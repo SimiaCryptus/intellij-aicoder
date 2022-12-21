@@ -1,6 +1,6 @@
-package org.jetbrains.plugins.template.services
+package com.github.acharneski.intellijaicoder.services
 
-import org.jetbrains.plugins.template.MyBundle
+import com.github.acharneski.intellijaicoder.MyBundle
 
 class MyApplicationService {
 
