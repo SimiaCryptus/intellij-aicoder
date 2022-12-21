@@ -1,18 +1,36 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.acharneski.intellijaicoder</id>
-    <name>IntelliJ Platform Plugin intellij-aicoder</name>
-    <vendor>acharneski</vendor>
+    <id>com.github.simiacryptus.intellijopenaicodeassist</id>
+    <name>AI Coding Assistant</name>
+    <vendor>simiacryptus</vendor>
 
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.acharneski.intellijaicoder.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.acharneski.intellijaicoder.services.MyProjectService"/>
+        <applicationService serviceImplementation="com.github.simiacryptus.aicoder.AppSettingsState"/>
+        <applicationConfigurable parentId="tools"
+                                 instance="com.github.simiacryptus.aicoder.AppSettingsConfigurable"
+                                 id="org.intellij.sdk.settings.AppSettingsConfigurable"
+                                 displayName="AICoder"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.acharneski.intellijaicoder.listeners.MyProjectManagerListener"
+        <listener class="com.github.simiacryptus.aicoder.ProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+
+    <!-- Text to display as company information on Preferences/Settings | Plugin page -->
+    <vendor url="http://simiacryptus.com">SimiaCryptus Software</vendor>
+
+    <actions>
+        <group id="org.intellij.sdk.action.DynamicActionGroup"
+               class="com.github.simiacryptus.aicoder.AICoderContextGroup"
+               popup="true"
+               text="AICoder"
+               description="AICoder Tools"
+               icon="com.github.simiacryptus.aicoder.Icons.default_icon">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </group>
+    </actions>
+
 </idea-plugin>
