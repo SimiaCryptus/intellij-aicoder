@@ -20,8 +20,4 @@ public class CompletionRequest {
     this.echo = echo;
   }
 
-  public CompletionRequest(String prompt, double temperature, int max_tokens, String stop, boolean echo) {
-    this(prompt, temperature, max_tokens, stop, null, echo);
-  }
-
 }

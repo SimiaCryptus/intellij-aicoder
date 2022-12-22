@@ -42,11 +42,30 @@ public class OpenAIAPI {
     return post(url, body, 3);
   }
 
+  /**
+   * Completes a given text using the specified model.
+   *
+   * @param completionRequest The completion request containing the text to complete.
+   * @param model             The model to use for completion.
+   * @return The completion result.
+   * @throws IOException          If an I/O error occurs.
+   * @throws InterruptedException If the thread is interrupted.
+   */
   public TextCompletion complete(CompletionRequest completionRequest, String model) throws IOException, InterruptedException {
     String result = post(getSettingsState().apiBase + "/engines/" + model + "/completions", getMapper().writeValueAsString(completionRequest));
     return getMapper().readValue(result, TextCompletion.class);
   }
 
+  /**
+   * Posts a request to the given URL with the given JSON body and retries if an IOException is thrown.
+   *
+   * @param url     The URL to post the request to.
+   * @param json    The JSON body of the request.
+   * @param retries The number of times to retry the request if an IOException is thrown.
+   * @return The response from the request.
+   * @throws IOException          If an IOException is thrown and the number of retries is exceeded.
+   * @throws InterruptedException If the thread is interrupted while sleeping.
+   */
   protected String post(String url, String json, int retries) throws IOException, InterruptedException {
     try {
       HttpClientBuilder client = HttpClientBuilder.create();
@@ -83,6 +102,13 @@ public class OpenAIAPI {
     request.addHeader("Authorization", "Bearer " + getSettingsState().apiKey);
   }
 
+  /**
+   * Gets the response from the given URL.
+   *
+   * @param url The URL to get the response from.
+   * @return The response from the given URL.
+   * @throws IOException If an I/O error occurs.
+   */
   public String get(String url) throws IOException {
     HttpClientBuilder client = HttpClientBuilder.create();
     HttpGet request = new HttpGet(url);
@@ -95,26 +121,52 @@ public class OpenAIAPI {
   }
 
 
+  /**
+   * Creates a function that takes a String as input and returns a String as output.
+   * The output is the result of a completion request using the given input and output tags, instruction, and attributes.
+   *
+   * @param inputTag    the tag to wrap the input text in
+   * @param outputTag   the tag to wrap the output text in
+   * @param instruction the instruction to include in the completion request
+   * @param inputAttr   a map of attributes to include in the input tag
+   * @param outputAttr  a map of attributes to include in the output tag
+   * @return a Function that takes a String as input and returns a String as output
+   */
   public Function<String, String> xmlFN(String inputTag, String outputTag, String instruction, Map<String, String> inputAttr, Map<String, String> outputAttr) {
+    // Create a function that takes a string as input
     return (originalText) -> {
+      // Create a string of input attributes
       String inputAttributes = inputAttr.isEmpty() ? "" : (" " + inputAttr.entrySet().stream().map(t -> String.format("%s=\"%s\"", t.getKey(), t.getValue())).collect(Collectors.joining()));
+      // Create a string of output attributes
       String outputAttributes = outputAttr.isEmpty() ? "" : (" " + outputAttr.entrySet().stream().map(t -> String.format("%s=\"%s\"", t.getKey(), t.getValue())).collect(Collectors.joining()));
+      // Create a completion request
       CompletionRequest request = new CompletionRequest(
+          // Format the request with the given input and output tags, attributes, and instruction
           String.format("<!-- %s -->\n<%s%s>%s</%s>\n<%s%s>", instruction, inputTag, inputAttributes, originalText, inputTag, outputTag, outputAttributes).trim(),
+          // Get the temperature from the settings state
           getSettingsState().temperature,
+          // Get the max tokens from the settings state
           getSettingsState().maxTokens,
+          // Format the end tag
           String.format("</%s>", outputTag),
+          null,
+          // Set the completion to true
           true
       );
       try {
+        // Get the completion
         TextCompletion completion = complete(request, getSettingsState().model);
+        // Get the first choice from the completion
         Optional<String> completionOption = Optional.ofNullable(completion.choices).flatMap(choices -> Arrays.stream(choices).findFirst()).map(choice -> choice.text.trim());
+        // If the completion is empty, return the original text
         if (completionOption.isEmpty()) {
           return originalText;
         } else {
+          // Otherwise, strip the prefix from the completion and return it
           return stripPrefix(completionOption.get(), request.prompt);
         }
       } catch (Throwable e) {
+        // Print the stack trace and return the original text
         e.printStackTrace();
         return originalText;
       }

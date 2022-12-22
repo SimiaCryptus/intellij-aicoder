@@ -26,6 +26,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
   public String model = "text-davinci-003";
   public int maxTokens = 250;
   public double temperature = 0.0;
+  public String style = "";
 
   public AppSettingsState() {
   }
@@ -50,7 +51,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     AppSettingsState that = (AppSettingsState) o;
-    return maxTokens == that.maxTokens && Double.compare(that.temperature, temperature) == 0 && Objects.equals(apiBase, that.apiBase) && Objects.equals(apiKey, that.apiKey) && Objects.equals(model, that.model);
+    return maxTokens == that.maxTokens && Double.compare(that.temperature, temperature) == 0 && Objects.equals(apiBase, that.apiBase) && Objects.equals(apiKey, that.apiKey) && Objects.equals(model, that.model) && Objects.equals(style, that.style);
   }
 
   @Override

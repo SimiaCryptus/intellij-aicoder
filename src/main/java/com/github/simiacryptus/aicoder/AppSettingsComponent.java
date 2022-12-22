@@ -17,6 +17,7 @@ public class AppSettingsComponent {
   private final JBTextField model = new JBTextField();
   private final JBTextField maxTokens = new JBTextField();
   private final JBTextField temperature = new JBTextField();
+  private final JBTextField style = new JBTextField();
 
   public AppSettingsComponent() {
     mainPanel = FormBuilder.createFormBuilder()
@@ -25,6 +26,7 @@ public class AppSettingsComponent {
         .addLabeledComponent(new JBLabel("Model: "), model, 1, false)
         .addLabeledComponent(new JBLabel("Max Tokens: "), maxTokens, 1, false)
         .addLabeledComponent(new JBLabel("Temperature: "), temperature, 1, false)
+        .addLabeledComponent(new JBLabel("Style: "), style, 1, false)
         .addComponentFillVertically(new JPanel(), 0)
         .getPanel();
   }
@@ -33,6 +35,7 @@ public class AppSettingsComponent {
     settings.apiBase = apiBase.getText();
     settings.apiKey = apiKey.getText();
     settings.model = model.getText();
+    settings.style = style.getText().trim();
     settings.maxTokens = Integer.parseInt(maxTokens.getText());
     settings.temperature = Double.parseDouble(temperature.getText());
   }
@@ -41,6 +44,7 @@ public class AppSettingsComponent {
     apiBase.setText(settings.apiBase);
     apiKey.setText(settings.apiKey);
     model.setText(settings.model);
+    style.setText(settings.style);
     maxTokens.setText(String.valueOf(settings.maxTokens));
     temperature.setText(String.valueOf(settings.temperature));
   }
