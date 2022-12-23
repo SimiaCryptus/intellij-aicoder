@@ -55,40 +55,29 @@ public class AICoderContextGroup extends ActionGroup {
 
         switch (extension) {
             case "java":
-                autoImplementationAction(e, children, extension, humanLanguage);
                 docAction(children, extension, "JavaDoc", "*/");
-                describeAction(children, extension, humanLanguage, "// ");
-                standardCodeActions(children, extension, humanLanguage);
-                customTranslation(children, extension);
+                standardLanguageActions(e, children, humanLanguage, extension, "// ");
                 break;
             case "scala":
                 docAction(children, extension, "ScalaDoc", "*/");
             case "groovy":
-                autoImplementationAction(e, children, extension, humanLanguage);
-                describeAction(children, extension, humanLanguage, "// ");
-                standardCodeActions(children, extension, humanLanguage);
-                customTranslation(children, extension);
+                standardLanguageActions(e, children, humanLanguage, extension, "// ");
+                break;
+            case "sql":
+                standardLanguageActions(e, children, humanLanguage, extension, "# ");
                 break;
             case "py":
-                autoImplementationAction(e, children, extension, humanLanguage);
-                describeAction(children, extension, humanLanguage, "# ");
-                standardCodeActions(children, extension, humanLanguage);
-                customTranslation(children, extension);
+                standardLanguageActions(e, children, humanLanguage, "python", "# ");
                 break;
             case "sh":
-                String bash = "bash";
-                autoImplementationAction(e, children, bash, humanLanguage);
-                standardCodeActions(children, bash, humanLanguage);
-                describeAction(children, bash, humanLanguage, "# ");
-                customTranslation(children, bash);
+                standardLanguageActions(e, children, humanLanguage, "bash", "# ");
                 break;
             case "gradle":
-                autoImplementationAction(e, children, extension, humanLanguage);
-                describeAction(children, extension, humanLanguage, "// ");
-                standardCodeActions(children, "groovy", humanLanguage);
+                standardLanguageActions(e, children, humanLanguage, "groovy", "// ");
                 break;
             case "md":
                 standardCodeActions(children, "markdown", humanLanguage);
+                customTranslation(children, "markdown");
                 break;
             // Default case
             default:
@@ -97,6 +86,13 @@ public class AICoderContextGroup extends ActionGroup {
 
         // Return the ArrayList as an array of AnAction objects
         return children.toArray(AnAction[]::new);
+    }
+
+    private void standardLanguageActions(AnActionEvent e, ArrayList<AnAction> children, String humanLanguage, String bash, String commentLinePrefix) {
+        autoImplementationAction(e, children, bash, humanLanguage);
+        standardCodeActions(children, bash, humanLanguage);
+        describeAction(children, bash, humanLanguage, commentLinePrefix);
+        customTranslation(children, bash);
     }
 
     private void docAction(ArrayList<AnAction> children, String computerLanguage, String docType, String... stop) {
