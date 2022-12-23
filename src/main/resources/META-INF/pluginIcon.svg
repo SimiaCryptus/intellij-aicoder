@@ -1,11 +1,20 @@
 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M32.0845 7.94025V4H24.0203V7.9896H16.029V4H7.91553V7.94025H4V36H16.0044V32.0045C16.0058 30.9457 16.4274 29.9308 17.1766 29.1826C17.9258 28.4345 18.9412 28.0143 20 28.0143C21.0588 28.0143 22.0743 28.4345 22.8234 29.1826C23.5726 29.9308 23.9942 30.9457 23.9956 32.0045V36H36V7.94025H32.0845Z"
-          fill="url(#paint0_linear)"/>
-    <defs>
-        <linearGradient id="paint0_linear" x1="2.94192" y1="4.89955" x2="37.7772" y2="39.7345" gradientUnits="userSpaceOnUse">
-            <stop offset="0.15937" stop-color="#3BEA62"/>
-            <stop offset="0.5404" stop-color="#3C99CC"/>
-            <stop offset="0.93739" stop-color="#6B57FF"/>
-        </linearGradient>
-    </defs>
+    <circle cx="20" cy="20" r="20" fill="#F0F6FF"/>
+    <circle cx="20" cy="20" r="19.5" stroke="black"/>
+    <circle cx="20" cy="20" r="17.5" stroke="black"/>
+    <circle cx="20" cy="20" r="16" stroke="black"/>
+    <line x1="20" y1="20" x2="30" y2="30" stroke="black" stroke-linecap="round"/>
+    <line x1="20" y1="20" x2="10" y2="10" stroke="black" stroke-linecap="round"/>
+    <line x1="20" y1="20" x2="20" y2="10" stroke="black" stroke-linecap="round"/>
+    <line x1="20" y1="20" x2="20" y2="30" stroke="black" stroke-linecap="round"/>
+    <rect x="17.5" y="8.90625" width="5" height="22.1875" fill="#C4C4C4"/>
+    <rect x="8.90625" y="17.5" width="22.1875" height="5" fill="#C4C4C4"/>
+    <circle cx="20" cy="20" r="15" stroke="black" stroke-width="2"/>
+    <circle cx="20" cy="20" r="10" stroke="black" stroke-width="2"/>
+    <circle cx="20" cy="20" r="5" stroke="black" stroke-width="2"/>
+    <rect x="13.5" y="13.5" width="13" height="13" stroke="black"/>
+    <circle cx="20" cy="20" r="16.5" stroke="#1A6CFF" stroke-width="3"/>
+    <rect x="17.5" y="16.5" width="5" height="7" rx="2.5" fill="#1A6CFF"/>
+    <rect x="17.5" y="26.5" width="5" height="7" rx="2.5" fill="#1A6CFF"/>
+    <rect x="11.5" y="20.5" width="17" height="3" rx="1.5" fill="#1A6CFF"/>
 </svg>

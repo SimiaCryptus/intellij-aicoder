@@ -24,8 +24,8 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
   public String apiBase = "https://api.openai.com/v1";
   public String apiKey = "";
   public String model = "text-davinci-003";
-  public int maxTokens = 250;
-  public double temperature = 0.0;
+  public int maxTokens = 1000;
+  public double temperature = 0.1;
   public String style = "";
 
   public AppSettingsState() {

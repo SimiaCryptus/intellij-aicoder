@@ -18,7 +18,9 @@
 <!-- Plugin description -->
 This plugin adds some editor context menu options that provide text processing functions powered by OpenAI's GPT models.
 
-Please note that you need your own [OpenAPI access token](https://beta.openai.com/). Put this token into the AICoder configuration, and start pair programing with AI!
+It enables automated coding in Java, Scala, Python, Bash, and more.
+
+Please note that you need your own [OpenAPI access token](https://beta.openai.com/). This is intended as a development tool for developers who already have an OpenAI access token; it is not itself to be considered an end-product. This plugin is provided free of charge and without any guarantee.
 <!-- Plugin description end -->
 
 ## Installation

@@ -28,7 +28,7 @@
                popup="true"
                text="AICoder"
                description="AICoder Tools"
-               icon="com.github.simiacryptus.aicoder.Icons.default_icon">
+               icon="com.github.simiacryptus.aicoder.Icons.icon1">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </group>
     </actions>

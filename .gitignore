@@ -3,3 +3,4 @@
 .qodana
 build
 openai.key
+.run
