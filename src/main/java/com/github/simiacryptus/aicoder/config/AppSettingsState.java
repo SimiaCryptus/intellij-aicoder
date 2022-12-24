@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder;
+package com.github.simiacryptus.aicoder.config;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -30,7 +30,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public String style = "";
     public Map<String, Integer> instructionHistory = new HashMap<>();
     public int historyLimit = 10;
-    String humanLanguage = "English";
+    public String humanLanguage = "English";
 
     public AppSettingsState() {
     }

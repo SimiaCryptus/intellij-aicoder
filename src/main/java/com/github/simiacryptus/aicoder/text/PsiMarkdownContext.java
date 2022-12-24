@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder;
+package com.github.simiacryptus.aicoder.text;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PsiMarkdownContext {

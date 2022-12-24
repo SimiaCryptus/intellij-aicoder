@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder;
+package com.github.simiacryptus.aicoder.config;
 
 import com.intellij.openapi.options.Configurable;
 import org.jetbrains.annotations.Nls;

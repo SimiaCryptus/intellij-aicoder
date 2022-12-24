@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder;
+package com.github.simiacryptus.aicoder.text;
 
 import java.util.Arrays;
 
@@ -6,8 +6,8 @@ public class IndentedText {
     public static final String TAB_REPLACEMENT = "  ";
     public static final String DELIMITER = "\n";
 
-    String indent;
-    String textBlock;
+    public String indent;
+    public String textBlock;
 
     public IndentedText(String indent, String textBlock) {
         this.indent = indent;

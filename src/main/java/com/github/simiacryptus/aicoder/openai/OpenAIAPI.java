@@ -1,11 +1,10 @@
-package com.github.simiacryptus.aicoder;
+package com.github.simiacryptus.aicoder.openai;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.github.simiacryptus.aicoder.openai.CompletionRequest;
-import com.github.simiacryptus.aicoder.openai.TextCompletion;
+import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;

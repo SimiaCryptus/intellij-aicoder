@@ -1,5 +1,10 @@
 package com.github.simiacryptus.aicoder;
 
+import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.github.simiacryptus.aicoder.openai.OpenAIAPI;
+import com.github.simiacryptus.aicoder.text.IndentedText;
+import com.github.simiacryptus.aicoder.text.PsiClassContext;
+import com.github.simiacryptus.aicoder.text.PsiMarkdownContext;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
@@ -282,6 +287,19 @@ public class AICoderContextGroup extends ActionGroup {
         return largest.get();
     }
 
+
+    /**
+     * This code is creating a TextReplacementAction object that will be added to an ArrayList of AnAction objects.
+     * This TextReplacementAction object will take a string of code written in a computer language (specified by the computerLanguage parameter) and explain it in a human language (specified by the humanLanguage parameter).
+     * The explanation will be preceded by a comment line prefix (specified by the commentLinePrefix parameter).
+     * The OpenAIAPI xmlFN function will be used to generate the explanation, and the input and output attributes will be set to "type: code" and "type: description" respectively.
+     * The result of the xmlFN function will be returned and appended to the original string of code, preceded by the comment line prefix.
+     *
+     * @param children
+     * @param computerLanguage
+     * @param humanLanguage
+     * @param commentLinePrefix
+     */
     private void describeAction(ArrayList<AnAction> children, String computerLanguage, String humanLanguage, String commentLinePrefix) {
         children.add(TextReplacementAction.create("Describe Code and Prepend Comment", "Add JavaDoc Comments", Icons.icon1, (event, string) -> {
             String instruction = "Explain this " + computerLanguage + " in " + humanLanguage;
