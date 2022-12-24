@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <!-- "Javadocs" Icon -->
-    <rect width="12" height="12" x="2" y="2" fill="none" stroke="black"/>
-    <rect width="4" height="4" x="6" y="6" fill="black" stroke="black"/>
-    <rect width="2" height="2" x="7" y="7" fill="black" stroke="red"/>
-    <rect width="4" height="4" x="4" y="4" fill="black" stroke="black"/>
-    <rect width="2" height="2" x="5" y="5" fill="black" stroke="black"/>
-</svg>

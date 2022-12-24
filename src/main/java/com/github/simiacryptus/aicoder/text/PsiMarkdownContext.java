@@ -14,7 +14,7 @@ public class PsiMarkdownContext {
     public final ArrayList<PsiMarkdownContext> children = new ArrayList<>();
     private final int start;
     private final PsiMarkdownContext parent;
-    boolean verbose = true;
+    boolean verbose = false;
 
     public PsiMarkdownContext(PsiMarkdownContext parent, String text, int start) {
         this.start = start;
