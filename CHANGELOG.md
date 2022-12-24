@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [0.0.4]
+### Added
+- Added support for various languages
+- Added custom edit options with recently used shortcuts
+- Added context-aware generation tools
+
 ## [0.0.1]
 ### Added
+- Initial implementation
 - Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)

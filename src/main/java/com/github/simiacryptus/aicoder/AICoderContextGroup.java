@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
@@ -20,19 +21,31 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+
+/**
+ * This is the AICoderContextGroup class.
+ * It is an ActionGroup that helps us do some cool stuff.
+ * <p>
+ * If the CopyPasteManager has DataFlavors available, it adds a TextReplacementAction to the ArrayList.
+ * <p>
+ * For Java, Scala, Groovy, SVG, and SQL, it adds standard language actions.
+ * For Python and Bash, it adds standard language actions with the language set to Python and Bash respectively.
+ * For Gradle, it adds standard language actions with the language set to Groovy.
+ * For Markdown, it adds a Markdown implementation action and standard language actions with the language set to Markdown.
+ */
 public class AICoderContextGroup extends ActionGroup {
+
+    // Set the human language to English
 
     @Override
     public AnAction @NotNull [] getChildren(AnActionEvent e) {
+        String humanLanguage = AppSettingsState.getInstance().humanLanguage;
         // Get the VirtualFile associated with the current action event
         VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
         // Create an ArrayList to store the generated AnAction objects
         ArrayList<AnAction> children = new ArrayList<>();
         // Get the file extension of the VirtualFile
         String extension = file.getExtension().toLowerCase();
-        // Set the human language to English
-        String humanLanguage = "English";
-        // Switch on the file extension
 
 
         // If the CopyPasteManager has DataFlavors available
@@ -53,6 +66,7 @@ public class AICoderContextGroup extends ActionGroup {
         }
 
 
+        // Switch on the file extension
         switch (extension) {
             case "java":
                 docAction(children, extension, "JavaDoc", "*/");
@@ -111,11 +125,37 @@ public class AICoderContextGroup extends ActionGroup {
         }));
     }
 
+
+    /**
+     * This method adds two actions to the list of children.
+     * The first action is called "Edit..." and it allows you to type in an instruction.
+     * The second action is a group of actions that are based on the instructions you have typed in before.
+     *
+     * @param children         The list of children to add the actions to.
+     * @param computerLanguage The language of the computer.
+     */
     private void customTranslation(ArrayList<AnAction> children, String computerLanguage) {
         children.add(TextReplacementAction.create("Edit...", "Edit...", Icons.icon2, (event, string) -> {
-//            String[] options = {"Option 1", "Option 2", "Option 3"};
-//            String instruction = (String) JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
             String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
+            AppSettingsState.getInstance().addInstructionToHistory(instruction);
+            Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
+            Map<String, String> outputAttr = new HashMap<>(Map.of("type", "after"));
+            IndentedText indentedInput = IndentedText.fromString(string);
+            return new IndentedText(indentedInput.indent, OpenAIAPI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "")).toString();
+        }));
+        children.add(new ActionGroup("Recent Edits", true) {
+            @Override
+            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+                ArrayList<AnAction> children = new ArrayList<>();
+                AppSettingsState.getInstance().getInstructionHistory().forEach(instruction -> quickTranslation(children, computerLanguage, instruction));
+                return children.toArray(AnAction[]::new);
+            }
+        });
+    }
+
+    private void quickTranslation(ArrayList<AnAction> children, String computerLanguage, String instruction) {
+        children.add(TextReplacementAction.create(instruction, instruction, Icons.icon2, (event, string) -> {
+            AppSettingsState.getInstance().addInstructionToHistory(instruction);
             Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
             Map<String, String> outputAttr = new HashMap<>(Map.of("type", "after"));
             IndentedText indentedInput = IndentedText.fromString(string);
@@ -125,11 +165,12 @@ public class AICoderContextGroup extends ActionGroup {
 
     private void markdownImplementationAction(AnActionEvent e, ArrayList<AnAction> children, String humanLanguage) {
         String computerLanguage = "markdown";
-        Caret caret = e.getRequiredData(CommonDataKeys.CARET);
+        Caret caret = e.getData(CommonDataKeys.CARET);
+        if (null == caret) return;
         int selectionStart = caret.getSelectionStart();
         int selectionEnd = caret.getSelectionEnd();
-        if(selectionStart < selectionEnd) {
-            children.add(TextReplacementAction.create("Execute Directive", "Execute Directive", Icons.icon1, (event, directive)-> {
+        if (selectionStart < selectionEnd) {
+            children.add(TextReplacementAction.create("Execute Directive", "Execute Directive", Icons.icon1, (event, directive) -> {
                 String instruction = "Implement " + humanLanguage + " as " + computerLanguage + " code";
                 if (!AppSettingsState.getInstance().style.isEmpty())
                     instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
@@ -155,12 +196,15 @@ public class AICoderContextGroup extends ActionGroup {
                         "#");
                 return new IndentedText(indentedInput.indent, implementation).toString();
             }));
-        };
+        }
+        ;
     }
 
     private void autoImplementationAction(AnActionEvent e, ArrayList<AnAction> children, String computerLanguage, String humanLanguage) {
-        PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
-        Caret caret = e.getRequiredData(CommonDataKeys.CARET);
+        PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+        if (null == psiFile) return;
+        Caret caret = e.getData(CommonDataKeys.CARET);
+        if (null == caret) return;
         int selectionStart = caret.getSelectionStart();
         int selectionEnd = caret.getSelectionEnd();
         PsiElement largestIntersectingComment = getLargestIntersectingComment(psiFile, selectionStart, selectionEnd);
@@ -195,7 +239,7 @@ public class AICoderContextGroup extends ActionGroup {
                             instruction,
                             inputAttr,
                             outputAttr,
-                            root.toString()+"\n");
+                            root.toString() + "\n");
                     return new IndentedText(indentedInput.indent, implementation).toString();
                 }
 
@@ -203,6 +247,18 @@ public class AICoderContextGroup extends ActionGroup {
         }
     }
 
+
+    /**
+     * This method gets the largest comment that intersects with the given selection.
+     * <p>
+     * It takes in an element, a selection start, and a selection end.
+     * <p>
+     * It then looks through the element and its children to find a comment that is within the selection.
+     * <p>
+     * If it finds one, it compares it to the other comments it finds and keeps the one with the longest text.
+     * <p>
+     * Finally, it returns the largest comment it found.
+     */
     private PsiElement getLargestIntersectingComment(PsiElement element, int selectionStart, int selectionEnd) {
         final AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
@@ -211,7 +267,7 @@ public class AICoderContextGroup extends ActionGroup {
             public void visitElement(@NotNull PsiElement element) {
                 if (null == element) return;
                 TextRange textRange = element.getTextRange();
-                boolean within = (textRange.getStartOffset() <= selectionStart && textRange.getEndOffset()+1 >= selectionStart && textRange.getStartOffset() <= selectionEnd && textRange.getEndOffset()+1 >= selectionEnd);
+                boolean within = (textRange.getStartOffset() <= selectionStart && textRange.getEndOffset() + 1 >= selectionStart && textRange.getStartOffset() <= selectionEnd && textRange.getEndOffset() + 1 >= selectionEnd);
                 String simpleName = element.getClass().getSimpleName();
                 if (simpleName.equals("PsiCommentImpl") || simpleName.equals("PsiDocCommentImpl")) {
                     if (within) {
