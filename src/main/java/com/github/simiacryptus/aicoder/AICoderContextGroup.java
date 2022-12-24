@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * For Markdown, it adds a Markdown implementation action and standard language actions with the language set to Markdown.
  */
 public class AICoderContextGroup extends ActionGroup {
+    private final Icon defaultIcon = null;
 
     // Set the human language to English
 
@@ -52,11 +54,10 @@ public class AICoderContextGroup extends ActionGroup {
         // Get the file extension of the VirtualFile
         String extension = file.getExtension().toLowerCase();
 
-
         // If the CopyPasteManager has DataFlavors available
         if (CopyPasteManager.getInstance().areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
             // Add a TextReplacementAction to the ArrayList
-            children.add(TextReplacementAction.create("Paste", "Paste", Icons.icon2, (event, string) -> {
+            children.add(TextReplacementAction.create("Paste", "Paste", defaultIcon, (event, string) -> {
                 // Set the instruction to "Translate this input into " + extension
                 String instruction = "Translate this input into " + extension;
                 // Set the input attributes to "language: autodetect"
@@ -69,7 +70,6 @@ public class AICoderContextGroup extends ActionGroup {
                 return OpenAIAPI.INSTANCE.xmlFN(pasteContents, "source", "translated", instruction, inputAttr, outputAttr, "");
             }));
         }
-
 
         // Switch on the file extension
         switch (extension) {
@@ -96,7 +96,7 @@ public class AICoderContextGroup extends ActionGroup {
                 standardLanguageActions(e, children, humanLanguage, "groovy", "// ");
                 break;
             case "md":
-                markdownImplementationAction(e, children, humanLanguage);
+                if(hasSelection(e)) markdownImplementationAction(e, children, humanLanguage);
                 standardLanguageActions(e, children, humanLanguage, "markdown", "<!-- ");
                 break;
             // Default case
@@ -109,25 +109,47 @@ public class AICoderContextGroup extends ActionGroup {
     }
 
     private void standardLanguageActions(AnActionEvent e, ArrayList<AnAction> children, String humanLanguage, String bash, String commentLinePrefix) {
-        autoImplementationAction(e, children, bash, humanLanguage);
-        standardCodeActions(children, bash, humanLanguage);
-        describeAction(children, bash, humanLanguage, commentLinePrefix);
-        customTranslation(children, bash);
+        boolean hasSelection = hasSelection(e);
+        if(hasSelection) customTranslation(children, bash);
+        if(hasSelection) autoImplementationAction(e, children, bash, humanLanguage);
+        if(hasSelection) describeAction(children, bash, humanLanguage, commentLinePrefix);
+        if(hasSelection) standardCodeActions(children, bash, humanLanguage);
+    }
+
+    public static boolean hasSelection(AnActionEvent e) {
+        Caret caret = e.getData(CommonDataKeys.CARET);
+        return null != caret && caret.hasSelection();
     }
 
     private void docAction(ArrayList<AnAction> children, String computerLanguage, String docType, String... stop) {
-        children.add(TextReplacementAction.create("Add " + docType + " Comments", "Add " + docType + " Comments", Icons.icon1, (event, string) -> {
-            String instruction = "Rewrite to include detailed " + docType;
-            if (!AppSettingsState.getInstance().style.isEmpty())
-                instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
-            Map<String, String> inputAttr = new HashMap<>(Map.of("type", "uncommented"));
-            Map<String, String> outputAttr = new HashMap<>(Map.of("type", "commented"));
-            if (!AppSettingsState.getInstance().style.isEmpty())
-                outputAttr.put("style", AppSettingsState.getInstance().style);
-            IndentedText indentedInput = IndentedText.fromString(string);
-            String replace = OpenAIAPI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "", stop) + "*/\n";
-            return new IndentedText(indentedInput.indent, replace + indentedInput.textBlock).toString();
-        }));
+        children.add(new AnAction("Add " + docType + " Comments", "Add " + docType + " Comments", defaultIcon){
+            @Override
+            public void actionPerformed(@NotNull final AnActionEvent event) {
+                try {
+                    PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
+                    Caret caret = event.getData(CommonDataKeys.CARET);
+                    PsiElement smallestIntersectingMethod = getSmallestIntersectingMethod(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
+                    if(null == smallestIntersectingMethod) return;
+                    String code = smallestIntersectingMethod.getText();
+                    String instruction = "Rewrite to include detailed " + docType;
+                    if (!AppSettingsState.getInstance().style.isEmpty())
+                        instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
+                    Map<String, String> inputAttr = new HashMap<>(Map.of("type", "uncommented"));
+                    Map<String, String> outputAttr = new HashMap<>(Map.of("type", "commented"));
+                    if (!AppSettingsState.getInstance().style.isEmpty())
+                        outputAttr.put("style", AppSettingsState.getInstance().style);
+                    IndentedText indentedInput = IndentedText.fromString(code);
+                    String replace = OpenAIAPI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "", stop) + "*/\n";
+                    final String newText = new IndentedText(indentedInput.indent, replace + indentedInput.textBlock).toString();
+                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                        editor.getDocument().replaceString(smallestIntersectingMethod.getTextRange().getStartOffset(), smallestIntersectingMethod.getTextRange().getEndOffset(), newText);
+                    });
+                } catch (IOException ex) {
+                    TextReplacementAction.handle(ex);
+                }
+            }
+        });
     }
 
 
@@ -140,7 +162,7 @@ public class AICoderContextGroup extends ActionGroup {
      * @param computerLanguage The language of the computer.
      */
     private void customTranslation(ArrayList<AnAction> children, String computerLanguage) {
-        children.add(TextReplacementAction.create("Edit...", "Edit...", Icons.icon2, (event, string) -> {
+        children.add(TextReplacementAction.create("Edit...", "Edit...", defaultIcon, (event, string) -> {
             String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
             AppSettingsState.getInstance().addInstructionToHistory(instruction);
             Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
@@ -159,7 +181,7 @@ public class AICoderContextGroup extends ActionGroup {
     }
 
     private void quickTranslation(ArrayList<AnAction> children, String computerLanguage, String instruction) {
-        children.add(TextReplacementAction.create(instruction, instruction, Icons.icon2, (event, string) -> {
+        children.add(TextReplacementAction.create(instruction, instruction, defaultIcon, (event, string) -> {
             AppSettingsState.getInstance().addInstructionToHistory(instruction);
             Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
             Map<String, String> outputAttr = new HashMap<>(Map.of("type", "after"));
@@ -175,7 +197,7 @@ public class AICoderContextGroup extends ActionGroup {
         int selectionStart = caret.getSelectionStart();
         int selectionEnd = caret.getSelectionEnd();
         if (selectionStart < selectionEnd) {
-            children.add(TextReplacementAction.create("Execute Directive", "Execute Directive", Icons.icon1, (event, directive) -> {
+            children.add(TextReplacementAction.create("Execute Directive", "Execute Directive", defaultIcon, (event, directive) -> {
                 String instruction = "Implement " + humanLanguage + " as " + computerLanguage + " code";
                 if (!AppSettingsState.getInstance().style.isEmpty())
                     instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
@@ -186,7 +208,6 @@ public class AICoderContextGroup extends ActionGroup {
                 IndentedText indentedInput = IndentedText.fromString(directive);
 
                 PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
-                PsiElement largestIntersectingComment = getLargestIntersectingComment(psiFile, selectionStart, selectionEnd);
                 PsiMarkdownContext root = PsiMarkdownContext.getContext(psiFile, selectionStart, selectionEnd);
                 String contextWithDirective = root.toString(selectionEnd) + "\n<!-- " + directive + "-->\n";
 
@@ -214,7 +235,7 @@ public class AICoderContextGroup extends ActionGroup {
         int selectionEnd = caret.getSelectionEnd();
         PsiElement largestIntersectingComment = getLargestIntersectingComment(psiFile, selectionStart, selectionEnd);
         if (largestIntersectingComment != null) {
-            children.add(new AnAction("Insert Implementation", "Insert Implementation", Icons.icon1) {
+            children.add(new AnAction("Insert Implementation", "Insert Implementation", defaultIcon) {
                 @Override
                 public void actionPerformed(@NotNull final AnActionEvent e) {
                     final Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
@@ -237,14 +258,19 @@ public class AICoderContextGroup extends ActionGroup {
                     if (!AppSettingsState.getInstance().style.isEmpty())
                         outputAttr.put("style", AppSettingsState.getInstance().style);
                     IndentedText indentedInput = IndentedText.fromString(string);
-                    String implementation = OpenAIAPI.INSTANCE.xmlFN(
-                            string.split(" ").length > 4 ? string : largestIntersectingComment.getText(),
-                            humanLanguage,
-                            computerLanguage,
-                            instruction,
-                            inputAttr,
-                            outputAttr,
-                            root.toString() + "\n");
+                    String implementation = null;
+                    try {
+                        implementation = OpenAIAPI.INSTANCE.xmlFN(
+                                string.split(" ").length > 4 ? string : largestIntersectingComment.getText(),
+                                humanLanguage,
+                                computerLanguage,
+                                instruction,
+                                inputAttr,
+                                outputAttr,
+                                root.toString() + "\n");
+                    } catch (IOException ex) {
+                        TextReplacementAction.handle(ex);
+                    }
                     return new IndentedText(indentedInput.indent, implementation).toString();
                 }
 
@@ -287,6 +313,30 @@ public class AICoderContextGroup extends ActionGroup {
         return largest.get();
     }
 
+    private PsiElement getSmallestIntersectingMethod(PsiElement element, int selectionStart, int selectionEnd) {
+        final AtomicReference<PsiElement> largest = new AtomicReference<>(null);
+        final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
+        visitor.set(new PsiElementVisitor() {
+            @Override
+            public void visitElement(@NotNull PsiElement element) {
+                if (null == element) return;
+                TextRange textRange = element.getTextRange();
+                boolean within = (textRange.getStartOffset() <= selectionStart && textRange.getEndOffset() + 1 >= selectionStart && textRange.getStartOffset() <= selectionEnd && textRange.getEndOffset() + 1 >= selectionEnd);
+                String simpleName = element.getClass().getSimpleName();
+                if (simpleName.equals("PsiMethodImpl") || simpleName.equals("PsiFieldImpl")) {
+                    if (within) {
+                        largest.updateAndGet(s -> (s == null ? Integer.MAX_VALUE : s.getText().length()) < element.getText().length() ? s : element);
+                    }
+                }
+                System.out.println(String.format("%s : %s", simpleName, element.getText()));
+                super.visitElement(element);
+                element.acceptChildren(visitor.get());
+            }
+        });
+        element.accept(visitor.get());
+        return largest.get();
+    }
+
 
     /**
      * This code is creating a TextReplacementAction object that will be added to an ArrayList of AnAction objects.
@@ -301,7 +351,7 @@ public class AICoderContextGroup extends ActionGroup {
      * @param commentLinePrefix
      */
     private void describeAction(ArrayList<AnAction> children, String computerLanguage, String humanLanguage, String commentLinePrefix) {
-        children.add(TextReplacementAction.create("Describe Code and Prepend Comment", "Add JavaDoc Comments", Icons.icon1, (event, string) -> {
+        children.add(TextReplacementAction.create("Describe Code and Prepend Comment", "Add JavaDoc Comments", defaultIcon, (event, string) -> {
             String instruction = "Explain this " + computerLanguage + " in " + humanLanguage;
             if (!AppSettingsState.getInstance().style.isEmpty())
                 instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
@@ -320,7 +370,7 @@ public class AICoderContextGroup extends ActionGroup {
 
     private void standardCodeActions(ArrayList<AnAction> children, String computerLanguage, String humanLanguage) {
         // Add a TextReplacementAction to the ArrayList
-        children.add(TextReplacementAction.create("Add Code Comments", "Add Code Comments", Icons.icon1, (event, string) -> {
+        children.add(TextReplacementAction.create("Add Code Comments", "Add Code Comments", defaultIcon, (event, string) -> {
             // Set the instruction to "Rewrite to include detailed code comments at the end of every line"
             String instruction = "Rewrite to include detailed code comments for every line";
             if (!AppSettingsState.getInstance().style.isEmpty())
@@ -335,7 +385,7 @@ public class AICoderContextGroup extends ActionGroup {
             return OpenAIAPI.INSTANCE.xmlFN(string, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "");
         }));
         // Add a TextReplacementAction to the ArrayList
-        children.add(TextReplacementAction.create("From " + humanLanguage, String.format("Implement %s -> %s", humanLanguage, computerLanguage), Icons.icon1, (event, string) -> {
+        children.add(TextReplacementAction.create("From " + humanLanguage, String.format("Implement %s -> %s", humanLanguage, computerLanguage), defaultIcon, (event, string) -> {
             // Set the instruction to "Implement this specification"
             String instruction = "Implement this specification";
             // Set the input attributes to "type: input"
@@ -346,7 +396,7 @@ public class AICoderContextGroup extends ActionGroup {
             return OpenAIAPI.INSTANCE.xmlFN(string, humanLanguage.toLowerCase(), computerLanguage, instruction, inputAttr, outputAttr, "");
         }));
         // Add a TextReplacementAction to the ArrayList
-        children.add(TextReplacementAction.create("To " + humanLanguage, String.format("Describe %s -> %s", humanLanguage, computerLanguage), Icons.icon1, (event, string) -> {
+        children.add(TextReplacementAction.create("To " + humanLanguage, String.format("Describe %s -> %s", humanLanguage, computerLanguage), defaultIcon, (event, string) -> {
             // Set the instruction to "Describe this code"
             String instruction = "Describe this code";
             if (!AppSettingsState.getInstance().style.isEmpty())

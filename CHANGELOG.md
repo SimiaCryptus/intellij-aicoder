@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [0.1.0]
+### Added
+- Added filtering using OpenAI moderation API
+- Handle error message by telling the user
+- Improved support for various languages, especially markdown
+- Improved UI polish
+
 ## [0.0.4]
 ### Added
 - Added support for various languages

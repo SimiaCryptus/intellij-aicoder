@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OpenAIAPI {
@@ -51,9 +54,32 @@ public class OpenAIAPI {
      * @throws InterruptedException If the thread is interrupted.
      */
     public TextCompletion complete(CompletionRequest completionRequest, String model) throws IOException, InterruptedException {
+        if(completionRequest.prompt.length() > AppSettingsState.getInstance().maxPrompt) throw new IOException("Prompt too long:" + completionRequest.prompt.length() + " chars");
+        moderate(completionRequest.prompt);
         String result = post(getSettingsState().apiBase + "/engines/" + model + "/completions", getMapper().writeValueAsString(completionRequest));
+        JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
+        if (jsonObject.has("error")) {
+            JsonObject errorObject = jsonObject.getAsJsonObject("error");
+            throw new IOException(errorObject.get("message").getAsString());
+        }
         return getMapper().readValue(result, TextCompletion.class);
     }
+
+    public void moderate(String text) throws IOException, InterruptedException {
+        String body = getMapper().writeValueAsString(Map.of("input", text));
+        String result = post(getSettingsState().apiBase + "/moderations", body);
+        JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
+        if (jsonObject.has("error")) {
+            JsonObject errorObject = jsonObject.getAsJsonObject("error");
+            throw new IOException(errorObject.get("message").getAsString());
+        }
+        JsonObject moderationResult = jsonObject.getAsJsonArray("results").get(0).getAsJsonObject();
+        if(moderationResult.get("flagged").getAsBoolean()) {
+            JsonObject categoriesObj = moderationResult.get("categories").getAsJsonObject();
+            throw new IOException("Moderation flagged this request due to " + categoriesObj.keySet().stream().filter(c->categoriesObj.get(c).getAsBoolean()).reduce((a, b)->a+", "+b).orElse("???"));
+        }
+    }
+
 
     /**
      * Posts a request to the given URL with the given JSON body and retries if an IOException is thrown.
@@ -132,18 +158,15 @@ public class OpenAIAPI {
      * @param outputPrefix
      * @return a Function that takes a String as input and returns a String as output
      */
-    public String xmlFN(String originalText, String inputTag, String outputTag, String instruction, Map<String, String> inputAttr, Map<String, String> outputAttr, String outputPrefix, String... stops) {
+    public String xmlFN(String originalText, String inputTag, String outputTag, String instruction, Map<String, String> inputAttr, Map<String, String> outputAttr, String outputPrefix, String... stops) throws IOException {
+        CompletionRequest request = xmlFnRequest(inputTag, outputTag, instruction, inputAttr, outputAttr, originalText).addStops(stops).appendPrompt(outputPrefix);
+        TextCompletion completion = null;
         try {
-            CompletionRequest request = xmlFnRequest(inputTag, outputTag, instruction, inputAttr, outputAttr, originalText).addStops(stops).appendPrompt(outputPrefix);
-            TextCompletion completion = complete(request, getSettingsState().model);
-            String newText = getNewText(request, completion);
-            if (null == newText) return null;
-            return newText;
-        } catch (Throwable e) {
-            // Print the stack trace and return the original text
-            e.printStackTrace();
-            return originalText;
+            completion = complete(request, getSettingsState().model);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+        return getNewText(request, completion);
     }
 
     public static String getNewText(CompletionRequest request, TextCompletion completion) {

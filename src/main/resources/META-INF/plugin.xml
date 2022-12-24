@@ -14,11 +14,6 @@
                                  displayName="AICoder"/>
     </extensions>
 
-    <applicationListeners>
-        <listener class="com.github.simiacryptus.aicoder.ProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
-
     <!-- Text to display as company information on Preferences/Settings | Plugin page -->
     <vendor url="http://simiacryptus.com">SimiaCryptus Software</vendor>
 
@@ -29,7 +24,7 @@
                text="AICoder"
                description="AICoder Tools"
                icon="com.github.simiacryptus.aicoder.Icons.icon1">
-            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="EditorPopupMenu" />
         </group>
     </actions>
 

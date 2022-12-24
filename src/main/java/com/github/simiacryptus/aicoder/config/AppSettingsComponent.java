@@ -19,6 +19,10 @@ public class AppSettingsComponent extends SimpleSettingsComponent<AppSettingsSta
     public final JBTextField temperature = new JBTextField();
     @Name("Style")
     public final JBTextField style = new JBTextField();
+    @Name("Human Language")
+    public final JBTextField humanLanguage = new JBTextField();
+    @Name("Max Prompt (Characters)")
+    public final JBTextField maxPrompt = new JBTextField();
 
     public JComponent getPreferredFocusedComponent() {
         return apiKey;

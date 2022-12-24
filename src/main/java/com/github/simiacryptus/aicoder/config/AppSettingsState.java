@@ -31,6 +31,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public Map<String, Integer> instructionHistory = new HashMap<>();
     public int historyLimit = 10;
     public String humanLanguage = "English";
+    public int maxPrompt = 5000;
 
     public AppSettingsState() {
     }
@@ -55,7 +56,15 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AppSettingsState that = (AppSettingsState) o;
-        return maxTokens == that.maxTokens && Double.compare(that.temperature, temperature) == 0 && Objects.equals(apiBase, that.apiBase) && Objects.equals(apiKey, that.apiKey) && Objects.equals(model, that.model) && Objects.equals(style, that.style);
+        if (maxTokens != that.maxTokens) return false;
+        if (maxPrompt != that.maxPrompt) return false;
+        if (Double.compare(that.temperature, temperature) != 0) return false;
+        if (!Objects.equals(humanLanguage, that.humanLanguage)) return false;
+        if (!Objects.equals(apiBase, that.apiBase)) return false;
+        if (!Objects.equals(apiKey, that.apiKey)) return false;
+        if (!Objects.equals(model, that.model)) return false;
+        if (!Objects.equals(style, that.style)) return false;
+        return true;
     }
 
     @Override
