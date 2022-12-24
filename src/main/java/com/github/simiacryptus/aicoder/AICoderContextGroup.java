@@ -61,6 +61,7 @@ public class AICoderContextGroup extends ActionGroup {
             case "scala":
                 docAction(children, extension, "ScalaDoc", "*/");
             case "groovy":
+            case "svg":
                 standardLanguageActions(e, children, humanLanguage, extension, "// ");
                 break;
             case "sql":
@@ -76,8 +77,8 @@ public class AICoderContextGroup extends ActionGroup {
                 standardLanguageActions(e, children, humanLanguage, "groovy", "// ");
                 break;
             case "md":
-                standardCodeActions(children, "markdown", humanLanguage);
-                customTranslation(children, "markdown");
+                markdownImplementationAction(e, children, humanLanguage);
+                standardLanguageActions(e, children, humanLanguage, "markdown", "<!-- ");
                 break;
             // Default case
             default:
@@ -122,6 +123,41 @@ public class AICoderContextGroup extends ActionGroup {
         }));
     }
 
+    private void markdownImplementationAction(AnActionEvent e, ArrayList<AnAction> children, String humanLanguage) {
+        String computerLanguage = "markdown";
+        Caret caret = e.getRequiredData(CommonDataKeys.CARET);
+        int selectionStart = caret.getSelectionStart();
+        int selectionEnd = caret.getSelectionEnd();
+        if(selectionStart < selectionEnd) {
+            children.add(TextReplacementAction.create("Execute Directive", "Execute Directive", Icons.icon1, (event, directive)-> {
+                String instruction = "Implement " + humanLanguage + " as " + computerLanguage + " code";
+                if (!AppSettingsState.getInstance().style.isEmpty())
+                    instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
+                Map<String, String> inputAttr = new HashMap<>(Map.of("type", "instruction"));
+                Map<String, String> outputAttr = new HashMap<>(Map.of("type", "document"));
+                if (!AppSettingsState.getInstance().style.isEmpty())
+                    outputAttr.put("style", AppSettingsState.getInstance().style);
+                IndentedText indentedInput = IndentedText.fromString(directive);
+
+                PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
+                PsiElement largestIntersectingComment = getLargestIntersectingComment(psiFile, selectionStart, selectionEnd);
+                PsiMarkdownContext root = PsiMarkdownContext.getContext(psiFile, selectionStart, selectionEnd);
+                String contextWithDirective = root.toString(selectionEnd) + "\n<!-- " + directive + "-->\n";
+
+                String implementation = OpenAIAPI.INSTANCE.xmlFN(
+                        directive,
+                        humanLanguage,
+                        computerLanguage,
+                        instruction,
+                        inputAttr,
+                        outputAttr,
+                        contextWithDirective + "\n",
+                        "#");
+                return new IndentedText(indentedInput.indent, implementation).toString();
+            }));
+        };
+    }
+
     private void autoImplementationAction(AnActionEvent e, ArrayList<AnAction> children, String computerLanguage, String humanLanguage) {
         PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
         Caret caret = e.getRequiredData(CommonDataKeys.CARET);
@@ -143,12 +179,12 @@ public class AICoderContextGroup extends ActionGroup {
                 }
 
                 protected String implement(@NotNull AnActionEvent event, String string) {
-                    ImplementationContext root = ImplementationContext.getContext(psiFile, selectionStart, selectionEnd);
+                    PsiClassContext root = PsiClassContext.getContext(psiFile, selectionStart, selectionEnd);
                     String instruction = "Implement " + humanLanguage + " as " + computerLanguage + " code";
                     if (!AppSettingsState.getInstance().style.isEmpty())
                         instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
-                    Map<String, String> inputAttr = new HashMap<>(Map.of("type", "uncommented"));
-                    Map<String, String> outputAttr = new HashMap<>(Map.of("type", "commented"));
+                    Map<String, String> inputAttr = new HashMap<>(Map.of("type", "instruction"));
+                    Map<String, String> outputAttr = new HashMap<>(Map.of("type", "code"));
                     if (!AppSettingsState.getInstance().style.isEmpty())
                         outputAttr.put("style", AppSettingsState.getInstance().style);
                     IndentedText indentedInput = IndentedText.fromString(string);
