@@ -9,11 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.function.BiFunction;
 
 public abstract class TextReplacementAction extends AnAction {
 
-    //
     public interface ActionTextEditorFunction {
         String apply(AnActionEvent actionEvent, String input) throws IOException;
     }
@@ -43,13 +41,9 @@ public abstract class TextReplacementAction extends AnAction {
                 editor.getDocument().replaceString(primaryCaret.getSelectionStart(), primaryCaret.getSelectionEnd(), newText);
             });
         } catch (IOException ex) {
-            handle(ex);
+            AICoderContextGroup.handle(ex);
         }
 
-    }
-
-    public static void handle(Throwable ex) {
-        JOptionPane.showMessageDialog(null, ex.getMessage(), "Warning", JOptionPane.WARNING_MESSAGE);
     }
 
     protected abstract String edit(@NotNull AnActionEvent e, String previousText) throws IOException;

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PsiClassContext {
@@ -28,44 +27,17 @@ public class PsiClassContext {
         return new PsiClassContext("", false, true).init(psiFile, selectionStart, selectionEnd);
     }
 
-    public static String getLargestCodeBlock(PsiElement element, String blockType) {
-        AtomicReference<String> largest = new AtomicReference<>("");
-        AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
-        visitor.set(new PsiElementVisitor() {
-            @Override
-            public void visitElement(@NotNull PsiElement element) {
-                String simpleName = element.getClass().getSimpleName();
-                if (simpleName.equals(blockType)) {
-                    String text = element.getText();
-                    largest.updateAndGet(s -> s.length() > text.length() ? s : text);
-                    super.visitElement(element);
-                } else {
-                    super.visitElement(element);
-                }
-                element.acceptChildren(visitor.get());
-            }
-        });
-        element.accept(visitor.get());
-        return largest.get();
-    }
-
-    public static HashSet<String> getAllElementNames(PsiElement element) {
-        HashSet<String> set = new HashSet<>();
-        AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
-        visitor.set(new PsiElementVisitor() {
-            @Override
-            public void visitElement(@NotNull PsiElement element) {
-                String simpleName = element.getClass().getSimpleName();
-                set.add(simpleName);
-                element.acceptChildren(visitor.get());
-            }
-        });
-        element.accept(visitor.get());
-        return set;
-    }
-
+    /**
+     * This java code is initializing a PsiClassContext object. It is doing this by creating a PsiElementVisitor and using it to traverse the PsiFile.
+     * It is checking the text range of each element and whether it is prior to, overlapping, or within the selectionStart and selectionEnd parameters.
+     * Depending on the element, it is adding the text of the element to the PsiClassContext object, or recursively visiting its children.
+     *
+     * @param psiFile
+     * @param selectionStart
+     * @param selectionEnd
+     * @return
+     */
     public PsiClassContext init(PsiFile psiFile, int selectionStart, int selectionEnd) {
-        //HashSet<String> elementNames = getAllElementNames(psiFile);
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
             String indent = "";
@@ -75,14 +47,13 @@ public class PsiClassContext {
             public void visitElement(@NotNull PsiElement element) {
                 String text = element.getText();
                 TextRange textRange = element.getTextRange();
-                int textRangeEndOffset = textRange.getEndOffset()+1;
+                int textRangeEndOffset = textRange.getEndOffset() + 1;
                 int textRangeStartOffset = textRange.getStartOffset();
                 boolean isPrior = textRangeEndOffset < selectionStart;
                 boolean isOverlap = (textRangeStartOffset >= selectionStart && textRangeStartOffset <= selectionEnd) || (textRangeEndOffset >= selectionStart && textRangeEndOffset <= selectionEnd) ||
                         (textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart) || (textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd);
                 boolean within = (textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart) && (textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd);
                 String simpleName = element.getClass().getSimpleName();
-                String block = getLargestCodeBlock(element, "PsiCodeBlockImpl");
                 if (simpleName.equals("PsiImportListImpl")) {
                     classBuffer.children.add(new PsiClassContext(text.trim(), isPrior, isOverlap));
                 } else if (simpleName.equals("PsiCommentImpl") || simpleName.equals("PsiDocCommentImpl")) {
@@ -90,10 +61,11 @@ public class PsiClassContext {
                         classBuffer.children.add(new PsiClassContext(indent + text.trim(), isPrior, isOverlap));
                     }
                 } else if (simpleName.equals("PsiMethodImpl") || simpleName.equals("PsiFieldImpl")) {
-                    String docComment = getLargestCodeBlock(element, "PsiDocCommentImpl");
+                    String docComment = PsiUtil.getLargestBlock(element, "PsiDocCommentImpl");
                     String declaration = text;
                     if (declaration.startsWith(docComment))
                         declaration = declaration.substring(docComment.length());
+                    String block = PsiUtil.getLargestBlock(element, "PsiCodeBlockImpl");
                     if (declaration.endsWith(block))
                         declaration = declaration.substring(0, declaration.length() - block.length());
                     classBuffer.children.add(new PsiClassContext(indent + declaration.trim() + (isOverlap ? " {" : ";"), isPrior, isOverlap));
@@ -116,7 +88,7 @@ public class PsiClassContext {
                         classBuffer.children.add(new PsiClassContext("}", isPrior, isOverlap));
                     }
                 } else {
-                    if(verbose) System.out.printf("%s -> %s%n", simpleName, text);
+                    if (verbose) System.out.printf("%s -> %s%n", simpleName, text);
                     element.acceptChildren(visitor.get());
                 }
                 super.visitElement(element);
