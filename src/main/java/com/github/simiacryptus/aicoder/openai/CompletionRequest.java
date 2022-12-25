@@ -1,5 +1,7 @@
 package com.github.simiacryptus.aicoder.openai;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -26,12 +28,12 @@ public class CompletionRequest {
         this.echo = echo;
     }
 
-    public CompletionRequest appendPrompt(String prompt) {
+    public @NotNull CompletionRequest appendPrompt(String prompt) {
         this.prompt = this.prompt + prompt;
         return this;
     }
 
-    public CompletionRequest addStops(String[] stop) {
+    public @NotNull CompletionRequest addStops(String @NotNull [] stop) {
         ArrayList<String> stops = new ArrayList<>();
         Arrays.stream(this.stop).forEach(stops::add);
         Arrays.stream(stop).forEach(stops::add);

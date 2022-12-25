@@ -22,15 +22,15 @@ import java.util.stream.Collectors;
 )
 public class AppSettingsState implements PersistentStateComponent<AppSettingsState> {
 
-    public String apiBase = "https://api.openai.com/v1";
-    public String apiKey = "";
-    public String model = "text-davinci-003";
+    public @NotNull String apiBase = "https://api.openai.com/v1";
+    public @NotNull String apiKey = "";
+    public @NotNull String model = "text-davinci-003";
     public int maxTokens = 1000;
     public double temperature = 0.1;
-    public String style = "";
-    public Map<String, Integer> instructionHistory = new HashMap<>();
+    public @NotNull String style = "";
+    public @NotNull Map<String, Integer> instructionHistory = new HashMap<>();
     public int historyLimit = 10;
-    public String humanLanguage = "English";
+    public @NotNull String humanLanguage = "English";
     public int maxPrompt = 5000;
 
     public AppSettingsState() {
@@ -52,7 +52,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AppSettingsState that = (AppSettingsState) o;
@@ -63,8 +63,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         if (!Objects.equals(apiBase, that.apiBase)) return false;
         if (!Objects.equals(apiKey, that.apiKey)) return false;
         if (!Objects.equals(model, that.model)) return false;
-        if (!Objects.equals(style, that.style)) return false;
-        return true;
+        return Objects.equals(style, that.style);
     }
 
     @Override
@@ -100,7 +99,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         instructionHistory.remove(instruction);
     }
 
-    public Set<String> getInstructionHistory() {
+    public @NotNull Set<String> getInstructionHistory() {
         return instructionHistory.keySet();
     }
 }

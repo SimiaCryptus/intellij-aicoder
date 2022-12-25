@@ -6,7 +6,10 @@ import com.github.simiacryptus.aicoder.text.IndentedText;
 import com.github.simiacryptus.aicoder.text.PsiClassContext;
 import com.github.simiacryptus.aicoder.text.PsiMarkdownContext;
 import com.github.simiacryptus.aicoder.text.PsiUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
@@ -29,7 +32,7 @@ import java.util.Map;
 /**
  * This is the AICoderContextGroup class.
  * It is an ActionGroup that helps us do some cool stuff.
- *
+ * <p>
  * If the CopyPasteManager has DataFlavors available, it adds a TextReplacementAction to the ArrayList.
  * For Java, Scala, Groovy, SVG, and SQL, it adds standard language actions.
  * For Python and Bash, it adds standard language actions with the language set to Python and Bash respectively.
@@ -38,17 +41,17 @@ import java.util.Map;
  */
 public class AICoderMainMenu extends ActionGroup {
 
-    public static void handle(Throwable ex) {
+    public static void handle(@NotNull Throwable ex) {
         JOptionPane.showMessageDialog(null, ex.getMessage(), "Warning", JOptionPane.WARNING_MESSAGE);
     }
 
-    public static boolean hasSelection(AnActionEvent e) {
+    public static boolean hasSelection(@NotNull AnActionEvent e) {
         Caret caret = e.getData(CommonDataKeys.CARET);
         return null != caret && caret.hasSelection();
     }
 
     @Override
-    public AnAction @NotNull [] getChildren(AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@NotNull AnActionEvent e) {
         String humanLanguage = AppSettingsState.getInstance().humanLanguage;
         // Get the VirtualFile associated with the current action event
         VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
@@ -59,19 +62,7 @@ public class AICoderMainMenu extends ActionGroup {
 
         // If the CopyPasteManager has DataFlavors available
         if (CopyPasteManager.getInstance().areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
-            // Add a TextReplacementAction to the ArrayList
-            children.add(TextReplacementAction.create("Paste", "Paste", null, (event, string) -> {
-                // Set the instruction to "Translate this input into " + extension
-                String instruction = "Translate this input into " + extension;
-                // Set the input attributes to "language: autodetect"
-                Map<String, String> inputAttr = Map.of("language", "autodetect");
-                // Set the output attributes to "language: " + extension
-                Map<String, String> outputAttr = Map.of("language", extension);
-                // Get the contents of the clipboard
-                String pasteContents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor).toString();
-                // Return the result of the OpenAIAPI xmlFN function
-                return OpenAI.INSTANCE.xmlFN(pasteContents, "source", "translated", instruction, inputAttr, outputAttr, "");
-            }));
+            pasteAction(children, extension);
         }
 
         // Switch on the file extension
@@ -111,7 +102,23 @@ public class AICoderMainMenu extends ActionGroup {
         return children.toArray(AnAction[]::new);
     }
 
-    private void standardLanguageActions(AnActionEvent e, ArrayList<AnAction> children, String humanLanguage, String bash, String commentLinePrefix) {
+    private void pasteAction(@NotNull ArrayList<AnAction> children, @NotNull String extension) {
+        // Add a TextReplacementAction to the ArrayList
+        children.add(TextReplacementAction.create("Paste", "Paste", null, (event, string) -> {
+            // Set the instruction to "Translate this input into " + extension
+            String instruction = "Translate this input into " + extension;
+            // Set the input attributes to "language: autodetect"
+            Map<String, String> inputAttr = Map.of("language", "autodetect");
+            // Set the output attributes to "language: " + extension
+            Map<String, String> outputAttr = Map.of("language", extension);
+            // Get the contents of the clipboard
+            String pasteContents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor).toString();
+            // Return the result of the OpenAIAPI xmlFN function
+            return OpenAI.INSTANCE.xmlFN(pasteContents, "source", "translated", instruction, inputAttr, outputAttr, "");
+        }));
+    }
+
+    private void standardLanguageActions(@NotNull AnActionEvent e, @NotNull ArrayList<AnAction> children, @NotNull String humanLanguage, String bash, String commentLinePrefix) {
         boolean hasSelection = hasSelection(e);
         if (hasSelection) customTranslation(children, bash);
         if (hasSelection) autoImplementationAction(e, children, bash, humanLanguage);
@@ -119,7 +126,7 @@ public class AICoderMainMenu extends ActionGroup {
         if (hasSelection) standardCodeActions(children, bash, humanLanguage);
     }
 
-    private void docAction(ArrayList<AnAction> children, String computerLanguage, String docType, String... stop) {
+    private void docAction(@NotNull ArrayList<AnAction> children, String computerLanguage, String docType, String... stop) {
         children.add(new AnAction("Add " + docType + " Comments", "Add " + docType + " Comments", null) {
             @Override
             public void actionPerformed(@NotNull final AnActionEvent event) {
@@ -158,7 +165,7 @@ public class AICoderMainMenu extends ActionGroup {
      * @param children         The list of children to add the actions to.
      * @param computerLanguage The language of the computer.
      */
-    private void customTranslation(ArrayList<AnAction> children, String computerLanguage) {
+    private void customTranslation(@NotNull ArrayList<AnAction> children, String computerLanguage) {
         children.add(TextReplacementAction.create("Edit...", "Edit...", null, (event, string) -> {
             String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
             AppSettingsState.getInstance().addInstructionToHistory(instruction);
@@ -177,7 +184,7 @@ public class AICoderMainMenu extends ActionGroup {
         });
     }
 
-    private void quickTranslation(ArrayList<AnAction> children, String computerLanguage, String instruction) {
+    private void quickTranslation(@NotNull ArrayList<AnAction> children, String computerLanguage, String instruction) {
         children.add(TextReplacementAction.create(instruction, instruction, null, (event, string) -> {
             AppSettingsState.getInstance().addInstructionToHistory(instruction);
             Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
@@ -187,7 +194,7 @@ public class AICoderMainMenu extends ActionGroup {
         }));
     }
 
-    private void markdownImplementationAction(AnActionEvent e, ArrayList<AnAction> children, String humanLanguage) {
+    private void markdownImplementationAction(@NotNull AnActionEvent e, @NotNull ArrayList<AnAction> children, String humanLanguage) {
         String computerLanguage = "markdown";
         Caret caret = e.getData(CommonDataKeys.CARET);
         if (null == caret) return;
@@ -220,7 +227,6 @@ public class AICoderMainMenu extends ActionGroup {
                 return new IndentedText(indentedInput.indent, implementation).toString();
             }));
         }
-        ;
     }
 
     /**
@@ -231,7 +237,7 @@ public class AICoderMainMenu extends ActionGroup {
      * @param computerLanguage the computer language to implement
      * @param humanLanguage    the human language to implement
      */
-    private void autoImplementationAction(AnActionEvent e, ArrayList<AnAction> children, String computerLanguage, String humanLanguage) {
+    private void autoImplementationAction(@NotNull AnActionEvent e, @NotNull ArrayList<AnAction> children, String computerLanguage, String humanLanguage) {
         PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null == psiFile) return;
         Caret caret = e.getData(CommonDataKeys.CARET);
@@ -252,7 +258,7 @@ public class AICoderMainMenu extends ActionGroup {
                     });
                 }
 
-                protected String implement(@NotNull AnActionEvent event, String string) {
+                private String implement(@NotNull AnActionEvent event, @NotNull String string) {
                     PsiClassContext root = PsiClassContext.getContext(psiFile, selectionStart, selectionEnd);
                     String instruction = "Implement " + humanLanguage + " as " + computerLanguage + " code";
                     if (!AppSettingsState.getInstance().style.isEmpty())
@@ -271,7 +277,7 @@ public class AICoderMainMenu extends ActionGroup {
                                 instruction,
                                 inputAttr,
                                 outputAttr,
-                                root.toString() + "\n");
+                                root + "\n");
                     } catch (IOException ex) {
                         handle(ex);
                     }
@@ -294,7 +300,7 @@ public class AICoderMainMenu extends ActionGroup {
      * @param humanLanguage
      * @param commentLinePrefix
      */
-    private void describeAction(ArrayList<AnAction> children, String computerLanguage, String humanLanguage, String commentLinePrefix) {
+    private void describeAction(@NotNull ArrayList<AnAction> children, String computerLanguage, String humanLanguage, String commentLinePrefix) {
         children.add(TextReplacementAction.create("Describe Code and Prepend Comment", "Add JavaDoc Comments", null, (event, string) -> {
             String instruction = "Explain this " + computerLanguage + " in " + humanLanguage;
             if (!AppSettingsState.getInstance().style.isEmpty())
@@ -322,7 +328,7 @@ public class AICoderMainMenu extends ActionGroup {
      * @param computerLanguage
      * @param humanLanguage
      */
-    private void standardCodeActions(ArrayList<AnAction> children, String computerLanguage, String humanLanguage) {
+    private void standardCodeActions(@NotNull ArrayList<AnAction> children, String computerLanguage, @NotNull String humanLanguage) {
         // Add a TextReplacementAction to the ArrayList
         children.add(TextReplacementAction.create("Add Code Comments", "Add Code Comments", null, (event, string) -> {
             // Set the instruction to "Rewrite to include detailed code comments at the end of every line"

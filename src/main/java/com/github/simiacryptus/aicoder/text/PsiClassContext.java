@@ -23,7 +23,7 @@ public class PsiClassContext {
     }
 
     @NotNull
-    public static PsiClassContext getContext(PsiFile psiFile, int selectionStart, int selectionEnd) {
+    public static PsiClassContext getContext(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
         return new PsiClassContext("", false, true).init(psiFile, selectionStart, selectionEnd);
     }
 
@@ -37,11 +37,11 @@ public class PsiClassContext {
      * @param selectionEnd
      * @return
      */
-    public PsiClassContext init(PsiFile psiFile, int selectionStart, int selectionEnd) {
+    public @NotNull PsiClassContext init(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
             String indent = "";
-            PsiClassContext classBuffer = PsiClassContext.this;
+            @NotNull PsiClassContext classBuffer = PsiClassContext.this;
 
             @Override
             public void visitElement(@NotNull PsiElement element) {
@@ -99,7 +99,7 @@ public class PsiClassContext {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         final ArrayList<String> sb = new ArrayList<>();
         sb.add(text);
         children.stream().filter(x -> x.isPrior).map(PsiClassContext::toString).forEach(sb::add);

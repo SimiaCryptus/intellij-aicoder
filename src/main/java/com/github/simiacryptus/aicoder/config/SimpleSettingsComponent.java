@@ -1,18 +1,19 @@
 package com.github.simiacryptus.aicoder.config;
 
-import com.github.simiacryptus.aicoder.config.Name;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
 
 public class SimpleSettingsComponent<T> {
     protected final boolean verbose = false;
-    private volatile JPanel mainPanel = null;
+    private volatile @Nullable JPanel mainPanel = null;
 
     /**
      * Builds the main panel for the form.
@@ -43,7 +44,7 @@ public class SimpleSettingsComponent<T> {
         return formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
     }
 
-    public void getProperties(T settings) {
+    public void getProperties(@NotNull T settings) {
         Field[] thoseFields = settings.getClass().getDeclaredFields();
         for (Field thatField : thoseFields) {
             thatField.setAccessible(true);
@@ -91,7 +92,7 @@ public class SimpleSettingsComponent<T> {
         }
     }
 
-    public void setProperties(T settings) {
+    public void setProperties(@NotNull T settings) {
         Field[] thoseFields = settings.getClass().getDeclaredFields();
         for (Field thatField : thoseFields) {
             thatField.setAccessible(true);

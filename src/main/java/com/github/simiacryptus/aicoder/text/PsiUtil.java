@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class PsiUtil {
 
-    public static PsiElement getLargestIntersectingComment(PsiElement element, int selectionStart, int selectionEnd) {
+    public static PsiElement getLargestIntersectingComment(@NotNull PsiElement element, int selectionStart, int selectionEnd) {
         return getLargestIntersecting(element, selectionStart, selectionEnd, "PsiCommentImpl", "PsiDocCommentImpl");
     }
 
@@ -24,7 +24,7 @@ public class PsiUtil {
      * @param types          The types of elements to search for.
      * @return The largest element that intersects with the given selection range.
      */
-    public static PsiElement getLargestIntersecting(PsiElement element, int selectionStart, int selectionEnd, String... types) {
+    public static PsiElement getLargestIntersecting(@NotNull PsiElement element, int selectionStart, int selectionEnd, String... types) {
         final AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
@@ -55,7 +55,7 @@ public class PsiUtil {
      * @param selectionEnd   The end of the selection range.
      * @return The smallest intersecting entity of the given PsiElement.
      */
-    public static PsiElement getSmallestIntersectingEntity(PsiElement element, int selectionStart, int selectionEnd) {
+    public static PsiElement getSmallestIntersectingEntity(@NotNull PsiElement element, int selectionStart, int selectionEnd) {
         return getSmallestIntersectingEntity(element, selectionStart, selectionEnd, "PsiMethodImpl", "PsiFieldImpl", "PsiClassImpl");
     }
 
@@ -68,7 +68,7 @@ public class PsiUtil {
      * @param types          The types of the elements to be retrieved.
      * @return The smallest intersecting entity from the given PsiElement.
      */
-    public static PsiElement getSmallestIntersectingEntity(PsiElement element, int selectionStart, int selectionEnd, String... types) {
+    public static PsiElement getSmallestIntersectingEntity(@NotNull PsiElement element, int selectionStart, int selectionEnd, String... types) {
         final AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
@@ -83,7 +83,7 @@ public class PsiUtil {
                         largest.updateAndGet(s -> (s == null ? Integer.MAX_VALUE : s.getText().length()) < element.getText().length() ? s : element);
                     }
                 }
-                System.out.println(String.format("%s : %s", simpleName, element.getText()));
+                System.out.printf("%s : %s%n", simpleName, element.getText());
                 super.visitElement(element);
                 element.acceptChildren(visitor.get());
             }
@@ -99,7 +99,7 @@ public class PsiUtil {
      * @param blockType The type of the block to be retrieved.
      * @return The largest block of the given type from the given PsiElement.
      */
-    public static String getLargestBlock(PsiElement element, String blockType) {
+    public static String getLargestBlock(@NotNull PsiElement element, String blockType) {
         AtomicReference<String> largest = new AtomicReference<>("");
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
@@ -128,7 +128,7 @@ public class PsiUtil {
      * @return A {@link HashSet} of {@link String}s containing the simple names of all the {@link PsiElement}s contained
      * within the given {@link PsiElement}.
      */
-    public static HashSet<String> getAllElementNames(PsiElement element) {
+    public static @NotNull HashSet<String> getAllElementNames(@NotNull PsiElement element) {
         HashSet<String> set = new HashSet<>();
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {

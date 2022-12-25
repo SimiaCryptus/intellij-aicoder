@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.config;
 
 import com.intellij.ui.components.JBTextField;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -24,7 +25,7 @@ public class AppSettingsComponent extends SimpleSettingsComponent<AppSettingsSta
     @Name("Max Prompt (Characters)")
     public final JBTextField maxPrompt = new JBTextField();
 
-    public JComponent getPreferredFocusedComponent() {
+    public @NotNull JComponent getPreferredFocusedComponent() {
         return apiKey;
     }
 

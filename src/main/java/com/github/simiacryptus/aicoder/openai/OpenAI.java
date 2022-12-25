@@ -1,9 +1,9 @@
 package com.github.simiacryptus.aicoder.openai;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -16,6 +16,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -26,6 +27,27 @@ import java.util.stream.Collectors;
 public class OpenAI {
 
     public static final OpenAI INSTANCE = new OpenAI();
+
+    public static @Nullable String getNewText(@NotNull CompletionRequest request, @NotNull TextCompletion completion) {
+        // Get the first choice from the completion
+        Optional<String> completionOption = Optional.ofNullable(completion.choices).flatMap(choices -> Arrays.stream(choices).findFirst()).map(choice -> choice.text.trim());
+        // If the completion is empty, return the original text
+        if (completionOption.isEmpty()) {
+            return null;
+        } else {
+            // Otherwise, strip the prefix from the completion and return it
+            return stripPrefix(completionOption.get(), request.prompt);
+        }
+    }
+
+    public static @NotNull String stripPrefix(@NotNull String text, @NotNull String prefix) {
+        boolean startsWith = text.startsWith(prefix);
+        if (startsWith) {
+            return text.substring(prefix.length());
+        } else {
+            return text;
+        }
+    }
 
     protected AppSettingsState getSettingsState() {
         return AppSettingsState.getInstance();
@@ -39,7 +61,7 @@ public class OpenAI {
         return post(url, getMapper().writeValueAsString(map));
     }
 
-    protected String post(String url, String body) throws IOException, InterruptedException {
+    protected String post(String url, @NotNull String body) throws IOException, InterruptedException {
         return post(url, body, 3);
     }
 
@@ -52,8 +74,9 @@ public class OpenAI {
      * @throws IOException          If an I/O error occurs.
      * @throws InterruptedException If the thread is interrupted.
      */
-    public TextCompletion complete(CompletionRequest completionRequest, String model) throws IOException, InterruptedException {
-        if(completionRequest.prompt.length() > AppSettingsState.getInstance().maxPrompt) throw new IOException("Prompt too long:" + completionRequest.prompt.length() + " chars");
+    public TextCompletion complete(@NotNull CompletionRequest completionRequest, String model) throws IOException, InterruptedException {
+        if (completionRequest.prompt.length() > AppSettingsState.getInstance().maxPrompt)
+            throw new IOException("Prompt too long:" + completionRequest.prompt.length() + " chars");
         moderate(completionRequest.prompt);
         String result = post(getSettingsState().apiBase + "/engines/" + model + "/completions", getMapper().writeValueAsString(completionRequest));
         JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
@@ -64,7 +87,7 @@ public class OpenAI {
         return getMapper().readValue(result, TextCompletion.class);
     }
 
-    public void moderate(String text) throws IOException, InterruptedException {
+    public void moderate(@NotNull String text) throws IOException, InterruptedException {
         String body = getMapper().writeValueAsString(Map.of("input", text));
         String result = post(getSettingsState().apiBase + "/moderations", body);
         JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
@@ -73,12 +96,11 @@ public class OpenAI {
             throw new IOException(errorObject.get("message").getAsString());
         }
         JsonObject moderationResult = jsonObject.getAsJsonArray("results").get(0).getAsJsonObject();
-        if(moderationResult.get("flagged").getAsBoolean()) {
+        if (moderationResult.get("flagged").getAsBoolean()) {
             JsonObject categoriesObj = moderationResult.get("categories").getAsJsonObject();
-            throw new IOException("Moderation flagged this request due to " + categoriesObj.keySet().stream().filter(c->categoriesObj.get(c).getAsBoolean()).reduce((a, b)->a+", "+b).orElse("???"));
+            throw new IOException("Moderation flagged this request due to " + categoriesObj.keySet().stream().filter(c -> categoriesObj.get(c).getAsBoolean()).reduce((a, b) -> a + ", " + b).orElse("???"));
         }
     }
-
 
     /**
      * Posts a request to the given URL with the given JSON body and retries if an IOException is thrown.
@@ -90,7 +112,7 @@ public class OpenAI {
      * @throws IOException          If an IOException is thrown and the number of retries is exceeded.
      * @throws InterruptedException If the thread is interrupted while sleeping.
      */
-    protected String post(String url, String json, int retries) throws IOException, InterruptedException {
+    protected String post(String url, @NotNull String json, int retries) throws IOException, InterruptedException {
         try {
             HttpClientBuilder client = HttpClientBuilder.create();
             HttpPost request = new HttpPost(url);
@@ -111,7 +133,7 @@ public class OpenAI {
         }
     }
 
-    protected ObjectMapper getMapper() {
+    protected @NotNull ObjectMapper getMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper
                 .enable(SerializationFeature.INDENT_OUTPUT)
@@ -122,7 +144,7 @@ public class OpenAI {
         return mapper;
     }
 
-    protected void authorize(HttpRequestBase request) throws IOException {
+    protected void authorize(@NotNull HttpRequestBase request) throws IOException {
         request.addHeader("Authorization", "Bearer " + getSettingsState().apiKey);
     }
 
@@ -144,20 +166,19 @@ public class OpenAI {
         return EntityUtils.toString(entity);
     }
 
-
     /**
      * Creates a function that takes a String as input and returns a String as output.
      * The output is the result of a completion request using the given input and output tags, instruction, and attributes.
      *
-     * @param inputTag    the tag to wrap the input text in
-     * @param outputTag   the tag to wrap the output text in
-     * @param instruction the instruction to include in the completion request
-     * @param inputAttr   a map of attributes to include in the input tag
-     * @param outputAttr  a map of attributes to include in the output tag
+     * @param inputTag     the tag to wrap the input text in
+     * @param outputTag    the tag to wrap the output text in
+     * @param instruction  the instruction to include in the completion request
+     * @param inputAttr    a map of attributes to include in the input tag
+     * @param outputAttr   a map of attributes to include in the output tag
      * @param outputPrefix
      * @return a Function that takes a String as input and returns a String as output
      */
-    public String xmlFN(String originalText, String inputTag, String outputTag, String instruction, Map<String, String> inputAttr, Map<String, String> outputAttr, String outputPrefix, String... stops) throws IOException {
+    public @Nullable String xmlFN(String originalText, String inputTag, String outputTag, String instruction, @NotNull Map<String, String> inputAttr, @NotNull Map<String, String> outputAttr, String outputPrefix, String... stops) throws IOException {
         CompletionRequest request = xmlFnRequest(inputTag, outputTag, instruction, inputAttr, outputAttr, originalText).addStops(stops).appendPrompt(outputPrefix);
         TextCompletion completion = null;
         try {
@@ -168,20 +189,8 @@ public class OpenAI {
         return getNewText(request, completion);
     }
 
-    public static String getNewText(CompletionRequest request, TextCompletion completion) {
-        // Get the first choice from the completion
-        Optional<String> completionOption = Optional.ofNullable(completion.choices).flatMap(choices -> Arrays.stream(choices).findFirst()).map(choice -> choice.text.trim());
-        // If the completion is empty, return the original text
-        if (completionOption.isEmpty()) {
-            return null;
-        } else {
-            // Otherwise, strip the prefix from the completion and return it
-            return stripPrefix(completionOption.get(), request.prompt);
-        }
-    }
-
     @NotNull
-    public CompletionRequest xmlFnRequest(String inputTag, String outputTag, String instruction, Map<String, String> inputAttr, Map<String, String> outputAttr, String originalText) {
+    public CompletionRequest xmlFnRequest(String inputTag, String outputTag, String instruction, @NotNull Map<String, String> inputAttr, @NotNull Map<String, String> outputAttr, String originalText) {
         // Create a string of input attributes
         String inputAttributes = inputAttr.isEmpty() ? "" : (" " + inputAttr.entrySet().stream().map(t -> String.format("%s=\"%s\"", t.getKey(), t.getValue())).collect(Collectors.joining()));
         // Create a string of output attributes
@@ -199,15 +208,6 @@ public class OpenAI {
                 // Set the completion to true
         );
         return request;
-    }
-
-    public static String stripPrefix(String text, String prefix) {
-        boolean startsWith = text.startsWith(prefix);
-        if (startsWith) {
-            return text.substring(prefix.length());
-        } else {
-            return text;
-        }
     }
 
 }
