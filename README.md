@@ -43,6 +43,24 @@ Ye need yer own [OpenAPI access token](https://beta.openai.com/) fer this plugin
   Download the [latest release](https://github.com/SimiaCryptus/intellij-aicoder/releases/latest) and install it manually using
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
+## Usage
+
+After installation, edit the settings and add your API key. If desired, customize your style!
+![aicoder_settings.png](docs/aicoder_settings.png)
+
+Use the context menu to access features. In this example, we use the "Insert Implementation" tool. _Note: After inserting, the code needs reformatting and some manual cleanup (e.g. correcting additional ending braces)_
+![aicoder_implement.png](docs/aicoder_implement.png)
+
+After reviewing the code, we can easily add documentation.
+![aicoder_adddocs.png](docs/aicoder_adddocs.png)
+
+![aicoder_final.png](docs/aicoder_final.png)
+
+We can also iterate and use the AI to refactor the code using custom edits:
+![aicoder_edit.png](docs/aicoder_edit.png)
+
+![aicoder_editresult.png](docs/aicoder_editresult.png)
+
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].
 
