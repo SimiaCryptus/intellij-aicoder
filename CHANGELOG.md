@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.1.2]
+### Added
+- Improved UI polish
+- Code cleanups
+
 ## [0.1.0]
 ### Added
 - Added filtering using OpenAI moderation API

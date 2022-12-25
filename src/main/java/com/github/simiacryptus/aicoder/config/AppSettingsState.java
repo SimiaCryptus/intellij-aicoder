@@ -28,7 +28,8 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public int maxTokens = 1000;
     public double temperature = 0.1;
     public @NotNull String style = "";
-    public @NotNull Map<String, Integer> instructionHistory = new HashMap<>();
+    public @NotNull Map<String, Integer> mostUsedHistory = new HashMap<>();
+    public @NotNull List<String> mostRecentHistory = new ArrayList<>();
     public int historyLimit = 10;
     public @NotNull String humanLanguage = "English";
     public int maxPrompt = 5000;
@@ -72,8 +73,14 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     }
 
     public void addInstructionToHistory(String instruction) {
-        synchronized (instructionHistory) {
-            instructionHistory.put(instruction, instructionHistory.getOrDefault(instruction, 0) + 1);
+        synchronized (mostRecentHistory) {
+            mostRecentHistory.add(instruction);
+            while(mostRecentHistory.size() > historyLimit) {
+                mostRecentHistory.remove(0);
+            }
+        }
+        synchronized (mostUsedHistory) {
+            mostUsedHistory.put(instruction, mostUsedHistory.getOrDefault(instruction, 0) + 1);
         }
 
         // If the instruction history is bigger than the history limit,
@@ -85,21 +92,18 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         // And remove all the ones we want to retain,
         // Then we'll remove all the ones we don't want to keep,
         // And that's how we'll make sure the instruction history is neat!
-        if (instructionHistory.size() > historyLimit) {
-            List<String> retain = instructionHistory.entrySet().stream()
+        if (mostUsedHistory.size() > historyLimit) {
+            List<String> retain = mostUsedHistory.entrySet().stream()
                     .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                     .limit(historyLimit).map(Map.Entry::getKey).collect(Collectors.toList());
-            HashSet<String> toRemove = new HashSet<>(instructionHistory.keySet());
+            HashSet<String> toRemove = new HashSet<>(mostUsedHistory.keySet());
             toRemove.removeAll(retain);
-            toRemove.forEach(instructionHistory::remove);
+            toRemove.removeAll(mostRecentHistory);
+            toRemove.forEach(mostUsedHistory::remove);
         }
     }
 
-    public void removeInstructionFromHistory(String instruction) {
-        instructionHistory.remove(instruction);
-    }
-
-    public @NotNull Set<String> getInstructionHistory() {
-        return instructionHistory.keySet();
+    public @NotNull Set<String> getEditHistory() {
+        return mostUsedHistory.keySet();
     }
 }

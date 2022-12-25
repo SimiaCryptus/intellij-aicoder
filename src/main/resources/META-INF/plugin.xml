@@ -22,9 +22,10 @@
                class="com.github.simiacryptus.aicoder.AICoderMainMenu"
                popup="true"
                text="AI Coder"
+               icon="AllIcons.Actions.Lightning"
                description="AI Coding Assistant Tools"
         >
-            <add-to-group group-id="EditorPopupMenu" />
+            <add-to-group group-id="EditorPopupMenu" anchor="first" />
         </group>
     </actions>
 

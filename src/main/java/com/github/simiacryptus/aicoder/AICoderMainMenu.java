@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -226,7 +227,7 @@ public class AICoderMainMenu extends ActionGroup {
             @Override
             public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
                 ArrayList<AnAction> children = new ArrayList<>();
-                AppSettingsState.getInstance().getInstructionHistory().forEach(instruction -> quickTranslation(children, computerLanguage, instruction));
+                AppSettingsState.getInstance().getEditHistory().forEach(instruction -> quickTranslation(children, computerLanguage, instruction));
                 return children.toArray(AnAction[]::new);
             }
         });
