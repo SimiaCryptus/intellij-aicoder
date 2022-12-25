@@ -250,7 +250,6 @@ public class AICoderMainMenu extends ActionGroup {
                     WriteCommandAction.runWriteCommandAction(e.getProject(), () -> {
                         editor.getDocument().insertString(largestIntersectingComment.getTextRange().getEndOffset(), "\n" + newText);
                     });
-
                 }
 
                 protected String implement(@NotNull AnActionEvent event, String string) {
