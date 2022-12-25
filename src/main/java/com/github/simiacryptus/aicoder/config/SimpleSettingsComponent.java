@@ -14,6 +14,11 @@ public class SimpleSettingsComponent<T> {
     protected final boolean verbose = false;
     private volatile JPanel mainPanel = null;
 
+    /**
+     * Builds the main panel for the form.
+     *
+     * @return the main panel for the form
+     */
     private JPanel buildMainPanel() {
         FormBuilder formBuilder = FormBuilder.createFormBuilder();
         for (Field field : this.getClass().getDeclaredFields()) {

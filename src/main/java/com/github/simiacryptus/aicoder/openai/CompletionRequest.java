@@ -3,6 +3,9 @@ package com.github.simiacryptus.aicoder.openai;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * The CompletionRequest class is used to create a request for completion of a given prompt.
+ */
 public class CompletionRequest {
     public String prompt;
     public double temperature;

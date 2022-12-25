@@ -21,12 +21,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-public class OpenAIAPI {
+public class OpenAI {
 
-    public static final OpenAIAPI INSTANCE = new OpenAIAPI();
+    public static final OpenAI INSTANCE = new OpenAI();
 
     protected AppSettingsState getSettingsState() {
         return AppSettingsState.getInstance();

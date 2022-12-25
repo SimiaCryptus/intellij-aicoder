@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -43,7 +44,7 @@ public class PsiUtil {
         return largest.get();
     }
 
-    public static PsiElement getSmallestIntersectingMethod(PsiElement element, int selectionStart, int selectionEnd) {
+    public static PsiElement getSmallestIntersectingEntity(PsiElement element, int selectionStart, int selectionEnd) {
         final AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
@@ -53,7 +54,7 @@ public class PsiUtil {
                 TextRange textRange = element.getTextRange();
                 boolean within = (textRange.getStartOffset() <= selectionStart && textRange.getEndOffset() + 1 >= selectionStart && textRange.getStartOffset() <= selectionEnd && textRange.getEndOffset() + 1 >= selectionEnd);
                 String simpleName = element.getClass().getSimpleName();
-                if (simpleName.equals("PsiMethodImpl") || simpleName.equals("PsiFieldImpl")) {
+                if (Arrays.asList("PsiMethodImpl", "PsiFieldImpl", "PsiClassImpl").contains(simpleName)) {
                     if (within) {
                         largest.updateAndGet(s -> (s == null ? Integer.MAX_VALUE : s.getText().length()) < element.getText().length() ? s : element);
                     }

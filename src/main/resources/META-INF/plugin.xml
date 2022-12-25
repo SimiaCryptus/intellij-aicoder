@@ -19,7 +19,7 @@
 
     <actions>
         <group id="org.intellij.sdk.action.DynamicActionGroup"
-               class="com.github.simiacryptus.aicoder.AICoderContextGroup"
+               class="com.github.simiacryptus.aicoder.AICoderMainMenu"
                popup="true"
                text="AICoder"
                description="AICoder Tools"

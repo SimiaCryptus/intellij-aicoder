@@ -41,7 +41,7 @@ public abstract class TextReplacementAction extends AnAction {
                 editor.getDocument().replaceString(primaryCaret.getSelectionStart(), primaryCaret.getSelectionEnd(), newText);
             });
         } catch (IOException ex) {
-            AICoderContextGroup.handle(ex);
+            AICoderMainMenu.handle(ex);
         }
 
     }

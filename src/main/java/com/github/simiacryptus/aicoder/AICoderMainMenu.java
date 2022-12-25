@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
-import com.github.simiacryptus.aicoder.openai.OpenAIAPI;
+import com.github.simiacryptus.aicoder.openai.OpenAI;
 import com.github.simiacryptus.aicoder.text.IndentedText;
 import com.github.simiacryptus.aicoder.text.PsiClassContext;
 import com.github.simiacryptus.aicoder.text.PsiMarkdownContext;
@@ -29,15 +29,14 @@ import java.util.Map;
 /**
  * This is the AICoderContextGroup class.
  * It is an ActionGroup that helps us do some cool stuff.
- * <p>
+ *
  * If the CopyPasteManager has DataFlavors available, it adds a TextReplacementAction to the ArrayList.
- * <p>
  * For Java, Scala, Groovy, SVG, and SQL, it adds standard language actions.
  * For Python and Bash, it adds standard language actions with the language set to Python and Bash respectively.
  * For Gradle, it adds standard language actions with the language set to Groovy.
  * For Markdown, it adds a Markdown implementation action and standard language actions with the language set to Markdown.
  */
-public class AICoderContextGroup extends ActionGroup {
+public class AICoderMainMenu extends ActionGroup {
 
     public static void handle(Throwable ex) {
         JOptionPane.showMessageDialog(null, ex.getMessage(), "Warning", JOptionPane.WARNING_MESSAGE);
@@ -71,7 +70,7 @@ public class AICoderContextGroup extends ActionGroup {
                 // Get the contents of the clipboard
                 String pasteContents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor).toString();
                 // Return the result of the OpenAIAPI xmlFN function
-                return OpenAIAPI.INSTANCE.xmlFN(pasteContents, "source", "translated", instruction, inputAttr, outputAttr, "");
+                return OpenAI.INSTANCE.xmlFN(pasteContents, "source", "translated", instruction, inputAttr, outputAttr, "");
             }));
         }
 
@@ -127,7 +126,7 @@ public class AICoderContextGroup extends ActionGroup {
                 try {
                     PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
                     Caret caret = event.getData(CommonDataKeys.CARET);
-                    PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersectingMethod(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
+                    PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersectingEntity(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
                     if (null == smallestIntersectingMethod) return;
                     String code = smallestIntersectingMethod.getText();
                     String instruction = "Rewrite to include detailed " + docType;
@@ -138,7 +137,7 @@ public class AICoderContextGroup extends ActionGroup {
                     if (!AppSettingsState.getInstance().style.isEmpty())
                         outputAttr.put("style", AppSettingsState.getInstance().style);
                     IndentedText indentedInput = IndentedText.fromString(code);
-                    String replace = OpenAIAPI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "", stop) + "*/\n";
+                    String replace = OpenAI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "", stop) + "*/\n";
                     final String newText = new IndentedText(indentedInput.indent, replace + indentedInput.textBlock).toString();
                     final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
                     WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
@@ -150,7 +149,6 @@ public class AICoderContextGroup extends ActionGroup {
             }
         });
     }
-
 
     /**
      * This method adds two actions to the list of children.
@@ -167,7 +165,7 @@ public class AICoderContextGroup extends ActionGroup {
             Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
             Map<String, String> outputAttr = new HashMap<>(Map.of("type", "after"));
             IndentedText indentedInput = IndentedText.fromString(string);
-            return new IndentedText(indentedInput.indent, OpenAIAPI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "")).toString();
+            return new IndentedText(indentedInput.indent, OpenAI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "")).toString();
         }));
         children.add(new ActionGroup("Recent Edits", true) {
             @Override
@@ -185,7 +183,7 @@ public class AICoderContextGroup extends ActionGroup {
             Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
             Map<String, String> outputAttr = new HashMap<>(Map.of("type", "after"));
             IndentedText indentedInput = IndentedText.fromString(string);
-            return new IndentedText(indentedInput.indent, OpenAIAPI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "")).toString();
+            return new IndentedText(indentedInput.indent, OpenAI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "")).toString();
         }));
     }
 
@@ -210,7 +208,7 @@ public class AICoderContextGroup extends ActionGroup {
                 PsiMarkdownContext root = PsiMarkdownContext.getContext(psiFile, selectionStart, selectionEnd);
                 String contextWithDirective = root.toString(selectionEnd) + "\n<!-- " + directive + "-->\n";
 
-                String implementation = OpenAIAPI.INSTANCE.xmlFN(
+                String implementation = OpenAI.INSTANCE.xmlFN(
                         directive,
                         humanLanguage,
                         computerLanguage,
@@ -267,7 +265,7 @@ public class AICoderContextGroup extends ActionGroup {
                     IndentedText indentedInput = IndentedText.fromString(string);
                     String implementation = null;
                     try {
-                        implementation = OpenAIAPI.INSTANCE.xmlFN(
+                        implementation = OpenAI.INSTANCE.xmlFN(
                                 string.split(" ").length > 4 ? string : largestIntersectingComment.getText(),
                                 humanLanguage,
                                 computerLanguage,
@@ -284,7 +282,6 @@ public class AICoderContextGroup extends ActionGroup {
             });
         }
     }
-
 
     /**
      * This code is creating a TextReplacementAction object that will be added to an ArrayList of AnAction objects.
@@ -311,11 +308,10 @@ public class AICoderContextGroup extends ActionGroup {
                 outputAttr.put("style", AppSettingsState.getInstance().style);
             // Return the result of the OpenAIAPI xmlFN function
             IndentedText indentedInput = IndentedText.fromString(string);
-            String replace = OpenAIAPI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, humanLanguage, instruction, inputAttr, outputAttr, "").replace("\n", "\n" + commentLinePrefix) + "\n";
+            String replace = OpenAI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, humanLanguage, instruction, inputAttr, outputAttr, "").replace("\n", "\n" + commentLinePrefix) + "\n";
             return new IndentedText(indentedInput.indent, replace + indentedInput.textBlock).toString();
         }));
     }
-
 
     /**
      * This code is creating three TextReplacementActions and adding them to an ArrayList.
@@ -341,7 +337,7 @@ public class AICoderContextGroup extends ActionGroup {
             if (!AppSettingsState.getInstance().style.isEmpty())
                 outputAttr.put("style", AppSettingsState.getInstance().style);
             // Return the result of the OpenAIAPI xmlFN function
-            return OpenAIAPI.INSTANCE.xmlFN(string, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "");
+            return OpenAI.INSTANCE.xmlFN(string, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "");
         }));
         // Add a TextReplacementAction to the ArrayList
         children.add(TextReplacementAction.create("From " + humanLanguage, String.format("Implement %s -> %s", humanLanguage, computerLanguage), null, (event, string) -> {
@@ -352,7 +348,7 @@ public class AICoderContextGroup extends ActionGroup {
             // Set the output attributes to "type: output"
             Map<String, String> outputAttr = Map.of("type", "output");
             // Return the result of the OpenAIAPI xmlFN function
-            return OpenAIAPI.INSTANCE.xmlFN(string, humanLanguage.toLowerCase(), computerLanguage, instruction, inputAttr, outputAttr, "");
+            return OpenAI.INSTANCE.xmlFN(string, humanLanguage.toLowerCase(), computerLanguage, instruction, inputAttr, outputAttr, "");
         }));
         // Add a TextReplacementAction to the ArrayList
         children.add(TextReplacementAction.create("To " + humanLanguage, String.format("Describe %s -> %s", humanLanguage, computerLanguage), null, (event, string) -> {
@@ -367,7 +363,7 @@ public class AICoderContextGroup extends ActionGroup {
             if (!AppSettingsState.getInstance().style.isEmpty())
                 outputAttr.put("style", AppSettingsState.getInstance().style);
             // Return the result of the OpenAIAPI xmlFN function
-            return OpenAIAPI.INSTANCE.xmlFN(string, computerLanguage, humanLanguage.toLowerCase(), instruction, inputAttr, outputAttr, "");
+            return OpenAI.INSTANCE.xmlFN(string, computerLanguage, humanLanguage.toLowerCase(), instruction, inputAttr, outputAttr, "");
         }));
     }
 

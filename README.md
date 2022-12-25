@@ -1,8 +1,8 @@
 # intellij-aicoder
 
 ![Build](https://github.com/SimiaCryptus/intellij-aicoder/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 
 ## Template ToDo list
 - [x] Create a new [IntelliJ Platform Plugin Template][template] project.
@@ -16,12 +16,17 @@
 - [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
 
 <!-- Plugin description -->
-This plugin adds some editor context menu options that provide text processing functions powered by OpenAI's GPT models.
+Ahoy, mateys! This plugin be a powerful tool fer yer coding needs. It be adding some editor context menu options that be providing text processing functions powered by OpenAI's GPT models.
 
-It enables automated coding in Java, Scala, Python, Bash, and more.
+It be enabling automated coding in Java, Scala, Python, Bash, SQL, and more!
 
-Please note that you need your own [OpenAPI access token](https://beta.openai.com/). This is intended as a development tool for developers who already have an OpenAI access token; it is not itself to be considered an end-product. This plugin is provided free of charge and without any guarantee.
-<!-- Plugin description end -->
+Features:
+- Automatic code commenting, JavaDoc (et al) creation
+- Code generation based on plain-text requirements, with context awareness
+- Directive-based code editing
+- Custom styles (e.g. write like a pirate!)
+
+Ye need yer own [OpenAPI access token](https://beta.openai.com/) fer this plugin. This be intended as a development tool fer developers who already have an OpenAI access token; it be not itself to be considered an end-product. This plugin be provided free of charge and without any guarantee. So what be ye waitin' fer? Get yer hands on this plugin now!<!-- Plugin description end -->
 
 ## Installation
 
