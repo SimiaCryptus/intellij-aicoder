@@ -29,16 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-/**
- * This is the AICoderContextGroup class.
- * It is an ActionGroup that helps us do some cool stuff.
- * <p>
- * If the CopyPasteManager has DataFlavors available, it adds a TextReplacementAction to the ArrayList.
- * For Java, Scala, Groovy, SVG, and SQL, it adds standard language actions.
- * For Python and Bash, it adds standard language actions with the language set to Python and Bash respectively.
- * For Gradle, it adds standard language actions with the language set to Groovy.
- * For Markdown, it adds a Markdown implementation action and standard language actions with the language set to Markdown.
- */
 public class AICoderMainMenu extends ActionGroup {
 
     public static void handle(@NotNull Throwable ex) {
@@ -50,58 +40,116 @@ public class AICoderMainMenu extends ActionGroup {
         return null != caret && caret.hasSelection();
     }
 
+    /**
+     * This method is used to get the children of the action.
+     *
+     * This Java code is an override of the getChildren() method. It is used to create an array of AnAction objects that will be used to create a context menu for a file.
+     * The code first gets the extension of the file and sets the computer language and comment line prefix based on the extension.
+     * It then checks if the copy/paste manager has data flavors available and calls the pasteAction() method if it does.
+     * It then checks the extension and calls the docAction() method if it is either Java or Scala.
+     * It then checks if there is a selection and calls the customTranslation(), autoImplementationAction(), describeAction(), and standardCodeActions() methods if there is.
+     * Finally, it returns an array of AnAction objects.
+     *
+     * @param e AnActionEvent object that contains the necessary data to perform the action.
+     * @return An array of AnAction objects that are the children of the action.
+     */
     @Override
     public AnAction @NotNull [] getChildren(@NotNull AnActionEvent e) {
         String humanLanguage = AppSettingsState.getInstance().humanLanguage;
-        // Get the VirtualFile associated with the current action event
         VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
-        // Create an ArrayList to store the generated AnAction objects
-        ArrayList<AnAction> children = new ArrayList<>();
-        // Get the file extension of the VirtualFile
         String extension = file.getExtension().toLowerCase();
 
-        // If the CopyPasteManager has DataFlavors available
+        final String computerLanguage;
+        switch (extension) {
+            case "py":
+                computerLanguage = "python";
+                break;
+            case "sh":
+                computerLanguage = "bash";
+                break;
+            case "gradle":
+                computerLanguage = "groovy";
+                break;
+            case "md":
+                computerLanguage = "markdown";
+                break;
+            default:
+                computerLanguage = extension;
+                break;
+        }
+
+        String commentLinePrefix;
+        switch (extension) {
+            case "java":
+            case "scala":
+            case "groovy":
+            case "svg":
+            case "gradle":
+                commentLinePrefix = "// ";
+                break;
+            case "sql":
+            case "py":
+            case "sh":
+                commentLinePrefix = "# ";
+                break;
+            case "md":
+                commentLinePrefix = "<!-- ";
+                break;
+            // Default case
+            default:
+                commentLinePrefix = "?";
+                break;
+        }
+
+        ArrayList<AnAction> children = new ArrayList<>();
         if (CopyPasteManager.getInstance().areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
             pasteAction(children, extension);
         }
-
-        // Switch on the file extension
         switch (extension) {
             case "java":
                 docAction(children, extension, "JavaDoc", "*/");
-                standardLanguageActions(e, children, humanLanguage, extension, "// ");
                 break;
             case "scala":
                 docAction(children, extension, "ScalaDoc", "*/");
+                break;
+        }
+        switch (extension) {
+            case "java":
+            case "scala":
             case "groovy":
             case "svg":
-                standardLanguageActions(e, children, humanLanguage, extension, "// ");
-                break;
-            case "sql":
-                standardLanguageActions(e, children, humanLanguage, extension, "# ");
-                break;
-            case "py":
-                standardLanguageActions(e, children, humanLanguage, "python", "# ");
-                break;
-            case "sh":
-                standardLanguageActions(e, children, humanLanguage, "bash", "# ");
-                break;
             case "gradle":
-                standardLanguageActions(e, children, humanLanguage, "groovy", "// ");
+            case "sql":
+            case "py":
+            case "sh":
+                if (hasSelection(e)) {
+                    customTranslation(children, extension);
+                    autoImplementationAction(e, children, extension, humanLanguage);
+                    describeAction(children, extension, humanLanguage, commentLinePrefix);
+                    standardCodeActions(children, extension, humanLanguage);
+                }
                 break;
             case "md":
-                if (hasSelection(e)) markdownImplementationAction(e, children, humanLanguage);
-                standardLanguageActions(e, children, humanLanguage, "markdown", "<!-- ");
+                if (hasSelection(e)) {
+                    customTranslation(children, computerLanguage);
+                    markdownImplementationAction(e, children, humanLanguage);
+                    describeAction(children, computerLanguage, humanLanguage, commentLinePrefix);
+                    standardCodeActions(children, computerLanguage, humanLanguage);
+                }
                 break;
             // Default case
             default:
                 break;
         }
-
-        // Return the ArrayList as an array of AnAction objects
         return children.toArray(AnAction[]::new);
     }
 
+    /**
+     * Adds a TextReplacementAction that auto-translates content from the clipboard
+     *
+     * @param children  The ArrayList to add the TextReplacementAction to.
+     * @param extension The extension to translate the input into.
+     */
     private void pasteAction(@NotNull ArrayList<AnAction> children, @NotNull String extension) {
         // Add a TextReplacementAction to the ArrayList
         children.add(TextReplacementAction.create("Paste", "Paste", null, (event, string) -> {
@@ -118,14 +166,14 @@ public class AICoderMainMenu extends ActionGroup {
         }));
     }
 
-    private void standardLanguageActions(@NotNull AnActionEvent e, @NotNull ArrayList<AnAction> children, @NotNull String humanLanguage, String bash, String commentLinePrefix) {
-        boolean hasSelection = hasSelection(e);
-        if (hasSelection) customTranslation(children, bash);
-        if (hasSelection) autoImplementationAction(e, children, bash, humanLanguage);
-        if (hasSelection) describeAction(children, bash, humanLanguage, commentLinePrefix);
-        if (hasSelection) standardCodeActions(children, bash, humanLanguage);
-    }
-
+    /**
+     * Private method to add JavaDoc (or similar) comments to a given code block.
+     *
+     * @param children         The list of actions to add the comment action to.
+     * @param computerLanguage The language of the code block.
+     * @param docType          The type of documentation to add.
+     * @param stop             An array of strings to stop the comment generation at.
+     */
     private void docAction(@NotNull ArrayList<AnAction> children, String computerLanguage, String docType, String... stop) {
         children.add(new AnAction("Add " + docType + " Comments", "Add " + docType + " Comments", null) {
             @Override
@@ -184,6 +232,15 @@ public class AICoderMainMenu extends ActionGroup {
         });
     }
 
+    /**
+     * This method adds a TextReplacementAction to the given ArrayList of AnActions.
+     * The TextReplacementAction is created with the given instruction and a lambda expression.
+     * The lambda expression is used to translate the given string from one computer language to another.
+     *
+     * @param children         The ArrayList of AnActions to which the TextReplacementAction is added.
+     * @param computerLanguage The language to which the given string is translated.
+     * @param instruction      The instruction used to create the TextReplacementAction.
+     */
     private void quickTranslation(@NotNull ArrayList<AnAction> children, String computerLanguage, String instruction) {
         children.add(TextReplacementAction.create(instruction, instruction, null, (event, string) -> {
             AppSettingsState.getInstance().addInstructionToHistory(instruction);
@@ -194,6 +251,15 @@ public class AICoderMainMenu extends ActionGroup {
         }));
     }
 
+    /**
+     * This method is used to add an action to the list of available actions for the user to execute.
+     * The action is used to implement a given human language action as markdown documentation.
+     *
+     * @param e             AnActionEvent object containing the context of the action.
+     * @param children      ArrayList of AnAction objects containing the list of available actions.
+     * @param humanLanguage The human language to be implemented as markdown documentation.
+     * @return void
+     */
     private void markdownImplementationAction(@NotNull AnActionEvent e, @NotNull ArrayList<AnAction> children, String humanLanguage) {
         String computerLanguage = "markdown";
         Caret caret = e.getData(CommonDataKeys.CARET);

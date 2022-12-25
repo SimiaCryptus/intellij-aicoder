@@ -4,6 +4,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+/**
+ * This class provides a way to store and manipulate indented text blocks.
+ * <p>
+ * The text block is stored as a single string, with each line separated by a newline character.
+ * The indentation is stored as a separate string, which is prepended to each line when the text block is converted to a string.
+ * <p>
+ * The class provides a static method to convert a string to an IndentedText object.
+ * This method replaces all tab characters with two spaces, and then finds the minimum indentation of all lines.
+ * This indentation is then used as the indentation for the IndentedText object.
+ * <p>
+ * The class also provides a method to create a new IndentedText object with a different indentation.
+ *
+ */
 public class IndentedText {
     public static final String TAB_REPLACEMENT = "  ";
     public static final String DELIMITER = "\n";
