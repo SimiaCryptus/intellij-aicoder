@@ -15,7 +15,7 @@
     </extensions>
 
     <!-- Text to display as company information on Preferences/Settings | Plugin page -->
-    <vendor url="http://simiacryptus.com">SimiaCryptus Software</vendor>
+    <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
 
     <actions>
         <group id="org.intellij.sdk.action.DynamicActionGroup"

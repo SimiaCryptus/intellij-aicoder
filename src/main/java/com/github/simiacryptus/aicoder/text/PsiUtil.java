@@ -83,7 +83,7 @@ public class PsiUtil {
                         largest.updateAndGet(s -> (s == null ? Integer.MAX_VALUE : s.getText().length()) < element.getText().length() ? s : element);
                     }
                 }
-                System.out.printf("%s : %s%n", simpleName, element.getText());
+                //System.out.printf("%s : %s%n", simpleName, element.getText());
                 super.visitElement(element);
                 element.acceptChildren(visitor.get());
             }

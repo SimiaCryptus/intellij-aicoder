@@ -1,17 +1,19 @@
 package com.github.simiacryptus.aicoder.config;
 
+import com.github.simiacryptus.aicoder.AICoderMainMenu;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextArea;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.lang.reflect.Field;
 
 public class SimpleSettingsComponent<T> {
+    private static final Logger log = Logger.getInstance(SimpleSettingsComponent.class);
     protected final boolean verbose = false;
     private volatile @Nullable JPanel mainPanel = null;
 
@@ -28,17 +30,15 @@ public class SimpleSettingsComponent<T> {
                 Name nameAnnotation = field.getDeclaredAnnotation(Name.class);
                 JComponent component = (JComponent) field.get(this);
                 if (null == component) continue;
-                if (component instanceof JBTextField) {
-                    if (nameAnnotation != null) {
-                        formBuilder.addLabeledComponent(new JBLabel(nameAnnotation.value() + ": "), component, 1, false);
-                    }
+                if (nameAnnotation != null) {
+                    formBuilder.addLabeledComponent(new JBLabel(nameAnnotation.value() + ": "), component, 1, false);
                 } else {
-                    if (nameAnnotation != null) {
-                        formBuilder.addLabeledComponent(new JBLabel(nameAnnotation.value() + ": "), component, 1, false);
-                    }
+                    formBuilder.addComponentToRightColumn(component, 1);
                 }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
+            } catch (Throwable e) {
+                log.warn("Error processing " + field.getName(), e);
             }
         }
         return formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
@@ -55,33 +55,25 @@ public class SimpleSettingsComponent<T> {
                 Object thisFieldVal = thisField.get(this);
                 switch (thatField.getType().getName()) {
                     case "java.lang.String":
-                        if (thisFieldVal instanceof JBTextField) {
-                            thisValue = ((JBTextField) thisFieldVal).getText();
-                        } else if (thisFieldVal instanceof JBTextArea) {
-                            thisValue = ((JBTextArea) thisFieldVal).getText();
+                        if (thisFieldVal instanceof JTextComponent) {
+                            thisValue = ((JTextComponent) thisFieldVal).getText();
                         }
                         break;
                     case "int":
-                        if (thisFieldVal instanceof JBTextField) {
-                            thisValue = Integer.parseInt(((JBTextField) thisFieldVal).getText());
-                        } else if (thisFieldVal instanceof JBTextArea) {
-                            thisValue = Integer.parseInt(((JBTextArea) thisFieldVal).getText());
+                        if (thisFieldVal instanceof JTextComponent) {
+                            thisValue = Integer.parseInt(((JTextComponent) thisFieldVal).getText());
                         }
                         break;
                     case "double":
-                        if (thisFieldVal instanceof JBTextField) {
-                            thisValue = Double.parseDouble(((JBTextField) thisFieldVal).getText());
-                        } else if (thisFieldVal instanceof JBTextArea) {
-                            thisValue = Double.parseDouble(((JBTextArea) thisFieldVal).getText());
+                        if (thisFieldVal instanceof JTextComponent) {
+                            thisValue = Double.parseDouble(((JTextComponent) thisFieldVal).getText());
                         }
                         break;
                     case "boolean":
                         if (thisFieldVal instanceof JBCheckBox) {
                             thisValue = ((JBCheckBox) thisFieldVal).isSelected();
-                        } else if (thisFieldVal instanceof JBTextField) {
-                            thisValue = Boolean.parseBoolean(((JBTextField) thisFieldVal).getText());
-                        } else if (thisFieldVal instanceof JBTextArea) {
-                            thisValue = Boolean.parseBoolean(((JBTextArea) thisFieldVal).getText());
+                        } else if (thisFieldVal instanceof JTextComponent) {
+                            thisValue = Boolean.parseBoolean(((JTextComponent) thisFieldVal).getText());
                         }
                         break;
                 }
@@ -100,36 +92,29 @@ public class SimpleSettingsComponent<T> {
             try {
                 Field thisField = this.getClass().getDeclaredField(fieldName);
                 Object thatFieldVal = thatField.get(settings);
+                if(null == thatFieldVal) continue;
                 Object thisFieldVal = thisField.get(this);
                 switch (thatField.getType().getName()) {
                     case "java.lang.String":
-                        if (thisFieldVal instanceof JBTextField) {
-                            ((JBTextField) thisFieldVal).setText((String) thatFieldVal);
-                        } else if (thisFieldVal instanceof JBTextArea) {
-                            ((JBTextArea) thisFieldVal).setText((String) thatFieldVal);
+                        if (thisFieldVal instanceof JTextComponent) {
+                            ((JTextComponent) thisFieldVal).setText((String) thatFieldVal);
                         }
                         break;
                     case "int":
-                        if (thisFieldVal instanceof JBTextField) {
-                            ((JBTextField) thisFieldVal).setText(Integer.toString((Integer) thatFieldVal));
-                        } else if (thisFieldVal instanceof JBTextArea) {
-                            ((JBTextArea) thisFieldVal).setText(Integer.toString((Integer) thatFieldVal));
+                        if (thisFieldVal instanceof JTextComponent) {
+                            ((JTextComponent) thisFieldVal).setText(Integer.toString((Integer) thatFieldVal));
                         }
                         break;
                     case "double":
-                        if (thisFieldVal instanceof JBTextField) {
-                            ((JBTextField) thisFieldVal).setText(Double.toString(((Double) thatFieldVal)));
-                        } else if (thisFieldVal instanceof JBTextArea) {
-                            ((JBTextArea) thisFieldVal).setText(Double.toString(((Double) thatFieldVal)));
+                        if (thisFieldVal instanceof JTextComponent) {
+                            ((JTextComponent) thisFieldVal).setText(Double.toString(((Double) thatFieldVal)));
                         }
                         break;
                     case "boolean":
                         if (thisFieldVal instanceof JBCheckBox) {
                             ((JBCheckBox) thisFieldVal).setSelected(((Boolean) thatFieldVal));
-                        } else if (thisFieldVal instanceof JBTextField) {
-                            ((JBTextField) thisFieldVal).setText(Boolean.toString((Boolean) thatFieldVal));
-                        } else if (thisFieldVal instanceof JBTextArea) {
-                            ((JBTextArea) thisFieldVal).setText(Boolean.toString((Boolean) thatFieldVal));
+                        } else if (thisFieldVal instanceof JTextComponent) {
+                            ((JTextComponent) thisFieldVal).setText(Boolean.toString((Boolean) thatFieldVal));
                         }
                         break;
                 }

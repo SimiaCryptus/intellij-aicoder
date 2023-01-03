@@ -1,7 +1,9 @@
 package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.OpenAI;
+import com.github.simiacryptus.aicoder.openai.StringTools;
 import com.github.simiacryptus.aicoder.text.IndentedText;
 import com.github.simiacryptus.aicoder.text.PsiClassContext;
 import com.github.simiacryptus.aicoder.text.PsiMarkdownContext;
@@ -11,11 +13,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,11 +29,10 @@ import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 
 public class AICoderMainMenu extends ActionGroup {
+    private static final Logger log = Logger.getInstance(AICoderMainMenu.class);
 
     public static void handle(@NotNull Throwable ex) {
         JOptionPane.showMessageDialog(null, ex.getMessage(), "Warning", JOptionPane.WARNING_MESSAGE);
@@ -43,7 +45,7 @@ public class AICoderMainMenu extends ActionGroup {
 
     /**
      * This method is used to get the children of the action.
-     *
+     * <p>
      * This Java code is an override of the getChildren() method. It is used to create an array of AnAction objects that will be used to create a context menu for a file.
      * The code first gets the extension of the file and sets the computer language and comment line prefix based on the extension.
      * It then checks if the copy/paste manager has data flavors available and calls the pasteAction() method if it does.
@@ -56,145 +58,178 @@ public class AICoderMainMenu extends ActionGroup {
      */
     @Override
     public AnAction @NotNull [] getChildren(@NotNull AnActionEvent e) {
-        String humanLanguage = AppSettingsState.getInstance().humanLanguage;
+        String inputHumanLanguage = AppSettingsState.getInstance().humanLanguage;
+        String outputHumanLanguage = AppSettingsState.getInstance().humanLanguage;
         VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
         String extension = file.getExtension().toLowerCase();
-
-        final String computerLanguage;
-        switch (extension) {
-            case "py":
-                computerLanguage = "python";
-                break;
-            case "sh":
-                computerLanguage = "bash";
-                break;
-            case "gradle":
-                computerLanguage = "groovy";
-                break;
-            case "md":
-                computerLanguage = "markdown";
-                break;
-            default:
-                computerLanguage = extension;
-                break;
-        }
-
-        String commentLinePrefix;
-        switch (extension) {
-            case "java":
-            case "scala":
-            case "groovy":
-            case "svg":
-            case "gradle":
-                commentLinePrefix = "// ";
-                break;
-            case "sql":
-            case "py":
-            case "sh":
-                commentLinePrefix = "# ";
-                break;
-            case "md":
-                commentLinePrefix = "<!-- ";
-                break;
-            // Default case
-            default:
-                commentLinePrefix = "?";
-                break;
-        }
+        ComputerLanguage language = ComputerLanguage.findByExtension(extension);
+        if (language == null) return new AnAction[]{};
 
         ArrayList<AnAction> children = new ArrayList<>();
+
         if (CopyPasteManager.getInstance().areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
             pasteAction(children, extension);
         }
-        switch (extension) {
-            case "java":
-                docAction(children, extension, "JavaDoc", "*/");
-                break;
-            case "scala":
-                docAction(children, extension, "ScalaDoc", "*/");
-                break;
+        docAction(extension, language, children);
+
+        if (hasSelection(e)) {
+            customTranslation(language, children);
+            switch (language) {
+                case Markdown:
+                    markdownImplementationAction(e, children, inputHumanLanguage);
+                    break;
+                default:
+                    autoImplementationAction(e, children, extension, inputHumanLanguage);
+                    break;
+            }
+            describeAction(outputHumanLanguage, language, children);
+            addCodeCommentsAction(outputHumanLanguage, language, children);
+            fromHumanLanguageAction(inputHumanLanguage, language, children);
+            toHumanLanguageAction(outputHumanLanguage, language, children);
         }
-        switch (extension) {
-            case "java":
-            case "scala":
-            case "groovy":
-            case "svg":
-            case "gradle":
-            case "sql":
-            case "py":
-            case "sh":
-                if (hasSelection(e)) {
-                    customTranslation(children, extension);
-                    autoImplementationAction(e, children, extension, humanLanguage);
-                    describeAction(children, extension, humanLanguage, commentLinePrefix);
-                    standardCodeActions(children, extension, humanLanguage);
-                }
-                break;
-            case "md":
-                if (hasSelection(e)) {
-                    customTranslation(children, computerLanguage);
-                    markdownImplementationAction(e, children, humanLanguage);
-                    describeAction(children, computerLanguage, humanLanguage, commentLinePrefix);
-                    standardCodeActions(children, computerLanguage, humanLanguage);
-                }
-                break;
-            // Default case
-            default:
-                break;
-        }
+
         return children.toArray(AnAction[]::new);
     }
 
-    /**
-     * Adds a TextReplacementAction that auto-translates content from the clipboard
-     *
-     * @param children  The ArrayList to add the TextReplacementAction to.
-     * @param extension The extension to translate the input into.
-     */
-    private void pasteAction(@NotNull ArrayList<AnAction> children, @NotNull String extension) {
-        // Add a TextReplacementAction to the ArrayList
-        children.add(TextReplacementAction.create("Paste", "Paste", null, (event, string) -> {
-            // Set the instruction to "Translate this input into " + extension
-            String instruction = "Translate this input into " + extension;
-            // Set the input attributes to "language: autodetect"
-            Map<String, String> inputAttr = Map.of("language", "autodetect");
-            // Set the output attributes to "language: " + extension
-            Map<String, String> outputAttr = Map.of("language", extension);
-            // Get the contents of the clipboard
-            String pasteContents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor).toString();
-            // Return the result of the OpenAIAPI xmlFN function
-            return OpenAI.INSTANCE.xmlFN(pasteContents, "source", "translated", instruction, inputAttr, outputAttr, "");
+    private static void toHumanLanguageAction(String outputHumanLanguage, ComputerLanguage language, ArrayList<AnAction> children) {
+        String computerLanguage = language.name();
+        children.add(TextReplacementAction.create("To " + outputHumanLanguage, String.format("Describe %s -> %s", outputHumanLanguage, computerLanguage), null, (event, string) -> {
+            AppSettingsState settings = AppSettingsState.getInstance();
+            String instruction = "Describe this code";
+            if (!settings.style.isEmpty())
+                instruction = String.format("%s (%s)", instruction, settings.style);
+            CompletionRequest request = settings.createTranslationRequestTemplate()
+                    .setInputTag(computerLanguage)
+                    .setOutputTag(outputHumanLanguage.toLowerCase())
+                    .setInstruction(instruction)
+                    .setInputAttr("type", "input")
+                    .setOutputAttr("type", "output")
+                    .setOutputAttr("style", settings.style)
+                    .setOriginalText(string)
+                    .buildRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
         }));
     }
 
-    /**
-     * Private method to add JavaDoc (or similar) comments to a given code block.
-     *
-     * @param children         The list of actions to add the comment action to.
-     * @param computerLanguage The language of the code block.
-     * @param docType          The type of documentation to add.
-     * @param stop             An array of strings to stop the comment generation at.
-     */
-    private void docAction(@NotNull ArrayList<AnAction> children, String computerLanguage, String docType, String... stop) {
-        children.add(new AnAction("Add " + docType + " Comments", "Add " + docType + " Comments", null) {
+    private static boolean fromHumanLanguageAction(String inputHumanLanguage, ComputerLanguage language, ArrayList<AnAction> children) {
+        String computerLanguage = language.name();
+        return children.add(TextReplacementAction.create("From " + inputHumanLanguage, String.format("Implement %s -> %s", inputHumanLanguage, computerLanguage), null, (event, string) -> {
+            AppSettingsState settings = AppSettingsState.getInstance();
+            CompletionRequest request = settings.createTranslationRequestTemplate()
+                    .setInputTag(inputHumanLanguage.toLowerCase())
+                    .setOutputTag(computerLanguage)
+                    .setInstruction("Implement this specification")
+                    .setInputAttr("type", "input")
+                    .setOutputAttr("type", "output")
+                    .setOriginalText(string)
+                    .buildRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+        }));
+    }
+
+    private static void addCodeCommentsAction(String outputHumanLanguage, ComputerLanguage language, ArrayList<AnAction> children) {
+        String computerLanguage = language.name();
+        children.add(TextReplacementAction.create("Add Code Comments", "Add Code Comments", null, (event, string) -> {
+            AppSettingsState settings = AppSettingsState.getInstance();
+            String instruction = "Rewrite to include detailed " + outputHumanLanguage + " code comments for every line";
+            if (!settings.style.isEmpty())
+                instruction = String.format("%s (%s)", instruction, settings.style);
+            CompletionRequest request = settings.createTranslationRequestTemplate()
+                    .setInputTag(computerLanguage)
+                    .setOutputTag(computerLanguage)
+                    .setInstruction(instruction)
+                    .setInputAttr("type", "uncommented")
+                    .setOutputAttr("type", "commented")
+                    .setOutputAttr("style", settings.style)
+                    .setOriginalText(string)
+                    .buildRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+        }));
+    }
+
+    private void describeAction(String outputHumanLanguage, ComputerLanguage language, ArrayList<AnAction> children) {
+        children.add(TextReplacementAction.create("Describe Code and Prepend Comment", "Add JavaDoc Comments", null, (event, inputString) -> {
+            AppSettingsState settings = AppSettingsState.getInstance();
+            String style = settings.style;
+            String instruction = "Explain this " + language.name() + " in " + outputHumanLanguage;
+            if (!style.isEmpty()) instruction = String.format("%s (%s)", instruction, style);
+            CompletionRequest request = settings.createTranslationRequestTemplate()
+                    .setInputTag(language.name())
+                    .setOutputTag(outputHumanLanguage)
+                    .setInstruction(instruction)
+                    .setInputAttr("type", "code")
+                    .setOutputAttr("type", "description")
+                    .setOutputAttr("style", style)
+                    .setOriginalText(IndentedText.fromString(inputString).textBlock.trim())
+                    .buildRequest();
+            //String indent = indentedInput.indent;
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            String description = request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+            String linePrefix = indent + language.singlelineCommentPrefix + " ";
+            description = linePrefix + IndentedText.fromString(StringTools.lineWrapping(description.trim())).withIndent(linePrefix);
+            return "\n" + description + "\n" + indent + inputString;
+        }));
+    }
+
+    private void customTranslation(ComputerLanguage language, ArrayList<AnAction> children) {
+        String computerLanguage = language.name();
+        children.add(TextReplacementAction.create("Edit...", "Edit...", null, (event, string) -> {
+            String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
+            AppSettingsState settings = AppSettingsState.getInstance();
+            settings.addInstructionToHistory(instruction);
+            IndentedText indentedInput = IndentedText.fromString(string);
+            CompletionRequest request = settings.createTranslationRequestTemplate()
+                    .setInputTag(computerLanguage)
+                    .setOutputTag(computerLanguage)
+                    .setInstruction(instruction)
+                    .setInputAttr("type", "before")
+                    .setOutputAttr("type", "after")
+                    .setOriginalText(indentedInput.textBlock)
+                    .buildRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+        }));
+        children.add(new ActionGroup("Recent Edits", true) {
+            @Override
+            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+                ArrayList<AnAction> children11 = new ArrayList<>();
+                AppSettingsState.getInstance().getEditHistory().forEach(instruction -> quickTranslation(children11, computerLanguage, instruction));
+                return children11.toArray(AnAction[]::new);
+            }
+        });
+    }
+
+    private void docAction(String extension, ComputerLanguage language, ArrayList<AnAction> children) {
+        if (language.documentationStyle.isEmpty()) return;
+        children.add(new AnAction("Add " + language.documentationStyle + " Comments", "Add " + language.documentationStyle + " Comments", null) {
             @Override
             public void actionPerformed(@NotNull final AnActionEvent event) {
                 try {
-                    PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
                     Caret caret = event.getData(CommonDataKeys.CARET);
+                    PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
                     PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersectingEntity(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
                     if (null == smallestIntersectingMethod) return;
+                    String instruction = "Rewrite to include detailed " + language.documentationStyle;
+                    AppSettingsState settings = AppSettingsState.getInstance();
+                    if (!settings.style.isEmpty())
+                        instruction = String.format("%s (%s)", instruction, settings.style);
                     String code = smallestIntersectingMethod.getText();
-                    String instruction = "Rewrite to include detailed " + docType;
-                    if (!AppSettingsState.getInstance().style.isEmpty())
-                        instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
-                    Map<String, String> inputAttr = new HashMap<>(Map.of("type", "uncommented"));
-                    Map<String, String> outputAttr = new HashMap<>(Map.of("type", "commented"));
-                    if (!AppSettingsState.getInstance().style.isEmpty())
-                        outputAttr.put("style", AppSettingsState.getInstance().style);
                     IndentedText indentedInput = IndentedText.fromString(code);
-                    String replace = OpenAI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "", stop) + "*/\n";
-                    final String newText = new IndentedText(indentedInput.indent, replace + indentedInput.textBlock).toString();
+                    CompletionRequest request = settings.createTranslationRequestTemplate()
+                            .setInputTag(extension)
+                            .setOutputTag(extension)
+                            .setInstruction(instruction)
+                            .setInputAttr("type", "uncommented")
+                            .setOutputAttr("type", "commented")
+                            .setOutputAttr("style", settings.style)
+                            .setOriginalText(indentedInput.textBlock)
+                            .buildRequest()
+                            .addStops(new String[]{language.multilineCommentSuffix});
+                    String replace = request.getCompletionText(OpenAI.INSTANCE.request(request), "").toString().replaceAll("\n", "\n*") + "\n*/\n";
+                    final String newText = IndentedText.fromString(replace).withIndent(indentedInput.indent) + indentedInput.textBlock;
                     final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
                     WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
                         editor.getDocument().replaceString(smallestIntersectingMethod.getTextRange().getStartOffset(), smallestIntersectingMethod.getTextRange().getEndOffset(), newText);
@@ -207,30 +242,32 @@ public class AICoderMainMenu extends ActionGroup {
     }
 
     /**
-     * This method adds two actions to the list of children.
-     * The first action is called "Edit..." and it allows you to type in an instruction.
-     * The second action is a group of actions that are based on the instructions you have typed in before.
+     * Adds a TextReplacementAction that auto-translates content from the clipboard
      *
-     * @param children         The list of children to add the actions to.
-     * @param computerLanguage The language of the computer.
+     * @param children  The ArrayList to add the TextReplacementAction to.
+     * @param extension The extension to translate the input into.
      */
-    private void customTranslation(@NotNull ArrayList<AnAction> children, String computerLanguage) {
-        children.add(TextReplacementAction.create("Edit...", "Edit...", null, (event, string) -> {
-            String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
-            AppSettingsState.getInstance().addInstructionToHistory(instruction);
-            Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
-            Map<String, String> outputAttr = new HashMap<>(Map.of("type", "after"));
-            IndentedText indentedInput = IndentedText.fromString(string);
-            return new IndentedText(indentedInput.indent, OpenAI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "")).toString();
+    private void pasteAction(@NotNull ArrayList<AnAction> children, @NotNull String extension) {
+        // Add a TextReplacementAction to the ArrayList
+        children.add(TextReplacementAction.create("Paste", "Paste", null, (event, string) -> {
+            String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor).toString().trim();
+            CompletionRequest request = AppSettingsState.getInstance().createTranslationRequestTemplate()
+                    .setInputTag("source")
+                    .setOutputTag("translated")
+                    .setInstruction("Translate this input into " + extension)
+                    .setInputAttr("language", "autodetect")
+                    .setOutputAttr("language", extension)
+                    .setOriginalText(text)
+                    .buildRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
         }));
-        children.add(new ActionGroup("Recent Edits", true) {
-            @Override
-            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-                ArrayList<AnAction> children = new ArrayList<>();
-                AppSettingsState.getInstance().getEditHistory().forEach(instruction -> quickTranslation(children, computerLanguage, instruction));
-                return children.toArray(AnAction[]::new);
-            }
-        });
+    }
+
+    private static String getIndent(Caret caret) {
+        if (null == caret) return "";
+        Document document = caret.getEditor().getDocument();
+        return IndentedText.fromString(document.getText().split("\n")[document.getLineNumber(caret.getSelectionStart())]).indent;
     }
 
     /**
@@ -244,11 +281,19 @@ public class AICoderMainMenu extends ActionGroup {
      */
     private void quickTranslation(@NotNull ArrayList<AnAction> children, String computerLanguage, String instruction) {
         children.add(TextReplacementAction.create(instruction, instruction, null, (event, string) -> {
-            AppSettingsState.getInstance().addInstructionToHistory(instruction);
-            Map<String, String> inputAttr = new HashMap<>(Map.of("type", "before"));
-            Map<String, String> outputAttr = new HashMap<>(Map.of("type", "after"));
+            AppSettingsState settings = AppSettingsState.getInstance();
+            settings.addInstructionToHistory(instruction);
             IndentedText indentedInput = IndentedText.fromString(string);
-            return new IndentedText(indentedInput.indent, OpenAI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "")).toString();
+            CompletionRequest request = settings.createTranslationRequestTemplate()
+                    .setInputTag(computerLanguage)
+                    .setOutputTag(computerLanguage)
+                    .setInstruction(instruction)
+                    .setInputAttr("type", "before")
+                    .setOutputAttr("type", "after")
+                    .setOriginalText(indentedInput.textBlock)
+                    .buildRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
         }));
     }
 
@@ -268,30 +313,27 @@ public class AICoderMainMenu extends ActionGroup {
         int selectionStart = caret.getSelectionStart();
         int selectionEnd = caret.getSelectionEnd();
         if (selectionStart < selectionEnd) {
-            children.add(TextReplacementAction.create("Execute Directive", "Execute Directive", null, (event, directive) -> {
+            children.add(TextReplacementAction.create("Execute Directive", "Execute Directive", null, (event, humanDescription) -> {
                 String instruction = "Implement " + humanLanguage + " as " + computerLanguage + " code";
-                if (!AppSettingsState.getInstance().style.isEmpty())
-                    instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
-                Map<String, String> inputAttr = new HashMap<>(Map.of("type", "instruction"));
-                Map<String, String> outputAttr = new HashMap<>(Map.of("type", "document"));
-                if (!AppSettingsState.getInstance().style.isEmpty())
-                    outputAttr.put("style", AppSettingsState.getInstance().style);
-                IndentedText indentedInput = IndentedText.fromString(directive);
-
+                AppSettingsState settings = AppSettingsState.getInstance();
+                if (!settings.style.isEmpty())
+                    instruction = String.format("%s (%s)", instruction, settings.style);
                 PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
                 PsiMarkdownContext root = PsiMarkdownContext.getContext(psiFile, selectionStart, selectionEnd);
-                String contextWithDirective = root.toString(selectionEnd) + "\n<!-- " + directive + "-->\n";
-
-                String implementation = OpenAI.INSTANCE.xmlFN(
-                        directive,
-                        humanLanguage,
-                        computerLanguage,
-                        instruction,
-                        inputAttr,
-                        outputAttr,
-                        contextWithDirective + "\n",
-                        "#");
-                return new IndentedText(indentedInput.indent, implementation).toString();
+                String contextWithDirective = root.toString(selectionEnd) + "\n<!-- " + humanDescription + "-->\n";
+                CompletionRequest request = settings.createTranslationRequestTemplate()
+                        .setInputTag(humanLanguage)
+                        .setOutputTag(computerLanguage)
+                        .setInstruction(instruction)
+                        .setInputAttr("type", "instruction")
+                        .setOutputAttr("type", "document")
+                        .setOutputAttr("style", settings.style)
+                        .setOriginalText(humanDescription)
+                        .buildRequest()
+                        .addStops(new String[]{"#"})
+                        .appendPrompt(contextWithDirective + "\n");
+                String indent = getIndent(caret);
+                return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
             }));
         }
     }
@@ -328,115 +370,31 @@ public class AICoderMainMenu extends ActionGroup {
                 private String implement(@NotNull AnActionEvent event, @NotNull String string) {
                     PsiClassContext root = PsiClassContext.getContext(psiFile, selectionStart, selectionEnd);
                     String instruction = "Implement " + humanLanguage + " as " + computerLanguage + " code";
-                    if (!AppSettingsState.getInstance().style.isEmpty())
-                        instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
-                    Map<String, String> inputAttr = new HashMap<>(Map.of("type", "instruction"));
-                    Map<String, String> outputAttr = new HashMap<>(Map.of("type", "code"));
-                    if (!AppSettingsState.getInstance().style.isEmpty())
-                        outputAttr.put("style", AppSettingsState.getInstance().style);
-                    IndentedText indentedInput = IndentedText.fromString(string);
+                    AppSettingsState settings = AppSettingsState.getInstance();
+                    if (!settings.style.isEmpty())
+                        instruction = String.format("%s (%s)", instruction, settings.style);
                     String implementation = null;
                     try {
-                        implementation = OpenAI.INSTANCE.xmlFN(
-                                string.split(" ").length > 4 ? string : largestIntersectingComment.getText(),
-                                humanLanguage,
-                                computerLanguage,
-                                instruction,
-                                inputAttr,
-                                outputAttr,
-                                root + "\n");
+                        CompletionRequest request = settings.createTranslationRequestTemplate()
+                                .setInputTag(humanLanguage)
+                                .setOutputTag(computerLanguage)
+                                .setInstruction(instruction)
+                                .setInputAttr("type", "instruction")
+                                .setOutputAttr("type", "code")
+                                .setOutputAttr("style", settings.style)
+                                .setOriginalText(string.split(" ").length > 4 ? string : largestIntersectingComment.getText())
+                                .buildRequest()
+                                .appendPrompt(root + "\n");
+                        String indent = getIndent(caret);
+                        implementation = request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
                     } catch (IOException ex) {
                         handle(ex);
                     }
-                    return new IndentedText(indentedInput.indent, implementation).toString();
+                    return implementation;
                 }
 
             });
         }
-    }
-
-    /**
-     * This code is creating a TextReplacementAction object that will be added to an ArrayList of AnAction objects.
-     * This TextReplacementAction object will take a string of code written in a computer language (specified by the computerLanguage parameter) and explain it in a human language (specified by the humanLanguage parameter).
-     * The explanation will be preceded by a comment line prefix (specified by the commentLinePrefix parameter).
-     * The OpenAIAPI xmlFN function will be used to generate the explanation, and the input and output attributes will be set to "type: code" and "type: description" respectively.
-     * The result of the xmlFN function will be returned and appended to the original string of code, preceded by the comment line prefix.
-     *
-     * @param children
-     * @param computerLanguage
-     * @param humanLanguage
-     * @param commentLinePrefix
-     */
-    private void describeAction(@NotNull ArrayList<AnAction> children, String computerLanguage, String humanLanguage, String commentLinePrefix) {
-        children.add(TextReplacementAction.create("Describe Code and Prepend Comment", "Add JavaDoc Comments", null, (event, string) -> {
-            String instruction = "Explain this " + computerLanguage + " in " + humanLanguage;
-            if (!AppSettingsState.getInstance().style.isEmpty())
-                instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
-            // Set the input attributes to "type: uncommented"
-            Map<String, String> inputAttr = new HashMap<>(Map.of("type", "code"));
-            // Set the output attributes to "type: commented"
-            Map<String, String> outputAttr = new HashMap<>(Map.of("type", "description"));
-            if (!AppSettingsState.getInstance().style.isEmpty())
-                outputAttr.put("style", AppSettingsState.getInstance().style);
-            // Return the result of the OpenAIAPI xmlFN function
-            IndentedText indentedInput = IndentedText.fromString(string);
-            String replace = OpenAI.INSTANCE.xmlFN(indentedInput.textBlock, computerLanguage, humanLanguage, instruction, inputAttr, outputAttr, "").replace("\n", "\n" + commentLinePrefix) + "\n";
-            return new IndentedText(indentedInput.indent, replace + indentedInput.textBlock).toString();
-        }));
-    }
-
-    /**
-     * This code is creating three TextReplacementActions and adding them to an ArrayList.
-     * The first action is for adding code comments to a line of code written in a computer language.
-     * The second action is for implementing a specification written in a human language into a computer language.
-     * The third action is for describing code written in a computer language into a human language.
-     *
-     * @param children
-     * @param computerLanguage
-     * @param humanLanguage
-     */
-    private void standardCodeActions(@NotNull ArrayList<AnAction> children, String computerLanguage, @NotNull String humanLanguage) {
-        // Add a TextReplacementAction to the ArrayList
-        children.add(TextReplacementAction.create("Add Code Comments", "Add Code Comments", null, (event, string) -> {
-            // Set the instruction to "Rewrite to include detailed code comments at the end of every line"
-            String instruction = "Rewrite to include detailed code comments for every line";
-            if (!AppSettingsState.getInstance().style.isEmpty())
-                instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
-            // Set the input attributes to "type: uncommented"
-            Map<String, String> inputAttr = Map.of("type", "uncommented");
-            // Set the output attributes to "type: commented"
-            Map<String, String> outputAttr = new HashMap<>(Map.of("type", "commented"));
-            if (!AppSettingsState.getInstance().style.isEmpty())
-                outputAttr.put("style", AppSettingsState.getInstance().style);
-            // Return the result of the OpenAIAPI xmlFN function
-            return OpenAI.INSTANCE.xmlFN(string, computerLanguage, computerLanguage, instruction, inputAttr, outputAttr, "");
-        }));
-        // Add a TextReplacementAction to the ArrayList
-        children.add(TextReplacementAction.create("From " + humanLanguage, String.format("Implement %s -> %s", humanLanguage, computerLanguage), null, (event, string) -> {
-            // Set the instruction to "Implement this specification"
-            String instruction = "Implement this specification";
-            // Set the input attributes to "type: input"
-            Map<String, String> inputAttr = Map.of("type", "input");
-            // Set the output attributes to "type: output"
-            Map<String, String> outputAttr = Map.of("type", "output");
-            // Return the result of the OpenAIAPI xmlFN function
-            return OpenAI.INSTANCE.xmlFN(string, humanLanguage.toLowerCase(), computerLanguage, instruction, inputAttr, outputAttr, "");
-        }));
-        // Add a TextReplacementAction to the ArrayList
-        children.add(TextReplacementAction.create("To " + humanLanguage, String.format("Describe %s -> %s", humanLanguage, computerLanguage), null, (event, string) -> {
-            // Set the instruction to "Describe this code"
-            String instruction = "Describe this code";
-            if (!AppSettingsState.getInstance().style.isEmpty())
-                instruction = String.format("%s (%s)", instruction, AppSettingsState.getInstance().style);
-            // Set the input attributes to "type: input"
-            Map<String, String> inputAttr = Map.of("type", "input");
-            // Set the output attributes to "type: output"
-            Map<String, String> outputAttr = new HashMap<>(Map.of("type", "output"));
-            if (!AppSettingsState.getInstance().style.isEmpty())
-                outputAttr.put("style", AppSettingsState.getInstance().style);
-            // Return the result of the OpenAIAPI xmlFN function
-            return OpenAI.INSTANCE.xmlFN(string, computerLanguage, humanLanguage.toLowerCase(), instruction, inputAttr, outputAttr, "");
-        }));
     }
 
     @Override

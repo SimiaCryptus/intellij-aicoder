@@ -44,8 +44,7 @@ public class IndentedText {
     @Override
     public @NotNull String toString() {
         return Arrays.stream(textBlock.split("\n"))
-                .map(s -> indent + s)
-                .reduce((a, b) -> a + "\n" + b).get();
+                .reduce((a, b) -> a + "\n" + indent + b).get();
     }
 
     public @NotNull IndentedText withIndent(String indent) {

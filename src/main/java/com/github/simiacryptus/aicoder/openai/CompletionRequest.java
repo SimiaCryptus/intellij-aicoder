@@ -1,9 +1,14 @@
 package com.github.simiacryptus.aicoder.openai;
 
+import com.github.simiacryptus.aicoder.text.IndentedText;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static com.github.simiacryptus.aicoder.openai.StringTools.stripPrefix;
+import static com.github.simiacryptus.aicoder.openai.StringTools.stripUnbalancedTerminators;
 
 /**
  * The CompletionRequest class is used to create a request for completion of a given prompt.
@@ -26,6 +31,19 @@ public class CompletionRequest {
         this.stop = stop;
         this.logprobs = logprobs;
         this.echo = echo;
+    }
+
+    @Nullable
+    public String getCompletionText(TextCompletion response, String indent) {
+        return response
+                .getFirstChoice()
+                .map(completion -> stripPrefix(completion, this.prompt))
+                .map(completion -> stripUnbalancedTerminators(completion))
+                .map(IndentedText::fromString)
+                .map(indentedText -> indentedText.withIndent(indent))
+                .map(IndentedText::toString)
+                .map(indentedText -> indent + indentedText)
+                .orElse(null);
     }
 
     public @NotNull CompletionRequest appendPrompt(String prompt) {

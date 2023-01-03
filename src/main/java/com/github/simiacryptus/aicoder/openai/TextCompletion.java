@@ -1,5 +1,10 @@
 package com.github.simiacryptus.aicoder.openai;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.Optional;
+
 public class TextCompletion {
     public String id;
     public String object;
@@ -22,4 +27,7 @@ public class TextCompletion {
         this.error = error;
     }
 
+    public @NotNull Optional<String> getFirstChoice() {
+        return Optional.ofNullable(this.choices).flatMap(choices -> Arrays.stream(choices).findFirst()).map(choice -> choice.text.trim());
+    }
 }

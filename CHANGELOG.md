@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.1.3]
+### Added
+- Expanded language support
+- Improved handling of braces and indentation before making document edits
+- Improved settings - "Random style" and "Test style" helpers
+
 ## [0.1.2]
 ### Added
 - Improved UI polish

@@ -1,10 +1,13 @@
 package com.github.simiacryptus.aicoder.config;
 
+import com.github.simiacryptus.aicoder.openai.translate.TranslationRequest;
+import com.github.simiacryptus.aicoder.openai.translate.TranslationRequestTemplate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.rd.util.LogLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +36,18 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public int historyLimit = 10;
     public @NotNull String humanLanguage = "English";
     public int maxPrompt = 5000;
+    public TranslationRequestTemplate translationRequestTemplate = TranslationRequestTemplate.XML;
+    public LogLevel apiLogLevel = LogLevel.Info;
 
     public AppSettingsState() {
     }
 
     public static AppSettingsState getInstance() {
         return ApplicationManager.getApplication().getService(AppSettingsState.class);
+    }
+
+    public TranslationRequest createTranslationRequestTemplate() {
+        return translationRequestTemplate.get(this);
     }
 
     @Nullable
