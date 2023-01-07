@@ -12,6 +12,7 @@ public enum ComputerLanguage {
     Ada("", "--", "/*", "*/", "ada"),
     Assembly("", ";", "/*", "*/", "assembly"),
     Basic("", "'", "/*", "*/", "basic", "bs"),
+    Bash("", "#", "", "", "sh"),
     C("Doxygen", "//", "/*", "*/", "c"),
     Clojure("ClojureDocs", ";", "/*", "*/", "cj"),
     COBOL("", "*", "/*", "*/", "cobol", "cob"),
@@ -29,6 +30,7 @@ public enum ComputerLanguage {
     HTML("", "//", "/*", "*/", "html"),
     Julia("", "#", "/*", "*/", "julia"),
     JavaScript("JSDoc", "//", "/*", "*/", "javascript", "js"),
+    Json("JSDoc", "", "", "", "json"),
     Kotlin("KDoc", "//", "/*", "*/", "kotlin", "kt"),
     Lisp("", ";", "/*", "*/", "lisp"),
     Logo("", ";", "/*", "*/", "logo", "log"),
@@ -50,7 +52,8 @@ public enum ComputerLanguage {
     Swift("", "//", "/*", "*/", "swift"),
     Tcl("", "#", "/*", "*/", "tcl"),
     TypeScript("TypeDoc", "//", "/*", "*/", "typescript", "ts"),
-    VisualBasic("", "'", "/*", "*/", "visualbasic", "vb");
+    VisualBasic("", "'", "/*", "*/", "visualbasic", "vb"),
+    Zshell("", "#", "", "", "visualbasic", "zsh");
 
     public final List<String> fileExtensions;
     public final String singlelineCommentPrefix;
