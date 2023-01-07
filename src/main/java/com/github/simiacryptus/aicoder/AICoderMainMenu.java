@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.openai.ModerationException;
 import com.github.simiacryptus.aicoder.openai.OpenAI;
 import com.github.simiacryptus.aicoder.openai.StringTools;
 import com.github.simiacryptus.aicoder.text.IndentedText;
@@ -35,6 +36,7 @@ public class AICoderMainMenu extends ActionGroup {
     private static final Logger log = Logger.getInstance(AICoderMainMenu.class);
 
     public static void handle(@NotNull Throwable ex) {
+        if(!(ex instanceof ModerationException)) log.error(ex);
         JOptionPane.showMessageDialog(null, ex.getMessage(), "Warning", JOptionPane.WARNING_MESSAGE);
     }
 
@@ -108,7 +110,7 @@ public class AICoderMainMenu extends ActionGroup {
                     .setOriginalText(string)
                     .buildRequest();
             String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+            return request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
         }));
     }
 
@@ -125,7 +127,7 @@ public class AICoderMainMenu extends ActionGroup {
                     .setOriginalText(string)
                     .buildRequest();
             String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+            return request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
         }));
     }
 
@@ -146,7 +148,7 @@ public class AICoderMainMenu extends ActionGroup {
                     .setOriginalText(string)
                     .buildRequest();
             String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+            return request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
         }));
     }
 
@@ -167,7 +169,7 @@ public class AICoderMainMenu extends ActionGroup {
                     .buildRequest();
             //String indent = indentedInput.indent;
             String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            String description = request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+            String description = request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
             String linePrefix = indent + language.singlelineCommentPrefix + " ";
             description = linePrefix + IndentedText.fromString(StringTools.lineWrapping(description.trim())).withIndent(linePrefix);
             return "\n" + description + "\n" + indent + inputString;
@@ -190,7 +192,7 @@ public class AICoderMainMenu extends ActionGroup {
                     .setOriginalText(indentedInput.textBlock)
                     .buildRequest();
             String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+            return request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
         }));
         children.add(new ActionGroup("Recent Edits", true) {
             @Override
@@ -212,8 +214,8 @@ public class AICoderMainMenu extends ActionGroup {
                     PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
                     PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersectingEntity(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
                     if (null == smallestIntersectingMethod) return;
-                    String instruction = "Rewrite to include detailed " + language.documentationStyle;
                     AppSettingsState settings = AppSettingsState.getInstance();
+                    String instruction = "Rewrite to include detailed " + language.documentationStyle;
                     if (!settings.style.isEmpty())
                         instruction = String.format("%s (%s)", instruction, settings.style);
                     String code = smallestIntersectingMethod.getText();
@@ -228,13 +230,13 @@ public class AICoderMainMenu extends ActionGroup {
                             .setOriginalText(indentedInput.textBlock)
                             .buildRequest()
                             .addStops(new String[]{language.multilineCommentSuffix});
-                    String replace = request.getCompletionText(OpenAI.INSTANCE.request(request), "").toString().replaceAll("\n", "\n*") + "\n*/\n";
+                    String replace = request.getCompletionText(OpenAI.INSTANCE.complete(request), "").toString().replaceAll("\n", "\n*") + "\n*/\n";
                     final String newText = IndentedText.fromString(replace).withIndent(indentedInput.indent) + indentedInput.textBlock;
                     final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
                     WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
                         editor.getDocument().replaceString(smallestIntersectingMethod.getTextRange().getStartOffset(), smallestIntersectingMethod.getTextRange().getEndOffset(), newText);
                     });
-                } catch (IOException ex) {
+                } catch (ModerationException | IOException ex) {
                     handle(ex);
                 }
             }
@@ -260,7 +262,7 @@ public class AICoderMainMenu extends ActionGroup {
                     .setOriginalText(text)
                     .buildRequest();
             String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+            return request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
         }));
     }
 
@@ -293,7 +295,7 @@ public class AICoderMainMenu extends ActionGroup {
                     .setOriginalText(indentedInput.textBlock)
                     .buildRequest();
             String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+            return request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
         }));
     }
 
@@ -333,7 +335,7 @@ public class AICoderMainMenu extends ActionGroup {
                         .addStops(new String[]{"#"})
                         .appendPrompt(contextWithDirective + "\n");
                 String indent = getIndent(caret);
-                return request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
+                return request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
             }));
         }
     }
@@ -386,8 +388,8 @@ public class AICoderMainMenu extends ActionGroup {
                                 .buildRequest()
                                 .appendPrompt(root + "\n");
                         String indent = getIndent(caret);
-                        implementation = request.getCompletionText(OpenAI.INSTANCE.request(request), indent);
-                    } catch (IOException ex) {
+                        implementation = request.getCompletionText(OpenAI.INSTANCE.complete(request), indent);
+                    } catch (ModerationException | IOException ex) {
                         handle(ex);
                     }
                     return implementation;

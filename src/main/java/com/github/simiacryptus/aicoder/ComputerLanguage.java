@@ -38,14 +38,14 @@ public enum ComputerLanguage {
     OCaml("", "(*", "*)", "ocaml", "ml"),
     Pascal("", "//", "/*", "*/", "pascal", "pas"),
     PHP("", "//", "/*", "*/", "php"),
-    Perl("POD", "#", "/*", "*/", "perl"),
+    Perl("POD", "#", "/*", "*/", "perl", "pl"),
     Prolog("", "%", "/*", "*/", "prolog"),
     Python("PyDoc", "#", "/*", "*/", "python", "py"),
     R("", "#", "/*", "*/", "r"),
     Ruby("", "#", "/*", "*/", "ruby", "rb"),
-    Racket("", "#|", "|#", "racket"),
+    Racket("", "#","#|", "|#", "racket"),
     Rust("Rustdoc", "//", "/*", "*/", "rust", "rs"),
-    Scala("ScalaDoc", "//", "/*", "*/", "scala"),
+    Scala("ScalaDoc", "//", "/*", "*/", "scala", "sc"),
     Scheme("", ";", "/*", "*/", "scheme"),
     SQL("", "--", "/*", "*/", "sql"),
     Smalltalk("", "\"", "/*", "*/", "smalltalk", "st"),
@@ -53,7 +53,8 @@ public enum ComputerLanguage {
     Tcl("", "#", "/*", "*/", "tcl"),
     TypeScript("TypeDoc", "//", "/*", "*/", "typescript", "ts"),
     VisualBasic("", "'", "/*", "*/", "visualbasic", "vb"),
-    Zshell("", "#", "", "", "visualbasic", "zsh");
+    YAML("", "#", "", "", "yaml"),
+    ZShell("", "#", "", "", "zsh");
 
     public final List<String> fileExtensions;
     public final String singlelineCommentPrefix;

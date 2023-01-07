@@ -39,14 +39,14 @@ public class OpenAI {
     }
 
     public ObjectNode getEngines() throws IOException {
-        return getMapper().readValue(request(getSettingsState().apiBase + "/engines"), ObjectNode.class);
+        return getMapper().readValue(get(getSettingsState().apiBase + "/engines"), ObjectNode.class);
     }
 
     protected String post(String url, @NotNull String body) throws IOException, InterruptedException {
         return post(url, body, 3);
     }
 
-    public TextCompletion request(@NotNull CompletionRequest completionRequest) throws IOException {
+    public CompletionResponse complete(@NotNull CompletionRequest completionRequest) throws IOException, ModerationException {
         try {
             AppSettingsState settings = getSettingsState();
             if (completionRequest.prompt.length() > settings.maxPrompt)
@@ -61,11 +61,11 @@ public class OpenAI {
                 log.error(errorMessage);
                 throw new IOException(errorMessage);
             }
-            TextCompletion textCompletion = getMapper().readValue(result, TextCompletion.class);
-            String completionResult = stripPrefix(textCompletion.getFirstChoice().orElse(""), completionRequest.prompt).replace("\n", "\n\t");
+            CompletionResponse completionResponse = getMapper().readValue(result, CompletionResponse.class);
+            String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse(""), completionRequest.prompt).replace("\n", "\n\t");
             requestLog(String.format("Text Completion Request\nPrefix:\n%s\n\nCompletion:\n%s", completionRequest.prompt.replace("\n", "\n\t"), completionResult));
             //writeRequestLog(String.format("Request:\n%s\n\nResponse:\n%s", request, result));
-            return textCompletion;
+            return completionResponse;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -90,7 +90,7 @@ public class OpenAI {
         }
     }
 
-    public void moderate(@NotNull String text) throws IOException, InterruptedException {
+    public void moderate(@NotNull String text) throws IOException, InterruptedException, ModerationException {
         String body = getMapper().writeValueAsString(Map.of("input", text));
         String result = post(getSettingsState().apiBase + "/moderations", body);
         JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
@@ -102,7 +102,7 @@ public class OpenAI {
         requestLog(String.format("Moderation Request\nText:\n%s\n\nResult:\n%s", text.replace("\n", "\n\t"), result));
         if (moderationResult.get("flagged").getAsBoolean()) {
             JsonObject categoriesObj = moderationResult.get("categories").getAsJsonObject();
-            throw new IOException("Moderation flagged this request due to " + categoriesObj.keySet().stream().filter(c -> categoriesObj.get(c).getAsBoolean()).reduce((a, b) -> a + ", " + b).orElse("???"));
+            throw new ModerationException("Moderation flagged this request due to " + categoriesObj.keySet().stream().filter(c -> categoriesObj.get(c).getAsBoolean()).reduce((a, b) -> a + ", " + b).orElse("???"));
         }
     }
 
@@ -170,7 +170,7 @@ public class OpenAI {
      * @return The response from the given URL.
      * @throws IOException If an I/O error occurs.
      */
-    public String request(String url) throws IOException {
+    public String get(String url) throws IOException {
         HttpClientBuilder client = HttpClientBuilder.create();
         HttpGet request = new HttpGet(url);
         request.addHeader("Content-Type", "application/json");

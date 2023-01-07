@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder;
 
+import com.github.simiacryptus.aicoder.openai.ModerationException;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -31,7 +32,7 @@ public abstract class TextReplacementAction extends AnAction {
     public static @NotNull TextReplacementAction create(@Nullable @NlsActions.ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon, @NotNull ActionTextEditorFunction fn) {
         return new TextReplacementAction(text, description, icon) {
             @Override
-            protected String edit(@NotNull AnActionEvent e, String previousText) throws IOException {
+            protected String edit(@NotNull AnActionEvent e, String previousText) throws IOException, ModerationException {
                 return fn.apply(e, previousText);
             }
         };
@@ -48,16 +49,15 @@ public abstract class TextReplacementAction extends AnAction {
             WriteCommandAction.runWriteCommandAction(e.getProject(), () -> {
                 editor.getDocument().replaceString(primaryCaret.getSelectionStart(), primaryCaret.getSelectionEnd(), newText);
             });
-        } catch (IOException ex) {
+        } catch (ModerationException | IOException ex) {
             AICoderMainMenu.handle(ex);
         }
-
     }
 
-    protected abstract String edit(@NotNull AnActionEvent e, String previousText) throws IOException;
+    protected abstract String edit(@NotNull AnActionEvent e, String previousText) throws IOException, ModerationException;
 
     public interface ActionTextEditorFunction {
-        String apply(AnActionEvent actionEvent, String input) throws IOException;
+        String apply(AnActionEvent actionEvent, String input) throws IOException, ModerationException;
     }
 
 }

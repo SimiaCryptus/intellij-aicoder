@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Optional;
 
-public class TextCompletion {
+public class CompletionResponse {
     public String id;
     public String object;
     public int created;
@@ -15,10 +15,10 @@ public class TextCompletion {
 
     public Usage usage;
 
-    public TextCompletion() {
+    public CompletionResponse() {
     }
 
-    public TextCompletion(String id, String object, int created, String model, Choice[] choices, ApiError error) {
+    public CompletionResponse(String id, String object, int created, String model, Choice[] choices, ApiError error) {
         this.id = id;
         this.object = object;
         this.created = created;

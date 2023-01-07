@@ -34,7 +34,7 @@ public class CompletionRequest {
     }
 
     @Nullable
-    public String getCompletionText(TextCompletion response, String indent) {
+    public String getCompletionText(CompletionResponse response, String indent) {
         return response
                 .getFirstChoice()
                 .map(completion -> stripPrefix(completion, this.prompt))
