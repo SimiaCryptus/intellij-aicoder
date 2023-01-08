@@ -1,11 +1,15 @@
 package com.github.simiacryptus.aicoder.config;
 
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBPasswordField;
 import com.intellij.ui.components.JBTextField;
+import com.jetbrains.rd.util.LogLevel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class AppSettingsComponent extends SimpleSettingsComponent<AppSettingsState> {
@@ -27,45 +31,45 @@ public class AppSettingsComponent extends SimpleSettingsComponent<AppSettingsSta
     public final JBTextField historyLimit = new JBTextField();
     @Name("Temperature")
     public final JBTextField temperature = new JBTextField();
-    public final JButton randomizeStyle = new JButton();
-    public final JButton testStyle = new JButton();
+    public final JButton randomizeStyle = new JButton(new AbstractAction("Randomize Style") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            style.setText(StyleUtil.randomStyle());
+        }
+    });
+    public final JButton testStyle = new JButton(new AbstractAction("Test Style") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            StyleUtil.demoStyle(style.getText());
+        }
+    });
+    @Name("Developer Tools")
+    public final JBCheckBox devActions = new JBCheckBox();
+    @Name("API Log Level")
+    public final ComboBox apiLogLevel = new ComboBox(Arrays.stream(LogLevel.values()).map(x->x.name()).toArray(String[]::new));
+
+//    @Name("API Envelope")
+//    public final ComboBox translationRequestTemplate = new ComboBox(Arrays.stream(TranslationRequestTemplate.values()).map(x->x.name()).toArray(String[]::new));
 
     public @NotNull JComponent getPreferredFocusedComponent() {
         return apiKey;
     }
 
     public static String queryAPIKey() {
-        // Open a dialog box with a password input to get the API key from the user
         JPanel panel = new JPanel();
-        JLabel label = new JLabel("Enter API Key:");
-        JPasswordField pass = new JPasswordField(10);
+        JLabel label = new JLabel("Enter OpenAI API Key:");
+        JPasswordField pass = new JPasswordField(100);
         panel.add(label);
         panel.add(pass);
         String[] options = new String[]{"OK", "Cancel"};
         int option = JOptionPane.showOptionDialog(null, panel, "API Key",
                 JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
                 null, options, options[1]);
-        if (option == 0) // pressing OK button
-        {
+        if (option == 0) {
             char[] password = pass.getPassword();
             return new String(password);
         }
         return null;
     }
 
-    public AppSettingsComponent() {
-        randomizeStyle.setAction(new AbstractAction("Randomize Style") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                style.setText(StyleUtil.randomStyle());
-            }
-        });
-        testStyle.setAction(new AbstractAction("Test Style") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                StyleUtil.demoStyle(style.getText());
-            }
-        });
-
-    }
 }

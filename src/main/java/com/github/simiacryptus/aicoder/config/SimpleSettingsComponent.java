@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.config;
 
 import com.github.simiacryptus.aicoder.AICoderMainMenu;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
@@ -45,81 +46,98 @@ public class SimpleSettingsComponent<T> {
     }
 
     public void getProperties(@NotNull T settings) {
-        Field[] thoseFields = settings.getClass().getDeclaredFields();
-        for (Field thatField : thoseFields) {
-            thatField.setAccessible(true);
-            String fieldName = thatField.getName();
+        for (Field settingsField : settings.getClass().getDeclaredFields()) {
+            settingsField.setAccessible(true);
+            String settingsFieldName = settingsField.getName();
             try {
-                Object thisValue = null;
-                Field thisField = this.getClass().getDeclaredField(fieldName);
-                Object thisFieldVal = thisField.get(this);
-                switch (thatField.getType().getName()) {
+                Object newSettingsValue = null;
+                Field uiField = this.getClass().getDeclaredField(settingsFieldName);
+                Object uiFieldVal = uiField.get(this);
+                switch (settingsField.getType().getName()) {
                     case "java.lang.String":
-                        if (thisFieldVal instanceof JTextComponent) {
-                            thisValue = ((JTextComponent) thisFieldVal).getText();
+                        if (uiFieldVal instanceof JTextComponent) {
+                            newSettingsValue = ((JTextComponent) uiFieldVal).getText();
+                        } else if (uiFieldVal instanceof ComboBox) {
+                            newSettingsValue = ((ComboBox<String>) uiFieldVal).getItem();
                         }
                         break;
                     case "int":
-                        if (thisFieldVal instanceof JTextComponent) {
-                            thisValue = Integer.parseInt(((JTextComponent) thisFieldVal).getText());
+                        if (uiFieldVal instanceof JTextComponent) {
+                            newSettingsValue = Integer.parseInt(((JTextComponent) uiFieldVal).getText());
                         }
                         break;
                     case "double":
-                        if (thisFieldVal instanceof JTextComponent) {
-                            thisValue = Double.parseDouble(((JTextComponent) thisFieldVal).getText());
+                        if (uiFieldVal instanceof JTextComponent) {
+                            newSettingsValue = Double.parseDouble(((JTextComponent) uiFieldVal).getText());
                         }
                         break;
                     case "boolean":
-                        if (thisFieldVal instanceof JBCheckBox) {
-                            thisValue = ((JBCheckBox) thisFieldVal).isSelected();
-                        } else if (thisFieldVal instanceof JTextComponent) {
-                            thisValue = Boolean.parseBoolean(((JTextComponent) thisFieldVal).getText());
+                        if (uiFieldVal instanceof JCheckBox) {
+                            newSettingsValue = ((JCheckBox) uiFieldVal).isSelected();
+                        } else if (uiFieldVal instanceof JTextComponent) {
+                            newSettingsValue = Boolean.parseBoolean(((JTextComponent) uiFieldVal).getText());
+                        }
+                        break;
+                    default:
+
+                        if (java.lang.Enum.class.isAssignableFrom(settingsField.getType())) {
+                            if (uiFieldVal instanceof ComboBox) {
+                                ComboBox<String> comboBox = (ComboBox<String>) uiFieldVal;
+                                String item = comboBox.getItem();
+                                newSettingsValue = Enum.valueOf((Class<? extends Enum>) settingsField.getType(), item);
+                            }
                         }
                         break;
                 }
-                thatField.set(settings, thisValue);
+                settingsField.set(settings, newSettingsValue);
             } catch (Throwable e) {
-                if (verbose) new RuntimeException("Error processing " + thatField, e).printStackTrace();
+                if (verbose) new RuntimeException("Error processing " + settingsField, e).printStackTrace();
             }
         }
     }
 
     public void setProperties(@NotNull T settings) {
-        Field[] thoseFields = settings.getClass().getDeclaredFields();
-        for (Field thatField : thoseFields) {
-            thatField.setAccessible(true);
-            String fieldName = thatField.getName();
+        for (Field settingsField : settings.getClass().getDeclaredFields()) {
+            settingsField.setAccessible(true);
+            String fieldName = settingsField.getName();
             try {
-                Field thisField = this.getClass().getDeclaredField(fieldName);
-                Object thatFieldVal = thatField.get(settings);
-                if(null == thatFieldVal) continue;
-                Object thisFieldVal = thisField.get(this);
-                switch (thatField.getType().getName()) {
+                Field uiField = this.getClass().getDeclaredField(fieldName);
+                Object settingsVal = settingsField.get(settings);
+                if(null == settingsVal) continue;
+                Object uiVal = uiField.get(this);
+                switch (settingsField.getType().getName()) {
                     case "java.lang.String":
-                        if (thisFieldVal instanceof JTextComponent) {
-                            ((JTextComponent) thisFieldVal).setText((String) thatFieldVal);
+                        if (uiVal instanceof JTextComponent) {
+                            ((JTextComponent) uiVal).setText((String) settingsVal);
+                        } else if (uiVal instanceof ComboBox) {
+                            ((ComboBox<String>) uiVal).setItem(settingsVal.toString());
                         }
                         break;
                     case "int":
-                        if (thisFieldVal instanceof JTextComponent) {
-                            ((JTextComponent) thisFieldVal).setText(Integer.toString((Integer) thatFieldVal));
+                        if (uiVal instanceof JTextComponent) {
+                            ((JTextComponent) uiVal).setText(Integer.toString((Integer) settingsVal));
                         }
                         break;
                     case "double":
-                        if (thisFieldVal instanceof JTextComponent) {
-                            ((JTextComponent) thisFieldVal).setText(Double.toString(((Double) thatFieldVal)));
+                        if (uiVal instanceof JTextComponent) {
+                            ((JTextComponent) uiVal).setText(Double.toString(((Double) settingsVal)));
                         }
                         break;
                     case "boolean":
-                        if (thisFieldVal instanceof JBCheckBox) {
-                            ((JBCheckBox) thisFieldVal).setSelected(((Boolean) thatFieldVal));
-                        } else if (thisFieldVal instanceof JTextComponent) {
-                            ((JTextComponent) thisFieldVal).setText(Boolean.toString((Boolean) thatFieldVal));
+                        if (uiVal instanceof JCheckBox) {
+                            ((JCheckBox) uiVal).setSelected(((Boolean) settingsVal));
+                        } else if (uiVal instanceof JTextComponent) {
+                            ((JTextComponent) uiVal).setText(Boolean.toString((Boolean) settingsVal));
+                        }
+                        break;
+                    default:
+                        if (uiVal instanceof ComboBox) {
+                            ((ComboBox<String>) uiVal).setItem(settingsVal.toString());
                         }
                         break;
                 }
             } catch (Throwable e) {
-                if (verbose) new RuntimeException("Error processing " + thatField, e).printStackTrace();
+                if (verbose) new RuntimeException("Error processing " + settingsField, e).printStackTrace();
             }
         }
     }

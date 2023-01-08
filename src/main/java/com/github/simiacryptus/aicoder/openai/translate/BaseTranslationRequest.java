@@ -62,13 +62,13 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public T setInputTag(String inputTag) {
+    public T setInputType(String inputTag) {
         this.inputTag = inputTag;
         return (T) this;
     }
 
     @Override
-    public T setOutputTag(String outputTag) {
+    public T setOutputType(String outputTag) {
         this.outputTag = outputTag;
         return (T) this;
     }
@@ -80,7 +80,7 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public T setOriginalText(String originalText) {
+    public T setInputText(String originalText) {
         this.originalText = originalText;
         return (T) this;
     }
@@ -98,14 +98,22 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public T setInputAttr(String key, String value) {
-        inputAttr.put(key, value);
+    public T setInputAttribute(String key, String value) {
+        if(null == value || value.isEmpty()) {
+            inputAttr.remove(key);
+        } else {
+            inputAttr.put(key, value);
+        }
         return (T) this;
     }
 
     @Override
-    public T setOutputAttr(String key, String value) {
-        outputAttr.put(key, value);
+    public T setOutputAttrute(String key, String value) {
+        if(null == value || value.isEmpty()) {
+            outputAttr.remove(key);
+        } else {
+            outputAttr.put(key, value);
+        }
         return (T) this;
     }
 

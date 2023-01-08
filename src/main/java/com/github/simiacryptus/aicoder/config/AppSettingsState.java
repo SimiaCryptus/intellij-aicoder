@@ -37,7 +37,8 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public @NotNull String humanLanguage = "English";
     public int maxPrompt = 5000;
     public TranslationRequestTemplate translationRequestTemplate = TranslationRequestTemplate.XML;
-    public LogLevel apiLogLevel = LogLevel.Info;
+    public LogLevel apiLogLevel = LogLevel.Debug;
+    public boolean devActions = false;
 
     public AppSettingsState() {
     }
@@ -46,7 +47,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         return ApplicationManager.getApplication().getService(AppSettingsState.class);
     }
 
-    public TranslationRequest createTranslationRequestTemplate() {
+    public TranslationRequest createTranslationRequest() {
         return translationRequestTemplate.get(this);
     }
 
@@ -73,12 +74,15 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         if (!Objects.equals(apiBase, that.apiBase)) return false;
         if (!Objects.equals(apiKey, that.apiKey)) return false;
         if (!Objects.equals(model, that.model)) return false;
+        if (!Objects.equals(translationRequestTemplate, that.translationRequestTemplate)) return false;
+        if (!Objects.equals(apiLogLevel, that.apiLogLevel)) return false;
+        if (!Objects.equals(devActions, that.devActions)) return false;
         return Objects.equals(style, that.style);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(apiBase, apiKey, model, maxTokens, temperature);
+        return Objects.hash(apiBase, apiKey, model, maxTokens, temperature, translationRequestTemplate, apiLogLevel, devActions, style);
     }
 
     public void addInstructionToHistory(String instruction) {

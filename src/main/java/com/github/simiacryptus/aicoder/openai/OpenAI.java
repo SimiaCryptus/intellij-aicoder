@@ -9,6 +9,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
+import com.jetbrains.rd.util.LogLevel;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -63,7 +64,7 @@ public class OpenAI {
             }
             CompletionResponse completionResponse = getMapper().readValue(result, CompletionResponse.class);
             String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse(""), completionRequest.prompt).replace("\n", "\n\t");
-            requestLog(String.format("Text Completion Request\nPrefix:\n%s\n\nCompletion:\n%s", completionRequest.prompt.replace("\n", "\n\t"), completionResult));
+            log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n%s\n\nCompletion:\n%s", completionRequest.prompt.replace("\n", "\n\t"), completionResult));
             //writeRequestLog(String.format("Request:\n%s\n\nResponse:\n%s", request, result));
             return completionResponse;
         } catch (InterruptedException e) {
@@ -72,9 +73,9 @@ public class OpenAI {
         }
     }
 
-    private void requestLog(String msg) {
+    private void log(LogLevel level, String msg) {
         String message = msg.trim().replace("\n", "\n\t");
-        switch (getSettingsState().apiLogLevel) {
+        switch (level) {
             case Error:
                 log.error(message);
                 break;
@@ -92,14 +93,15 @@ public class OpenAI {
 
     public void moderate(@NotNull String text) throws IOException, InterruptedException, ModerationException {
         String body = getMapper().writeValueAsString(Map.of("input", text));
-        String result = post(getSettingsState().apiBase + "/moderations", body);
+        AppSettingsState settings = getSettingsState();
+        String result = post(settings.apiBase + "/moderations", body);
         JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
         if (jsonObject.has("error")) {
             JsonObject errorObject = jsonObject.getAsJsonObject("error");
             throw new IOException(errorObject.get("message").getAsString());
         }
         JsonObject moderationResult = jsonObject.getAsJsonArray("results").get(0).getAsJsonObject();
-        requestLog(String.format("Moderation Request\nText:\n%s\n\nResult:\n%s", text.replace("\n", "\n\t"), result));
+        log(LogLevel.Debug, String.format("Moderation Request\nText:\n%s\n\nResult:\n%s", text.replace("\n", "\n\t"), result));
         if (moderationResult.get("flagged").getAsBoolean()) {
             JsonObject categoriesObj = moderationResult.get("categories").getAsJsonObject();
             throw new ModerationException("Moderation flagged this request due to " + categoriesObj.keySet().stream().filter(c -> categoriesObj.get(c).getAsBoolean()).reduce((a, b) -> a + ", " + b).orElse("???"));

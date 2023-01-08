@@ -21,7 +21,7 @@
         <group id="org.intellij.sdk.action.DynamicActionGroup"
                class="com.github.simiacryptus.aicoder.AICoderMainMenu"
                popup="true"
-               text="AI Coder"
+               text="_AI Coder"
                icon="AllIcons.Actions.Lightning"
                description="AI Coding Assistant Tools"
         >

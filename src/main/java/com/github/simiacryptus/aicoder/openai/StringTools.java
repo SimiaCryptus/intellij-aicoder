@@ -53,6 +53,15 @@ public class StringTools {
         }
     }
 
+    public static @NotNull String stripSuffix(@NotNull String text, @NotNull String suffix) {
+        boolean endsWith = text.endsWith(suffix);
+        if (endsWith) {
+            return text.substring(0, text.length()- suffix.length());
+        } else {
+            return text;
+        }
+    }
+
     public static String lineWrapping(String description) {
         return Arrays.stream(description.trim().split("\\.")).map(String::trim).collect(Collectors.joining("\n"));
     }

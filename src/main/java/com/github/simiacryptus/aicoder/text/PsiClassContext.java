@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.text;
 
+import com.github.simiacryptus.aicoder.openai.StringTools;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -7,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PsiClassContext {
@@ -14,7 +16,6 @@ public class PsiClassContext {
     public final boolean isOverlap;
     public final String text;
     public final ArrayList<PsiClassContext> children = new ArrayList<>();
-    boolean verbose = false;
 
     public PsiClassContext(String text, boolean isPrior, boolean isOverlap) {
         this.isPrior = isPrior;
@@ -41,7 +42,7 @@ public class PsiClassContext {
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
             String indent = "";
-            @NotNull PsiClassContext classBuffer = PsiClassContext.this;
+            @NotNull PsiClassContext currentContext = PsiClassContext.this;
 
             @Override
             public void visitElement(@NotNull PsiElement element) {
@@ -49,46 +50,55 @@ public class PsiClassContext {
                 TextRange textRange = element.getTextRange();
                 int textRangeEndOffset = textRange.getEndOffset() + 1;
                 int textRangeStartOffset = textRange.getStartOffset();
+                // Check if the element comes before the selection
                 boolean isPrior = textRangeEndOffset < selectionStart;
+                // Check if the element overlaps with the selection
                 boolean isOverlap = (textRangeStartOffset >= selectionStart && textRangeStartOffset <= selectionEnd) || (textRangeEndOffset >= selectionStart && textRangeEndOffset <= selectionEnd) ||
-                        (textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart) || (textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd);
+                    (textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart) || (textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd);
+                // Check if the element is within the selection
                 boolean within = (textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart) && (textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd);
                 String simpleName = element.getClass().getSimpleName();
                 if (simpleName.equals("PsiImportListImpl")) {
-                    classBuffer.children.add(new PsiClassContext(text.trim(), isPrior, isOverlap));
+                    currentContext.children.add(new PsiClassContext(text.trim(), isPrior, isOverlap));
                 } else if (simpleName.equals("PsiCommentImpl") || simpleName.equals("PsiDocCommentImpl")) {
                     if (within) {
-                        classBuffer.children.add(new PsiClassContext(indent + text.trim(), isPrior, isOverlap));
+                        currentContext.children.add(new PsiClassContext(indent + text.trim(), isPrior, isOverlap));
                     }
                 } else if (simpleName.equals("PsiMethodImpl") || simpleName.equals("PsiFieldImpl")) {
-                    String docComment = PsiUtil.getLargestBlock(element, "PsiDocCommentImpl");
                     String declaration = text;
-                    if (declaration.startsWith(docComment))
-                        declaration = declaration.substring(docComment.length());
-                    String block = PsiUtil.getLargestBlock(element, "PsiCodeBlockImpl");
-                    if (declaration.endsWith(block))
-                        declaration = declaration.substring(0, declaration.length() - block.length());
-                    classBuffer.children.add(new PsiClassContext(indent + declaration.trim() + (isOverlap ? " {" : ";"), isPrior, isOverlap));
+                    PsiElement docComment = PsiUtil.getLargestBlock(element, "PsiDocCommentImpl");
+                    if(null == docComment)  docComment = PsiUtil.getFirstBlock(element, "PsiCommentImpl");
+                    if(null != docComment) declaration = StringTools.stripPrefix(declaration.trim(), docComment.getText().trim());
+                    PsiElement codeBlock = PsiUtil.getLargestBlock(element, "PsiCodeBlockImpl");
+                    if(null != codeBlock) declaration = StringTools.stripSuffix(declaration.trim(), codeBlock.getText().trim());
+                    PsiClassContext newNode = new PsiClassContext(indent + declaration.trim() + (isOverlap ? " {" : ";"), isPrior, isOverlap);
+                    currentContext.children.add(newNode);
                     String prevIndent = indent;
                     indent = indent + "  ";
+                    PsiClassContext prevclassBuffer = currentContext;
+                    currentContext = newNode;
                     element.acceptChildren(visitor.get());
+                    currentContext = prevclassBuffer;
                     indent = prevIndent;
+                } else if (simpleName.equals("PsiLocalVariableImpl")) {
+                    currentContext.children.add(new PsiClassContext(indent + text.trim() + ";", isPrior, isOverlap));
                 } else if (simpleName.equals("PsiClassImpl")) {
                     String declarationText = indent + text.substring(0, text.indexOf('{')).trim() + " {";
                     PsiClassContext newNode = new PsiClassContext(declarationText, isPrior, isOverlap);
-                    classBuffer.children.add(newNode);
-                    PsiClassContext prevclassBuffer = classBuffer;
-                    classBuffer = newNode;
+                    currentContext.children.add(newNode);
+                    PsiClassContext prevclassBuffer = currentContext;
+                    currentContext = newNode;
                     String prevIndent = indent;
                     indent = indent + "  ";
                     element.acceptChildren(visitor.get());
                     indent = prevIndent;
-                    classBuffer = prevclassBuffer;
+                    currentContext = prevclassBuffer;
                     if (!isOverlap) {
-                        classBuffer.children.add(new PsiClassContext("}", isPrior, isOverlap));
+                        currentContext.children.add(new PsiClassContext("}", isPrior, isOverlap));
                     }
+                } else if (!isOverlap && Arrays.asList("PsiCodeBlockImpl", "PsiForStatementImpl").contains(simpleName)) {
+                    // Skip
                 } else {
-                    if (verbose) System.out.printf("%s -> %s%n", simpleName, text);
                     element.acceptChildren(visitor.get());
                 }
                 super.visitElement(element);

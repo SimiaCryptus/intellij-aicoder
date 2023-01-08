@@ -14,7 +14,6 @@ public class PsiMarkdownContext {
     public final ArrayList<PsiMarkdownContext> children = new ArrayList<>();
     private final int start;
     private final PsiMarkdownContext parent;
-    boolean verbose = false;
 
     public PsiMarkdownContext(PsiMarkdownContext parent, String text, int start) {
         this.start = start;
@@ -47,9 +46,12 @@ public class PsiMarkdownContext {
                 TextRange textRange = element.getTextRange();
                 int textRangeEndOffset = textRange.getEndOffset() + 1;
                 int textRangeStartOffset = textRange.getStartOffset();
+                // Check if the element comes before the selection
                 boolean isPrior = textRangeEndOffset < selectionStart;
+                // Check if the element overlaps with the selection
                 boolean isOverlap = (textRangeStartOffset >= selectionStart && textRangeStartOffset <= selectionEnd) || (textRangeEndOffset >= selectionStart && textRangeEndOffset <= selectionEnd) ||
                         (textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart) || (textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd);
+                // Check if the element is within the selection
                 boolean within = (textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart) && (textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd);
                 if (!isPrior && !isOverlap) return;
                 String simpleName = element.getClass().getSimpleName();
@@ -69,7 +71,6 @@ public class PsiMarkdownContext {
                         element.acceptChildren(visitor.get());
                     }
                 } else {
-                    if (verbose) System.out.printf("%s -> %s%n", simpleName, text);
                     element.acceptChildren(visitor.get());
                 }
                 super.visitElement(element);

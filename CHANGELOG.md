@@ -6,8 +6,11 @@
 
 ## [0.1.4]
 ### Added
+- Improved configurability
+- Improved actions logic
+- Improved menu UI navigability
 - Improved exception handling
-- Added bash, json
+- Added support for bash, json, and others 
 
 ## [0.1.3]
 ### Added

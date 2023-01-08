@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.text.IndentedText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -31,6 +32,11 @@ public class CompletionRequest {
         this.stop = stop;
         this.logprobs = logprobs;
         this.echo = echo;
+    }
+
+    @Nullable
+    public String complete(String indent) throws IOException, ModerationException {
+        return getCompletionText(OpenAI.INSTANCE.complete(this), indent);
     }
 
     @Nullable

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public interface TranslationRequest {
-    @NotNull CompletionRequest buildRequest();
+    @NotNull CompletionRequest buildCompletionRequest();
 
     String getInputTag();
 
@@ -24,16 +24,16 @@ public interface TranslationRequest {
 
     int getMaxTokens();
 
-    TranslationRequest setInputTag(String inputTag);
+    TranslationRequest setInputType(String inputTag);
 
-    TranslationRequest setOutputTag(String outputTag);
+    TranslationRequest setOutputType(String outputTag);
 
     TranslationRequest setInstruction(String instruction);
 
-    TranslationRequest setInputAttr(String key, String value);
-    TranslationRequest setOutputAttr(String key, String value);
+    TranslationRequest setInputAttribute(String key, String value);
+    TranslationRequest setOutputAttrute(String key, String value);
 
-    TranslationRequest setOriginalText(String originalText);
+    TranslationRequest setInputText(String originalText);
 
     TranslationRequest setTemperature(double temperature);
 

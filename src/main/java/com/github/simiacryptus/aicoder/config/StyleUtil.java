@@ -120,21 +120,18 @@ public class StyleUtil {
 
     public static String describeTest(String style, ComputerLanguage language, String inputString) {
         AppSettingsState settings = AppSettingsState.getInstance();
-        CompletionRequest request = settings.createTranslationRequestTemplate()
-                .setInputTag(language.name())
-                .setOutputTag(settings.humanLanguage)
-                .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
-                .setInputAttr("type", "code")
-                .setOutputAttr("type", "description")
-                .setOutputAttr("style", style)
-                .setOriginalText(IndentedText.fromString(inputString).textBlock.trim())
-                .buildRequest();
         try {
-            CompletionResponse response = OpenAI.INSTANCE.complete(request);
-            String completionText = request.getCompletionText(response, "");
-            String trimmedText = completionText.trim();
-            String lineWrappedText = StringTools.lineWrapping(trimmedText);
-            return lineWrappedText;
+            return StringTools.lineWrapping(settings.createTranslationRequest()
+                    .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
+                    .setInputText(IndentedText.fromString(inputString).textBlock.trim())
+                    .setInputType(language.name())
+                    .setInputAttribute("type", "code")
+                    .setOutputType(settings.humanLanguage)
+                    .setOutputAttrute("type", "description")
+                    .setOutputAttrute("style", style)
+                    .buildCompletionRequest()
+                    .complete("")
+                    .trim());
         } catch (ModerationException e) {
             return e.getMessage();
         } catch (IOException e) {

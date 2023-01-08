@@ -92,23 +92,23 @@ public class PsiUtil {
         return largest.get();
     }
 
-    /**
-     * This method is used to get the largest block of a given type from a given PsiElement.
-     *
-     * @param element   The PsiElement from which the largest block is to be retrieved.
-     * @param blockType The type of the block to be retrieved.
-     * @return The largest block of the given type from the given PsiElement.
-     */
-    public static String getLargestBlock(@NotNull PsiElement element, String blockType) {
-        AtomicReference<String> largest = new AtomicReference<>("");
+    public static PsiElement getFirstBlock(@NotNull PsiElement element, String blockType) {
+        PsiElement[] children = element.getChildren();
+        if(null == children || 0 == children.length) return null;
+        PsiElement first = children[0];
+        if(first.getClass().getSimpleName().equals(blockType)) return first;
+        return null;
+    }
+
+    public static PsiElement getLargestBlock(@NotNull PsiElement element, String blockType) {
+        AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
                 String simpleName = element.getClass().getSimpleName();
                 if (simpleName.equals(blockType)) {
-                    String text = element.getText();
-                    largest.updateAndGet(s -> s.length() > text.length() ? s : text);
+                    largest.updateAndGet(s -> s != null && s.getText().length() > element.getText().length() ? s : element);
                     super.visitElement(element);
                 } else {
                     super.visitElement(element);
@@ -117,7 +117,8 @@ public class PsiUtil {
             }
         });
         element.accept(visitor.get());
-        return largest.get();
+        PsiElement psiElement = largest.get();
+        return psiElement;
     }
 
     /**
@@ -142,4 +143,38 @@ public class PsiUtil {
         element.accept(visitor.get());
         return set;
     }
+
+    public static @NotNull String printTree(@NotNull PsiElement element) {
+        StringBuilder builder = new StringBuilder();
+        printTree(element, builder, 0);
+        return builder.toString();
+    }
+
+    private static void printTree(@NotNull PsiElement element, @NotNull StringBuilder builder, int level) {
+        for (int i = 0; i < level; i++) {
+            builder.append("  ");
+        }
+        builder.append(element.getClass().getSimpleName() + "    " + element.getText().replaceAll("\n", "\\\\n"));
+        builder.append("\n");
+        for (PsiElement child : element.getChildren()) {
+            printTree(child, builder, level + 1);
+        }
+    }
+
+    public static PsiElement getLargestContainedEntity(PsiElement element, int selectionStart, int selectionEnd) {
+        if(null == element) return element;
+        TextRange textRange = element.getTextRange();
+        if(textRange.getStartOffset() >= selectionStart && textRange.getEndOffset() <= selectionEnd) return element;
+        PsiElement largestContainedChild = null;
+        for (PsiElement child : element.getChildren()) {
+            PsiElement entity = getLargestContainedEntity(child, selectionStart, selectionEnd);
+            if(null != entity) {
+                if (largestContainedChild == null || largestContainedChild.getTextRange().getLength() < entity.getTextRange().getLength()) {
+                    largestContainedChild = entity;
+                }
+            }
+        }
+        return largestContainedChild;
+    }
+
 }
