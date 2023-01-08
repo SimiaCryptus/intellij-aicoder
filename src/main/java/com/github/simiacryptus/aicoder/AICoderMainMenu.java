@@ -2,7 +2,6 @@ package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.ModerationException;
-import com.github.simiacryptus.aicoder.openai.StringTools;
 import com.github.simiacryptus.aicoder.text.IndentedText;
 import com.github.simiacryptus.aicoder.text.PsiClassContext;
 import com.github.simiacryptus.aicoder.text.PsiMarkdownContext;

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.github.simiacryptus.aicoder.openai.StringTools.stripPrefix;
+import static com.github.simiacryptus.aicoder.StringTools.stripPrefix;
 
 public class OpenAI {
 

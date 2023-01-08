@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.openai;
+package com.github.simiacryptus.aicoder;
 
 import org.jetbrains.annotations.NotNull;
 

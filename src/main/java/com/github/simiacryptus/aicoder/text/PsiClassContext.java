@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.text;
 
-import com.github.simiacryptus.aicoder.openai.StringTools;
+import com.github.simiacryptus.aicoder.StringTools;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;

@@ -1,6 +1,6 @@
-package com.github.simiacryptus.aicoder.config;
+package com.github.simiacryptus.aicoder;
 
-import com.github.simiacryptus.aicoder.ComputerLanguage;
+import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.*;
 import com.github.simiacryptus.aicoder.text.IndentedText;
 import com.intellij.openapi.diagnostic.Logger;

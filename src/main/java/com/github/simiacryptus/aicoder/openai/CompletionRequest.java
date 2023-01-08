@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static com.github.simiacryptus.aicoder.openai.StringTools.stripPrefix;
-import static com.github.simiacryptus.aicoder.openai.StringTools.stripUnbalancedTerminators;
+import static com.github.simiacryptus.aicoder.StringTools.stripPrefix;
+import static com.github.simiacryptus.aicoder.StringTools.stripUnbalancedTerminators;
 
 /**
  * The CompletionRequest class is used to create a request for completion of a given prompt.

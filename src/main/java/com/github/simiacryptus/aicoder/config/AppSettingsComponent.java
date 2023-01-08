@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.config;
 
+import com.github.simiacryptus.aicoder.StyleUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBPasswordField;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
-import java.util.UUID;
 
 public class AppSettingsComponent extends SimpleSettingsComponent<AppSettingsState> {
     @Name("API Base")
