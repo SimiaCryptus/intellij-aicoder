@@ -4,3 +4,5 @@
 build
 openai.key
 .run
+chain.crt
+*.pem

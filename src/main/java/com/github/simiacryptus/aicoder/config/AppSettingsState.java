@@ -31,8 +31,8 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public int maxTokens = 1000;
     public double temperature = 0.1;
     public @NotNull String style = "";
-    public @NotNull Map<String, Integer> mostUsedHistory = new HashMap<>();
-    public @NotNull List<String> mostRecentHistory = new ArrayList<>();
+    private @NotNull Map<String, Integer> mostUsedHistory = new HashMap<>();
+    private @NotNull List<String> mostRecentHistory = new ArrayList<>();
     public int historyLimit = 10;
     public @NotNull String humanLanguage = "English";
     public int maxPrompt = 5000;
