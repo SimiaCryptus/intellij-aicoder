@@ -1,12 +1,14 @@
-package com.github.simiacryptus.aicoder.text;
+package com.github.simiacryptus.aicoder.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PsiUtil {
@@ -46,6 +48,24 @@ public class PsiUtil {
         element.accept(visitor.get());
         return largest.get();
     }
+    public static List<PsiElement> getAll(@NotNull PsiElement element, String... types) {
+        final List<PsiElement> elements = new ArrayList<>();
+        final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
+        visitor.set(new PsiElementVisitor() {
+            @Override
+            public void visitElement(@NotNull PsiElement element) {
+                if (null == element) return;
+                if (Arrays.asList(types).contains(element.getClass().getSimpleName())) {
+                    elements.add(element);
+                } else {
+                    element.acceptChildren(visitor.get());
+                }
+                super.visitElement(element);
+            }
+        });
+        element.accept(visitor.get());
+        return elements;
+    }
 
     /**
      * This method is used to get the smallest intersecting entity of a given PsiElement.
@@ -55,8 +75,8 @@ public class PsiUtil {
      * @param selectionEnd   The end of the selection range.
      * @return The smallest intersecting entity of the given PsiElement.
      */
-    public static PsiElement getSmallestIntersectingEntity(@NotNull PsiElement element, int selectionStart, int selectionEnd) {
-        return getSmallestIntersectingEntity(element, selectionStart, selectionEnd, "PsiMethodImpl", "PsiFieldImpl", "PsiClassImpl");
+    public static PsiElement getSmallestIntersecting(@NotNull PsiElement element, int selectionStart, int selectionEnd) {
+        return getSmallestIntersecting(element, selectionStart, selectionEnd, "PsiMethodImpl", "PsiFieldImpl", "PsiClassImpl");
     }
 
     /**
@@ -68,7 +88,7 @@ public class PsiUtil {
      * @param types          The types of the elements to be retrieved.
      * @return The smallest intersecting entity from the given PsiElement.
      */
-    public static PsiElement getSmallestIntersectingEntity(@NotNull PsiElement element, int selectionStart, int selectionEnd, String... types) {
+    public static PsiElement getSmallestIntersecting(@NotNull PsiElement element, int selectionStart, int selectionEnd, String... types) {
         final AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {

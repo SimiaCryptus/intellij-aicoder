@@ -1,6 +1,10 @@
 package com.github.simiacryptus.aicoder.config;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.simiacryptus.aicoder.StyleUtil;
+import com.github.simiacryptus.aicoder.openai.OpenAI;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBPasswordField;
@@ -13,12 +17,31 @@ import java.awt.event.ActionEvent;
 import java.util.Arrays;
 
 public class AppSettingsComponent extends SimpleSettingsComponent<AppSettingsState> {
+    private static final Logger log = Logger.getInstance(AppSettingsComponent.class);
     @Name("API Base")
     public final JBTextField apiBase = new JBTextField();
     @Name("API Key")
     public final JBPasswordField apiKey = new JBPasswordField();
     @Name("Model")
-    public final JBTextField model = new JBTextField();
+    public final JComponent model = getModelSelector();
+
+    @NotNull
+    private static JComponent getModelSelector() {
+        try {
+            ObjectNode engines = OpenAI.INSTANCE.getEngines();
+            JsonNode data = engines.get("data");
+            String[] items = new String[data.size()];
+            for (int i = 0; i < data.size(); i++) {
+                items[i] = data.get(i).get("id").asText();
+            }
+            Arrays.sort(items);
+            return new ComboBox<String>(items);
+        } catch (Throwable e) {
+            log.warn(e);
+            return new JBTextField();
+        }
+    }
+
     @Name("Style")
     public final JBTextField style = new JBTextField();
     @Name("Human Language")

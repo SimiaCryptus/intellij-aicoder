@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static com.github.simiacryptus.aicoder.StringTools.stripPrefix;
-import static com.github.simiacryptus.aicoder.StringTools.stripUnbalancedTerminators;
+import static com.github.simiacryptus.aicoder.text.StringTools.stripPrefix;
+import static com.github.simiacryptus.aicoder.text.StringTools.stripUnbalancedTerminators;
 
 /**
  * The CompletionRequest class is used to create a request for completion of a given prompt.
@@ -34,22 +34,20 @@ public class CompletionRequest {
         this.echo = echo;
     }
 
-    @Nullable
+    @NotNull
     public String complete(String indent) throws IOException, ModerationException {
-        return getCompletionText(OpenAI.INSTANCE.complete(this), indent);
-    }
-
-    @Nullable
-    public String getCompletionText(CompletionResponse response, String indent) {
+        CompletionResponse response = OpenAI.INSTANCE.complete(this);
         return response
                 .getFirstChoice()
-                .map(completion -> stripPrefix(completion, this.prompt))
+                .map(String::trim)
+                .map(completion -> stripPrefix(completion, this.prompt.trim()))
+                .map(String::trim)
                 .map(completion -> stripUnbalancedTerminators(completion))
                 .map(IndentedText::fromString)
                 .map(indentedText -> indentedText.withIndent(indent))
                 .map(IndentedText::toString)
                 .map(indentedText -> indent + indentedText)
-                .orElse(null);
+                .orElse("");
     }
 
     public @NotNull CompletionRequest appendPrompt(String prompt) {
@@ -57,11 +55,19 @@ public class CompletionRequest {
         return this;
     }
 
-    public @NotNull CompletionRequest addStops(String @NotNull [] stop) {
+    public @NotNull CompletionRequest addStops(@NotNull String... newStops) {
         ArrayList<String> stops = new ArrayList<>();
-        Arrays.stream(this.stop).forEach(stops::add);
-        Arrays.stream(stop).forEach(stops::add);
-        this.stop = stops.stream().distinct().toArray(String[]::new);
+        for (String x : newStops) {
+            if (x != null) {
+                if (!x.isEmpty()) {
+                    stops.add(x);
+                }
+            }
+        }
+        if (!stops.isEmpty()) {
+            Arrays.stream(this.stop).forEach(stops::add);
+            this.stop = stops.stream().distinct().toArray(String[]::new);
+        }
         return this;
     }
 }

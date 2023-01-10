@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.text;
+package com.github.simiacryptus.aicoder.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;

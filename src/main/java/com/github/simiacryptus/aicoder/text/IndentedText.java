@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.text;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * This class provides a way to store and manipulate indented text blocks.
@@ -15,39 +16,53 @@ import java.util.Arrays;
  * This indentation is then used as the indentation for the IndentedText object.
  * <p>
  * The class also provides a method to create a new IndentedText object with a different indentation.
- *
  */
-public class IndentedText {
-    public static final String TAB_REPLACEMENT = "  ";
-    public static final String DELIMITER = "\n";
+public class IndentedText implements TextBlock {
 
-    public String indent;
-    public String textBlock;
+    public String getIndent() {
+        return indent;
+    }
 
-    public IndentedText(String indent, String textBlock) {
+    public static class Factory implements TextBlockFactory<IndentedText> {
+        @Override
+        public IndentedText fromString(String text) {
+            return IndentedText.fromString(text);
+        }
+
+        @Override
+        public boolean looksLike(String text) {
+            return true;
+        }
+    }
+
+    protected String indent;
+    protected String textBlock[];
+
+    public IndentedText(String indent, String... textBlock) {
         this.indent = indent;
         this.textBlock = textBlock;
     }
 
     public static @NotNull IndentedText fromString(String text) {
         text = text.replace("\t", TAB_REPLACEMENT);
-        long spaces = Arrays.stream(text.split(DELIMITER)).mapToLong(l -> l.chars().takeWhile(i -> i == ((int) ' ')).count()).filter(l -> l > 0).min().orElse(0L);
-        char[] chars = new char[(int) spaces];
-        Arrays.fill(chars, ' ');
-        String indent = String.valueOf(chars);
-        String stripped = Arrays.stream(text.split("\n"))
-                .map(s -> s.startsWith(indent) ? s.substring(indent.length()) : s)
-                .reduce((a, b) -> a + "\n" + b).get();
-        return new IndentedText(indent, stripped);
+        String indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
+        return new IndentedText(indent,
+                Arrays.stream(text.split(DELIMITER))
+                .map(s -> StringTools.stripPrefix(s, indent))
+                .toArray(String[]::new));
     }
 
     @Override
     public @NotNull String toString() {
-        return Arrays.stream(textBlock.split("\n"))
-                .reduce((a, b) -> a + "\n" + indent + b).get();
+        return Arrays.stream(rawString()).collect(Collectors.joining(DELIMITER + getIndent()));
     }
 
     public @NotNull IndentedText withIndent(String indent) {
         return new IndentedText(indent, textBlock);
+    }
+
+    @Override
+    public String[] rawString() {
+        return this.textBlock;
     }
 }
