@@ -88,10 +88,10 @@ public class EditorMenu extends ActionGroup {
             if (!language.docStyle.isEmpty()) children.add(docAction(extension, language));
 
             if (language == ComputerLanguage.Markdown) {
-                addIfNotNull(children, markdownListAction(e, inputHumanLanguage));
-                addIfNotNull(children, markdownNewTableRowsAction(e, inputHumanLanguage));
-                addIfNotNull(children, markdownNewTableColsAction(e, inputHumanLanguage));
-                addIfNotNull(children, markdownNewTableColsAction2(e, inputHumanLanguage));
+                addIfNotNull(children, markdownListAction(e));
+                addIfNotNull(children, markdownNewTableRowsAction(e));
+                addIfNotNull(children, markdownNewTableColsAction(e));
+                addIfNotNull(children, markdownNewTableColsAction2(e));
             }
 
             if (hasSelection(e)) {
@@ -312,11 +312,14 @@ public class EditorMenu extends ActionGroup {
     }
 
     @Nullable
-    public static AnAction markdownListAction(@NotNull AnActionEvent e, String humanLanguage) {
-        Caret caret = e.getRequiredData(CommonDataKeys.CARET);
-        PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
-        PsiElement list = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownListImpl");
-        if (null != list) {
+    public static AnAction markdownListAction(@NotNull AnActionEvent e) {
+        try {
+            Caret caret = e.getData(CommonDataKeys.CARET);
+            if(null == caret) return null;
+            PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+            if(null == psiFile) return null;
+            PsiElement list = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownListImpl");
+            if (null == list) return null;
             return new AnAction("Add _List Items", "Add list items", null) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent event) {
@@ -335,8 +338,10 @@ public class EditorMenu extends ActionGroup {
                     });
                 }
             };
+        } catch (Exception ex) {
+            log.error(ex);
+            return null;
         }
-        return null;
     }
 
     @NotNull
@@ -375,54 +380,54 @@ public class EditorMenu extends ActionGroup {
     }
 
     @Nullable
-    public static AnAction markdownNewTableColsAction(@NotNull AnActionEvent e, String humanLanguage) {
-        Caret caret = e.getRequiredData(CommonDataKeys.CARET);
-        PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
+    public static AnAction markdownNewTableColsAction(@NotNull AnActionEvent e) {
+        Caret caret = e.getData(CommonDataKeys.CARET);
+        if (null == caret) return null;
+        PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+        if (null == psiFile) return null;
         PsiElement table = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownTableImpl");
-        if (null != table) {
-            List<String> rows = Arrays.asList(transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl").stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
-            String n = Integer.toString(rows.size() * 2);
-            return new AnAction("Add _Table Columns", "Add table columns", null) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent event) {
-                    AppSettingsState settings = AppSettingsState.getInstance();
-                    String indent = getIndent(caret);
-                    List<String> newRows = newRows(settings, n, rows, "");
-                    String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
-                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                        editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
-                    });
-                }
-            };
-        }
-        return null;
+        if (null == table) return null;
+        List<String> rows = Arrays.asList(transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl").stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
+        String n = Integer.toString(rows.size() * 2);
+        return new AnAction("Add _Table Columns", "Add table columns", null) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                AppSettingsState settings = AppSettingsState.getInstance();
+                String indent = getIndent(caret);
+                List<String> newRows = newRows(settings, n, rows, "");
+                String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
+                WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                    editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
+                });
+            }
+        };
     }
 
     @Nullable
-    public static AnAction markdownNewTableColsAction2(@NotNull AnActionEvent e, String humanLanguage) {
-        Caret caret = e.getRequiredData(CommonDataKeys.CARET);
-        PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
+    public static AnAction markdownNewTableColsAction2(@NotNull AnActionEvent e) {
+        Caret caret = e.getData(CommonDataKeys.CARET);
+        if (null == caret) return null;
+        PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+        if (null == psiFile) return null;
         PsiElement table = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownTableImpl");
-        if (null != table) {
-            List<String> rows = Arrays.asList(transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl").stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
-            String n = Integer.toString(rows.size() * 2);
-            return new AnAction("Add Table _Column...", "Add table column...", null) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent event) {
-                    AppSettingsState settings = AppSettingsState.getInstance();
-                    String indent = getIndent(caret);
-                    String columnName = JOptionPane.showInputDialog(null, "Column Name:", "Add Column", JOptionPane.QUESTION_MESSAGE);
-                    List<String> newRows = newRows(settings, n, rows, "| " + columnName + " | ");
-                    String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
-                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                        editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
-                    });
-                }
-            };
-        }
-        return null;
+        if (null == table) return null;
+        List<String> rows = Arrays.asList(transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl").stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
+        String n = Integer.toString(rows.size() * 2);
+        return new AnAction("Add Table _Column...", "Add table column...", null) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                AppSettingsState settings = AppSettingsState.getInstance();
+                String indent = getIndent(caret);
+                String columnName = JOptionPane.showInputDialog(null, "Column Name:", "Add Column", JOptionPane.QUESTION_MESSAGE);
+                List<String> newRows = newRows(settings, n, rows, "| " + columnName + " | ");
+                String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
+                WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                    editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
+                });
+            }
+        };
     }
 
     static String transposeMarkdownTable(String table, boolean inputHeader, boolean outputHeader) {
@@ -467,10 +472,13 @@ public class EditorMenu extends ActionGroup {
     }
 
     @Nullable
-    public static AnAction markdownNewTableRowsAction(@NotNull AnActionEvent e, String humanLanguage) {
-        Caret caret = e.getRequiredData(CommonDataKeys.CARET);
-        PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
+    public static AnAction markdownNewTableRowsAction(@NotNull AnActionEvent e) {
+        Caret caret = e.getData(CommonDataKeys.CARET);
+        if (null == caret) return null;
+        PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+        if (null == psiFile) return null;
         PsiElement table = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownTableImpl");
+        if (null == table) return null;
         if (null != table) {
             List<String> rows = trim(PsiUtil.getAll(table, "MarkdownTableRowImpl").stream().map(PsiElement::getText).collect(Collectors.toList()), 10, true);
             String n = Integer.toString(rows.size() * 2);
