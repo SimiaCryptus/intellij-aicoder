@@ -19,7 +19,7 @@
 
     <actions>
         <group id="org.intellij.sdk.action.DynamicActionGroup"
-               class="com.github.simiacryptus.aicoder.AICoderMainMenu"
+               class="com.github.simiacryptus.aicoder.EditorMenu"
                popup="true"
                text="_AI Coder"
                icon="AllIcons.Actions.Lightning"

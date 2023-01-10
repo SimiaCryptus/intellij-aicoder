@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.github.simiacryptus.aicoder.StringTools.stripPrefix;
+import static com.github.simiacryptus.aicoder.text.StringTools.stripPrefix;
 
 public class OpenAI {
 
@@ -63,9 +63,8 @@ public class OpenAI {
                 throw new IOException(errorMessage);
             }
             CompletionResponse completionResponse = getMapper().readValue(result, CompletionResponse.class);
-            String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse(""), completionRequest.prompt).replace("\n", "\n\t");
-            log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n%s\n\nCompletion:\n%s", completionRequest.prompt.replace("\n", "\n\t"), completionResult));
-            //writeRequestLog(String.format("Request:\n%s\n\nResponse:\n%s", request, result));
+            String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").trim(), completionRequest.prompt.trim());
+            log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\n\nCompletion:\n\t%s", completionRequest.prompt.replace("\n", "\n\t"), completionResult.replace("\n", "\n\t")));
             return completionResponse;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -168,7 +167,7 @@ public class OpenAI {
     /**
      * Gets the response from the given URL.
      *
-     * @param url The URL to get the response from.
+     * @param url The URL to GET the response from.
      * @return The response from the given URL.
      * @throws IOException If an I/O error occurs.
      */

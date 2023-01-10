@@ -1,8 +1,9 @@
 package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
-import com.github.simiacryptus.aicoder.openai.*;
+import com.github.simiacryptus.aicoder.openai.ModerationException;
 import com.github.simiacryptus.aicoder.text.IndentedText;
+import com.github.simiacryptus.aicoder.text.StringTools;
 import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
@@ -90,8 +91,12 @@ public class StyleUtil {
             "Yoda-Speak"
     );
 
-    // This here code is gonna pick two random styles from a list of 'em and combine 'em with a random dialect
-    // It'll then return a string with the combination of the three
+    /**
+     *
+     * This method will generate a random combination of a dialect and style
+     *
+     * @return A string in the format of "Dialect - Casual, Inspirational"
+     */
     public static String randomStyle() {
         String dialect = dialectKeywords.get(new Random().nextInt(dialectKeywords.size()));
         String style1 = styleKeywords.get(new Random().nextInt(styleKeywords.size()));
@@ -112,18 +117,33 @@ public class StyleUtil {
                         "String randomItem = items.get(randomIndex);");
     }
 
+    /**
+     * Demonstrates the description of a given code snippet using a given style.
+     *
+     * @param style    The style to describe with.
+     * @param language The language of the code snippet.
+     * @param code     The code snippet to be described.
+     */
     public static void demoStyle(String style, ComputerLanguage language, String code) {
         String codeDescription = describeTest(style, language, code);
         String message = String.format("This code:\n    %s\nwas described as:\n    %s", code.replace("\n", "\n    "), codeDescription.replace("\n", "\n    "));
         JOptionPane.showMessageDialog(null, message, "Style Demo", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public static String describeTest(String style, ComputerLanguage language, String inputString) {
+    /**
+     * Describes some test code in the specified style and language.
+     *
+     * @param style       The style of the description.
+     * @param language    The language of the test.
+     * @param code The code.
+     * @return A description of the test in the specified style and language.
+     */
+    public static String describeTest(String style, ComputerLanguage language, String code) {
         AppSettingsState settings = AppSettingsState.getInstance();
         try {
             return StringTools.lineWrapping(settings.createTranslationRequest()
                     .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
-                    .setInputText(IndentedText.fromString(inputString).textBlock.trim())
+                    .setInputText(IndentedText.fromString(code).getTextBlock().trim())
                     .setInputType(language.name())
                     .setInputAttribute("type", "code")
                     .setOutputType(settings.humanLanguage)
@@ -131,7 +151,7 @@ public class StyleUtil {
                     .setOutputAttrute("style", style)
                     .buildCompletionRequest()
                     .complete("")
-                    .trim());
+                    .trim(), 120);
         } catch (ModerationException e) {
             return e.getMessage();
         } catch (IOException e) {
