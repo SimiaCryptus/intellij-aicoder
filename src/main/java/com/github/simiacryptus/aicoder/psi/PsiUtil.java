@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.psi;
 
+import com.github.simiacryptus.aicoder.text.StringTools;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -10,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 public class PsiUtil {
 
@@ -36,7 +38,7 @@ public class PsiUtil {
                 TextRange textRange = element.getTextRange();
                 boolean within = (textRange.getStartOffset() <= selectionStart && textRange.getEndOffset() + 1 >= selectionStart && textRange.getStartOffset() <= selectionEnd && textRange.getEndOffset() + 1 >= selectionEnd);
                 String simpleName = element.getClass().getSimpleName();
-                if (Arrays.asList(types).contains(simpleName)) {
+                if (Arrays.asList(expand(types)).contains(simpleName)) {
                     if (within) {
                         largest.updateAndGet(s -> (s == null ? 0 : s.getText().length()) > element.getText().length() ? s : element);
                     }
@@ -55,7 +57,7 @@ public class PsiUtil {
             @Override
             public void visitElement(@NotNull PsiElement element) {
                 if (null == element) return;
-                if (Arrays.asList(types).contains(element.getClass().getSimpleName())) {
+                if (Arrays.asList(expand(types)).contains(element.getClass().getSimpleName())) {
                     elements.add(element);
                 } else {
                     element.acceptChildren(visitor.get());
@@ -98,7 +100,7 @@ public class PsiUtil {
                 TextRange textRange = element.getTextRange();
                 boolean within = (textRange.getStartOffset() <= selectionStart && textRange.getEndOffset() + 1 >= selectionStart && textRange.getStartOffset() <= selectionEnd && textRange.getEndOffset() + 1 >= selectionEnd);
                 String simpleName = element.getClass().getSimpleName();
-                if (Arrays.asList(types).contains(simpleName)) {
+                if (Arrays.asList(expand(types)).contains(simpleName)) {
                     if (within) {
                         largest.updateAndGet(s -> (s == null ? Integer.MAX_VALUE : s.getText().length()) < element.getText().length() ? s : element);
                     }
@@ -110,6 +112,10 @@ public class PsiUtil {
         });
         element.accept(visitor.get());
         return largest.get();
+    }
+
+    private static String[] expand(String[] types) {
+        return Arrays.stream(types).flatMap(x-> Stream.of(x, StringTools.stripSuffix(x, "Impl"))).distinct().toArray(String[]::new);
     }
 
     public static PsiElement getFirstBlock(@NotNull PsiElement element, String blockType) {

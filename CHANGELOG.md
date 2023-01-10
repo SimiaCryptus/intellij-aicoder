@@ -4,9 +4,15 @@
 
 ## [Unreleased]
 
-## [0.1.5]
+## [0.1.6]
+
 ### Added
-- Added dropdown model selection 
+- Fix compatibility issues
+
+## [0.1.5]
+
+### Added
+- Added dropdown model selection
 - Improved comment parsing
 - Added functions to create new list items and table rows and columns (markdown)
 
