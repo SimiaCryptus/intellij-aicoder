@@ -1,8 +1,9 @@
 package com.github.simiacryptus.aicoder.openai;
 
 import com.github.simiacryptus.aicoder.text.IndentedText;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,9 +36,8 @@ public class CompletionRequest {
     }
 
     @NotNull
-    public String complete(String indent) throws IOException, ModerationException {
-        CompletionResponse response = OpenAI.INSTANCE.complete(this);
-        return response
+    public ListenableFuture<String> complete(String indent) {
+        return OpenAI.map(OpenAI.INSTANCE.complete(this), response -> response
                 .getFirstChoice()
                 .map(String::trim)
                 .map(completion -> stripPrefix(completion, this.prompt.trim()))
@@ -47,7 +47,7 @@ public class CompletionRequest {
                 .map(indentedText -> indentedText.withIndent(indent))
                 .map(IndentedText::toString)
                 .map(indentedText -> indent + indentedText)
-                .orElse("");
+                .orElse(""));
     }
 
     public @NotNull CompletionRequest appendPrompt(String prompt) {

@@ -1,13 +1,17 @@
 package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.ModerationException;
+import com.github.simiacryptus.aicoder.openai.OpenAI;
 import com.github.simiacryptus.aicoder.psi.PsiClassContext;
 import com.github.simiacryptus.aicoder.psi.PsiMarkdownContext;
 import com.github.simiacryptus.aicoder.psi.PsiUtil;
 import com.github.simiacryptus.aicoder.text.IndentedText;
 import com.github.simiacryptus.aicoder.text.StringTools;
 import com.github.simiacryptus.aicoder.text.TextBlockFactory;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +40,8 @@ import java.util.stream.Stream;
 
 
 public class EditorMenu extends ActionGroup {
+
+
     private static final Logger log = Logger.getInstance(EditorMenu.class);
 
     public static void handle(@NotNull Throwable ex) {
@@ -120,7 +125,7 @@ public class EditorMenu extends ActionGroup {
         String computerLanguage = language.name();
         return TextReplacementAction.create("_To " + outputHumanLanguage, String.format("Describe %s -> %s", outputHumanLanguage, computerLanguage), null, (event, string) -> {
             AppSettingsState settings = AppSettingsState.getInstance();
-            return settings.createTranslationRequest()
+            CompletionRequest completionRequest = settings.createTranslationRequest()
                     .setInstruction(getInstruction(settings.style, "Describe this code"))
                     .setInputText(string)
                     .setInputType(computerLanguage)
@@ -128,8 +133,9 @@ public class EditorMenu extends ActionGroup {
                     .setOutputType(outputHumanLanguage.toLowerCase())
                     .setOutputAttrute("type", "output")
                     .setOutputAttrute("style", settings.style)
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return completionRequest.complete(indent);
         });
     }
 
@@ -137,15 +143,16 @@ public class EditorMenu extends ActionGroup {
     public static TextReplacementAction fromHumanLanguageAction(String inputHumanLanguage, ComputerLanguage language) {
         String computerLanguage = language.name();
         return TextReplacementAction.create("_From " + inputHumanLanguage, String.format("Implement %s -> %s", inputHumanLanguage, computerLanguage), null, (event, string) -> {
-            return AppSettingsState.getInstance().createTranslationRequest()
+            CompletionRequest completionRequest = AppSettingsState.getInstance().createTranslationRequest()
                     .setInputType(inputHumanLanguage.toLowerCase())
                     .setOutputType(computerLanguage)
                     .setInstruction("Implement this specification")
                     .setInputAttribute("type", "input")
                     .setOutputAttrute("type", "output")
                     .setInputText(string)
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return completionRequest.complete(indent);
         });
     }
 
@@ -154,7 +161,7 @@ public class EditorMenu extends ActionGroup {
         String computerLanguage = language.name();
         return TextReplacementAction.create("Add Code _Comments", "Add Code Comments", null, (event, string) -> {
             AppSettingsState settings = AppSettingsState.getInstance();
-            return settings.createTranslationRequest()
+            CompletionRequest completionRequest = settings.createTranslationRequest()
                     .setInputType(computerLanguage)
                     .setOutputType(computerLanguage)
                     .setInstruction(getInstruction(settings.style, "Rewrite to include detailed " + outputHumanLanguage + " code comments for every line"))
@@ -162,8 +169,9 @@ public class EditorMenu extends ActionGroup {
                     .setOutputAttrute("type", "commented")
                     .setOutputAttrute("style", settings.style)
                     .setInputText(string)
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return completionRequest.complete(indent);
         });
     }
 
@@ -172,7 +180,7 @@ public class EditorMenu extends ActionGroup {
         return TextReplacementAction.create("_Describe Code and Prepend Comment", "Add JavaDoc Comments", null, (event, inputString) -> {
             AppSettingsState settings = AppSettingsState.getInstance();
             String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            String description = settings.createTranslationRequest()
+            CompletionRequest completionRequest = settings.createTranslationRequest()
                     .setInputType(language.name())
                     .setOutputType(outputHumanLanguage)
                     .setInstruction(getInstruction(settings.style, "Explain this " + language.name() + " in " + outputHumanLanguage))
@@ -180,9 +188,11 @@ public class EditorMenu extends ActionGroup {
                     .setOutputAttrute("type", "description")
                     .setOutputAttrute("style", settings.style)
                     .setInputText(IndentedText.fromString(inputString).getTextBlock().trim())
-                    .buildCompletionRequest()
-                    .complete(indent);
-            return "\n" + indent + language.blockComment.fromString(StringTools.lineWrapping(description.trim(), 120)).withIndent(indent) + "\n" + indent + inputString;
+                    .buildCompletionRequest();
+            return Futures.transform(
+                    completionRequest.complete(indent),
+                    description->"\n" + indent + language.blockComment.fromString(StringTools.lineWrapping(description.trim(), 120)).withIndent(indent) + "\n" + indent + inputString,
+                    OpenAI.INSTANCE.pool);
         });
     }
 
@@ -197,15 +207,16 @@ public class EditorMenu extends ActionGroup {
             String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
             AppSettingsState settings = AppSettingsState.getInstance();
             settings.addInstructionToHistory(instruction);
-            return settings.createTranslationRequest()
+            CompletionRequest completionRequest = settings.createTranslationRequest()
                     .setInputType(computerLanguage)
                     .setOutputType(computerLanguage)
                     .setInstruction(instruction)
                     .setInputAttribute("type", "before")
                     .setOutputAttrute("type", "after")
                     .setInputText(IndentedText.fromString(string).getTextBlock())
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return completionRequest.complete(indent);
         });
     }
 
@@ -233,35 +244,32 @@ public class EditorMenu extends ActionGroup {
         return new AnAction("_Add " + language.docStyle + " Comments", "Add " + language.docStyle + " Comments", null) {
             @Override
             public void actionPerformed(@NotNull final AnActionEvent event) {
-                try {
-                    Caret caret = event.getData(CommonDataKeys.CARET);
-                    PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
-                    PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
-                    if (null == smallestIntersectingMethod) return;
-                    AppSettingsState settings = AppSettingsState.getInstance();
-                    String code = smallestIntersectingMethod.getText();
-                    IndentedText indentedInput = IndentedText.fromString(code);
-                    String indent = indentedInput.getIndent();
-                    String rawDocString = settings.createTranslationRequest()
-                            .setInputType(extension)
-                            .setOutputType(extension)
-                            .setInstruction(getInstruction(settings.style, "Rewrite to include detailed " + language.docStyle))
-                            .setInputAttribute("type", "uncommented")
-                            .setOutputAttrute("type", "commented")
-                            .setOutputAttrute("style", settings.style)
-                            .setInputText(indentedInput.getTextBlock())
-                            .buildCompletionRequest()
-                            .addStops(language.getMultilineCommentSuffix())
-                            .complete("").trim();
-                    final String newText = language.docComment.fromString(rawDocString).withIndent(indent) + "\n" + indent + StringTools.trimPrefix(indentedInput.toString());
-                    //language.docComment.fromString(rawDocString).withIndent(indent).toString()
+                Caret caret = event.getData(CommonDataKeys.CARET);
+                PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
+                PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
+                if (null == smallestIntersectingMethod) return;
+                AppSettingsState settings = AppSettingsState.getInstance();
+                String code = smallestIntersectingMethod.getText();
+                IndentedText indentedInput = IndentedText.fromString(code);
+                String indent = indentedInput.getIndent();
+                CompletionRequest completionRequest = settings.createTranslationRequest()
+                        .setInputType(extension)
+                        .setOutputType(extension)
+                        .setInstruction(getInstruction(settings.style, "Rewrite to include detailed " + language.docStyle))
+                        .setInputAttribute("type", "uncommented")
+                        .setOutputAttrute("type", "commented")
+                        .setOutputAttrute("style", settings.style)
+                        .setInputText(indentedInput.getTextBlock())
+                        .buildCompletionRequest()
+                        .addStops(language.getMultilineCommentSuffix());
+                ListenableFuture<String> future = completionRequest.complete("");
+                OpenAI.onSuccess(future, docString->{
                     WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                        final String newText = language.docComment.fromString(docString.trim()).withIndent(indent) + "\n" + indent + StringTools.trimPrefix(indentedInput.toString());
                         final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
                         editor.getDocument().replaceString(smallestIntersectingMethod.getTextRange().getStartOffset(), smallestIntersectingMethod.getTextRange().getEndOffset(), newText);
                     });
-                } catch (ModerationException | IOException ex) {
-                    handle(ex);
-                }
+                });
             }
         };
     }
@@ -276,15 +284,16 @@ public class EditorMenu extends ActionGroup {
     public static TextReplacementAction pasteAction(@NotNull String language) {
         return TextReplacementAction.create("_Paste", "Paste", null, (event, string) -> {
             String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor).toString().trim();
-            return AppSettingsState.getInstance().createTranslationRequest()
+            CompletionRequest completionRequest = AppSettingsState.getInstance().createTranslationRequest()
                     .setInputType("source")
                     .setOutputType("translated")
                     .setInstruction("Translate this input into " + language)
                     .setInputAttribute("language", "autodetect")
                     .setOutputAttrute("language", language)
                     .setInputText(text)
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return completionRequest.complete(indent);
         });
     }
 
@@ -299,15 +308,16 @@ public class EditorMenu extends ActionGroup {
         return TextReplacementAction.create(instruction, instruction, null, (event, string) -> {
             AppSettingsState settings = AppSettingsState.getInstance();
             settings.addInstructionToHistory(instruction);
-            return settings.createTranslationRequest()
+            CompletionRequest completionRequest = settings.createTranslationRequest()
                     .setInputType(computerLanguage)
                     .setOutputType(computerLanguage)
                     .setInstruction(instruction)
                     .setInputAttribute("type", "before")
                     .setOutputAttrute("type", "after")
                     .setInputText(IndentedText.fromString(string).getTextBlock())
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
+            String indent = getIndent(event.getData(CommonDataKeys.CARET));
+            return completionRequest.complete(indent);
         });
     }
 
@@ -327,14 +337,15 @@ public class EditorMenu extends ActionGroup {
                     List<String> items = trim(PsiUtil.getAll(list, "MarkdownListItemImpl").stream().map(item -> PsiUtil.getAll(item, "MarkdownParagraphImpl").get(0).getText()).collect(Collectors.toList()), 10, false);
                     String indent = getIndent(caret);
                     String n = Integer.toString(items.size() * 2);
-                    List<String> newItems = getNewItems(settings, items, n);
-                    String strippedList = Arrays.stream(list.getText().split("\n")).map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.joining("\n"));
-                    String bulletString = Stream.of("- [ ] ", "- ", "* ")
-                            .filter(strippedList::startsWith).findFirst().orElse("1. ");
-                    String itemText = indent + newItems.stream().map(x -> bulletString + x).collect(Collectors.joining("\n" + indent));
-                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                        editor.getDocument().insertString(list.getTextRange().getEndOffset(), "\n" + itemText);
+                    OpenAI.onSuccess(getNewItems(settings, items, n), newItems->{
+                        WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                            String strippedList = Arrays.stream(list.getText().split("\n")).map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.joining("\n"));
+                            String bulletString = Stream.of("- [ ] ", "- ", "* ")
+                                    .filter(strippedList::startsWith).findFirst().orElse("1. ");
+                            String itemText = indent + newItems.stream().map(x -> bulletString + x).collect(Collectors.joining("\n" + indent));
+                            final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                            editor.getDocument().insertString(list.getTextRange().getEndOffset(), "\n" + itemText);
+                        });
                     });
                 }
             };
@@ -356,27 +367,20 @@ public class EditorMenu extends ActionGroup {
         return items;
     }
 
-    @NotNull
-    private static List<String> getNewItems(AppSettingsState settings, List<String> items, String n) {
+    private static ListenableFuture<List<String>> getNewItems(AppSettingsState settings, List<String> items, String n) {
         String listPrefix = "* ";
-        String complete;
-        try {
-            complete = settings.createTranslationRequest()
-                    .setInstruction(getInstruction(settings.style, "List " + n + " items"))
-                    .setInputType("instruction")
-                    .setInputText("List " + n + " items")
-                    .setOutputType("list")
-                    .setOutputAttrute("style", settings.style)
-                    .buildCompletionRequest()
-                    .appendPrompt(items.stream().map(x -> listPrefix + x).collect(Collectors.joining("\n")) + "\n" + listPrefix)
-                    .complete("");
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } catch (ModerationException ex) {
-            throw new RuntimeException(ex);
-        }
+        CompletionRequest completionRequest = settings.createTranslationRequest()
+                .setInstruction(getInstruction(settings.style, "List " + n + " items"))
+                .setInputType("instruction")
+                .setInputText("List " + n + " items")
+                .setOutputType("list")
+                .setOutputAttrute("style", settings.style)
+                .buildCompletionRequest()
+                .appendPrompt(items.stream().map(x -> listPrefix + x).collect(Collectors.joining("\n")) + "\n" + listPrefix);
 
-        return Arrays.stream(complete.split("\n")).map(String::trim).filter(x -> x != null && !x.isEmpty()).map(x -> StringTools.stripPrefix(x, listPrefix)).collect(Collectors.toList());
+        return OpenAI.map(completionRequest.complete(""), complete->{
+            return Arrays.stream(complete.split("\n")).map(String::trim).filter(x -> x != null && !x.isEmpty()).map(x -> StringTools.stripPrefix(x, listPrefix)).collect(Collectors.toList());
+        });
     }
 
     @Nullable
@@ -394,11 +398,12 @@ public class EditorMenu extends ActionGroup {
             public void actionPerformed(@NotNull AnActionEvent event) {
                 AppSettingsState settings = AppSettingsState.getInstance();
                 String indent = getIndent(caret);
-                List<String> newRows = newRows(settings, n, rows, "");
-                String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
-                WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                    editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
+                OpenAI.onSuccess(newRows(settings, n, rows, ""), newRows->{
+                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                        String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
+                        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                        editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
+                    });
                 });
             }
         };
@@ -420,11 +425,12 @@ public class EditorMenu extends ActionGroup {
                 AppSettingsState settings = AppSettingsState.getInstance();
                 String indent = getIndent(caret);
                 String columnName = JOptionPane.showInputDialog(null, "Column Name:", "Add Column", JOptionPane.QUESTION_MESSAGE);
-                List<String> newRows = newRows(settings, n, rows, "| " + columnName + " | ");
-                String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
-                WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                    editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
+                OpenAI.onSuccess(newRows(settings, n, rows, "| " + columnName + " | "), newRows->{
+                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                        String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
+                        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                        editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
+                    });
                 });
             }
         };
@@ -487,11 +493,12 @@ public class EditorMenu extends ActionGroup {
                 public void actionPerformed(@NotNull AnActionEvent event) {
                     AppSettingsState settings = AppSettingsState.getInstance();
                     String indent = getIndent(caret);
-                    List<String> newRows = newRows(settings, n, rows, "");
-                    String itemText = indent + newRows.stream().collect(Collectors.joining("\n" + indent));
-                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                        editor.getDocument().insertString(table.getTextRange().getEndOffset(), "\n" + itemText);
+                    OpenAI.onSuccess(newRows(settings, n, rows, ""), newRows->{
+                        WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                            String itemText = indent + newRows.stream().collect(Collectors.joining("\n" + indent));
+                            final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                            editor.getDocument().insertString(table.getTextRange().getEndOffset(), "\n" + itemText);
+                        });
                     });
                 }
             };
@@ -499,23 +506,28 @@ public class EditorMenu extends ActionGroup {
         return null;
     }
 
-    @NotNull
-    private static List<String> newRows(AppSettingsState settings, String n, List<String> rows, String rowPrefix) {
-        String complete;
-        try {
-            complete = settings.createTranslationRequest()
-                    .setInstruction(getInstruction(settings.style, "List " + n + " items"))
-                    .setInputType("instruction")
-                    .setInputText("List " + n + " items")
-                    .setOutputType("markdown")
-                    .setOutputAttrute("style", settings.style)
-                    .buildCompletionRequest()
-                    .appendPrompt("\n" + String.join("\n", rows) + "\n" + rowPrefix)
-                    .complete("");
-        } catch (IOException | ModerationException ex) {
-            throw new RuntimeException(ex);
-        }
-        return Arrays.stream((rowPrefix + complete).split("\n")).map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.toList());
+    /**
+     * Generates a list of strings based on the given parameters.
+     *
+     * @param settings  The application settings state.
+     * @param n         The number of items to list.
+     * @param rows      The existing list of rows.
+     * @param rowPrefix The prefix for the new rows.
+     * @return A list of strings generated from the given parameters.
+     * @throws RuntimeException If an IOException or ModerationException occurs.
+     */
+    private static ListenableFuture<List<String>> newRows(AppSettingsState settings, String n, List<String> rows, String rowPrefix) {
+        CompletionRequest completionRequest = settings.createTranslationRequest()
+                .setInstruction(getInstruction(settings.style, "List " + n + " items"))
+                .setInputType("instruction")
+                .setInputText("List " + n + " items")
+                .setOutputType("markdown")
+                .setOutputAttrute("style", settings.style)
+                .buildCompletionRequest()
+                .appendPrompt("\n" + String.join("\n", rows) + "\n" + rowPrefix);
+        return OpenAI.map(completionRequest.complete(""), complete->{
+            return Arrays.stream((rowPrefix + complete).split("\n")).map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.toList());
+        });
     }
 
     @Nullable
@@ -531,7 +543,8 @@ public class EditorMenu extends ActionGroup {
                     String context = PsiMarkdownContext.getContext(psiFile, selectionStart, selectionEnd).toString(selectionEnd);
                     context = context + "\n<!-- " + humanDescription + "-->\n";
                     context = context + "\n";
-                    return settings.createTranslationRequest()
+                    //.addStops(new String[]{"#"})
+                    CompletionRequest completionRequest = settings.createTranslationRequest()
                             .setOutputType("markdown")
                             .setInstruction(getInstruction(settings.style, String.format("Using Markdown and %s", humanLanguage)))
                             .setInputType("instruction")
@@ -540,8 +553,9 @@ public class EditorMenu extends ActionGroup {
                             .setOutputAttrute("style", settings.style)
                             .buildCompletionRequest()
                             //.addStops(new String[]{"#"})
-                            .appendPrompt(context)
-                            .complete(getIndent(caret));
+                            .appendPrompt(context);
+                    String indent = getIndent(caret);
+                    return completionRequest.complete(indent);
                 });
             }
         }
@@ -587,33 +601,30 @@ public class EditorMenu extends ActionGroup {
             public void actionPerformed(@NotNull final AnActionEvent e1) {
                 final Editor editor = e1.getRequiredData(CommonDataKeys.EDITOR);
                 AppSettingsState settings = AppSettingsState.getInstance();
-                try {
-                    TextBlockFactory<?> commentModel = computerLanguage.getCommentModel(largestIntersectingComment.getText());
-                    String commentText = commentModel.fromString(largestIntersectingComment.getText().trim()).stream()
-                            .map(String::trim)
-                            .filter(x -> !x.isEmpty())
-                            .reduce((a, b) -> a + "\n" + b).get();
-                    String result = settings.createTranslationRequest()
-                            .setInstruction(getInstruction(settings.style, "Reword"))
-                            .setInputText(commentText)
-                            .setInputType(humanLanguage)
-                            .setOutputAttrute("type", "input")
-                            .setOutputType(humanLanguage)
-                            .setOutputAttrute("type", "output")
-                            .setOutputAttrute("style", settings.style)
-                            .buildCompletionRequest()
-                            .complete("");
-                    String indent = getIndent(caret);
-                    String finalResult = indent + commentModel.fromString(StringTools.lineWrapping(result, 120)).withIndent(indent);
+                TextBlockFactory<?> commentModel = computerLanguage.getCommentModel(largestIntersectingComment.getText());
+                String commentText = commentModel.fromString(largestIntersectingComment.getText().trim()).stream()
+                        .map(String::trim)
+                        .filter(x -> !x.isEmpty())
+                        .reduce((a, b) -> a + "\n" + b).get();
+                CompletionRequest completionRequest = settings.createTranslationRequest()
+                        .setInstruction(getInstruction(settings.style, "Reword"))
+                        .setInputText(commentText)
+                        .setInputType(humanLanguage)
+                        .setOutputAttrute("type", "input")
+                        .setOutputType(humanLanguage)
+                        .setOutputAttrute("type", "output")
+                        .setOutputAttrute("style", settings.style)
+                        .buildCompletionRequest();
+                OpenAI.onSuccess(completionRequest.complete(""), result->{
                     WriteCommandAction.runWriteCommandAction(e1.getProject(), () -> {
+                        String indent = getIndent(caret);
+                        String finalResult = indent + commentModel.fromString(StringTools.lineWrapping(result, 120)).withIndent(indent);
                         editor.getDocument().replaceString(
                                 largestIntersectingComment.getTextRange().getStartOffset(),
                                 largestIntersectingComment.getTextRange().getEndOffset(),
                                 finalResult);
                     });
-                } catch (ModerationException | IOException ex) {
-                    handle(ex);
-                }
+                });
             }
 
         };
@@ -637,30 +648,28 @@ public class EditorMenu extends ActionGroup {
                 final Caret primaryCaret = caretModel.getPrimaryCaret();
                 @NotNull String selectedText = primaryCaret.getSelectedText();
                 AppSettingsState settings = AppSettingsState.getInstance();
-                try {
 
-                    String instruct = (selectedText.split(" ").length > 4 ? selectedText : largestIntersectingComment.getText()).trim();
-                    String specification = computerLanguage.getCommentModel(instruct).fromString(instruct).stream()
-                            .map(String::trim)
-                            .filter(x -> !x.isEmpty())
-                            .reduce((a, b) -> a + " " + b).get();
-                    String result = settings.createTranslationRequest()
-                            .setInstruction("Implement " + humanLanguage + " as " + computerLanguage.name() + " code")
-                            .setInputType(humanLanguage)
-                            .setInputAttribute("type", "instruction")
-                            .setInputText(specification)
-                            .setOutputType(computerLanguage.name())
-                            .setOutputAttrute("type", "code")
-                            .setOutputAttrute("style", settings.style)
-                            .buildCompletionRequest()
-                            .appendPrompt(PsiClassContext.getContext(psiFile, selectionStart, selectionEnd) + "\n")
-                            .complete(getIndent(caret));
+                String instruct = (selectedText.split(" ").length > 4 ? selectedText : largestIntersectingComment.getText()).trim();
+                String specification = computerLanguage.getCommentModel(instruct).fromString(instruct).stream()
+                        .map(String::trim)
+                        .filter(x -> !x.isEmpty())
+                        .reduce((a, b) -> a + " " + b).get();
+                CompletionRequest completionRequest = settings.createTranslationRequest()
+                        .setInstruction("Implement " + humanLanguage + " as " + computerLanguage.name() + " code")
+                        .setInputType(humanLanguage)
+                        .setInputAttribute("type", "instruction")
+                        .setInputText(specification)
+                        .setOutputType(computerLanguage.name())
+                        .setOutputAttrute("type", "code")
+                        .setOutputAttrute("style", settings.style)
+                        .buildCompletionRequest()
+                        .appendPrompt(PsiClassContext.getContext(psiFile, selectionStart, selectionEnd) + "\n");
+                String indent = getIndent(caret);
+                OpenAI.onSuccess(completionRequest.complete(indent), result->{
                     WriteCommandAction.runWriteCommandAction(e1.getProject(), () -> {
                         editor.getDocument().insertString(largestIntersectingComment.getTextRange().getEndOffset(), "\n" + result);
                     });
-                } catch (ModerationException | IOException ex) {
-                    handle(ex);
-                }
+                });
             }
 
         };

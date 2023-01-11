@@ -1,6 +1,8 @@
 package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.openai.ModerationException;
+import com.github.simiacryptus.aicoder.openai.OpenAI;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -32,7 +34,7 @@ public abstract class TextReplacementAction extends AnAction {
     public static @NotNull TextReplacementAction create(@Nullable @NlsActions.ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon, @NotNull ActionTextEditorFunction fn) {
         return new TextReplacementAction(text, description, icon) {
             @Override
-            protected String edit(@NotNull AnActionEvent e, String previousText) throws IOException, ModerationException {
+            protected ListenableFuture<String> edit(@NotNull AnActionEvent e, String previousText) throws IOException, ModerationException {
                 return fn.apply(e, previousText);
             }
         };
@@ -43,21 +45,23 @@ public abstract class TextReplacementAction extends AnAction {
         final Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
         final CaretModel caretModel = editor.getCaretModel();
         final Caret primaryCaret = caretModel.getPrimaryCaret();
-        final String newText;
+        final ListenableFuture<String> future;
         try {
-            newText = edit(e, primaryCaret.getSelectedText());
-            WriteCommandAction.runWriteCommandAction(e.getProject(), () -> {
-                editor.getDocument().replaceString(primaryCaret.getSelectionStart(), primaryCaret.getSelectionEnd(), newText);
+            future = edit(e, primaryCaret.getSelectedText());
+            OpenAI.onSuccess(future, newText->{
+                WriteCommandAction.runWriteCommandAction(e.getProject(), () -> {
+                    editor.getDocument().replaceString(primaryCaret.getSelectionStart(), primaryCaret.getSelectionEnd(), newText);
+                });
             });
         } catch (ModerationException | IOException ex) {
             EditorMenu.handle(ex);
         }
     }
 
-    protected abstract String edit(@NotNull AnActionEvent e, String previousText) throws IOException, ModerationException;
+    protected abstract ListenableFuture<String> edit(@NotNull AnActionEvent e, String previousText) throws IOException, ModerationException;
 
     public interface ActionTextEditorFunction {
-        String apply(AnActionEvent actionEvent, String input) throws IOException, ModerationException;
+        ListenableFuture<String> apply(AnActionEvent actionEvent, String input) throws IOException, ModerationException;
     }
 
 }

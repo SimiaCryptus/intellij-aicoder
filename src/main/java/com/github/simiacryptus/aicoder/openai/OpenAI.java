@@ -1,11 +1,14 @@
 package com.github.simiacryptus.aicoder.openai;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.simiacryptus.aicoder.config.AppSettingsComponent;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.*;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,17 +22,21 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 import static com.github.simiacryptus.aicoder.text.StringTools.stripPrefix;
 
-public class OpenAI {
+public final class OpenAI {
 
     private static final Logger log = Logger.getInstance(OpenAI.class);
 
     public static final OpenAI INSTANCE = new OpenAI();
+    public final ListeningExecutorService pool;
     private transient AppSettingsState settings = null;
 
     protected AppSettingsState getSettingsState() {
@@ -39,37 +46,60 @@ public class OpenAI {
         return settings;
     }
 
-    public ObjectNode getEngines() throws IOException {
-        return getMapper().readValue(get(getSettingsState().apiBase + "/engines"), ObjectNode.class);
+    protected OpenAI() {
+        this.pool = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+    }
+
+    @NotNull
+    public ListenableFuture<ObjectNode> getEngines() {
+        return pool.submit(() -> getMapper().readValue(get(getSettingsState().apiBase + "/engines"), ObjectNode.class));
     }
 
     protected String post(String url, @NotNull String body) throws IOException, InterruptedException {
         return post(url, body, 3);
     }
 
-    public CompletionResponse complete(@NotNull CompletionRequest completionRequest) throws IOException, ModerationException {
-        try {
-            AppSettingsState settings = getSettingsState();
-            if (completionRequest.prompt.length() > settings.maxPrompt)
-                throw new IOException("Prompt too long:" + completionRequest.prompt.length() + " chars");
-            moderate(completionRequest.prompt);
-            String request = getMapper().writeValueAsString(completionRequest);
-            String result = post(settings.apiBase + "/engines/" + settings.model + "/completions", request);
-            JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
-            if (jsonObject.has("error")) {
-                JsonObject errorObject = jsonObject.getAsJsonObject("error");
-                String errorMessage = errorObject.get("message").getAsString();
-                log.error(errorMessage);
-                throw new IOException(errorMessage);
+    public ListenableFuture<CompletionResponse> complete(@NotNull CompletionRequest completionRequest) {
+        AppSettingsState settings = getSettingsState();
+        if (completionRequest.prompt.length() > settings.maxPrompt)
+            throw new IllegalArgumentException("Prompt too long:" + completionRequest.prompt.length() + " chars");
+        return OpenAI.map(moderateAsync(completionRequest.prompt), x->{
+            try {
+                String request = getMapper().writeValueAsString(completionRequest);
+                String result = post(settings.apiBase + "/engines/" + settings.model + "/completions", request);
+                JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
+                if (jsonObject.has("error")) {
+                    JsonObject errorObject = jsonObject.getAsJsonObject("error");
+                    String errorMessage = errorObject.get("message").getAsString();
+                    log.error(errorMessage);
+                    throw new IOException(errorMessage);
+                }
+                CompletionResponse completionResponse = getMapper().readValue(result, CompletionResponse.class);
+                String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").trim(), completionRequest.prompt.trim());
+                log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\n\nCompletion:\n\t%s", completionRequest.prompt.replace("\n", "\n\t"), completionResult.replace("\n", "\n\t")));
+                return completionResponse;
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
             }
-            CompletionResponse completionResponse = getMapper().readValue(result, CompletionResponse.class);
-            String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").trim(), completionRequest.prompt.trim());
-            log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\n\nCompletion:\n\t%s", completionRequest.prompt.replace("\n", "\n\t"), completionResult.replace("\n", "\n\t")));
-            return completionResponse;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
+        });
+    }
+
+    public static <I extends @Nullable Object, O extends @Nullable Object>
+    ListenableFuture<O> map(ListenableFuture<I> moderateAsync, Function<? super I,? extends O> o) {
+        return Futures.transform(moderateAsync, o, INSTANCE.pool);
+    }
+    public static <I extends @Nullable Object> void onSuccess(ListenableFuture<I> moderateAsync, Consumer<? super I> o) {
+        Futures.addCallback(moderateAsync, new FutureCallback<I>() {
+            @Override
+            public void onSuccess(I result) {
+                o.accept(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error(t);
+            }
+        }, INSTANCE.pool);
     }
 
     private void log(LogLevel level, String msg) {
@@ -90,21 +120,35 @@ public class OpenAI {
         }
     }
 
-    public void moderate(@NotNull String text) throws IOException, InterruptedException, ModerationException {
-        String body = getMapper().writeValueAsString(Map.of("input", text));
-        AppSettingsState settings = getSettingsState();
-        String result = post(settings.apiBase + "/moderations", body);
-        JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
-        if (jsonObject.has("error")) {
-            JsonObject errorObject = jsonObject.getAsJsonObject("error");
-            throw new IOException(errorObject.get("message").getAsString());
-        }
-        JsonObject moderationResult = jsonObject.getAsJsonArray("results").get(0).getAsJsonObject();
-        log(LogLevel.Debug, String.format("Moderation Request\nText:\n%s\n\nResult:\n%s", text.replace("\n", "\n\t"), result));
-        if (moderationResult.get("flagged").getAsBoolean()) {
-            JsonObject categoriesObj = moderationResult.get("categories").getAsJsonObject();
-            throw new ModerationException("Moderation flagged this request due to " + categoriesObj.keySet().stream().filter(c -> categoriesObj.get(c).getAsBoolean()).reduce((a, b) -> a + ", " + b).orElse("???"));
-        }
+    @NotNull
+    private ListenableFuture<?> moderateAsync(@NotNull String text) {
+        ListenableFuture<?> future = pool.submit(()->{
+            String body = null;
+            try {
+                body = getMapper().writeValueAsString(Map.of("input", text));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            AppSettingsState settings = getSettingsState();
+            String result = null;
+            try {
+                result = post(settings.apiBase + "/moderations", body);
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
+            if (jsonObject.has("error")) {
+                JsonObject errorObject = jsonObject.getAsJsonObject("error");
+                throw new RuntimeException(new IOException(errorObject.get("message").getAsString()));
+            }
+            JsonObject moderationResult = jsonObject.getAsJsonArray("results").get(0).getAsJsonObject();
+            log(LogLevel.Debug, String.format("Moderation Request\nText:\n%s\n\nResult:\n%s", text.replace("\n", "\n\t"), result));
+            if (moderationResult.get("flagged").getAsBoolean()) {
+                JsonObject categoriesObj = moderationResult.get("categories").getAsJsonObject();
+                throw new RuntimeException(new ModerationException("Moderation flagged this request due to " + categoriesObj.keySet().stream().filter(c -> categoriesObj.get(c).getAsBoolean()).reduce((a, b) -> a + ", " + b).orElse("???")));
+            }
+        });
+        return future;
     }
 
     /**

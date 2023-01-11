@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.1.7]
+
+### Added
+- All API calls are handled asynchronously - no UI thread blocking!
+
 ## [0.1.6]
 
 ### Added

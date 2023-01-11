@@ -1,7 +1,6 @@
 package com.github.simiacryptus.aicoder.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.simiacryptus.aicoder.StyleUtil;
 import com.github.simiacryptus.aicoder.openai.OpenAI;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,19 +26,26 @@ public class AppSettingsComponent extends SimpleSettingsComponent<AppSettingsSta
 
     @NotNull
     private static JComponent getModelSelector() {
-        try {
-            ObjectNode engines = OpenAI.INSTANCE.getEngines();
-            JsonNode data = engines.get("data");
-            String[] items = new String[data.size()];
-            for (int i = 0; i < data.size(); i++) {
-                items[i] = data.get(i).get("id").asText();
+        AppSettingsState settings = AppSettingsState.getInstance();
+        String apiKey = settings.apiKey;
+        if (null != apiKey && !apiKey.isEmpty()) {
+            try {
+                ComboBox<String> comboBox = new ComboBox<>(new String[]{settings.model});
+                OpenAI.onSuccess(OpenAI.INSTANCE.getEngines(), engines -> {
+                    JsonNode data = engines.get("data");
+                    String[] items = new String[data.size()];
+                    for (int i = 0; i < data.size(); i++) {
+                        items[i] = data.get(i).get("id").asText();
+                    }
+                    Arrays.sort(items);
+                    Arrays.stream(items).forEach(comboBox::addItem);
+                });
+                return comboBox;
+            } catch (Throwable e) {
+                log.warn(e);
             }
-            Arrays.sort(items);
-            return new ComboBox<String>(items);
-        } catch (Throwable e) {
-            log.warn(e);
-            return new JBTextField();
         }
+        return new JBTextField();
     }
 
     @Name("Style")
@@ -69,7 +75,7 @@ public class AppSettingsComponent extends SimpleSettingsComponent<AppSettingsSta
     @Name("Developer Tools")
     public final JBCheckBox devActions = new JBCheckBox();
     @Name("API Log Level")
-    public final ComboBox apiLogLevel = new ComboBox(Arrays.stream(LogLevel.values()).map(x->x.name()).toArray(String[]::new));
+    public final ComboBox apiLogLevel = new ComboBox(Arrays.stream(LogLevel.values()).map(x -> x.name()).toArray(String[]::new));
 
 //    @Name("API Envelope")
 //    public final ComboBox translationRequestTemplate = new ComboBox(Arrays.stream(TranslationRequestTemplate.values()).map(x->x.name()).toArray(String[]::new));

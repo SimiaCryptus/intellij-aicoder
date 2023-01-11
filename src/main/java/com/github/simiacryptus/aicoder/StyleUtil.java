@@ -1,13 +1,14 @@
 package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
-import com.github.simiacryptus.aicoder.openai.ModerationException;
+import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.openai.OpenAI;
 import com.github.simiacryptus.aicoder.text.IndentedText;
 import com.github.simiacryptus.aicoder.text.StringTools;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -125,38 +126,32 @@ public class StyleUtil {
      * @param code     The code snippet to be described.
      */
     public static void demoStyle(String style, ComputerLanguage language, String code) {
-        String codeDescription = describeTest(style, language, code);
-        String message = String.format("This code:\n    %s\nwas described as:\n    %s", code.replace("\n", "\n    "), codeDescription.replace("\n", "\n    "));
-        JOptionPane.showMessageDialog(null, message, "Style Demo", JOptionPane.INFORMATION_MESSAGE);
+        OpenAI.onSuccess(describeTest(style, language, code), description -> {
+            String message = String.format("This code:\n    %s\nwas described as:\n    %s", code.replace("\n", "\n    "), description.replace("\n", "\n    "));
+            JOptionPane.showMessageDialog(null, message, "Style Demo", JOptionPane.INFORMATION_MESSAGE);
+        });
     }
 
     /**
      * Describes some test code in the specified style and language.
      *
-     * @param style       The style of the description.
-     * @param language    The language of the test.
-     * @param code The code.
+     * @param style    The style of the description.
+     * @param language The language of the test.
+     * @param code     The code.
      * @return A description of the test in the specified style and language.
      */
-    public static String describeTest(String style, ComputerLanguage language, String code) {
+    public static ListenableFuture<String> describeTest(String style, ComputerLanguage language, String code) {
         AppSettingsState settings = AppSettingsState.getInstance();
-        try {
-            return StringTools.lineWrapping(settings.createTranslationRequest()
-                    .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
-                    .setInputText(IndentedText.fromString(code).getTextBlock().trim())
-                    .setInputType(language.name())
-                    .setInputAttribute("type", "code")
-                    .setOutputType(settings.humanLanguage)
-                    .setOutputAttrute("type", "description")
-                    .setOutputAttrute("style", style)
-                    .buildCompletionRequest()
-                    .complete("")
-                    .trim(), 120);
-        } catch (ModerationException e) {
-            return e.getMessage();
-        } catch (IOException e) {
-            log.error(e);
-            return e.getMessage();
-        }
+        CompletionRequest completionRequest = settings.createTranslationRequest()
+                .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
+                .setInputText(IndentedText.fromString(code).getTextBlock().trim())
+                .setInputType(language.name())
+                .setInputAttribute("type", "code")
+                .setOutputType(settings.humanLanguage)
+                .setOutputAttrute("type", "description")
+                .setOutputAttrute("style", style)
+                .buildCompletionRequest();
+        ListenableFuture<String> future = completionRequest.complete("");
+        return OpenAI.map(future, x->StringTools.lineWrapping(x.trim(), 120));
     }
 }
