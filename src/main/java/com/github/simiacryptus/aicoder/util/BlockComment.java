@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.text;
+package com.github.simiacryptus.aicoder.util;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -20,13 +20,13 @@ public class BlockComment extends IndentedText {
         @Override
         public BlockComment fromString(String text) {
             text = StringTools.stripSuffix(StringTools.trimSuffix(text.replace("\t", TAB_REPLACEMENT)), blockSuffix.trim());
-            String indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
+            @NotNull CharSequence indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
             return new BlockComment(blockPrefix, linePrefix, blockSuffix, indent, Arrays.stream(text.split(DELIMITER))
                     .map(s -> StringTools.stripPrefix(s, indent))
                     .map(StringTools::trimPrefix)
                     .map(s -> StringTools.stripPrefix(s, blockPrefix.trim()))
                     .map(s -> StringTools.stripPrefix(s, linePrefix.trim()))
-                    .toArray(String[]::new));
+                    .toArray(CharSequence[]::new));
         }
 
         @Override
@@ -35,12 +35,12 @@ public class BlockComment extends IndentedText {
         }
     }
 
-    public final String linePrefix;
-    public final String blockPrefix;
-    public final String blockSuffix;
+    public final CharSequence linePrefix;
+    public final CharSequence blockPrefix;
+    public final CharSequence blockSuffix;
 
 
-    public BlockComment(String blockPrefix, String linePrefix, String blockSuffix, String indent, String... textBlock) {
+    public BlockComment(CharSequence blockPrefix, CharSequence linePrefix, CharSequence blockSuffix, CharSequence indent, CharSequence... textBlock) {
         super(indent, textBlock);
         this.linePrefix = linePrefix;
         this.blockPrefix = blockPrefix;
@@ -49,13 +49,13 @@ public class BlockComment extends IndentedText {
 
     @Override
     public @NotNull String toString() {
-        String indent = getIndent();
-        String delimiter = DELIMITER + indent;
-        String joined = Arrays.stream(rawString()).map(x->linePrefix + " " + x).collect(Collectors.joining(delimiter));
-        return blockPrefix + delimiter + joined + delimiter + blockSuffix;
+        CharSequence indent = getIndent();
+        CharSequence delimiter = DELIMITER + indent;
+        CharSequence joined = Arrays.stream(rawString()).map(x->linePrefix + " " + x).collect(Collectors.joining(delimiter));
+        return blockPrefix.toString() + delimiter + joined + delimiter + blockSuffix;
     }
 
-    public @NotNull IndentedText withIndent(String indent) {
+    public @NotNull BlockComment withIndent(CharSequence indent) {
         return new BlockComment(blockPrefix, linePrefix, blockSuffix, indent, textBlock);
     }
 }

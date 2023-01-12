@@ -27,7 +27,7 @@ public class CompletionResponse {
         this.error = error;
     }
 
-    public @NotNull Optional<String> getFirstChoice() {
+    public @NotNull Optional<CharSequence> getFirstChoice() {
         return Optional.ofNullable(this.choices).flatMap(choices -> Arrays.stream(choices).findFirst()).map(choice -> choice.text.trim());
     }
 }

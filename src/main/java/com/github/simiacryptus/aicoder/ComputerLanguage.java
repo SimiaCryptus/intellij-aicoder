@@ -1,8 +1,8 @@
 package com.github.simiacryptus.aicoder;
 
-import com.github.simiacryptus.aicoder.text.BlockComment;
-import com.github.simiacryptus.aicoder.text.LineComment;
-import com.github.simiacryptus.aicoder.text.TextBlockFactory;
+import com.github.simiacryptus.aicoder.util.BlockComment;
+import com.github.simiacryptus.aicoder.util.LineComment;
+import com.github.simiacryptus.aicoder.util.TextBlockFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -21,6 +21,9 @@ public enum ComputerLanguage {
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
             .setFileExtensions("cpp")),
+    Bash(new Configuration()
+            .setLineComments(new LineComment.Factory("#"))
+            .setFileExtensions("sh")),
     Markdown(new Configuration()
             .setDocumentationStyle("Markdown")
             .setLineComments(new BlockComment.Factory("<!--", "", "-->"))
@@ -42,9 +45,6 @@ public enum ComputerLanguage {
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
             .setFileExtensions("basic", "bs")),
-    Bash(new Configuration()
-            .setLineComments(new LineComment.Factory("#"))
-            .setFileExtensions("sh")),
     C(new Configuration()
             .setDocumentationStyle("Doxygen")
             .setLineComments(new LineComment.Factory("//"))
@@ -221,6 +221,12 @@ public enum ComputerLanguage {
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
             .setFileExtensions("scheme")),
+    SCSS(new Configuration()
+            .setDocumentationStyle("SCSS")
+            .setLineComments(new LineComment.Factory("//"))
+            .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
+            .setDocComments(new LineComment.Factory("///"))
+            .setFileExtensions("scss")),
     SQL(new Configuration()
             .setLineComments(new LineComment.Factory("--"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
@@ -259,7 +265,7 @@ public enum ComputerLanguage {
             .setLineComments(new LineComment.Factory("#"))
             .setFileExtensions("zsh"));
 
-    public final List<String> extensions;
+    public final List<CharSequence> extensions;
     public final String docStyle;
     public final TextBlockFactory<?> lineComment;
     public final TextBlockFactory<?> blockComment;
@@ -274,11 +280,11 @@ public enum ComputerLanguage {
     }
 
     @Nullable
-    public static ComputerLanguage findByExtension(String extension) {
+    public static ComputerLanguage findByExtension(CharSequence extension) {
         return Arrays.stream(values()).filter(x -> x.extensions.contains(extension)).findAny().orElse(null);
     }
 
-    public String getMultilineCommentSuffix() {
+    public CharSequence getMultilineCommentSuffix() {
         if (docComment instanceof BlockComment.Factory) {
             return ((BlockComment.Factory) docComment).blockSuffix;
         }
@@ -286,14 +292,14 @@ public enum ComputerLanguage {
     }
 
     public TextBlockFactory<?> getCommentModel(String text) {
-        if(docComment.looksLike(text)) return docComment;
-        if(blockComment.looksLike(text)) return blockComment;
+        if (docComment.looksLike(text)) return docComment;
+        if (blockComment.looksLike(text)) return blockComment;
         return lineComment;
     }
 
     static class Configuration {
         private String documentationStyle = "";
-        private String[] fileExtensions = new String[] {};
+        private CharSequence[] fileExtensions = new CharSequence[]{};
         private TextBlockFactory<?> lineComments = null;
         private TextBlockFactory<?> blockComments = null;
         private TextBlockFactory<?> docComments = null;
@@ -307,11 +313,11 @@ public enum ComputerLanguage {
             return this;
         }
 
-        public String[] getFileExtensions() {
+        public CharSequence[] getFileExtensions() {
             return fileExtensions;
         }
 
-        public Configuration setFileExtensions(String... fileExtensions) {
+        public Configuration setFileExtensions(CharSequence... fileExtensions) {
             this.fileExtensions = fileExtensions;
             return this;
         }

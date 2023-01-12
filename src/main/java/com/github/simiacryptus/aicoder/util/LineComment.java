@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.text;
+package com.github.simiacryptus.aicoder.util;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -16,12 +16,12 @@ public class LineComment extends IndentedText {
         @Override
         public LineComment fromString(String text) {
             text = text.replace("\t", TAB_REPLACEMENT);
-            String indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
+            CharSequence indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
             return new LineComment(commentPrefix, indent, Arrays.stream(text.split(DELIMITER))
                     .map(s -> StringTools.stripPrefix(s, indent))
                     .map(StringTools::trimPrefix)
                     .map(s -> StringTools.stripPrefix(s, commentPrefix))
-                    .toArray(String[]::new));
+                    .toArray(CharSequence[]::new));
         }
 
         @Override
@@ -30,9 +30,9 @@ public class LineComment extends IndentedText {
         }
     }
 
-    private final String commentPrefix;
+    private final CharSequence commentPrefix;
 
-    public LineComment(String commentPrefix, String indent, String... textBlock) {
+    public LineComment(CharSequence commentPrefix, CharSequence indent, CharSequence... textBlock) {
         super(indent, textBlock);
         this.commentPrefix = commentPrefix;
     }
@@ -42,7 +42,7 @@ public class LineComment extends IndentedText {
         return commentPrefix + " " + Arrays.stream(rawString()).collect(Collectors.joining(DELIMITER + getIndent() + commentPrefix + " "));
     }
 
-    public @NotNull IndentedText withIndent(String indent) {
+    public @NotNull LineComment withIndent(CharSequence indent) {
         return new LineComment(commentPrefix, indent, textBlock);
     }
 }

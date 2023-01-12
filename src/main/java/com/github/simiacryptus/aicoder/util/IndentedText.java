@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.text;
+package com.github.simiacryptus.aicoder.util;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 public class IndentedText implements TextBlock {
 
-    public String getIndent() {
+    public CharSequence getIndent() {
         return indent;
     }
 
@@ -35,21 +35,21 @@ public class IndentedText implements TextBlock {
         }
     }
 
-    protected String indent;
-    protected String textBlock[];
+    protected CharSequence indent;
+    protected CharSequence textBlock[];
 
-    public IndentedText(String indent, String... textBlock) {
+    public IndentedText(CharSequence indent, CharSequence... textBlock) {
         this.indent = indent;
         this.textBlock = textBlock;
     }
 
-    public static @NotNull IndentedText fromString(String text) {
-        text = text.replace("\t", TAB_REPLACEMENT);
-        String indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
+    public static @NotNull IndentedText fromString(CharSequence text) {
+        text = text.toString().replace("\t", TAB_REPLACEMENT);
+        @NotNull CharSequence indent = StringTools.getWhitespacePrefix(text.toString().split(DELIMITER));
         return new IndentedText(indent,
-                Arrays.stream(text.split(DELIMITER))
+                Arrays.stream(text.toString().split(DELIMITER))
                 .map(s -> StringTools.stripPrefix(s, indent))
-                .toArray(String[]::new));
+                .toArray(CharSequence[]::new));
     }
 
     @Override
@@ -57,12 +57,12 @@ public class IndentedText implements TextBlock {
         return Arrays.stream(rawString()).collect(Collectors.joining(DELIMITER + getIndent()));
     }
 
-    public @NotNull IndentedText withIndent(String indent) {
+    public @NotNull IndentedText withIndent(CharSequence indent) {
         return new IndentedText(indent, textBlock);
     }
 
     @Override
-    public String[] rawString() {
+    public CharSequence[] rawString() {
         return this.textBlock;
     }
 }

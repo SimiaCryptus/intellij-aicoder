@@ -1,13 +1,13 @@
-package com.github.simiacryptus.aicoder;
+package com.github.simiacryptus.aicoder.util;
 
+import com.github.simiacryptus.aicoder.ComputerLanguage;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
-import com.github.simiacryptus.aicoder.openai.ModerationException;
-import com.github.simiacryptus.aicoder.text.IndentedText;
-import com.github.simiacryptus.aicoder.text.StringTools;
+import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.openai.OpenAI_API;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -18,7 +18,7 @@ public class StyleUtil {
     /**
      * A list of style keywords used to describe the type of writing.
      */
-    private static final List<String> styleKeywords = Arrays.asList(
+    private static final List<CharSequence> styleKeywords = Arrays.asList(
             "Analytical",
             "Casual",
             "Comic-book",
@@ -42,7 +42,7 @@ public class StyleUtil {
     /**
      * A list of dialect keywords for use in writing.
      */
-    private static final List<String> dialectKeywords = Arrays.asList(
+    private static final List<CharSequence> dialectKeywords = Arrays.asList(
             "Academic Writing",
             "Business Writing",
             "Character Monologues",
@@ -98,14 +98,14 @@ public class StyleUtil {
      * @return A string in the format of "Dialect - Casual, Inspirational"
      */
     public static String randomStyle() {
-        String dialect = dialectKeywords.get(new Random().nextInt(dialectKeywords.size()));
-        String style1 = styleKeywords.get(new Random().nextInt(styleKeywords.size()));
-        String style2 = style1;
+        CharSequence dialect = dialectKeywords.get(new Random().nextInt(dialectKeywords.size()));
+        CharSequence style1 = styleKeywords.get(new Random().nextInt(styleKeywords.size()));
+        CharSequence style2 = style1;
         while (style2.equals(style1)) style2 = styleKeywords.get(new Random().nextInt(styleKeywords.size()));
         return String.format("%s - %s, %s", dialect, style1, style2);
     }
 
-    public static void demoStyle(String style) {
+    public static void demoStyle(CharSequence style) {
         demoStyle(style,
                 ComputerLanguage.Java,
                 "List<String> items = new ArrayList<>();\n" +
@@ -124,39 +124,33 @@ public class StyleUtil {
      * @param language The language of the code snippet.
      * @param code     The code snippet to be described.
      */
-    public static void demoStyle(String style, ComputerLanguage language, String code) {
-        String codeDescription = describeTest(style, language, code);
-        String message = String.format("This code:\n    %s\nwas described as:\n    %s", code.replace("\n", "\n    "), codeDescription.replace("\n", "\n    "));
-        JOptionPane.showMessageDialog(null, message, "Style Demo", JOptionPane.INFORMATION_MESSAGE);
+    public static void demoStyle(CharSequence style, ComputerLanguage language, String code) {
+        OpenAI_API.onSuccess(describeTest(style, language, code), description -> {
+            CharSequence message = String.format("This code:\n    %s\nwas described as:\n    %s", code.replace("\n", "\n    "), description.toString().replace("\n", "\n    "));
+            JOptionPane.showMessageDialog(null, message, "Style Demo", JOptionPane.INFORMATION_MESSAGE);
+        });
     }
 
     /**
      * Describes some test code in the specified style and language.
      *
-     * @param style       The style of the description.
-     * @param language    The language of the test.
-     * @param code The code.
+     * @param style    The style of the description.
+     * @param language The language of the test.
+     * @param code     The code.
      * @return A description of the test in the specified style and language.
      */
-    public static String describeTest(String style, ComputerLanguage language, String code) {
+    public static ListenableFuture<CharSequence> describeTest(CharSequence style, ComputerLanguage language, String code) {
         AppSettingsState settings = AppSettingsState.getInstance();
-        try {
-            return StringTools.lineWrapping(settings.createTranslationRequest()
-                    .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
-                    .setInputText(IndentedText.fromString(code).getTextBlock().trim())
-                    .setInputType(language.name())
-                    .setInputAttribute("type", "code")
-                    .setOutputType(settings.humanLanguage)
-                    .setOutputAttrute("type", "description")
-                    .setOutputAttrute("style", style)
-                    .buildCompletionRequest()
-                    .complete("")
-                    .trim(), 120);
-        } catch (ModerationException e) {
-            return e.getMessage();
-        } catch (IOException e) {
-            log.error(e);
-            return e.getMessage();
-        }
+        CompletionRequest completionRequest = settings.createTranslationRequest()
+                .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
+                .setInputText(IndentedText.fromString(code).getTextBlock().trim())
+                .setInputType(language.name())
+                .setInputAttribute("type", "code")
+                .setOutputType(settings.humanLanguage)
+                .setOutputAttrute("type", "description")
+                .setOutputAttrute("style", style)
+                .buildCompletionRequest();
+        ListenableFuture<CharSequence> future = completionRequest.complete(null, "");
+        return OpenAI_API.map(future, x->StringTools.lineWrapping(x.toString().trim(), 120));
     }
 }
