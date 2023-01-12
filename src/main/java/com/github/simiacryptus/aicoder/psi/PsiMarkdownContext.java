@@ -37,7 +37,7 @@ public class PsiMarkdownContext {
     public @NotNull PsiMarkdownContext init(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
-            final String indent = "";
+            final CharSequence indent = "";
             @NotNull PsiMarkdownContext section = PsiMarkdownContext.this;
 
             @Override
@@ -54,7 +54,7 @@ public class PsiMarkdownContext {
                 // Check if the element is within the selection
                 boolean within = (textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart) && (textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd);
                 if (!isPrior && !isOverlap) return;
-                String simpleName = element.getClass().getSimpleName();
+                CharSequence simpleName = element.getClass().getSimpleName();
                 if (simpleName.equals("MarkdownHeaderImpl")) {
                     PsiMarkdownContext content = new PsiMarkdownContext(section, text.trim(), element.getTextOffset());
                     while (content.headerLevel() <= section.headerLevel() && section.parent != null) {

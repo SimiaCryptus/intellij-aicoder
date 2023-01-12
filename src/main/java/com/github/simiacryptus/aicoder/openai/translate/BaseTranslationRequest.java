@@ -8,47 +8,47 @@ import java.util.Map;
 
 public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>> implements TranslationRequest {
 
-    private String inputTag;
-    private String outputTag;
-    private String instruction;
+    private CharSequence inputTag;
+    private CharSequence outputTag;
+    private CharSequence instruction;
     @NotNull
-    private Map<String, String> inputAttr = new HashMap<>();
+    private Map<CharSequence, CharSequence> inputAttr = new HashMap<>();
     @NotNull
-    private Map<String, String> outputAttr = new HashMap<>();
-    private String originalText;
+    private Map<CharSequence, CharSequence> outputAttr = new HashMap<>();
+    private CharSequence originalText;
     private double temperature;
     private int maxTokens;
 
     @Override
     public String getInputTag() {
-        return inputTag;
+        return inputTag.toString();
     }
 
     @Override
     public String getOutputTag() {
-        return outputTag;
+        return outputTag.toString();
     }
 
     @Override
-    public String getInstruction() {
-        return instruction;
+    public CharSequence getInstruction() {
+        return instruction.toString();
     }
 
     @Override
     @NotNull
-    public Map<String, String> getInputAttr() {
+    public Map<CharSequence, CharSequence> getInputAttr() {
         return Collections.unmodifiableMap(inputAttr);
     }
 
     @Override
     @NotNull
-    public Map<String, String> getOutputAttr() {
+    public Map<CharSequence, CharSequence> getOutputAttr() {
         return Collections.unmodifiableMap(outputAttr);
     }
 
     @Override
     public String getOriginalText() {
-        return originalText;
+        return originalText.toString();
     }
 
     @Override
@@ -62,25 +62,25 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public T setInputType(String inputTag) {
+    public T setInputType(CharSequence inputTag) {
         this.inputTag = inputTag;
         return (T) this;
     }
 
     @Override
-    public T setOutputType(String outputTag) {
+    public T setOutputType(CharSequence outputTag) {
         this.outputTag = outputTag;
         return (T) this;
     }
 
     @Override
-    public T setInstruction(String instruction) {
+    public T setInstruction(CharSequence instruction) {
         this.instruction = instruction;
         return (T) this;
     }
 
     @Override
-    public T setInputText(String originalText) {
+    public T setInputText(CharSequence originalText) {
         this.originalText = originalText;
         return (T) this;
     }
@@ -98,8 +98,8 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public T setInputAttribute(String key, String value) {
-        if(null == value || value.isEmpty()) {
+    public T setInputAttribute(CharSequence key, CharSequence value) {
+        if(null == value || value.length()==0) {
             inputAttr.remove(key);
         } else {
             inputAttr.put(key, value);
@@ -108,8 +108,8 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public T setOutputAttrute(String key, String value) {
-        if(null == value || value.isEmpty()) {
+    public T setOutputAttrute(CharSequence key, CharSequence value) {
+        if(null == value || value.length()==0) {
             outputAttr.remove(key);
         } else {
             outputAttr.put(key, value);

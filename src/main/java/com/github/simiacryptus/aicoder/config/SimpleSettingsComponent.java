@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 public class SimpleSettingsComponent<T> {
     private static final Logger log = Logger.getInstance(SimpleSettingsComponent.class);
@@ -24,6 +25,7 @@ public class SimpleSettingsComponent<T> {
     private JPanel buildMainPanel() {
         FormBuilder formBuilder = FormBuilder.createFormBuilder();
         for (Field field : this.getClass().getDeclaredFields()) {
+            if(Modifier.isStatic(field.getModifiers())) continue;
             try {
                 field.setAccessible(true);
                 Name nameAnnotation = field.getDeclaredAnnotation(Name.class);
@@ -56,12 +58,17 @@ public class SimpleSettingsComponent<T> {
                         if (uiFieldVal instanceof JTextComponent) {
                             newSettingsValue = ((JTextComponent) uiFieldVal).getText();
                         } else if (uiFieldVal instanceof ComboBox) {
-                            newSettingsValue = ((ComboBox<String>) uiFieldVal).getItem();
+                            newSettingsValue = ((ComboBox<CharSequence>) uiFieldVal).getItem();
                         }
                         break;
                     case "int":
                         if (uiFieldVal instanceof JTextComponent) {
                             newSettingsValue = Integer.parseInt(((JTextComponent) uiFieldVal).getText());
+                        }
+                        break;
+                    case "long":
+                        if (uiFieldVal instanceof JTextComponent) {
+                            newSettingsValue = Long.parseLong(((JTextComponent) uiFieldVal).getText());
                         }
                         break;
                     case "double":
@@ -80,9 +87,9 @@ public class SimpleSettingsComponent<T> {
 
                         if (java.lang.Enum.class.isAssignableFrom(settingsField.getType())) {
                             if (uiFieldVal instanceof ComboBox) {
-                                ComboBox<String> comboBox = (ComboBox<String>) uiFieldVal;
-                                String item = comboBox.getItem();
-                                newSettingsValue = Enum.valueOf((Class<? extends Enum>) settingsField.getType(), item);
+                                ComboBox<CharSequence> comboBox = (ComboBox<CharSequence>) uiFieldVal;
+                                CharSequence item = comboBox.getItem();
+                                newSettingsValue = Enum.valueOf((Class<? extends Enum>) settingsField.getType(), item.toString());
                             }
                         }
                         break;
@@ -108,12 +115,17 @@ public class SimpleSettingsComponent<T> {
                         if (uiVal instanceof JTextComponent) {
                             ((JTextComponent) uiVal).setText((String) settingsVal);
                         } else if (uiVal instanceof ComboBox) {
-                            ((ComboBox<String>) uiVal).setItem(settingsVal.toString());
+                            ((ComboBox<CharSequence>) uiVal).setItem(settingsVal.toString());
                         }
                         break;
                     case "int":
                         if (uiVal instanceof JTextComponent) {
                             ((JTextComponent) uiVal).setText(Integer.toString((Integer) settingsVal));
+                        }
+                        break;
+                    case "long":
+                        if (uiVal instanceof JTextComponent) {
+                            ((JTextComponent) uiVal).setText(Long.toString((Integer) settingsVal));
                         }
                         break;
                     case "double":
@@ -130,7 +142,7 @@ public class SimpleSettingsComponent<T> {
                         break;
                     default:
                         if (uiVal instanceof ComboBox) {
-                            ((ComboBox<String>) uiVal).setItem(settingsVal.toString());
+                            ((ComboBox<CharSequence>) uiVal).setItem(settingsVal.toString());
                         }
                         break;
                 }

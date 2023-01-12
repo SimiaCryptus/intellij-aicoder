@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.psi;
 
-import com.github.simiacryptus.aicoder.text.StringTools;
+import com.github.simiacryptus.aicoder.util.StringTools;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -28,7 +28,7 @@ public class PsiUtil {
      * @param types          The types of elements to search for.
      * @return The largest element that intersects with the given selection range.
      */
-    public static PsiElement getLargestIntersecting(@NotNull PsiElement element, int selectionStart, int selectionEnd, String... types) {
+    public static PsiElement getLargestIntersecting(@NotNull PsiElement element, int selectionStart, int selectionEnd, CharSequence... types) {
         final AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
@@ -37,7 +37,7 @@ public class PsiUtil {
                 if (null == element) return;
                 TextRange textRange = element.getTextRange();
                 boolean within = (textRange.getStartOffset() <= selectionStart && textRange.getEndOffset() + 1 >= selectionStart && textRange.getStartOffset() <= selectionEnd && textRange.getEndOffset() + 1 >= selectionEnd);
-                String simpleName = element.getClass().getSimpleName();
+                CharSequence simpleName = element.getClass().getSimpleName();
                 if (Arrays.asList(expand(types)).contains(simpleName)) {
                     if (within) {
                         largest.updateAndGet(s -> (s == null ? 0 : s.getText().length()) > element.getText().length() ? s : element);
@@ -50,7 +50,7 @@ public class PsiUtil {
         element.accept(visitor.get());
         return largest.get();
     }
-    public static List<PsiElement> getAll(@NotNull PsiElement element, String... types) {
+    public static List<PsiElement> getAll(@NotNull PsiElement element, CharSequence... types) {
         final List<PsiElement> elements = new ArrayList<>();
         final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
@@ -90,7 +90,7 @@ public class PsiUtil {
      * @param types          The types of the elements to be retrieved.
      * @return The smallest intersecting entity from the given PsiElement.
      */
-    public static PsiElement getSmallestIntersecting(@NotNull PsiElement element, int selectionStart, int selectionEnd, String... types) {
+    public static PsiElement getSmallestIntersecting(@NotNull PsiElement element, int selectionStart, int selectionEnd, CharSequence... types) {
         final AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         final AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
@@ -99,7 +99,7 @@ public class PsiUtil {
                 if (null == element) return;
                 TextRange textRange = element.getTextRange();
                 boolean within = (textRange.getStartOffset() <= selectionStart && textRange.getEndOffset() + 1 >= selectionStart && textRange.getStartOffset() <= selectionEnd && textRange.getEndOffset() + 1 >= selectionEnd);
-                String simpleName = element.getClass().getSimpleName();
+                CharSequence simpleName = element.getClass().getSimpleName();
                 if (Arrays.asList(expand(types)).contains(simpleName)) {
                     if (within) {
                         largest.updateAndGet(s -> (s == null ? Integer.MAX_VALUE : s.getText().length()) < element.getText().length() ? s : element);
@@ -114,11 +114,11 @@ public class PsiUtil {
         return largest.get();
     }
 
-    private static String[] expand(String[] types) {
-        return Arrays.stream(types).flatMap(x-> Stream.of(x, StringTools.stripSuffix(x, "Impl"))).distinct().toArray(String[]::new);
+    private static CharSequence[] expand(CharSequence[] types) {
+        return Arrays.stream(types).flatMap(x-> Stream.of(x, StringTools.stripSuffix(x, "Impl"))).distinct().toArray(CharSequence[]::new);
     }
 
-    public static PsiElement getFirstBlock(@NotNull PsiElement element, String blockType) {
+    public static PsiElement getFirstBlock(@NotNull PsiElement element, CharSequence blockType) {
         PsiElement[] children = element.getChildren();
         if(null == children || 0 == children.length) return null;
         PsiElement first = children[0];
@@ -126,13 +126,13 @@ public class PsiUtil {
         return null;
     }
 
-    public static PsiElement getLargestBlock(@NotNull PsiElement element, String blockType) {
+    public static PsiElement getLargestBlock(@NotNull PsiElement element, CharSequence blockType) {
         AtomicReference<PsiElement> largest = new AtomicReference<>(null);
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
-                String simpleName = element.getClass().getSimpleName();
+                CharSequence simpleName = element.getClass().getSimpleName();
                 if (simpleName.equals(blockType)) {
                     largest.updateAndGet(s -> s != null && s.getText().length() > element.getText().length() ? s : element);
                     super.visitElement(element);
@@ -155,13 +155,13 @@ public class PsiUtil {
      * @return A {@link HashSet} of {@link String}s containing the simple names of all the {@link PsiElement}s contained
      * within the given {@link PsiElement}.
      */
-    public static @NotNull HashSet<String> getAllElementNames(@NotNull PsiElement element) {
-        HashSet<String> set = new HashSet<>();
+    public static @NotNull HashSet<CharSequence> getAllElementNames(@NotNull PsiElement element) {
+        HashSet<CharSequence> set = new HashSet<>();
         AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
-                String simpleName = element.getClass().getSimpleName();
+                CharSequence simpleName = element.getClass().getSimpleName();
                 set.add(simpleName);
                 element.acceptChildren(visitor.get());
             }

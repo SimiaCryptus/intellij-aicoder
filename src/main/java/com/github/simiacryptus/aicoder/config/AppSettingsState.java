@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.config;
 
+import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequest;
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequestTemplate;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,6 +32,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public int maxTokens = 1000;
     public double temperature = 0.1;
     public @NotNull String style = "";
+    public int tokenCounter = 0;
     private @NotNull Map<String, Integer> mostUsedHistory = new HashMap<>();
     private @NotNull List<String> mostRecentHistory = new ArrayList<>();
     public int historyLimit = 10;
@@ -49,6 +51,16 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
 
     public TranslationRequest createTranslationRequest() {
         return translationRequestTemplate.get(this);
+    }
+
+    public CompletionRequest createCompletionRequest() {
+        return new CompletionRequest(
+                "",
+                temperature,
+                maxTokens,
+                null,
+                true
+        );
     }
 
     @Nullable
@@ -85,15 +97,15 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         return Objects.hash(apiBase, apiKey, model, maxTokens, temperature, translationRequestTemplate, apiLogLevel, devActions, style);
     }
 
-    public void addInstructionToHistory(String instruction) {
+    public void addInstructionToHistory(CharSequence instruction) {
         synchronized (mostRecentHistory) {
-            mostRecentHistory.add(instruction);
+            mostRecentHistory.add(instruction.toString());
             while(mostRecentHistory.size() > historyLimit) {
                 mostRecentHistory.remove(0);
             }
         }
         synchronized (mostUsedHistory) {
-            mostUsedHistory.put(instruction, mostUsedHistory.getOrDefault(instruction, 0) + 1);
+            mostUsedHistory.put(instruction.toString(), mostUsedHistory.getOrDefault(instruction, 0) + 1);
         }
 
         // If the instruction history is bigger than the history limit,
@@ -106,10 +118,10 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         // Then we'll remove all the ones we don't want to keep,
         // And that's how we'll make sure the instruction history is neat!
         if (mostUsedHistory.size() > historyLimit) {
-            List<String> retain = mostUsedHistory.entrySet().stream()
+            List<CharSequence> retain = mostUsedHistory.entrySet().stream()
                     .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                     .limit(historyLimit).map(Map.Entry::getKey).collect(Collectors.toList());
-            HashSet<String> toRemove = new HashSet<>(mostUsedHistory.keySet());
+            HashSet<CharSequence> toRemove = new HashSet<>(mostUsedHistory.keySet());
             toRemove.removeAll(retain);
             toRemove.removeAll(mostRecentHistory);
             toRemove.forEach(mostUsedHistory::remove);

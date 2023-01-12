@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [0.1.8]
+
+### Added
+- Asynchronous operations now include modal progress
+- Added "retry last" and generic "append" and "insert" operations
+- Added SCSS support
+
+## [0.1.7]
+
+### Added
+- All API calls are handled asynchronously - no UI thread blocking!
+
 ## [0.1.6]
 
 ### Added

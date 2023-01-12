@@ -1,53 +1,44 @@
 package com.github.simiacryptus.aicoder;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.ModerationException;
 import com.github.simiacryptus.aicoder.psi.PsiClassContext;
 import com.github.simiacryptus.aicoder.psi.PsiMarkdownContext;
 import com.github.simiacryptus.aicoder.psi.PsiUtil;
-import com.github.simiacryptus.aicoder.text.IndentedText;
-import com.github.simiacryptus.aicoder.text.StringTools;
-import com.github.simiacryptus.aicoder.text.TextBlockFactory;
+import com.github.simiacryptus.aicoder.util.*;
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
 public class EditorMenu extends ActionGroup {
+
     private static final Logger log = Logger.getInstance(EditorMenu.class);
-
-    public static void handle(@NotNull Throwable ex) {
-        if (!(ex instanceof ModerationException)) log.error(ex);
-        JOptionPane.showMessageDialog(null, ex.getMessage(), "Warning", JOptionPane.WARNING_MESSAGE);
-    }
-
-    public static boolean hasSelection(@NotNull AnActionEvent e) {
-        Caret caret = e.getData(CommonDataKeys.CARET);
-        return null != caret && caret.hasSelection();
-    }
+    public static final @NotNull
+    @Nls String DEFAULT_ACTION_MESSAGE = CoreBundle.message("command.name.undefined");
 
     /**
      * This method is used to get the children of the action.
@@ -73,6 +64,18 @@ public class EditorMenu extends ActionGroup {
         ArrayList<AnAction> children = new ArrayList<>();
         ComputerLanguage language = ComputerLanguage.findByExtension(extension);
 
+        Caret caret = e.getData(CommonDataKeys.CARET);
+
+        if (null != caret) {
+            addIfNotNull(children, redoLast());
+            if (!caret.hasSelection()) {
+                children.add(genericInsert());
+            } else {
+                children.add(genericAppend());
+            }
+        }
+
+
         if (language != null) {
 
             addIfNotNull(children, rewordCommentAction(e, language, inputHumanLanguage));
@@ -85,30 +88,34 @@ public class EditorMenu extends ActionGroup {
                 children.add(pasteAction(language.name()));
             }
 
-            if (!language.docStyle.isEmpty()) children.add(docAction(extension, language));
+            if (language.docStyle.length() > 0) {
+                children.add(docAction(extension, language));
+            }
 
             if (language == ComputerLanguage.Markdown) {
                 addIfNotNull(children, markdownListAction(e));
                 addIfNotNull(children, markdownNewTableRowsAction(e));
                 addIfNotNull(children, markdownNewTableColsAction(e));
-                addIfNotNull(children, markdownNewTableColsAction2(e));
+                addIfNotNull(children, markdownNewTableColAction(e));
             }
 
-            if (hasSelection(e)) {
-                children.add(customEdit(language.name()));
-                children.add(recentEdits(language.name()));
-                switch (language) {
-                    case Markdown:
-                        addIfNotNull(children, markdownContextAction(e, inputHumanLanguage));
-                        break;
-                    default:
-                        addIfNotNull(children, psiClassContextAction(e, language, inputHumanLanguage));
-                        break;
+            if (null != caret) {
+                if (caret.hasSelection()) {
+                    children.add(customEdit(language.name()));
+                    children.add(recentEdits(language.name()));
+                    switch (language) {
+                        case Markdown:
+                            addIfNotNull(children, markdownContextAction(e, inputHumanLanguage));
+                            break;
+                        default:
+                            addIfNotNull(children, psiClassContextAction(e, language, inputHumanLanguage));
+                            break;
+                    }
+                    children.add(describeAction(outputHumanLanguage, language));
+                    children.add(addCodeCommentsAction(outputHumanLanguage, language));
+                    children.add(fromHumanLanguageAction(inputHumanLanguage, language));
+                    children.add(toHumanLanguageAction(outputHumanLanguage, language));
                 }
-                children.add(describeAction(outputHumanLanguage, language));
-                children.add(addCodeCommentsAction(outputHumanLanguage, language));
-                children.add(fromHumanLanguageAction(inputHumanLanguage, language));
-                children.add(toHumanLanguageAction(outputHumanLanguage, language));
             }
         }
 
@@ -116,83 +123,134 @@ public class EditorMenu extends ActionGroup {
     }
 
     @NotNull
-    public static TextReplacementAction toHumanLanguageAction(String outputHumanLanguage, ComputerLanguage language) {
+    protected AnAction toHumanLanguageAction(String outputHumanLanguage, ComputerLanguage language) {
         String computerLanguage = language.name();
-        return TextReplacementAction.create("_To " + outputHumanLanguage, String.format("Describe %s -> %s", outputHumanLanguage, computerLanguage), null, (event, string) -> {
-            AppSettingsState settings = AppSettingsState.getInstance();
-            return settings.createTranslationRequest()
-                    .setInstruction(getInstruction(settings.style, "Describe this code"))
-                    .setInputText(string)
-                    .setInputType(computerLanguage)
-                    .setInputAttribute("type", "input")
-                    .setOutputType(outputHumanLanguage.toLowerCase())
-                    .setOutputAttrute("type", "output")
-                    .setOutputAttrute("style", settings.style)
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
-        });
+        String description = String.format("Describe %s -> %s", outputHumanLanguage, computerLanguage);
+        return TextReplacementAction.create("_To " + outputHumanLanguage, description, null,
+                (event, string) -> {
+                    AppSettingsState settings = AppSettingsState.getInstance();
+                    return settings.createTranslationRequest()
+                            .setInstruction(UITools.getInstruction("Describe this code"))
+                            .setInputText(string)
+                            .setInputType(computerLanguage)
+                            .setInputAttribute("type", "input")
+                            .setOutputType(outputHumanLanguage.toLowerCase())
+                            .setOutputAttrute("type", "output")
+                            .setOutputAttrute("style", settings.style)
+                            .buildCompletionRequest();
+                });
     }
 
     @NotNull
-    public static TextReplacementAction fromHumanLanguageAction(String inputHumanLanguage, ComputerLanguage language) {
+    protected AnAction fromHumanLanguageAction(String inputHumanLanguage, ComputerLanguage language) {
         String computerLanguage = language.name();
-        return TextReplacementAction.create("_From " + inputHumanLanguage, String.format("Implement %s -> %s", inputHumanLanguage, computerLanguage), null, (event, string) -> {
-            return AppSettingsState.getInstance().createTranslationRequest()
-                    .setInputType(inputHumanLanguage.toLowerCase())
-                    .setOutputType(computerLanguage)
-                    .setInstruction("Implement this specification")
-                    .setInputAttribute("type", "input")
-                    .setOutputAttrute("type", "output")
-                    .setInputText(string)
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
-        });
+        String description = String.format("Implement %s -> %s", inputHumanLanguage, computerLanguage);
+        return TextReplacementAction.create("_From " + inputHumanLanguage, description, null, (event, string) ->
+                AppSettingsState.getInstance().createTranslationRequest()
+                        .setInputType(inputHumanLanguage.toLowerCase())
+                        .setOutputType(computerLanguage)
+                        .setInstruction("Implement this specification")
+                        .setInputAttribute("type", "input")
+                        .setOutputAttrute("type", "output")
+                        .setInputText(string)
+                        .buildCompletionRequest());
     }
 
     @NotNull
-    public static TextReplacementAction addCodeCommentsAction(String outputHumanLanguage, ComputerLanguage language) {
+    protected AnAction addCodeCommentsAction(CharSequence outputHumanLanguage, ComputerLanguage language) {
         String computerLanguage = language.name();
         return TextReplacementAction.create("Add Code _Comments", "Add Code Comments", null, (event, string) -> {
             AppSettingsState settings = AppSettingsState.getInstance();
             return settings.createTranslationRequest()
                     .setInputType(computerLanguage)
                     .setOutputType(computerLanguage)
-                    .setInstruction(getInstruction(settings.style, "Rewrite to include detailed " + outputHumanLanguage + " code comments for every line"))
+                    .setInstruction(UITools.getInstruction("Rewrite to include detailed " + outputHumanLanguage + " code comments for every line"))
                     .setInputAttribute("type", "uncommented")
                     .setOutputAttrute("type", "commented")
                     .setOutputAttrute("style", settings.style)
                     .setInputText(string)
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
         });
     }
 
     @NotNull
-    public static TextReplacementAction describeAction(String outputHumanLanguage, ComputerLanguage language) {
-        return TextReplacementAction.create("_Describe Code and Prepend Comment", "Add JavaDoc Comments", null, (event, inputString) -> {
-            AppSettingsState settings = AppSettingsState.getInstance();
-            String indent = getIndent(event.getData(CommonDataKeys.CARET));
-            String description = settings.createTranslationRequest()
-                    .setInputType(language.name())
-                    .setOutputType(outputHumanLanguage)
-                    .setInstruction(getInstruction(settings.style, "Explain this " + language.name() + " in " + outputHumanLanguage))
-                    .setInputAttribute("type", "code")
-                    .setOutputAttrute("type", "description")
-                    .setOutputAttrute("style", settings.style)
-                    .setInputText(IndentedText.fromString(inputString).getTextBlock().trim())
-                    .buildCompletionRequest()
-                    .complete(indent);
-            return "\n" + indent + language.blockComment.fromString(StringTools.lineWrapping(description.trim(), 120)).withIndent(indent) + "\n" + indent + inputString;
+    protected AnAction describeAction(String outputHumanLanguage, ComputerLanguage language) {
+        return TextReplacementAction.create("_Describe Code and Prepend Comment", "Add JavaDoc Comments", null, new TextReplacementAction.ActionTextEditorFunction() {
+            @Override
+            public CompletionRequest apply(AnActionEvent event, String inputString) throws IOException, ModerationException {
+                AppSettingsState settings = AppSettingsState.getInstance();
+                return settings.createTranslationRequest()
+                        .setInputType(language.name())
+                        .setOutputType(outputHumanLanguage)
+                        .setInstruction(UITools.getInstruction("Explain this " + language.name() + " in " + outputHumanLanguage))
+                        .setInputAttribute("type", "code")
+                        .setOutputAttrute("type", "description")
+                        .setOutputAttrute("style", settings.style)
+                        .setInputText(IndentedText.fromString(inputString).getTextBlock().trim())
+                        .buildCompletionRequest();
+            }
+
+            @Override
+            public CharSequence postTransform(AnActionEvent event, CharSequence prompt, CharSequence completion) {
+                CharSequence indent = UITools.getIndent(event);
+                String wrapping = StringTools.lineWrapping(completion.toString().trim(), 120);
+                return "\n" + indent + language.blockComment.fromString(wrapping).withIndent(indent) + "\n" + indent + prompt;
+            }
         });
     }
 
-    public static String getInstruction(String style, String instruction) {
-        if (style.isEmpty()) return instruction;
-        return String.format("%s (%s)", instruction, style);
+    @NotNull
+    protected AnAction genericInsert() {
+        return new AnAction("_Insert Text", "Insert Text", null) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                Caret caret = event.getData(CommonDataKeys.CARET);
+                Document document = caret.getEditor().getDocument();
+                int caretPosition = caret.getOffset();
+                CharSequence before = StringTools.getSuffixForContext(document.getText(new TextRange(0, caretPosition)));
+                CharSequence after = StringTools.getPrefixForContext(document.getText(new TextRange(caretPosition, document.getTextLength())));
+                AppSettingsState settings = AppSettingsState.getInstance();
+                CompletionRequest completionRequest = settings.createCompletionRequest()
+                        .appendPrompt(before)
+                        .setSuffix(after);
+                UITools.redoableRequest(completionRequest, "", event, complete -> {
+                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                    return UITools.insertString(editor.getDocument(), caretPosition, complete);
+                });
+            }
+        };
     }
 
     @NotNull
-    public static TextReplacementAction customEdit(String computerLanguage) {
+    protected AnAction genericAppend() {
+        return new AnAction("_Append Text", "Append Text", null) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                Caret caret = event.getData(CommonDataKeys.CARET);
+                CharSequence before = caret.getSelectedText();
+                AppSettingsState settings = AppSettingsState.getInstance();
+                CompletionRequest completionRequest = settings.createCompletionRequest()
+                        .appendPrompt(before);
+                UITools.redoableRequest(completionRequest, "", event, complete -> {
+                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                    return UITools.insertString(editor.getDocument(), caret.getSelectionEnd(), complete);
+                });
+            }
+        };
+    }
+
+    @Nullable
+    protected AnAction redoLast() {
+        if(UITools.retry.isEmpty()) return null;
+        return new AnAction("_Redo Last", "Redo last", null) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                UITools.retry.pop().run();
+            }
+        };
+    }
+
+    protected AnAction customEdit(String computerLanguage) {
         return TextReplacementAction.create("_Edit...", "Edit...", null, (event, string) -> {
             String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
             AppSettingsState settings = AppSettingsState.getInstance();
@@ -204,8 +262,7 @@ public class EditorMenu extends ActionGroup {
                     .setInputAttribute("type", "before")
                     .setOutputAttrute("type", "after")
                     .setInputText(IndentedText.fromString(string).getTextBlock())
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
         });
     }
 
@@ -217,7 +274,7 @@ public class EditorMenu extends ActionGroup {
      * @return a new ActionGroup for recent edits
      */
     @NotNull
-    public static ActionGroup recentEdits(String computerLanguage) {
+    protected ActionGroup recentEdits(String computerLanguage) {
         return new ActionGroup("Recent Edits", true) {
             @Override
             public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -229,39 +286,36 @@ public class EditorMenu extends ActionGroup {
     }
 
     @NotNull
-    public static AnAction docAction(String extension, ComputerLanguage language) {
+    protected AnAction docAction(String extension, ComputerLanguage language) {
         return new AnAction("_Add " + language.docStyle + " Comments", "Add " + language.docStyle + " Comments", null) {
             @Override
             public void actionPerformed(@NotNull final AnActionEvent event) {
-                try {
-                    Caret caret = event.getData(CommonDataKeys.CARET);
-                    PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
-                    PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
-                    if (null == smallestIntersectingMethod) return;
-                    AppSettingsState settings = AppSettingsState.getInstance();
-                    String code = smallestIntersectingMethod.getText();
-                    IndentedText indentedInput = IndentedText.fromString(code);
-                    String indent = indentedInput.getIndent();
-                    String rawDocString = settings.createTranslationRequest()
-                            .setInputType(extension)
-                            .setOutputType(extension)
-                            .setInstruction(getInstruction(settings.style, "Rewrite to include detailed " + language.docStyle))
-                            .setInputAttribute("type", "uncommented")
-                            .setOutputAttrute("type", "commented")
-                            .setOutputAttrute("style", settings.style)
-                            .setInputText(indentedInput.getTextBlock())
-                            .buildCompletionRequest()
-                            .addStops(language.getMultilineCommentSuffix())
-                            .complete("").trim();
-                    final String newText = language.docComment.fromString(rawDocString).withIndent(indent) + "\n" + indent + StringTools.trimPrefix(indentedInput.toString());
-                    //language.docComment.fromString(rawDocString).withIndent(indent).toString()
-                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                        editor.getDocument().replaceString(smallestIntersectingMethod.getTextRange().getStartOffset(), smallestIntersectingMethod.getTextRange().getEndOffset(), newText);
-                    });
-                } catch (ModerationException | IOException ex) {
-                    handle(ex);
-                }
+                Caret caret = event.getData(CommonDataKeys.CARET);
+                PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
+                PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd());
+                if (null == smallestIntersectingMethod) return;
+                AppSettingsState settings = AppSettingsState.getInstance();
+                String code = smallestIntersectingMethod.getText();
+                IndentedText indentedInput = IndentedText.fromString(code);
+                CharSequence indent = indentedInput.getIndent();
+                CompletionRequest completionRequest = settings.createTranslationRequest()
+                        .setInputType(extension)
+                        .setOutputType(extension)
+                        .setInstruction(UITools.getInstruction("Rewrite to include detailed " + language.docStyle))
+                        .setInputAttribute("type", "uncommented")
+                        .setOutputAttrute("type", "commented")
+                        .setOutputAttrute("style", settings.style)
+                        .setInputText(indentedInput.getTextBlock())
+                        .buildCompletionRequest()
+                        .addStops(language.getMultilineCommentSuffix());
+                int startOffset = smallestIntersectingMethod.getTextRange().getStartOffset();
+                int endOffset = smallestIntersectingMethod.getTextRange().getEndOffset();
+                UITools.redoableRequest(completionRequest, "", event, (CharSequence docString) -> {
+                    TextBlock reindented = language.docComment.fromString(docString.toString().trim()).withIndent(indent);
+                    final CharSequence newText = reindented + "\n" + indent + StringTools.trimPrefix(indentedInput.toString());
+                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                    return UITools.replaceString(editor.getDocument(), startOffset, endOffset, newText);
+                });
             }
         };
     }
@@ -273,7 +327,7 @@ public class EditorMenu extends ActionGroup {
      * @return a {@link TextReplacementAction} that pastes the contents of the clipboard into the given language
      */
     @NotNull
-    public static TextReplacementAction pasteAction(@NotNull String language) {
+    protected AnAction pasteAction(@NotNull CharSequence language) {
         return TextReplacementAction.create("_Paste", "Paste", null, (event, string) -> {
             String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor).toString().trim();
             return AppSettingsState.getInstance().createTranslationRequest()
@@ -283,19 +337,12 @@ public class EditorMenu extends ActionGroup {
                     .setInputAttribute("language", "autodetect")
                     .setOutputAttrute("language", language)
                     .setInputText(text)
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
         });
     }
 
-    public static String getIndent(Caret caret) {
-        if (null == caret) return "";
-        Document document = caret.getEditor().getDocument();
-        return IndentedText.fromString(document.getText().split("\n")[document.getLineNumber(caret.getSelectionStart())]).getIndent();
-    }
-
     @NotNull
-    public static TextReplacementAction customEdit(String computerLanguage, String instruction) {
+    protected AnAction customEdit(CharSequence computerLanguage, CharSequence instruction) {
         return TextReplacementAction.create(instruction, instruction, null, (event, string) -> {
             AppSettingsState settings = AppSettingsState.getInstance();
             settings.addInstructionToHistory(instruction);
@@ -306,35 +353,48 @@ public class EditorMenu extends ActionGroup {
                     .setInputAttribute("type", "before")
                     .setOutputAttrute("type", "after")
                     .setInputText(IndentedText.fromString(string).getTextBlock())
-                    .buildCompletionRequest()
-                    .complete(getIndent(event.getData(CommonDataKeys.CARET)));
+                    .buildCompletionRequest();
         });
     }
 
     @Nullable
-    public static AnAction markdownListAction(@NotNull AnActionEvent e) {
+    protected AnAction markdownListAction(@NotNull AnActionEvent e) {
         try {
             Caret caret = e.getData(CommonDataKeys.CARET);
-            if(null == caret) return null;
+            if (null == caret) return null;
             PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-            if(null == psiFile) return null;
+            if (null == psiFile) return null;
             PsiElement list = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownListImpl");
             if (null == list) return null;
             return new AnAction("Add _List Items", "Add list items", null) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent event) {
                     AppSettingsState settings = AppSettingsState.getInstance();
-                    List<String> items = trim(PsiUtil.getAll(list, "MarkdownListItemImpl").stream().map(item -> PsiUtil.getAll(item, "MarkdownParagraphImpl").get(0).getText()).collect(Collectors.toList()), 10, false);
-                    String indent = getIndent(caret);
-                    String n = Integer.toString(items.size() * 2);
-                    List<String> newItems = getNewItems(settings, items, n);
-                    String strippedList = Arrays.stream(list.getText().split("\n")).map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.joining("\n"));
-                    String bulletString = Stream.of("- [ ] ", "- ", "* ")
-                            .filter(strippedList::startsWith).findFirst().orElse("1. ");
-                    String itemText = indent + newItems.stream().map(x -> bulletString + x).collect(Collectors.joining("\n" + indent));
-                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                    List<CharSequence> items = StringTools.trim(PsiUtil.getAll(list, "MarkdownListItemImpl")
+                            .stream().map(item -> PsiUtil.getAll(item, "MarkdownParagraphImpl").get(0).getText()).collect(Collectors.toList()), 10, false);
+                    CharSequence indent = UITools.getIndent(caret);
+                    CharSequence n = Integer.toString(items.size() * 2);
+                    int endOffset = list.getTextRange().getEndOffset();
+                    String listPrefix = "* ";
+                    CompletionRequest completionRequest = settings.createTranslationRequest()
+                            .setInstruction(UITools.getInstruction("List " + n + " items"))
+                            .setInputType("instruction")
+                            .setInputText("List " + n + " items")
+                            .setOutputType("list")
+                            .setOutputAttrute("style", settings.style)
+                            .buildCompletionRequest()
+                            .appendPrompt(items.stream().map(x2 -> listPrefix + x2).collect(Collectors.joining("\n")) + "\n" + listPrefix);
+                    UITools.redoableRequest(completionRequest, "", event, complete -> {
+                        List<CharSequence> newItems = Arrays.stream(complete.toString().split("\n")).map(String::trim)
+                                .filter(x1 -> x1 != null && x1.length() > 0).map(x1 -> StringTools.stripPrefix(x1, listPrefix)).collect(Collectors.toList());
+                        String strippedList = Arrays.stream(list.getText().split("\n"))
+                                .map(String::trim).filter(x -> x.length() > 0).collect(Collectors.joining("\n"));
+                        String bulletString = Stream.of("- [ ] ", "- ", "* ")
+                                .filter(strippedList::startsWith).findFirst().orElse("1. ");
+                        CharSequence itemText = indent + newItems.stream().map(x -> bulletString + x)
+                                .collect(Collectors.joining("\n" + indent));
                         final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                        editor.getDocument().insertString(list.getTextRange().getEndOffset(), "\n" + itemText);
+                        return UITools.insertString(editor.getDocument(), endOffset, "\n" + itemText);
                     });
                 }
             };
@@ -344,135 +404,93 @@ public class EditorMenu extends ActionGroup {
         }
     }
 
-    @NotNull
-    private static List<String> trim(List<String> items, int max, boolean preserveHead) {
-        items = new ArrayList<>(items);
-        Random random = new Random();
-        while (items.size() > max) {
-            int index = random.nextInt(items.size());
-            if (preserveHead && index == 0) continue;
-            items.remove(index);
-        }
-        return items;
-    }
-
-    @NotNull
-    private static List<String> getNewItems(AppSettingsState settings, List<String> items, String n) {
-        String listPrefix = "* ";
-        String complete;
-        try {
-            complete = settings.createTranslationRequest()
-                    .setInstruction(getInstruction(settings.style, "List " + n + " items"))
-                    .setInputType("instruction")
-                    .setInputText("List " + n + " items")
-                    .setOutputType("list")
-                    .setOutputAttrute("style", settings.style)
-                    .buildCompletionRequest()
-                    .appendPrompt(items.stream().map(x -> listPrefix + x).collect(Collectors.joining("\n")) + "\n" + listPrefix)
-                    .complete("");
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } catch (ModerationException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        return Arrays.stream(complete.split("\n")).map(String::trim).filter(x -> x != null && !x.isEmpty()).map(x -> StringTools.stripPrefix(x, listPrefix)).collect(Collectors.toList());
-    }
-
+    /**
+     * This method creates an action to add new columns to a Markdown table.
+     *
+     * @param e The action event
+     * @return An action to add new columns to a Markdown table, or null if the action cannot be created
+     */
     @Nullable
-    public static AnAction markdownNewTableColsAction(@NotNull AnActionEvent e) {
+    protected AnAction markdownNewTableColsAction(@NotNull AnActionEvent e) {
         Caret caret = e.getData(CommonDataKeys.CARET);
         if (null == caret) return null;
         PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null == psiFile) return null;
         PsiElement table = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownTableImpl");
         if (null == table) return null;
-        List<String> rows = Arrays.asList(transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl").stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
-        String n = Integer.toString(rows.size() * 2);
+        List<CharSequence> rows = Arrays.asList(StringTools.transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl")
+                .stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
+        CharSequence n = Integer.toString(rows.size() * 2);
         return new AnAction("Add _Table Columns", "Add table columns", null) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent event) {
+                CharSequence originalText = table.getText();
                 AppSettingsState settings = AppSettingsState.getInstance();
-                String indent = getIndent(caret);
-                List<String> newRows = newRows(settings, n, rows, "");
-                String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
-                WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                    editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
-                });
+                CharSequence indent = UITools.getIndent(caret);
+                UITools.redoableRequest(newRowsRequest(settings, n, rows, ""),
+                        "",
+                        event,
+                        (CharSequence complete) -> {
+                            List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n")).map(String::trim)
+                                    .filter(x -> x.length() > 0).collect(Collectors.toList());
+                            String newTableTxt = StringTools.transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream())
+                                    .collect(Collectors.joining("\n")), false, true);
+                            final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                            return UITools.replaceString(
+                                    editor.getDocument(),
+                                    table.getTextRange().getStartOffset(),
+                                    table.getTextRange().getEndOffset(),
+                                    newTableTxt.replace("\n", "\n" + indent));
+                        });
             }
         };
     }
 
+    /**
+     * Creates an action to add a new column to a Markdown table.
+     *
+     * @param e The action event.
+     * @return An action to add a new column to a Markdown table, or null if the action cannot be created.
+     */
     @Nullable
-    public static AnAction markdownNewTableColsAction2(@NotNull AnActionEvent e) {
+    protected AnAction markdownNewTableColAction(@NotNull AnActionEvent e) {
         Caret caret = e.getData(CommonDataKeys.CARET);
         if (null == caret) return null;
         PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null == psiFile) return null;
         PsiElement table = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownTableImpl");
         if (null == table) return null;
-        List<String> rows = Arrays.asList(transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl").stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
-        String n = Integer.toString(rows.size() * 2);
+        List<CharSequence> rows = Arrays.asList(StringTools.transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl")
+                .stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
+        CharSequence n = Integer.toString(rows.size() * 2);
         return new AnAction("Add Table _Column...", "Add table column...", null) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent event) {
                 AppSettingsState settings = AppSettingsState.getInstance();
-                String indent = getIndent(caret);
-                String columnName = JOptionPane.showInputDialog(null, "Column Name:", "Add Column", JOptionPane.QUESTION_MESSAGE);
-                List<String> newRows = newRows(settings, n, rows, "| " + columnName + " | ");
-                String newTableTxt = transposeMarkdownTable(Stream.concat(rows.stream(), newRows.stream()).collect(Collectors.joining("\n")), false, true);
-                WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                    final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                    editor.getDocument().replaceString(table.getTextRange().getStartOffset(), table.getTextRange().getEndOffset(), newTableTxt.replace("\n", "\n" + indent));
-                });
+                CharSequence indent = UITools.getIndent(caret);
+                CharSequence columnName = JOptionPane.showInputDialog(null, "Column Name:", "Add Column", JOptionPane.QUESTION_MESSAGE);
+                UITools.redoableRequest(
+                        newRowsRequest(settings, n, rows, "| " + columnName + " | "),
+                        "",
+                        event,
+                        (CharSequence complete) -> {
+                            List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n"))
+                                    .map(String::trim).filter(x -> x.length() > 0).collect(Collectors.toList());
+                            String newTableTxt = StringTools.transposeMarkdownTable(Stream.concat(rows.stream(),
+                                    newRows.stream()).collect(Collectors.joining("\n")), false, true);
+                            final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                            return UITools.replaceString(
+                                    editor.getDocument(),
+                                    table.getTextRange().getStartOffset(),
+                                    table.getTextRange().getEndOffset(),
+                                    newTableTxt.replace("\n", "\n" + indent));
+                        });
             }
         };
     }
 
-    static String transposeMarkdownTable(String table, boolean inputHeader, boolean outputHeader) {
-        String[][] cells = parseMarkdownTable(table, inputHeader);
-        StringBuilder transposedTable = new StringBuilder();
-        int columns = cells[0].length;
-        int rows = cells.length;
-        if (outputHeader) columns = columns + 1;
-        for (int column = 0; column < columns; column++) {
-            transposedTable.append("|");
-            for (int row = 0; row < rows; row++) {
-                String cellValue;
-                String[] rowCells = cells[row];
-                if (outputHeader) {
-                    if (column < 1) {
-                        cellValue = rowCells[column].trim();
-                    } else if (column == 1) {
-                        cellValue = "---";
-                    } else if ((column - 1) >= rowCells.length) {
-                        cellValue = "";
-                    } else {
-                        cellValue = rowCells[column - 1].trim();
-                    }
-                } else {
-                    cellValue = rowCells[column].trim();
-                }
-                transposedTable.append(" ").append(cellValue).append(" |");
-            }
-            transposedTable.append("\n");
-        }
-        return transposedTable.toString();
-    }
-
-    private static String[][] parseMarkdownTable(String table, boolean removeHeader) {
-        ArrayList<String[]> rows = new ArrayList(Arrays.stream(table.split("\n")).map(x -> Arrays.stream(x.split("\\|")).filter(cell -> !cell.isEmpty()).toArray(String[]::new)).collect(Collectors.toList()));
-        if (removeHeader) {
-            rows.remove(1);
-        }
-        return rows.stream()
-                //.filter(x -> x.length == rows.get(0).length)
-                .toArray(String[][]::new);
-    }
-
     @Nullable
-    public static AnAction markdownNewTableRowsAction(@NotNull AnActionEvent e) {
+    protected AnAction markdownNewTableRowsAction(@NotNull AnActionEvent e) {
         Caret caret = e.getData(CommonDataKeys.CARET);
         if (null == caret) return null;
         PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
@@ -480,19 +498,24 @@ public class EditorMenu extends ActionGroup {
         PsiElement table = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownTableImpl");
         if (null == table) return null;
         if (null != table) {
-            List<String> rows = trim(PsiUtil.getAll(table, "MarkdownTableRowImpl").stream().map(PsiElement::getText).collect(Collectors.toList()), 10, true);
-            String n = Integer.toString(rows.size() * 2);
+            List<CharSequence> rows = StringTools.trim(PsiUtil.getAll(table, "MarkdownTableRowImpl")
+                    .stream().map(PsiElement::getText).collect(Collectors.toList()), 10, true);
+            CharSequence n = Integer.toString(rows.size() * 2);
             return new AnAction("Add _Table Rows", "Add table rows", null) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent event) {
                     AppSettingsState settings = AppSettingsState.getInstance();
-                    String indent = getIndent(caret);
-                    List<String> newRows = newRows(settings, n, rows, "");
-                    String itemText = indent + newRows.stream().collect(Collectors.joining("\n" + indent));
-                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-                        editor.getDocument().insertString(table.getTextRange().getEndOffset(), "\n" + itemText);
-                    });
+                    CharSequence indent = UITools.getIndent(caret);
+                    UITools.redoableRequest(newRowsRequest(settings, n, rows, ""),
+                            "",
+                            event,
+                            (CharSequence complete) -> {
+                                List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n"))
+                                        .map(String::trim).filter(x -> x.length() > 0).collect(Collectors.toList());
+                                CharSequence itemText = indent + newRows.stream().collect(Collectors.joining("\n" + indent));
+                                final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+                                return UITools.insertString(editor.getDocument(), table.getTextRange().getEndOffset(), "\n" + itemText);
+                            });
                 }
             };
         }
@@ -500,26 +523,26 @@ public class EditorMenu extends ActionGroup {
     }
 
     @NotNull
-    private static List<String> newRows(AppSettingsState settings, String n, List<String> rows, String rowPrefix) {
-        String complete;
-        try {
-            complete = settings.createTranslationRequest()
-                    .setInstruction(getInstruction(settings.style, "List " + n + " items"))
-                    .setInputType("instruction")
-                    .setInputText("List " + n + " items")
-                    .setOutputType("markdown")
-                    .setOutputAttrute("style", settings.style)
-                    .buildCompletionRequest()
-                    .appendPrompt("\n" + String.join("\n", rows) + "\n" + rowPrefix)
-                    .complete("");
-        } catch (IOException | ModerationException ex) {
-            throw new RuntimeException(ex);
-        }
-        return Arrays.stream((rowPrefix + complete).split("\n")).map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.toList());
+    protected CompletionRequest newRowsRequest(AppSettingsState settings, CharSequence n, List<CharSequence> rows, CharSequence rowPrefix) {
+        return settings.createTranslationRequest()
+                .setInstruction(UITools.getInstruction("List " + n + " items"))
+                .setInputType("instruction")
+                .setInputText("List " + n + " items")
+                .setOutputType("markdown")
+                .setOutputAttrute("style", settings.style)
+                .buildCompletionRequest()
+                .appendPrompt("\n" + String.join("\n", rows) + "\n" + rowPrefix);
     }
 
+    /**
+     * Creates a {@link TextReplacementAction} for the given {@link AnActionEvent} and human language.
+     *
+     * @param e             the action event
+     * @param humanLanguage the human language
+     * @return the {@link TextReplacementAction} or {@code null} if no action can be created
+     */
     @Nullable
-    public static TextReplacementAction markdownContextAction(@NotNull AnActionEvent e, String humanLanguage) {
+    protected AnAction markdownContextAction(@NotNull AnActionEvent e, CharSequence humanLanguage) {
         Caret caret = e.getData(CommonDataKeys.CARET);
         if (null != caret) {
             int selectionStart = caret.getSelectionStart();
@@ -533,15 +556,13 @@ public class EditorMenu extends ActionGroup {
                     context = context + "\n";
                     return settings.createTranslationRequest()
                             .setOutputType("markdown")
-                            .setInstruction(getInstruction(settings.style, String.format("Using Markdown and %s", humanLanguage)))
+                            .setInstruction(UITools.getInstruction(String.format("Using Markdown and %s", humanLanguage)))
                             .setInputType("instruction")
                             .setInputText(humanDescription)
                             .setOutputAttrute("type", "document")
                             .setOutputAttrute("style", settings.style)
                             .buildCompletionRequest()
-                            //.addStops(new String[]{"#"})
-                            .appendPrompt(context)
-                            .complete(getIndent(caret));
+                            .appendPrompt(context);
                 });
             }
         }
@@ -553,7 +574,7 @@ public class EditorMenu extends ActionGroup {
     }
 
     @Nullable
-    public static AnAction printTreeAction(@NotNull AnActionEvent e) {
+    protected AnAction printTreeAction(@NotNull AnActionEvent e) {
         Caret caret = e.getData(CommonDataKeys.CARET);
         if (null == caret) return null;
         PsiElement psiFile = e.getData(CommonDataKeys.PSI_FILE);
@@ -573,7 +594,7 @@ public class EditorMenu extends ActionGroup {
     }
 
     @Nullable
-    public static AnAction rewordCommentAction(@NotNull AnActionEvent e, ComputerLanguage computerLanguage, String humanLanguage) {
+    protected AnAction rewordCommentAction(@NotNull AnActionEvent e, ComputerLanguage computerLanguage, String humanLanguage) {
         PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null == psiFile) return null;
         Caret caret = e.getData(CommonDataKeys.CARET);
@@ -587,40 +608,36 @@ public class EditorMenu extends ActionGroup {
             public void actionPerformed(@NotNull final AnActionEvent e1) {
                 final Editor editor = e1.getRequiredData(CommonDataKeys.EDITOR);
                 AppSettingsState settings = AppSettingsState.getInstance();
-                try {
-                    TextBlockFactory<?> commentModel = computerLanguage.getCommentModel(largestIntersectingComment.getText());
-                    String commentText = commentModel.fromString(largestIntersectingComment.getText().trim()).stream()
-                            .map(String::trim)
-                            .filter(x -> !x.isEmpty())
-                            .reduce((a, b) -> a + "\n" + b).get();
-                    String result = settings.createTranslationRequest()
-                            .setInstruction(getInstruction(settings.style, "Reword"))
-                            .setInputText(commentText)
-                            .setInputType(humanLanguage)
-                            .setOutputAttrute("type", "input")
-                            .setOutputType(humanLanguage)
-                            .setOutputAttrute("type", "output")
-                            .setOutputAttrute("style", settings.style)
-                            .buildCompletionRequest()
-                            .complete("");
-                    String indent = getIndent(caret);
-                    String finalResult = indent + commentModel.fromString(StringTools.lineWrapping(result, 120)).withIndent(indent);
-                    WriteCommandAction.runWriteCommandAction(e1.getProject(), () -> {
-                        editor.getDocument().replaceString(
-                                largestIntersectingComment.getTextRange().getStartOffset(),
-                                largestIntersectingComment.getTextRange().getEndOffset(),
-                                finalResult);
-                    });
-                } catch (ModerationException | IOException ex) {
-                    handle(ex);
-                }
+                String text = largestIntersectingComment.getText();
+                TextBlockFactory<?> commentModel = computerLanguage.getCommentModel(text);
+                String commentText = commentModel.fromString(text.trim()).stream()
+                        .map(Object::toString)
+                        .map(String::trim)
+                        .filter(x -> !x.isEmpty())
+                        .reduce((a, b) -> a + "\n" + b).get();
+                int startOffset = largestIntersectingComment.getTextRange().getStartOffset();
+                int endOffset = largestIntersectingComment.getTextRange().getEndOffset();
+                CharSequence indent = UITools.getIndent(caret);
+                UITools.redoableRequest(settings.createTranslationRequest()
+                        .setInstruction(UITools.getInstruction("Reword"))
+                        .setInputText(commentText)
+                        .setInputType(humanLanguage)
+                        .setOutputAttrute("type", "input")
+                        .setOutputType(humanLanguage)
+                        .setOutputAttrute("type", "output")
+                        .setOutputAttrute("style", settings.style)
+                        .buildCompletionRequest(), "", e1, (CharSequence result) -> {
+                    String lineWrapping = StringTools.lineWrapping(result, 120);
+                    CharSequence finalResult = indent.toString() + commentModel.fromString(lineWrapping).withIndent(indent);
+                    return UITools.replaceString(editor.getDocument(), startOffset, endOffset, finalResult);
+                });
             }
 
         };
     }
 
     @Nullable
-    public static AnAction psiClassContextAction(@NotNull AnActionEvent e, ComputerLanguage computerLanguage, String humanLanguage) {
+    protected AnAction psiClassContextAction(@NotNull AnActionEvent e, ComputerLanguage computerLanguage, String humanLanguage) {
         PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null == psiFile) return null;
         Caret caret = e.getData(CommonDataKeys.CARET);
@@ -637,34 +654,31 @@ public class EditorMenu extends ActionGroup {
                 final Caret primaryCaret = caretModel.getPrimaryCaret();
                 @NotNull String selectedText = primaryCaret.getSelectedText();
                 AppSettingsState settings = AppSettingsState.getInstance();
-                try {
 
-                    String instruct = (selectedText.split(" ").length > 4 ? selectedText : largestIntersectingComment.getText()).trim();
-                    String specification = computerLanguage.getCommentModel(instruct).fromString(instruct).stream()
-                            .map(String::trim)
-                            .filter(x -> !x.isEmpty())
-                            .reduce((a, b) -> a + " " + b).get();
-                    String result = settings.createTranslationRequest()
-                            .setInstruction("Implement " + humanLanguage + " as " + computerLanguage.name() + " code")
-                            .setInputType(humanLanguage)
-                            .setInputAttribute("type", "instruction")
-                            .setInputText(specification)
-                            .setOutputType(computerLanguage.name())
-                            .setOutputAttrute("type", "code")
-                            .setOutputAttrute("style", settings.style)
-                            .buildCompletionRequest()
-                            .appendPrompt(PsiClassContext.getContext(psiFile, selectionStart, selectionEnd) + "\n")
-                            .complete(getIndent(caret));
-                    WriteCommandAction.runWriteCommandAction(e1.getProject(), () -> {
-                        editor.getDocument().insertString(largestIntersectingComment.getTextRange().getEndOffset(), "\n" + result);
-                    });
-                } catch (ModerationException | IOException ex) {
-                    handle(ex);
-                }
+                String instruct = (selectedText.split(" ").length > 4 ? selectedText : largestIntersectingComment.getText()).trim();
+                String specification = computerLanguage.getCommentModel(instruct).fromString(instruct).stream()
+                        .map(Object::toString)
+                        .map(String::trim)
+                        .filter(x -> !x.isEmpty())
+                        .reduce((a, b) -> a + " " + b).get();
+                int endOffset = largestIntersectingComment.getTextRange().getEndOffset();
+                UITools.redoableRequest(settings.createTranslationRequest()
+                                .setInstruction("Implement " + humanLanguage + " as " + computerLanguage.name() + " code")
+                                .setInputType(humanLanguage)
+                                .setInputAttribute("type", "instruction")
+                                .setInputText(specification)
+                                .setOutputType(computerLanguage.name())
+                                .setOutputAttrute("type", "code")
+                                .setOutputAttrute("style", settings.style)
+                                .buildCompletionRequest()
+                                .appendPrompt(PsiClassContext.getContext(psiFile, selectionStart, selectionEnd) + "\n"),
+                        UITools.getIndent(caret),
+                        e1,
+                        (CharSequence result) -> UITools.insertString(editor.getDocument(), endOffset, "\n" + result));
             }
-
         };
     }
+
 
     @Override
     public void update(@NotNull AnActionEvent e) {

@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.psi;
 
-import com.github.simiacryptus.aicoder.text.StringTools;
+import com.github.simiacryptus.aicoder.util.StringTools;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -57,7 +57,7 @@ public class PsiClassContext {
                     (textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart) || (textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd);
                 // Check if the element is within the selection
                 boolean within = (textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart) && (textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd);
-                String simpleName = element.getClass().getSimpleName();
+                CharSequence simpleName = element.getClass().getSimpleName();
                 if (simpleName.equals("PsiImportListImpl")) {
                     currentContext.children.add(new PsiClassContext(text.trim(), isPrior, isOverlap));
                 } else if (simpleName.equals("PsiCommentImpl") || simpleName.equals("PsiDocCommentImpl")) {

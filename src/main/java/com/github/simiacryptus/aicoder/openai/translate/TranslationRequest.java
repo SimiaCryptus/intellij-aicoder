@@ -12,11 +12,11 @@ public interface TranslationRequest {
 
     String getOutputTag();
 
-    String getInstruction();
+    CharSequence getInstruction();
 
-    @NotNull Map<String, String> getInputAttr();
+    @NotNull Map<CharSequence, CharSequence> getInputAttr();
 
-    @NotNull Map<String, String> getOutputAttr();
+    @NotNull Map<CharSequence, CharSequence> getOutputAttr();
 
     String getOriginalText();
 
@@ -24,16 +24,16 @@ public interface TranslationRequest {
 
     int getMaxTokens();
 
-    TranslationRequest setInputType(String inputTag);
+    TranslationRequest setInputType(CharSequence inputTag);
 
-    TranslationRequest setOutputType(String outputTag);
+    TranslationRequest setOutputType(CharSequence outputTag);
 
-    TranslationRequest setInstruction(String instruction);
+    TranslationRequest setInstruction(CharSequence instruction);
 
-    TranslationRequest setInputAttribute(String key, String value);
-    TranslationRequest setOutputAttrute(String key, String value);
+    TranslationRequest setInputAttribute(CharSequence key, CharSequence value);
+    TranslationRequest setOutputAttrute(CharSequence key, CharSequence value);
 
-    TranslationRequest setInputText(String originalText);
+    TranslationRequest setInputText(CharSequence originalText);
 
     TranslationRequest setTemperature(double temperature);
 
