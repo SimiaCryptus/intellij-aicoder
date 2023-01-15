@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class TranslationRequest_XML extends BaseTranslationRequest<TranslationRequest_XML> {
 
-    public TranslationRequest_XML(AppSettingsState settings) {
+    public TranslationRequest_XML(@NotNull AppSettingsState settings) {
         setTemperature(settings.temperature);
         setMaxTokens(settings.maxTokens);
     }

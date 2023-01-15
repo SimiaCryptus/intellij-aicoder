@@ -1,11 +1,11 @@
 package com.github.simiacryptus.aicoder.util;
 
-import com.github.simiacryptus.aicoder.ComputerLanguage;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Random;
 
 public class StyleUtil {
+    @SuppressWarnings("unused")
     private static final Logger log = Logger.getInstance(StyleUtil.class);
 
     /**
@@ -124,7 +125,7 @@ public class StyleUtil {
      * @param language The language of the code snippet.
      * @param code     The code snippet to be described.
      */
-    public static void demoStyle(CharSequence style, ComputerLanguage language, String code) {
+    public static void demoStyle(CharSequence style, @NotNull ComputerLanguage language, @NotNull String code) {
         OpenAI_API.onSuccess(describeTest(style, language, code), description -> {
             CharSequence message = String.format("This code:\n    %s\nwas described as:\n    %s", code.replace("\n", "\n    "), description.toString().replace("\n", "\n    "));
             JOptionPane.showMessageDialog(null, message, "Style Demo", JOptionPane.INFORMATION_MESSAGE);
@@ -139,7 +140,7 @@ public class StyleUtil {
      * @param code     The code.
      * @return A description of the test in the specified style and language.
      */
-    public static ListenableFuture<CharSequence> describeTest(CharSequence style, ComputerLanguage language, String code) {
+    public static @NotNull ListenableFuture<CharSequence> describeTest(CharSequence style, @NotNull ComputerLanguage language, String code) {
         AppSettingsState settings = AppSettingsState.getInstance();
         CompletionRequest completionRequest = settings.createTranslationRequest()
                 .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
@@ -150,7 +151,7 @@ public class StyleUtil {
                 .setOutputAttrute("type", "description")
                 .setOutputAttrute("style", style)
                 .buildCompletionRequest();
-        ListenableFuture<CharSequence> future = completionRequest.complete(null, "");
+        ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.complete(null, completionRequest, "");
         return OpenAI_API.map(future, x->StringTools.lineWrapping(x.toString().trim(), 120));
     }
 }

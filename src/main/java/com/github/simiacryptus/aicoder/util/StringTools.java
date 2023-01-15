@@ -18,7 +18,7 @@ public class StringTools {
      * @return The input string with unbalanced terminators removed.
      * @throws IllegalArgumentException If the input string is unbalanced.
      */
-    public static CharSequence stripUnbalancedTerminators(CharSequence input) {
+    public static @NotNull CharSequence stripUnbalancedTerminators(@NotNull CharSequence input) {
         int openCount = 0;
         boolean inQuotes = false;
         StringBuilder output = new StringBuilder();
@@ -83,7 +83,7 @@ public class StringTools {
         }
     }
 
-    public static String lineWrapping(CharSequence description, int width) {
+    public static @NotNull String lineWrapping(@NotNull CharSequence description, int width) {
         StringBuilder output = new StringBuilder();
         String[] lines = description.toString().split("\n");
         int lineLength = 0;
@@ -105,7 +105,7 @@ public class StringTools {
         return output.toString();
     }
 
-    private static String wrapSentence(CharSequence line, int width, AtomicInteger xPointer) {
+    private static @NotNull String wrapSentence(@NotNull CharSequence line, int width, @NotNull AtomicInteger xPointer) {
         StringBuilder sentenceBuffer = new StringBuilder();
         String[] words = line.toString().split(" ");
         for (String word : words) {
@@ -122,7 +122,7 @@ public class StringTools {
         return sentenceBuffer.toString();
     }
 
-    public static CharSequence toString(int[] ints) {
+    public static @NotNull CharSequence toString(int @NotNull [] ints) {
         char[] chars = new char[ints.length];
         for (int i = 0; i < ints.length; i++) {
             chars[i] = (char) ints[i];
@@ -131,22 +131,22 @@ public class StringTools {
     }
 
     @NotNull
-    public static CharSequence getWhitespacePrefix(CharSequence... lines) {
+    public static CharSequence getWhitespacePrefix(CharSequence @NotNull ... lines) {
         return Arrays.stream(lines)
-                .map(l -> toString(l.chars().takeWhile(i -> Character.isWhitespace(i)).toArray()))
+                .map(l -> toString(l.chars().takeWhile(Character::isWhitespace).toArray()))
                 .filter(x -> x.length()>0)
-                .min(Comparator.comparing(x -> x.length())).orElse("");
+                .min(Comparator.comparing(CharSequence::length)).orElse("");
     }
 
     @NotNull
-    public static String getWhitespaceSuffix(CharSequence... lines) {
+    public static String getWhitespaceSuffix(CharSequence @NotNull ... lines) {
         return reverse(Arrays.stream(lines)
                 .map(StringTools::reverse)
-                .map(l -> toString(l.chars().takeWhile(i -> Character.isWhitespace(i)).toArray()))
-                .max(Comparator.comparing(x -> x.length())).orElse("")).toString();
+                .map(l -> toString(l.chars().takeWhile(Character::isWhitespace).toArray()))
+                .max(Comparator.comparing(CharSequence::length)).orElse("")).toString();
     }
 
-    private static CharSequence reverse(CharSequence l) {
+    private static @NotNull CharSequence reverse(@NotNull CharSequence l) {
         return new StringBuffer(l).reverse().toString();
     }
 
@@ -162,8 +162,8 @@ public class StringTools {
         return items;
     }
 
-    public static String transposeMarkdownTable(String table, boolean inputHeader, boolean outputHeader) {
-        String[][] cells = parseMarkdownTable(table, inputHeader);
+    public static @NotNull String transposeMarkdownTable(@NotNull String table, boolean inputHeader, boolean outputHeader) {
+        CharSequence[][] cells = parseMarkdownTable(table, inputHeader);
         StringBuilder transposedTable = new StringBuilder();
         int columns = cells[0].length;
         int rows = cells.length;
@@ -172,19 +172,19 @@ public class StringTools {
             transposedTable.append("|");
             for (int row = 0; row < rows; row++) {
                 String cellValue;
-                String[] rowCells = cells[row];
+                CharSequence[] rowCells = cells[row];
                 if (outputHeader) {
                     if (column < 1) {
-                        cellValue = rowCells[column].trim();
+                        cellValue = rowCells[column].toString().trim();
                     } else if (column == 1) {
                         cellValue = "---";
                     } else if ((column - 1) >= rowCells.length) {
                         cellValue = "";
                     } else {
-                        cellValue = rowCells[column - 1].trim();
+                        cellValue = rowCells[column - 1].toString().trim();
                     }
                 } else {
-                    cellValue = rowCells[column].trim();
+                    cellValue = rowCells[column].toString().trim();
                 }
                 transposedTable.append(" ").append(cellValue).append(" |");
             }
@@ -193,17 +193,17 @@ public class StringTools {
         return transposedTable.toString();
     }
 
-    private static String[][] parseMarkdownTable(String table, boolean removeHeader) {
-        ArrayList<CharSequence[]> rows = new ArrayList(Arrays.stream(table.split("\n")).map(x -> Arrays.stream(x.split("\\|")).filter(cell -> cell.length() > 0).toArray(CharSequence[]::new)).collect(Collectors.toList()));
+    private static CharSequence[] @NotNull [] parseMarkdownTable(@NotNull String table, boolean removeHeader) {
+        ArrayList<CharSequence[]> rows = new ArrayList<>(Arrays.stream(table.split("\n")).map(x -> Arrays.stream(x.split("\\|")).filter(cell -> cell.length() > 0).toArray(CharSequence[]::new)).collect(Collectors.toList()));
         if (removeHeader) {
             rows.remove(1);
         }
         return rows.stream()
                 //.filter(x -> x.length == rows.get(0).length)
-                .toArray(String[][]::new);
+                .toArray(CharSequence[][]::new);
     }
 
-    public static CharSequence getPrefixForContext(String text) {
+    public static @NotNull CharSequence getPrefixForContext(@NotNull String text) {
         return getPrefixForContext(text, 512, ".", "\n", ",", ";");
     }
 
@@ -215,7 +215,7 @@ public class StringTools {
      * @param delimiters  The delimiters to split the text by.
      * @return The prefix for the given context.
      */
-    public static CharSequence getPrefixForContext(String text, int idealLength, CharSequence... delimiters) {
+    public static @NotNull CharSequence getPrefixForContext(@NotNull String text, int idealLength, CharSequence... delimiters) {
         List<CharSequence> candidates = Stream.of(delimiters).flatMap(d -> {
             StringBuilder sb = new StringBuilder();
             String[] split = text.split(Pattern.quote(d.toString()));
@@ -233,7 +233,7 @@ public class StringTools {
         return winner.get();
     }
 
-    public static CharSequence getSuffixForContext(String text) {
+    public static @NotNull CharSequence getSuffixForContext(@NotNull String text) {
         return getSuffixForContext(text, 512, ".", "\n", ",", ";");
     }
 
@@ -247,7 +247,7 @@ public class StringTools {
      *   @return The suffix for the given context.
      */
     @NotNull
-    public static CharSequence getSuffixForContext(String text, int idealLength, CharSequence... delimiters) {
+    public static CharSequence getSuffixForContext(@NotNull String text, int idealLength, CharSequence... delimiters) {
         List<CharSequence> candidates = Stream.of(delimiters).flatMap(d -> {
             StringBuilder sb = new StringBuilder();
             String[] split = text.split(Pattern.quote(d.toString()));

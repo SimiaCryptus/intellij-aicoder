@@ -18,7 +18,7 @@ public class BlockComment extends IndentedText {
         }
 
         @Override
-        public BlockComment fromString(String text) {
+        public @NotNull BlockComment fromString(String text) {
             text = StringTools.stripSuffix(StringTools.trimSuffix(text.replace("\t", TAB_REPLACEMENT)), blockSuffix.trim());
             @NotNull CharSequence indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
             return new BlockComment(blockPrefix, linePrefix, blockSuffix, indent, Arrays.stream(text.split(DELIMITER))
@@ -30,7 +30,7 @@ public class BlockComment extends IndentedText {
         }
 
         @Override
-        public boolean looksLike(String text) {
+        public boolean looksLike(@NotNull String text) {
             return text.trim().startsWith(blockPrefix) && text.trim().endsWith(blockSuffix);
         }
     }

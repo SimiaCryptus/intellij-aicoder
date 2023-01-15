@@ -14,7 +14,7 @@ public class LineComment extends IndentedText {
         }
 
         @Override
-        public LineComment fromString(String text) {
+        public @NotNull LineComment fromString(String text) {
             text = text.replace("\t", TAB_REPLACEMENT);
             CharSequence indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
             return new LineComment(commentPrefix, indent, Arrays.stream(text.split(DELIMITER))
@@ -25,7 +25,7 @@ public class LineComment extends IndentedText {
         }
 
         @Override
-        public boolean looksLike(String text) {
+        public boolean looksLike(@NotNull String text) {
             return Arrays.stream(text.split(DELIMITER)).allMatch(x->x.trim().startsWith(commentPrefix));
         }
     }

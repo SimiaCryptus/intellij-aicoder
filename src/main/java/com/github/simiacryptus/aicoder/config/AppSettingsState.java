@@ -32,14 +32,15 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public int maxTokens = 1000;
     public double temperature = 0.1;
     public @NotNull String style = "";
+    @SuppressWarnings("unused")
     public int tokenCounter = 0;
-    private @NotNull Map<String, Integer> mostUsedHistory = new HashMap<>();
-    private @NotNull List<String> mostRecentHistory = new ArrayList<>();
+    private final @NotNull Map<String, Integer> mostUsedHistory = new HashMap<>();
+    private final @NotNull List<String> mostRecentHistory = new ArrayList<>();
     public int historyLimit = 10;
     public @NotNull String humanLanguage = "English";
     public int maxPrompt = 5000;
-    public TranslationRequestTemplate translationRequestTemplate = TranslationRequestTemplate.XML;
-    public LogLevel apiLogLevel = LogLevel.Debug;
+    public @NotNull TranslationRequestTemplate translationRequestTemplate = TranslationRequestTemplate.XML;
+    public @NotNull LogLevel apiLogLevel = LogLevel.Debug;
     public boolean devActions = false;
 
     public AppSettingsState() {
@@ -53,7 +54,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         return translationRequestTemplate.get(this);
     }
 
-    public CompletionRequest createCompletionRequest() {
+    public @NotNull CompletionRequest createCompletionRequest() {
         return new CompletionRequest(
                 "",
                 temperature,
@@ -97,7 +98,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         return Objects.hash(apiBase, apiKey, model, maxTokens, temperature, translationRequestTemplate, apiLogLevel, devActions, style);
     }
 
-    public void addInstructionToHistory(CharSequence instruction) {
+    public void addInstructionToHistory(@NotNull CharSequence instruction) {
         synchronized (mostRecentHistory) {
             mostRecentHistory.add(instruction.toString());
             while(mostRecentHistory.size() > historyLimit) {

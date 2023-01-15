@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.openai.translate;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,25 +13,25 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     private CharSequence outputTag;
     private CharSequence instruction;
     @NotNull
-    private Map<CharSequence, CharSequence> inputAttr = new HashMap<>();
+    private final Map<CharSequence, CharSequence> inputAttr = new HashMap<>();
     @NotNull
-    private Map<CharSequence, CharSequence> outputAttr = new HashMap<>();
+    private final Map<CharSequence, CharSequence> outputAttr = new HashMap<>();
     private CharSequence originalText;
     private double temperature;
     private int maxTokens;
 
     @Override
-    public String getInputTag() {
+    public @NotNull String getInputTag() {
         return inputTag.toString();
     }
 
     @Override
-    public String getOutputTag() {
+    public @NotNull String getOutputTag() {
         return outputTag.toString();
     }
 
     @Override
-    public CharSequence getInstruction() {
+    public @NotNull CharSequence getInstruction() {
         return instruction.toString();
     }
 
@@ -47,7 +48,7 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public String getOriginalText() {
+    public @NotNull String getOriginalText() {
         return originalText.toString();
     }
 
@@ -62,43 +63,43 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public T setInputType(CharSequence inputTag) {
+    public @NotNull T setInputType(CharSequence inputTag) {
         this.inputTag = inputTag;
         return (T) this;
     }
 
     @Override
-    public T setOutputType(CharSequence outputTag) {
+    public @NotNull T setOutputType(CharSequence outputTag) {
         this.outputTag = outputTag;
         return (T) this;
     }
 
     @Override
-    public T setInstruction(CharSequence instruction) {
+    public @NotNull T setInstruction(CharSequence instruction) {
         this.instruction = instruction;
         return (T) this;
     }
 
     @Override
-    public T setInputText(CharSequence originalText) {
+    public @NotNull T setInputText(CharSequence originalText) {
         this.originalText = originalText;
         return (T) this;
     }
 
     @Override
-    public T setTemperature(double temperature) {
+    public @NotNull T setTemperature(double temperature) {
         this.temperature = temperature;
         return (T) this;
     }
 
     @Override
-    public T setMaxTokens(int maxTokens) {
+    public @NotNull T setMaxTokens(int maxTokens) {
         this.maxTokens = maxTokens;
         return (T) this;
     }
 
     @Override
-    public T setInputAttribute(CharSequence key, CharSequence value) {
+    public @NotNull T setInputAttribute(CharSequence key, @Nullable CharSequence value) {
         if(null == value || value.length()==0) {
             inputAttr.remove(key);
         } else {
@@ -108,7 +109,7 @@ public abstract class BaseTranslationRequest<T extends BaseTranslationRequest<T>
     }
 
     @Override
-    public T setOutputAttrute(CharSequence key, CharSequence value) {
+    public @NotNull T setOutputAttrute(CharSequence key, @Nullable CharSequence value) {
         if(null == value || value.length()==0) {
             outputAttr.remove(key);
         } else {

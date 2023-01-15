@@ -1,29 +1,54 @@
 package com.github.simiacryptus.aicoder.openai;
 
-import com.github.simiacryptus.aicoder.util.IndentedText;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.intellij.openapi.project.Project;
+import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.github.simiacryptus.aicoder.util.UITools;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Objects;
-
-import static com.github.simiacryptus.aicoder.util.StringTools.stripPrefix;
-import static com.github.simiacryptus.aicoder.util.StringTools.stripUnbalancedTerminators;
 
 /**
  * The CompletionRequest class is used to create a request for completion of a given prompt.
  */
 public class CompletionRequest {
+
+    public static class CompletionRequestWithModel extends CompletionRequest {
+
+        public String model;
+
+        public CompletionRequestWithModel(String prompt, double temperature, int max_tokens, Integer logprobs, boolean echo, String model, CharSequence... stop) {
+            super(prompt, temperature, max_tokens, logprobs, echo, stop);
+            this.model = model;
+        }
+
+        public CompletionRequestWithModel(CompletionRequestWithModel other) {
+            super(other);
+            this.model = other.model;
+        }
+
+        public CompletionRequestWithModel(CompletionRequest other, String model) {
+            super(other);
+            this.model = model;
+        }
+    }
     public String prompt;
-    public String suffix = null;
+    public @Nullable String suffix = null;
+    @SuppressWarnings("unused")
     public double temperature;
+    @SuppressWarnings("unused")
     public int max_tokens;
-    public CharSequence[] stop;
+    public CharSequence @Nullable [] stop;
+    @SuppressWarnings("unused")
     public Integer logprobs;
+    @SuppressWarnings("unused")
     public boolean echo;
+
+    @SuppressWarnings("unused")
+    public CompletionRequest() {
+    }
 
     public CompletionRequest(String prompt, double temperature, int max_tokens, Integer logprobs, boolean echo, CharSequence... stop) {
         this.prompt = prompt;
@@ -33,46 +58,61 @@ public class CompletionRequest {
         this.logprobs = logprobs;
         this.echo = echo;
     }
-
-    @NotNull
-    public ListenableFuture<CharSequence> complete(@Nullable Project project, CharSequence indent) {
-        return OpenAI_API.map(OpenAI_API.INSTANCE.complete(project, this), response -> response
-                .getFirstChoice()
-                .map(Objects::toString)
-                .map(String::trim)
-                .map(completion -> stripPrefix(completion, this.prompt.trim()))
-                .map(String::trim)
-                .map(completion -> stripUnbalancedTerminators(completion))
-                .map(IndentedText::fromString)
-                .map(indentedText -> indentedText.withIndent(indent))
-                .map(IndentedText::toString)
-                .map(indentedText -> indent + indentedText)
-                .orElse(""));
+    public CompletionRequest(CompletionRequest other) {
+        this.prompt = other.prompt;
+        this.temperature = other.temperature;
+        this.max_tokens = other.max_tokens;
+        this.stop = other.stop;
+        this.logprobs = other.logprobs;
+        this.echo = other.echo;
     }
+
 
     public @NotNull CompletionRequest appendPrompt(CharSequence prompt) {
         this.prompt = this.prompt + prompt;
         return this;
     }
 
-    public @NotNull CompletionRequest addStops(@NotNull CharSequence... newStops) {
+    public @NotNull CompletionRequest addStops(@NotNull CharSequence @NotNull ... newStops) {
         ArrayList<CharSequence> stops = new ArrayList<>();
         for (CharSequence x : newStops) {
-            if (x != null) {
-                if (x.length() > 0) {
-                    stops.add(x);
-                }
+            if (x.length() > 0) {
+                stops.add(x);
             }
         }
         if (!stops.isEmpty()) {
-            if(null != this.stop) Arrays.stream(this.stop).forEach(stops::add);
+            if (null != this.stop) Arrays.stream(this.stop).forEach(stops::add);
             this.stop = stops.stream().distinct().toArray(CharSequence[]::new);
         }
         return this;
     }
 
-    public CompletionRequest setSuffix(CharSequence suffix) {
-        this.suffix = suffix.toString();
+    public @NotNull CompletionRequest setSuffix(@Nullable CharSequence suffix) {
+        this.suffix = null==suffix?null:suffix.toString();
         return this;
+    }
+
+    public @NotNull CompletionRequestWithModel showModelEditDialog() {
+        FormBuilder formBuilder = FormBuilder.createFormBuilder();
+        CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model);
+        InteractiveRequest ui = new InteractiveRequest(withModel);
+        UITools.addFields(ui, formBuilder);
+        JPanel mainPanel = formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
+        UITools.writeUI(ui, withModel);
+        Object[] options = {"OK"};
+        if (JOptionPane.showOptionDialog(
+                null,
+                mainPanel,
+                "OpenAI Completion Request",
+                JOptionPane.NO_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options,
+                options[0]) == JOptionPane.OK_OPTION) {
+            UITools.readUI(ui, withModel);
+            return withModel;
+        } else {
+            return withModel;
+        }
     }
 }

@@ -8,20 +8,28 @@ import java.util.Map;
 public interface TranslationRequest {
     @NotNull CompletionRequest buildCompletionRequest();
 
+    @SuppressWarnings("unused")
     String getInputTag();
 
+    @SuppressWarnings("unused")
     String getOutputTag();
 
+    @SuppressWarnings("unused")
     CharSequence getInstruction();
 
+    @SuppressWarnings("unused")
     @NotNull Map<CharSequence, CharSequence> getInputAttr();
 
+    @SuppressWarnings("unused")
     @NotNull Map<CharSequence, CharSequence> getOutputAttr();
 
+    @SuppressWarnings("unused")
     String getOriginalText();
 
+    @SuppressWarnings("unused")
     double getTemperature();
 
+    @SuppressWarnings("unused")
     int getMaxTokens();
 
     TranslationRequest setInputType(CharSequence inputTag);
@@ -35,7 +43,9 @@ public interface TranslationRequest {
 
     TranslationRequest setInputText(CharSequence originalText);
 
+    @SuppressWarnings("unused")
     TranslationRequest setTemperature(double temperature);
 
+    @SuppressWarnings("unused")
     TranslationRequest setMaxTokens(int maxTokens);
 }

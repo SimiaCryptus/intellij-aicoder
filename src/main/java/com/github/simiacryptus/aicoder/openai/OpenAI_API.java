@@ -1,11 +1,14 @@
 package com.github.simiacryptus.aicoder.openai;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.github.simiacryptus.aicoder.util.IndentedText;
+import com.github.simiacryptus.aicoder.util.StringTools;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.*;
@@ -17,6 +20,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.components.JBTextField;
 import com.jetbrains.rd.util.LogLevel;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -29,8 +34,11 @@ import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
@@ -41,17 +49,60 @@ public final class OpenAI_API {
     private static final Logger log = Logger.getInstance(OpenAI_API.class);
 
     public static final OpenAI_API INSTANCE = new OpenAI_API();
-    public final ListeningExecutorService pool;
-    private transient AppSettingsState settings = null;
+    public final @NotNull ListeningExecutorService pool;
+    private transient @Nullable AppSettingsState settings = null;
 
-    protected AppSettingsState getSettingsState() {
+    private transient ComboBox<CharSequence> comboBox = null;
+
+    @NotNull
+    public JComponent getModelSelector() {
+        if (null != comboBox) return comboBox;
+        AppSettingsState settings = AppSettingsState.getInstance();
+        CharSequence apiKey = settings.apiKey;
+        if (apiKey.toString().trim().length() > 0) {
+            try {
+                comboBox = new ComboBox<>(new CharSequence[]{settings.model});
+                onSuccess(INSTANCE.getEngines(), engines -> {
+                    JsonNode data = engines.get("data");
+                    CharSequence[] items = new CharSequence[data.size()];
+                    for (int i = 0; i < data.size(); i++) {
+                        items[i] = data.get(i).get("id").asText();
+                    }
+                    Arrays.sort(items);
+                    Arrays.stream(items).forEach(comboBox::addItem);
+                });
+                return comboBox;
+            } catch (Throwable e) {
+                log.warn(e);
+            }
+        }
+        return new JBTextField();
+    }
+
+    @NotNull
+    public ListenableFuture<CharSequence> complete(@Nullable Project project, @NotNull CompletionRequest request, CharSequence indent) {
+        return map(complete(project, request), response -> response
+                .getFirstChoice()
+                .map(Objects::toString)
+                .map(String::trim)
+                .map(completion -> stripPrefix(completion, request.prompt.trim()))
+                .map(String::trim)
+                .map(StringTools::stripUnbalancedTerminators)
+                .map(IndentedText::fromString)
+                .map(indentedText -> indentedText.withIndent(indent))
+                .map(IndentedText::toString)
+                .map(indentedText -> indent + indentedText)
+                .orElse(""));
+    }
+
+    private AppSettingsState getSettingsState() {
         if (null == this.settings) {
             this.settings = AppSettingsState.getInstance();
         }
         return settings;
     }
 
-    protected OpenAI_API() {
+    private OpenAI_API() {
         this.pool = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
     }
 
@@ -60,32 +111,56 @@ public final class OpenAI_API {
         return pool.submit(() -> getMapper().readValue(get(getSettingsState().apiBase + "/engines"), ObjectNode.class));
     }
 
-    protected String post(String url, @NotNull String body) throws IOException, InterruptedException {
+    private String post(String url, @NotNull String body) throws IOException, InterruptedException {
         return post(url, body, 3);
     }
 
-    public ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest) {
+    private @NotNull ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest) {
         AppSettingsState settings = getSettingsState();
-        if (null != completionRequest.suffix) {
-            if (completionRequest.suffix.trim().length() == 0) {
-                completionRequest.setSuffix(null);
+        CompletionRequest.CompletionRequestWithModel withModel;
+        if (!(completionRequest instanceof CompletionRequest.CompletionRequestWithModel)) {
+            if (!AppSettingsState.getInstance().devActions) {
+                withModel = new CompletionRequest.CompletionRequestWithModel(completionRequest, AppSettingsState.getInstance().model);
             } else {
-                completionRequest.echo = false;
+                withModel = completionRequest.showModelEditDialog();
+            }
+        } else {
+            withModel = (CompletionRequest.CompletionRequestWithModel) completionRequest;
+        }
+
+        if (null != withModel.suffix) {
+            if (withModel.suffix.trim().length() == 0) {
+                withModel.setSuffix(null);
+            } else {
+                withModel.echo = false;
             }
         }
-        if (null != completionRequest.stop && completionRequest.stop.length == 0) {
-            completionRequest.stop = null;
+        if (null != withModel.stop && withModel.stop.length == 0) {
+            withModel.stop = null;
         }
-        if (completionRequest.prompt.length() > settings.maxPrompt)
-            throw new IllegalArgumentException("Prompt too long:" + completionRequest.prompt.length() + " chars");
+        if (withModel.prompt.length() > settings.maxPrompt)
+            throw new IllegalArgumentException("Prompt too long:" + withModel.prompt.length() + " chars");
+        return complete(project, new CompletionRequest(withModel), settings, withModel.model);
+    }
+
+    @NotNull
+    private ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest, @NotNull AppSettingsState settings, @NotNull final String model) {
         return OpenAI_API.map(moderateAsync(project, completionRequest.prompt), x -> {
             try {
                 Task.WithResult<CompletionResponse, Exception> task = new Task.WithResult<>(project, "OpenAI Text Completion", false) {
                     @Override
-                    protected CompletionResponse compute(@NotNull ProgressIndicator indicator) throws Exception {
+                    protected @NotNull CompletionResponse compute(@NotNull ProgressIndicator indicator) throws Exception {
                         try {
+                            if (completionRequest.suffix == null) {
+                                log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\n",
+                                        completionRequest.prompt.replace("\n", "\n\t")));
+                            } else {
+                                log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\nSuffix:\n\t%s\n",
+                                        completionRequest.prompt.replace("\n", "\n\t"),
+                                        completionRequest.suffix.replace("\n", "\n\t")));
+                            }
                             String request = getMapper().writeValueAsString(completionRequest);
-                            String result = post(settings.apiBase + "/engines/" + settings.model + "/completions", request);
+                            String result = post(settings.apiBase + "/engines/" + model + "/completions", request);
                             JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
                             if (jsonObject.has("error")) {
                                 JsonObject errorObject = jsonObject.getAsJsonObject("error");
@@ -99,13 +174,10 @@ public final class OpenAI_API {
                             }
                             String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").toString().trim(), completionRequest.prompt.trim());
                             if (completionRequest.suffix == null) {
-                                log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\nCompletion:\n\t%s",
-                                        completionRequest.prompt.replace("\n", "\n\t"),
+                                log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
                                         completionResult.replace("\n", "\n\t")));
                             } else {
-                                log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\nSuffix:\n\t%s\nCompletion:\n\t%s",
-                                        completionRequest.prompt.replace("\n", "\n\t"),
-                                        completionRequest.suffix.replace("\n", "\n\t"),
+                                log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
                                         completionResult.replace("\n", "\n\t")));
                             }
                             return completionResponse;
@@ -129,12 +201,12 @@ public final class OpenAI_API {
     }
 
     public static <I extends @Nullable Object, O extends @Nullable Object>
-    ListenableFuture<O> map(ListenableFuture<I> moderateAsync, Function<? super I, ? extends O> o) {
+    @NotNull ListenableFuture<O> map(@NotNull ListenableFuture<I> moderateAsync, @NotNull Function<? super I, ? extends O> o) {
         return Futures.transform(moderateAsync, o, INSTANCE.pool);
     }
 
-    public static <I extends @Nullable Object> void onSuccess(ListenableFuture<I> moderateAsync, Consumer<? super I> o) {
-        Futures.addCallback(moderateAsync, new FutureCallback<I>() {
+    public static <I extends @Nullable Object> void onSuccess(@NotNull ListenableFuture<I> moderateAsync, @NotNull Consumer<? super I> o) {
+        Futures.addCallback(moderateAsync, new FutureCallback<>() {
             @Override
             public void onSuccess(I result) {
                 o.accept(result);
@@ -147,7 +219,7 @@ public final class OpenAI_API {
         }, INSTANCE.pool);
     }
 
-    private void log(LogLevel level, String msg) {
+    private void log(@NotNull LogLevel level, @NotNull String msg) {
         String message = msg.trim().replace("\n", "\n\t");
         switch (level) {
             case Error:
@@ -167,9 +239,9 @@ public final class OpenAI_API {
 
     @NotNull
     private ListenableFuture<?> moderateAsync(@Nullable Project project, @NotNull String text) {
-        Task.WithResult<ListenableFuture<?>, Exception> task = new Task.WithResult<ListenableFuture<?>, Exception>(project, "OpenAI Moderation", false) {
+        Task.WithResult<ListenableFuture<?>, Exception> task = new Task.WithResult<>(project, "OpenAI Moderation", false) {
             @Override
-            protected ListenableFuture<?> compute(@NotNull ProgressIndicator indicator) throws Exception {
+            protected @NotNull ListenableFuture<?> compute(@NotNull ProgressIndicator indicator) throws Exception {
                 return pool.submit(() -> {
                     String body = null;
                     try {
@@ -222,7 +294,7 @@ public final class OpenAI_API {
      * @throws IOException          If an IOException is thrown and the number of retries is exceeded.
      * @throws InterruptedException If the thread is interrupted while sleeping.
      */
-    protected String post(String url, @NotNull String json, int retries) throws IOException, InterruptedException {
+    private String post(String url, @NotNull String json, int retries) throws IOException, InterruptedException {
         try {
             HttpClientBuilder client = HttpClientBuilder.create();
             HttpPost request = new HttpPost(url);
@@ -243,7 +315,8 @@ public final class OpenAI_API {
         }
     }
 
-    protected @NotNull ObjectMapper getMapper() {
+    @NotNull
+    private ObjectMapper getMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper
                 .enable(SerializationFeature.INDENT_OUTPUT)
@@ -254,15 +327,15 @@ public final class OpenAI_API {
         return mapper;
     }
 
-    protected void authorize(@NotNull HttpRequestBase request) throws IOException {
+    private void authorize(@NotNull HttpRequestBase request) throws IOException {
         AppSettingsState settingsState = getSettingsState();
         String apiKey = settingsState.apiKey;
-        if (apiKey == null || apiKey.length() == 0) {
+        if (apiKey.length() == 0) {
             synchronized (settingsState) {
                 apiKey = settingsState.apiKey;
-                if (apiKey == null || apiKey.length() == 0) {
+                if (apiKey.length() == 0) {
                     apiKey = UITools.queryAPIKey();
-                    settingsState.apiKey = apiKey;
+                    settingsState.apiKey = Objects.requireNonNull(apiKey);
                 }
             }
         }
