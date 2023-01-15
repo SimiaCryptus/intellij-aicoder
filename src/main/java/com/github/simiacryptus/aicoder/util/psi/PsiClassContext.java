@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.psi;
+package com.github.simiacryptus.aicoder.util.psi;
 
 import com.github.simiacryptus.aicoder.util.StringTools;
 import com.intellij.openapi.util.TextRange;
@@ -62,7 +62,7 @@ public class PsiClassContext {
                     currentContext.children.add(new PsiClassContext(text.trim(), isPrior, isOverlap));
                 } else if (simpleName.equals("PsiCommentImpl") || simpleName.equals("PsiDocCommentImpl")) {
                     if (within) {
-                        currentContext.children.add(new PsiClassContext(indent + text.trim(), isPrior, isOverlap));
+                        currentContext.children.add(new PsiClassContext(indent + text.trim(), false, true));
                     }
                 } else if (simpleName.equals("PsiMethodImpl") || simpleName.equals("PsiFieldImpl")) {
                     String declaration = text;
@@ -94,7 +94,7 @@ public class PsiClassContext {
                     indent = prevIndent;
                     currentContext = prevclassBuffer;
                     if (!isOverlap) {
-                        currentContext.children.add(new PsiClassContext("}", isPrior, isOverlap));
+                        currentContext.children.add(new PsiClassContext("}", isPrior, false));
                     }
                 } else if (!isOverlap && Arrays.asList("PsiCodeBlockImpl", "PsiForStatementImpl").contains(simpleName)) {
                     // Skip

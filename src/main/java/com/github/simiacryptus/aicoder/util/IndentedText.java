@@ -23,12 +23,14 @@ public class IndentedText implements TextBlock {
         return indent;
     }
 
+    @SuppressWarnings("unused")
     public static class Factory implements TextBlockFactory<IndentedText> {
         @Override
-        public IndentedText fromString(String text) {
+        public @NotNull IndentedText fromString(String text) {
             return IndentedText.fromString(text);
         }
 
+        @SuppressWarnings("unused")
         @Override
         public boolean looksLike(String text) {
             return true;
@@ -36,7 +38,7 @@ public class IndentedText implements TextBlock {
     }
 
     protected CharSequence indent;
-    protected CharSequence textBlock[];
+    protected CharSequence[] textBlock;
 
     public IndentedText(CharSequence indent, CharSequence... textBlock) {
         this.indent = indent;

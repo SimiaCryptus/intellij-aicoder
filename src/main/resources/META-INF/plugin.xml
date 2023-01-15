@@ -18,15 +18,125 @@
     <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
 
     <actions>
-        <group id="org.intellij.sdk.action.DynamicActionGroup"
-               class="com.github.simiacryptus.aicoder.EditorMenu"
+        <group id="com.github.simiacryptus.aicoder.EditorMenu"
+               class="com.intellij.openapi.actionSystem.DefaultActionGroup"
                popup="true"
                text="_AI Coder"
                icon="AllIcons.Actions.Lightning"
-               description="AI Coding Assistant Tools"
-        >
-            <add-to-group group-id="EditorPopupMenu" anchor="first" />
+               description="AI Coding Assistant Tools">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </group>
+
+        <action class="com.github.simiacryptus.aicoder.actions.PrintTreeAction"
+                text="Print PSI Tree"
+                description="Print PSI Tree">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.GenericInsert"
+                text="_Insert Text"
+                description="Insert Text">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.GenericAppend"
+                text="_Append Text"
+                description="Append Text">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.RewordCommentAction"
+                text="_Reword Comment"
+                description="Reword Comment">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.MarkdownListAction"
+                text="Add _List Items"
+                description="Add list items">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.MarkdownNewTableRowsAction"
+                text="Add _Table Rows"
+                description="Add table rows">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.MarkdownNewTableColsAction"
+                text="Add _Table Columns"
+                description="Add table columns">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.MarkdownNewTableColAction"
+                text="Add Table _Column..."
+                description="Add table column...">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.MarkdownContextAction"
+                text="E_xecute Directive"
+                description="Execute Directive">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.CustomEditAction"
+                text="_Edit..."
+                description="Edit...">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="E"/>
+        </action>
+        <group class="com.github.simiacryptus.aicoder.actions.RecentEditsAction"
+                text="Recent Edits"
+                popup="true">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </group>
+
+        <action class="com.github.simiacryptus.aicoder.actions.FromHumanLanguageAction"
+                text="_From Text"
+                description="Implement Text -> Code">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.ToHumanLanguageAction"
+                text="_To Code"
+                description="Describe Text -> Code">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.PsiClassContextAction"
+                text="Insert _Implementation"
+                description="Insert Implementation">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.DescribeAction"
+                text="_Describe Code and Prepend Comment"
+                description="Add Doc Comments">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="D"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.CommentsAction"
+                text="Add Code _Comments"
+                description="Add Code Comments">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.DocAction"
+                text="_Add Doc Comments"
+                description="Add Code Comments">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="X"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.PasteAction"
+                text="_Paste" description="Paste">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="V"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.RedoLast"
+                text="_Redo Last"
+                description="Redo last">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="R"/>
+        </action>
     </actions>
 
 </idea-plugin>

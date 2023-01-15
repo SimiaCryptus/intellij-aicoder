@@ -3,10 +3,9 @@ package com.github.simiacryptus.aicoder.openai.translate;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public enum TranslationRequestTemplate {
-    XML(config -> new TranslationRequest_XML(config));
+    XML(TranslationRequest_XML::new);
     private final Function<AppSettingsState, TranslationRequest> fn;
 
     TranslationRequestTemplate(Function<AppSettingsState, TranslationRequest> fn) {

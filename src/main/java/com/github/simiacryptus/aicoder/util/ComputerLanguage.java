@@ -1,12 +1,14 @@
-package com.github.simiacryptus.aicoder;
+package com.github.simiacryptus.aicoder.util;
 
-import com.github.simiacryptus.aicoder.util.BlockComment;
-import com.github.simiacryptus.aicoder.util.LineComment;
-import com.github.simiacryptus.aicoder.util.TextBlockFactory;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public enum ComputerLanguage {
     Java(new Configuration()
@@ -21,6 +23,18 @@ public enum ComputerLanguage {
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
             .setFileExtensions("cpp")),
+    SVG(new Configuration()
+            .setDocumentationStyle("SVG")
+            .setLineComments(new LineComment.Factory("<!--"))
+            .setBlockComments(new BlockComment.Factory("<!--", "", "-->"))
+            .setDocComments(new BlockComment.Factory("<!--", "", "-->"))
+            .setFileExtensions("svg")),
+    OpenSCAD(new Configuration()
+            .setDocumentationStyle("OpenSCAD")
+            .setLineComments(new LineComment.Factory("//"))
+            .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
+            .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
+            .setFileExtensions("scad")),
     Bash(new Configuration()
             .setLineComments(new LineComment.Factory("#"))
             .setFileExtensions("sh")),
@@ -141,7 +155,7 @@ public enum ComputerLanguage {
             .setLineComments(new LineComment.Factory("//"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
-            .setFileExtensions("kotlin", "kt")),
+            .setFileExtensions("kotlin", "kt", "kts")),
     Lisp(new Configuration()
             .setLineComments(new LineComment.Factory(";"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
@@ -265,13 +279,13 @@ public enum ComputerLanguage {
             .setLineComments(new LineComment.Factory("#"))
             .setFileExtensions("zsh"));
 
-    public final List<CharSequence> extensions;
+    public final @NotNull List<CharSequence> extensions;
     public final String docStyle;
-    public final TextBlockFactory<?> lineComment;
-    public final TextBlockFactory<?> blockComment;
-    public final TextBlockFactory<?> docComment;
+    public final @Nullable TextBlockFactory<?> lineComment;
+    public final @Nullable TextBlockFactory<?> blockComment;
+    public final @Nullable TextBlockFactory<?> docComment;
 
-    ComputerLanguage(Configuration configuration) {
+    ComputerLanguage(@NotNull Configuration configuration) {
         this.extensions = Arrays.asList(configuration.getFileExtensions());
         this.docStyle = configuration.getDocumentationStyle();
         this.lineComment = configuration.getLineComments();
@@ -284,31 +298,39 @@ public enum ComputerLanguage {
         return Arrays.stream(values()).filter(x -> x.extensions.contains(extension)).findAny().orElse(null);
     }
 
-    public CharSequence getMultilineCommentSuffix() {
+    @Nullable
+    public static ComputerLanguage getComputerLanguage(@NotNull AnActionEvent e) {
+        VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+        if (file == null) return null;
+        String extension = file.getExtension() != null ? file.getExtension().toLowerCase() : "";
+        return findByExtension(extension);
+    }
+
+    public @Nullable CharSequence getMultilineCommentSuffix() {
         if (docComment instanceof BlockComment.Factory) {
             return ((BlockComment.Factory) docComment).blockSuffix;
         }
         return null;
     }
 
-    public TextBlockFactory<?> getCommentModel(String text) {
-        if (docComment.looksLike(text)) return docComment;
-        if (blockComment.looksLike(text)) return blockComment;
+    public @Nullable TextBlockFactory<?> getCommentModel(String text) {
+        if (Objects.requireNonNull(docComment).looksLike(text)) return docComment;
+        if (Objects.requireNonNull(blockComment).looksLike(text)) return blockComment;
         return lineComment;
     }
 
     static class Configuration {
         private String documentationStyle = "";
         private CharSequence[] fileExtensions = new CharSequence[]{};
-        private TextBlockFactory<?> lineComments = null;
-        private TextBlockFactory<?> blockComments = null;
-        private TextBlockFactory<?> docComments = null;
+        private @Nullable TextBlockFactory<?> lineComments = null;
+        private @Nullable TextBlockFactory<?> blockComments = null;
+        private @Nullable TextBlockFactory<?> docComments = null;
 
         public String getDocumentationStyle() {
             return documentationStyle;
         }
 
-        public Configuration setDocumentationStyle(String documentationStyle) {
+        public @NotNull Configuration setDocumentationStyle(String documentationStyle) {
             this.documentationStyle = documentationStyle;
             return this;
         }
@@ -317,36 +339,36 @@ public enum ComputerLanguage {
             return fileExtensions;
         }
 
-        public Configuration setFileExtensions(CharSequence... fileExtensions) {
+        public @NotNull Configuration setFileExtensions(CharSequence... fileExtensions) {
             this.fileExtensions = fileExtensions;
             return this;
         }
 
-        public TextBlockFactory<?> getLineComments() {
+        public @Nullable TextBlockFactory<?> getLineComments() {
             return lineComments;
         }
 
-        public Configuration setLineComments(TextBlockFactory<?> lineComments) {
+        public @NotNull Configuration setLineComments(TextBlockFactory<?> lineComments) {
             this.lineComments = lineComments;
             return this;
         }
 
-        public TextBlockFactory<?> getBlockComments() {
+        public @Nullable TextBlockFactory<?> getBlockComments() {
             if (null == blockComments) return getLineComments();
             return blockComments;
         }
 
-        public Configuration setBlockComments(TextBlockFactory<?> blockComments) {
+        public @NotNull Configuration setBlockComments(TextBlockFactory<?> blockComments) {
             this.blockComments = blockComments;
             return this;
         }
 
-        public TextBlockFactory<?> getDocComments() {
+        public @Nullable TextBlockFactory<?> getDocComments() {
             if (null == docComments) return getBlockComments();
             return docComments;
         }
 
-        public Configuration setDocComments(TextBlockFactory<?> docComments) {
+        public @NotNull Configuration setDocComments(TextBlockFactory<?> docComments) {
             this.docComments = docComments;
             return this;
         }

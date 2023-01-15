@@ -8,8 +8,8 @@ import java.util.stream.Stream;
 
 public interface TextBlock {
 
-    public static final CharSequence TAB_REPLACEMENT = "  ";
-    public static final String DELIMITER = "\n";
+    CharSequence TAB_REPLACEMENT = "  ";
+    String DELIMITER = "\n";
 
     CharSequence[] rawString();
 
@@ -19,7 +19,7 @@ public interface TextBlock {
 
     @NotNull TextBlock withIndent(CharSequence indent);
 
-    default Stream<CharSequence> stream() {
+    default @NotNull Stream<CharSequence> stream() {
         return Arrays.stream(rawString());
     }
 }

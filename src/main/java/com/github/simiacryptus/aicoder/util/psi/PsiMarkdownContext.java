@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.psi;
+package com.github.simiacryptus.aicoder.util.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -27,7 +27,7 @@ public class PsiMarkdownContext {
     }
 
     public int getEnd() {
-        return Math.max(start + text.length(), children.stream().mapToInt(x -> x.getEnd()).max().orElse(0));
+        return Math.max(start + text.length(), children.stream().mapToInt(PsiMarkdownContext::getEnd).max().orElse(0));
     }
 
     public int headerLevel() {
@@ -40,6 +40,7 @@ public class PsiMarkdownContext {
             final CharSequence indent = "";
             @NotNull PsiMarkdownContext section = PsiMarkdownContext.this;
 
+            @SuppressWarnings("unused")
             @Override
             public void visitElement(@NotNull PsiElement element) {
                 String text = element.getText();

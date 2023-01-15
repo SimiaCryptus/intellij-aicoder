@@ -6,13 +6,19 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public class CompletionResponse {
+    @SuppressWarnings("unused")
     public String id;
+    @SuppressWarnings("unused")
     public String object;
+    @SuppressWarnings("unused")
     public int created;
+    @SuppressWarnings("unused")
     public String model;
     public Choice[] choices;
+    @SuppressWarnings("unused")
     public ApiError error;
 
+    @SuppressWarnings("unused")
     public Usage usage;
 
     public CompletionResponse() {

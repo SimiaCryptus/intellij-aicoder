@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [0.1.9]
+
+### Added
+- Dev mode now adds a API request preview/testing UI for each request
+- Various UI polish
+- Refactored code so Actions are independent components
+
 ## [0.1.8]
 
 ### Added
