@@ -35,9 +35,9 @@ public class MarkdownNewTableRowsAction extends AnAction {
 
     @Nullable
     public static MarkdownNewTableRowsParams getMarkdownNewTableRowsParams(@NotNull AnActionEvent e) {
-        Caret caret = e.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         if (null != caret) {
-            PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+            @Nullable PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
             if (null != psiFile) {
                 PsiElement table = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownTableImpl");
                 if (null != table) {
@@ -50,22 +50,22 @@ public class MarkdownNewTableRowsAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        MarkdownNewTableRowsParams markdownNewTableRowsParams = getMarkdownNewTableRowsParams(event);
-        List<CharSequence> rows = StringTools.trim(PsiUtil.getAll(Objects.requireNonNull(markdownNewTableRowsParams).table, "MarkdownTableRowImpl")
+        @Nullable MarkdownNewTableRowsParams markdownNewTableRowsParams = getMarkdownNewTableRowsParams(event);
+        @NotNull List<CharSequence> rows = StringTools.trim(PsiUtil.getAll(Objects.requireNonNull(markdownNewTableRowsParams).table, "MarkdownTableRowImpl")
                 .stream().map(PsiElement::getText).collect(Collectors.toList()), 10, true);
-        CharSequence n = Integer.toString(rows.size() * 2);
+        @NotNull CharSequence n = Integer.toString(rows.size() * 2);
         AppSettingsState settings = AppSettingsState.getInstance();
         int endOffset = markdownNewTableRowsParams.table.getTextRange().getEndOffset();
-        Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+        @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         UITools.redoableRequest(MarkdownNewTableColAction.newRowsRequest(settings, n, rows, ""), "", event,
                 newText -> transformCompletion(markdownNewTableRowsParams, newText),
                 newText -> insertString(document, endOffset, newText));
     }
 
     @NotNull
-    private static String transformCompletion(MarkdownNewTableRowsParams markdownNewTableRowsParams, CharSequence complete) {
+    private static String transformCompletion(@NotNull MarkdownNewTableRowsParams markdownNewTableRowsParams, CharSequence complete) {
         CharSequence indent = UITools.getIndent(markdownNewTableRowsParams.caret);
-        List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n"))
+        @NotNull List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n"))
                 .map(String::trim).filter(x -> x.length() > 0).collect(Collectors.toList());
         return "\n" + indent + newRows.stream().collect(Collectors.joining("\n" + indent));
     }

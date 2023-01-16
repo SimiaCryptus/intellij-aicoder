@@ -31,7 +31,7 @@ public class MarkdownContextAction extends AnAction {
 
     @Nullable
     public static MarkdownContextParams getMarkdownContextParams(@NotNull AnActionEvent e, CharSequence humanLanguage) {
-        Caret caret = e.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         if (null != caret) {
             int selectionStart = caret.getSelectionStart();
             int selectionEnd = caret.getSelectionEnd();
@@ -44,20 +44,20 @@ public class MarkdownContextAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent event) {
-        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        final @NotNull Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
-        String selectedText = primaryCaret.getSelectedText();
-        String humanLanguage = AppSettingsState.getInstance().humanLanguage;
-        MarkdownContextParams markdownContextParams = getMarkdownContextParams(event, humanLanguage);
+        @Nullable String selectedText = primaryCaret.getSelectedText();
+        @NotNull String humanLanguage = AppSettingsState.getInstance().humanLanguage;
+        @Nullable MarkdownContextParams markdownContextParams = getMarkdownContextParams(event, humanLanguage);
         AppSettingsState settings = AppSettingsState.getInstance();
-        PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
-        String context = PsiMarkdownContext.getContext(psiFile, requireNonNull(markdownContextParams).selectionStart, markdownContextParams.selectionEnd).toString(markdownContextParams.selectionEnd);
+        @NotNull PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
+        @NotNull String context = PsiMarkdownContext.getContext(psiFile, requireNonNull(markdownContextParams).selectionStart, markdownContextParams.selectionEnd).toString(markdownContextParams.selectionEnd);
         context = context + "\n<!-- " + selectedText + "-->\n";
         context = context + "\n";
-        CompletionRequest request = settings.createTranslationRequest()
+        @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setOutputType("markdown")
                 .setInstruction(UITools.getInstruction(String.format("Using Markdown and %s", markdownContextParams.humanLanguage)))
                 .setInputType("instruction")
@@ -66,7 +66,7 @@ public class MarkdownContextAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest()
                 .appendPrompt(context);
-        Caret caret = event.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
         UITools.redoableRequest(request, indent, event, newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }

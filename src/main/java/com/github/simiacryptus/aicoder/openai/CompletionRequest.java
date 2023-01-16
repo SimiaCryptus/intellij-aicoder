@@ -15,7 +15,7 @@ import java.util.Arrays;
  */
 public class CompletionRequest {
 
-    public CompletionRequest(AppSettingsState config) {
+    public CompletionRequest(@NotNull AppSettingsState config) {
         this("",config.temperature,config.maxTokens,null);
     }
 
@@ -43,17 +43,17 @@ public class CompletionRequest {
             this.model = model;
         }
 
-        public CompletionRequestWithModel(CompletionRequestWithModel other) {
+        public CompletionRequestWithModel(@NotNull CompletionRequestWithModel other) {
             super(other);
             this.model = other.model;
         }
 
-        public CompletionRequestWithModel(CompletionRequest other, String model) {
+        public CompletionRequestWithModel(@NotNull CompletionRequest other, String model) {
             super(other);
             this.model = model;
         }
 
-        public void fixup(AppSettingsState settings) {
+        public void fixup(@NotNull AppSettingsState settings) {
             if (null != this.suffix) {
                 if (this.suffix.trim().length() == 0) {
                     setSuffix(null);
@@ -92,7 +92,7 @@ public class CompletionRequest {
         this.logprobs = logprobs;
         this.echo = false;
     }
-    public CompletionRequest(CompletionRequest other) {
+    public CompletionRequest(@NotNull CompletionRequest other) {
         this.prompt = other.prompt;
         this.temperature = other.temperature;
         this.max_tokens = other.max_tokens;
@@ -108,8 +108,8 @@ public class CompletionRequest {
     }
 
     public @NotNull CompletionRequest addStops(@NotNull CharSequence @NotNull ... newStops) {
-        ArrayList<CharSequence> stops = new ArrayList<>();
-        for (CharSequence x : newStops) {
+        @NotNull ArrayList<CharSequence> stops = new ArrayList<>();
+        for (@NotNull CharSequence x : newStops) {
             if (x.length() > 0) {
                 stops.add(x);
             }
@@ -127,13 +127,13 @@ public class CompletionRequest {
     }
 
     public @NotNull CompletionRequestWithModel showModelEditDialog() {
-        FormBuilder formBuilder = FormBuilder.createFormBuilder();
-        CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model_completion);
-        InteractiveCompletionRequest ui = new InteractiveCompletionRequest(withModel);
+        @NotNull FormBuilder formBuilder = FormBuilder.createFormBuilder();
+        @NotNull CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model_completion);
+        @NotNull InteractiveCompletionRequest ui = new InteractiveCompletionRequest(withModel);
         UITools.addFields(ui, formBuilder);
         JPanel mainPanel = formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
         UITools.writeUI(ui, withModel);
-        Object[] options = {"OK"};
+        Object @NotNull [] options = {"OK"};
         if (JOptionPane.showOptionDialog(
                 null,
                 mainPanel,

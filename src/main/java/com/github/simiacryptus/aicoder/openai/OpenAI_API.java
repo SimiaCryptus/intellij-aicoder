@@ -52,25 +52,25 @@ public final class OpenAI_API {
     public final @NotNull ListeningExecutorService pool;
     private transient @Nullable AppSettingsState settings = null;
 
-    private transient ComboBox<CharSequence> comboBox = null;
+    private transient @Nullable ComboBox<CharSequence> comboBox = null;
     private static final WeakHashMap<ComboBox<CharSequence>, Object> activeModelUI = new WeakHashMap<>();
 
     @NotNull
     public JComponent getModelSelector() {
         if (null != comboBox) {
-            ComboBox<CharSequence> element = new ComboBox<>(IntStream.range(0, comboBox.getItemCount()).mapToObj(comboBox::getItemAt).toArray(CharSequence[]::new));
+            @NotNull ComboBox<CharSequence> element = new ComboBox<>(IntStream.range(0, comboBox.getItemCount()).mapToObj(comboBox::getItemAt).toArray(CharSequence[]::new));
             activeModelUI.put(element, new Object());
             return element;
         }
         AppSettingsState settings = AppSettingsState.getInstance();
-        CharSequence apiKey = settings.apiKey;
+        @NotNull CharSequence apiKey = settings.apiKey;
         if (apiKey.toString().trim().length() > 0) {
             try {
                 comboBox = new ComboBox<>(new CharSequence[]{settings.model_completion, settings.model_edit});
                 activeModelUI.put(comboBox, new Object());
                 onSuccess(INSTANCE.getEngines(), engines -> {
                     JsonNode data = engines.get("data");
-                    CharSequence[] items = new CharSequence[data.size()];
+                    CharSequence @NotNull [] items = new CharSequence[data.size()];
                     for (int i = 0; i < data.size(); i++) {
                         items[i] = data.get(i).get("id").asText();
                     }
@@ -91,7 +91,7 @@ public final class OpenAI_API {
     }
 
     @NotNull
-    public ListenableFuture<CharSequence> complete(@Nullable Project project, @NotNull CompletionRequest request, java.util.function.Function<Optional<CharSequence>, Optional<CharSequence>> filter) {
+    public ListenableFuture<CharSequence> complete(@Nullable Project project, @NotNull CompletionRequest request, java.util.function.@NotNull Function<Optional<CharSequence>, Optional<CharSequence>> filter) {
         return map(complete(project, request), response -> filter.apply(response.getFirstChoice()).orElse(""));
     }
 
@@ -101,7 +101,7 @@ public final class OpenAI_API {
     }
 
     @NotNull
-    public ListenableFuture<CharSequence> edit(@Nullable Project project, @NotNull EditRequest request, java.util.function.Function<Optional<CharSequence>, Optional<CharSequence>> filter) {
+    public ListenableFuture<CharSequence> edit(@Nullable Project project, @NotNull EditRequest request, java.util.function.@NotNull Function<Optional<CharSequence>, Optional<CharSequence>> filter) {
         return map(edit(project, request), response -> filter.apply(response.getFirstChoice()).orElse(""));
     }
 
@@ -140,7 +140,7 @@ public final class OpenAI_API {
 
     private @NotNull ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest) {
         AppSettingsState settings = getSettingsState();
-        CompletionRequest.CompletionRequestWithModel withModel = completionRequest.uiIntercept();
+        CompletionRequest.@NotNull CompletionRequestWithModel withModel = completionRequest.uiIntercept();
         withModel.fixup(settings);
         return complete(project, new CompletionRequest(withModel), settings, withModel.model);
     }
@@ -153,7 +153,7 @@ public final class OpenAI_API {
     private ListenableFuture<CompletionResponse> edit(@Nullable Project project, @NotNull EditRequest editRequest, @NotNull AppSettingsState settings) {
         return OpenAI_API.map(moderateAsync(project, editRequest.toString()), x -> {
             try {
-                Task.WithResult<CompletionResponse, Exception> task = new Task.WithResult<>(project, "OpenAI Text Completion", false) {
+                Task.@NotNull WithResult<CompletionResponse, Exception> task = new Task.WithResult<>(project, "OpenAI Text Completion", false) {
                     @Override
                     protected @NotNull CompletionResponse compute(@NotNull ProgressIndicator indicator) throws Exception {
                         try {
@@ -204,7 +204,7 @@ public final class OpenAI_API {
     private ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest, @NotNull AppSettingsState settings, @NotNull final String model) {
         return OpenAI_API.map(moderateAsync(project, completionRequest.prompt), x -> {
             try {
-                Task.WithResult<CompletionResponse, Exception> task = new Task.WithResult<>(project, "OpenAI Text Completion", false) {
+                Task.@NotNull WithResult<CompletionResponse, Exception> task = new Task.WithResult<>(project, "OpenAI Text Completion", false) {
                     @Override
                     protected @NotNull CompletionResponse compute(@NotNull ProgressIndicator indicator) throws Exception {
                         try {
@@ -229,7 +229,7 @@ public final class OpenAI_API {
                             if (completionResponse.usage != null) {
                                 settings.tokenCounter += completionResponse.usage.total_tokens;
                             }
-                            String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").toString().trim(), completionRequest.prompt.trim());
+                            @NotNull String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").toString().trim(), completionRequest.prompt.trim());
                             log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
                                     completionResult.replace("\n", "\n\t")));
                             return completionResponse;
@@ -272,7 +272,7 @@ public final class OpenAI_API {
     }
 
     private void log(@NotNull LogLevel level, @NotNull String msg) {
-        String message = msg.trim().replace("\n", "\n\t");
+        @NotNull String message = msg.trim().replace("\n", "\n\t");
         switch (level) {
             case Error:
                 log.error(message);
@@ -291,18 +291,18 @@ public final class OpenAI_API {
 
     @NotNull
     private ListenableFuture<?> moderateAsync(@Nullable Project project, @NotNull String text) {
-        Task.WithResult<ListenableFuture<?>, Exception> task = new Task.WithResult<>(project, "OpenAI Moderation", false) {
+        Task.@NotNull WithResult<ListenableFuture<?>, Exception> task = new Task.WithResult<>(project, "OpenAI Moderation", false) {
             @Override
             protected @NotNull ListenableFuture<?> compute(@NotNull ProgressIndicator indicator) throws Exception {
                 return pool.submit(() -> {
-                    String body = null;
+                    @Nullable String body = null;
                     try {
                         body = getMapper().writeValueAsString(Map.of("input", text));
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
                     AppSettingsState settings1 = getSettingsState();
-                    String result = null;
+                    @Nullable String result = null;
                     try {
                         result = post(settings1.apiBase + "/moderations", body);
                     } catch (IOException | InterruptedException e) {
@@ -348,8 +348,8 @@ public final class OpenAI_API {
      */
     private String post(String url, @NotNull String json, int retries) throws IOException, InterruptedException {
         try {
-            HttpClientBuilder client = HttpClientBuilder.create();
-            HttpPost request = new HttpPost(url);
+            @NotNull HttpClientBuilder client = HttpClientBuilder.create();
+            @NotNull HttpPost request = new HttpPost(url);
             request.addHeader("Content-Type", "application/json");
             request.addHeader("Accept", "application/json");
             authorize(request);
@@ -369,7 +369,7 @@ public final class OpenAI_API {
 
     @NotNull
     private ObjectMapper getMapper() {
-        ObjectMapper mapper = new ObjectMapper();
+        @NotNull ObjectMapper mapper = new ObjectMapper();
         mapper
                 .enable(SerializationFeature.INDENT_OUTPUT)
                 .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
@@ -381,7 +381,7 @@ public final class OpenAI_API {
 
     private void authorize(@NotNull HttpRequestBase request) throws IOException {
         AppSettingsState settingsState = getSettingsState();
-        String apiKey = settingsState.apiKey;
+        @Nullable String apiKey = settingsState.apiKey;
         if (apiKey.length() == 0) {
             synchronized (settingsState) {
                 apiKey = settingsState.apiKey;
@@ -402,8 +402,8 @@ public final class OpenAI_API {
      * @throws IOException If an I/O error occurs.
      */
     public String get(String url) throws IOException {
-        HttpClientBuilder client = HttpClientBuilder.create();
-        HttpGet request = new HttpGet(url);
+        @NotNull HttpClientBuilder client = HttpClientBuilder.create();
+        @NotNull HttpGet request = new HttpGet(url);
         request.addHeader("Content-Type", "application/json");
         request.addHeader("Accept", "application/json");
         authorize(request);

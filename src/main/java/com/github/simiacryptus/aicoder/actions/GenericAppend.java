@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -22,18 +23,17 @@ public class GenericAppend extends AnAction {
 
     @SuppressWarnings("unused")
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        Caret data = e.getData(CommonDataKeys.CARET);
-        if (!data.hasSelection()) return false;
-        return true;
+        @Nullable Caret data = e.getData(CommonDataKeys.CARET);
+        return data.hasSelection();
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        Caret caret = event.getData(CommonDataKeys.CARET);
-        CharSequence before = Objects.requireNonNull(caret).getSelectedText();
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
+        @Nullable CharSequence before = Objects.requireNonNull(caret).getSelectedText();
         AppSettingsState settings = AppSettingsState.getInstance();
-        CompletionRequest completionRequest = settings.createCompletionRequest().appendPrompt(before);
-        Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+        @NotNull CompletionRequest completionRequest = settings.createCompletionRequest().appendPrompt(before);
+        @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         int selectionEnd = caret.getSelectionEnd();
         UITools.redoableRequest(completionRequest, "", event, newText -> UITools.insertString(document, selectionEnd, newText));
     }

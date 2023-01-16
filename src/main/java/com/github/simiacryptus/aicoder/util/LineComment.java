@@ -16,7 +16,7 @@ public class LineComment extends IndentedText {
         @Override
         public @NotNull LineComment fromString(String text) {
             text = text.replace("\t", TAB_REPLACEMENT);
-            CharSequence indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
+            @NotNull CharSequence indent = StringTools.getWhitespacePrefix(text.split(DELIMITER));
             return new LineComment(commentPrefix, indent, Arrays.stream(text.split(DELIMITER))
                     .map(s -> StringTools.stripPrefix(s, indent))
                     .map(StringTools::trimPrefix)

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public class PsiClassContext {
      * @return
      */
     public @NotNull PsiClassContext init(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
-        AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
+        @NotNull AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
         visitor.set(new PsiElementVisitor() {
             String indent = "";
             @NotNull PsiClassContext currentContext = PsiClassContext.this;
@@ -57,7 +58,7 @@ public class PsiClassContext {
                     (textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart) || (textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd);
                 // Check if the element is within the selection
                 boolean within = (textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart) && (textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd);
-                CharSequence simpleName = element.getClass().getSimpleName();
+                @NotNull CharSequence simpleName = element.getClass().getSimpleName();
                 if (simpleName.equals("PsiImportListImpl")) {
                     currentContext.children.add(new PsiClassContext(text.trim(), isPrior, isOverlap));
                 } else if (simpleName.equals("PsiCommentImpl") || simpleName.equals("PsiDocCommentImpl")) {
@@ -66,16 +67,16 @@ public class PsiClassContext {
                     }
                 } else if (simpleName.equals("PsiMethodImpl") || simpleName.equals("PsiFieldImpl")) {
                     String declaration = text;
-                    PsiElement docComment = PsiUtil.getLargestBlock(element, "PsiDocCommentImpl");
+                    @Nullable PsiElement docComment = PsiUtil.getLargestBlock(element, "PsiDocCommentImpl");
                     if(null == docComment)  docComment = PsiUtil.getFirstBlock(element, "PsiCommentImpl");
                     if(null != docComment) declaration = StringTools.stripPrefix(declaration.trim(), docComment.getText().trim());
                     PsiElement codeBlock = PsiUtil.getLargestBlock(element, "PsiCodeBlockImpl");
                     if(null != codeBlock) declaration = StringTools.stripSuffix(declaration.trim(), codeBlock.getText().trim());
-                    PsiClassContext newNode = new PsiClassContext(indent + declaration.trim() + (isOverlap ? " {" : ";"), isPrior, isOverlap);
+                    @NotNull PsiClassContext newNode = new PsiClassContext(indent + declaration.trim() + (isOverlap ? " {" : ";"), isPrior, isOverlap);
                     currentContext.children.add(newNode);
                     String prevIndent = indent;
                     indent = indent + "  ";
-                    PsiClassContext prevclassBuffer = currentContext;
+                    @NotNull PsiClassContext prevclassBuffer = currentContext;
                     currentContext = newNode;
                     element.acceptChildren(visitor.get());
                     currentContext = prevclassBuffer;
@@ -83,10 +84,10 @@ public class PsiClassContext {
                 } else if (simpleName.equals("PsiLocalVariableImpl")) {
                     currentContext.children.add(new PsiClassContext(indent + text.trim() + ";", isPrior, isOverlap));
                 } else if (simpleName.equals("PsiClassImpl")) {
-                    String declarationText = indent + text.substring(0, text.indexOf('{')).trim() + " {";
-                    PsiClassContext newNode = new PsiClassContext(declarationText, isPrior, isOverlap);
+                    @NotNull String declarationText = indent + text.substring(0, text.indexOf('{')).trim() + " {";
+                    @NotNull PsiClassContext newNode = new PsiClassContext(declarationText, isPrior, isOverlap);
                     currentContext.children.add(newNode);
-                    PsiClassContext prevclassBuffer = currentContext;
+                    @NotNull PsiClassContext prevclassBuffer = currentContext;
                     currentContext = newNode;
                     String prevIndent = indent;
                     indent = indent + "  ";
@@ -110,7 +111,7 @@ public class PsiClassContext {
 
     @Override
     public @NotNull String toString() {
-        final ArrayList<String> sb = new ArrayList<>();
+        final @NotNull ArrayList<String> sb = new ArrayList<>();
         sb.add(text);
         children.stream().filter(x -> x.isPrior).map(PsiClassContext::toString).forEach(sb::add);
         children.stream().filter(x -> !x.isOverlap && !x.isPrior).map(PsiClassContext::toString).forEach(sb::add);

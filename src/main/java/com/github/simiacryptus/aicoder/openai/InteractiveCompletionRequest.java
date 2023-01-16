@@ -36,18 +36,18 @@ public class InteractiveCompletionRequest {
         testRequest = new JButton(new AbstractAction("Test Request") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CompletionRequest.CompletionRequestWithModel withModel = new CompletionRequest.CompletionRequestWithModel(parent, AppSettingsState.getInstance().model_completion);
+                CompletionRequest.@NotNull CompletionRequestWithModel withModel = new CompletionRequest.CompletionRequestWithModel(parent, AppSettingsState.getInstance().model_completion);
                 UITools.readUI(InteractiveCompletionRequest.this, withModel);
-                ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.complete(null, withModel, "");
+                @NotNull ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.complete(null, withModel, "");
                 testRequest.setEnabled(false);
                 Futures.addCallback(future, new FutureCallback<>() {
                     @Override
                     public void onSuccess(@NotNull CharSequence result) {
                         testRequest.setEnabled(true);
-                        String text = result.toString();
+                        @NotNull String text = result.toString();
                         int rows = Math.min(50, text.split("\n").length);
                         int columns = Math.min(200, Arrays.stream(text.split("\n")).mapToInt(String::length).max().getAsInt());
-                        JBTextArea area = new JBTextArea(rows, columns);
+                        @NotNull JBTextArea area = new JBTextArea(rows, columns);
                         area.setText(text);
                         area.setEditable(false);
                         JOptionPane.showMessageDialog(null, area, "Test Output", JOptionPane.PLAIN_MESSAGE);

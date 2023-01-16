@@ -79,7 +79,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        AppSettingsState that = (AppSettingsState) o;
+        @NotNull AppSettingsState that = (AppSettingsState) o;
         if (maxTokens != that.maxTokens) return false;
         if (maxPrompt != that.maxPrompt) return false;
         if (Double.compare(that.temperature, temperature) != 0) return false;
@@ -120,10 +120,10 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         // Then we'll remove all the ones we don't want to keep,
         // And that's how we'll make sure the instruction history is neat!
         if (mostUsedHistory.size() > historyLimit) {
-            List<CharSequence> retain = mostUsedHistory.entrySet().stream()
+            @NotNull List<CharSequence> retain = mostUsedHistory.entrySet().stream()
                     .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                     .limit(historyLimit).map(Map.Entry::getKey).collect(Collectors.toList());
-            HashSet<CharSequence> toRemove = new HashSet<>(mostUsedHistory.keySet());
+            @NotNull HashSet<CharSequence> toRemove = new HashSet<>(mostUsedHistory.keySet());
             toRemove.removeAll(retain);
             toRemove.removeAll(mostRecentHistory);
             toRemove.forEach(mostUsedHistory::remove);

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
@@ -24,28 +25,27 @@ public class CommentsAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        final Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        final @NotNull Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
         if(selectionStart == selectionEnd) return false;
-        if (null == ComputerLanguage.getComputerLanguage(e)) return false;
-        return true;
+        return null != ComputerLanguage.getComputerLanguage(e);
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-        final Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        final @NotNull Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
-        String selectedText = primaryCaret.getSelectedText();
-        String outputHumanLanguage = AppSettingsState.getInstance().humanLanguage;
-        ComputerLanguage language = ComputerLanguage.getComputerLanguage(e);
+        @Nullable String selectedText = primaryCaret.getSelectedText();
+        @NotNull String outputHumanLanguage = AppSettingsState.getInstance().humanLanguage;
+        @Nullable ComputerLanguage language = ComputerLanguage.getComputerLanguage(e);
         AppSettingsState settings = AppSettingsState.getInstance();
-        CompletionRequest request = settings.createTranslationRequest()
+        @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setInputType(requireNonNull(language).name())
                 .setOutputType(language.name())
                 .setInstruction(UITools.getInstruction("Rewrite to include detailed " + outputHumanLanguage + " code comments for every line"))
@@ -54,7 +54,7 @@ public class CommentsAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .setInputText(selectedText)
                 .buildCompletionRequest();
-        Caret caret = e.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
         UITools.redoableRequest(request, indent, e, newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }

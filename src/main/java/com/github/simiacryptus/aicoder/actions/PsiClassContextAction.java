@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -34,9 +35,9 @@ public class PsiClassContextAction extends AnAction {
     }
 
     public static @NotNull Optional<PsiClassContextActionParams> getPsiClassContextActionParams(@NotNull AnActionEvent e) {
-        PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+        @Nullable PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null != psiFile) {
-            Caret caret = e.getData(CommonDataKeys.CARET);
+            @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
             if (null != caret) {
                 int selectionStart = caret.getSelectionStart();
                 int selectionEnd = caret.getSelectionEnd();
@@ -51,15 +52,15 @@ public class PsiClassContextAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent event) {
-        String humanLanguage = AppSettingsState.getInstance().humanLanguage;
-        ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(event);
-        PsiClassContextActionParams psiClassContextActionParams = getPsiClassContextActionParams(event).get();
-        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        @NotNull String humanLanguage = AppSettingsState.getInstance().humanLanguage;
+        @Nullable ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(event);
+        @NotNull PsiClassContextActionParams psiClassContextActionParams = getPsiClassContextActionParams(event).get();
+        final @NotNull Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         AppSettingsState settings = AppSettingsState.getInstance();
 
-        String instruct = psiClassContextActionParams.largestIntersectingComment.getText().trim();
+        @NotNull String instruct = psiClassContextActionParams.largestIntersectingComment.getText().trim();
         if (primaryCaret.getSelectionEnd() > primaryCaret.getSelectionStart()) {
             @NotNull String selectedText = Objects.requireNonNull(primaryCaret.getSelectedText());
             if (Objects.requireNonNull(selectedText).split(" ").length > 4) {
@@ -67,13 +68,13 @@ public class PsiClassContextAction extends AnAction {
             }
         }
         assert computerLanguage != null;
-        String specification = Objects.requireNonNull(computerLanguage.getCommentModel(instruct)).fromString(instruct).stream()
+        @NotNull String specification = Objects.requireNonNull(computerLanguage.getCommentModel(instruct)).fromString(instruct).stream()
                 .map(Object::toString)
                 .map(String::trim)
                 .filter(x -> !x.isEmpty())
                 .reduce((a, b) -> a + " " + b).get();
         int endOffset = psiClassContextActionParams.largestIntersectingComment.getTextRange().getEndOffset();
-        CompletionRequest request = settings.createTranslationRequest()
+        @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setInstruction("Implement " + humanLanguage + " as " + computerLanguage.name() + " code")
                 .setInputType(humanLanguage)
                 .setInputAttribute("type", "instruction")

@@ -83,7 +83,7 @@ public enum ComputerLanguage {
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
             .setFileExtensions("c#", "cs")),
     CSS(new Configuration()
-            .setLineComments(new LineComment.Factory("//"))
+            .setLineComments(new BlockComment.Factory("/*", "", "*/"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
             .setFileExtensions("css")),
@@ -147,7 +147,7 @@ public enum ComputerLanguage {
             .setLineComments(new LineComment.Factory("//"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
-            .setFileExtensions("javascript", "js")),
+            .setFileExtensions("js", "javascript")),
     Json(new Configuration()
             .setFileExtensions("json")),
     Kotlin(new Configuration()
@@ -300,9 +300,9 @@ public enum ComputerLanguage {
 
     @Nullable
     public static ComputerLanguage getComputerLanguage(@NotNull AnActionEvent e) {
-        VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+        @Nullable VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
         if (file == null) return null;
-        String extension = file.getExtension() != null ? file.getExtension().toLowerCase() : "";
+        @NotNull String extension = file.getExtension() != null ? file.getExtension().toLowerCase() : "";
         return findByExtension(extension);
     }
 

@@ -32,7 +32,7 @@ public class EditRequest {
     public EditRequest() {
     }
 
-    public EditRequest(AppSettingsState settingsState) {
+    public EditRequest(@NotNull AppSettingsState settingsState) {
         this.setInstruction("");
         this.setModel(settingsState.model_edit);
         this.setTemperature(settingsState.temperature);
@@ -58,7 +58,7 @@ public class EditRequest {
         this.setTemperature(temperature);
     }
 
-    public EditRequest(EditRequest obj) {
+    public EditRequest(@NotNull EditRequest obj) {
         this.model = obj.model;
         this.top_p = obj.top_p;
         this.input = obj.input;
@@ -67,59 +67,58 @@ public class EditRequest {
         this.n = obj.n;
     }
 
-    public EditRequest setModel(String model) {
+    public @NotNull EditRequest setModel(@NotNull String model) {
         this.model = model;
         return this;
     }
 
-    public EditRequest setInput(String input) {
+    public @NotNull EditRequest setInput(String input) {
         this.input = input;
         return this;
     }
 
-    public EditRequest setInstruction(String instruction) {
+    public @NotNull EditRequest setInstruction(@NotNull String instruction) {
         this.instruction = instruction;
         return this;
     }
 
-    public EditRequest setTemperature(Double temperature) {
+    public @NotNull EditRequest setTemperature(Double temperature) {
         this.top_p = null;
         this.temperature = temperature;
         return this;
     }
 
-    public EditRequest setN(Integer n) {
+    public @NotNull EditRequest setN(Integer n) {
         this.n = n;
         return this;
     }
 
-    public EditRequest setTop_p(Double top_p) {
+    public @NotNull EditRequest setTop_p(Double top_p) {
         this.temperature = null;
         this.top_p = top_p;
         return this;
     }
 
     @Override
-    public String toString() {
-        final StringBuffer sb = new StringBuffer("EditRequest{");
-        sb.append("model='").append(model).append('\'');
-        sb.append(", input='").append(input).append('\'');
-        sb.append(", instruction='").append(instruction).append('\'');
-        sb.append(", temperature=").append(temperature);
-        sb.append(", n=").append(n);
-        sb.append(", top_p=").append(top_p);
-        sb.append('}');
-        return sb.toString();
+    public @NotNull String toString() {
+        @NotNull String sb = "EditRequest{" + "model='" + model + '\'' +
+                ", input='" + input + '\'' +
+                ", instruction='" + instruction + '\'' +
+                ", temperature=" + temperature +
+                ", n=" + n +
+                ", top_p=" + top_p +
+                '}';
+        return sb;
     }
 
     public @NotNull EditRequest showModelEditDialog() {
-        FormBuilder formBuilder = FormBuilder.createFormBuilder();
-        EditRequest withModel = new EditRequest(this);
-        InteractiveEditRequest ui = new InteractiveEditRequest(withModel);
+        @NotNull FormBuilder formBuilder = FormBuilder.createFormBuilder();
+        @NotNull EditRequest withModel = new EditRequest(this);
+        @NotNull InteractiveEditRequest ui = new InteractiveEditRequest(withModel);
         UITools.addFields(ui, formBuilder);
         UITools.writeUI(ui, withModel);
         JPanel mainPanel = formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
-        Object[] options = {"OK"};
+        Object @NotNull [] options = {"OK"};
         if (JOptionPane.showOptionDialog(
                 null,
                 mainPanel,

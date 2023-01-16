@@ -31,16 +31,15 @@ public class RecentTextEditsAction extends ActionGroup {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        Caret data = e.getData(CommonDataKeys.CARET);
-        if (!data.hasSelection()) return false;
-        return true;
+        @Nullable Caret data = e.getData(CommonDataKeys.CARET);
+        return data.hasSelection();
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent event) {
         if (event == null) return new AnAction[]{};
-        ArrayList<AnAction> children = new ArrayList<>();
-        for (String instruction : AppSettingsState.getInstance().getEditHistory()) {
+        @NotNull ArrayList<AnAction> children = new ArrayList<>();
+        for (@NotNull String instruction : AppSettingsState.getInstance().getEditHistory()) {
             int id = children.size() + 1;
             String text;
             if(id<10) {
@@ -51,20 +50,20 @@ public class RecentTextEditsAction extends ActionGroup {
             children.add(new AnAction(text, instruction, null) {
                 @Override
                 public void actionPerformed(@NotNull final AnActionEvent event1) {
-                    final Editor editor = event1.getRequiredData(CommonDataKeys.EDITOR);
-                    final CaretModel caretModel = editor.getCaretModel();
-                    final Caret primaryCaret = caretModel.getPrimaryCaret();
+                    final @NotNull Editor editor = event1.getRequiredData(CommonDataKeys.EDITOR);
+                    final @NotNull CaretModel caretModel = editor.getCaretModel();
+                    final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
                     int selectionStart = primaryCaret.getSelectionStart();
                     int selectionEnd = primaryCaret.getSelectionEnd();
-                    String selectedText = primaryCaret.getSelectedText();
+                    @Nullable String selectedText = primaryCaret.getSelectedText();
                     AppSettingsState settings = AppSettingsState.getInstance();
                     settings.addInstructionToHistory(instruction);
-                    EditRequest request = settings.createEditRequest()
+                    @NotNull EditRequest request = settings.createEditRequest()
                             .setInstruction(instruction)
                             .setInput(IndentedText.fromString(selectedText).getTextBlock());
-                    Caret caret = event1.getData(CommonDataKeys.CARET);
+                    @Nullable Caret caret = event1.getData(CommonDataKeys.CARET);
                     CharSequence indent = UITools.getIndent(caret);
-                    Document document = editor.getDocument();
+                    @NotNull Document document = editor.getDocument();
                     UITools.redoableRequest(request, indent, event1,
                             newText -> replaceString(document, selectionStart, selectionEnd, newText));
                 }

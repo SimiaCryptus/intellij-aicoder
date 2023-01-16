@@ -37,9 +37,9 @@ public class MarkdownListAction extends AnAction {
 
     @Nullable
     public static MarkdownListParams getMarkdownListParams(@NotNull AnActionEvent e) {
-        Caret caret = e.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         if (null == caret) return null;
-        PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+        @Nullable PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null == psiFile) return null;
         PsiElement list = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownListImpl");
         if (null == list) return null;
@@ -48,15 +48,15 @@ public class MarkdownListAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        MarkdownListParams markdownListParams = getMarkdownListParams(event);
+        @Nullable MarkdownListParams markdownListParams = getMarkdownListParams(event);
         AppSettingsState settings = AppSettingsState.getInstance();
-        List<CharSequence> items = StringTools.trim(PsiUtil.getAll(Objects.requireNonNull(markdownListParams).list, "MarkdownListItemImpl")
+        @NotNull List<CharSequence> items = StringTools.trim(PsiUtil.getAll(Objects.requireNonNull(markdownListParams).list, "MarkdownListItemImpl")
                 .stream().map(item -> PsiUtil.getAll(item, "MarkdownParagraphImpl").get(0).getText()).collect(Collectors.toList()), 10, false);
         CharSequence indent = UITools.getIndent(markdownListParams.caret);
-        CharSequence n = Integer.toString(items.size() * 2);
+        @NotNull CharSequence n = Integer.toString(items.size() * 2);
         int endOffset = markdownListParams.list.getTextRange().getEndOffset();
-        String listPrefix = "* ";
-        CompletionRequest completionRequest = settings.createTranslationRequest()
+        @NotNull String listPrefix = "* ";
+        @NotNull CompletionRequest completionRequest = settings.createTranslationRequest()
                 .setInstruction(UITools.getInstruction("List " + n + " items"))
                 .setInputType("instruction")
                 .setInputText("List " + n + " items")
@@ -64,19 +64,19 @@ public class MarkdownListAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest()
                 .appendPrompt(items.stream().map(x2 -> listPrefix + x2).collect(Collectors.joining("\n")) + "\n" + listPrefix);
-        Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+        @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         UITools.redoableRequest(completionRequest, "", event, newText -> transformCompletion(markdownListParams, indent, listPrefix, newText), newText -> insertString(document, endOffset, newText));
     }
 
     @NotNull
-    private static String transformCompletion(MarkdownListParams markdownListParams, CharSequence indent, String listPrefix, CharSequence complete) {
-        List<CharSequence> newItems = Arrays.stream(complete.toString().split("\n")).map(String::trim)
+    private static String transformCompletion(@NotNull MarkdownListParams markdownListParams, CharSequence indent, @NotNull String listPrefix, @NotNull CharSequence complete) {
+        @NotNull List<CharSequence> newItems = Arrays.stream(complete.toString().split("\n")).map(String::trim)
                 .filter(x1 -> x1.length() > 0).map(x1 -> StringTools.stripPrefix(x1, listPrefix)).collect(Collectors.toList());
         String strippedList = Arrays.stream(markdownListParams.list.getText().split("\n"))
                 .map(String::trim).filter(x -> x.length() > 0).collect(Collectors.joining("\n"));
-        String bulletString = Stream.of("- [ ] ", "- ", "* ")
+        @NotNull String bulletString = Stream.of("- [ ] ", "- ", "* ")
                 .filter(strippedList::startsWith).findFirst().orElse("1. ");
-        CharSequence itemText = indent + newItems.stream().map(x -> bulletString + x)
+        @NotNull CharSequence itemText = indent + newItems.stream().map(x -> bulletString + x)
                 .collect(Collectors.joining("\n" + indent));
         return "\n" + itemText;
     }

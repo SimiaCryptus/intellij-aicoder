@@ -39,7 +39,7 @@ public class AppSettingsConfigurable implements Configurable {
         if (null == mainPanel) {
             synchronized (this) {
                 if (null == mainPanel) {
-                    FormBuilder formBuilder = FormBuilder.createFormBuilder();
+                    @NotNull FormBuilder formBuilder = FormBuilder.createFormBuilder();
                     settingsComponent = new AppSettingsComponent();
                     UITools.addFields(settingsComponent, formBuilder);
                     mainPanel = formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
@@ -51,7 +51,7 @@ public class AppSettingsConfigurable implements Configurable {
 
     @Override
     public boolean isModified() {
-        AppSettingsState buffer = new AppSettingsState();
+        @NotNull AppSettingsState buffer = new AppSettingsState();
         if (this.settingsComponent != null) {
             UITools.readUI(this.settingsComponent, buffer);
         }

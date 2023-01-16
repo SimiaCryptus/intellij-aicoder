@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -30,21 +31,21 @@ public class DescribeAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent event) {
-        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        final @NotNull Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
-        String selectedText = primaryCaret.getSelectedText();
-        ComputerLanguage language = ComputerLanguage.getComputerLanguage(event);
+        @Nullable String selectedText = primaryCaret.getSelectedText();
+        @Nullable ComputerLanguage language = ComputerLanguage.getComputerLanguage(event);
         assert language != null;
 
         if(null == selectedText || selectedText.isEmpty()) {
-            Document document = editor.getDocument();
+            @NotNull Document document = editor.getDocument();
             int lineNumber = document.getLineNumber(selectionStart);
             int lineStartOffset = document.getLineStartOffset(lineNumber);
             int lineEndOffset = document.getLineEndOffset(lineNumber);
-            String currentLine = document.getText().substring(lineStartOffset, lineEndOffset);
+            @NotNull String currentLine = document.getText().substring(lineStartOffset, lineEndOffset);
             selectionStart = lineStartOffset;
             selectionEnd = lineEndOffset;
             selectedText = currentLine;
@@ -53,10 +54,10 @@ public class DescribeAction extends AnAction {
         actionPerformed(event, editor, selectionStart, selectionEnd, selectedText, language);
     }
 
-    private static void actionPerformed(@NotNull AnActionEvent event, Editor editor, int selectionStart, int selectionEnd, String selectedText, ComputerLanguage language) {
+    private static void actionPerformed(@NotNull AnActionEvent event, @NotNull Editor editor, int selectionStart, int selectionEnd, String selectedText, @NotNull ComputerLanguage language) {
         CharSequence indent = UITools.getIndent(event);
         AppSettingsState settings = AppSettingsState.getInstance();
-        CompletionRequest request = settings.createTranslationRequest()
+        @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setInputType(Objects.requireNonNull(language).name())
                 .setOutputType(settings.humanLanguage)
                 .setInstruction(UITools.getInstruction("Explain this " + language.name() + " in " + settings.humanLanguage))
@@ -69,9 +70,9 @@ public class DescribeAction extends AnAction {
     }
 
     @NotNull
-    private static CharSequence transformCompletion(String selectedText, ComputerLanguage language, CharSequence indent, CharSequence x) {
-        String wrapping = StringTools.lineWrapping(x.toString().trim(), 120);
-        TextBlockFactory<?> commentStyle;
+    private static CharSequence transformCompletion(String selectedText, @NotNull ComputerLanguage language, CharSequence indent, @NotNull CharSequence x) {
+        @NotNull String wrapping = StringTools.lineWrapping(x.toString().trim(), 120);
+        @Nullable TextBlockFactory<?> commentStyle;
         if(wrapping.trim().split("\n").length == 1) {
             commentStyle = language.lineComment;
         } else {

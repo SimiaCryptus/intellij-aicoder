@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -24,9 +25,8 @@ public class GenericEdit extends AnAction {
 
     @SuppressWarnings("unused")
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        Caret data = e.getData(CommonDataKeys.CARET);
-        if (!data.hasSelection()) return false;
-        return true;
+        @Nullable Caret data = e.getData(CommonDataKeys.CARET);
+        return data.hasSelection();
     }
 
     @Override
@@ -35,12 +35,12 @@ public class GenericEdit extends AnAction {
         String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Text", JOptionPane.QUESTION_MESSAGE);
         settings.addInstructionToHistory(instruction);
 
-        Caret caret = event.getData(CommonDataKeys.CARET);
-        CharSequence selectedText = Objects.requireNonNull(caret).getSelectedText();
-        EditRequest editRequest = settings.createEditRequest()
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
+        @Nullable CharSequence selectedText = Objects.requireNonNull(caret).getSelectedText();
+        @NotNull EditRequest editRequest = settings.createEditRequest()
                 .setInput(selectedText.toString())
                 .setInstruction(instruction);
-        Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+        @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         int selectionEnd = caret.getSelectionEnd();
         int selectionStart = caret.getSelectionStart();
         UITools.redoableRequest(editRequest, "", event,
