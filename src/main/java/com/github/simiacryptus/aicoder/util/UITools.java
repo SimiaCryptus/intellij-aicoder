@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.util;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.config.Name;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.openai.EditRequest;
 import com.github.simiacryptus.aicoder.openai.ModerationException;
 import com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.google.common.util.concurrent.FutureCallback;
@@ -109,6 +110,73 @@ public class UITools {
         }
         return () -> {
             ListenableFuture<CharSequence> retryFuture = OpenAI_API.INSTANCE.complete(event.getProject(), request, indent);
+            Futures.addCallback(retryFuture, new FutureCallback<>() {
+                @Override
+                public void onSuccess(@NotNull CharSequence result) {
+                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                        if (null != progressIndicator) {
+                            progressIndicator.cancel();
+                        }
+                        if (null != undo) undo.run();
+                        retry.put(document, getRetry(request, indent, event, action, action.apply(result.toString())));
+                    });
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    if (null != progressIndicator) {
+                        progressIndicator.cancel();
+                    }
+                    handle(t);
+                }
+            }, OpenAI_API.INSTANCE.pool);
+        };
+    }
+
+    public static void redoableRequest(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action) {
+        redoableRequest(request, indent, event, x->x, action);
+    }
+
+    public static void redoableRequest(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, CharSequence> transformCompletion, @NotNull Function<CharSequence, Runnable> action) {
+        Editor editor = event.getData(CommonDataKeys.EDITOR);
+        Document document = Objects.requireNonNull(editor).getDocument();
+        ProgressManager progressManager = ProgressManager.getInstance();
+        ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+        if(null != progressIndicator) {
+            progressIndicator.setIndeterminate(true);
+            progressIndicator.setText("Talking to OpenAI...");
+        }
+        ListenableFuture<CharSequence> resultFuture = OpenAI_API.INSTANCE.edit(event.getProject(), request.uiIntercept(), indent);
+        Futures.addCallback(resultFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(@NotNull CharSequence result) {
+                if (null != progressIndicator) {
+                    progressIndicator.cancel();
+                }
+                WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                    retry.put(document, getRetry(request, indent, event, action, action.apply(transformCompletion.apply(result.toString()))));
+                });
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                if (null != progressIndicator) {
+                    progressIndicator.cancel();
+                }
+                handle(t);
+            }
+        }, OpenAI_API.INSTANCE.pool);
+    }
+
+    @NotNull
+    private static Runnable getRetry(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action, @Nullable Runnable undo) {
+        Document document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR)).getDocument();
+        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        if(null != progressIndicator) {
+            progressIndicator.setIndeterminate(true);
+        }
+        return () -> {
+            ListenableFuture<CharSequence> retryFuture = OpenAI_API.INSTANCE.edit(event.getProject(), request.uiIntercept(), indent);
             Futures.addCallback(retryFuture, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@NotNull CharSequence result) {
@@ -322,6 +390,7 @@ public class UITools {
                         }
                         break;
                     case "int":
+                    case "java.lang.Integer":
                         if (uiVal instanceof JTextComponent) {
                             ((JTextComponent) uiVal).setText(Integer.toString((Integer) settingsVal));
                         }
@@ -331,16 +400,17 @@ public class UITools {
                             ((JTextComponent) uiVal).setText(Long.toString((Integer) settingsVal));
                         }
                         break;
-                    case "double":
-                        if (uiVal instanceof JTextComponent) {
-                            ((JTextComponent) uiVal).setText(Double.toString(((Double) settingsVal)));
-                        }
-                        break;
                     case "boolean":
                         if (uiVal instanceof JCheckBox) {
                             ((JCheckBox) uiVal).setSelected(((Boolean) settingsVal));
                         } else if (uiVal instanceof JTextComponent) {
                             ((JTextComponent) uiVal).setText(Boolean.toString((Boolean) settingsVal));
+                        }
+                        break;
+                    case "double":
+                    case "java.lang.Double":
+                        if (uiVal instanceof JTextComponent) {
+                            ((JTextComponent) uiVal).setText(Double.toString(((Double) settingsVal)));
                         }
                         break;
                     default:

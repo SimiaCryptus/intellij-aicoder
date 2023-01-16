@@ -1,0 +1,61 @@
+package com.github.simiacryptus.aicoder.openai;
+
+import com.github.simiacryptus.aicoder.config.Name;
+import com.github.simiacryptus.aicoder.util.UITools;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.JBTextField;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.Arrays;
+
+public class InteractiveEditRequest {
+    @SuppressWarnings("unused")
+    @Name("Input")
+    public final JBTextArea input = new JBTextArea(10, 40);
+    @SuppressWarnings("unused")
+    @Name("Instruction")
+    public final JBTextArea instruction = new JBTextArea(2, 40);
+    @SuppressWarnings("unused")
+    @Name("Model")
+    public final JComponent model = OpenAI_API.INSTANCE.getModelSelector();
+    @SuppressWarnings("unused")
+    @Name("Temperature")
+    public final JBTextField temperature = new JBTextField(8);
+    public final @NotNull JButton testRequest;
+
+    public InteractiveEditRequest(@NotNull EditRequest parent) {
+        testRequest = new JButton(new AbstractAction("Test Request") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                EditRequest request = new EditRequest();
+                UITools.readUI(InteractiveEditRequest.this, request);
+                ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.edit(null, request, "");
+                testRequest.setEnabled(false);
+                Futures.addCallback(future, new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@NotNull CharSequence result) {
+                        testRequest.setEnabled(true);
+                        String text = result.toString();
+                        int rows = Math.min(50, text.split("\n").length);
+                        int columns = Math.min(200, Arrays.stream(text.split("\n")).mapToInt(String::length).max().getAsInt());
+                        JBTextArea area = new JBTextArea(rows, columns);
+                        area.setText(text);
+                        area.setEditable(false);
+                        JOptionPane.showMessageDialog(null, area, "Test Output", JOptionPane.PLAIN_MESSAGE);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        testRequest.setEnabled(true);
+                        UITools.handle(t);
+                    }
+                }, OpenAI_API.INSTANCE.pool);
+            }
+        });
+    }
+}

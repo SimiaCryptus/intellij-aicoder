@@ -15,12 +15,31 @@ import java.util.Arrays;
  */
 public class CompletionRequest {
 
+    public CompletionRequest(AppSettingsState config) {
+        this("",config.temperature,config.maxTokens,null);
+    }
+
+    @NotNull
+    public CompletionRequest.CompletionRequestWithModel uiIntercept() {
+        CompletionRequestWithModel withModel;
+        if (!(this instanceof CompletionRequestWithModel)) {
+            if (!AppSettingsState.getInstance().devActions) {
+                withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model_completion);
+            } else {
+                withModel = showModelEditDialog();
+            }
+        } else {
+            withModel = (CompletionRequestWithModel) this;
+        }
+        return withModel;
+    }
+
     public static class CompletionRequestWithModel extends CompletionRequest {
 
         public String model;
 
         public CompletionRequestWithModel(String prompt, double temperature, int max_tokens, Integer logprobs, boolean echo, String model, CharSequence... stop) {
-            super(prompt, temperature, max_tokens, logprobs, echo, stop);
+            super(prompt, temperature, max_tokens, logprobs, stop);
             this.model = model;
         }
 
@@ -32,6 +51,21 @@ public class CompletionRequest {
         public CompletionRequestWithModel(CompletionRequest other, String model) {
             super(other);
             this.model = model;
+        }
+
+        public void fixup(AppSettingsState settings) {
+            if (null != this.suffix) {
+                if (this.suffix.trim().length() == 0) {
+                    setSuffix(null);
+                } else {
+                    this.echo = false;
+                }
+            }
+            if (null != this.stop && this.stop.length == 0) {
+                this.stop = null;
+            }
+            if (this.prompt.length() > settings.maxPrompt)
+                throw new IllegalArgumentException("Prompt too long:" + this.prompt.length() + " chars");
         }
     }
     public String prompt;
@@ -50,13 +84,13 @@ public class CompletionRequest {
     public CompletionRequest() {
     }
 
-    public CompletionRequest(String prompt, double temperature, int max_tokens, Integer logprobs, boolean echo, CharSequence... stop) {
+    public CompletionRequest(String prompt, double temperature, int max_tokens, Integer logprobs, CharSequence... stop) {
         this.prompt = prompt;
         this.temperature = temperature;
         this.max_tokens = max_tokens;
         this.stop = stop;
         this.logprobs = logprobs;
-        this.echo = echo;
+        this.echo = false;
     }
     public CompletionRequest(CompletionRequest other) {
         this.prompt = other.prompt;
@@ -94,8 +128,8 @@ public class CompletionRequest {
 
     public @NotNull CompletionRequestWithModel showModelEditDialog() {
         FormBuilder formBuilder = FormBuilder.createFormBuilder();
-        CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model);
-        InteractiveRequest ui = new InteractiveRequest(withModel);
+        CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model_completion);
+        InteractiveCompletionRequest ui = new InteractiveCompletionRequest(withModel);
         UITools.addFields(ui, formBuilder);
         JPanel mainPanel = formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
         UITools.writeUI(ui, withModel);

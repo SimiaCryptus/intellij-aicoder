@@ -14,7 +14,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 
-public class InteractiveRequest {
+public class InteractiveCompletionRequest {
     @SuppressWarnings("unused")
     @Name("Prompt")
     public final JBTextArea prompt = new JBTextArea(10, 40);
@@ -32,12 +32,12 @@ public class InteractiveRequest {
     public final JBTextField max_tokens = new JBTextField(8);
     public final @NotNull JButton testRequest;
 
-    public InteractiveRequest(@NotNull CompletionRequest parent) {
+    public InteractiveCompletionRequest(@NotNull CompletionRequest parent) {
         testRequest = new JButton(new AbstractAction("Test Request") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CompletionRequest.CompletionRequestWithModel withModel = new CompletionRequest.CompletionRequestWithModel(parent, AppSettingsState.getInstance().model);
-                UITools.readUI(InteractiveRequest.this, withModel);
+                CompletionRequest.CompletionRequestWithModel withModel = new CompletionRequest.CompletionRequestWithModel(parent, AppSettingsState.getInstance().model_completion);
+                UITools.readUI(InteractiveCompletionRequest.this, withModel);
                 ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.complete(null, withModel, "");
                 testRequest.setEnabled(false);
                 Futures.addCallback(future, new FutureCallback<>() {

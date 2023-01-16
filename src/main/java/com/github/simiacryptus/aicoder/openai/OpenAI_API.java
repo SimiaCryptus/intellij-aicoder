@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.openai;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -36,11 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import static com.github.simiacryptus.aicoder.util.StringTools.stripPrefix;
 
@@ -53,15 +53,21 @@ public final class OpenAI_API {
     private transient @Nullable AppSettingsState settings = null;
 
     private transient ComboBox<CharSequence> comboBox = null;
+    private static final WeakHashMap<ComboBox<CharSequence>, Object> activeModelUI = new WeakHashMap<>();
 
     @NotNull
     public JComponent getModelSelector() {
-        if (null != comboBox) return comboBox;
+        if (null != comboBox) {
+            ComboBox<CharSequence> element = new ComboBox<>(IntStream.range(0, comboBox.getItemCount()).mapToObj(comboBox::getItemAt).toArray(CharSequence[]::new));
+            activeModelUI.put(element, new Object());
+            return element;
+        }
         AppSettingsState settings = AppSettingsState.getInstance();
         CharSequence apiKey = settings.apiKey;
         if (apiKey.toString().trim().length() > 0) {
             try {
-                comboBox = new ComboBox<>(new CharSequence[]{settings.model});
+                comboBox = new ComboBox<>(new CharSequence[]{settings.model_completion, settings.model_edit});
+                activeModelUI.put(comboBox, new Object());
                 onSuccess(INSTANCE.getEngines(), engines -> {
                     JsonNode data = engines.get("data");
                     CharSequence[] items = new CharSequence[data.size()];
@@ -69,7 +75,7 @@ public final class OpenAI_API {
                         items[i] = data.get(i).get("id").asText();
                     }
                     Arrays.sort(items);
-                    Arrays.stream(items).forEach(comboBox::addItem);
+                    activeModelUI.keySet().forEach(ui->Arrays.stream(items).forEach(ui::addItem));
                 });
                 return comboBox;
             } catch (Throwable e) {
@@ -81,18 +87,35 @@ public final class OpenAI_API {
 
     @NotNull
     public ListenableFuture<CharSequence> complete(@Nullable Project project, @NotNull CompletionRequest request, CharSequence indent) {
-        return map(complete(project, request), response -> response
-                .getFirstChoice()
+        return complete(project, request, filterCodeInsert(indent));
+    }
+
+    @NotNull
+    public ListenableFuture<CharSequence> complete(@Nullable Project project, @NotNull CompletionRequest request, java.util.function.Function<Optional<CharSequence>, Optional<CharSequence>> filter) {
+        return map(complete(project, request), response -> filter.apply(response.getFirstChoice()).orElse(""));
+    }
+
+    @NotNull
+    public ListenableFuture<CharSequence> edit(@Nullable Project project, @NotNull EditRequest request, CharSequence indent) {
+        return edit(project, request, filterCodeInsert(indent));
+    }
+
+    @NotNull
+    public ListenableFuture<CharSequence> edit(@Nullable Project project, @NotNull EditRequest request, java.util.function.Function<Optional<CharSequence>, Optional<CharSequence>> filter) {
+        return map(edit(project, request), response -> filter.apply(response.getFirstChoice()).orElse(""));
+    }
+
+    @NotNull
+    public static java.util.function.Function<Optional<CharSequence>, Optional<CharSequence>> filterCodeInsert(CharSequence indent) {
+        return response -> response
                 .map(Objects::toString)
-                .map(String::trim)
-                .map(completion -> stripPrefix(completion, request.prompt.trim()))
+//                .map(String::trim).map(completion -> stripPrefix(completion, request.prompt.trim()))
                 .map(String::trim)
                 .map(StringTools::stripUnbalancedTerminators)
                 .map(IndentedText::fromString)
                 .map(indentedText -> indentedText.withIndent(indent))
                 .map(IndentedText::toString)
-                .map(indentedText -> indent + indentedText)
-                .orElse(""));
+                .map(indentedText -> indent + indentedText);
     }
 
     private AppSettingsState getSettingsState() {
@@ -117,30 +140,64 @@ public final class OpenAI_API {
 
     private @NotNull ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest) {
         AppSettingsState settings = getSettingsState();
-        CompletionRequest.CompletionRequestWithModel withModel;
-        if (!(completionRequest instanceof CompletionRequest.CompletionRequestWithModel)) {
-            if (!AppSettingsState.getInstance().devActions) {
-                withModel = new CompletionRequest.CompletionRequestWithModel(completionRequest, AppSettingsState.getInstance().model);
-            } else {
-                withModel = completionRequest.showModelEditDialog();
-            }
-        } else {
-            withModel = (CompletionRequest.CompletionRequestWithModel) completionRequest;
-        }
-
-        if (null != withModel.suffix) {
-            if (withModel.suffix.trim().length() == 0) {
-                withModel.setSuffix(null);
-            } else {
-                withModel.echo = false;
-            }
-        }
-        if (null != withModel.stop && withModel.stop.length == 0) {
-            withModel.stop = null;
-        }
-        if (withModel.prompt.length() > settings.maxPrompt)
-            throw new IllegalArgumentException("Prompt too long:" + withModel.prompt.length() + " chars");
+        CompletionRequest.CompletionRequestWithModel withModel = completionRequest.uiIntercept();
+        withModel.fixup(settings);
         return complete(project, new CompletionRequest(withModel), settings, withModel.model);
+    }
+
+    private @NotNull ListenableFuture<CompletionResponse> edit(@Nullable Project project, @NotNull EditRequest request) {
+        return edit(project, request, getSettingsState());
+    }
+
+    @NotNull
+    private ListenableFuture<CompletionResponse> edit(@Nullable Project project, @NotNull EditRequest editRequest, @NotNull AppSettingsState settings) {
+        return OpenAI_API.map(moderateAsync(project, editRequest.toString()), x -> {
+            try {
+                Task.WithResult<CompletionResponse, Exception> task = new Task.WithResult<>(project, "OpenAI Text Completion", false) {
+                    @Override
+                    protected @NotNull CompletionResponse compute(@NotNull ProgressIndicator indicator) throws Exception {
+                        try {
+                            if (editRequest.input == null) {
+                                log(settings.apiLogLevel, String.format("Text Edit Request\nInstruction:\n\t%s\n",
+                                        editRequest.instruction.replace("\n", "\n\t")));
+                            } else {
+                                log(settings.apiLogLevel, String.format("Text Edit Request\nInstruction:\n\t%s\nInput:\n\t%s\n",
+                                        editRequest.instruction.replace("\n", "\n\t"),
+                                        editRequest.input.replace("\n", "\n\t")));
+                            }
+                            String request = getMapper().writeValueAsString(editRequest);
+                            String result = post(settings.apiBase + "/edits", request);
+                            JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
+                            if (jsonObject.has("error")) {
+                                JsonObject errorObject = jsonObject.getAsJsonObject("error");
+                                String errorMessage = errorObject.get("message").getAsString();
+                                log.error(errorMessage);
+                                throw new IOException(errorMessage);
+                            }
+                            CompletionResponse completionResponse = getMapper().readValue(result, CompletionResponse.class);
+                            if (completionResponse.usage != null) {
+                                settings.tokenCounter += completionResponse.usage.total_tokens;
+                            }
+                            log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
+                                    completionResponse.getFirstChoice().orElse("").toString().trim().replace("\n", "\n\t")));
+                            return completionResponse;
+                        } catch (IOException | InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                };
+                if (null != project) {
+                    return ProgressManager.getInstance().run(task);
+                } else {
+                    task.run(new AbstractProgressIndicatorBase());
+                    return task.getResult();
+                }
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @NotNull
@@ -173,13 +230,8 @@ public final class OpenAI_API {
                                 settings.tokenCounter += completionResponse.usage.total_tokens;
                             }
                             String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").toString().trim(), completionRequest.prompt.trim());
-                            if (completionRequest.suffix == null) {
-                                log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
-                                        completionResult.replace("\n", "\n\t")));
-                            } else {
-                                log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
-                                        completionResult.replace("\n", "\n\t")));
-                            }
+                            log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
+                                    completionResult.replace("\n", "\n\t")));
                             return completionResponse;
                         } catch (IOException | InterruptedException e) {
                             throw new RuntimeException(e);
@@ -322,7 +374,7 @@ public final class OpenAI_API {
                 .enable(SerializationFeature.INDENT_OUTPUT)
                 .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
                 .enable(MapperFeature.USE_STD_BEAN_NAMING)
-                //.registerModule(DefaultScalaModule)
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
                 .activateDefaultTyping(mapper.getPolymorphicTypeValidator());
         return mapper;
     }

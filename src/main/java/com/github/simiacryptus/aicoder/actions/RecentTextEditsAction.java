@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.openai.EditRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.IndentedText;
 import com.github.simiacryptus.aicoder.util.UITools;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
-public class RecentEditsAction extends ActionGroup {
+public class RecentTextEditsAction extends ActionGroup {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -30,13 +31,14 @@ public class RecentEditsAction extends ActionGroup {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        return null != ComputerLanguage.getComputerLanguage(e);
+        Caret data = e.getData(CommonDataKeys.CARET);
+        if (!data.hasSelection()) return false;
+        return true;
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent event) {
-        assert event != null;
-        String computerLanguage = requireNonNull(ComputerLanguage.getComputerLanguage(event)).name();
+        if (event == null) return new AnAction[]{};
         ArrayList<AnAction> children = new ArrayList<>();
         for (String instruction : AppSettingsState.getInstance().getEditHistory()) {
             int id = children.size() + 1;
@@ -57,14 +59,9 @@ public class RecentEditsAction extends ActionGroup {
                     String selectedText = primaryCaret.getSelectedText();
                     AppSettingsState settings = AppSettingsState.getInstance();
                     settings.addInstructionToHistory(instruction);
-                    CompletionRequest request = settings.createTranslationRequest()
-                            .setInputType(computerLanguage)
-                            .setOutputType(computerLanguage)
+                    EditRequest request = settings.createEditRequest()
                             .setInstruction(instruction)
-                            .setInputAttribute("type", "before")
-                            .setOutputAttrute("type", "after")
-                            .setInputText(IndentedText.fromString(selectedText).getTextBlock())
-                            .buildCompletionRequest();
+                            .setInput(IndentedText.fromString(selectedText).getTextBlock());
                     Caret caret = event1.getData(CommonDataKeys.CARET);
                     CharSequence indent = UITools.getIndent(caret);
                     Document document = editor.getDocument();

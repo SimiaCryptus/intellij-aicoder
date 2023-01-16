@@ -32,7 +32,6 @@ public class TranslationRequest_XML extends BaseTranslationRequest<TranslationRe
                 getTemperature(),
                 getMaxTokens(),
                 null,
-                true,
                 String.format("</%s>", getOutputTag().toLowerCase())
         );
     }

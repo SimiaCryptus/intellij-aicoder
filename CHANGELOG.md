@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [1.0.0]
+
+### Added
+- Fixed bug when changing prefix in UI intercept dialog
+- Added generic "edit" feature
+
 ## [0.1.9]
 
 ### Added
