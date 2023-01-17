@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
@@ -34,16 +35,16 @@ public class ToHumanLanguageAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent event) {
-        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        final @NotNull Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
-        String selectedText = primaryCaret.getSelectedText();
-        ComputerLanguage language = ComputerLanguage.getComputerLanguage(event);
-        String computerLanguage = requireNonNull(language).name();
+        @Nullable String selectedText = primaryCaret.getSelectedText();
+        @Nullable ComputerLanguage language = ComputerLanguage.getComputerLanguage(event);
+        @NotNull String computerLanguage = requireNonNull(language).name();
         AppSettingsState settings = AppSettingsState.getInstance();
-        CompletionRequest request = settings.createTranslationRequest()
+        @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setInstruction(UITools.getInstruction("Describe this code"))
                 .setInputText(selectedText)
                 .setInputType(computerLanguage)
@@ -52,9 +53,9 @@ public class ToHumanLanguageAction extends AnAction {
                 .setOutputAttrute("type", "output")
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest();
-        Caret caret = event.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
-        Document document = editor.getDocument();
+        @NotNull Document document = editor.getDocument();
         UITools.redoableRequest(request, indent, event, newText -> replaceString(document, selectionStart, selectionEnd, newText));
     }
 }

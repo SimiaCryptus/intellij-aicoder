@@ -39,15 +39,15 @@ public class MarkdownNewTableColAction extends AnAction {
 
     @Nullable
     public static MarkdownNewTableColParams getMarkdownNewTableColParams(@NotNull AnActionEvent e) {
-        Caret caret = e.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         if (null == caret) return null;
-        PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+        @Nullable PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null == psiFile) return null;
         PsiElement table = PsiUtil.getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), "MarkdownTableImpl");
         if (null == table) return null;
-        List<CharSequence> rows = Arrays.asList(StringTools.transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl")
+        @NotNull List<CharSequence> rows = Arrays.asList(StringTools.transposeMarkdownTable(PsiUtil.getAll(table, "MarkdownTableRowImpl")
                 .stream().map(PsiElement::getText).collect(Collectors.joining("\n")), false, false).split("\n"));
-        CharSequence n = Integer.toString(rows.size() * 2);
+        @NotNull CharSequence n = Integer.toString(rows.size() * 2);
         return new MarkdownNewTableColParams(caret, table, rows, n);
     }
 
@@ -65,11 +65,11 @@ public class MarkdownNewTableColAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        MarkdownNewTableColParams markdownNewTableColParams = getMarkdownNewTableColParams(event);
+        @Nullable MarkdownNewTableColParams markdownNewTableColParams = getMarkdownNewTableColParams(event);
         AppSettingsState settings = AppSettingsState.getInstance();
-        CharSequence columnName = JOptionPane.showInputDialog(null, "Column Name:", "Add Column", JOptionPane.QUESTION_MESSAGE).trim();
-        CompletionRequest request = newRowsRequest(settings, Objects.requireNonNull(markdownNewTableColParams).n, markdownNewTableColParams.rows, "| " + columnName + " | ");
-        Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+        @NotNull CharSequence columnName = JOptionPane.showInputDialog(null, "Column Name:", "Add Column", JOptionPane.QUESTION_MESSAGE).trim();
+        @NotNull CompletionRequest request = newRowsRequest(settings, Objects.requireNonNull(markdownNewTableColParams).n, markdownNewTableColParams.rows, "| " + columnName + " | ");
+        @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         TextRange textRange = markdownNewTableColParams.table.getTextRange();
         int startOffset = textRange.getStartOffset();
         int endOffset = textRange.getEndOffset();
@@ -79,12 +79,12 @@ public class MarkdownNewTableColAction extends AnAction {
     }
 
     @NotNull
-    private static String transformCompletion(MarkdownNewTableColParams markdownNewTableColParams, CharSequence complete, CharSequence columnName) {
+    private static String transformCompletion(@NotNull MarkdownNewTableColParams markdownNewTableColParams, CharSequence complete, CharSequence columnName) {
         complete = "| " + columnName + " | " +  complete;
         CharSequence indent = UITools.getIndent(markdownNewTableColParams.caret);
-        List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n"))
+        @NotNull List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n"))
                 .map(String::trim).filter(x -> x.length() > 0).collect(Collectors.toList());
-        String newTableTxt = StringTools.transposeMarkdownTable(Stream.concat(markdownNewTableColParams.rows.stream(),
+        @NotNull String newTableTxt = StringTools.transposeMarkdownTable(Stream.concat(markdownNewTableColParams.rows.stream(),
                 newRows.stream()).collect(Collectors.joining("\n")), false, true);
         return newTableTxt.replace("\n", "\n" + indent);
     }

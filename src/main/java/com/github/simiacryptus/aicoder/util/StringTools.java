@@ -21,7 +21,7 @@ public class StringTools {
     public static @NotNull CharSequence stripUnbalancedTerminators(@NotNull CharSequence input) {
         int openCount = 0;
         boolean inQuotes = false;
-        StringBuilder output = new StringBuilder();
+        @NotNull StringBuilder output = new StringBuilder();
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
             if (c == '"') {
@@ -70,7 +70,7 @@ public class StringTools {
     }
 
     public static @NotNull String trimSuffix(@NotNull CharSequence text) {
-        String suffix = getWhitespaceSuffix(text);
+        @NotNull String suffix = getWhitespaceSuffix(text);
         return stripSuffix(text, suffix);
     }
 
@@ -84,31 +84,31 @@ public class StringTools {
     }
 
     public static @NotNull String lineWrapping(@NotNull CharSequence description, int width) {
-        StringBuilder output = new StringBuilder();
-        String[] lines = description.toString().split("\n");
+        @NotNull StringBuilder output = new StringBuilder();
+        String @NotNull [] lines = description.toString().split("\n");
         int lineLength = 0;
-        for (String line : lines) {
-            AtomicInteger sentenceLength = new AtomicInteger(lineLength);
-            String sentanceBuffer = wrapSentence(line, width, sentenceLength);
-            if (lineLength + sentanceBuffer.length() > width && sentanceBuffer.length() < width) {
+        for (@NotNull String line : lines) {
+            @NotNull AtomicInteger sentenceLength = new AtomicInteger(lineLength);
+            @NotNull String sentenceBuffer = wrapSentence(line, width, sentenceLength);
+            if (lineLength + sentenceBuffer.length() > width && sentenceBuffer.length() < width) {
                 output.append("\n");
                 lineLength = 0;
                 sentenceLength.set(lineLength);
-                sentanceBuffer = wrapSentence(line, width, sentenceLength);
+                sentenceBuffer = wrapSentence(line, width, sentenceLength);
             } else {
                 output.append(" ");
                 sentenceLength.addAndGet(1);
             }
-            output.append(sentanceBuffer);
+            output.append(sentenceBuffer);
             lineLength = sentenceLength.get();
         }
         return output.toString();
     }
 
     private static @NotNull String wrapSentence(@NotNull CharSequence line, int width, @NotNull AtomicInteger xPointer) {
-        StringBuilder sentenceBuffer = new StringBuilder();
-        String[] words = line.toString().split(" ");
-        for (String word : words) {
+        @NotNull StringBuilder sentenceBuffer = new StringBuilder();
+        String @NotNull [] words = line.toString().split(" ");
+        for (@NotNull String word : words) {
             if (xPointer.get() + word.length() > width) {
                 sentenceBuffer.append("\n");
                 xPointer.set(0);
@@ -123,7 +123,7 @@ public class StringTools {
     }
 
     public static @NotNull CharSequence toString(int @NotNull [] ints) {
-        char[] chars = new char[ints.length];
+        char @NotNull [] chars = new char[ints.length];
         for (int i = 0; i < ints.length; i++) {
             chars[i] = (char) ints[i];
         }
@@ -153,7 +153,7 @@ public class StringTools {
     @NotNull
     public static List<CharSequence> trim(List<CharSequence> items, int max, boolean preserveHead) {
         items = new ArrayList<>(items);
-        Random random = new Random();
+        @NotNull Random random = new Random();
         while (items.size() > max) {
             int index = random.nextInt(items.size());
             if (preserveHead && index == 0) continue;
@@ -163,28 +163,26 @@ public class StringTools {
     }
 
     public static @NotNull String transposeMarkdownTable(@NotNull String table, boolean inputHeader, boolean outputHeader) {
-        CharSequence[][] cells = parseMarkdownTable(table, inputHeader);
-        StringBuilder transposedTable = new StringBuilder();
+        CharSequence[] @NotNull [] cells = parseMarkdownTable(table, inputHeader);
+        @NotNull StringBuilder transposedTable = new StringBuilder();
         int columns = cells[0].length;
-        int rows = cells.length;
         if (outputHeader) columns = columns + 1;
         for (int column = 0; column < columns; column++) {
             transposedTable.append("|");
-            for (int row = 0; row < rows; row++) {
+            for (CharSequence[] cell : cells) {
                 String cellValue;
-                CharSequence[] rowCells = cells[row];
                 if (outputHeader) {
                     if (column < 1) {
-                        cellValue = rowCells[column].toString().trim();
+                        cellValue = cell[column].toString().trim();
                     } else if (column == 1) {
                         cellValue = "---";
-                    } else if ((column - 1) >= rowCells.length) {
+                    } else if ((column - 1) >= cell.length) {
                         cellValue = "";
                     } else {
-                        cellValue = rowCells[column - 1].toString().trim();
+                        cellValue = cell[column - 1].toString().trim();
                     }
                 } else {
-                    cellValue = rowCells[column].toString().trim();
+                    cellValue = cell[column].toString().trim();
                 }
                 transposedTable.append(" ").append(cellValue).append(" |");
             }
@@ -194,13 +192,11 @@ public class StringTools {
     }
 
     private static CharSequence[] @NotNull [] parseMarkdownTable(@NotNull String table, boolean removeHeader) {
-        ArrayList<CharSequence[]> rows = new ArrayList<>(Arrays.stream(table.split("\n")).map(x -> Arrays.stream(x.split("\\|")).filter(cell -> cell.length() > 0).toArray(CharSequence[]::new)).collect(Collectors.toList()));
+        @NotNull ArrayList<CharSequence[]> rows = Arrays.stream(table.split("\n")).map(x -> Arrays.stream(x.split("\\|")).filter(cell -> cell.length() > 0).toArray(CharSequence[]::new)).collect(Collectors.toCollection(ArrayList::new));
         if (removeHeader) {
             rows.remove(1);
         }
-        return rows.stream()
-                //.filter(x -> x.length == rows.get(0).length)
-                .toArray(CharSequence[][]::new);
+        return rows.toArray(CharSequence[][]::new);
     }
 
     public static @NotNull CharSequence getPrefixForContext(@NotNull String text) {
@@ -216,11 +212,10 @@ public class StringTools {
      * @return The prefix for the given context.
      */
     public static @NotNull CharSequence getPrefixForContext(@NotNull String text, int idealLength, CharSequence... delimiters) {
-        List<CharSequence> candidates = Stream.of(delimiters).flatMap(d -> {
-            StringBuilder sb = new StringBuilder();
-            String[] split = text.split(Pattern.quote(d.toString()));
-            for (int i = 0; i < split.length; i++) {
-                String s = split[i];
+        @NotNull List<CharSequence> candidates = Stream.of(delimiters).flatMap(d -> {
+            @NotNull StringBuilder sb = new StringBuilder();
+            String @NotNull [] split = text.split(Pattern.quote(d.toString()));
+            for (String s : split) {
                 if (Math.abs(sb.length() - idealLength) < Math.abs((sb.length() + s.length()) - idealLength)) break;
                 if (sb.length() > 0) sb.append(d);
                 sb.append(s);
@@ -229,8 +224,7 @@ public class StringTools {
             if (split.length == 0) return Stream.empty();
             return Stream.of(sb.toString());
         }).collect(Collectors.toList());
-        Optional<CharSequence> winner = candidates.stream().min(Comparator.comparing(s -> Math.abs(s.length() - idealLength)));
-        return winner.get();
+        return candidates.stream().min(Comparator.comparing(s -> Math.abs(s.length() - idealLength))).orElse("");
     }
 
     public static @NotNull CharSequence getSuffixForContext(@NotNull String text) {
@@ -248,9 +242,9 @@ public class StringTools {
      */
     @NotNull
     public static CharSequence getSuffixForContext(@NotNull String text, int idealLength, CharSequence... delimiters) {
-        List<CharSequence> candidates = Stream.of(delimiters).flatMap(d -> {
-            StringBuilder sb = new StringBuilder();
-            String[] split = text.split(Pattern.quote(d.toString()));
+        @NotNull List<CharSequence> candidates = Stream.of(delimiters).flatMap(d -> {
+            @NotNull StringBuilder sb = new StringBuilder();
+            String @NotNull [] split = text.split(Pattern.quote(d.toString()));
             for (int i = split.length - 1; i >= 0; i--) {
                 String s = split[i];
                 if (Math.abs(sb.length() - idealLength) < Math.abs((sb.length() + s.length()) - idealLength)) break;
@@ -264,7 +258,6 @@ public class StringTools {
             if (split.length == 0) return Stream.empty();
             return Stream.of(sb.toString());
         }).collect(Collectors.toList());
-        Optional<CharSequence> winner = candidates.stream().min(Comparator.comparing(s -> Math.abs(s.length() - idealLength)));
-        return winner.get();
+        return candidates.stream().min(Comparator.comparing(s -> Math.abs(s.length() - idealLength))).orElse("");
     }
 }

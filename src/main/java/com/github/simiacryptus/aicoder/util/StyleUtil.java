@@ -142,7 +142,7 @@ public class StyleUtil {
      */
     public static @NotNull ListenableFuture<CharSequence> describeTest(CharSequence style, @NotNull ComputerLanguage language, String code) {
         AppSettingsState settings = AppSettingsState.getInstance();
-        CompletionRequest completionRequest = settings.createTranslationRequest()
+        @NotNull CompletionRequest completionRequest = settings.createTranslationRequest()
                 .setInstruction(String.format("Explain this %s in %s (%s)", language.name(), settings.humanLanguage, style))
                 .setInputText(IndentedText.fromString(code).getTextBlock().trim())
                 .setInputType(language.name())
@@ -151,7 +151,7 @@ public class StyleUtil {
                 .setOutputAttrute("type", "description")
                 .setOutputAttrute("style", style)
                 .buildCompletionRequest();
-        ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.complete(null, completionRequest, "");
+        @NotNull ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.complete(null, completionRequest, "");
         return OpenAI_API.map(future, x->StringTools.lineWrapping(x.toString().trim(), 120));
     }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -26,26 +27,25 @@ public class DocAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
+        @Nullable ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
         if (null == computerLanguage) return false;
-        if (null == computerLanguage.docStyle || computerLanguage.docStyle.isEmpty()) return false;
-        return true;
+        return null != computerLanguage.docStyle && !computerLanguage.docStyle.isEmpty();
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent event) {
-        ComputerLanguage language = ComputerLanguage.getComputerLanguage(event);
-        Caret caret = event.getData(CommonDataKeys.CARET);
-        PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
-        PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersecting(psiFile, Objects.requireNonNull(caret).getSelectionStart(), caret.getSelectionEnd());
+        @Nullable ComputerLanguage language = ComputerLanguage.getComputerLanguage(event);
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
+        @NotNull PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
+        PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, Objects.requireNonNull(caret));
         if (null == smallestIntersectingMethod) return;
         AppSettingsState settings = AppSettingsState.getInstance();
         String code = smallestIntersectingMethod.getText();
-        IndentedText indentedInput = IndentedText.fromString(code);
+        @NotNull IndentedText indentedInput = IndentedText.fromString(code);
         CharSequence indent = indentedInput.getIndent();
         int startOffset = smallestIntersectingMethod.getTextRange().getStartOffset();
         int endOffset = smallestIntersectingMethod.getTextRange().getEndOffset();
-        CompletionRequest completionRequest = settings.createTranslationRequest()
+        @NotNull CompletionRequest completionRequest = settings.createTranslationRequest()
                 .setInputType(Objects.requireNonNull(language).name())
                 .setOutputType(language.name())
                 .setInstruction(UITools.getInstruction("Rewrite to include detailed " + language.docStyle))
@@ -55,13 +55,13 @@ public class DocAction extends AnAction {
                 .setInputText(indentedInput.getTextBlock())
                 .buildCompletionRequest()
                 .addStops(Objects.requireNonNull(language.getMultilineCommentSuffix()));
-        Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+        @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         UITools.redoableRequest(completionRequest, "", event, docString -> transformCompletion(language, indentedInput, indent, docString), docString -> replaceString(document, startOffset, endOffset, docString));
     }
 
     @NotNull
-    private static CharSequence transformCompletion(ComputerLanguage language, IndentedText indentedInput, CharSequence indent, CharSequence docString) {
-        TextBlock reindented = Objects.requireNonNull(language.docComment).fromString(docString.toString().trim()).withIndent(indent);
+    private static CharSequence transformCompletion(@NotNull ComputerLanguage language, @NotNull IndentedText indentedInput, CharSequence indent, @NotNull CharSequence docString) {
+        @NotNull TextBlock reindented = Objects.requireNonNull(language.docComment).fromString(docString.toString().trim()).withIndent(indent);
         return reindented + "\n" + indent + StringTools.trimPrefix(indentedInput.toString());
     }
 }

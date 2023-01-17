@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
@@ -23,13 +24,13 @@ public class FromHumanLanguageAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent event) {
-        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        final @NotNull Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
-        String selectedText = primaryCaret.getSelectedText();
-        CompletionRequest request = AppSettingsState.getInstance().createTranslationRequest()
+        @Nullable String selectedText = primaryCaret.getSelectedText();
+        @NotNull CompletionRequest request = AppSettingsState.getInstance().createTranslationRequest()
                 .setInputType(AppSettingsState.getInstance().humanLanguage.toLowerCase())
                 .setOutputType(requireNonNull(ComputerLanguage.getComputerLanguage(event)).name())
                 .setInstruction("Implement this specification")
@@ -37,7 +38,7 @@ public class FromHumanLanguageAction extends AnAction {
                 .setOutputAttrute("type", "output")
                 .setInputText(selectedText)
                 .buildCompletionRequest();
-        Caret caret = event.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
         UITools.redoableRequest(request, indent, event, newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }

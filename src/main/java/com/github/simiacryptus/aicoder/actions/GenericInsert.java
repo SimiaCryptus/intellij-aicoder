@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -24,20 +25,19 @@ public class GenericInsert extends AnAction {
 
     @SuppressWarnings("unused")
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        Caret data = e.getData(CommonDataKeys.CARET);
-        if(data.hasSelection()) return false;
-        return true;
+        @Nullable Caret data = e.getData(CommonDataKeys.CARET);
+        return !data.hasSelection();
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        Caret caret = event.getData(CommonDataKeys.CARET);
-        Document document = Objects.requireNonNull(caret).getEditor().getDocument();
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
+        @NotNull Document document = Objects.requireNonNull(caret).getEditor().getDocument();
         int caretPosition = caret.getOffset();
-        CharSequence before = StringTools.getSuffixForContext(document.getText(new TextRange(0, caretPosition)));
-        CharSequence after = StringTools.getPrefixForContext(document.getText(new TextRange(caretPosition, document.getTextLength())));
+        @NotNull CharSequence before = StringTools.getSuffixForContext(document.getText(new TextRange(0, caretPosition)));
+        @NotNull CharSequence after = StringTools.getPrefixForContext(document.getText(new TextRange(caretPosition, document.getTextLength())));
         AppSettingsState settings = AppSettingsState.getInstance();
-        CompletionRequest completionRequest = settings.createCompletionRequest()
+        @NotNull CompletionRequest completionRequest = settings.createCompletionRequest()
                 .appendPrompt(before)
                 .setSuffix(after);
         UITools.redoableRequest(completionRequest, "", event, newText -> UITools.insertString(document, caretPosition, newText));

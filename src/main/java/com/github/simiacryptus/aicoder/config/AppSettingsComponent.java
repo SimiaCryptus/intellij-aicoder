@@ -68,8 +68,10 @@ public class AppSettingsComponent {
     @Name("Max Prompt (Characters)")
     public final JBTextField maxPrompt = new JBTextField();
     @SuppressWarnings("unused")
-    @Name("Model")
-    public final JComponent model = OpenAI_API.INSTANCE.getModelSelector();
+    @Name("Completion Model")
+    public final JComponent model_completion = OpenAI_API.INSTANCE.getModelSelector();
+    @Name("Edit Model")
+    public final JComponent model_edit = OpenAI_API.INSTANCE.getModelSelector();
 
     @Name("API Key")
     public final JBPasswordField apiKey = new JBPasswordField();

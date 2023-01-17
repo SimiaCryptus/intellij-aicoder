@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -32,17 +33,17 @@ public class CustomEditAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-        final Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        final @NotNull Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
-        String selectedText = primaryCaret.getSelectedText();
-        String computerLanguage = requireNonNull(ComputerLanguage.getComputerLanguage(e)).name();
+        @Nullable String selectedText = primaryCaret.getSelectedText();
+        @NotNull String computerLanguage = requireNonNull(ComputerLanguage.getComputerLanguage(e)).name();
         String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
         AppSettingsState settings = AppSettingsState.getInstance();
         settings.addInstructionToHistory(instruction);
-        CompletionRequest request = settings.createTranslationRequest()
+        @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setInputType(computerLanguage)
                 .setOutputType(computerLanguage)
                 .setInstruction(instruction)
@@ -50,7 +51,7 @@ public class CustomEditAction extends AnAction {
                 .setOutputAttrute("type", "after")
                 .setInputText(IndentedText.fromString(selectedText).getTextBlock())
                 .buildCompletionRequest();
-        Caret caret = e.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
         UITools.redoableRequest(request, indent, e, newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }

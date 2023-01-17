@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.openai.EditRequest;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,9 +12,10 @@ import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Objects;
 
-public class GenericAppend extends AnAction {
+public class GenericEdit extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -29,12 +31,19 @@ public class GenericAppend extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
-        @Nullable CharSequence before = Objects.requireNonNull(caret).getSelectedText();
         AppSettingsState settings = AppSettingsState.getInstance();
-        @NotNull CompletionRequest completionRequest = settings.createCompletionRequest().appendPrompt(before);
+        String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Text", JOptionPane.QUESTION_MESSAGE);
+        settings.addInstructionToHistory(instruction);
+
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
+        @Nullable CharSequence selectedText = Objects.requireNonNull(caret).getSelectedText();
+        @NotNull EditRequest editRequest = settings.createEditRequest()
+                .setInput(selectedText.toString())
+                .setInstruction(instruction);
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         int selectionEnd = caret.getSelectionEnd();
-        UITools.redoableRequest(completionRequest, "", event, newText -> UITools.insertString(document, selectionEnd, newText));
+        int selectionStart = caret.getSelectionStart();
+        UITools.redoableRequest(editRequest, "", event,
+                newText -> UITools.replaceString(document, selectionStart, selectionEnd, newText));
     }
 }

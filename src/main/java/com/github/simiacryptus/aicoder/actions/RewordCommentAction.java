@@ -36,9 +36,9 @@ public class RewordCommentAction extends AnAction {
 
     @Nullable
     public static RewordCommentParams getRewordCommentParams(@NotNull AnActionEvent e) {
-        PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+        @Nullable PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
         if (null == psiFile) return null;
-        Caret caret = e.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         if (null == caret) return null;
         int selectionStart = caret.getSelectionStart();
         int selectionEnd = caret.getSelectionEnd();
@@ -49,14 +49,14 @@ public class RewordCommentAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent event) {
-        String humanLanguage = AppSettingsState.getInstance().humanLanguage;
-        ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(event);
-        RewordCommentParams rewordCommentParams = getRewordCommentParams(event);
-        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+        @NotNull String humanLanguage = AppSettingsState.getInstance().humanLanguage;
+        @Nullable ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(event);
+        @Nullable RewordCommentParams rewordCommentParams = getRewordCommentParams(event);
+        final @NotNull Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
         AppSettingsState settings = AppSettingsState.getInstance();
         String text = Objects.requireNonNull(rewordCommentParams).largestIntersectingComment.getText();
-        TextBlockFactory<?> commentModel = Objects.requireNonNull(computerLanguage).getCommentModel(text);
-        String commentText = Objects.requireNonNull(commentModel).fromString(text.trim()).stream()
+        @Nullable TextBlockFactory<?> commentModel = Objects.requireNonNull(computerLanguage).getCommentModel(text);
+        @NotNull String commentText = Objects.requireNonNull(commentModel).fromString(text.trim()).stream()
                 .map(Object::toString)
                 .map(String::trim)
                 .filter(x -> !x.isEmpty())
@@ -64,7 +64,7 @@ public class RewordCommentAction extends AnAction {
         int startOffset = rewordCommentParams.largestIntersectingComment.getTextRange().getStartOffset();
         int endOffset = rewordCommentParams.largestIntersectingComment.getTextRange().getEndOffset();
         CharSequence indent = UITools.getIndent(rewordCommentParams.caret);
-        CompletionRequest request = settings.createTranslationRequest()
+        @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setInstruction(UITools.getInstruction("Reword"))
                 .setInputText(commentText)
                 .setInputType(humanLanguage)
@@ -73,15 +73,15 @@ public class RewordCommentAction extends AnAction {
                 .setOutputAttrute("type", "output")
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest();
-        Document document = editor.getDocument();
+        @NotNull Document document = editor.getDocument();
         UITools.redoableRequest(request, "", event,
                 newText -> transformCompletion(commentModel, indent, newText),
                 newText -> replaceString(document, startOffset, endOffset, newText));
     }
 
     @NotNull
-    private static CharSequence transformCompletion(TextBlockFactory<?> commentModel, CharSequence indent, CharSequence result) {
-        String lineWrapping = StringTools.lineWrapping(result, 120);
+    private static CharSequence transformCompletion(@NotNull TextBlockFactory<?> commentModel, @NotNull CharSequence indent, @NotNull CharSequence result) {
+        @NotNull String lineWrapping = StringTools.lineWrapping(result, 120);
         return indent.toString() + commentModel.fromString(lineWrapping).withIndent(indent);
     }
 

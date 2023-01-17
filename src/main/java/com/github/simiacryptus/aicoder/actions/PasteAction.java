@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.util.Objects;
@@ -38,15 +39,15 @@ public class PasteAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent event) {
-        final Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret primaryCaret = caretModel.getPrimaryCaret();
+        final @NotNull Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
+        final @NotNull CaretModel caretModel = editor.getCaretModel();
+        final @NotNull Caret primaryCaret = caretModel.getPrimaryCaret();
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
-        String selectedText = primaryCaret.getSelectedText();
-        String language = Objects.requireNonNull(ComputerLanguage.getComputerLanguage(event)).name();
-        String text = Objects.requireNonNull(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor)).toString().trim();
-        CompletionRequest request = AppSettingsState.getInstance().createTranslationRequest()
+        @Nullable String selectedText = primaryCaret.getSelectedText();
+        @NotNull String language = Objects.requireNonNull(ComputerLanguage.getComputerLanguage(event)).name();
+        @NotNull String text = Objects.requireNonNull(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor)).toString().trim();
+        @NotNull CompletionRequest request = AppSettingsState.getInstance().createTranslationRequest()
                 .setInputType("source")
                 .setOutputType("translated")
                 .setInstruction("Translate this input into " + language)
@@ -54,7 +55,7 @@ public class PasteAction extends AnAction {
                 .setOutputAttrute("language", language)
                 .setInputText(text)
                 .buildCompletionRequest();
-        Caret caret = event.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
         UITools.redoableRequest(request, indent, event, newText -> {
             if(selectedText == null) {

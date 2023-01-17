@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.config;
 
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.openai.EditRequest;
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequest;
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequestTemplate;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +29,8 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
 
     public @NotNull String apiBase = "https://api.openai.com/v1";
     public @NotNull String apiKey = "";
-    public @NotNull String model = "text-davinci-003";
+    public @NotNull String model_completion = "text-davinci-003";
+    public @NotNull String model_edit = "text-davinci-edit-001";
     public int maxTokens = 1000;
     public double temperature = 0.1;
     public @NotNull String style = "";
@@ -55,13 +57,11 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     }
 
     public @NotNull CompletionRequest createCompletionRequest() {
-        return new CompletionRequest(
-                "",
-                temperature,
-                maxTokens,
-                null,
-                true
-        );
+        return new CompletionRequest(this);
+    }
+
+    public @NotNull EditRequest createEditRequest() {
+        return new EditRequest(this);
     }
 
     @Nullable
@@ -79,14 +79,15 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        AppSettingsState that = (AppSettingsState) o;
+        @NotNull AppSettingsState that = (AppSettingsState) o;
         if (maxTokens != that.maxTokens) return false;
         if (maxPrompt != that.maxPrompt) return false;
         if (Double.compare(that.temperature, temperature) != 0) return false;
         if (!Objects.equals(humanLanguage, that.humanLanguage)) return false;
         if (!Objects.equals(apiBase, that.apiBase)) return false;
         if (!Objects.equals(apiKey, that.apiKey)) return false;
-        if (!Objects.equals(model, that.model)) return false;
+        if (!Objects.equals(model_completion, that.model_completion)) return false;
+        if (!Objects.equals(model_edit, that.model_edit)) return false;
         if (!Objects.equals(translationRequestTemplate, that.translationRequestTemplate)) return false;
         if (!Objects.equals(apiLogLevel, that.apiLogLevel)) return false;
         if (!Objects.equals(devActions, that.devActions)) return false;
@@ -95,7 +96,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
 
     @Override
     public int hashCode() {
-        return Objects.hash(apiBase, apiKey, model, maxTokens, temperature, translationRequestTemplate, apiLogLevel, devActions, style);
+        return Objects.hash(apiBase, apiKey, model_completion, model_edit, maxTokens, temperature, translationRequestTemplate, apiLogLevel, devActions, style);
     }
 
     public void addInstructionToHistory(@NotNull CharSequence instruction) {
@@ -119,10 +120,10 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         // Then we'll remove all the ones we don't want to keep,
         // And that's how we'll make sure the instruction history is neat!
         if (mostUsedHistory.size() > historyLimit) {
-            List<CharSequence> retain = mostUsedHistory.entrySet().stream()
+            @NotNull List<CharSequence> retain = mostUsedHistory.entrySet().stream()
                     .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                     .limit(historyLimit).map(Map.Entry::getKey).collect(Collectors.toList());
-            HashSet<CharSequence> toRemove = new HashSet<>(mostUsedHistory.keySet());
+            @NotNull HashSet<CharSequence> toRemove = new HashSet<>(mostUsedHistory.keySet());
             toRemove.removeAll(retain);
             toRemove.removeAll(mostRecentHistory);
             toRemove.forEach(mostUsedHistory::remove);

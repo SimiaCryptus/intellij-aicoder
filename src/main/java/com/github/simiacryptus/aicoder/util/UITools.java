@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.util;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.config.Name;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.openai.EditRequest;
 import com.github.simiacryptus.aicoder.openai.ModerationException;
 import com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.google.common.util.concurrent.FutureCallback;
@@ -56,15 +57,15 @@ public class UITools {
      * @return A {@link Runnable} that can be used to redo the request.
      */
     public static void redoableRequest(@NotNull CompletionRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, CharSequence> transformCompletion, @NotNull Function<CharSequence, Runnable> action) {
-        Editor editor = event.getData(CommonDataKeys.EDITOR);
-        Document document = Objects.requireNonNull(editor).getDocument();
-        ProgressManager progressManager = ProgressManager.getInstance();
+        @Nullable Editor editor = event.getData(CommonDataKeys.EDITOR);
+        @NotNull Document document = Objects.requireNonNull(editor).getDocument();
+        @NotNull ProgressManager progressManager = ProgressManager.getInstance();
         ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
         if(null != progressIndicator) {
             progressIndicator.setIndeterminate(true);
             progressIndicator.setText("Talking to OpenAI...");
         }
-        ListenableFuture<CharSequence> resultFuture = OpenAI_API.INSTANCE.complete(event.getProject(), request, indent);
+        @NotNull ListenableFuture<CharSequence> resultFuture = OpenAI_API.INSTANCE.complete(event.getProject(), request, indent);
         Futures.addCallback(resultFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(@NotNull CharSequence result) {
@@ -102,13 +103,80 @@ public class UITools {
      */
     @NotNull
     private static Runnable getRetry(@NotNull CompletionRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action, @Nullable Runnable undo) {
-        Document document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR)).getDocument();
+        @NotNull Document document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR)).getDocument();
         ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if(null != progressIndicator) {
             progressIndicator.setIndeterminate(true);
         }
         return () -> {
-            ListenableFuture<CharSequence> retryFuture = OpenAI_API.INSTANCE.complete(event.getProject(), request, indent);
+            @NotNull ListenableFuture<CharSequence> retryFuture = OpenAI_API.INSTANCE.complete(event.getProject(), request, indent);
+            Futures.addCallback(retryFuture, new FutureCallback<>() {
+                @Override
+                public void onSuccess(@NotNull CharSequence result) {
+                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                        if (null != progressIndicator) {
+                            progressIndicator.cancel();
+                        }
+                        if (null != undo) undo.run();
+                        retry.put(document, getRetry(request, indent, event, action, action.apply(result.toString())));
+                    });
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    if (null != progressIndicator) {
+                        progressIndicator.cancel();
+                    }
+                    handle(t);
+                }
+            }, OpenAI_API.INSTANCE.pool);
+        };
+    }
+
+    public static void redoableRequest(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action) {
+        redoableRequest(request, indent, event, x->x, action);
+    }
+
+    public static void redoableRequest(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, CharSequence> transformCompletion, @NotNull Function<CharSequence, Runnable> action) {
+        @Nullable Editor editor = event.getData(CommonDataKeys.EDITOR);
+        @NotNull Document document = Objects.requireNonNull(editor).getDocument();
+        @NotNull ProgressManager progressManager = ProgressManager.getInstance();
+        ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+        if(null != progressIndicator) {
+            progressIndicator.setIndeterminate(true);
+            progressIndicator.setText("Talking to OpenAI...");
+        }
+        @NotNull ListenableFuture<CharSequence> resultFuture = OpenAI_API.INSTANCE.edit(event.getProject(), request.uiIntercept(), indent);
+        Futures.addCallback(resultFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(@NotNull CharSequence result) {
+                if (null != progressIndicator) {
+                    progressIndicator.cancel();
+                }
+                WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                    retry.put(document, getRetry(request, indent, event, action, action.apply(transformCompletion.apply(result.toString()))));
+                });
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                if (null != progressIndicator) {
+                    progressIndicator.cancel();
+                }
+                handle(t);
+            }
+        }, OpenAI_API.INSTANCE.pool);
+    }
+
+    @NotNull
+    private static Runnable getRetry(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action, @Nullable Runnable undo) {
+        @NotNull Document document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR)).getDocument();
+        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        if(null != progressIndicator) {
+            progressIndicator.setIndeterminate(true);
+        }
+        return () -> {
+            @NotNull ListenableFuture<CharSequence> retryFuture = OpenAI_API.INSTANCE.edit(event.getProject(), request.uiIntercept(), indent);
             Futures.addCallback(retryFuture, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@NotNull CharSequence result) {
@@ -139,7 +207,7 @@ public class UITools {
      * @return A string containing the instruction and the style
      */
     public static String getInstruction(String instruction) {
-        CharSequence style = AppSettingsState.getInstance().style;
+        @NotNull CharSequence style = AppSettingsState.getInstance().style;
         if (style.length() == 0) return instruction;
         return String.format("%s (%s)", instruction, style);
     }
@@ -154,7 +222,7 @@ public class UITools {
      * @return A Runnable that can be used to undo the replacement.
      */
     public static @NotNull Runnable replaceString(@NotNull Document document, int startOffset, int endOffset, @NotNull CharSequence newText) {
-        CharSequence oldText = document.getText(new TextRange(startOffset, endOffset));
+        @NotNull CharSequence oldText = document.getText(new TextRange(startOffset, endOffset));
         document.replaceString(startOffset, endOffset, newText);
         return () -> {
             if (!document.getText(new TextRange(startOffset, startOffset + newText.length())).equals(newText))
@@ -182,7 +250,7 @@ public class UITools {
 
     @SuppressWarnings("unused")
     public static @NotNull Runnable deleteString(@NotNull Document document, int startOffset, int endOffset) {
-        CharSequence oldText = document.getText(new TextRange(startOffset, endOffset));
+        @NotNull CharSequence oldText = document.getText(new TextRange(startOffset, endOffset));
         document.deleteString(startOffset, endOffset);
         return () -> {
             document.insertString(startOffset, oldText);
@@ -191,16 +259,16 @@ public class UITools {
 
     public static CharSequence getIndent(@Nullable Caret caret) {
         if (null == caret) return "";
-        Document document = caret.getEditor().getDocument();
-        String documentText = document.getText();
+        @NotNull Document document = caret.getEditor().getDocument();
+        @NotNull String documentText = document.getText();
         int lineNumber = document.getLineNumber(caret.getSelectionStart());
-        String[] lines = documentText.split("\n");
+        String @NotNull [] lines = documentText.split("\n");
         return IndentedText.fromString(lines[Math.min(Math.max(lineNumber, 0), lines.length-1)]).getIndent();
     }
 
     @SuppressWarnings("unused")
     public static boolean hasSelection(@NotNull AnActionEvent e) {
-        Caret caret = e.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         return null != caret && caret.hasSelection();
     }
 
@@ -210,7 +278,7 @@ public class UITools {
     }
 
     public static CharSequence getIndent(@NotNull AnActionEvent event) {
-        Caret caret = event.getData(CommonDataKeys.CARET);
+        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent;
         if (null == caret) {
             indent = "";
@@ -221,12 +289,12 @@ public class UITools {
     }
 
     public static @Nullable String queryAPIKey() {
-        JPanel panel = new JPanel();
-        JLabel label = new JLabel("Enter OpenAI API Key:");
-        JPasswordField pass = new JPasswordField(100);
+        @NotNull JPanel panel = new JPanel();
+        @NotNull JLabel label = new JLabel("Enter OpenAI API Key:");
+        @NotNull JPasswordField pass = new JPasswordField(100);
         panel.add(label);
         panel.add(pass);
-        Object[] options = {"OK", "Cancel"};
+        Object @NotNull [] options = {"OK", "Cancel"};
         if (JOptionPane.showOptionDialog(
                 null,
                 panel,
@@ -245,14 +313,14 @@ public class UITools {
 
     public static <T> void readUI(@NotNull Object component, @NotNull T settings) {
         Class<?> componentClass = component.getClass();
-        Set<String> declaredUIFields = Arrays.stream(componentClass.getFields()).map(Field::getName).collect(Collectors.toSet());
-        for (Field settingsField : settings.getClass().getFields()) {
+        @NotNull Set<String> declaredUIFields = Arrays.stream(componentClass.getFields()).map(Field::getName).collect(Collectors.toSet());
+        for (@NotNull Field settingsField : settings.getClass().getFields()) {
             settingsField.setAccessible(true);
-            String settingsFieldName = settingsField.getName();
+            @NotNull String settingsFieldName = settingsField.getName();
             try {
-                Object newSettingsValue = null;
+                @Nullable Object newSettingsValue = null;
                 if(!declaredUIFields.contains(settingsFieldName)) continue;
-                Field uiField = componentClass.getDeclaredField(settingsFieldName);
+                @NotNull Field uiField = componentClass.getDeclaredField(settingsFieldName);
                 Object uiFieldVal = uiField.get(component);
                 switch (settingsField.getType().getName()) {
                     case "java.lang.String":
@@ -288,7 +356,7 @@ public class UITools {
 
                         if (Enum.class.isAssignableFrom(settingsField.getType())) {
                             if (uiFieldVal instanceof ComboBox) {
-                                ComboBox<CharSequence> comboBox = (ComboBox<CharSequence>) uiFieldVal;
+                                @NotNull ComboBox<CharSequence> comboBox = (ComboBox<CharSequence>) uiFieldVal;
                                 CharSequence item = comboBox.getItem();
                                 newSettingsValue = Enum.valueOf((Class<? extends Enum>) settingsField.getType(), item.toString());
                             }
@@ -304,12 +372,12 @@ public class UITools {
 
     public static <T> void writeUI(@NotNull Object component, @NotNull T settings) {
         Class<?> componentClass = component.getClass();
-        Set<String> declaredUIFields = Arrays.stream(componentClass.getFields()).map(Field::getName).collect(Collectors.toSet());
-        for (Field settingsField : settings.getClass().getFields()) {
-            String fieldName = settingsField.getName();
+        @NotNull Set<String> declaredUIFields = Arrays.stream(componentClass.getFields()).map(Field::getName).collect(Collectors.toSet());
+        for (@NotNull Field settingsField : settings.getClass().getFields()) {
+            @NotNull String fieldName = settingsField.getName();
             try {
                 if(!declaredUIFields.contains(fieldName)) continue;
-                Field uiField = componentClass.getDeclaredField(fieldName);
+                @NotNull Field uiField = componentClass.getDeclaredField(fieldName);
                 Object settingsVal = settingsField.get(settings);
                 if(null == settingsVal) continue;
                 Object uiVal = uiField.get(component);
@@ -322,6 +390,7 @@ public class UITools {
                         }
                         break;
                     case "int":
+                    case "java.lang.Integer":
                         if (uiVal instanceof JTextComponent) {
                             ((JTextComponent) uiVal).setText(Integer.toString((Integer) settingsVal));
                         }
@@ -331,16 +400,17 @@ public class UITools {
                             ((JTextComponent) uiVal).setText(Long.toString((Integer) settingsVal));
                         }
                         break;
-                    case "double":
-                        if (uiVal instanceof JTextComponent) {
-                            ((JTextComponent) uiVal).setText(Double.toString(((Double) settingsVal)));
-                        }
-                        break;
                     case "boolean":
                         if (uiVal instanceof JCheckBox) {
                             ((JCheckBox) uiVal).setSelected(((Boolean) settingsVal));
                         } else if (uiVal instanceof JTextComponent) {
                             ((JTextComponent) uiVal).setText(Boolean.toString((Boolean) settingsVal));
+                        }
+                        break;
+                    case "double":
+                    case "java.lang.Double":
+                        if (uiVal instanceof JTextComponent) {
+                            ((JTextComponent) uiVal).setText(Double.toString(((Double) settingsVal)));
                         }
                         break;
                     default:
@@ -356,7 +426,7 @@ public class UITools {
     }
 
     public static <T> void addFields(@NotNull Object ui, @NotNull FormBuilder formBuilder) {
-        for (Field field : ui.getClass().getFields()) {
+        for (@NotNull Field field : ui.getClass().getFields()) {
             if(Modifier.isStatic(field.getModifiers())) continue;
             try {
                 Name nameAnnotation = field.getDeclaredAnnotation(Name.class);

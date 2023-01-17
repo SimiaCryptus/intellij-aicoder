@@ -50,7 +50,7 @@ public class BlockComment extends IndentedText {
     @Override
     public @NotNull String toString() {
         CharSequence indent = getIndent();
-        CharSequence delimiter = DELIMITER + indent;
+        @NotNull CharSequence delimiter = DELIMITER + indent;
         CharSequence joined = Arrays.stream(rawString()).map(x->linePrefix + " " + x).collect(Collectors.joining(delimiter));
         return blockPrefix.toString() + delimiter + joined + delimiter + blockSuffix;
     }
