@@ -42,7 +42,9 @@ public class PsiTranslationSkeleton  {
     public CharSequence injectStubTranslation(CharSequence translatedOuter, CharSequence translatedInner) {
         if(stubId==null) return translatedOuter;
         // TODO: Correctly implement this and support multiple languages
-        return translatedOuter.toString().replace(stubId, translatedInner);
+        String regex = "(?s)\n[^\n]*?\\{[^{}]*?" + stubId + ".*?\\}";
+        String replace = translatedOuter.toString().replaceAll(regex, translatedInner.toString());
+        return replace;
     }
 
     private static PsiFile parseFile(Project project, CharSequence text, Language language) {
