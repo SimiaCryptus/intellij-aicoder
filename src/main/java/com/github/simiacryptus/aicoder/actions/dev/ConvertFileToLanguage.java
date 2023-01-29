@@ -1,12 +1,9 @@
 package com.github.simiacryptus.aicoder.actions.dev;
 
-import com.github.simiacryptus.aicoder.config.AppSettingsState;
-import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiTranslationSkeleton;
-import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.intellij.lang.Language;
@@ -19,14 +16,11 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -51,82 +45,30 @@ public class ConvertFileToLanguage extends AnAction {
                 Optional.ofNullable(language.getDialects()).map(x->x.stream().map(y->y.getID()).collect(Collectors.joining(","))).orElse("")
         ).stream().collect(Collectors.joining(","))).collect(Collectors.joining("\n")));
         ComputerLanguage sourceLanguage = ComputerLanguage.getComputerLanguage(event);
-        Project project = event.getRequiredData(CommonDataKeys.PROJECT);
         @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
-
-
-        PsiTranslationSkeleton skeleton = PsiTranslationSkeleton.getContext(event.getRequiredData(CommonDataKeys.PSI_FILE), sourceLanguage, targetLanguage);
-
-
+        PsiTranslationSkeleton skeleton = PsiTranslationSkeleton.parseFile(event.getRequiredData(CommonDataKeys.PSI_FILE), sourceLanguage, targetLanguage);
         translate(event, sourceLanguage, indent, skeleton);
-
     }
 
     private void translate(@NotNull AnActionEvent event, ComputerLanguage sourceLanguage, CharSequence indent, PsiTranslationSkeleton root) {
-        Project project = event.getProject();
-        CompletionRequest request = translate(sourceLanguage, root.toString());
-        //PsiFile nextPSI = parse(project, newText, targetLanguage.psiLanguage());
         ProgressIndicator progressIndicator = UITools.startProgress();
-        Futures.addCallback(OpenAI_API.INSTANCE.complete(project, request, indent), new FutureCallback<CharSequence>() {
+        Futures.addCallback(root.fullTranslate(event.getProject(), indent, sourceLanguage, targetLanguage), new FutureCallback<Object>() {
             @Override
-            public void onSuccess(CharSequence newText) {
-                //PsiFile nextPSI = parse(project, newText, targetLanguage.psiLanguage());
-                List<PsiTranslationSkeleton> found = root.children.stream().filter(x -> newText.toString().contains(x.prefix.toString().trim())).collect(Collectors.toList());
-                List<PsiTranslationSkeleton> notFound = root.children.stream().filter(x -> !newText.toString().contains(x.prefix.toString().trim())).collect(Collectors.toList());
-
-                String translatedDocument = newText.toString();
-                for (PsiTranslationSkeleton child : found) {
-
-                }
-
-
-                complete(newText, progressIndicator, event);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
+            public void onSuccess(Object newText) {
+                String content = root.getTranslatedDocument().toString();
                 if (null != progressIndicator) {
                     progressIndicator.cancel();
                 }
-                log.error("Error translating file", t);
+                write(event.getProject(), getNewFile(event.getProject(), event.getRequiredData(CommonDataKeys.VIRTUAL_FILE), targetLanguage), content);
             }
+            @Override public void onFailure(Throwable e) {
+                if (null != progressIndicator) {
+                    progressIndicator.cancel();
+                }
+                log.error("Error translating file", e);
+            };
         }, OpenAI_API.INSTANCE.pool);
-    }
-
-    private void complete(CharSequence newText, ProgressIndicator progressIndicator, @NotNull AnActionEvent event) {
-        if (null != progressIndicator) {
-            progressIndicator.cancel();
-        }
-        write(event, ConvertFileToLanguage.this.targetLanguage, newText);
-    }
-
-    @NotNull
-    private CompletionRequest translate(ComputerLanguage sourceLanguage, String sourceCode) {
-        return AppSettingsState.getInstance()
-                .createTranslationRequest()
-                .setInstruction(String.format("Translate %s into %s", sourceLanguage.name(), targetLanguage.name()))
-                .setInputType("source")
-                .setInputText(sourceCode)
-                .setInputAttribute("language", sourceLanguage.name())
-                .setOutputType("translated")
-                .setOutputAttrute("language", targetLanguage.name())
-                .buildCompletionRequest();
-    }
-
-    private static void write(@NotNull AnActionEvent event, ComputerLanguage language, CharSequence newText) {
-        write(event.getProject(), getNewFile(event.getProject(), event.getRequiredData(CommonDataKeys.VIRTUAL_FILE), language), newText.toString());
-    }
-
-    private static PsiFile parse(Project project, CharSequence text, Language languageByID) {
-        final AtomicReference<PsiFile> fileFromText = new AtomicReference<>();
-        WriteCommandAction.runWriteCommandAction(project, () -> {
-            PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(project);
-            PsiFile file = psiFileFactory.createFileFromText(languageByID, text);
-            PsiUtil.printTree(file);
-            fileFromText.set(file);
-        });
-        return fileFromText.get();
     }
 
     public static VirtualFile getNewFile(Project project, VirtualFile file, ComputerLanguage language) {
