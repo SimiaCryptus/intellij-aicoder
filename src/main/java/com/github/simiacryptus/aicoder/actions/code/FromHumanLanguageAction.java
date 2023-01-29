@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.code;
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
@@ -10,21 +10,18 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ide.CopyPasteManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.DataFlavor;
-import java.util.Objects;
-
-import static com.github.simiacryptus.aicoder.util.UITools.insertString;
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
+import static java.util.Objects.requireNonNull;
 
-public class PasteAction extends AnAction {
-
-    public PasteAction() {
-        super("", "Paste", null);
-    }
+/**
+ *  The FromHumanLanguageAction class is an action that is used to convert a human language specification into a computer language.
+ *  It is triggered when the user selects a text in the editor and selects the action.
+ *  The action will then replace the selected text with the OpenAI-translated version.
+*/
+public class FromHumanLanguageAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -33,8 +30,9 @@ public class PasteAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        if(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor) == null) return false;
-        return null != ComputerLanguage.getComputerLanguage(e);
+        if(!UITools.hasSelection(e)) return false;
+        if(null == ComputerLanguage.getComputerLanguage(e)) return false;
+        return true;
     }
 
     @Override
@@ -45,24 +43,17 @@ public class PasteAction extends AnAction {
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
         @Nullable String selectedText = primaryCaret.getSelectedText();
-        @NotNull String language = Objects.requireNonNull(ComputerLanguage.getComputerLanguage(event)).name();
-        @NotNull String text = Objects.requireNonNull(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor)).toString().trim();
         @NotNull CompletionRequest request = AppSettingsState.getInstance().createTranslationRequest()
-                .setInputType("source")
-                .setOutputType("translated")
-                .setInstruction("Translate this input into " + language)
-                .setInputAttribute("language", "autodetect")
-                .setOutputAttrute("language", language)
-                .setInputText(text)
+                .setInputType(AppSettingsState.getInstance().humanLanguage.toLowerCase())
+                .setOutputType(requireNonNull(ComputerLanguage.getComputerLanguage(event)).name())
+                .setInstruction("Implement this specification")
+                .setInputAttribute("type", "input")
+                .setOutputAttrute("type", "output")
+                .setInputText(selectedText)
                 .buildCompletionRequest();
         @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
-        UITools.redoableRequest(request, indent, event, newText -> {
-            if(selectedText == null) {
-                return insertString(editor.getDocument(), selectionStart, newText);
-            } else {
-                return replaceString(editor.getDocument(), selectionStart, selectionEnd, newText);
-            }
-        });
+        UITools.redoableRequest(request, indent, event,
+                newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }
 }

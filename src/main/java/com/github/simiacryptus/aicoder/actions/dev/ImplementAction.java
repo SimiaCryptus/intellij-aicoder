@@ -1,9 +1,9 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.dev;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
-import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
 import com.github.simiacryptus.aicoder.util.*;
+import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -16,9 +16,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+import static com.github.simiacryptus.aicoder.util.StringTools.trimPrefix;
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
+import static java.util.Objects.requireNonNull;
 
-public class DocAction extends AnAction {
+
+/**
+ * Work in Progress
+ */
+public class ImplementAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -27,8 +33,10 @@ public class DocAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
+        if(!AppSettingsState.getInstance().devActions) return false;
         @Nullable ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
         if (null == computerLanguage) return false;
+        if (ComputerLanguage.Markdown == computerLanguage) return false;
         return null != computerLanguage.docStyle && !computerLanguage.docStyle.isEmpty();
     }
 
@@ -37,7 +45,7 @@ public class DocAction extends AnAction {
         @Nullable ComputerLanguage language = ComputerLanguage.getComputerLanguage(event);
         @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         @NotNull PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
-        PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, Objects.requireNonNull(caret));
+        PsiElement smallestIntersectingMethod = PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, requireNonNull(caret));
         if (null == smallestIntersectingMethod) return;
         AppSettingsState settings = AppSettingsState.getInstance();
         String code = smallestIntersectingMethod.getText();
@@ -46,7 +54,7 @@ public class DocAction extends AnAction {
         int startOffset = smallestIntersectingMethod.getTextRange().getStartOffset();
         int endOffset = smallestIntersectingMethod.getTextRange().getEndOffset();
         @NotNull CompletionRequest completionRequest = settings.createTranslationRequest()
-                .setInputType(Objects.requireNonNull(language).name())
+                .setInputType(requireNonNull(language).name())
                 .setOutputType(language.name())
                 .setInstruction(UITools.getInstruction("Rewrite to include detailed " + language.docStyle))
                 .setInputAttribute("type", "uncommented")
@@ -54,14 +62,11 @@ public class DocAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .setInputText(indentedInput.getTextBlock())
                 .buildCompletionRequest()
-                .addStops(Objects.requireNonNull(language.getMultilineCommentSuffix()));
+                .addStops(requireNonNull(language.getMultilineCommentSuffix()));
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
-        UITools.redoableRequest(completionRequest, "", event, docString -> transformCompletion(language, indentedInput, indent, docString), docString -> replaceString(document, startOffset, endOffset, docString));
+        UITools.redoableRequest(completionRequest, "", event,
+                docString -> requireNonNull(language.docComment).fromString(docString.toString().trim()).withIndent(indent) + "\n" + indent + trimPrefix(indentedInput.toString()),
+                docString -> replaceString(document, startOffset, endOffset, docString));
     }
 
-    @NotNull
-    private static CharSequence transformCompletion(@NotNull ComputerLanguage language, @NotNull IndentedText indentedInput, CharSequence indent, @NotNull CharSequence docString) {
-        @NotNull TextBlock reindented = Objects.requireNonNull(language.docComment).fromString(docString.toString().trim()).withIndent(indent);
-        return reindented + "\n" + indent + StringTools.trimPrefix(indentedInput.toString());
-    }
 }

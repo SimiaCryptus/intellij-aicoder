@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.code;
 
 import com.github.simiacryptus.aicoder.util.*;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
@@ -17,6 +17,13 @@ import java.util.Objects;
 
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 
+
+/**
+ * The DescribeAction class is an action that can be used to describe a piece of code in plain language.
+ * It is triggered when the user selects a piece of code and then selects the action.
+ * The action will then generate a description of the code in the user's chosen language.
+ * The description will be formatted according to the user's chosen style and will be inserted prior to the code as a comment.
+*/
 public class DescribeAction extends AnAction {
 
     @Override
@@ -66,7 +73,9 @@ public class DescribeAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .setInputText(IndentedText.fromString(selectedText).getTextBlock().trim())
                 .buildCompletionRequest();
-        UITools.redoableRequest(request, indent, event, newText -> transformCompletion(selectedText, language, indent, newText), newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
+        UITools.redoableRequest(request, indent, event,
+                newText -> transformCompletion(selectedText, language, indent, newText),
+                newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }
 
     @NotNull

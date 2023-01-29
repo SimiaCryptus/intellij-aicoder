@@ -112,11 +112,15 @@ public class PsiUtil {
         return largest.get();
     }
 
-    private static boolean matchesType(@NotNull PsiElement element, CharSequence @NotNull ... types) {
+    public static boolean matchesType(@NotNull PsiElement element, CharSequence @NotNull ... types) {
         @NotNull CharSequence simpleName = element.getClass().getSimpleName();
         simpleName = StringTools.stripSuffix(simpleName, "Impl");
+        simpleName = StringTools.stripPrefix(simpleName, "Psi");
         @NotNull String str = simpleName.toString();
-        return Stream.of(types).anyMatch(t -> str.endsWith(t.toString()));
+        return Stream.of(types)
+                .map(s->StringTools.stripSuffix(s, "Impl"))
+                .map(s->StringTools.stripPrefix(s, "Psi"))
+                .anyMatch(t -> str.endsWith(t.toString()));
     }
 
     public static @Nullable PsiElement getFirstBlock(@NotNull PsiElement element, CharSequence... blockType) {
@@ -216,5 +220,17 @@ public class PsiUtil {
 
     public static PsiElement getSmallestIntersectingMajorCodeElement(@NotNull PsiFile psiFile, @NotNull Caret caret) {
         return getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), ELEMENTS_CODE);
+    }
+
+    public static String getDeclaration(@NotNull PsiElement element) {
+        String declaration = element.getText();
+        @Nullable PsiElement docComment = getLargestBlock(element, "DocComment");
+        if (null == docComment) docComment = getFirstBlock(element, "Comment");
+        if (null != docComment)
+            declaration = StringTools.stripPrefix(declaration.trim(), docComment.getText().trim());
+        PsiElement codeBlock = getLargestBlock(element, "CodeBlock");
+        if (null != codeBlock)
+            declaration = StringTools.stripSuffix(declaration.trim(), codeBlock.getText().trim());
+        return declaration.trim();
     }
 }

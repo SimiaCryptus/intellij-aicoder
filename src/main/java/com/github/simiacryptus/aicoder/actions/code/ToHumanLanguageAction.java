@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.code;
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
@@ -17,11 +17,14 @@ import org.jetbrains.annotations.Nullable;
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
-public class ToHumanLanguageAction extends AnAction {
 
-    public ToHumanLanguageAction() {
-        super("", "", null);
-    }
+/**
+ * The ToHumanLanguageAction class is an action that is used to translate code written in a computer language into a human language.
+ * It is triggered when the user selects a piece of code and then clicks the action.
+ * The action will then send a request to the server to translate the code into the human language specified in the AppSettingsState.
+ * The translated text will then be inserted into the document at the location of the selected code.
+*/
+public class ToHumanLanguageAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -30,7 +33,9 @@ public class ToHumanLanguageAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        return null != ComputerLanguage.getComputerLanguage(e);
+        if(!UITools.hasSelection(e)) return false;
+        if(null == ComputerLanguage.getComputerLanguage(e)) return false;
+        return true;
     }
 
     @Override
@@ -56,6 +61,7 @@ public class ToHumanLanguageAction extends AnAction {
         @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
         @NotNull Document document = editor.getDocument();
-        UITools.redoableRequest(request, indent, event, newText -> replaceString(document, selectionStart, selectionEnd, newText));
+        UITools.redoableRequest(request, indent, event,
+                newText -> replaceString(document, selectionStart, selectionEnd, newText));
     }
 }

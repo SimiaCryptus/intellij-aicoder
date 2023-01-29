@@ -1,7 +1,8 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.markdown;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.StringTools;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
@@ -34,6 +35,9 @@ public class MarkdownNewTableColAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
+        ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
+        if (null == computerLanguage) return false;
+        if (ComputerLanguage.Markdown != computerLanguage) return false;
         return null != getMarkdownNewTableColParams(e);
     }
 

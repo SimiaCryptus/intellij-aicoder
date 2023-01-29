@@ -6,6 +6,7 @@ import com.github.simiacryptus.aicoder.util.UITools;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +18,10 @@ import java.util.Arrays;
 public class InteractiveCompletionRequest {
     @SuppressWarnings("unused")
     @Name("Prompt")
-    public final JBTextArea prompt = new JBTextArea(10, 40);
+    public final JBScrollPane prompt;
     @SuppressWarnings("unused")
     @Name("Suffix")
-    public final JBTextArea suffix = new JBTextArea(2, 40);
+    public final JBTextArea suffix;
     @SuppressWarnings("unused")
     @Name("Model")
     public final JComponent model = OpenAI_API.INSTANCE.getModelSelector();
@@ -61,5 +62,8 @@ public class InteractiveCompletionRequest {
                 }, OpenAI_API.INSTANCE.pool);
             }
         });
+        suffix = UITools.configureTextArea(new JBTextArea(1, 120));
+        prompt = UITools.wrapScrollPane((new JBTextArea(10, 120)));
     }
+
 }

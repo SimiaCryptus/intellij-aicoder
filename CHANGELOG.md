@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [1.0.2]
+
+### Added
+- New actions to implement code blocks in markdown
+- Various bug fixes and UI polish
+- Improved API interception dialogs
+
 ## [1.0.0]
 
 ### Added

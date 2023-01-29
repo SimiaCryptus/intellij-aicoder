@@ -1,7 +1,8 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.dev;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.psi.PsiMarkdownContext;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -17,6 +18,12 @@ import org.jetbrains.annotations.Nullable;
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
+
+/**
+ * The MarkdownContextAction is an action in IntelliJ that allows users to quickly create a Markdown document with the selected text.
+ *
+ * Work In Progress
+*/
 public class MarkdownContextAction extends AnAction {
 
     @Override
@@ -26,6 +33,10 @@ public class MarkdownContextAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
+        if(!AppSettingsState.getInstance().devActions) return false;
+        ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
+        if (null == computerLanguage) return false;
+        if (ComputerLanguage.Markdown != computerLanguage) return false;
         return null != getMarkdownContextParams(e, AppSettingsState.getInstance().humanLanguage);
     }
 
@@ -54,7 +65,11 @@ public class MarkdownContextAction extends AnAction {
         @Nullable MarkdownContextParams markdownContextParams = getMarkdownContextParams(event, humanLanguage);
         AppSettingsState settings = AppSettingsState.getInstance();
         @NotNull PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
-        @NotNull String context = PsiMarkdownContext.getContext(psiFile, requireNonNull(markdownContextParams).selectionStart, markdownContextParams.selectionEnd).toString(markdownContextParams.selectionEnd);
+        @NotNull String context = PsiMarkdownContext.getContext(
+                psiFile,
+                requireNonNull(markdownContextParams).selectionStart,
+                markdownContextParams.selectionEnd
+        ).toString(markdownContextParams.selectionEnd);
         context = context + "\n<!-- " + selectedText + "-->\n";
         context = context + "\n";
         @NotNull CompletionRequest request = settings.createTranslationRequest()
@@ -68,7 +83,8 @@ public class MarkdownContextAction extends AnAction {
                 .appendPrompt(context);
         @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
-        UITools.redoableRequest(request, indent, event, newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
+        UITools.redoableRequest(request, indent, event,
+                newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }
 
     public static class MarkdownContextParams {

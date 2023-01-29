@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -16,7 +17,7 @@ import java.util.Arrays;
 public class CompletionRequest {
 
     public CompletionRequest(@NotNull AppSettingsState config) {
-        this("",config.temperature,config.maxTokens,null);
+        this("", config.temperature, config.maxTokens, null);
     }
 
     @NotNull
@@ -68,6 +69,7 @@ public class CompletionRequest {
                 throw new IllegalArgumentException("Prompt too long:" + this.prompt.length() + " chars");
         }
     }
+
     public String prompt;
     public @Nullable String suffix = null;
     @SuppressWarnings("unused")
@@ -92,6 +94,7 @@ public class CompletionRequest {
         this.logprobs = logprobs;
         this.echo = false;
     }
+
     public CompletionRequest(@NotNull CompletionRequest other) {
         this.prompt = other.prompt;
         this.temperature = other.temperature;
@@ -122,7 +125,7 @@ public class CompletionRequest {
     }
 
     public @NotNull CompletionRequest setSuffix(@Nullable CharSequence suffix) {
-        this.suffix = null==suffix?null:suffix.toString();
+        this.suffix = null == suffix ? null : suffix.toString();
         return this;
     }
 
@@ -131,22 +134,14 @@ public class CompletionRequest {
         @NotNull CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model_completion);
         @NotNull InteractiveCompletionRequest ui = new InteractiveCompletionRequest(withModel);
         UITools.addFields(ui, formBuilder);
-        JPanel mainPanel = formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
+        JPanel mainPanel = formBuilder.getPanel();
         UITools.writeUI(ui, withModel);
-        Object @NotNull [] options = {"OK"};
-        if (JOptionPane.showOptionDialog(
-                null,
-                mainPanel,
-                "OpenAI Completion Request",
-                JOptionPane.NO_OPTION,
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                options,
-                options[0]) == JOptionPane.OK_OPTION) {
+        if (UITools.showOptionDialog(mainPanel, "OK") == 0) {
             UITools.readUI(ui, withModel);
             return withModel;
         } else {
             return withModel;
         }
     }
+
 }

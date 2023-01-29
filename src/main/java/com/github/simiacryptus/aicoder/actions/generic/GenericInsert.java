@@ -1,7 +1,8 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.generic;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.StringTools;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,6 +16,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+
+/**
+ * The GenericInsert IntelliJ action allows users to quickly insert a prompt at the current caret position.
+ * To use, select some text and then select the GenericInsert action from the editor context menu.
+ * The action will insert the completion at the current caret position.
+ */
 public class GenericInsert extends AnAction {
 
     @Override
@@ -25,8 +32,8 @@ public class GenericInsert extends AnAction {
 
     @SuppressWarnings("unused")
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        @Nullable Caret data = e.getData(CommonDataKeys.CARET);
-        return !data.hasSelection();
+        if (UITools.hasSelection(e)) return false;
+        return true;
     }
 
     @Override
@@ -40,6 +47,7 @@ public class GenericInsert extends AnAction {
         @NotNull CompletionRequest completionRequest = settings.createCompletionRequest()
                 .appendPrompt(before)
                 .setSuffix(after);
-        UITools.redoableRequest(completionRequest, "", event, newText -> UITools.insertString(document, caretPosition, newText));
+        UITools.redoableRequest(completionRequest, "", event,
+                newText -> UITools.insertString(document, caretPosition, newText));
     }
 }

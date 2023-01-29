@@ -1,9 +1,8 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.code;
 
-import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
-import com.github.simiacryptus.aicoder.util.IndentedText;
+import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,12 +13,17 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
-public class CustomEditAction extends AnAction {
+
+/**
+ * The CommentsAction class is an IntelliJ action that allows users to add detailed comments to their code.
+ * To use the CommentsAction, first select a block of code in the editor.
+ * Then, select the action in the context menu.
+ * The action will then generate a new version of the code with comments added.
+*/
+public class CommentsAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -28,7 +32,9 @@ public class CustomEditAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        return null != ComputerLanguage.getComputerLanguage(e);
+        if(!UITools.hasSelection(e)) return false;
+        if(null == ComputerLanguage.getComputerLanguage(e)) return false;
+        return true;
     }
 
     @Override
@@ -39,20 +45,21 @@ public class CustomEditAction extends AnAction {
         int selectionStart = primaryCaret.getSelectionStart();
         int selectionEnd = primaryCaret.getSelectionEnd();
         @Nullable String selectedText = primaryCaret.getSelectedText();
-        @NotNull String computerLanguage = requireNonNull(ComputerLanguage.getComputerLanguage(e)).name();
-        String instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE);
+        @NotNull String outputHumanLanguage = AppSettingsState.getInstance().humanLanguage;
+        @Nullable ComputerLanguage language = ComputerLanguage.getComputerLanguage(e);
         AppSettingsState settings = AppSettingsState.getInstance();
-        settings.addInstructionToHistory(instruction);
         @NotNull CompletionRequest request = settings.createTranslationRequest()
-                .setInputType(computerLanguage)
-                .setOutputType(computerLanguage)
-                .setInstruction(instruction)
-                .setInputAttribute("type", "before")
-                .setOutputAttrute("type", "after")
-                .setInputText(IndentedText.fromString(selectedText).getTextBlock())
+                .setInputType(requireNonNull(language).name())
+                .setOutputType(language.name())
+                .setInstruction(UITools.getInstruction("Rewrite to include detailed " + outputHumanLanguage + " code comments for every line"))
+                .setInputAttribute("type", "commented")
+                .setOutputAttrute("type", "uncommented")
+                .setOutputAttrute("style", settings.style)
+                .setInputText(selectedText)
                 .buildCompletionRequest();
         @Nullable Caret caret = e.getData(CommonDataKeys.CARET);
         CharSequence indent = UITools.getIndent(caret);
-        UITools.redoableRequest(request, indent, e, newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
+        UITools.redoableRequest(request, indent, e,
+                newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }
 }

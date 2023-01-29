@@ -1,8 +1,9 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.generic;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.EditRequest;
+import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,6 +16,19 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Objects;
 
+
+/**
+ * The GenericEdit action is an IntelliJ action that allows users to edit text in their code.
+ * When the action is triggered, a dialog box will appear prompting the user to enter an instruction.
+ * The instruction will be added to the history and used to edit the selected text.
+ * The action will then replace the selected text with the edited version.
+ *
+ * To use the GenericEdit action, first select the text you want to edit.
+ * Then, select the action in the context menu.
+ * A dialog box will appear prompting you to enter an instruction.
+ * Enter the instruction and press OK.
+ * The selected text will then be replaced with the edited version.
+*/
 public class GenericEdit extends AnAction {
 
     @Override
@@ -25,8 +39,8 @@ public class GenericEdit extends AnAction {
 
     @SuppressWarnings("unused")
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        @Nullable Caret data = e.getData(CommonDataKeys.CARET);
-        return data.hasSelection();
+        if(!UITools.hasSelection(e)) return false;
+        return true;
     }
 
     @Override

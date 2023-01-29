@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.code;
 
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
@@ -22,6 +22,12 @@ import java.util.Objects;
 
 import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 
+
+/**
+ * The RewordCommentAction is an IntelliJ action that allows users to reword comments in their code.
+ * It is triggered when the user selects a comment in their code and then clicks the RewordCommentAction button.
+ * This will replace the old comment with the new one.
+ */
 public class RewordCommentAction extends AnAction {
 
     @Override
@@ -31,6 +37,7 @@ public class RewordCommentAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
+        if (null == ComputerLanguage.getComputerLanguage(e)) return false;
         return null != getRewordCommentParams(e);
     }
 
@@ -75,14 +82,8 @@ public class RewordCommentAction extends AnAction {
                 .buildCompletionRequest();
         @NotNull Document document = editor.getDocument();
         UITools.redoableRequest(request, "", event,
-                newText -> transformCompletion(commentModel, indent, newText),
+                newText -> indent.toString() + commentModel.fromString(StringTools.lineWrapping(newText, 120)).withIndent(indent),
                 newText -> replaceString(document, startOffset, endOffset, newText));
-    }
-
-    @NotNull
-    private static CharSequence transformCompletion(@NotNull TextBlockFactory<?> commentModel, @NotNull CharSequence indent, @NotNull CharSequence result) {
-        @NotNull String lineWrapping = StringTools.lineWrapping(result, 120);
-        return indent.toString() + commentModel.fromString(lineWrapping).withIndent(indent);
     }
 
     public static class RewordCommentParams {

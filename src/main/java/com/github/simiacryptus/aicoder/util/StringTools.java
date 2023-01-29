@@ -24,7 +24,7 @@ public class StringTools {
         @NotNull StringBuilder output = new StringBuilder();
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
-            if (c == '"') {
+            if (c == '"' || c == '\'') {
                 inQuotes = !inQuotes;
             } else if (inQuotes && c == '\\') {
                 // Skip the next character
@@ -46,11 +46,8 @@ public class StringTools {
             if (openCount >= 0) {
                 output.append(c);
             } else {
-                openCount++; // Dropping character
+                openCount++; // Dropping character, undo counting close bracket
             }
-        }
-        if (openCount != 0) {
-            throw new IllegalArgumentException("Unbalanced input");
         }
         return output.toString();
     }
