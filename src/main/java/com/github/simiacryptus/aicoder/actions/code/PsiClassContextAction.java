@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.code;
 
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
@@ -31,6 +31,7 @@ public class PsiClassContextAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
+        if(null == ComputerLanguage.getComputerLanguage(e)) return false;
         return getPsiClassContextActionParams(e).isPresent();
     }
 
@@ -84,12 +85,9 @@ public class PsiClassContextAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest()
                 .appendPrompt(PsiClassContext.getContext(psiClassContextActionParams.psiFile, psiClassContextActionParams.selectionStart, psiClassContextActionParams.selectionEnd) + "\n");
-        UITools.redoableRequest(request, UITools.getIndent(psiClassContextActionParams.caret), event, newText -> transformCompletion(newText), newText -> insertString(editor.getDocument(), endOffset, newText));
-    }
-
-    @NotNull
-    private static String transformCompletion(CharSequence result) {
-        return "\n" + result;
+        UITools.redoableRequest(request, UITools.getIndent(psiClassContextActionParams.caret), event,
+                newText -> "\n" + newText,
+                newText -> insertString(editor.getDocument(), endOffset, newText));
     }
 
     public static class PsiClassContextActionParams {

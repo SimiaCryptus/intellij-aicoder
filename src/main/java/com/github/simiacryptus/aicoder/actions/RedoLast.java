@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import org.jetbrains.annotations.NotNull;
 
-public class RedoLast extends AnAction {
 
-    public RedoLast() {
-        super("_Redo Last", "Redo last", null);
-    }
+/**
+ * The RedoLast action is an IntelliJ action that allows users to redo the last AI Coder action they performed in the editor.
+ * To use this action, open the editor and select the RedoLast action from the editor context menu.
+ * This will redo the last action that was performed in the editor.
+ */
+public class RedoLast extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {

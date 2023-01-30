@@ -6,23 +6,52 @@
 
 <!-- Plugin description -->
 
-Ahoy, mateys! This plugin be a powerful tool fer yer coding needs. It be adding some editor context menu options that be providing text processing functions powered by OpenAI's GPT models.
+Behold, a revolutionary new plugin for code editors that useth the power of artificial intelligence to make coding swifter and simpler. 'Tis compatible with popular autocomplete-based AI plugins such as GitHub Copilot and AWS CodeWhisperer, and can be explicitly invoked through the editor's context menu.
 
+To use AI Coding Assistant, thou must possess an OpenAI access token. With this token, thou canst access a variety of features, including generics and system-wide functions, Markdown support, and general code editing.
 
-Supported languages include [Java](https://dev.java/), [C++](https://en.wikipedia.org/wiki/C%2B%2B), [C#](https://docs.microsoft.com/en-us/dotnet/csharp/), [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript), [Python](https://www.python.org/), [Ruby](https://www.ruby-lang.org/en/), [PHP](https://php.net/), [Go](https://golang.org/), [Perl](https://www.perl.org/), [R](https://www.r-project.org/), [Swift](https://swift.org/), [SQL](https://www.postgresql.org/), [HTML](https://www.w3schools.com/html/), [CSS](https://www.w3schools.com/css/), [TypeScript](https://www.typescriptlang.org/), [Kotlin](https://kotlinlang.org/), [Dart](https://dart.dev/), [Rust](https://www.rust-lang.org/), [Scala](https://www.scala-lang.org/), [Assembly](https://en.wikipedia.org/wiki/Assembly_language), [Ada](https://en.wikipedia.org/wiki/Ada_(programming_language)), [Basic](https://en.wikipedia.org/wiki/BASIC), [COBOL](https://en.wikipedia.org/wiki/COBOL), [Clojure](https://clojure.org/), [Delphi](https://www.embarcadero.com/products/delphi), [Erlang](https://www.erlang.org/), [Elixir](https://elixir-lang.org/), [FORTRAN](https://en.wikipedia.org/wiki/Fortran), [F#](https://fsharp.org/), [Groovy](https://groovy-lang.org/), [Haskell](https://www.haskell.org/), [Julia](https://julialang.org/), [Lisp](https://lisp-lang.org/), [Logo](https://en.wikipedia.org/wiki/Logo_(programming_language)), [MATLAB](https://www.mathworks.com/products/matlab.html), [OCaml](https://ocaml.org/), [Pascal](https://www.freepascal.org/), [Prolog](https://www.swi-prolog.org/), [Racket](https://racket-lang.org/), [Smalltalk](https://smalltalk.org/), [Tcl](https://www.tcl.tk/), and [Visual Basic](https://docs.microsoft.com/en-us/dotnet/visual-basic/).
+## Generics & System-wide
 
+AI Coding Assistant provides a rad selection of generics and system-wide functions, like Append, Edit, and Insert. Plus, you can totally undo any operation. You can also tweak the "language" and "style" of your code.
 
-Features:
-- Automatic code commenting and documentation
-- Code generation based on plain-text requirements, with context awareness
-- Directive-based code editing
-- Custom styles (e.g. write like a pirate!)
+## Markdown
 
+And the Lord said, "Let there be Markdown, and it shall allow for the quick creation of list items, table rows and columns, and code snippets."
 
-To use, simply access the context menu within any editor window and view the options under "AI Coder".
+## General Code
 
+```
+Generics and Markdown
+AI Coding Assistant too
+A variety of features
 
-Ye need yer own [OpenAI access token](https://beta.openai.com/) fer this plugin. This be intended as a development tool fer developers who already have an OpenAI access token; it be not itself to be considered an end-product. This plugin be provided free of charge and without any guarantee. So what be ye waitin' fer? Get yer hands on this plugin now!<!-- Plugin description end -->
+Documentation comments
+Comment as code, reword too
+Paste with translation
+
+Java, C++, C#, JS
+Python, Ruby, PHP, Go
+Perl, R, Swift, SQL
+
+HTML, CSS, TypeScript
+Kotlin, Dart, Rust, Scala
+Assembly, Ada, Basic
+
+COBOL, Clojure, Delphi
+Erlang, Elixir, FORTRAN
+F#, Groovy, Haskell, Julia
+
+Lisp, Logo, MATLAB
+OCaml, Pascal, Prolog
+Racket, Smalltalk, Tcl
+Visual Basic, and more!
+```
+
+## Dev Features
+
+Finally, AI Coding Assistant also offers a variety of developer-focused features, including the ability to keep tabs on API usage, tweak and adjust API calls, and access some real nifty experimental and utility functions.
+
+With AI Coding Assistant, you can get your code edited in a jiffy with the help of artificial intelligence. Give it a whirl today and see how it can revolutionize your coding experience!
 
 <!-- Plugin description end -->
 

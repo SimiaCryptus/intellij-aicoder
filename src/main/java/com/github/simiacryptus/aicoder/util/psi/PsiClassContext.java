@@ -1,16 +1,12 @@
 package com.github.simiacryptus.aicoder.util.psi;
 
-import com.github.simiacryptus.aicoder.util.StringTools;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class PsiClassContext {
     public final boolean isPrior;
@@ -28,6 +24,9 @@ public class PsiClassContext {
     public static PsiClassContext getContext(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
         return new PsiClassContext("", false, true).init(psiFile, selectionStart, selectionEnd);
     }
+    public static PsiClassContext getContext(@NotNull PsiFile psiFile) {
+        return getContext(psiFile, 0, psiFile.getTextLength());
+    }
 
     /**
      * This java code is initializing a PsiClassContext object. It is doing this by creating a PsiElementVisitor and using it to traverse the PsiFile.
@@ -40,72 +39,57 @@ public class PsiClassContext {
      * @return
      */
     public @NotNull PsiClassContext init(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
-        @NotNull AtomicReference<PsiElementVisitor> visitor = new AtomicReference<>();
-        visitor.set(new PsiElementVisitor() {
+        new PsiVisitorBase() {
+            PsiClassContext currentContext = PsiClassContext.this;
             String indent = "";
-            @NotNull PsiClassContext currentContext = PsiClassContext.this;
-
             @Override
-            public void visitElement(@NotNull PsiElement element) {
-                String text = element.getText();
-                TextRange textRange = element.getTextRange();
-                int textRangeEndOffset = textRange.getEndOffset() + 1;
-                int textRangeStartOffset = textRange.getStartOffset();
+            protected void visit(@NotNull PsiElement element, PsiElementVisitor self) {
+                final String text = element.getText();
+                final TextRange textRange = element.getTextRange();
+                final int textRangeEndOffset = textRange.getEndOffset() + 1;
+                final int textRangeStartOffset = textRange.getStartOffset();
                 // Check if the element comes before the selection
-                boolean isPrior = textRangeEndOffset < selectionStart;
+                final boolean isPrior = textRangeEndOffset < selectionStart;
                 // Check if the element overlaps with the selection
-                boolean isOverlap = (textRangeStartOffset >= selectionStart && textRangeStartOffset <= selectionEnd) || (textRangeEndOffset >= selectionStart && textRangeEndOffset <= selectionEnd) ||
-                    (textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart) || (textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd);
+                final boolean isOverlap = textRangeStartOffset >= selectionStart && textRangeStartOffset <= selectionEnd || textRangeEndOffset >= selectionStart && textRangeEndOffset <= selectionEnd ||
+                        textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart || textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd;
                 // Check if the element is within the selection
-                boolean within = (textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart) && (textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd);
-                @NotNull CharSequence simpleName = element.getClass().getSimpleName();
-                if (simpleName.equals("PsiImportListImpl")) {
-                    currentContext.children.add(new PsiClassContext(text.trim(), isPrior, isOverlap));
-                } else if (simpleName.equals("PsiCommentImpl") || simpleName.equals("PsiDocCommentImpl")) {
+                final boolean within = textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart && textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd;
+                if (PsiUtil.matchesType(element, "ImportList")) {
+                    this.currentContext.children.add(new PsiClassContext(text.trim(), isPrior, isOverlap));
+                } else if (PsiUtil.matchesType(element, "Comment", "DocComment")) {
                     if (within) {
-                        currentContext.children.add(new PsiClassContext(indent + text.trim(), false, true));
+                        this.currentContext.children.add(new PsiClassContext(this.indent + text.trim(), false, true));
                     }
-                } else if (simpleName.equals("PsiMethodImpl") || simpleName.equals("PsiFieldImpl")) {
-                    String declaration = text;
-                    @Nullable PsiElement docComment = PsiUtil.getLargestBlock(element, "PsiDocCommentImpl");
-                    if(null == docComment)  docComment = PsiUtil.getFirstBlock(element, "PsiCommentImpl");
-                    if(null != docComment) declaration = StringTools.stripPrefix(declaration.trim(), docComment.getText().trim());
-                    PsiElement codeBlock = PsiUtil.getLargestBlock(element, "PsiCodeBlockImpl");
-                    if(null != codeBlock) declaration = StringTools.stripSuffix(declaration.trim(), codeBlock.getText().trim());
-                    @NotNull PsiClassContext newNode = new PsiClassContext(indent + declaration.trim() + (isOverlap ? " {" : ";"), isPrior, isOverlap);
-                    currentContext.children.add(newNode);
-                    String prevIndent = indent;
-                    indent = indent + "  ";
-                    @NotNull PsiClassContext prevclassBuffer = currentContext;
-                    currentContext = newNode;
-                    element.acceptChildren(visitor.get());
-                    currentContext = prevclassBuffer;
-                    indent = prevIndent;
-                } else if (simpleName.equals("PsiLocalVariableImpl")) {
-                    currentContext.children.add(new PsiClassContext(indent + text.trim() + ";", isPrior, isOverlap));
-                } else if (simpleName.equals("PsiClassImpl")) {
-                    @NotNull String declarationText = indent + text.substring(0, text.indexOf('{')).trim() + " {";
-                    @NotNull PsiClassContext newNode = new PsiClassContext(declarationText, isPrior, isOverlap);
-                    currentContext.children.add(newNode);
-                    @NotNull PsiClassContext prevclassBuffer = currentContext;
-                    currentContext = newNode;
-                    String prevIndent = indent;
-                    indent = indent + "  ";
-                    element.acceptChildren(visitor.get());
-                    indent = prevIndent;
-                    currentContext = prevclassBuffer;
+                } else if (PsiUtil.matchesType(element, "Method", "Field")) {
+                    processChildren(element, self, isPrior, isOverlap, this.indent + PsiUtil.getDeclaration(element).trim() + (isOverlap ? " {" : ";"));
+                } else if (PsiUtil.matchesType(element, "LocalVariable")) {
+                    this.currentContext.children.add(new PsiClassContext(this.indent + text.trim() + ";", isPrior, isOverlap));
+                } else if (PsiUtil.matchesType(element, "Class")) {
+                    processChildren(element, self, isPrior, isOverlap, this.indent + text.substring(0, text.indexOf('{')).trim() + " {");
                     if (!isOverlap) {
-                        currentContext.children.add(new PsiClassContext("}", isPrior, false));
+                        this.currentContext.children.add(new PsiClassContext("}", isPrior, false));
                     }
-                } else if (!isOverlap && Arrays.asList("PsiCodeBlockImpl", "PsiForStatementImpl").contains(simpleName)) {
+                } else if (!isOverlap && PsiUtil.matchesType(element, "CodeBlock", "ForStatement")) {
                     // Skip
                 } else {
-                    element.acceptChildren(visitor.get());
+                    element.acceptChildren(self);
                 }
-                super.visitElement(element);
             }
-        });
-        psiFile.accept(visitor.get());
+
+            private @NotNull PsiClassContext processChildren(@NotNull PsiElement element, PsiElementVisitor self, boolean isPrior, boolean isOverlap, @NotNull String declarationText) {
+                @NotNull PsiClassContext newNode = new PsiClassContext(declarationText, isPrior, isOverlap);
+                this.currentContext.children.add(newNode);
+                @NotNull PsiClassContext prevclassBuffer = this.currentContext;
+                currentContext = newNode;
+                String prevIndent = this.indent;
+                indent += "  ";
+                element.acceptChildren(self);
+                indent = prevIndent;
+                currentContext = prevclassBuffer;
+                return newNode;
+            }
+        }.build(psiFile);
         return this;
     }
 

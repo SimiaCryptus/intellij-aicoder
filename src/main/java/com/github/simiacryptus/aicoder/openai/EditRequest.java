@@ -117,17 +117,8 @@ public class EditRequest {
         @NotNull InteractiveEditRequest ui = new InteractiveEditRequest(withModel);
         UITools.addFields(ui, formBuilder);
         UITools.writeUI(ui, withModel);
-        JPanel mainPanel = formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
-        Object @NotNull [] options = {"OK"};
-        if (JOptionPane.showOptionDialog(
-                null,
-                mainPanel,
-                "OpenAI Completion Request",
-                JOptionPane.NO_OPTION,
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                options,
-                options[0]) == JOptionPane.OK_OPTION) {
+        JPanel mainPanel = formBuilder.getPanel();
+        if (UITools.showOptionDialog(mainPanel, "OK") == 0) {
             UITools.readUI(ui, withModel);
             return withModel;
         } else {

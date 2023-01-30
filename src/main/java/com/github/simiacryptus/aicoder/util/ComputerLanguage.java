@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.util;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -304,6 +305,11 @@ public enum ComputerLanguage {
         if (file == null) return null;
         @NotNull String extension = file.getExtension() != null ? file.getExtension().toLowerCase() : "";
         return findByExtension(extension);
+    }
+
+    @Nullable
+    public Language psiLanguage() {
+        return Language.findLanguageByID(name());
     }
 
     public @Nullable CharSequence getMultilineCommentSuffix() {

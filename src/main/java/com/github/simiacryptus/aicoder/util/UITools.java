@@ -22,18 +22,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
+import java.awt.*;
+import java.awt.event.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,7 +49,17 @@ public class UITools {
     public static final WeakHashMap<Document, Runnable> retry = new WeakHashMap<>();
 
     public static void redoableRequest(@NotNull CompletionRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action) {
-        redoableRequest(request, indent, event, x->x, action);
+        redoableRequest(request, indent, event, x -> x, action);
+    }
+
+
+    public static ProgressIndicator startProgress() {
+        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        if (null != progressIndicator) {
+            progressIndicator.setIndeterminate(true);
+            progressIndicator.setText("Talking to OpenAI...");
+        }
+        return progressIndicator;
     }
 
     /**
@@ -57,14 +72,7 @@ public class UITools {
      * @return A {@link Runnable} that can be used to redo the request.
      */
     public static void redoableRequest(@NotNull CompletionRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, CharSequence> transformCompletion, @NotNull Function<CharSequence, Runnable> action) {
-        @Nullable Editor editor = event.getData(CommonDataKeys.EDITOR);
-        @NotNull Document document = Objects.requireNonNull(editor).getDocument();
-        @NotNull ProgressManager progressManager = ProgressManager.getInstance();
-        ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
-        if(null != progressIndicator) {
-            progressIndicator.setIndeterminate(true);
-            progressIndicator.setText("Talking to OpenAI...");
-        }
+        ProgressIndicator progressIndicator = startProgress();
         @NotNull ListenableFuture<CharSequence> resultFuture = OpenAI_API.INSTANCE.complete(event.getProject(), request, indent);
         Futures.addCallback(resultFuture, new FutureCallback<>() {
             @Override
@@ -72,9 +80,15 @@ public class UITools {
                 if (null != progressIndicator) {
                     progressIndicator.cancel();
                 }
+                final AtomicReference<Runnable> actionFn = new AtomicReference<>();
                 WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                    retry.put(document, getRetry(request, indent, event, action, action.apply(transformCompletion.apply(result.toString()))));
+                    actionFn.set(action.apply(transformCompletion.apply(result.toString())));
                 });
+                if (null != actionFn.get()) {
+                    Runnable undo = getRetry(request, indent, event, action, actionFn.get(), transformCompletion);
+                    @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+                    retry.put(document, undo);
+                }
             }
 
             @Override
@@ -88,38 +102,40 @@ public class UITools {
     }
 
     /**
-     * Get a retry for the given {@link CompletionRequest}.
+     * Get a retry Runnable for the given {@link CompletionRequest}.
      *
      * <p>This method will create a {@link Runnable} that will attempt to complete the given {@link CompletionRequest}
      * with the given {@code indent}. If the completion is successful, the given {@code action} will be applied to the
-     * result and the given {@code undo} will be run.
+     * result after the given {@code undo} is run.
      *
-     * @param request the {@link CompletionRequest} to complete
-     * @param indent  the indent to use for the completion
-     * @param event   the {@link Project} to use for the completion
-     * @param action  the {@link Function} to apply to the result of the completion
-     * @param undo    the {@link Runnable} to run if the completion is successful
+     * @param request             the {@link CompletionRequest} to complete
+     * @param indent              the indent to use for the completion
+     * @param event               the {@link Project} to use for the completion
+     * @param action              the {@link Function} to apply to the result of the completion
+     * @param undo                the {@link Runnable} to run if the completion is successful
+     * @param transformCompletion
      * @return a {@link Runnable} that will attempt to complete the given {@link CompletionRequest}
      */
     @NotNull
-    private static Runnable getRetry(@NotNull CompletionRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action, @Nullable Runnable undo) {
+    private static Runnable getRetry(@NotNull CompletionRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action, @Nullable Runnable undo, @NotNull Function<CharSequence, CharSequence> transformCompletion) {
         @NotNull Document document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR)).getDocument();
-        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if(null != progressIndicator) {
-            progressIndicator.setIndeterminate(true);
-        }
         return () -> {
+            ProgressIndicator progressIndicator = startProgress();
             @NotNull ListenableFuture<CharSequence> retryFuture = OpenAI_API.INSTANCE.complete(event.getProject(), request, indent);
             Futures.addCallback(retryFuture, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@NotNull CharSequence result) {
+                    if (null != progressIndicator) {
+                        progressIndicator.cancel();
+                    }
                     WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                        if (null != progressIndicator) {
-                            progressIndicator.cancel();
-                        }
                         if (null != undo) undo.run();
-                        retry.put(document, getRetry(request, indent, event, action, action.apply(result.toString())));
                     });
+                    AtomicReference<Runnable> nextUndo = new AtomicReference<>();
+                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                        nextUndo.set(action.apply(transformCompletion.apply(result.toString())));
+                    });
+                    retry.put(document, getRetry(request, indent, event, action, nextUndo.get(), transformCompletion));
                 }
 
                 @Override
@@ -134,18 +150,13 @@ public class UITools {
     }
 
     public static void redoableRequest(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action) {
-        redoableRequest(request, indent, event, x->x, action);
+        redoableRequest(request, indent, event, x -> x, action);
     }
 
     public static void redoableRequest(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, CharSequence> transformCompletion, @NotNull Function<CharSequence, Runnable> action) {
         @Nullable Editor editor = event.getData(CommonDataKeys.EDITOR);
         @NotNull Document document = Objects.requireNonNull(editor).getDocument();
-        @NotNull ProgressManager progressManager = ProgressManager.getInstance();
-        ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
-        if(null != progressIndicator) {
-            progressIndicator.setIndeterminate(true);
-            progressIndicator.setText("Talking to OpenAI...");
-        }
+        ProgressIndicator progressIndicator = startProgress();
         @NotNull ListenableFuture<CharSequence> resultFuture = OpenAI_API.INSTANCE.edit(event.getProject(), request.uiIntercept(), indent);
         Futures.addCallback(resultFuture, new FutureCallback<>() {
             @Override
@@ -153,9 +164,11 @@ public class UITools {
                 if (null != progressIndicator) {
                     progressIndicator.cancel();
                 }
+                AtomicReference<Runnable> undo = new AtomicReference<>();
                 WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                    retry.put(document, getRetry(request, indent, event, action, action.apply(transformCompletion.apply(result.toString()))));
+                    undo.set(action.apply(transformCompletion.apply(result.toString())));
                 });
+                retry.put(document, getRetry(request, indent, event, action, undo.get()));
             }
 
             @Override
@@ -171,22 +184,23 @@ public class UITools {
     @NotNull
     private static Runnable getRetry(@NotNull EditRequest request, CharSequence indent, @NotNull AnActionEvent event, @NotNull Function<CharSequence, Runnable> action, @Nullable Runnable undo) {
         @NotNull Document document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR)).getDocument();
-        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if(null != progressIndicator) {
-            progressIndicator.setIndeterminate(true);
-        }
         return () -> {
+            ProgressIndicator progressIndicator = startProgress();
             @NotNull ListenableFuture<CharSequence> retryFuture = OpenAI_API.INSTANCE.edit(event.getProject(), request.uiIntercept(), indent);
             Futures.addCallback(retryFuture, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@NotNull CharSequence result) {
+                    if (null != progressIndicator) {
+                        progressIndicator.cancel();
+                    }
                     WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
-                        if (null != progressIndicator) {
-                            progressIndicator.cancel();
-                        }
                         if (null != undo) undo.run();
-                        retry.put(document, getRetry(request, indent, event, action, action.apply(result.toString())));
                     });
+                    AtomicReference<Runnable> nextUndo = new AtomicReference<>();
+                    WriteCommandAction.runWriteCommandAction(event.getProject(), () -> {
+                        nextUndo.set(action.apply(result.toString()));
+                    });
+                    retry.put(document, getRetry(request, indent, event, action, nextUndo.get()));
                 }
 
                 @Override
@@ -224,10 +238,15 @@ public class UITools {
     public static @NotNull Runnable replaceString(@NotNull Document document, int startOffset, int endOffset, @NotNull CharSequence newText) {
         @NotNull CharSequence oldText = document.getText(new TextRange(startOffset, endOffset));
         document.replaceString(startOffset, endOffset, newText);
+        logEdit(String.format("FWD replaceString from %s to %s (%s->%s): %s", startOffset, endOffset, endOffset - startOffset, newText.length(), newText));
         return () -> {
-            if (!document.getText(new TextRange(startOffset, startOffset + newText.length())).equals(newText))
-                throw new AssertionError();
+            String verifyTxt = document.getText(new TextRange(startOffset, startOffset + newText.length()));
+            if (!verifyTxt.equals(newText)) {
+                String msg = String.format("The text range from %d to %d does not match the expected text \"%s\" and is instead \"%s\"", startOffset, startOffset + newText.length(), newText, verifyTxt);
+                throw new IllegalStateException(msg);
+            }
             document.replaceString(startOffset, startOffset + newText.length(), oldText);
+            logEdit(String.format("REV replaceString from %s to %s (%s->%s): %s", startOffset, startOffset + newText.length(), newText.length(), oldText.length(), oldText));
         };
     }
 
@@ -241,11 +260,20 @@ public class UITools {
      */
     public static @NotNull Runnable insertString(@NotNull Document document, int startOffset, @NotNull CharSequence newText) {
         document.insertString(startOffset, newText);
+        logEdit(String.format("FWD insertString @ %s (%s): %s", startOffset, newText.length(), newText));
         return () -> {
-            if (!document.getText(new TextRange(startOffset, startOffset + newText.length())).equals(newText))
-                throw new AssertionError();
+            String verifyTxt = document.getText(new TextRange(startOffset, startOffset + newText.length()));
+            if (!verifyTxt.equals(newText)) {
+                String message = String.format("The text range from %d to %d does not match the expected text \"%s\" and is instead \"%s\"", startOffset, startOffset + newText.length(), newText, verifyTxt);
+                throw new AssertionError(message);
+            }
             document.deleteString(startOffset, startOffset + newText.length());
+            logEdit(String.format("REV deleteString from %s to %s", startOffset, startOffset + newText.length()));
         };
+    }
+
+    private static void logEdit(String message) {
+        log.debug(message);
     }
 
     @SuppressWarnings("unused")
@@ -254,6 +282,7 @@ public class UITools {
         document.deleteString(startOffset, endOffset);
         return () -> {
             document.insertString(startOffset, oldText);
+            logEdit(String.format("REV insertString @ %s (%s): %s", startOffset, oldText.length(), oldText));
         };
     }
 
@@ -263,7 +292,7 @@ public class UITools {
         @NotNull String documentText = document.getText();
         int lineNumber = document.getLineNumber(caret.getSelectionStart());
         String @NotNull [] lines = documentText.split("\n");
-        return IndentedText.fromString(lines[Math.min(Math.max(lineNumber, 0), lines.length-1)]).getIndent();
+        return IndentedText.fromString(lines[Math.min(Math.max(lineNumber, 0), lines.length - 1)]).getIndent();
     }
 
     @SuppressWarnings("unused")
@@ -319,44 +348,47 @@ public class UITools {
             @NotNull String settingsFieldName = settingsField.getName();
             try {
                 @Nullable Object newSettingsValue = null;
-                if(!declaredUIFields.contains(settingsFieldName)) continue;
+                if (!declaredUIFields.contains(settingsFieldName)) continue;
                 @NotNull Field uiField = componentClass.getDeclaredField(settingsFieldName);
-                Object uiFieldVal = uiField.get(component);
+                Object uiVal = uiField.get(component);
+                if(uiVal instanceof JScrollPane) {
+                    uiVal = ((JScrollPane) uiVal).getViewport().getView();
+                }
                 switch (settingsField.getType().getName()) {
                     case "java.lang.String":
-                        if (uiFieldVal instanceof JTextComponent) {
-                            newSettingsValue = ((JTextComponent) uiFieldVal).getText();
-                        } else if (uiFieldVal instanceof ComboBox) {
-                            newSettingsValue = ((ComboBox<CharSequence>) uiFieldVal).getItem();
+                        if (uiVal instanceof JTextComponent) {
+                            newSettingsValue = ((JTextComponent) uiVal).getText();
+                        } else if (uiVal instanceof ComboBox) {
+                            newSettingsValue = ((ComboBox<CharSequence>) uiVal).getItem();
                         }
                         break;
                     case "int":
-                        if (uiFieldVal instanceof JTextComponent) {
-                            newSettingsValue = Integer.parseInt(((JTextComponent) uiFieldVal).getText());
+                        if (uiVal instanceof JTextComponent) {
+                            newSettingsValue = Integer.parseInt(((JTextComponent) uiVal).getText());
                         }
                         break;
                     case "long":
-                        if (uiFieldVal instanceof JTextComponent) {
-                            newSettingsValue = Long.parseLong(((JTextComponent) uiFieldVal).getText());
+                        if (uiVal instanceof JTextComponent) {
+                            newSettingsValue = Long.parseLong(((JTextComponent) uiVal).getText());
                         }
                         break;
                     case "double":
-                        if (uiFieldVal instanceof JTextComponent) {
-                            newSettingsValue = Double.parseDouble(((JTextComponent) uiFieldVal).getText());
+                        if (uiVal instanceof JTextComponent) {
+                            newSettingsValue = Double.parseDouble(((JTextComponent) uiVal).getText());
                         }
                         break;
                     case "boolean":
-                        if (uiFieldVal instanceof JCheckBox) {
-                            newSettingsValue = ((JCheckBox) uiFieldVal).isSelected();
-                        } else if (uiFieldVal instanceof JTextComponent) {
-                            newSettingsValue = Boolean.parseBoolean(((JTextComponent) uiFieldVal).getText());
+                        if (uiVal instanceof JCheckBox) {
+                            newSettingsValue = ((JCheckBox) uiVal).isSelected();
+                        } else if (uiVal instanceof JTextComponent) {
+                            newSettingsValue = Boolean.parseBoolean(((JTextComponent) uiVal).getText());
                         }
                         break;
                     default:
 
                         if (Enum.class.isAssignableFrom(settingsField.getType())) {
-                            if (uiFieldVal instanceof ComboBox) {
-                                @NotNull ComboBox<CharSequence> comboBox = (ComboBox<CharSequence>) uiFieldVal;
+                            if (uiVal instanceof ComboBox) {
+                                @NotNull ComboBox<CharSequence> comboBox = (ComboBox<CharSequence>) uiVal;
                                 CharSequence item = comboBox.getItem();
                                 newSettingsValue = Enum.valueOf((Class<? extends Enum>) settingsField.getType(), item.toString());
                             }
@@ -376,11 +408,14 @@ public class UITools {
         for (@NotNull Field settingsField : settings.getClass().getFields()) {
             @NotNull String fieldName = settingsField.getName();
             try {
-                if(!declaredUIFields.contains(fieldName)) continue;
+                if (!declaredUIFields.contains(fieldName)) continue;
                 @NotNull Field uiField = componentClass.getDeclaredField(fieldName);
                 Object settingsVal = settingsField.get(settings);
-                if(null == settingsVal) continue;
+                if (null == settingsVal) continue;
                 Object uiVal = uiField.get(component);
+                if(uiVal instanceof JScrollPane) {
+                    uiVal = ((JScrollPane) uiVal).getViewport().getView();
+                }
                 switch (settingsField.getType().getName()) {
                     case "java.lang.String":
                         if (uiVal instanceof JTextComponent) {
@@ -426,14 +461,20 @@ public class UITools {
     }
 
     public static <T> void addFields(@NotNull Object ui, @NotNull FormBuilder formBuilder) {
+        boolean first = true;
         for (@NotNull Field field : ui.getClass().getFields()) {
-            if(Modifier.isStatic(field.getModifiers())) continue;
+            if (Modifier.isStatic(field.getModifiers())) continue;
             try {
                 Name nameAnnotation = field.getDeclaredAnnotation(Name.class);
                 JComponent component = (JComponent) field.get(ui);
                 if (null == component) continue;
                 if (nameAnnotation != null) {
-                    formBuilder.addLabeledComponent(new JBLabel(nameAnnotation.value() + ": "), component, 1, false);
+                    if(first) {
+                        first = false;
+                        formBuilder.addLabeledComponentFillVertically(nameAnnotation.value() + ": ", component);
+                    } else {
+                        formBuilder.addLabeledComponent(new JBLabel(nameAnnotation.value() + ": "), component, 1, false);
+                    }
                 } else {
                     formBuilder.addComponentToRightColumn(component, 1);
                 }
@@ -445,4 +486,124 @@ public class UITools {
         }
     }
 
+    @NotNull
+    public static Dimension getMaximumSize(double factor) {
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension maximumSize = new Dimension(
+                (int) (screenSize.getWidth() * factor),
+                (int) (screenSize.getHeight() * factor));
+        return maximumSize;
+    }
+
+    public static int showOptionDialog(JPanel mainPanel, @NotNull Object... options) {
+        JOptionPane pane = new JOptionPane(
+                mainPanel, JOptionPane.PLAIN_MESSAGE,
+                JOptionPane.NO_OPTION, null,
+                options, options[0]);
+        pane.setInitialValue(options[0]);
+        pane.setComponentOrientation(JOptionPane.getRootFrame().getComponentOrientation());
+
+        final JDialog dialog;
+        JOptionPane.getRootFrame();
+        dialog = new JDialog(JOptionPane.getRootFrame(), "OpenAI Completion Request", true);
+        dialog.setComponentOrientation(JOptionPane.getRootFrame().getComponentOrientation());
+        Container contentPane = dialog.getContentPane();
+        contentPane.setLayout(new BorderLayout());
+
+        contentPane.add(pane, BorderLayout.CENTER);
+        if (JDialog.isDefaultLookAndFeelDecorated() && UIManager.getLookAndFeel().getSupportsWindowDecorations()) {
+            dialog.setUndecorated(true);
+            pane.getRootPane().setWindowDecorationStyle(JRootPane.PLAIN_DIALOG);
+        }
+        dialog.setResizable(true);
+        dialog.setMaximumSize(getMaximumSize(0.9));
+        dialog.pack();
+        dialog.setLocationRelativeTo((Component) null);
+
+        WindowAdapter adapter = new WindowAdapter() {
+            private boolean gotFocus = false;
+
+            public void windowClosing(WindowEvent we) {
+                pane.setValue(null);
+            }
+
+            public void windowClosed(WindowEvent e) {
+                pane.removePropertyChangeListener(event -> {
+                    // Let the defaultCloseOperation handle the closing
+                    // if the user closed the window without selecting a button
+                    // (newValue = null in that case).  Otherwise, close the dialog.
+                    if (dialog.isVisible() && event.getSource() == pane &&
+                            (event.getPropertyName().equals(JOptionPane.VALUE_PROPERTY)) &&
+                            event.getNewValue() != null &&
+                            event.getNewValue() != JOptionPane.UNINITIALIZED_VALUE) {
+                        dialog.setVisible(false);
+                    }
+                });
+                dialog.getContentPane().removeAll();
+            }
+
+            public void windowGainedFocus(WindowEvent we) {
+                // Once window gets focus, set initial focus
+                if (!gotFocus) {
+                    pane.selectInitialValue();
+                    gotFocus = true;
+                }
+            }
+        };
+        dialog.addWindowListener(adapter);
+        dialog.addWindowFocusListener(adapter);
+        dialog.addComponentListener(new ComponentAdapter() {
+            public void componentShown(ComponentEvent ce) {
+                // reset value to ensure closing works properly
+                pane.setValue(JOptionPane.UNINITIALIZED_VALUE);
+            }
+        });
+
+        pane.addPropertyChangeListener(event -> {
+            if (dialog.isVisible() && event.getSource() == pane &&
+                    (event.getPropertyName().equals(JOptionPane.VALUE_PROPERTY)) &&
+                    event.getNewValue() != null &&
+                    event.getNewValue() != JOptionPane.UNINITIALIZED_VALUE) {
+                dialog.setVisible(false);
+            }
+        });
+
+        pane.selectInitialValue();
+        dialog.show();
+        dialog.dispose();
+
+        return getSelectedValue(pane, options);
+    }
+
+    private static int getSelectedValue(JOptionPane pane, Object @NotNull [] options) {
+        Object selectedValue = pane.getValue();
+        if (selectedValue == null) return JOptionPane.CLOSED_OPTION;
+        if (options == null) {
+            if (selectedValue instanceof Integer) return ((Integer) selectedValue).intValue();
+            return JOptionPane.CLOSED_OPTION;
+        }
+        for (int counter = 0, maxCounter = options.length; counter < maxCounter; counter++) {
+            if (options[counter].equals(selectedValue)) return counter;
+        }
+        return JOptionPane.CLOSED_OPTION;
+    }
+
+    public static JBTextArea configureTextArea(JBTextArea textArea) {
+        Font font = textArea.getFont();
+        FontMetrics fontMetrics = textArea.getFontMetrics(font);
+        textArea.setPreferredSize(new Dimension(
+                (int) (fontMetrics.charWidth(' ') * textArea.getColumns() * 1.2),
+                (int) (fontMetrics.getHeight() * textArea.getRows() * 1.2)
+        ));
+        textArea.setAutoscrolls(true);
+        return textArea;
+    }
+
+    @NotNull
+    public static JBScrollPane wrapScrollPane(JBTextArea promptArea) {
+        JBScrollPane scrollPane = new JBScrollPane(promptArea);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        return scrollPane;
+    }
 }

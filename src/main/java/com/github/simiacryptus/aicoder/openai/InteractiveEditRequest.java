@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.util.UITools;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +17,10 @@ import java.util.Arrays;
 public class InteractiveEditRequest {
     @SuppressWarnings("unused")
     @Name("Input")
-    public final JBTextArea input = new JBTextArea(10, 40);
+    public final @NotNull JBScrollPane input;
     @SuppressWarnings("unused")
     @Name("Instruction")
-    public final JBTextArea instruction = new JBTextArea(2, 40);
+    public final JBTextArea instruction;
     @SuppressWarnings("unused")
     @Name("Model")
     public final JComponent model = OpenAI_API.INSTANCE.getModelSelector();
@@ -57,5 +58,7 @@ public class InteractiveEditRequest {
                 }, OpenAI_API.INSTANCE.pool);
             }
         });
+        input = UITools.wrapScrollPane(new JBTextArea(10, 120));
+        instruction = UITools.configureTextArea(new JBTextArea(1, 120));
     }
 }

@@ -1,7 +1,8 @@
-package com.github.simiacryptus.aicoder.actions;
+package com.github.simiacryptus.aicoder.actions.markdown;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
+import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
 import com.github.simiacryptus.aicoder.util.StringTools;
 import com.github.simiacryptus.aicoder.util.UITools;
@@ -23,6 +24,13 @@ import java.util.stream.Stream;
 
 import static com.github.simiacryptus.aicoder.util.UITools.insertString;
 
+
+/**
+ * The MarkdownListAction class is an action that allows users to quickly expand a list of items in IntelliJ.
+ * It is triggered when the user selects a list in the markdown editor and then invokes the action.
+ * The action will then use current list items to generate further items via OpenAI's GPT-3 API.
+ * These new items will be inserted into the document at the end of the list.
+ */
 public class MarkdownListAction extends AnAction {
 
     @Override
@@ -32,6 +40,9 @@ public class MarkdownListAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
+        ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
+        if (null == computerLanguage) return false;
+        if (ComputerLanguage.Markdown != computerLanguage) return false;
         return null != getMarkdownListParams(e);
     }
 
@@ -65,7 +76,9 @@ public class MarkdownListAction extends AnAction {
                 .buildCompletionRequest()
                 .appendPrompt(items.stream().map(x2 -> listPrefix + x2).collect(Collectors.joining("\n")) + "\n" + listPrefix);
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
-        UITools.redoableRequest(completionRequest, "", event, newText -> transformCompletion(markdownListParams, indent, listPrefix, newText), newText -> insertString(document, endOffset, newText));
+        UITools.redoableRequest(completionRequest, "", event,
+                newText -> transformCompletion(markdownListParams, indent, listPrefix, newText),
+                newText -> insertString(document, endOffset, newText));
     }
 
     @NotNull
