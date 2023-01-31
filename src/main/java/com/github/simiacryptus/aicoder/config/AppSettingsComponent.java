@@ -55,6 +55,9 @@ public class AppSettingsComponent {
     @Name("Developer Tools")
     public final JBCheckBox devActions = new JBCheckBox();
     @SuppressWarnings("unused")
+    @Name("Suppress Progress (UNSAFE)")
+    public final JBCheckBox suppressProgress = new JBCheckBox();
+    @SuppressWarnings("unused")
     @Name("API Log Level")
     public final ComboBox<String> apiLogLevel = new ComboBox<>(Arrays.stream(LogLevel.values()).map(Enum::name).toArray(String[]::new));
 

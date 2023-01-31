@@ -82,7 +82,7 @@ public enum ComputerLanguage {
             .setLineComments(new LineComment.Factory("//"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
-            .setFileExtensions("c#", "cs")),
+            .setFileExtensions("cs", "c#")),
     CSS(new Configuration()
             .setLineComments(new BlockComment.Factory("/*", "", "*/"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
@@ -156,7 +156,7 @@ public enum ComputerLanguage {
             .setLineComments(new LineComment.Factory("//"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
-            .setFileExtensions("kotlin", "kt", "kts")),
+            .setFileExtensions("kt", "kts")),
     Lisp(new Configuration()
             .setLineComments(new LineComment.Factory(";"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
@@ -203,7 +203,7 @@ public enum ComputerLanguage {
             .setLineComments(new LineComment.Factory("#"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
-            .setFileExtensions("python", "py")),
+            .setFileExtensions("py", "python")),
     R(new Configuration()
             .setLineComments(new LineComment.Factory("#"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))

@@ -136,6 +136,13 @@ public class StringTools {
     }
 
     @NotNull
+    public static CharSequence getWhitespacePrefix2(CharSequence @NotNull ... lines) {
+        return Arrays.stream(lines)
+                .map(l -> toString(l.chars().takeWhile(Character::isWhitespace).toArray()))
+                .min(Comparator.comparing(CharSequence::length)).orElse("");
+    }
+
+    @NotNull
     public static String getWhitespaceSuffix(CharSequence @NotNull ... lines) {
         return reverse(Arrays.stream(lines)
                 .map(StringTools::reverse)

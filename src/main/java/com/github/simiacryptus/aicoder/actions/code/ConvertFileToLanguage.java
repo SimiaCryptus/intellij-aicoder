@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.dev;
+package com.github.simiacryptus.aicoder.actions.code;
 
 import com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
@@ -6,24 +6,18 @@ import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiTranslationSkeleton;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 public class ConvertFileToLanguage extends AnAction {
     private static final Logger log = Logger.getInstance(ConvertFileToLanguage.class);
@@ -37,16 +31,8 @@ public class ConvertFileToLanguage extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        log.warn(Language.getRegisteredLanguages().stream().map(language -> Arrays.asList(
-                language.getID(),
-                language.getDisplayName(),
-                Optional.ofNullable(language.getAssociatedFileType()).map(x->x.getDefaultExtension()).orElse(""),
-                Optional.ofNullable(language.getBaseLanguage()).map(x->x.getID()).orElse(""),
-                Optional.ofNullable(language.getDialects()).map(x->x.stream().map(y->y.getID()).collect(Collectors.joining(","))).orElse("")
-        ).stream().collect(Collectors.joining(","))).collect(Collectors.joining("\n")));
         ComputerLanguage sourceLanguage = ComputerLanguage.getComputerLanguage(event);
-        @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
-        CharSequence indent = UITools.getIndent(caret);
+        CharSequence indent = UITools.getIndent(event.getData(CommonDataKeys.CARET));
         PsiTranslationSkeleton skeleton = PsiTranslationSkeleton.parseFile(event.getRequiredData(CommonDataKeys.PSI_FILE), sourceLanguage, targetLanguage);
         translate(event, sourceLanguage, indent, skeleton);
     }
@@ -56,7 +42,7 @@ public class ConvertFileToLanguage extends AnAction {
         Futures.addCallback(root.fullTranslate(event.getProject(), indent, sourceLanguage, targetLanguage), new FutureCallback<Object>() {
             @Override
             public void onSuccess(Object newText) {
-                String content = root.getTranslatedDocument().toString();
+                String content = root.getTranslatedDocument(targetLanguage).toString();
                 if (null != progressIndicator) {
                     progressIndicator.cancel();
                 }
@@ -92,6 +78,5 @@ public class ConvertFileToLanguage extends AnAction {
             }
         });
     }
-
 
 }
