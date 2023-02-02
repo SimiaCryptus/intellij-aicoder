@@ -54,6 +54,8 @@ public class UITools {
 
 
     public static ProgressIndicator startProgress() {
+        //if(1==1) return null;
+        if(AppSettingsState.getInstance().suppressProgress) return null;
         ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if (null != progressIndicator) {
             progressIndicator.setIndeterminate(true);

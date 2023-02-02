@@ -44,6 +44,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public @NotNull TranslationRequestTemplate translationRequestTemplate = TranslationRequestTemplate.XML;
     public @NotNull LogLevel apiLogLevel = LogLevel.Debug;
     public boolean devActions = false;
+    public boolean suppressProgress = false;
 
     public AppSettingsState() {
     }
@@ -91,12 +92,13 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
         if (!Objects.equals(translationRequestTemplate, that.translationRequestTemplate)) return false;
         if (!Objects.equals(apiLogLevel, that.apiLogLevel)) return false;
         if (!Objects.equals(devActions, that.devActions)) return false;
+        if (!Objects.equals(suppressProgress, that.suppressProgress)) return false;
         return Objects.equals(style, that.style);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(apiBase, apiKey, model_completion, model_edit, maxTokens, temperature, translationRequestTemplate, apiLogLevel, devActions, style);
+        return Objects.hash(apiBase, apiKey, model_completion, model_edit, maxTokens, temperature, translationRequestTemplate, apiLogLevel, devActions, suppressProgress, style);
     }
 
     public void addInstructionToHistory(@NotNull CharSequence instruction) {

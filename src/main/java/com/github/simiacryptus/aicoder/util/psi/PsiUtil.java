@@ -1,13 +1,17 @@
 package com.github.simiacryptus.aicoder.util.psi;
 
 import com.github.simiacryptus.aicoder.util.StringTools;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,9 +232,15 @@ public class PsiUtil {
         if (null == docComment) docComment = getFirstBlock(element, "Comment");
         if (null != docComment)
             declaration = StringTools.stripPrefix(declaration.trim(), docComment.getText().trim());
-        PsiElement codeBlock = getLargestBlock(element, "CodeBlock");
+        PsiElement codeBlock = getLargestBlock(element, "CodeBlock", "BlockExpr", "BlockExpression", "StatementList");
         if (null != codeBlock)
             declaration = StringTools.stripSuffix(declaration.trim(), codeBlock.getText().trim());
         return declaration.trim();
+    }
+
+    public static PsiFile parseFile(Project project, Language language, CharSequence text) {
+        final AtomicReference<PsiFile> fileFromText = new AtomicReference<>();
+        WriteCommandAction.runWriteCommandAction(project, () -> fileFromText.set(PsiFileFactory.getInstance(project).createFileFromText(language, text)));
+        return fileFromText.get();
     }
 }

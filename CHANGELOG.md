@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [1.0.3]
+
+### Added
+- Added file conversion for certain languages (Java, JavaScript, Scala, Kotlin, Go, Python)
+
 ## [1.0.2]
 
 ### Added

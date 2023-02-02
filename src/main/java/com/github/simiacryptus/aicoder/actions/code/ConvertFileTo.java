@@ -1,6 +1,5 @@
-package com.github.simiacryptus.aicoder.actions.dev;
+package com.github.simiacryptus.aicoder.actions.code;
 
-import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -13,6 +12,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.github.simiacryptus.aicoder.util.ComputerLanguage.*;
+import static com.github.simiacryptus.aicoder.util.ComputerLanguage.Java;
+
 
 /**
  * The ConvertFileTo ActionGroup provides a way to quickly convert a file from one language to another.
@@ -23,11 +25,7 @@ public class ConvertFileTo extends ActionGroup {
     private static final Logger log = Logger.getInstance(ConvertFileTo.class);
 
     List<ComputerLanguage> supportedLanguages = Arrays.asList(
-            ComputerLanguage.Java,
-            ComputerLanguage.Scala,
-            ComputerLanguage.Kotlin,
-            ComputerLanguage.CSharp,
-            ComputerLanguage.Python
+            Java, JavaScript, Scala, Kotlin, Go, Python
     );
 
     @Override
@@ -37,8 +35,7 @@ public class ConvertFileTo extends ActionGroup {
     }
 
     private boolean isEnabled(@NotNull AnActionEvent e) {
-        if(!AppSettingsState.getInstance().devActions) return false;
-        ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
+        ComputerLanguage computerLanguage = getComputerLanguage(e);
         if(null == computerLanguage) return false;
         if(!supportedLanguages.contains(computerLanguage)) return false;
         return true;
@@ -46,7 +43,7 @@ public class ConvertFileTo extends ActionGroup {
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
+        ComputerLanguage computerLanguage = getComputerLanguage(e);
         ArrayList<AnAction> actions = new ArrayList<>();
         for (ComputerLanguage language : supportedLanguages) {
             if(computerLanguage.equals(language)) continue;

@@ -173,7 +173,7 @@
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
         </group>
-        <group class="com.github.simiacryptus.aicoder.actions.dev.ConvertFileTo"
+        <group class="com.github.simiacryptus.aicoder.actions.code.ConvertFileTo"
                text="_Convert To..."
                description="Convert to..."
                popup="true"

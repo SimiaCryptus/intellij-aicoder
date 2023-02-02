@@ -109,7 +109,7 @@ public final class OpenAI_API {
                 .map(Objects::toString)
                 .map(String::trim)
                 .map(StringTools::stripUnbalancedTerminators)
-                .map(IndentedText::fromString)
+                .map(IndentedText::fromString2)
                 .map(text -> text.withIndent(indent))
                 .map(IndentedText::toString)
                 .map(text -> indent + text);
@@ -173,7 +173,7 @@ public final class OpenAI_API {
                         }
                     }
                 };
-                if (null != project) {
+                if (null != project && !AppSettingsState.getInstance().suppressProgress) {
                     return ProgressManager.getInstance().run(task);
                 } else {
                     task.run(new AbstractProgressIndicatorBase());
@@ -239,7 +239,7 @@ public final class OpenAI_API {
                         }
                     }
                 };
-                if (null != project) {
+                if (null != project && !AppSettingsState.getInstance().suppressProgress) {
                     return ProgressManager.getInstance().run(task);
                 } else {
                     task.run(new AbstractProgressIndicatorBase());

@@ -50,8 +50,16 @@ public class IndentedText implements TextBlock {
         @NotNull CharSequence indent = StringTools.getWhitespacePrefix(text.toString().split(DELIMITER));
         return new IndentedText(indent,
                 Arrays.stream(text.toString().split(DELIMITER))
-                .map(s -> StringTools.stripPrefix(s, indent))
-                .toArray(CharSequence[]::new));
+                        .map(s -> StringTools.stripPrefix(s, indent))
+                        .toArray(CharSequence[]::new));
+    }
+    public static @NotNull IndentedText fromString2(CharSequence text) {
+        text = text.toString().replace("\t", TAB_REPLACEMENT);
+        @NotNull CharSequence indent = StringTools.getWhitespacePrefix2(text.toString().split(DELIMITER));
+        return new IndentedText(indent,
+                Arrays.stream(text.toString().split(DELIMITER))
+                        .map(s -> StringTools.stripPrefix(s, indent))
+                        .toArray(CharSequence[]::new));
     }
 
     @Override
