@@ -30,7 +30,7 @@ Comment as code, reword too
 Paste with translation
 
 Java, C++, C#, JS
-Python, Ruby, PHP, Go
+Python, Ruby, Go
 Perl, R, Swift, SQL
 
 HTML, CSS, TypeScript
