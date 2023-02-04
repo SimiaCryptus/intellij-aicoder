@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+## [1.0.6]
+
+### Added
+- Permanently unremoved support for PHP
+- 
+
+## [1.0.5]
+
+### Added
+- Permanently removed support for PHP
+
 ## [1.0.3]
 
 ### Added
