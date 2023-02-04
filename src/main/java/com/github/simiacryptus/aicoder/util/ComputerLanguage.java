@@ -182,6 +182,11 @@ public enum ComputerLanguage {
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
             .setFileExtensions("pascal", "pas")),
+    PHP(new Configuration()
+            .setLineComments(new LineComment.Factory("//"))
+            .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
+            .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
+            .setFileExtensions("php")),
     Perl(new Configuration()
             .setDocumentationStyle("POD")
             .setLineComments(new LineComment.Factory("#"))
