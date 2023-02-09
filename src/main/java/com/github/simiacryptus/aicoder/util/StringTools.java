@@ -10,14 +10,6 @@ import java.util.stream.Stream;
 
 public class StringTools {
 
-    /*
-     *
-     * Strips unbalanced terminators from a given input string.
-     *
-     * @param input The input string to strip unbalanced terminators from.
-     * @return The input string with unbalanced terminators removed.
-     * @throws IllegalArgumentException If the input string is unbalanced.
-     */
     public static @NotNull CharSequence stripUnbalancedTerminators(@NotNull CharSequence input) {
         int openCount = 0;
         boolean inQuotes = false;

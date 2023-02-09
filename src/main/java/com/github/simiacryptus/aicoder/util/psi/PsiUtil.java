@@ -122,8 +122,8 @@ public class PsiUtil {
         simpleName = StringTools.stripPrefix(simpleName, "Psi");
         @NotNull String str = simpleName.toString();
         return Stream.of(types)
-                .map(s->StringTools.stripSuffix(s, "Impl"))
-                .map(s->StringTools.stripPrefix(s, "Psi"))
+                .map(s -> StringTools.stripSuffix(s, "Impl"))
+                .map(s -> StringTools.stripPrefix(s, "Psi"))
                 .anyMatch(t -> str.endsWith(t.toString()));
     }
 
@@ -226,18 +226,27 @@ public class PsiUtil {
         return getSmallestIntersecting(psiFile, caret.getSelectionStart(), caret.getSelectionEnd(), ELEMENTS_CODE);
     }
 
+
     public static String getDeclaration(@NotNull PsiElement element) {
         String declaration = element.getText();
         @Nullable PsiElement docComment = getLargestBlock(element, "DocComment");
         if (null == docComment) docComment = getFirstBlock(element, "Comment");
         if (null != docComment)
             declaration = StringTools.stripPrefix(declaration.trim(), docComment.getText().trim());
-        PsiElement codeBlock = getLargestBlock(element, "CodeBlock", "BlockExpr", "BlockExpression", "StatementList");
+        PsiElement codeBlock = getLargestBlock(element, "CodeBlock", "BlockExpr", "Block", "BlockExpression", "StatementList", "BlockFields");
         if (null != codeBlock)
             declaration = StringTools.stripSuffix(declaration.trim(), codeBlock.getText().trim());
         return declaration.trim();
     }
 
+    /**
+     * Parses a file from a given text and language.
+     *
+     * @param project  The project to which the file belongs.
+     * @param language The language of the file.
+     * @param text     The text of the file.
+     * @return The parsed file.
+     */
     public static PsiFile parseFile(Project project, Language language, CharSequence text) {
         final AtomicReference<PsiFile> fileFromText = new AtomicReference<>();
         WriteCommandAction.runWriteCommandAction(project, () -> fileFromText.set(PsiFileFactory.getInstance(project).createFileFromText(language, text)));

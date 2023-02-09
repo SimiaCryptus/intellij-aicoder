@@ -25,7 +25,7 @@ public class ConvertFileTo extends ActionGroup {
     private static final Logger log = Logger.getInstance(ConvertFileTo.class);
 
     List<ComputerLanguage> supportedLanguages = Arrays.asList(
-            Java, JavaScript, Scala, Kotlin, Go, Python
+            Java, JavaScript, Scala, Kotlin, Go, Rust, Python
     );
 
     @Override
