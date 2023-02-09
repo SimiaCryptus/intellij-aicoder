@@ -39,26 +39,26 @@ public class PsiTranslationSkeleton {
         if (stubId == null) return translatedOuter;
         String regex;
         switch (targetLanguage) {
+            case Python:
+                regex =
+                /*
+                 This is a Java regular expression that looks for a pattern of a line of text followed by a colon and then another line
+                 of text. The (?s) indicates that the expression should span multiple lines, and the (?<=\n|^) indicates that the pattern
+                 should start at the beginning of a line or the beginning of the string. The [^\n]*? indicates that any number of
+                 characters that are not a new line should be matched, followed by a colon and then another line of characters that are
+                 not a new line.
+                */
+                "(?s)(?<=\n|^)[^\n]*?:\n[^\n]*?" + stubId + "\\s*?pass\\s*?";
+                break;
+            case Rust:
             case Kotlin:
             case Scala:
             case Java:
             case JavaScript:
-                regex = "(?s)(?<=\n)[^\n]*?\\{[^{}]*?" + stubId + ".*?\\}";
-                break;
-            case Python:
-                /*
-                 This Java code creates a regular expression that looks for a line of text that contains the given stubId followed by the
-                 word "pass". The regular expression is preceded by a new line character and the line must not contain any other new line
-                 characters.
-                */
-                regex = "(?s)(?<=\n)[^\n]*?:\n[^\n]*?" + stubId + "\\s*?pass\\s*?";
+                regex = "(?s)(?<=\n|^)[^\n]*?\\{[^{}]*?" + stubId + ".*?\\}";
                 break;
             default:
-                /*
-                 This Java code creates a regular expression that looks for a line of text that contains the given stubId and is
-                 surrounded by curly braces. The regular expression is set to be case-insensitive and to span multiple lines.
-                */
-                regex = "(?s)(?<=\n)[^\n]*?\\{[^{}]*?" + stubId + ".*?\\}";
+                regex = "(?s)(?<=\n|^)[^\n]*?\\{[^{}]*?" + stubId + ".*?\\}";
                 regex = Pattern.compile(regex).matcher(translatedOuter).find() ? regex : stubId;
                 break;
         }
@@ -138,12 +138,12 @@ public class PsiTranslationSkeleton {
         @Override
         protected void visit(@NotNull PsiElement element, PsiElementVisitor self) {
             final String text = element.getText();
-            if (PsiUtil.matchesType(element, "Class")) {
+            if (PsiUtil.matchesType(element, "Class", "ImplItem")) {
                 @NotNull PsiTranslationSkeleton newNode = new PsiTranslationSkeleton(getClassDefPrefix(text), element, null);
                 currentContext.children.add(newNode);
                 processChildren(element, self, newNode);
                 newNode.suffix.append("}");
-            } else if (PsiUtil.matchesType(element, "Method", "FunctionDefinition", "Function")) {
+            } else if (PsiUtil.matchesType(element, "Method", "FunctionDefinition", "Function", "StructItem", "Struct")) {
                 String declaration = PsiUtil.getDeclaration(element).trim();
                 String stubID = "STUB: " + UUID.randomUUID().toString().substring(0, 8);
                 // TODO: This needs to support arbitrary languages
@@ -161,14 +161,14 @@ public class PsiTranslationSkeleton {
 
         private String stubMethodText(String declaration, String stubID) {
             switch (sourceLanguage) {
+                case Python:
+                    return String.format("%s\n    %s\n    pass", declaration, targetLanguage.lineComment.fromString(stubID));
                 case Go:
                 case Kotlin:
                 case Scala:
                 case Java:
                 case JavaScript:
-                    return String.format("%s {\n%s\n}\n", declaration, targetLanguage.lineComment.fromString(stubID));
-                case Python:
-                    return String.format("%s\n    %s\n    pass", declaration, targetLanguage.lineComment.fromString(stubID));
+                case Rust:
                 default:
                     return String.format("%s {\n%s\n}\n", declaration, targetLanguage.lineComment.fromString(stubID));
             }
@@ -177,14 +177,14 @@ public class PsiTranslationSkeleton {
         @NotNull
         private String getClassDefPrefix(String text) {
             switch (sourceLanguage) {
+                case Python:
+                    return indent + text.substring(0, text.indexOf(':')).trim() + ":";
                 case Go:
                 case Kotlin:
                 case Scala:
                 case Java:
                 case JavaScript:
-                    return indent + text.substring(0, text.indexOf('{')).trim() + " {";
-                case Python:
-                    return indent + text.substring(0, text.indexOf(':')).trim() + ":";
+                case Rust:
                 default:
                     return indent + text.substring(0, text.indexOf('{')).trim() + " {";
             }

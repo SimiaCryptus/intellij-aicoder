@@ -224,7 +224,7 @@ public enum ComputerLanguage {
             .setLineComments(new LineComment.Factory("//"))
             .setBlockComments(new BlockComment.Factory("/*", "", "*/"))
             .setDocComments(new BlockComment.Factory("/**", "*", "*/"))
-            .setFileExtensions("rust", "rs")),
+            .setFileExtensions("rs", "rust")),
     Scala(new Configuration()
             .setDocumentationStyle("ScalaDoc")
             .setLineComments(new LineComment.Factory("//"))

@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBTextField;
+import com.jetbrains.rd.util.AtomicReference;
 import com.jetbrains.rd.util.LogLevel;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -41,6 +42,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.github.simiacryptus.aicoder.util.StringTools.stripPrefix;
@@ -132,7 +134,7 @@ public final class OpenAI_API {
     }
 
     private String post(String url, @NotNull String body) throws IOException, InterruptedException {
-        return post(url, body, 3);
+        return post(url, body, 1);
     }
 
     private @NotNull ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest) {
@@ -165,8 +167,7 @@ public final class OpenAI_API {
                             String request = getMapper().writeValueAsString(editRequest);
                             String result = post(settings.apiBase + "/edits", request);
                             CompletionResponse completionResponse = processResponse(result, settings);
-                            log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
-                                    completionResponse.getFirstChoice().orElse("").toString().trim().replace("\n", "\n\t")));
+                            logComplete(completionResponse.getFirstChoice().orElse("").toString().trim(), settings);
                             return completionResponse;
                         } catch (IOException | InterruptedException e) {
                             throw new RuntimeException(e);
@@ -188,20 +189,18 @@ public final class OpenAI_API {
     }
 
     /**
+     * Processes the response from the server.
      *
-     *   Processes the response from the server.
-     *
-     *   @param result The response from the server.
-     *   @param settings The application settings.
-     *   @return The completion response.
-     *   @throws IOException If an error occurs while processing the response.
+     * @param result   The response from the server.
+     * @param settings The application settings.
+     * @return The completion response.
+     * @throws IOException If an error occurs while processing the response.
      */
     private CompletionResponse processResponse(String result, @NotNull AppSettingsState settings) throws IOException {
         JsonObject jsonObject = new Gson().fromJson(result, JsonObject.class);
         if (jsonObject.has("error")) {
             JsonObject errorObject = jsonObject.getAsJsonObject("error");
             String errorMessage = errorObject.get("message").getAsString();
-            log.error(errorMessage);
             throw new IOException(errorMessage);
         }
         CompletionResponse completionResponse = getMapper().readValue(result, CompletionResponse.class);
@@ -213,44 +212,97 @@ public final class OpenAI_API {
 
     @NotNull
     private ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest, @NotNull AppSettingsState settings, @NotNull final String model) {
-        return OpenAI_API.map(moderateAsync(project, completionRequest.prompt), x -> {
-            try {
-                Task.@NotNull WithResult<CompletionResponse, Exception> task = new Task.WithResult<>(project, "OpenAI Text Completion", false) {
+        boolean canBeCancelled = false; // Cancel doesn't seem to work; the cancel event is only dispatched after the request completes.
+        return OpenAI_API.map(moderateAsync(project, completionRequest.prompt), x -> run(project,
+                new Task.WithResult<>(project, "OpenAI Text Completion", canBeCancelled) {
+                    AtomicReference<Thread> threadRef = new AtomicReference<>(null);
                     @Override
                     protected @NotNull CompletionResponse compute(@NotNull ProgressIndicator indicator) {
+                        threadRef.getAndSet(Thread.currentThread());
                         try {
-                            if (completionRequest.suffix == null) {
-                                log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\n",
-                                        completionRequest.prompt.replace("\n", "\n\t")));
-                            } else {
-                                log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\nSuffix:\n\t%s\n",
-                                        completionRequest.prompt.replace("\n", "\n\t"),
-                                        completionRequest.suffix.replace("\n", "\n\t")));
-                            }
+                            logStart(completionRequest, settings);
                             String request = getMapper().writeValueAsString(completionRequest);
                             String result = post(settings.apiBase + "/engines/" + model + "/completions", request);
                             CompletionResponse completionResponse = processResponse(result, settings);
                             @NotNull String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").toString().trim(), completionRequest.prompt.trim());
-                            log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
-                                    completionResult.replace("\n", "\n\t")));
+                            logComplete(completionResult, settings);
                             return completionResponse;
-                        } catch (IOException | InterruptedException e) {
+                        } catch (IOException e) {
+                            log.error(e);
                             throw new RuntimeException(e);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        } finally {
+                            threadRef.getAndSet(null);
                         }
                     }
-                };
-                if (null != project && !AppSettingsState.getInstance().suppressProgress) {
-                    return ProgressManager.getInstance().run(task);
-                } else {
-                    task.run(new AbstractProgressIndicatorBase());
-                    return task.getResult();
-                }
-            } catch (RuntimeException e) {
+
+                    @Override
+                    public void onCancel() {
+                        Thread thread = threadRef.get();
+                        if(null != thread) {
+                            log.warn(Arrays.stream(thread.getStackTrace()).map(StackTraceElement::toString).collect(Collectors.joining("\n")));
+                            thread.interrupt();
+                        }
+                        super.onCancel();
+                    }
+                }, 3));
+    }
+
+    private static <T> T run(@Nullable Project project, Task.@NotNull WithResult<T, Exception> task, int retries) {
+        try {
+            if (null != project && !AppSettingsState.getInstance().suppressProgress) {
+                return ProgressManager.getInstance().run(task);
+            } else {
+                task.run(new AbstractProgressIndicatorBase());
+                return task.getResult();
+            }
+        } catch (RuntimeException e) {
+            if(isInterruptedException(e)) throw e;
+            if (retries > 0) {
+                log.warn("Retrying request", e);
+                return run(project, task, retries - 1);
+            } else {
                 throw e;
-            } catch (Exception e) {
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            if(isInterruptedException(e)) throw new RuntimeException(e);
+            if (retries > 0) {
+                log.warn("Retrying request", e);
+                try {
+                    Thread.sleep(15000);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                return run(project, task, retries - 1);
+            } else {
                 throw new RuntimeException(e);
             }
-        });
+        }
+    }
+
+    private static boolean isInterruptedException(Throwable e) {
+        if(e instanceof InterruptedException) return true;
+        if(e.getCause() != null && e.getCause() != e) return isInterruptedException(e.getCause());
+        return false;
+    }
+
+    private void logComplete(@NotNull String completionResult, @NotNull AppSettingsState settings) {
+        log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
+                completionResult.replace("\n", "\n\t")));
+    }
+
+    private void logStart(@NotNull CompletionRequest completionRequest, @NotNull AppSettingsState settings) {
+        if (completionRequest.suffix == null) {
+            log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\n",
+                    completionRequest.prompt.replace("\n", "\n\t")));
+        } else {
+            log(settings.apiLogLevel, String.format("Text Completion Request\nPrefix:\n\t%s\nSuffix:\n\t%s\n",
+                    completionRequest.prompt.replace("\n", "\n\t"),
+                    completionRequest.suffix.replace("\n", "\n\t")));
+        }
     }
 
     public static <I extends @Nullable Object, O extends @Nullable Object>
@@ -292,7 +344,7 @@ public final class OpenAI_API {
 
     @NotNull
     private ListenableFuture<?> moderateAsync(@Nullable Project project, @NotNull String text) {
-        Task.@NotNull WithResult<ListenableFuture<?>, Exception> task = new Task.WithResult<>(project, "OpenAI Moderation", false) {
+        return run(project, new Task.WithResult<>(project, "OpenAI Moderation", false) {
             @Override
             protected @NotNull ListenableFuture<?> compute(@NotNull ProgressIndicator indicator) {
                 return pool.submit(() -> {
@@ -322,19 +374,7 @@ public final class OpenAI_API {
                     }
                 });
             }
-        };
-        try {
-            if (null != project) {
-                return ProgressManager.getInstance().run(task);
-            } else {
-                task.run(new AbstractProgressIndicatorBase());
-                return task.getResult();
-            }
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        }, 0);
     }
 
     /**

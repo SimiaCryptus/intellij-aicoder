@@ -149,9 +149,9 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="R"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.dev.ImplementAction"
-                text="_Implement"
-                description="Implement">
+        <action class="com.github.simiacryptus.aicoder.actions.code.ImplementAction"
+                text="_Implement Stub"
+                description="Implement stub">
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="M"/>
         </action>
