@@ -1,11 +1,13 @@
 package com.github.simiacryptus.aicoder.actions.code;
 
+import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiTranslationSkeleton;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,6 +19,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ConvertFileToLanguage extends AnAction {
@@ -38,20 +43,24 @@ public class ConvertFileToLanguage extends AnAction {
     }
 
     private void translate(@NotNull AnActionEvent event, ComputerLanguage sourceLanguage, CharSequence indent, PsiTranslationSkeleton root) {
-        ProgressIndicator progressIndicator = UITools.startProgress();
-        Futures.addCallback(root.fullTranslate(event.getProject(), indent, sourceLanguage, targetLanguage), new FutureCallback<Object>() {
+        ListenableFuture<?> future;
+        if(AppSettingsState.getInstance().apiThreads > 1) {
+            future = root.parallelTranslate(event.getProject(), indent, sourceLanguage, targetLanguage);
+        } else {
+            future = root.sequentialTranslate(event.getProject(), indent, sourceLanguage, targetLanguage);
+        }
+        Futures.addCallback(future, new FutureCallback<Object>() {
             @Override
             public void onSuccess(Object newText) {
-                String content = root.getTranslatedDocument(targetLanguage).toString();
-                if (null != progressIndicator) {
-                    progressIndicator.cancel();
+                try {
+                    future.get(1, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    throw new RuntimeException(e);
                 }
+                String content = root.getTranslatedDocument(targetLanguage).toString();
                 write(event.getProject(), getNewFile(event.getProject(), event.getRequiredData(CommonDataKeys.VIRTUAL_FILE), targetLanguage), content);
             }
             @Override public void onFailure(Throwable e) {
-                if (null != progressIndicator) {
-                    progressIndicator.cancel();
-                }
                 log.error("Error translating file", e);
             };
         }, OpenAI_API.INSTANCE.pool);

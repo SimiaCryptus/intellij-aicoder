@@ -7,6 +7,7 @@ import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -17,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -25,14 +28,14 @@ public class PsiTranslationSkeleton {
     public final StringBuffer prefix;
     public final StringBuffer suffix = new StringBuffer();
     public final ArrayList<PsiTranslationSkeleton> children = new ArrayList<>();
-    public ListenableFuture<CharSequence> translateFuture = null;
-    private final PsiElement element;
+    private final @NlsSafe String elementText;
+    public volatile ListenableFuture<CharSequence> translateFuture = null;
     private final String stubId;
 
-    public PsiTranslationSkeleton(String text, @NotNull PsiElement element, @Nullable String stubId) {
+    public PsiTranslationSkeleton(@Nullable String stubId, String text, @NlsSafe String elementText) {
         prefix = new StringBuffer(text);
-        this.element = element;
         this.stubId = stubId;
+        this.elementText = elementText;
     }
 
     public CharSequence injectStubTranslation(CharSequence translatedOuter, CharSequence translatedInner, ComputerLanguage targetLanguage) {
@@ -68,22 +71,26 @@ public class PsiTranslationSkeleton {
 
     @NotNull
     public static PsiTranslationSkeleton parseFile(@NotNull PsiFile psiFile, ComputerLanguage sourceLanguage, ComputerLanguage targetLanguage) {
-        PsiTranslationSkeleton psiTranslationSkeleton = new PsiTranslationSkeleton("", psiFile, null);
+        PsiTranslationSkeleton psiTranslationSkeleton = new PsiTranslationSkeleton(null, "", psiFile.getText());
         new Parser(sourceLanguage, targetLanguage, psiTranslationSkeleton).build(psiFile);
         return psiTranslationSkeleton;
     }
 
     public ListenableFuture<CharSequence> translate(Project project, CharSequence indent, ComputerLanguage sourceLanguage, ComputerLanguage targetLanguage) {
         if (null == translateFuture) {
-            this.translateFuture = OpenAI_API.INSTANCE.complete(project, AppSettingsState.getInstance()
-                    .createTranslationRequest()
-                    .setInstruction(String.format("Translate %s into %s", sourceLanguage.name(), targetLanguage.name()))
-                    .setInputType("source")
-                    .setInputText(translationText())
-                    .setInputAttribute("language", sourceLanguage.name())
-                    .setOutputType("translated")
-                    .setOutputAttrute("language", targetLanguage.name())
-                    .buildCompletionRequest(), indent);
+            synchronized (this) {
+                if (null == translateFuture) {
+                    this.translateFuture = OpenAI_API.INSTANCE.complete(project, AppSettingsState.getInstance()
+                            .createTranslationRequest()
+                            .setInstruction(String.format("Translate %s into %s", sourceLanguage.name(), targetLanguage.name()))
+                            .setInputType("source")
+                            .setInputText(translationText())
+                            .setInputAttribute("language", sourceLanguage.name())
+                            .setOutputType("translated")
+                            .setOutputAttrute("language", targetLanguage.name())
+                            .buildCompletionRequest(), indent);
+                }
+            }
         }
         return this.translateFuture;
     }
@@ -91,26 +98,38 @@ public class PsiTranslationSkeleton {
     @NotNull
     private String translationText() {
         if (null != stubId) {
-            return element.getText();
+            return elementText;
         } else {
             return toString();
         }
     }
 
-    public ListenableFuture<?> fullTranslate(Project project, CharSequence indent, ComputerLanguage sourceLanguage, ComputerLanguage targetLanguage) {
+    public ListenableFuture<?> sequentialTranslate(Project project, CharSequence indent, ComputerLanguage sourceLanguage, ComputerLanguage targetLanguage) {
+        ListenableFuture<?> future = translate(project, indent, sourceLanguage, targetLanguage);
+        for (PsiTranslationSkeleton stub : getStubs()) {
+            future = Futures.transformAsync(future, x->stub.sequentialTranslate(project, indent, sourceLanguage, targetLanguage), OpenAI_API.INSTANCE.pool);
+        }
+        return future;
+    }
+
+    public ListenableFuture<?> parallelTranslate(Project project, CharSequence indent, ComputerLanguage sourceLanguage, ComputerLanguage targetLanguage) {
+        return Futures.allAsList(translationFutures(project, indent, sourceLanguage, targetLanguage).collect(Collectors.toList()));
+    }
+
+    public Stream<ListenableFuture<?>> translationFutures(Project project, CharSequence indent, ComputerLanguage sourceLanguage, ComputerLanguage targetLanguage) {
         if (!getStubs().isEmpty()) {
-            return Futures.allAsList(Streams.concat(
+            return Streams.concat(
                     Stream.of(translate(project, indent, sourceLanguage, targetLanguage)),
-                    getStubs().stream().map(stub -> stub.fullTranslate(project, indent + "  ", sourceLanguage, targetLanguage))
-            ).collect(Collectors.toList()));
+                    getStubs().stream().flatMap(stub -> stub.translationFutures(project, indent + "  ", sourceLanguage, targetLanguage))
+            );
         } else {
-            return translate(project, indent, sourceLanguage, targetLanguage);
+            return Stream.of(translate(project, indent, sourceLanguage, targetLanguage));
         }
     }
 
     public CharSequence getTranslatedDocument(ComputerLanguage targetLanguage) {
         try {
-            CharSequence translated = translateFuture.get();
+            CharSequence translated = translateFuture.get(1, TimeUnit.MILLISECONDS);
             for (PsiTranslationSkeleton child : getStubs()) {
                 translated = child.injectStubTranslation(translated, child.getTranslatedDocument(targetLanguage), targetLanguage);
             }
@@ -118,6 +137,8 @@ public class PsiTranslationSkeleton {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
     }
@@ -139,7 +160,7 @@ public class PsiTranslationSkeleton {
         protected void visit(@NotNull PsiElement element, PsiElementVisitor self) {
             final String text = element.getText();
             if (PsiUtil.matchesType(element, "Class", "ImplItem")) {
-                @NotNull PsiTranslationSkeleton newNode = new PsiTranslationSkeleton(getClassDefPrefix(text), element, null);
+                @NotNull PsiTranslationSkeleton newNode = new PsiTranslationSkeleton(null, getClassDefPrefix(text), element.getText());
                 currentContext.children.add(newNode);
                 processChildren(element, self, newNode);
                 newNode.suffix.append("}");
@@ -147,11 +168,11 @@ public class PsiTranslationSkeleton {
                 String declaration = PsiUtil.getDeclaration(element).trim();
                 String stubID = "STUB: " + UUID.randomUUID().toString().substring(0, 8);
                 // TODO: This needs to support arbitrary languages
-                @NotNull PsiTranslationSkeleton newNode = new PsiTranslationSkeleton(stubMethodText(declaration, stubID), element, stubID);
+                @NotNull PsiTranslationSkeleton newNode = new PsiTranslationSkeleton(stubID, stubMethodText(declaration, stubID), element.getText());
                 currentContext.children.add(newNode);
                 processChildren(element, self, newNode);
             } else if (PsiUtil.matchesType(element, "ImportList", "Field")) {
-                @NotNull PsiTranslationSkeleton newNode = new PsiTranslationSkeleton(element.getText().trim(), element, null);
+                @NotNull PsiTranslationSkeleton newNode = new PsiTranslationSkeleton(null, element.getText().trim(), element.getText());
                 currentContext.children.add(newNode);
                 processChildren(element, self, newNode);
             } else {

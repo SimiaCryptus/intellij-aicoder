@@ -45,6 +45,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public @NotNull LogLevel apiLogLevel = LogLevel.Debug;
     public boolean devActions = false;
     public boolean suppressProgress = false;
+    public int apiThreads = 1;
 
     public AppSettingsState() {
     }
