@@ -57,6 +57,11 @@
                 description="Reword comment">
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.TranslateCommentAction"
+                text="_Translate Comment"
+                description="Translate comment">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownListAction"
                 text="Add _List Items"

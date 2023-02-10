@@ -3,7 +3,12 @@
 # intellij-aicoder Changelog
 
 ## [Unreleased]
+
+## [1.0.7]
+
+### Added
 - Added cancel button to API call progress dialog
+- Added comment translation action
 
 ## [1.0.6]
 
@@ -11,7 +16,7 @@
 - Re-enabled support for PHP after verifying that it works
 - Added Rust support for file translation
 - Improved retry logic for API calls
-- Added action to implement stubs for Java classes
+- Added action to implement stubs
 
 ## [1.0.5]
 

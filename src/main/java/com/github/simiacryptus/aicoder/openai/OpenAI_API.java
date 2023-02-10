@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -51,6 +51,7 @@ public final class OpenAI_API {
     private static final Logger log = Logger.getInstance(OpenAI_API.class);
     public static final OpenAI_API INSTANCE = new OpenAI_API();
     public final @NotNull ListeningExecutorService pool;
+    private final @NotNull ListeningScheduledExecutorService scheduledPool;
     private transient @Nullable AppSettingsState settings = null;
     private transient @Nullable ComboBox<CharSequence> comboBox = null;
     private static final WeakHashMap<ComboBox<CharSequence>, Object> activeModelUI = new WeakHashMap<>();
@@ -125,7 +126,15 @@ public final class OpenAI_API {
     }
 
     private OpenAI_API() {
-        this.pool = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("OpenAI API Thread %d").build();
+        this.pool = MoreExecutors.listeningDecorator(new ThreadPoolExecutor(
+                AppSettingsState.getInstance().apiThreads,
+                AppSettingsState.getInstance().apiThreads,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(),
+                threadFactory,
+                new ThreadPoolExecutor.AbortPolicy()));
+        this.scheduledPool = MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1, threadFactory));
     }
 
     @NotNull
@@ -212,12 +221,14 @@ public final class OpenAI_API {
 
     @NotNull
     private ListenableFuture<CompletionResponse> complete(@Nullable Project project, @NotNull CompletionRequest completionRequest, @NotNull AppSettingsState settings, @NotNull final String model) {
-        boolean canBeCancelled = false; // Cancel doesn't seem to work; the cancel event is only dispatched after the request completes.
+        boolean canBeCancelled = true; // Cancel doesn't seem to work; the cancel event is only dispatched after the request completes.
         return OpenAI_API.map(moderateAsync(project, completionRequest.prompt), x -> run(project,
                 new Task.WithResult<>(project, "OpenAI Text Completion", canBeCancelled) {
                     AtomicReference<Thread> threadRef = new AtomicReference<>(null);
+
                     @Override
                     protected @NotNull CompletionResponse compute(@NotNull ProgressIndicator indicator) {
+                        ListenableScheduledFuture<?> cancelMonitor = scheduledPool.scheduleAtFixedRate(() -> checkCanceled(indicator, threadRef), 0, 100, TimeUnit.MILLISECONDS);
                         threadRef.getAndSet(Thread.currentThread());
                         try {
                             logStart(completionRequest, settings);
@@ -234,13 +245,14 @@ public final class OpenAI_API {
                             throw new RuntimeException(e);
                         } finally {
                             threadRef.getAndSet(null);
+                            cancelMonitor.cancel(true);
                         }
                     }
 
                     @Override
                     public void onCancel() {
                         Thread thread = threadRef.get();
-                        if(null != thread) {
+                        if (null != thread) {
                             log.warn(Arrays.stream(thread.getStackTrace()).map(StackTraceElement::toString).collect(Collectors.joining("\n")));
                             thread.interrupt();
                         }
@@ -249,16 +261,32 @@ public final class OpenAI_API {
                 }, 3));
     }
 
+    private void checkCanceled(@NotNull ProgressIndicator indicator, AtomicReference<Thread> threadRef) {
+        if (indicator.isCanceled()) {
+            Thread thread = threadRef.get();
+            if (null != thread) {
+                thread.interrupt();
+                try {
+                    clients.get(thread).close();
+                } catch (IOException e) {
+                    log.warn("Error closing client: " + e.getMessage());
+                }
+            }
+        }
+    }
+
     private static <T> T run(@Nullable Project project, Task.@NotNull WithResult<T, Exception> task, int retries) {
         try {
             if (null != project && !AppSettingsState.getInstance().suppressProgress) {
-                return ProgressManager.getInstance().run(task);
+                ProgressManager progressManager = ProgressManager.getInstance();
+                ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+                return progressManager.run(task);
             } else {
                 task.run(new AbstractProgressIndicatorBase());
                 return task.getResult();
             }
         } catch (RuntimeException e) {
-            if(isInterruptedException(e)) throw e;
+            if (isInterruptedException(e)) throw e;
             if (retries > 0) {
                 log.warn("Retrying request", e);
                 return run(project, task, retries - 1);
@@ -268,7 +296,7 @@ public final class OpenAI_API {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {
-            if(isInterruptedException(e)) throw new RuntimeException(e);
+            if (isInterruptedException(e)) throw new RuntimeException(e);
             if (retries > 0) {
                 log.warn("Retrying request", e);
                 try {
@@ -284,8 +312,8 @@ public final class OpenAI_API {
     }
 
     private static boolean isInterruptedException(Throwable e) {
-        if(e instanceof InterruptedException) return true;
-        if(e.getCause() != null && e.getCause() != e) return isInterruptedException(e.getCause());
+        if (e instanceof InterruptedException) return true;
+        if (e.getCause() != null && e.getCause() != e) return isInterruptedException(e.getCause());
         return false;
     }
 
@@ -377,6 +405,8 @@ public final class OpenAI_API {
         }, 0);
     }
 
+    private final Map<Thread, CloseableHttpClient> clients = new ConcurrentHashMap<>();
+
     /**
      * Posts a request to the given URL with the given JSON body and retries if an IOException is thrown.
      *
@@ -396,13 +426,16 @@ public final class OpenAI_API {
             authorize(request);
             request.setEntity(new StringEntity(json));
             try (CloseableHttpClient httpClient = client.build()) {
+                clients.put(Thread.currentThread(), httpClient);
                 HttpResponse response = httpClient.execute(request);
                 HttpEntity entity = response.getEntity();
                 return EntityUtils.toString(entity);
+            } finally {
+                clients.remove(Thread.currentThread());
             }
         } catch (IOException e) {
             if (retries > 0) {
-                e.printStackTrace();
+                log.warn("Error posting request to " + url + ", retrying in 15 seconds", e);
                 Thread.sleep(15000);
                 return post(url, json, retries - 1);
             }
