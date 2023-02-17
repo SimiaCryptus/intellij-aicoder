@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ public class ConvertFileToLanguage extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
         ComputerLanguage sourceLanguage = ComputerLanguage.getComputerLanguage(event);
-        CharSequence indent = UITools.getIndent(event.getData(CommonDataKeys.CARET));
+        CharSequence indent = UITools.INSTANCE.getIndent(event.getData(CommonDataKeys.CARET));
         PsiTranslationSkeleton skeleton = PsiTranslationSkeleton.parseFile(event.getRequiredData(CommonDataKeys.PSI_FILE), sourceLanguage, targetLanguage);
         translate(event, sourceLanguage, indent, skeleton);
     }

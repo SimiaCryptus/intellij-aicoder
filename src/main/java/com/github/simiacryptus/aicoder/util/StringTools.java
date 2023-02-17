@@ -44,7 +44,7 @@ public class StringTools {
         return output.toString();
     }
 
-    public static @NotNull String stripPrefix(@NotNull CharSequence text, @NotNull CharSequence prefix) {
+    public static @NotNull CharSequence stripPrefix(@NotNull CharSequence text, @NotNull CharSequence prefix) {
         boolean startsWith = text.toString().startsWith(prefix.toString());
         if (startsWith) {
             return text.toString().substring(prefix.length());

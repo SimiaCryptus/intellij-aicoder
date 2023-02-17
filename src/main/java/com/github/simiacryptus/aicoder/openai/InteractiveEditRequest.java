@@ -34,7 +34,7 @@ public class InteractiveEditRequest {
             @Override
             public void actionPerformed(ActionEvent e) {
                 @NotNull EditRequest request = new EditRequest();
-                UITools.readUI(InteractiveEditRequest.this, request);
+                UITools.INSTANCE.readUI(InteractiveEditRequest.this, request);
                 @NotNull ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.edit(null, request, "");
                 testRequest.setEnabled(false);
                 Futures.addCallback(future, new FutureCallback<>() {
@@ -53,12 +53,12 @@ public class InteractiveEditRequest {
                     @Override
                     public void onFailure(Throwable t) {
                         testRequest.setEnabled(true);
-                        UITools.handle(t);
+                        UITools.INSTANCE.handle(t);
                     }
                 }, OpenAI_API.INSTANCE.pool);
             }
         });
-        input = UITools.wrapScrollPane(new JBTextArea(10, 120));
-        instruction = UITools.configureTextArea(new JBTextArea(1, 120));
+        input = UITools.INSTANCE.wrapScrollPane(new JBTextArea(10, 120));
+        instruction = UITools.INSTANCE.configureTextArea(new JBTextArea(1, 120));
     }
 }

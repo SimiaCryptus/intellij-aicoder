@@ -62,7 +62,7 @@ public class MarkdownImplementActionGroup extends ActionGroup {
         ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
         if (null == computerLanguage) return false;
         if (ComputerLanguage.Markdown != computerLanguage) return false;
-        if (!UITools.hasSelection(e)) return false;
+        if (!UITools.INSTANCE.hasSelection(e)) return false;
         return true;
     }
 

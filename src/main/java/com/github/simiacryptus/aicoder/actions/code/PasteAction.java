@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.util.Objects;
 
-import static com.github.simiacryptus.aicoder.util.UITools.insertString;
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
-
 
 /**
  * The PasteAction class is an action that is used to paste text into an IntelliJ editor with OpenAI translation.
@@ -60,12 +57,12 @@ public class PasteAction extends AnAction {
                 .setInputText(text)
                 .buildCompletionRequest();
         @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
-        CharSequence indent = UITools.getIndent(caret);
-        UITools.redoableRequest(request, indent, event, newText -> {
+        CharSequence indent = UITools.INSTANCE.getIndent(caret);
+        UITools.INSTANCE.redoableRequest(request, indent, event, newText -> {
             if (selectedText == null) {
-                return insertString(editor.getDocument(), selectionStart, newText);
+                return UITools.INSTANCE.insertString(editor.getDocument(), selectionStart, newText);
             } else {
-                return replaceString(editor.getDocument(), selectionStart, selectionEnd, newText);
+                return UITools.INSTANCE.replaceString(editor.getDocument(), selectionStart, selectionEnd, newText);
             }
         });
     }

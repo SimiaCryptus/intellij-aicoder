@@ -15,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
-
 
 /**
  * The DescribeAction class is an action that can be used to describe a piece of code in plain language.
@@ -62,20 +60,20 @@ public class DescribeAction extends AnAction {
     }
 
     private static void actionPerformed(@NotNull AnActionEvent event, @NotNull Editor editor, int selectionStart, int selectionEnd, String selectedText, @NotNull ComputerLanguage language) {
-        CharSequence indent = UITools.getIndent(event);
+        CharSequence indent = UITools.INSTANCE.getIndent(event);
         AppSettingsState settings = AppSettingsState.getInstance();
         @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setInputType(Objects.requireNonNull(language).name())
                 .setOutputType(settings.humanLanguage)
-                .setInstruction(UITools.getInstruction("Explain this " + language.name() + " in " + settings.humanLanguage))
+                .setInstruction(UITools.INSTANCE.getInstruction("Explain this " + language.name() + " in " + settings.humanLanguage))
                 .setInputAttribute("type", "code")
                 .setOutputAttrute("type", "description")
                 .setOutputAttrute("style", settings.style)
                 .setInputText(IndentedText.fromString(selectedText).getTextBlock().trim())
                 .buildCompletionRequest();
-        UITools.redoableRequest(request, indent, event,
+        UITools.INSTANCE.redoableRequest(request, indent, event,
                 newText -> transformCompletion(selectedText, language, indent, newText),
-                newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
+                newText -> UITools.INSTANCE.replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }
 
     @NotNull

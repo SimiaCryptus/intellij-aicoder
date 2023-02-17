@@ -2,22 +2,15 @@ package com.github.simiacryptus.aicoder.actions.markdown;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
-import com.github.simiacryptus.aicoder.util.*;
-import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
+import com.github.simiacryptus.aicoder.util.ComputerLanguage;
+import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
-
-import static com.github.simiacryptus.aicoder.util.UITools.insertString;
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 
 
 /**
@@ -48,7 +41,7 @@ public class MarkdownImplementAction extends AnAction {
         ComputerLanguage computerLanguage = ComputerLanguage.getComputerLanguage(e);
         if (null == computerLanguage) return false;
         if (ComputerLanguage.Markdown != computerLanguage) return false;
-        if (!UITools.hasSelection(e)) return false;
+        if (!UITools.INSTANCE.hasSelection(e)) return false;
         return true;
     }
 
@@ -62,9 +55,9 @@ public class MarkdownImplementAction extends AnAction {
                 .appendPrompt(String.format("%s\n```%s\n", selectedText, language))
                 .addStops("```");
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
-        UITools.redoableRequest(completionRequest, "", event,
+        UITools.INSTANCE.redoableRequest(completionRequest, "", event,
                 docString -> String.format("\n```%s\n%s\n```", language, docString),
-                docString -> insertString(document, endOffset, docString));
+                docString -> UITools.INSTANCE.insertString(document, endOffset, docString));
     }
 
 }

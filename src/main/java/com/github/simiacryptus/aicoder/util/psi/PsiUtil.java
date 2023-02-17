@@ -228,15 +228,15 @@ public class PsiUtil {
 
 
     public static String getDeclaration(@NotNull PsiElement element) {
-        String declaration = element.getText();
+        @NotNull CharSequence declaration = element.getText();
         @Nullable PsiElement docComment = getLargestBlock(element, "DocComment");
         if (null == docComment) docComment = getFirstBlock(element, "Comment");
         if (null != docComment)
-            declaration = StringTools.stripPrefix(declaration.trim(), docComment.getText().trim());
+            declaration = StringTools.stripPrefix(declaration.toString().trim(), docComment.getText().trim());
         PsiElement codeBlock = getLargestBlock(element, "CodeBlock", "BlockExpr", "Block", "BlockExpression", "StatementList", "BlockFields");
         if (null != codeBlock)
-            declaration = StringTools.stripSuffix(declaration.trim(), codeBlock.getText().trim());
-        return declaration.trim();
+            declaration = StringTools.stripSuffix(declaration.toString().trim(), codeBlock.getText().trim());
+        return declaration.toString().trim();
     }
 
     /**

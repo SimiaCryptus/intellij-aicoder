@@ -1,9 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.generic;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
-import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.EditRequest;
-import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -39,7 +37,7 @@ public class GenericEdit extends AnAction {
 
     @SuppressWarnings("unused")
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        if(!UITools.hasSelection(e)) return false;
+        if(!UITools.INSTANCE.hasSelection(e)) return false;
         return true;
     }
 
@@ -57,7 +55,7 @@ public class GenericEdit extends AnAction {
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         int selectionEnd = caret.getSelectionEnd();
         int selectionStart = caret.getSelectionStart();
-        UITools.redoableRequest(editRequest, "", event,
-                newText -> UITools.replaceString(document, selectionStart, selectionEnd, newText));
+        UITools.INSTANCE.redoableRequest(editRequest, "", event,
+                newText -> UITools.INSTANCE.replaceString(document, selectionStart, selectionEnd, newText));
     }
 }

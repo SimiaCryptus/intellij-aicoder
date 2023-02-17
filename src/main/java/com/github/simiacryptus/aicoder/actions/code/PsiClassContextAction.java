@@ -3,9 +3,9 @@ package com.github.simiacryptus.aicoder.actions.code;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiClassContext;
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
-import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -19,8 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
-
-import static com.github.simiacryptus.aicoder.util.UITools.insertString;
 
 public class PsiClassContextAction extends AnAction {
 
@@ -85,9 +83,9 @@ public class PsiClassContextAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest()
                 .appendPrompt(PsiClassContext.getContext(psiClassContextActionParams.psiFile, psiClassContextActionParams.selectionStart, psiClassContextActionParams.selectionEnd) + "\n");
-        UITools.redoableRequest(request, UITools.getIndent(psiClassContextActionParams.caret), event,
+        UITools.INSTANCE.redoableRequest(request, UITools.INSTANCE.getIndent(psiClassContextActionParams.caret), event,
                 newText -> "\n" + newText,
-                newText -> insertString(editor.getDocument(), endOffset, newText));
+                newText -> UITools.INSTANCE.insertString(editor.getDocument(), endOffset, newText));
     }
 
     public static class PsiClassContextActionParams {

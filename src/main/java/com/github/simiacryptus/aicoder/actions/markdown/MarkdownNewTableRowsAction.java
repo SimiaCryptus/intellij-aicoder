@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.github.simiacryptus.aicoder.util.UITools.insertString;
-
 public class MarkdownNewTableRowsAction extends AnAction {
 
     @Override
@@ -61,14 +59,14 @@ public class MarkdownNewTableRowsAction extends AnAction {
         AppSettingsState settings = AppSettingsState.getInstance();
         int endOffset = markdownNewTableRowsParams.table.getTextRange().getEndOffset();
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
-        UITools.redoableRequest(MarkdownNewTableColAction.newRowsRequest(settings, n, rows, ""), "", event,
+        UITools.INSTANCE.redoableRequest(MarkdownNewTableColAction.newRowsRequest(settings, n, rows, ""), "", event,
                 newText -> transformCompletion(markdownNewTableRowsParams, newText),
-                newText -> insertString(document, endOffset, newText));
+                newText -> UITools.INSTANCE.insertString(document, endOffset, newText));
     }
 
     @NotNull
     private static String transformCompletion(@NotNull MarkdownNewTableRowsParams markdownNewTableRowsParams, CharSequence complete) {
-        CharSequence indent = UITools.getIndent(markdownNewTableRowsParams.caret);
+        CharSequence indent = UITools.INSTANCE.getIndent(markdownNewTableRowsParams.caret);
         @NotNull List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n"))
                 .map(String::trim).filter(x -> x.length() > 0).collect(Collectors.toList());
         return "\n" + indent + newRows.stream().collect(Collectors.joining("\n" + indent));

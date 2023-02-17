@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.github.simiacryptus.aicoder.util.StringTools.stripPrefix;
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
 public class ImplementAction extends AnAction {
@@ -51,7 +50,7 @@ public class ImplementAction extends AnAction {
     private static boolean isStub(@NotNull PsiElement element) {
         String compact = compacted(element).trim();
         String declaration = PsiUtil.getDeclaration(element);
-        String sansComments = stripPrefix(compact, declaration).trim();
+        String sansComments = stripPrefix(compact, declaration).toString().trim();
         if (sansComments.isBlank()) return true;
         if (Pattern.compile("(?s)\\{\\s*}").matcher(sansComments).matches()) return true;
         return false;
@@ -89,9 +88,9 @@ public class ImplementAction extends AnAction {
                 .appendPrompt(declaration);
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
         TextRange textRange = smallestIntersectingMethod.getTextRange();
-        UITools.redoableRequest(completionRequest, "", event,
+        UITools.INSTANCE.redoableRequest(completionRequest, "", event,
                 string -> IndentedText.fromString(declaration + string.toString().trim()).withIndent(indentedInput.getIndent()).toString(),
-                docString -> replaceString(document, textRange.getStartOffset(), textRange.getEndOffset(), docString));
+                docString -> UITools.INSTANCE.replaceString(document, textRange.getStartOffset(), textRange.getEndOffset(), docString));
     }
 
 }

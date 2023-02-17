@@ -24,8 +24,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
-
 public class MarkdownNewTableColAction extends AnAction {
 
     @Override
@@ -58,7 +56,7 @@ public class MarkdownNewTableColAction extends AnAction {
     @NotNull
     public static CompletionRequest newRowsRequest(@NotNull AppSettingsState settings, CharSequence n, @NotNull List<CharSequence> rows, CharSequence rowPrefix) {
         return settings.createTranslationRequest()
-                .setInstruction(UITools.getInstruction("List " + n + " items"))
+                .setInstruction(UITools.INSTANCE.getInstruction("List " + n + " items"))
                 .setInputType("instruction")
                 .setInputText("List " + n + " items")
                 .setOutputType("markdown")
@@ -77,15 +75,15 @@ public class MarkdownNewTableColAction extends AnAction {
         TextRange textRange = markdownNewTableColParams.table.getTextRange();
         int startOffset = textRange.getStartOffset();
         int endOffset = textRange.getEndOffset();
-        UITools.redoableRequest(request, "", event,
+        UITools.INSTANCE.redoableRequest(request, "", event,
                 newText -> transformCompletion(markdownNewTableColParams, newText, columnName),
-                newText -> replaceString(document, startOffset, endOffset, newText));
+                newText -> UITools.INSTANCE.replaceString(document, startOffset, endOffset, newText));
     }
 
     @NotNull
     private static String transformCompletion(@NotNull MarkdownNewTableColParams markdownNewTableColParams, CharSequence complete, CharSequence columnName) {
         complete = "| " + columnName + " | " +  complete;
-        CharSequence indent = UITools.getIndent(markdownNewTableColParams.caret);
+        CharSequence indent = UITools.INSTANCE.getIndent(markdownNewTableColParams.caret);
         @NotNull List<CharSequence> newRows = Arrays.stream(("" + complete).split("\n"))
                 .map(String::trim).filter(x -> x.length() > 0).collect(Collectors.toList());
         @NotNull String newTableTxt = StringTools.transposeMarkdownTable(Stream.concat(markdownNewTableColParams.rows.stream(),

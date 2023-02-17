@@ -3,8 +3,8 @@ package com.github.simiacryptus.aicoder.actions.dev;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
-import com.github.simiacryptus.aicoder.util.psi.PsiMarkdownContext;
 import com.github.simiacryptus.aicoder.util.UITools;
+import com.github.simiacryptus.aicoder.util.psi.PsiMarkdownContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
 
@@ -74,7 +73,7 @@ public class MarkdownContextAction extends AnAction {
         context = context + "\n";
         @NotNull CompletionRequest request = settings.createTranslationRequest()
                 .setOutputType("markdown")
-                .setInstruction(UITools.getInstruction(String.format("Using Markdown and %s", markdownContextParams.humanLanguage)))
+                .setInstruction(UITools.INSTANCE.getInstruction(String.format("Using Markdown and %s", markdownContextParams.humanLanguage)))
                 .setInputType("instruction")
                 .setInputText(selectedText)
                 .setOutputAttrute("type", "document")
@@ -82,9 +81,9 @@ public class MarkdownContextAction extends AnAction {
                 .buildCompletionRequest()
                 .appendPrompt(context);
         @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
-        CharSequence indent = UITools.getIndent(caret);
-        UITools.redoableRequest(request, indent, event,
-                newText -> replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
+        CharSequence indent = UITools.INSTANCE.getIndent(caret);
+        UITools.INSTANCE.redoableRequest(request, indent, event,
+                newText -> UITools.INSTANCE.replaceString(editor.getDocument(), selectionStart, selectionEnd, newText));
     }
 
     public static class MarkdownContextParams {

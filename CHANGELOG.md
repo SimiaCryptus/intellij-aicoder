@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added
+- 
+
+## [1.0.8]
+
+### Added
+- Added "rename variables" action-
+-
+
 ## [1.0.7]
 
 ### Added

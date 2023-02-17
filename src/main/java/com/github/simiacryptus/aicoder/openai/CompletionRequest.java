@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -133,11 +132,11 @@ public class CompletionRequest {
         @NotNull FormBuilder formBuilder = FormBuilder.createFormBuilder();
         @NotNull CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model_completion);
         @NotNull InteractiveCompletionRequest ui = new InteractiveCompletionRequest(withModel);
-        UITools.addFields(ui, formBuilder);
+        UITools.INSTANCE.addFields(ui, formBuilder);
+        UITools.INSTANCE.writeUI(ui, withModel);
         JPanel mainPanel = formBuilder.getPanel();
-        UITools.writeUI(ui, withModel);
-        if (UITools.showOptionDialog(mainPanel, "OK") == 0) {
-            UITools.readUI(ui, withModel);
+        if (UITools.INSTANCE.showOptionDialog(mainPanel, new Object[]{"OK"}, "OpenAI Completion Request") == 0) {
+            UITools.INSTANCE.readUI(ui, withModel);
             return withModel;
         } else {
             return withModel;

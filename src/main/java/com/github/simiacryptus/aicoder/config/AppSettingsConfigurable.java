@@ -41,7 +41,7 @@ public class AppSettingsConfigurable implements Configurable {
                 if (null == mainPanel) {
                     @NotNull FormBuilder formBuilder = FormBuilder.createFormBuilder();
                     settingsComponent = new AppSettingsComponent();
-                    UITools.addFields(settingsComponent, formBuilder);
+                    UITools.INSTANCE.addFields(settingsComponent, formBuilder);
                     mainPanel = formBuilder.addComponentFillVertically(new JPanel(), 0).getPanel();
                 }
             }
@@ -53,7 +53,7 @@ public class AppSettingsConfigurable implements Configurable {
     public boolean isModified() {
         @NotNull AppSettingsState buffer = new AppSettingsState();
         if (this.settingsComponent != null) {
-            UITools.readUI(this.settingsComponent, buffer);
+            UITools.INSTANCE.readUI(this.settingsComponent, buffer);
         }
         return !buffer.equals(AppSettingsState.getInstance());
     }
@@ -61,14 +61,14 @@ public class AppSettingsConfigurable implements Configurable {
     @Override
     public void apply() {
         if (this.settingsComponent != null) {
-            UITools.readUI(this.settingsComponent, AppSettingsState.getInstance());
+            UITools.INSTANCE.readUI(this.settingsComponent, AppSettingsState.getInstance());
         }
     }
 
     @Override
     public void reset() {
         if (settingsComponent != null) {
-            UITools.writeUI(settingsComponent, AppSettingsState.getInstance());
+            UITools.INSTANCE.writeUI(settingsComponent, AppSettingsState.getInstance());
         }
     }
 

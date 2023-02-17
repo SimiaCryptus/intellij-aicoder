@@ -314,7 +314,7 @@ public enum ComputerLanguage {
 
     public @Nullable CharSequence getMultilineCommentSuffix() {
         if (docComment instanceof BlockComment.Factory) {
-            return ((BlockComment.Factory) docComment).blockSuffix;
+            return ((BlockComment.Factory) docComment).getBlockSuffix();
         }
         return null;
     }

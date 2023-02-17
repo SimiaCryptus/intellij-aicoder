@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 import static com.github.simiacryptus.aicoder.util.StringTools.trimPrefix;
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
 
@@ -69,7 +68,7 @@ public class DocAction extends AnAction {
         @NotNull CompletionRequest completionRequest = settings.createTranslationRequest()
                 .setInputType(requireNonNull(language).name())
                 .setOutputType(language.name())
-                .setInstruction(UITools.getInstruction("Rewrite to include detailed " + language.docStyle))
+                .setInstruction(UITools.INSTANCE.getInstruction("Rewrite to include detailed " + language.docStyle))
                 .setInputAttribute("type", "uncommented")
                 .setOutputAttrute("type", "commented")
                 .setOutputAttrute("style", settings.style)
@@ -77,9 +76,9 @@ public class DocAction extends AnAction {
                 .buildCompletionRequest()
                 .addStops(requireNonNull(language.getMultilineCommentSuffix()));
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
-        UITools.redoableRequest(completionRequest, "", event,
+        UITools.INSTANCE.redoableRequest(completionRequest, "", event,
                 docString -> requireNonNull(language.docComment).fromString(docString.toString().trim()).withIndent(indent) + "\n" + indent + trimPrefix(indentedInput.toString()),
-                docString -> replaceString(document, startOffset, endOffset, docString));
+                docString -> UITools.INSTANCE.replaceString(document, startOffset, endOffset, docString));
     }
 
 }

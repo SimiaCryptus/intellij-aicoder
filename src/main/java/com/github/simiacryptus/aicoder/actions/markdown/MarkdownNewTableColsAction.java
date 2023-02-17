@@ -3,9 +3,9 @@ package com.github.simiacryptus.aicoder.actions.markdown;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
+import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
 import com.github.simiacryptus.aicoder.util.StringTools;
-import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 
 public class MarkdownNewTableColsAction extends AnAction {
 
@@ -60,9 +58,9 @@ public class MarkdownNewTableColsAction extends AnAction {
     public void actionPerformed(@NotNull AnActionEvent event) {
         @Nullable MarkdownNewTableColsParams markdownNewTableColsParams = getMarkdownNewTableColsParams(event);
         AppSettingsState settings = AppSettingsState.getInstance();
-        CharSequence indent = UITools.getIndent(Objects.requireNonNull(markdownNewTableColsParams).caret);
+        CharSequence indent = UITools.INSTANCE.getIndent(Objects.requireNonNull(markdownNewTableColsParams).caret);
         @NotNull CompletionRequest request = MarkdownNewTableColAction.newRowsRequest(settings, markdownNewTableColsParams.n, markdownNewTableColsParams.rows, "");
-        UITools.redoableRequest(request, "", event, newText -> transformCompletion(markdownNewTableColsParams, indent, newText), newText -> replaceString(event.getRequiredData(CommonDataKeys.EDITOR).getDocument(),
+        UITools.INSTANCE.redoableRequest(request, "", event, newText -> transformCompletion(markdownNewTableColsParams, indent, newText), newText -> UITools.INSTANCE.replaceString(event.getRequiredData(CommonDataKeys.EDITOR).getDocument(),
                 markdownNewTableColsParams.table.getTextRange().getStartOffset(),
                 markdownNewTableColsParams.table.getTextRange().getEndOffset(), newText));
     }
