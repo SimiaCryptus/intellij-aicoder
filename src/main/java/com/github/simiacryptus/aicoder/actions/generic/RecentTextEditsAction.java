@@ -1,9 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.generic;
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
-import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.EditRequest;
-import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.util.IndentedText;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -18,10 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
-import static java.util.Objects.requireNonNull;
-
 
 /**
  * The RecentTextEditsAction is an IntelliJ action that allows users to quickly access and apply recent text edits.
@@ -38,7 +32,7 @@ public class RecentTextEditsAction extends ActionGroup {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        if (!UITools.hasSelection(e)) return false;
+        if (!UITools.INSTANCE.hasSelection(e)) return false;
         return true;
     }
 
@@ -68,10 +62,10 @@ public class RecentTextEditsAction extends ActionGroup {
                             .setInstruction(instruction)
                             .setInput(IndentedText.fromString(selectedText).getTextBlock());
                     @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
-                    CharSequence indent = UITools.getIndent(caret);
+                    CharSequence indent = UITools.INSTANCE.getIndent(caret);
                     @NotNull Document document = editor.getDocument();
-                    UITools.redoableRequest(request, indent, event,
-                            newText -> replaceString(document, selectionStart, selectionEnd, newText));
+                    UITools.INSTANCE.redoableRequest(request, indent, event,
+                            newText -> UITools.INSTANCE.replaceString(document, selectionStart, selectionEnd, newText));
                 }
             });
         }

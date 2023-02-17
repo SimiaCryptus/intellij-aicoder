@@ -235,7 +235,7 @@ public final class OpenAI_API {
                             String request = getMapper().writeValueAsString(completionRequest);
                             String result = post(settings.apiBase + "/engines/" + model + "/completions", request);
                             CompletionResponse completionResponse = processResponse(result, settings);
-                            @NotNull String completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").toString().trim(), completionRequest.prompt.trim());
+                            @NotNull CharSequence completionResult = stripPrefix(completionResponse.getFirstChoice().orElse("").toString().trim(), completionRequest.prompt.trim());
                             logComplete(completionResult, settings);
                             return completionResponse;
                         } catch (IOException e) {
@@ -317,9 +317,9 @@ public final class OpenAI_API {
         return false;
     }
 
-    private void logComplete(@NotNull String completionResult, @NotNull AppSettingsState settings) {
+    private void logComplete(@NotNull CharSequence completionResult, @NotNull AppSettingsState settings) {
         log(settings.apiLogLevel, String.format("Text Completion Completion:\n\t%s",
-                completionResult.replace("\n", "\n\t")));
+                completionResult.toString().replace("\n", "\n\t")));
     }
 
     private void logStart(@NotNull CompletionRequest completionRequest, @NotNull AppSettingsState settings) {
@@ -347,7 +347,7 @@ public final class OpenAI_API {
 
             @Override
             public void onFailure(@NotNull Throwable t) {
-                UITools.handle(t);
+                UITools.INSTANCE.handle(t);
             }
         }, INSTANCE.pool);
     }
@@ -457,13 +457,13 @@ public final class OpenAI_API {
 
     private void authorize(@NotNull HttpRequestBase request) throws IOException {
         AppSettingsState settingsState = getSettingsState();
-        @Nullable String apiKey = settingsState.apiKey;
+        CharSequence apiKey = settingsState.apiKey;
         if (apiKey.length() == 0) {
             synchronized (settingsState) {
                 apiKey = settingsState.apiKey;
                 if (apiKey.length() == 0) {
-                    apiKey = UITools.queryAPIKey();
-                    settingsState.apiKey = Objects.requireNonNull(apiKey);
+                    apiKey = UITools.INSTANCE.queryAPIKey();
+                    settingsState.apiKey = Objects.requireNonNull(apiKey).toString();
                 }
             }
         }

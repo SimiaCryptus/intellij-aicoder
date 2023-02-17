@@ -38,7 +38,7 @@ public class InteractiveCompletionRequest {
             @Override
             public void actionPerformed(ActionEvent e) {
                 CompletionRequest.@NotNull CompletionRequestWithModel withModel = new CompletionRequest.CompletionRequestWithModel(parent, AppSettingsState.getInstance().model_completion);
-                UITools.readUI(InteractiveCompletionRequest.this, withModel);
+                UITools.INSTANCE.readUI(InteractiveCompletionRequest.this, withModel);
                 @NotNull ListenableFuture<CharSequence> future = OpenAI_API.INSTANCE.complete(null, withModel, "");
                 testRequest.setEnabled(false);
                 Futures.addCallback(future, new FutureCallback<>() {
@@ -57,13 +57,13 @@ public class InteractiveCompletionRequest {
                     @Override
                     public void onFailure(Throwable t) {
                         testRequest.setEnabled(true);
-                        UITools.handle(t);
+                        UITools.INSTANCE.handle(t);
                     }
                 }, OpenAI_API.INSTANCE.pool);
             }
         });
-        suffix = UITools.configureTextArea(new JBTextArea(1, 120));
-        prompt = UITools.wrapScrollPane((new JBTextArea(10, 120)));
+        suffix = UITools.INSTANCE.configureTextArea(new JBTextArea(1, 120));
+        prompt = UITools.INSTANCE.wrapScrollPane((new JBTextArea(10, 120)));
     }
 
 }

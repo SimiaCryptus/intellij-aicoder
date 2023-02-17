@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
 
@@ -33,7 +32,7 @@ public class ToHumanLanguageAction extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        if(!UITools.hasSelection(e)) return false;
+        if(!UITools.INSTANCE.hasSelection(e)) return false;
         if(null == ComputerLanguage.getComputerLanguage(e)) return false;
         return true;
     }
@@ -50,7 +49,7 @@ public class ToHumanLanguageAction extends AnAction {
         @NotNull String computerLanguage = requireNonNull(language).name();
         AppSettingsState settings = AppSettingsState.getInstance();
         @NotNull CompletionRequest request = settings.createTranslationRequest()
-                .setInstruction(UITools.getInstruction("Describe this code"))
+                .setInstruction(UITools.INSTANCE.getInstruction("Describe this code"))
                 .setInputText(selectedText)
                 .setInputType(computerLanguage)
                 .setInputAttribute("type", "input")
@@ -59,9 +58,9 @@ public class ToHumanLanguageAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest();
         @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
-        CharSequence indent = UITools.getIndent(caret);
+        CharSequence indent = UITools.INSTANCE.getIndent(caret);
         @NotNull Document document = editor.getDocument();
-        UITools.redoableRequest(request, indent, event,
-                newText -> replaceString(document, selectionStart, selectionEnd, newText));
+        UITools.INSTANCE.redoableRequest(request, indent, event,
+                newText -> UITools.INSTANCE.replaceString(document, selectionStart, selectionEnd, newText));
     }
 }

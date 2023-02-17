@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.actions.code;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
-import com.github.simiacryptus.aicoder.util.StringTools;
 import com.github.simiacryptus.aicoder.util.TextBlockFactory;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
@@ -20,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
-
 
 /**
  * The RewordCommentAction is an IntelliJ action that allows users to reword comments in their code.
@@ -63,7 +59,7 @@ public class TranslateCommentAction extends AnAction {
         final @NotNull Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
         AppSettingsState settings = AppSettingsState.getInstance();
         PsiElement largestIntersectingComment = rewordCommentParams.largestIntersectingComment;
-        CharSequence indent = UITools.getIndent(rewordCommentParams.caret);
+        CharSequence indent = UITools.INSTANCE.getIndent(rewordCommentParams.caret);
         String text = largestIntersectingComment.getText();
         TextRange textRange = largestIntersectingComment.getTextRange();
         @Nullable TextBlockFactory<?> commentModel = Objects.requireNonNull(computerLanguage.getCommentModel(text));
@@ -78,9 +74,9 @@ public class TranslateCommentAction extends AnAction {
                         humanLanguage.toUpperCase()
                 ));
         @NotNull Document document = editor.getDocument();
-        UITools.redoableRequest(request, "", event,
+        UITools.INSTANCE.redoableRequest(request, "", event,
                 newText -> indent.toString() + commentModel.fromString(newText.toString().trim()).withIndent(indent),
-                newText -> replaceString(document, textRange.getStartOffset(), textRange.getEndOffset(), newText));
+                newText -> UITools.INSTANCE.replaceString(document, textRange.getStartOffset(), textRange.getEndOffset(), newText));
     }
 
     public static class RewordCommentParams {

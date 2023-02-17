@@ -3,9 +3,9 @@ package com.github.simiacryptus.aicoder.actions.markdown;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
+import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
 import com.github.simiacryptus.aicoder.util.StringTools;
-import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -21,9 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.github.simiacryptus.aicoder.util.UITools.insertString;
-
 
 /**
  * The MarkdownListAction class is an action that allows users to quickly expand a list of items in IntelliJ.
@@ -63,12 +60,12 @@ public class MarkdownListAction extends AnAction {
         AppSettingsState settings = AppSettingsState.getInstance();
         @NotNull List<CharSequence> items = StringTools.trim(PsiUtil.getAll(Objects.requireNonNull(markdownListParams).list, "MarkdownListItemImpl")
                 .stream().map(item -> PsiUtil.getAll(item, "MarkdownParagraphImpl").get(0).getText()).collect(Collectors.toList()), 10, false);
-        CharSequence indent = UITools.getIndent(markdownListParams.caret);
+        CharSequence indent = UITools.INSTANCE.getIndent(markdownListParams.caret);
         @NotNull CharSequence n = Integer.toString(items.size() * 2);
         int endOffset = markdownListParams.list.getTextRange().getEndOffset();
         @NotNull String listPrefix = "* ";
         @NotNull CompletionRequest completionRequest = settings.createTranslationRequest()
-                .setInstruction(UITools.getInstruction("List " + n + " items"))
+                .setInstruction(UITools.INSTANCE.getInstruction("List " + n + " items"))
                 .setInputType("instruction")
                 .setInputText("List " + n + " items")
                 .setOutputType("list")
@@ -76,9 +73,9 @@ public class MarkdownListAction extends AnAction {
                 .buildCompletionRequest()
                 .appendPrompt(items.stream().map(x2 -> listPrefix + x2).collect(Collectors.joining("\n")) + "\n" + listPrefix);
         @NotNull Document document = event.getRequiredData(CommonDataKeys.EDITOR).getDocument();
-        UITools.redoableRequest(completionRequest, "", event,
+        UITools.INSTANCE.redoableRequest(completionRequest, "", event,
                 newText -> transformCompletion(markdownListParams, indent, listPrefix, newText),
-                newText -> insertString(document, endOffset, newText));
+                newText -> UITools.INSTANCE.insertString(document, endOffset, newText));
     }
 
     @NotNull

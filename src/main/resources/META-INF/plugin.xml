@@ -135,6 +135,12 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.RenameVariablesAction"
+                text="Rename Variables"
+                description="Rename variables">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="R"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.DocAction"
                 text="_Add Doc Comments"
                 description="Add code comments">

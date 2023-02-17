@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
 import static java.util.Objects.requireNonNull;
 
 
@@ -38,7 +37,7 @@ public class RecentCodeEditsAction extends ActionGroup {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        if (!UITools.hasSelection(e)) return false;
+        if (!UITools.INSTANCE.hasSelection(e)) return false;
         if (null == ComputerLanguage.getComputerLanguage(e)) return false;
         return true;
     }
@@ -75,10 +74,10 @@ public class RecentCodeEditsAction extends ActionGroup {
                             .setInputText(IndentedText.fromString(selectedText).getTextBlock())
                             .buildCompletionRequest();
                     @Nullable Caret caret = event.getData(CommonDataKeys.CARET);
-                    CharSequence indent = UITools.getIndent(caret);
+                    CharSequence indent = UITools.INSTANCE.getIndent(caret);
                     @NotNull Document document = editor.getDocument();
-                    UITools.redoableRequest(request, indent, event,
-                            newText -> replaceString(document, selectionStart, selectionEnd, newText));
+                    UITools.INSTANCE.redoableRequest(request, indent, event,
+                            newText -> UITools.INSTANCE.replaceString(document, selectionStart, selectionEnd, newText));
                 }
             });
         }

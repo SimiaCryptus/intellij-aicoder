@@ -3,10 +3,10 @@ package com.github.simiacryptus.aicoder.actions.code;
 import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.util.ComputerLanguage;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
+import com.github.simiacryptus.aicoder.util.UITools;
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil;
 import com.github.simiacryptus.aicoder.util.StringTools;
 import com.github.simiacryptus.aicoder.util.TextBlockFactory;
-import com.github.simiacryptus.aicoder.util.UITools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-
-import static com.github.simiacryptus.aicoder.util.UITools.replaceString;
-
 
 /**
  * The RewordCommentAction is an IntelliJ action that allows users to reword comments in their code.
@@ -70,9 +67,9 @@ public class RewordCommentAction extends AnAction {
                 .reduce((a, b) -> a + "\n" + b).get();
         int startOffset = rewordCommentParams.largestIntersectingComment.getTextRange().getStartOffset();
         int endOffset = rewordCommentParams.largestIntersectingComment.getTextRange().getEndOffset();
-        CharSequence indent = UITools.getIndent(rewordCommentParams.caret);
+        CharSequence indent = UITools.INSTANCE.getIndent(rewordCommentParams.caret);
         @NotNull CompletionRequest request = settings.createTranslationRequest()
-                .setInstruction(UITools.getInstruction("Reword"))
+                .setInstruction(UITools.INSTANCE.getInstruction("Reword"))
                 .setInputText(commentText)
                 .setInputType(humanLanguage)
                 .setOutputAttrute("type", "input")
@@ -81,9 +78,9 @@ public class RewordCommentAction extends AnAction {
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest();
         @NotNull Document document = editor.getDocument();
-        UITools.redoableRequest(request, "", event,
+        UITools.INSTANCE.redoableRequest(request, "", event,
                 newText -> indent.toString() + commentModel.fromString(StringTools.lineWrapping(newText, 120)).withIndent(indent),
-                newText -> replaceString(document, startOffset, endOffset, newText));
+                newText -> UITools.INSTANCE.replaceString(document, startOffset, endOffset, newText));
     }
 
     public static class RewordCommentParams {

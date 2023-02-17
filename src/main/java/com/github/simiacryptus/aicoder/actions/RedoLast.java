@@ -21,11 +21,11 @@ public class RedoLast extends AnAction {
     }
 
     private static boolean isEnabled(@NotNull AnActionEvent e) {
-        return null != UITools.retry.get(e.getRequiredData(CommonDataKeys.EDITOR).getDocument());
+        return null != UITools.INSTANCE.getRetry().get(e.getRequiredData(CommonDataKeys.EDITOR).getDocument());
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        UITools.retry.get(e.getRequiredData(CommonDataKeys.EDITOR).getDocument()).run();
+        UITools.INSTANCE.getRetry().get(e.getRequiredData(CommonDataKeys.EDITOR).getDocument()).run();
     }
 }
