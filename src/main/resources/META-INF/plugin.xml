@@ -100,6 +100,11 @@
                popup="true">
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </group>
+        <group class="com.github.simiacryptus.aicoder.actions.markdown.AnnotateTextAction"
+               text="_Annotate"
+               popup="true">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </group>
         <group class="com.github.simiacryptus.aicoder.actions.generic.RecentTextEditsAction"
                text="_Recent Text Edits"
                popup="true">

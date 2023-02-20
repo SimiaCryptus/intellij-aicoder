@@ -7,11 +7,19 @@
 ### Added
 - 
 
+## [1.0.9]
+
+### Added
+- Fixed major bug preventing plugin from working
+- Converted a majority of the project to Kotlin
+- Removed references to OpenAI in UI (this is not an official product)
+- Added annotation action
+- Added semi-automated testing and documentation generation
+
 ## [1.0.8]
 
 ### Added
-- Added "rename variables" action-
--
+- Added "rename variables" action
 
 ## [1.0.7]
 

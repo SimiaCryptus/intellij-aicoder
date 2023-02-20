@@ -1,9 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.StringTools
-import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.*
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
 import com.github.simiacryptus.aicoder.util.UITools.showOptionDialog
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
@@ -16,6 +14,7 @@ import com.intellij.util.ui.FormBuilder
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import java.util.*
 import java.util.stream.Collectors
 import javax.swing.Icon
 import javax.swing.JCheckBox
@@ -32,76 +31,124 @@ class RenameVariablesAction : AnAction() {
         return true
     }
 
-    override fun actionPerformed(@NotNull event: AnActionEvent) {
-        @NotNull val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-        @NotNull val caretModel = editor.caretModel
-        @NotNull val primaryCaret = caretModel.primaryCaret
-        @NotNull val outputHumanLanguage = AppSettingsState.getInstance().humanLanguage
-        val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
-        val codeElement = PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, primaryCaret);
-        @NotNull val language = ComputerLanguage.getComputerLanguage(event)
-        val settings = AppSettingsState.getInstance()
-
+    override fun actionPerformed(@NotNull actionEvent: AnActionEvent) {
+        @NotNull val textEditor = actionEvent.getRequiredData(CommonDataKeys.EDITOR)
+        @NotNull val caretModel = textEditor.caretModel
+        @NotNull val mainCursor = caretModel.primaryCaret
+        @NotNull val outputLanguage = AppSettingsState.getInstance().humanLanguage
+        val sourceFile = actionEvent.getRequiredData(CommonDataKeys.PSI_FILE)
+        val codeElement = PsiUtil.getSmallestIntersectingMajorCodeElement(sourceFile, mainCursor) ?: return
+        @NotNull val programmingLanguage = ComputerLanguage.getComputerLanguage(actionEvent)
+        val appSettings = AppSettingsState.getInstance()
         @Language("Markdown")
-        @NotNull val request = settings.createCompletionRequest()
-                .appendPrompt("""
-Extract Parameters and Local Variable names and suggest new names in $outputHumanLanguage
-```${language!!.name}
-  ${codeElement.text.replace("\n", "\n  ", false)}
+        @NotNull val completionRequest = appSettings.createCompletionRequest()
+            .appendPrompt(
+                """
+Extract Parameters and Local Variable names and suggest new names in $outputLanguage
+```${programmingLanguage!!.name}
+  ${codeElement!!.text.replace("\n", "\n  ", false)}
 ```
 
 | Identifier | Rename Suggestion |
 |------------|-------------------|
-""".trim())
-        @Nullable val caret = event.getData(CommonDataKeys.CARET)
-        val indent = UITools.getIndent(caret)
-        UITools.redoableRequest(request, indent, event) { newText ->
+""".trim()
+            )
+        @Nullable val textCursor = actionEvent.getData(CommonDataKeys.CARET)
+        val textIndent = UITools.getIndent(textCursor)
+        UITools.redoableRequest(completionRequest, textIndent, actionEvent) { completionText ->
 
-            val renames = newText!!.split('\n').stream().map { x ->
-                val kv = StringTools.stripSuffix(StringTools.stripPrefix(x.trim(), "|"), "|").split('|').map { x -> x.trim() }
+            val renameSuggestions = completionText!!.split('\n').stream().map { x ->
+                val kv = StringTools.stripSuffix(StringTools.stripPrefix(x.trim(), "|"), "|").split('|')
+                    .map { x -> x.trim() }
                 kv[0] to kv[1]
             }.collect(Collectors.toMap({ x -> x.first }, { x -> x.second }))
 
-            val selected = showCheckboxDialog(
-                    "Select which items to rename",
-                    renames.keys.toTypedArray(),
-                    renames.map { kv -> "${kv.key} -> ${kv.value}" }.toTypedArray()
+            val selectedSuggestions = showCheckboxDialog(
+                "Select which items to rename",
+                renameSuggestions.keys.toTypedArray(),
+                renameSuggestions.map { kv -> "${kv.key} -> ${kv.value}" }.toTypedArray()
             )
 
-            var text = codeElement.text
-            renames.filter { x->selected.contains(x.key) }.forEach { kv -> text = text.replace(Regex("(?<![01-9a-zA-Z_])${kv.key}(?![01-9a-zA-Z_])"), kv.value) }
-            replaceString(editor.document, codeElement.startOffset, codeElement.endOffset, text)
+            var modifiedText = codeElement.text
+            renameSuggestions.filter { x -> selectedSuggestions.contains(x.key) }
+                .forEach { kv -> modifiedText = modifiedText.replace(Regex("(?<![01-9a-zA-Z_])${kv.key}(?![01-9a-zA-Z_])"), kv.value) }
+            replaceString(textEditor.document, codeElement.startOffset, codeElement.endOffset, modifiedText)
 
         }
     }
 
     /**
-    *
-    *  Displays a dialog with a list of checkboxes and an OK button.
-    *  When OK is pressed, returns with an array of the selected IDs
-    *
-    *  @param prompt The prompt to display in the dialog.
-    *  @param ids The ids of the checkboxes.
-    *  @param descriptions The descriptions of the checkboxes.
-    *  @return An array of the ids of the checkboxes that were checked.
-    */
-    fun showCheckboxDialog(prompt: String, ids: Array<String>, descriptions: Array<String>): Array<String> {
+     *
+     *  Displays a dialog with a list of checkboxMap and an OK button.
+     *  When OK is pressed, returns with an array of the selected IDs
+     *
+     *  @param promptMessage The promptMessage to display in the dialog.
+     *  @param checkboxIds The checkboxIds of the checkboxMap.
+     *  @param checkboxDescriptions The checkboxDescriptions of the checkboxMap.
+     *  @return An array of the checkboxIds of the checkboxMap that were checked.
+     */
+    fun showCheckboxDialog(
+        promptMessage: String,
+        checkboxIds: Array<String>,
+        checkboxDescriptions: Array<String>
+    ): Array<String> {
         val formBuilder = FormBuilder.createFormBuilder()
-        val checkboxes = HashMap<String,JCheckBox>()
-        for (i in ids.indices) {
-            val checkbox = JCheckBox(descriptions[i], null as Icon?, true)
-            checkboxes.put(ids[i], checkbox)
+        val checkboxMap = HashMap<String, JCheckBox>()
+        for (i in checkboxIds.indices) {
+            val checkbox = JCheckBox(checkboxDescriptions[i], null as Icon?, true)
+            checkboxMap.put(checkboxIds[i], checkbox)
             formBuilder.addComponent(checkbox)
         }
-        val result = showOptionDialog(formBuilder.panel, "OK", title = "Select Names to Replace")
+        val dialogResult = showOptionDialog(formBuilder.panel, "OK", title = promptMessage)
         val selectedIds = ArrayList<String>()
-        if (result == 0) {
-            for ((id,checkbox) in checkboxes) {
+        if (dialogResult == 0) {
+            for ((checkboxId, checkbox) in checkboxMap) {
                 if (checkbox.isSelected) {
-                    selectedIds.add(id)
+                    selectedIds.add(checkboxId)
                 }
             }
         }
         return selectedIds.toTypedArray()
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

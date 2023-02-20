@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.openai;
 
+import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.github.simiacryptus.aicoder.config.Name;
 import com.github.simiacryptus.aicoder.util.UITools;
 import com.google.common.util.concurrent.FutureCallback;
@@ -55,7 +56,7 @@ public class InteractiveEditRequest {
                         testRequest.setEnabled(true);
                         UITools.INSTANCE.handle(t);
                     }
-                }, OpenAI_API.INSTANCE.pool);
+                }, OpenAI_API.getPool());
             }
         });
         input = UITools.INSTANCE.wrapScrollPane(new JBTextArea(10, 120));

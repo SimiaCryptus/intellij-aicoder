@@ -1,11 +1,11 @@
 package com.github.simiacryptus.aicoder.util
 
+import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.openai.CompletionRequest
 import com.github.simiacryptus.aicoder.openai.EditRequest
 import com.github.simiacryptus.aicoder.openai.ModerationException
-import com.github.simiacryptus.aicoder.openai.OpenAI_API
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -69,9 +69,9 @@ object UITools {
      */
     fun redoableRequest(request: CompletionRequest, indent: CharSequence?, event: AnActionEvent, transformCompletion: Function<CharSequence?, CharSequence?>, action: Function<CharSequence?, Runnable?>) {
         val progressIndicator = startProgress()
-        val resultFuture = OpenAI_API.INSTANCE.complete(event.project, request, indent)
-        Futures.addCallback(resultFuture, object : FutureCallback<CharSequence> {
-            override fun onSuccess(result: CharSequence) {
+        val resultFuture = OpenAI_API.complete(event.project, request, indent!!)
+        Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
+            override fun onSuccess(result: CharSequence?) {
                 progressIndicator?.cancel()
                 val actionFn = AtomicReference<Runnable?>()
                 WriteCommandAction.runWriteCommandAction(event.project) { actionFn.set(action.apply(transformCompletion.apply(result.toString()))) }
@@ -86,7 +86,7 @@ object UITools {
                 progressIndicator?.cancel()
                 handle(t)
             }
-        }, OpenAI_API.INSTANCE.pool)
+        }, OpenAI_API.pool)
     }
 
     /**
@@ -109,9 +109,9 @@ object UITools {
         val document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR))!!.document
         return Runnable {
             val progressIndicator = startProgress()
-            val retryFuture = OpenAI_API.INSTANCE.complete(event.project, request, indent)
-            Futures.addCallback(retryFuture, object : FutureCallback<CharSequence> {
-                override fun onSuccess(result: CharSequence) {
+            val retryFuture = OpenAI_API.complete(event.project, request, indent!!)
+            Futures.addCallback(retryFuture, object : FutureCallback<CharSequence?> {
+                override fun onSuccess(result: CharSequence?) {
                     progressIndicator?.cancel()
                     WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
                     val nextUndo = AtomicReference<Runnable?>()
@@ -123,7 +123,7 @@ object UITools {
                     progressIndicator?.cancel()
                     handle(t)
                 }
-            }, OpenAI_API.INSTANCE.pool)
+            }, OpenAI_API.pool)
         }
     }
 
@@ -135,9 +135,9 @@ object UITools {
         val editor = event.getData(CommonDataKeys.EDITOR)
         val document = Objects.requireNonNull(editor)!!.document
         val progressIndicator = startProgress()
-        val resultFuture = OpenAI_API.INSTANCE.edit(event.project, request.uiIntercept(), indent)
-        Futures.addCallback(resultFuture, object : FutureCallback<CharSequence> {
-            override fun onSuccess(result: CharSequence) {
+        val resultFuture = OpenAI_API.edit(event.project, request.uiIntercept(), indent!!)
+        Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
+            override fun onSuccess(result: CharSequence?) {
                 progressIndicator?.cancel()
                 val undo = AtomicReference<Runnable?>()
                 WriteCommandAction.runWriteCommandAction(event.project) { undo.set(action.apply(transformCompletion.apply(result.toString()))) }
@@ -148,16 +148,16 @@ object UITools {
                 progressIndicator?.cancel()
                 handle(t)
             }
-        }, OpenAI_API.INSTANCE.pool)
+        }, OpenAI_API.pool)
     }
 
     private fun getRetry(request: EditRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence?, Runnable?>, undo: Runnable?): Runnable {
         val document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR))!!.document
         return Runnable {
             val progressIndicator = startProgress()
-            val retryFuture = OpenAI_API.INSTANCE.edit(event.project, request.uiIntercept(), indent)
-            Futures.addCallback(retryFuture, object : FutureCallback<CharSequence> {
-                override fun onSuccess(result: CharSequence) {
+            val retryFuture = OpenAI_API.edit(event.project, request.uiIntercept(), indent!!)
+            Futures.addCallback(retryFuture, object : FutureCallback<CharSequence?> {
+                override fun onSuccess(result: CharSequence?) {
                     progressIndicator?.cancel()
                     WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
                     val nextUndo = AtomicReference<Runnable?>()
@@ -169,7 +169,7 @@ object UITools {
                     progressIndicator?.cancel()
                     handle(t)
                 }
-            }, OpenAI_API.INSTANCE.pool)
+            }, OpenAI_API.pool)
         }
     }
 
@@ -250,7 +250,7 @@ object UITools {
         val documentText = document.text
         val lineNumber = document.getLineNumber(caret.selectionStart)
         val lines = documentText.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        return IndentedText.fromString(lines[Math.min(Math.max(lineNumber, 0), lines.size - 1)]).getIndent()
+        return IndentedText.fromString(lines[Math.min(Math.max(lineNumber, 0), lines.size - 1)]).indent
     }
 
     @Suppress("unused")
@@ -301,7 +301,7 @@ object UITools {
     fun <T : Any> readUI(component: Any, settings: T) {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields = Arrays.stream(componentClass.fields).map { obj: Field -> obj.name }.collect(Collectors.toSet())
-        for (settingsField in settings.javaClass.getFields()) {
+        for (settingsField in settings.javaClass.fields) {
             settingsField.isAccessible = true
             val settingsFieldName = settingsField.name
             try {
@@ -316,7 +316,7 @@ object UITools {
                     "java.lang.String" -> if (uiVal is JTextComponent) {
                         newSettingsValue = uiVal.text
                     } else if (uiVal is ComboBox<*>) {
-                        newSettingsValue = (uiVal as ComboBox<CharSequence?>).item
+                        newSettingsValue = uiVal.item
                     }
 
                     "int" -> if (uiVal is JTextComponent) {
@@ -339,7 +339,7 @@ object UITools {
 
                     else -> if (Enum::class.java.isAssignableFrom(settingsField.type)) {
                         if (uiVal is ComboBox<*>) {
-                            val comboBox = uiVal as ComboBox<CharSequence>
+                            val comboBox = uiVal
                             val item = comboBox.item
                             newSettingsValue = java.lang.Enum.valueOf(settingsField.type as Class<out Enum<*>?>, item.toString())
                         }
@@ -355,7 +355,7 @@ object UITools {
     fun <T : Any> writeUI(component: Any, settings: T) {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields = Arrays.stream(componentClass.fields).map { obj: Field -> obj.name }.collect(Collectors.toSet())
-        for (settingsField in settings.javaClass.getFields()) {
+        for (settingsField in settings.javaClass.fields) {
             val fieldName = settingsField.name
             try {
                 if (!declaredUIFields.contains(fieldName)) continue
@@ -369,15 +369,15 @@ object UITools {
                     "java.lang.String" -> if (uiVal is JTextComponent) {
                         uiVal.text = settingsVal.toString()
                     } else if (uiVal is ComboBox<*>) {
-                        (uiVal as ComboBox<CharSequence?>).setItem(settingsVal.toString())
+                        (uiVal as ComboBox<CharSequence?>).item = settingsVal.toString()
                     }
 
                     "int", "java.lang.Integer" -> if (uiVal is JTextComponent) {
-                        uiVal.text = Integer.toString((settingsVal as Int))
+                        uiVal.text = (settingsVal as Int).toString()
                     }
 
                     "long" -> if (uiVal is JTextComponent) {
-                        uiVal.text = java.lang.Long.toString((settingsVal as Int).toLong())
+                        uiVal.text = (settingsVal as Int).toLong().toString()
                     }
 
                     "boolean" -> if (uiVal is JCheckBox) {
@@ -391,7 +391,7 @@ object UITools {
                     }
 
                     else -> if (uiVal is ComboBox<*>) {
-                        (uiVal as ComboBox<CharSequence?>).setItem(settingsVal.toString())
+                        (uiVal as ComboBox<CharSequence?>).item = settingsVal.toString()
                     }
                 }
             } catch (e: Throwable) {
@@ -406,7 +406,7 @@ object UITools {
             if (Modifier.isStatic(field.modifiers)) continue
             try {
                 val nameAnnotation = field.getDeclaredAnnotation(Name::class.java)
-                val component = field[ui] as JComponent ?: continue
+                val component = field[ui] as JComponent
                 if (nameAnnotation != null) {
                     if (first) {
                         first = false
@@ -492,16 +492,13 @@ object UITools {
             }
         }
         pane.selectInitialValue()
-        dialog.show()
+        dialog.isVisible = true
         dialog.dispose()
         return getSelectedValue(pane, options)
     }
 
     private fun getSelectedValue(pane: JOptionPane, options: Array<out Any>): Int {
         val selectedValue = pane.value ?: return JOptionPane.CLOSED_OPTION
-        if (options == null) {
-            return if (selectedValue is Int) selectedValue else JOptionPane.CLOSED_OPTION
-        }
         var counter = 0
         val maxCounter = options.size
         while (counter < maxCounter) {

@@ -1,0 +1,121 @@
+package com.github.simiacryptus.aicoder.util.psi
+
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import java.util.ArrayList
+
+class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boolean) {
+    val children = ArrayList<PsiClassContext>()
+
+    /**
+     * This java code is initializing a PsiClassContext object. It is doing this by creating a PsiElementVisitor and using it to traverse the PsiFile.
+     * It is checking the text range of each element and whether it is prior to, overlapping, or within the selectionStart and selectionEnd parameters.
+     * Depending on the element, it is adding the text of the element to the PsiClassContext object, or recursively visiting its children.
+     *
+     * @param psiFile
+     * @param selectionStart
+     * @param selectionEnd
+     * @return
+     */
+    fun init(psiFile: PsiFile, selectionStart: Int, selectionEnd: Int): PsiClassContext {
+        object : PsiVisitorBase() {
+            var currentContext = this@PsiClassContext
+            var indent = ""
+            override fun visit(element: PsiElement, self: PsiElementVisitor) {
+                val text = element.text
+                val textRange = element.textRange
+                val textRangeEndOffset = textRange.endOffset + 1
+                val textRangeStartOffset = textRange.startOffset
+                // Check if the element comes before the selection
+                val isPrior = textRangeEndOffset < selectionStart
+                // Check if the element overlaps with the selection
+                val isOverlap =
+                    textRangeStartOffset >= selectionStart && textRangeStartOffset <= selectionEnd || textRangeEndOffset >= selectionStart && textRangeEndOffset <= selectionEnd || textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart || textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd
+                // Check if the element is within the selection
+                val within =
+                    textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart && textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd
+                if (PsiUtil.matchesType(element, "ImportList")) {
+                    currentContext.children.add(PsiClassContext(text.trim { it <= ' ' }, isPrior, isOverlap))
+                } else if (PsiUtil.matchesType(element, "Comment", "DocComment")) {
+                    if (within) {
+                        currentContext.children.add(PsiClassContext(indent + text.trim { it <= ' ' }, false, true))
+                    }
+                } else if (PsiUtil.matchesType(element, "Method", "Field")) {
+                    processChildren(
+                        element,
+                        self,
+                        isPrior,
+                        isOverlap,
+                        indent + PsiUtil.getDeclaration(element).trim { it <= ' ' } + if (isOverlap) " {" else ";")
+                } else if (PsiUtil.matchesType(element, "LocalVariable")) {
+                    currentContext.children.add(PsiClassContext(indent + text.trim { it <= ' ' } + ";",
+                        isPrior,
+                        isOverlap))
+                } else if (PsiUtil.matchesType(element, "Class")) {
+                    processChildren(
+                        element,
+                        self,
+                        isPrior,
+                        isOverlap,
+                        indent + text.substring(0, text.indexOf('{')).trim { it <= ' ' } + " {")
+                    if (!isOverlap) {
+                        currentContext.children.add(PsiClassContext("}", isPrior, false))
+                    }
+                } else if (!isOverlap && PsiUtil.matchesType(element, "CodeBlock", "ForStatement")) {
+                    // Skip
+                } else {
+                    element.acceptChildren(self)
+                }
+            }
+
+            private fun processChildren(
+                element: PsiElement,
+                self: PsiElementVisitor,
+                isPrior: Boolean,
+                isOverlap: Boolean,
+                declarationText: String
+            ): PsiClassContext {
+                val newNode = PsiClassContext(declarationText, isPrior, isOverlap)
+                currentContext.children.add(newNode)
+                val prevclassBuffer = currentContext
+                currentContext = newNode
+                val prevIndent = indent
+                indent += "  "
+                element.acceptChildren(self)
+                indent = prevIndent
+                currentContext = prevclassBuffer
+                return newNode
+            }
+        }.build(psiFile)
+        return this
+    }
+
+    override fun toString(): String {
+        val sb = ArrayList<String>()
+        sb.add(text)
+        children.stream().filter { x: PsiClassContext -> x.isPrior }.map { obj: PsiClassContext -> obj.toString() }
+            .forEach { e: String -> sb.add(e) }
+        children.stream().filter { x: PsiClassContext -> !x.isOverlap && !x.isPrior }
+            .map { obj: PsiClassContext -> obj.toString() }
+            .forEach { e: String -> sb.add(e) }
+        children.stream().filter { x: PsiClassContext -> x.isOverlap }.map { obj: PsiClassContext -> obj.toString() }
+            .forEach { e: String -> sb.add(e) }
+        return sb.stream().reduce { l: String, r: String ->
+            """
+                $l
+                $r
+                """.trimIndent()
+        }.get()
+    }
+
+    companion object {
+        fun getContext(psiFile: PsiFile, selectionStart: Int, selectionEnd: Int): PsiClassContext {
+            return PsiClassContext("", false, true).init(psiFile, selectionStart, selectionEnd)
+        }
+
+        fun getContext(psiFile: PsiFile): PsiClassContext {
+            return getContext(psiFile, 0, psiFile.textLength)
+        }
+    }
+}

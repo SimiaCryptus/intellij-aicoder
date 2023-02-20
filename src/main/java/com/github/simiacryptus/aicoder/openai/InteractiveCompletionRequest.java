@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.openai;
 
+import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.config.Name;
 import com.github.simiacryptus.aicoder.util.UITools;
@@ -59,7 +60,7 @@ public class InteractiveCompletionRequest {
                         testRequest.setEnabled(true);
                         UITools.INSTANCE.handle(t);
                     }
-                }, OpenAI_API.INSTANCE.pool);
+                }, OpenAI_API.getPool());
             }
         });
         suffix = UITools.INSTANCE.configureTextArea(new JBTextArea(1, 120));

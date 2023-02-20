@@ -6,6 +6,7 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     // Java support
     id("java")
+    id("scala")
     // Kotlin support
     id("org.jetbrains.kotlin.jvm") version "1.7.21"
     // Gradle IntelliJ Plugin
@@ -24,7 +25,20 @@ version = properties("pluginVersion")
 // Configure project's dependencies
 repositories {
     mavenCentral()
+    maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 }
+
+dependencies {
+    testImplementation("com.intellij.remoterobot:remote-robot:0.11.16") // https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/remoterobot/remote-robot/
+    testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.16")
+    testImplementation("com.intellij.remoterobot:ide-launcher:0.11.16")
+    testImplementation("com.squareup.okhttp3:okhttp:3.14.9")
+    testImplementation(kotlin("script-runtime"))
+    testImplementation("org.scala-lang:scala-compiler:2.13.10")
+    testImplementation("org.scala-lang:scala-reflect:2.13.10")
+    testImplementation("org.scala-lang:scala-library:2.13.10")
+}
+
 
 // Set the JVM language level used to build project. Use Java 11 for 2020.3+, and Java 17 for 2022.2+.
 kotlin {
