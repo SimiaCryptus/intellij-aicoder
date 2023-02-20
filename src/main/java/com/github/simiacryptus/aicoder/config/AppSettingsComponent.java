@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.config;
 
+import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.github.simiacryptus.aicoder.util.StyleUtil;
-import com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBCheckBox;
@@ -24,14 +24,15 @@ public class AppSettingsComponent {
     public final JButton randomizeStyle = new JButton(new AbstractAction("Randomize Style") {
         @Override
         public void actionPerformed(ActionEvent e) {
-            style.setText(StyleUtil.randomStyle());
+            style.setText(StyleUtil.INSTANCE.randomStyle());
         }
     });
+
     @SuppressWarnings("unused")
     public final JButton testStyle = new JButton(new AbstractAction("Test Style") {
         @Override
         public void actionPerformed(ActionEvent e) {
-            StyleUtil.demoStyle(style.getText());
+            StyleUtil.INSTANCE.demoStyle(style.getText());
         }
     });
 

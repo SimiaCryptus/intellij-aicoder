@@ -118,7 +118,7 @@ public class EditRequest {
         UITools.INSTANCE.addFields(ui, formBuilder);
         UITools.INSTANCE.writeUI(ui, withModel);
         JPanel mainPanel = formBuilder.getPanel();
-        if (UITools.INSTANCE.showOptionDialog(mainPanel, new Object[]{"OK"}, "OpenAI Completion Request") == 0) {
+        if (UITools.INSTANCE.showOptionDialog(mainPanel, new Object[]{"OK"}, "Completion Request") == 0) {
             UITools.INSTANCE.readUI(ui, withModel);
             return withModel;
         } else {
