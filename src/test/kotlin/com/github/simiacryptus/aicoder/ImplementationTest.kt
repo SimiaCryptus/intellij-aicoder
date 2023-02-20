@@ -19,6 +19,7 @@ class ImplementationTest {
     @Test
     fun implementClass() {
         val buildDir = File("$basePath\\build")
+        if (!buildDir.exists()) return
         val testOutputFile = File(buildDir, "Implementations.md")
         val out = PrintWriter(FileOutputStream(testOutputFile))
         documentJavaImplementation("PrimeNumbers", "Print all prime numbers from 1 to 100", out, buildDir)
