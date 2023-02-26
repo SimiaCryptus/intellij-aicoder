@@ -89,7 +89,9 @@ class PsiClassContextAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            return if (null == ComputerLanguage.getComputerLanguage(e)) false else getPsiClassContextActionParams(e).isPresent
+            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+            if(computerLanguage == ComputerLanguage.Text) return false
+            return getPsiClassContextActionParams(e).isPresent
         }
 
         fun getPsiClassContextActionParams(e: AnActionEvent): Optional<PsiClassContextActionParams> {

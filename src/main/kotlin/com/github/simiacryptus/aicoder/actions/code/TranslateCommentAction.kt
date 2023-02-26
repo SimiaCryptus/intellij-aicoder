@@ -67,7 +67,9 @@ class TranslateCommentAction : AnAction() {
     class RewordCommentParams constructor(val caret: Caret, val largestIntersectingComment: PsiElement)
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            return if (null == ComputerLanguage.getComputerLanguage(e)) false else null != getRewordCommentParams(e)
+            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+            if(computerLanguage == ComputerLanguage.Text) return false
+            return null != getRewordCommentParams(e)
         }
 
         fun getRewordCommentParams(e: AnActionEvent): RewordCommentParams? {

@@ -22,7 +22,8 @@ class MarkdownNewTableRowsAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val markdownNewTableRowsParams = getMarkdownNewTableRowsParams(event)
         val rows = StringTools.trim(
-            PsiUtil.getAll(markdownNewTableRowsParams!!.table, "MarkdownTableRowImpl"
+            PsiUtil.getAll(
+                markdownNewTableRowsParams!!.table, "MarkdownTableRowImpl"
             ).stream().map { obj: PsiElement -> obj.text!! }.collect(Collectors.toList()), 10, true
         )
         val n: CharSequence = Integer.toString(rows.size * 2)
@@ -82,17 +83,7 @@ class MarkdownNewTableRowsAction : AnAction() {
                 .toTypedArray())
                 .map { obj: String -> obj.trim { it <= ' ' } }.filter { x: String -> x.length > 0 }
                 .collect(Collectors.toList())
-            return """
-     
-     $indent
-     """.trimIndent() + newRows.stream().collect(
-                Collectors.joining(
-                    """
-                    
-                    $indent
-                    """.trimIndent()
-                )
-            )
+            return "\n$indent" + newRows.stream().collect(Collectors.joining("\n$indent"))
         }
     }
 }

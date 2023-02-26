@@ -1,8 +1,10 @@
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.ComponentFixture
+import com.intellij.remoterobot.fixtures.dataExtractor.RemoteText
 import com.intellij.remoterobot.search.locators.Locators
 import com.intellij.remoterobot.utils.Keyboard
 
+import java.awt.Point
 import java.awt.event.KeyEvent
 import java.io.{File, FileOutputStream, PrintWriter}
 import java.lang.Thread.sleep
@@ -51,8 +53,9 @@ def implementAndRunJavaClass(name: String, task: String) = {
   keyboard.selectAll()
   keyboard.key(KeyEvent.VK_DELETE)
   multiline(
-    """public class """ + name + """ {
-      |  // """ + task)
+    """public class """ + name +
+      """ {
+        |  // """ + task)
   keyboard.key(KeyEvent.VK_CONTEXT_MENU)
   keyboard.key(KeyEvent.VK_A)
   keyboard.key(KeyEvent.VK_I)
@@ -95,17 +98,63 @@ def testTask(name: String, directive: String): Unit = {
 
 testTask("PrimeNumbers", "Print all prime numbers from 1 to 100")
 
-println(robot.find(classOf[ComponentFixture], Locators.byXpath("//div[@class='EditorComponentImpl']")).getData.getAll.asScala.map(x=>x.getText).mkString(""))
-println(robot.find(classOf[ComponentFixture], Locators.byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")).getData.getAll.asScala.map(x=>x.getText).mkString(""))
+println(robot.find(classOf[ComponentFixture], Locators.byXpath("//div[@class='EditorComponentImpl']")).getData.getAll.asScala.map(x => x.getText).mkString(""))
+println(robot.find(classOf[ComponentFixture], Locators.byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")).getData.getAll.asScala.map(x => x.getText).mkString(""))
 
 
-val editor = robot.find(classOf[ComponentFixture], Locators.byXpath("//div[@accessiblename.key='editor.for.file.accessible.name']"))
+val editor = robot.find(classOf[ComponentFixture], Locators.byXpath("//div[@class='EditorComponentImpl']"))
+
+sleep(5000)
+editor.runJs("robot.moveMouse(component)")
+
 editor.callJs("java.util.Arrays.stream(robot.getClass().getMethods()).map((x)=>x.getName()).collect(java.util.stream.Collectors.joining(\"\\\n\"))")
-java.util.Arrays.stream(robot.getClass().getMethods()).map(x=>x.getName()).collect(java.util.stream.Collectors.joining("\n"))
+java.util.Arrays.stream(robot.getClass().getMethods()).map(x => x.getName()).collect(java.util.stream.Collectors.joining("\n"))
+
+val data = editor.getData
+println(data.getAll.asScala.groupBy(_.getPoint.y).toList.sortBy(_._1).map(_._2).map(_.toList.sortBy(_.getPoint.x).map(_.getText).mkString("")).mkString("\n"))
 
 
 //robot.find(ComponentFixture::class.java, byXpath("//div[@accessiblename.key='editor.for.file.accessible.name']"))
-robot.find(classOf[ComponentFixture], Locators.byXpath("//div[contains(@myvisibleactions, 'all')]//div[contains(@myaction.key, 'action.stop')]")).getData.
+robot.find(classOf[ComponentFixture], Locators.byXpath("//div[contains(@myvisibleactions, 'all')]//div[contains(@myaction.key, 'action.stop')]")).getData;
+
+sleep(5000)
+editor.click()
+keyboard.key(KeyEvent.VK_CONTEXT_MENU)
+keyboard.key(KeyEvent.VK_A)
+robot.find(classOf[ComponentFixture], Locators.byXpath("//div[@class='HeavyWeightWindow'][.//div[@class='MyMenu']]//div[@class='HeavyWeightWindow']//div[contains(@text, 'Describe Code')]")).runJs("robot.moveMouse(component)")
 
 
-out.close()
+def findText(element: ComponentFixture, text: String) = {
+  val lines: Map[Int, Iterable[RemoteText]] = element.getData.getAll().asScala.groupBy(_.getPoint.y)
+  val line = lines.toList.filter(_._2.map(_.getText).reduce(_ + _).contains(text)).head._2
+  val index = line.map(_.getText).reduce(_ + _).indexOf(text)
+  val lineBuffer = line.toBuffer
+  var left = index
+  while (left > 0) {
+    val first = lineBuffer.head
+    if (first.getText.length <= left) {
+      left -= first.getText.length
+      lineBuffer.remove(0)
+    }
+  }
+  val leftPoint = lineBuffer.head.getPoint
+  left += text.length
+  while (left > 0) {
+    val first = lineBuffer.head
+    if (first.getText.length <= left) {
+      left -= first.getText.length
+      lineBuffer.remove(0)
+    }
+  }
+  val rightPoint = lineBuffer.head.getPoint
+  (leftPoint, rightPoint)
+}
+def selectText(text:String): Unit = {
+  val (leftPoint, rightPoint) = findText(editor, text)
+  editor.runJs(s"robot.pressMouse(component, new Point(${leftPoint.x}, ${leftPoint.y}))")
+  editor.runJs(s"robot.moveMouse(component, new Point(${rightPoint.x}, ${rightPoint.y}))")
+  editor.runJs(s"robot.releaseMouseButtons()")
+}
+
+sleep(2000)
+selectText("public static")

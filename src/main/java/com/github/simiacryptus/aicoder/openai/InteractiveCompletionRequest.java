@@ -1,6 +1,5 @@
 package com.github.simiacryptus.aicoder.openai;
 
-import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.github.simiacryptus.aicoder.config.AppSettingsState;
 import com.github.simiacryptus.aicoder.config.Name;
 import com.github.simiacryptus.aicoder.util.UITools;

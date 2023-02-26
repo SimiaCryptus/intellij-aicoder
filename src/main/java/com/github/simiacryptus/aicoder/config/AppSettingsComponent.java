@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.config;
 
-import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API;
+import com.github.simiacryptus.aicoder.openai.OpenAI_API;
 import com.github.simiacryptus.aicoder.util.StyleUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;

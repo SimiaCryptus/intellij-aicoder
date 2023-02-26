@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import java.util.*
+import javax.swing.JOptionPane
 
 /**
  * The DescribeAction class is an action that can be used to describe a piece of code in plain language.
@@ -14,10 +15,15 @@ import java.util.*
  * The action will then generate a description of the code in the user's chosen language.
  * The description will be formatted according to the user's chosen style and will be inserted prior to the code as a comment.
  */
-class DescribeAction : AnAction() {
+class QuestionAction : AnAction() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)
+    }
+    private fun isEnabled(e: AnActionEvent): Boolean {
+        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+        if (computerLanguage == ComputerLanguage.Text) return false
+        return true
     }
     override fun actionPerformed(event: AnActionEvent) {
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
@@ -39,11 +45,6 @@ class DescribeAction : AnAction() {
         }
         actionPerformed(event, editor, selectionStart, selectionEnd, selectedText, language)
     }
-    private fun isEnabled(e: AnActionEvent): Boolean {
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-        if (computerLanguage == ComputerLanguage.Text) return false
-        return true
-    }
     private fun actionPerformed(
         event: AnActionEvent,
         editor: Editor,
@@ -54,32 +55,26 @@ class DescribeAction : AnAction() {
     ) {
         val indent = UITools.getIndent(event)
         val settings = AppSettingsState.getInstance()
-        val request = settings.createTranslationRequest()
-            .setInputType(language.name)
-            .setOutputType(settings.humanLanguage)
-            .setInstruction(UITools.getInstruction("Explain this " + language.name + " in " + settings.humanLanguage))
-            .setInputAttribute("type", "code")
-            .setOutputAttrute("type", "description")
-            .setOutputAttrute("style", settings.style)
-            .setInputText(IndentedText.fromString(selectedText).textBlock.toString().trim { it <= ' ' })
-            .buildCompletionRequest()
+        val question = JOptionPane.showInputDialog(null, "Question:", "Question", JOptionPane.QUESTION_MESSAGE) ?: return
+        if(question.isBlank()) return
+        val request = settings.createCompletionRequest()
+            .appendPrompt("""
+                Analyze the following code to answer the question "$question"
+                ```$language
+                    ${selectedText.replace("\n", "\n    ")}
+                ```
+                
+                Question: $question
+                Answer:
+            """.trimIndent())
         UITools.redoableRequest(request, indent, event,
             { newText ->
-                val wrapping = StringTools.lineWrapping(
-                    newText!!.toString().trim { it <= ' ' }, 120
-                )
-                val numberOfLines = wrapping.trim { it <= ' ' }.split("\n".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray().size
-                val commentStyle =
-                    if (numberOfLines == 1) {
-                        language.lineComment
-                    } else {
-                        language.blockComment
-                    }
-                """
-                        $indent${Objects.requireNonNull(commentStyle)!!.fromString(wrapping)!!.withIndent(indent)}
-                        $indent$selectedText
-                        """.trimIndent()
+                var text = """
+                    Question: $question
+                    Answer: ${newText.toString().trim()}
+                """.trimMargin()
+                //text = StringTools.lineWrapping(text!!.toString().trim { it <= ' ' }, 120)
+                "$indent${language.blockComment.fromString(text)!!.withIndent(indent)}\n$indent$selectedText"
             }, { newText ->
                 UITools.replaceString(
                     editor.document,

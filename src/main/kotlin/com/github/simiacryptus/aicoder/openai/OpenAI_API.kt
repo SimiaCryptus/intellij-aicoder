@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai
+package com.github.simiacryptus.aicoder.openai
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonProcessingException
@@ -7,14 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.CompletionRequest
-import com.github.simiacryptus.aicoder.openai.CompletionResponse
-import com.github.simiacryptus.aicoder.openai.EditRequest
-import com.github.simiacryptus.aicoder.openai.ModerationException
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.StringTools
-import com.github.simiacryptus.aicoder.util.UITools.handle
-import com.github.simiacryptus.aicoder.util.UITools.queryAPIKey
+import com.github.simiacryptus.aicoder.util.UITools
 import com.google.common.util.concurrent.*
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -38,14 +33,12 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
 import java.io.IOException
 import java.util.*
+import java.util.Map
 import java.util.concurrent.*
 import java.util.function.Consumer
-import java.util.function.Function
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 import javax.swing.JComponent
-import kotlin.collections.MutableMap
-import kotlin.collections.set
 
 object OpenAI_API {
 
@@ -121,12 +114,12 @@ object OpenAI_API {
     fun complete(
         project: Project?,
         request: CompletionRequest,
-        filter: Function<Optional<CharSequence?>, Optional<CharSequence?>>
+        filter: (Optional<CharSequence?>) -> Optional<String>
     ): ListenableFuture<CharSequence?> {
         return map(
             complete(project, request)
         ) { response: CompletionResponse ->
-            filter.apply(
+            filter(
                 response.firstChoice
             ).orElse("")
         }
@@ -139,12 +132,12 @@ object OpenAI_API {
     fun edit(
         project: Project?,
         request: EditRequest,
-        filter: Function<Optional<CharSequence?>, Optional<CharSequence?>>
+        filter: (Optional<CharSequence?>) -> Optional<String>
     ): ListenableFuture<CharSequence?> {
         return map(
             edit(project, request)
         ) { response: CompletionResponse ->
-            filter.apply(
+            filter(
                 response.firstChoice
             ).orElse("")
         }
@@ -402,7 +395,7 @@ object OpenAI_API {
                         val body: String
                         body = try {
                             mapper.writeValueAsString(
-                                java.util.Map.of(
+                                Map.of(
                                     "input",
                                     text
                                 )
@@ -519,7 +512,7 @@ object OpenAI_API {
             synchronized(settingsState) {
                 apiKey = settingsState.apiKey
                 if (apiKey.length == 0) {
-                    apiKey = queryAPIKey()!!
+                    apiKey = UITools.queryAPIKey()!!
                     settingsState.apiKey = apiKey.toString()
                 }
             }
@@ -550,8 +543,8 @@ object OpenAI_API {
 
     private val log = Logger.getInstance(OpenAI_API::class.java)
     private val activeModelUI = WeakHashMap<ComboBox<CharSequence?>, Any>()
-    fun filterCodeInsert(indent: CharSequence): Function<Optional<CharSequence?>, Optional<CharSequence?>> {
-        return Function { response: Optional<CharSequence?> ->
+    fun filterCodeInsert(indent: CharSequence): (Optional<CharSequence?>) -> Optional<String> {
+        return { response: Optional<CharSequence?> ->
             response
                 .map { o: CharSequence? ->
                     Objects.toString(
@@ -576,8 +569,7 @@ object OpenAI_API {
                 }
                 .map { obj: IndentedText -> obj.toString() }
                 .map { text: String -> indent.toString() + text }
-        }
-    }
+        }    }
 
     private fun <T> run(project: Project?, task: Task.WithResult<T, Exception?>, retries: Int): T {
         return try {
@@ -632,7 +624,7 @@ object OpenAI_API {
             }
 
             override fun onFailure(t: Throwable) {
-                handle(t)
+                UITools.handle(t)
             }
         }, pool)
     }

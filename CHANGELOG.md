@@ -7,6 +7,15 @@
 ### Added
 - 
 
+## [1.0.10]
+
+### Added
+- New functional tests
+- Test-generated documentation
+- Added "replace options" action
+- Added "ask a question" action
+- Various formatting fixes
+
 ## [1.0.9]
 
 ### Added

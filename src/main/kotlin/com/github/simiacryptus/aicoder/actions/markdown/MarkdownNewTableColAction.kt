@@ -91,9 +91,9 @@ class MarkdownNewTableColAction : AnAction() {
             rowPrefix: CharSequence
         ): CompletionRequest {
             return settings.createTranslationRequest()
-                .setInstruction(UITools.getInstruction("List $n items"))
+                .setInstruction(UITools.getInstruction("Output $n rows"))
                 .setInputType("instruction")
-                .setInputText("List $n items")
+                .setInputText("Output $n rows")
                 .setOutputType("markdown")
                 .setOutputAttrute("style", settings.style)
                 .buildCompletionRequest()
@@ -124,12 +124,7 @@ class MarkdownNewTableColAction : AnAction() {
                     newRows.stream()
                 ).collect(Collectors.joining("\n")), false, true
             )
-            return newTableTxt.replace(
-                "\n", """
-     
-     $indent
-     """.trimIndent()
-            )
+            return newTableTxt.replace("\n", "\n$indent")
         }
     }
 }

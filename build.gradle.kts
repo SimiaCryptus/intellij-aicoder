@@ -31,9 +31,7 @@ repositories {
 dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:0.11.16") // https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/remoterobot/remote-robot/
     testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.16")
-    testImplementation("com.intellij.remoterobot:ide-launcher:0.11.16")
     testImplementation("com.squareup.okhttp3:okhttp:3.14.9")
-    testImplementation(kotlin("script-runtime"))
     testImplementation("org.scala-lang:scala-compiler:2.13.10")
     testImplementation("org.scala-lang:scala-reflect:2.13.10")
     testImplementation("org.scala-lang:scala-library:2.13.10")

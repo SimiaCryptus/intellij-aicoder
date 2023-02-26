@@ -64,12 +64,13 @@ class ImplementAction : AnAction() {
 
         private fun isEnabled(event: AnActionEvent): Boolean {
             if (!AppSettingsState.getInstance().devActions) return false
-            ComputerLanguage.getComputerLanguage(event) ?: return false
+            val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+            if(computerLanguage == ComputerLanguage.Text) return false
             val caret = event.getData(CommonDataKeys.CARET)
             val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
             val smallestIntersectingMethod =
                 getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return false
-            return isStub(smallestIntersectingMethod!!)
+            return isStub(smallestIntersectingMethod)
         }
 
         private fun isStub(element: PsiElement): Boolean {

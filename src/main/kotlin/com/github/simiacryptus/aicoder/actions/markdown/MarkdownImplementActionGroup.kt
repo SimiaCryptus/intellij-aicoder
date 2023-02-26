@@ -50,6 +50,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
 
     private fun isEnabled(e: AnActionEvent): Boolean {
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+        if(computerLanguage == ComputerLanguage.Text) return false
         if (ComputerLanguage.Markdown != computerLanguage) return false
         return hasSelection(e)
     }
