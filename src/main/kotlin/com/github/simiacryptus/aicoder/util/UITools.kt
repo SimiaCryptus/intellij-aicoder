@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API
+import com.github.simiacryptus.aicoder.openai.OpenAI_API
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.openai.CompletionRequest
@@ -521,5 +521,63 @@ object UITools {
         scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
         scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
         return scrollPane
+    }
+
+    /**
+     *
+     *  Displays a dialog with a list of checkboxMap and an OK button.
+     *  When OK is pressed, returns with an array of the selected IDs
+     *
+     *  @param promptMessage The promptMessage to display in the dialog.
+     *  @param checkboxIds The checkboxIds of the checkboxMap.
+     *  @param checkboxDescriptions The checkboxDescriptions of the checkboxMap.
+     *  @return An array of the checkboxIds of the checkboxMap that were checked.
+     */
+    fun showCheckboxDialog(
+        promptMessage: String,
+        checkboxIds: Array<String>,
+        checkboxDescriptions: Array<String>
+    ): Array<String> {
+        val formBuilder = FormBuilder.createFormBuilder()
+        val checkboxMap = HashMap<String, JCheckBox>()
+        for (i in checkboxIds.indices) {
+            val checkbox = JCheckBox(checkboxDescriptions[i], null as Icon?, true)
+            checkboxMap.put(checkboxIds[i], checkbox)
+            formBuilder.addComponent(checkbox)
+        }
+        val dialogResult = showOptionDialog(formBuilder.panel, "OK", title = promptMessage)
+        val selectedIds = ArrayList<String>()
+        if (dialogResult == 0) {
+            for ((checkboxId, checkbox) in checkboxMap) {
+                if (checkbox.isSelected) {
+                    selectedIds.add(checkboxId)
+                }
+            }
+        }
+        return selectedIds.toTypedArray()
+    }
+
+    fun showRadioButtonDialog(
+        promptMessage: String,
+        vararg radioButtonDescriptions: String
+    ): String? {
+        val formBuilder = FormBuilder.createFormBuilder()
+        val radioButtonMap = HashMap<String, JRadioButton>()
+        val buttonGroup = ButtonGroup()
+        for (i in radioButtonDescriptions.indices) {
+            val radioButton = JRadioButton(radioButtonDescriptions[i], null as Icon?, true)
+            radioButtonMap.put(radioButtonDescriptions[i], radioButton)
+            buttonGroup.add(radioButton)
+            formBuilder.addComponent(radioButton)
+        }
+        val dialogResult = showOptionDialog(formBuilder.panel, "OK", title = promptMessage)
+        if (dialogResult == 0) {
+            for ((radioButtonId, radioButton) in radioButtonMap) {
+                if (radioButton.isSelected) {
+                    return radioButtonId
+                }
+            }
+        }
+        return null
     }
 }

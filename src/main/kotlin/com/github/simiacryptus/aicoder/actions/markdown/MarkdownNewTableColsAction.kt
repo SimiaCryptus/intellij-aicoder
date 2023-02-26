@@ -57,8 +57,8 @@ class MarkdownNewTableColsAction : AnAction() {
         private fun isEnabled(e: AnActionEvent): Boolean {
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             return if (ComputerLanguage.Markdown !== computerLanguage) false else null != getMarkdownNewTableColsParams(
-                e
-            )
+                    e
+                )
         }
 
         fun getMarkdownNewTableColsParams(e: AnActionEvent): MarkdownNewTableColsParams? {
@@ -102,12 +102,7 @@ class MarkdownNewTableColsAction : AnAction() {
                 Stream.concat(markdownNewTableColsParams.rows.stream(), newRows.stream())
                     .collect(Collectors.joining("\n")), false, true
             )
-            return newTableTxt.replace(
-                "\n", """
-     
-     $indent
-     """.trimIndent()
-            )
+            return newTableTxt.replace("\n", "\n$indent")
         }
     }
 }

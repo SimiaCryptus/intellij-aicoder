@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.util.psi
 
-import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API.complete
-import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API.pool
+import com.github.simiacryptus.aicoder.openai.OpenAI_API.complete
+import com.github.simiacryptus.aicoder.openai.OpenAI_API.pool
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.google.common.collect.Streams

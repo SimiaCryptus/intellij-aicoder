@@ -19,8 +19,8 @@ class GenericInsert : AnAction() {
         val caret = event.getData(CommonDataKeys.CARET)
         val document = caret!!.editor.document
         val caretPosition = caret.offset
-        val before = StringTools.getSuffixForContext(document.getText(TextRange(0, caretPosition)))
-        val after = StringTools.getPrefixForContext(document.getText(TextRange(caretPosition, document.textLength)))
+        val before = StringTools.getSuffixForContext(document.getText(TextRange(0, caretPosition)), 32)
+        val after = StringTools.getPrefixForContext(document.getText(TextRange(caretPosition, document.textLength)), 32)
         val settings = AppSettingsState.getInstance()
         val completionRequest = settings.createCompletionRequest()
             .appendPrompt(before)

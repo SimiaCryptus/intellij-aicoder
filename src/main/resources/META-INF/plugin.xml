@@ -33,6 +33,12 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </action>
 
+        <action class="com.github.simiacryptus.aicoder.actions.generic.ReplaceOptions"
+                text="_Replace Options"
+                description="Replace options">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.GenericInsert"
                 text="_Insert Text"
                 description="Insert text">
@@ -101,7 +107,7 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </group>
         <group class="com.github.simiacryptus.aicoder.actions.markdown.AnnotateTextAction"
-               text="_Annotate"
+               text="A_nnotate"
                popup="true">
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </group>
@@ -129,10 +135,16 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.DescribeAction"
-                text="_Describe Code and Prepend Comment"
+                text="Desc_ribe Code and Prepend Comment"
                 description="Add doc comments">
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="D"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.QuestionAction"
+                text="Ask a _question about the code"
+                description="Ask a question about the code">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="Q"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.CommentsAction"
                 text="Add Code _Comments"
@@ -147,7 +159,7 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="R"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.DocAction"
-                text="_Add Doc Comments"
+                text="Add _Doc Comments"
                 description="Add code comments">
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="X"/>

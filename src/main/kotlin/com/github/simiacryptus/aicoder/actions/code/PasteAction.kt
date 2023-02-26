@@ -62,7 +62,10 @@ class PasteAction : AnAction() {
         private fun isEnabled(e: AnActionEvent): Boolean {
             return if (CopyPasteManager.getInstance()
                     .getContents<Any?>(DataFlavor.stringFlavor) == null
-            ) false else null != ComputerLanguage.getComputerLanguage(e)
+            ) false else {
+                val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+                computerLanguage != ComputerLanguage.Text
+            }
         }
     }
 }

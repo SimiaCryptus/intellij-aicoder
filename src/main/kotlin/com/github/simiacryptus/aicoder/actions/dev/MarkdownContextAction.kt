@@ -75,6 +75,7 @@ class MarkdownContextAction : AnAction() {
         private fun isEnabled(e: AnActionEvent): Boolean {
             if (!AppSettingsState.getInstance().devActions) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+            if(computerLanguage == ComputerLanguage.Text) return false
             return if (ComputerLanguage.Markdown != computerLanguage) false else null != getMarkdownContextParams(
                 e,
                 AppSettingsState.getInstance().humanLanguage

@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.actions.code
 
-import com.github.simiacryptus.aicoder.com.github.simiacryptus.aicoder.openai.OpenAI_API.pool
+import com.github.simiacryptus.aicoder.openai.OpenAI_API.pool
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools.getIndent

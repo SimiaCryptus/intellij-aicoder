@@ -203,6 +203,7 @@ enum class ComputerLanguage(configuration: Configuration) {
     ),
     Json(
         Configuration()
+            .setLineComments(LineComment.Factory("//"))
             .setFileExtensions("json")
     ),
     Kotlin(
@@ -386,16 +387,16 @@ enum class ComputerLanguage(configuration: Configuration) {
 
     val extensions: List<CharSequence>
     val docStyle: String
-    val lineComment: TextBlockFactory<*>?
-    val blockComment: TextBlockFactory<*>?
-    val docComment: TextBlockFactory<*>?
+    val lineComment: TextBlockFactory<*>
+    val blockComment: TextBlockFactory<*>
+    val docComment: TextBlockFactory<*>
 
     init {
         extensions = Arrays.asList(*configuration.fileExtensions)
         docStyle = configuration.documentationStyle
-        lineComment = configuration.lineComments
-        blockComment = configuration.getBlockComments()
-        docComment = configuration.getDocComments()
+        lineComment = configuration.lineComments!!
+        blockComment = configuration.getBlockComments()!!
+        docComment = configuration.getDocComments()!!
     }
 
     fun psiLanguage(): Language? {
@@ -431,7 +432,7 @@ enum class ComputerLanguage(configuration: Configuration) {
             return this
         }
 
-        fun setLineComments(lineComments: TextBlockFactory<*>?): Configuration {
+        fun setLineComments(lineComments: TextBlockFactory<*>): Configuration {
             this.lineComments = lineComments
             return this
         }
@@ -440,7 +441,7 @@ enum class ComputerLanguage(configuration: Configuration) {
             return if (null == blockComments) lineComments else blockComments
         }
 
-        fun setBlockComments(blockComments: TextBlockFactory<*>?): Configuration {
+        fun setBlockComments(blockComments: TextBlockFactory<*>): Configuration {
             this.blockComments = blockComments
             return this
         }
@@ -449,7 +450,7 @@ enum class ComputerLanguage(configuration: Configuration) {
             return if (null == docComments) getBlockComments() else docComments
         }
 
-        fun setDocComments(docComments: TextBlockFactory<*>?): Configuration {
+        fun setDocComments(docComments: TextBlockFactory<*>): Configuration {
             this.docComments = docComments
             return this
         }

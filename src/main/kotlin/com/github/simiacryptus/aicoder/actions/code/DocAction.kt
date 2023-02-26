@@ -71,6 +71,7 @@ class DocAction : AnAction() {
     companion object {
         private fun isEnabled(event: AnActionEvent): Boolean {
             val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+            if(computerLanguage == ComputerLanguage.Text) return false
             if (computerLanguage.docStyle.isEmpty()) return false
             val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
             val caret = event.getData(CommonDataKeys.CARET)

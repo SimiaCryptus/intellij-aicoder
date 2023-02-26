@@ -118,18 +118,8 @@ class MarkdownListAction : AnAction() {
                 .filter { prefix: String? -> strippedList.startsWith(prefix!!) }.findFirst().orElse("1. ")
             val itemText: CharSequence =
                 indent.toString() + newItems.stream().map { x: CharSequence -> bulletString + x }
-                    .collect(
-                        Collectors.joining(
-                            """
-                         
-                         $indent
-                         """.trimIndent()
-                        )
-                    )
-            return """
-                
-                $itemText
-                """.trimIndent()
+                    .collect(Collectors.joining("\n$indent"))
+            return "\n$itemText"
         }
     }
 }

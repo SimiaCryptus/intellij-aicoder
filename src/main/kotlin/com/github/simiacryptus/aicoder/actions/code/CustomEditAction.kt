@@ -34,7 +34,8 @@ class CustomEditAction : AnAction() {
         val selectionEnd = primaryCaret.selectionEnd
         val selectedText = primaryCaret.selectedText
         val computerLanguage = ComputerLanguage.getComputerLanguage(e)!!.name
-        val instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE)
+        val instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE) ?: return
+        if(instruction.isBlank()) return
         val settings = AppSettingsState.getInstance()
         settings.addInstructionToHistory(instruction)
         val request = settings.createTranslationRequest()
@@ -60,7 +61,9 @@ class CustomEditAction : AnAction() {
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
             if (!UITools.hasSelection(e)) return false
-            return null != ComputerLanguage.getComputerLanguage(e)
+            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+            if(computerLanguage == ComputerLanguage.Text) return false
+            return true
         }
     }
 }
