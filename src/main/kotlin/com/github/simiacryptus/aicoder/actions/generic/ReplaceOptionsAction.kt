@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.util.TextRange
 import java.util.*
 
-class ReplaceOptions : AnAction() {
+class ReplaceOptionsAction : AnAction() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)

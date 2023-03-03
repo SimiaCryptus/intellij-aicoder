@@ -27,7 +27,10 @@ import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpRequestBase
+import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
+import org.apache.http.entity.mime.HttpMultipartMode
+import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
@@ -39,6 +42,9 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 import javax.swing.JComponent
+import kotlin.collections.MutableMap
+import kotlin.collections.set
+import kotlin.collections.toTypedArray
 
 object OpenAI_API {
 
@@ -465,13 +471,15 @@ object OpenAI_API {
      */
     @Throws(IOException::class, InterruptedException::class)
     private fun post(url: String, json: String, retries: Int): String {
+        return post(jsonRequest(url, json), retries)
+    }
+
+    private fun post(
+        request: HttpPost,
+        retries: Int
+    ): String {
         try {
             val client = HttpClientBuilder.create()
-            val request = HttpPost(url)
-            request.addHeader("Content-Type", "application/json")
-            request.addHeader("Accept", "application/json")
-            authorize(request)
-            request.entity = StringEntity(json)
             try {
                 client.build().use { httpClient ->
                     clients[Thread.currentThread()] = httpClient
@@ -484,12 +492,21 @@ object OpenAI_API {
             }
         } catch (e: IOException) {
             if (retries > 0) {
-                log.warn("Error posting request to $url, retrying in 15 seconds", e)
+                log.warn("Error posting request, retrying in 15 seconds", e)
                 Thread.sleep(15000)
-                return post(url, json, retries - 1)
+                return post(request, retries - 1)
             }
             throw e
         }
+    }
+
+    private fun jsonRequest(url: String, json: String): HttpPost {
+        val request = HttpPost(url)
+        request.addHeader("Content-Type", "application/json")
+        request.addHeader("Accept", "application/json")
+        authorize(request)
+        request.entity = StringEntity(json)
+        return request
     }
 
     private val mapper: ObjectMapper
@@ -569,7 +586,8 @@ object OpenAI_API {
                 }
                 .map { obj: IndentedText -> obj.toString() }
                 .map { text: String -> indent.toString() + text }
-        }    }
+        }
+    }
 
     private fun <T> run(project: Project?, task: Task.WithResult<T, Exception?>, retries: Int): T {
         return try {
@@ -628,4 +646,25 @@ object OpenAI_API {
             }
         }, pool)
     }
+
+    fun text_to_speech(wavAudio: ByteArray): String {
+        val settings = AppSettingsState.getInstance()
+        val url = settings!!.apiBase + "/audio/transcriptions"
+        val request = HttpPost(url)
+        request.addHeader("Accept", "application/json")
+        authorize(request)
+        val entity = MultipartEntityBuilder.create()
+        entity.setMode(HttpMultipartMode.RFC6532)
+        entity.addBinaryBody("file", wavAudio, ContentType.create("audio/x-wav"), "audio.wav")
+        entity.addTextBody("model", "whisper-1")
+        request.entity = entity.build()
+        val response = post(request, 3)
+        val jsonObject = Gson().fromJson(response, JsonObject::class.java)
+        if (jsonObject.has("error")) {
+            val errorObject = jsonObject.getAsJsonObject("error")
+            throw RuntimeException(IOException(errorObject["message"].asString))
+        }
+        return jsonObject.get("text").asString!!
+    }
+
 }

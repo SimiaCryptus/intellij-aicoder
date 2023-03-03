@@ -14,7 +14,7 @@ import java.util.*
  * To use, select some text and then select the GenericAppend action from the editor context menu.
  * The action will insert the completion at the end of the selected text.
  */
-class GenericAppend : AnAction() {
+class AppendAction : AnAction() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)

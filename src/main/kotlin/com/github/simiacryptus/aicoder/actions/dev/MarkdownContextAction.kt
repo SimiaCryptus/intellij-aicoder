@@ -19,7 +19,7 @@ import java.util.*
  */
 class MarkdownContextAction : AnAction() {
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
+        e.presentation.isEnabledAndVisible = false && isEnabled(e)
         super.update(e)
     }
 

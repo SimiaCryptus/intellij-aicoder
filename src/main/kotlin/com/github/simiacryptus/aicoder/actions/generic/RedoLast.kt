@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions
+package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.util.UITools.retry
 import com.intellij.openapi.actionSystem.AnAction

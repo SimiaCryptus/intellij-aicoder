@@ -7,6 +7,14 @@
 ### Added
 - 
 
+## [1.0.11]
+
+### Added
+- Added actions documentation
+- Reviewed and updated action shortcuts and descriptions
+- Updated main product description
+- Added prototype "dictation" action
+
 ## [1.0.10]
 
 ### Added
