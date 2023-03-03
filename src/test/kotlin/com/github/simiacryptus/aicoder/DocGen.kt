@@ -16,9 +16,11 @@ class DocGen {
 
     @Test
     fun plugin_xml() {
+        val base = File("C:\\Users\\andre\\code\\aicoder\\intellij-aicoder")
+        if(!base.exists()) return
         val input =
-            File("C:\\Users\\andre\\code\\aicoder\\intellij-aicoder\\src\\main\\resources\\META-INF\\plugin.xml")
-        val output = File("C:\\Users\\andre\\code\\aicoder\\intellij-aicoder\\actions.md")
+            File(base,"src\\main\\resources\\META-INF\\plugin.xml")
+        val output = File(base,"actions.md")
         val actions = loadActions(input)
 
         val codeActions =
