@@ -2,7 +2,7 @@
 <idea-plugin>
     <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
-    <vendor>simiacryptus</vendor>
+    <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
 
     <depends>com.intellij.modules.platform</depends>
 
@@ -14,9 +14,6 @@
                                  displayName="AI Coder"/>
     </extensions>
 
-    <!-- Text to display as company information on Preferences/Settings | Plugin page -->
-    <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
-
     <actions>
         <group id="com.github.simiacryptus.aicoder.EditorMenu"
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"
@@ -26,173 +23,6 @@
                description="AI coding assistant tools">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </group>
-
-        <action class="com.github.simiacryptus.aicoder.actions.dev.PrintTreeAction"
-                text="Print PSI Tree"
-                description="Print PSI Tree">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.generic.ReplaceOptions"
-                text="_Replace Options"
-                description="Replace options">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.GenericInsert"
-                text="_Insert Text"
-                description="Insert text">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.GenericAppend"
-                text="_Append Text"
-                description="Append text">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.GenericEdit"
-                text="_Edit Text..."
-                description="Edit Text (Generic)">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="W"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.code.RewordCommentAction"
-                text="_Reword Comment"
-                description="Reword comment">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.TranslateCommentAction"
-                text="_Translate Comment"
-                description="Translate comment">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownListAction"
-                text="Add _List Items"
-                description="Add list items">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableRowsAction"
-                text="Add _Table Rows"
-                description="Add table rows">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableColsAction"
-                text="Add _Table Columns"
-                description="Add table columns">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableColAction"
-                text="Add Table _Column..."
-                description="Add table column...">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.dev.MarkdownContextAction"
-                text="E_xecute Directive"
-                description="Execute directive">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.code.CustomEditAction"
-                text="_Edit Code..."
-                description="Edit code...">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="E"/>
-        </action>
-        <group class="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
-               text="_Recent Code Edits"
-               popup="true">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </group>
-        <group class="com.github.simiacryptus.aicoder.actions.markdown.AnnotateTextAction"
-               text="A_nnotate"
-               popup="true">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </group>
-        <group class="com.github.simiacryptus.aicoder.actions.generic.RecentTextEditsAction"
-               text="_Recent Text Edits"
-               popup="true">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </group>
-
-        <action class="com.github.simiacryptus.aicoder.actions.code.FromHumanLanguageAction"
-                text="_From Text"
-                description="Implement text -&gt; code">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.ToHumanLanguageAction"
-                text="_To Code"
-                description="Describe text -&gt; code">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.code.PsiClassContextAction"
-                text="Insert _Implementation"
-                description="Insert implementation">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.DescribeAction"
-                text="Desc_ribe Code and Prepend Comment"
-                description="Add doc comments">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="D"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.QuestionAction"
-                text="Ask a _question about the code"
-                description="Ask a question about the code">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="Q"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.CommentsAction"
-                text="Add Code _Comments"
-                description="Add code comments">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.RenameVariablesAction"
-                text="Rename Variables"
-                description="Rename variables">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="R"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.DocAction"
-                text="Add _Doc Comments"
-                description="Add code comments">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="X"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
-                text="_Paste" description="Paste">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="V"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.RedoLast"
-                text="_Redo Last"
-                description="Redo last">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="R"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.code.ImplementAction"
-                text="_Implement Stub"
-                description="Implement stub">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="M"/>
-        </action>
-        <group class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
-               text="_Implement As..."
-               description="Implement as..."
-               popup="true"
-        >
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </group>
-
-
-
         <group id="com.github.simiacryptus.aicoder.ProjectMenu"
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"
                popup="true"
@@ -201,14 +31,360 @@
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
         </group>
+
+        <action class="com.github.simiacryptus.aicoder.actions.dev.PrintTreeAction"
+                text="Print PSI Tree"
+                description="Print PSI Tree">
+            <!--DOC
+        The `Print PSI Tree` action allows you to print the PSI tree for the current file.
+        This is useful for debugging and understanding the PSI tree for a file.
+        This is a developer tool and is only visible if the `Developer Mode` setting is enabled.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.dev.DictationAction"
+                text="Dictation"
+                description="Voice to text dictation">
+            <!--DOC
+        The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.generic.ReplaceOptionsAction"
+                text="Replace Optio_ns"
+                description="Replace options">
+            <!--DOC
+        The `Replace Options` action allows you to quickly replace selected text with one of a set of suggested options.
+        This also captures some preceding and following context, but uses a different prompting method to suggest the
+        options.
+        For example, if you type ‘I had a day’ and place the cursor after 'a' and then use the `Replace Options` action,
+        the plugin will **_provide an interactive selection UI_** to suggest words like ‘great’, ‘bad’, or ‘delicious’.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="N"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="N"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.InsertAction"
+                text="In_sert Text"
+                description="Insert text">
+            <!--DOC
+        The `Insert Text` action allows you to quickly insert text at the cursor position.
+        It automatically captures some preceding and following context for the text completion API to make the most
+        accurate suggestions.
+        For example, if you type ‘I had a day’ and place the cursor after 'a' and then use the `Insert Text` action,
+        the API will suggest words like ‘great’, ‘bad’, or ‘delicious’.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="S"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="S"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.AppendAction"
+                text="_Append Text"
+                description="Append text">
+            <!--DOC
+        The `Append Text` action allows you to quickly append text to the end of the current selection.
+        This is useful to quickly add to the document based on a user-determined prompting context.
+        For example, if you have a document that contains a list of items, you can use the `Append Text` action to
+        quickly add additional items to the list.
+        Additionally, you can use the `Append Text` action to quickly add additional text to the end of a sentence or
+        paragraph.
+        This can be useful for quickly adding additional details or context to a document.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="A"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.EditAction"
+                text="_Edit Text..."
+                description="Edit Text (Generic)">
+            <!--DOC
+        The `Edit Text` action allows you to edit the text in the current selection based on an Ad-hoc directive.
+        For example, you can translate, summarize, and correct errors.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="E"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="E"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.code.RewordCommentAction"
+                text="Re_word Comment"
+                description="Reword comment">
+            <!--DOC
+        The `Reword Comment` action allows you to quickly reword a comment in your code.
+        This is useful for quickly refactoring your code and making it easier to understand.
+        This is useful for managing and writing code comments.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="W"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="W"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.TranslateCommentAction"
+                text="Trans_late Comment"
+                description="Translate comment">
+            <!--DOC
+        The `Translate Comment` action allows you to quickly translate a comment in your code.
+        This is useful for quickly refactoring your code and making it easier to understand.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="L"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownListAction"
+                text="Add _List Items"
+                description="Add list items">
+            <!--DOC
+        The `Add List Items` action allows you to quickly add list items to your Markdown document.
+        It supports both ordered and unordered lists, and nested lists.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="L"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableRowsAction"
+                text="Add Table Ro_ws"
+                description="Add table rows">
+            <!--DOC
+        The `Add Table Rows` action allows you to quickly add rows to a Markdown document table.
+        The new row will be filled with generated data.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="W"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="W"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableColsAction"
+                text="Add Table C_olumns"
+                description="Add table columns">
+            <!--DOC
+        The `Add Table Columns` action allows you to quickly add table columns to your Markdown document.
+        Multiple new columns will be generated and filled with generated data.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="O"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableColAction"
+                text="Add Table _Column..."
+                description="Add table column...">
+            <!--DOC
+        The `Add Table Column` action allows you to quickly add a table column to your Markdown document.
+        It will prompt you for the column name and attempt to generate new values for all rows.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="C"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.code.CustomEditAction"
+                text="_Edit Code..."
+                description="Edit code...">
+            <!--DOC
+        The `Edit Code...` action allows you to quickly edit your code based on a user-supplied directive.
+        This is useful for quickly performing ad-hoc code transformations.
+        For example, you can use this action to add logging statements or to quickly refactor your code.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="E"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="E"/>
+        </action>
+        <group class="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
+               text="_Recent Code Edits"
+               description="Recent code edits"
+               popup="true">
+            <!--DOC
+        The `Recent Code Edits` group allows you to quickly access your most recent code edits.
+        This is useful for quickly accessing your most recent edits.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </group>
+        <group class="com.github.simiacryptus.aicoder.actions.markdown.AnnotateTextAction"
+               text="Annotate"
+               description="Annotate text"
+               popup="true">
+            <!--DOC
+        The `Annotate` group allows you to transform natural language into a variety of NLP annotatation formats.
+        This is useful for parsing and analyzing natural language.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </group>
+        <group class="com.github.simiacryptus.aicoder.actions.generic.RecentTextEditsAction"
+               text="_Recent Text Edits"
+               description="Recent text edits"
+               popup="true">
+            <!--DOC
+        The `Recent Text Edits` group allows you to quickly access your most recent text edits.
+        This is useful for quickly accessing your most recent edits.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </group>
+
+        <action class="com.github.simiacryptus.aicoder.actions.code.FromHumanLanguageAction"
+                text="_From Text"
+                description="Implement text -&gt; code">
+            <!--DOC
+        The `From Text` action allows you to quickly convert text into code.
+        This is useful for quickly implementing text-based ideas into code.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="F"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="F"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.ToHumanLanguageAction"
+                text="_To Text"
+                description="Describe code -&gt; text">
+            <!--DOC
+        The `To Text` action allows you to quickly convert code into text.
+        This is useful for quickly describing code in plain text.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="T"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="T"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.code.PsiClassContextAction"
+                text="Insert _Implementation"
+                description="Insert implementation">
+            <!--DOC
+        The `Insert Implementation` action allows you to quickly insert the implementation of a comment.
+        It attempts to process the code context and provide details about this generation context within the API call.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="I"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.DescribeAction"
+                text="Describe C_ode and Prepend Comment"
+                description="Add doc comments">
+            <!--DOC
+        The `Describe Code and Prepend Comment` action allows you to quickly add a comment to your code that describes
+        the current selection.
+        This is useful for quickly documenting your code and making it easier to understand.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="O"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.QuestionAction"
+                text="Ask a _question about the code"
+                description="Ask a question about the code">
+            <!--DOC
+        The `Ask a question about the code` action allows you to quickly ask a question about the code.
+        This is useful for quickly getting help with understanding the code.
+        The question and response are prepended to the selected code.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="Q"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="Q"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.CommentsAction"
+                text="Add Code _Comments"
+                description="Add code comments">
+            <!--DOC
+        The `Add Code Comments` action allows you to quickly add comments to selected code.
+        It will generally add a comment for each line with a description.
+        This is useful for quickly documenting your code and making it easier to understand.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="C"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.RenameVariablesAction"
+                text="Rename _Variables"
+                description="Rename variables">
+            <!--DOC
+        The `Rename Variables` action allows you to quickly rename variables in your code.
+        An interactive dialog is provided to select any/all/none of the rename suggestions.
+        This is useful for quickly refactoring your code and making it easier to understand.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="V"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="V"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.DocAction"
+                text="Add D_oc Comments"
+                description="Add code comments">
+            <!--DOC
+        The `Add Doc Comments` action allows you to quickly add comments to your code that are formatted for
+        documentation.
+        In contrast to existing code tools that can generate doc comments, this action is based on the full code and can
+        generate more accurate comments.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="O"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
+                text="_Paste" description="Paste">
+            <!--DOC
+        The `Paste` action allows you to quickly paste code into your project.
+        This text will be translated into the current language.
+        This is useful for quickly pasting code into your project.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="P"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.RedoLast"
+                text="Re_do Last"
+                description="Redo last">
+            <!--DOC
+        The `Redo Last` action allows you to quickly redo the last action you performed.
+        This is useful for getting variations from the generative AI.
+        For example, if you generate something and want to see an alternate, you can use the `Redo Last` action to
+        quickly retry without having to start from scratch.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="D"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="D"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.code.ImplementAction"
+                text="_Implement Stub"
+                description="Implement stub">
+            <!--DOC
+        The `Implement Stub` action allows you to quickly implement a stub of a method.
+        This is useful for quickly implementing a new method.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="I"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
+        </action>
+        <group class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
+               text="Imple_ment As..."
+               description="Implement as..."
+               popup="true"
+        >
+            <!--DOC
+        The `Implement As...` action allows you to quickly implement a markdown prompt in a specific language.
+        This is useful for quickly implementing code in a specific language.
+        For example, if select "find the largest file in the current directory" you can use the `Implement As...` action
+        to quickly implement this idea in Bash.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </group>
         <group class="com.github.simiacryptus.aicoder.actions.code.ConvertFileTo"
-               text="_Convert To..."
+               text="Conver_t To..."
                description="Convert to..."
                popup="true"
         >
+            <!--DOC
+        The `Convert To...` action allows you to quickly convert a file to a specific language.
+        This is useful for quickly converting larger amounts of code between languages.
+        For example, if you have a Java file and want to convert it to Kotlin, you can use the `Convert To...` action to
+        quickly convert it.
+            -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
         </group>
 
+
+        <action class="com.github.simiacryptus.aicoder.actions.dev.MarkdownContextAction"
+                text="E_xecute Directive"
+                description="Execute directive">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
 
     </actions>
 

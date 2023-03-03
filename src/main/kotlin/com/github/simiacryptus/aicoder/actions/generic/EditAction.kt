@@ -20,7 +20,7 @@ import javax.swing.JOptionPane
  * Enter the instruction and press OK.
  * The selected text will then be replaced with the edited version.
  */
-class GenericEdit : AnAction() {
+class EditAction : AnAction() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)
