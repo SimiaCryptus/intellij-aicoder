@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.aicoder.util.StringTools.restrictCharacterSet
 import com.github.simiacryptus.aicoder.util.UITools
 import com.google.common.util.concurrent.*
 import com.google.gson.Gson
@@ -35,6 +36,7 @@ import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
 import java.io.IOException
+import java.nio.charset.Charset
 import java.util.*
 import java.util.Map
 import java.util.concurrent.*
@@ -50,6 +52,7 @@ object OpenAI_API {
 
     @JvmStatic
     private val threadFactory: ThreadFactory = ThreadFactoryBuilder().setNameFormat("API Thread %d").build()
+    private val allowedCharset = Charset.forName("ASCII")
 
     @JvmStatic
     val pool: ListeningExecutorService = MoreExecutors.listeningDecorator(
@@ -67,6 +70,9 @@ object OpenAI_API {
     val scheduledPool: ListeningScheduledExecutorService =
         MoreExecutors.listeningDecorator(ScheduledThreadPoolExecutor(1, threadFactory))
 
+    private val log = Logger.getInstance(OpenAI_API::class.java)
+    private val activeModelUI = WeakHashMap<ComboBox<CharSequence?>, Any>()
+
     @Transient
     private var settings: AppSettingsState? = null
 
@@ -75,9 +81,7 @@ object OpenAI_API {
     val modelSelector: JComponent
         get() {
             if (null != comboBox) {
-                val element = ComboBox((IntStream.range(0, comboBox!!.itemCount).mapToObj { index: Int ->
-                    comboBox!!.getItemAt(index)
-                }).collect(Collectors.toList()).toTypedArray())
+                val element = ComboBox((IntStream.range(0, comboBox!!.itemCount).mapToObj(comboBox!!::getItemAt)).collect(Collectors.toList()).toTypedArray())
                 activeModelUI[element] = Any()
                 return element
             }
@@ -98,11 +102,7 @@ object OpenAI_API {
                         }
                         Arrays.sort(items)
                         activeModelUI.keys.forEach(Consumer { ui: ComboBox<CharSequence?> ->
-                            Arrays.stream(items).forEach { item: CharSequence? ->
-                                ui.addItem(
-                                    item
-                                )
-                            }
+                            Arrays.stream(items).forEach(ui::addItem)
                         })
                     }
                     return comboBox!!
@@ -113,40 +113,28 @@ object OpenAI_API {
             return JBTextField()
         }
 
-    fun complete(project: Project?, request: CompletionRequest, indent: CharSequence): ListenableFuture<CharSequence?> {
-        return complete(project, request, filterCodeInsert(indent))
+    fun complete(project: Project?, request: CompletionRequest, indent: CharSequence): ListenableFuture<CharSequence> {
+        return complete(project, request, filterStringResult(indent))
     }
 
     fun complete(
         project: Project?,
         request: CompletionRequest,
-        filter: (Optional<CharSequence?>) -> Optional<String>
-    ): ListenableFuture<CharSequence?> {
-        return map(
-            complete(project, request)
-        ) { response: CompletionResponse ->
-            filter(
-                response.firstChoice
-            ).orElse("")
-        }
+        filter: (CharSequence) -> CharSequence
+    ): ListenableFuture<CharSequence> {
+        return map(complete(project, request)) { it.firstChoice.map(filter).orElse("")}
     }
 
-    fun edit(project: Project?, request: EditRequest, indent: CharSequence): ListenableFuture<CharSequence?> {
-        return edit(project, request, filterCodeInsert(indent))
+    fun edit(project: Project, request: EditRequest, indent: CharSequence): ListenableFuture<CharSequence?> {
+        return edit(project, request, filterStringResult(indent))
     }
 
     fun edit(
-        project: Project?,
+        project: Project,
         request: EditRequest,
-        filter: (Optional<CharSequence?>) -> Optional<String>
+        filter: (CharSequence) -> CharSequence
     ): ListenableFuture<CharSequence?> {
-        return map(
-            edit(project, request)
-        ) { response: CompletionResponse ->
-            filter(
-                response.firstChoice
-            ).orElse("")
-        }
+        return map(edit(project, request)) { it.firstChoice.map(filter).orElse("") }
     }
 
     private val settingsState: AppSettingsState?
@@ -179,12 +167,12 @@ object OpenAI_API {
         return complete(project, CompletionRequest(withModel), settings, withModel.model)
     }
 
-    private fun edit(project: Project?, request: EditRequest): ListenableFuture<CompletionResponse> {
+    private fun edit(project: Project, request: EditRequest): ListenableFuture<CompletionResponse> {
         return edit(project, request, settingsState!!)
     }
 
     private fun edit(
-        project: Project?,
+        project: Project,
         editRequest: EditRequest,
         settings: AppSettingsState
     ): ListenableFuture<CompletionResponse> {
@@ -214,7 +202,7 @@ object OpenAI_API {
                                         )
                                     )
                                 }
-                                val request: String = mapper.writeValueAsString(editRequest)
+                                val request: String = restrictCharacterSet(mapper.writeValueAsString(editRequest), allowedCharset)
                                 val result = post(settings.apiBase + "/edits", request)
                                 val completionResponse = processResponse(result, settings)
                                 logComplete(
@@ -281,7 +269,7 @@ object OpenAI_API {
     ): ListenableFuture<CompletionResponse> {
         val canBeCancelled =
             true // Cancel doesn't seem to work; the cancel event is only dispatched after the request completes.
-        return map(moderateAsync(project, completionRequest.prompt)) { _: Any? ->
+        return map(moderateAsync(project, restrictCharacterSet(completionRequest.prompt, allowedCharset))) { _: Any? ->
             run(
                 project,
                 object : Task.WithResult<CompletionResponse, Exception?>(
@@ -303,7 +291,7 @@ object OpenAI_API {
                         threadRef.getAndSet(Thread.currentThread())
                         try {
                             logStart(completionRequest, settings)
-                            val request: String = mapper.writeValueAsString(completionRequest)
+                            val request: String = restrictCharacterSet(mapper.writeValueAsString(completionRequest), allowedCharset)
                             val result =
                                 post(settings.apiBase + "/engines/" + model + "/completions", request)
                             val completionResponse = processResponse(result, settings)
@@ -328,7 +316,7 @@ object OpenAI_API {
                         if (null != thread) {
                             log.warn(Arrays.stream(
                                 thread.stackTrace
-                            ).map { obj: StackTraceElement -> obj.toString() }
+                            ).map(StackTraceElement::toString)
                                 .collect(Collectors.joining("\n"))
                             )
                             thread.interrupt()
@@ -403,7 +391,7 @@ object OpenAI_API {
                             mapper.writeValueAsString(
                                 Map.of(
                                     "input",
-                                    text
+                                    restrictCharacterSet(text, allowedCharset)
                                 )
                             )
                         } catch (e: JsonProcessingException) {
@@ -558,34 +546,14 @@ object OpenAI_API {
         }
     }
 
-    private val log = Logger.getInstance(OpenAI_API::class.java)
-    private val activeModelUI = WeakHashMap<ComboBox<CharSequence?>, Any>()
-    fun filterCodeInsert(indent: CharSequence): (Optional<CharSequence?>) -> Optional<String> {
-        return { response: Optional<CharSequence?> ->
-            response
-                .map { o: CharSequence? ->
-                    Objects.toString(
-                        o
-                    )
-                }
-                .map { obj: String -> obj.trim { it <= ' ' } }
-                .map { input: String? ->
-                    StringTools.stripUnbalancedTerminators(
-                        input!!
-                    )
-                }
-                .map { text: CharSequence? ->
-                    IndentedText.fromString2(
-                        text!!.toString()
-                    )
-                }
-                .map { text: IndentedText ->
-                    text.withIndent(
-                        indent
-                    )
-                }
-                .map { obj: IndentedText -> obj.toString() }
-                .map { text: String -> indent.toString() + text }
+    fun filterStringResult(indent: CharSequence = "", stripUnbalancedTerminators: Boolean = true): (CharSequence) -> CharSequence {
+        return { text ->
+            var result : CharSequence = text.toString().trim { it <= ' ' }
+            if (stripUnbalancedTerminators) {
+                result = StringTools.stripUnbalancedTerminators(result)
+            }
+            result = IndentedText.fromString2(result).withIndent(indent).toString()
+            indent.toString() + result
         }
     }
 
@@ -647,7 +615,7 @@ object OpenAI_API {
         }, pool)
     }
 
-    fun text_to_speech(wavAudio: ByteArray): String {
+    fun text_to_speech(wavAudio: ByteArray, prompt: String = ""): String {
         val settings = AppSettingsState.getInstance()
         val url = settings!!.apiBase + "/audio/transcriptions"
         val request = HttpPost(url)
@@ -657,6 +625,7 @@ object OpenAI_API {
         entity.setMode(HttpMultipartMode.RFC6532)
         entity.addBinaryBody("file", wavAudio, ContentType.create("audio/x-wav"), "audio.wav")
         entity.addTextBody("model", "whisper-1")
+        if(!prompt.isEmpty()) entity.addTextBody("prompt", prompt)
         request.entity = entity.build()
         val response = post(request, 3)
         val jsonObject = Gson().fromJson(response, JsonObject::class.java)

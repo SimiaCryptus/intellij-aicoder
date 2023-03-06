@@ -31,19 +31,20 @@ class MarkdownNewTableColsAction : AnAction() {
             ""
         )
         UITools.redoableRequest(request, "", event,
-            { newText: CharSequence? ->
+            { newText ->
                 transformCompletion(
                     markdownNewTableColsParams, indent, newText
                 )
+            },
+            { newText ->
+                UITools.replaceString(
+                    event.getRequiredData(CommonDataKeys.EDITOR)
+                        .document,
+                    markdownNewTableColsParams.table.textRange.startOffset,
+                    markdownNewTableColsParams.table.textRange.endOffset, newText!!
+                )
             }
-        ) { newText: CharSequence? ->
-            UITools.replaceString(
-                event.getRequiredData(CommonDataKeys.EDITOR)
-                    .document,
-                markdownNewTableColsParams.table.textRange.startOffset,
-                markdownNewTableColsParams.table.textRange.endOffset, newText!!
-            )
-        }
+        )
     }
 
     class MarkdownNewTableColsParams constructor(

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -55,7 +56,10 @@ object PsiUtil {
             override fun visitElement(element: PsiElement) {
                 val textRange = element.textRange
                 val within =
-                    textRange.startOffset <= selectionStart && textRange.endOffset + 1 >= selectionStart && textRange.startOffset <= selectionEnd && textRange.endOffset + 1 >= selectionEnd
+                    within(
+                        textRange,
+                        selectionStart
+                    ) && textRange.startOffset <= selectionEnd && textRange.endOffset + 1 >= selectionEnd
                 if (matchesType(element, *types)) {
                     if (within) {
                         largest.updateAndGet { s: PsiElement? -> if (s?.text?.length ?: 0 > element.text.length) s else element }
@@ -106,11 +110,9 @@ object PsiUtil {
         visitor.set(object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 val textRange = element.textRange
-                val within =
-                    textRange.startOffset <= selectionStart && textRange.endOffset + 1 >= selectionStart && textRange.startOffset <= selectionEnd && textRange.endOffset + 1 >= selectionEnd
-                if (matchesType(element, *types)) {
-                    if (within) {
-                        largest.updateAndGet { s: PsiElement? -> if (s?.text?.length ?: Int.MAX_VALUE < element.text.length) s else element }
+                if (within(textRange, selectionStart, selectionEnd)) {
+                    if (matchesType(element, *types)) {
+                        largest.updateAndGet { s: PsiElement? -> if ((s?.text?.length ?: Int.MAX_VALUE) < element.text.length) s else element }
                     }
                 }
                 //System.out.printf("%s : %s%n", simpleName, element.getText());
@@ -121,6 +123,34 @@ object PsiUtil {
         element.accept(visitor.get())
         return largest.get()
     }
+
+    fun getAllIntersecting(
+        element: PsiElement,
+        selectionStart: Int,
+        selectionEnd: Int,
+        vararg types: CharSequence
+    ): List<PsiElement> {
+        val elements: MutableList<PsiElement> = ArrayList()
+        val visitor = AtomicReference<PsiElementVisitor>()
+        visitor.set(object : PsiElementVisitor() {
+            override fun visitElement(element: PsiElement) {
+                val textRange = element.textRange
+                if (matchesType(element, *types)) {
+                    if (within(textRange, selectionStart, selectionEnd)) {
+                        elements.add(element)
+                    }
+                }
+                super.visitElement(element)
+                element.acceptChildren(visitor.get())
+            }
+        })
+        element.accept(visitor.get())
+        return elements
+    }
+
+    private fun within(textRange: TextRange, vararg offset: Int) : Boolean =
+        (textRange.startOffset <= offset.max()) && (textRange.endOffset > offset.min())
+
 
     fun matchesType(element: PsiElement, vararg types: CharSequence): Boolean {
         var simpleName: CharSequence = element.javaClass.simpleName
@@ -224,7 +254,7 @@ object PsiUtil {
         return largestContainedChild
     }
 
-    fun getPsiFile(e: AnActionEvent): PsiElement? {
+    fun getLargestContainedEntity(e: AnActionEvent): PsiElement? {
         val caret = e.getData(CommonDataKeys.CARET)
             ?: return null
         var psiFile: PsiElement? = e.getData(CommonDataKeys.PSI_FILE)
@@ -296,6 +326,10 @@ object PsiUtil {
             )
         }
         return fileFromText.get()
+    }
+
+    fun getPsiFile(e: AnActionEvent) : PsiFile? {
+        return e.getData(CommonDataKeys.PSI_FILE)
     }
 }
 

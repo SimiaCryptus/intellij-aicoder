@@ -51,13 +51,13 @@ class ImplementAction : AnAction() {
                 IndentedText.fromString(
                     finalDeclaration.toString() + string.toString().trim { it <= ' ' })
                     .withIndent(indentedInput.indent).toString()
+            }, { docString: CharSequence? ->
+                replaceString(
+                    document, textRange.startOffset, textRange.endOffset,
+                    docString!!
+                )
             }
-        ) { docString: CharSequence? ->
-            replaceString(
-                document, textRange.startOffset, textRange.endOffset,
-                docString!!
-            )
-        }
+        )
     }
 
     companion object {

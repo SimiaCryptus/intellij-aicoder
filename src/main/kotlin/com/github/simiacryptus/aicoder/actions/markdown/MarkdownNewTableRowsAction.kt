@@ -31,18 +31,11 @@ class MarkdownNewTableRowsAction : AnAction() {
         val endOffset = markdownNewTableRowsParams.table.textRange.endOffset
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
         UITools.redoableRequest(
-            MarkdownNewTableColAction.newRowsRequest(settings, n, rows, ""), "", event,
-            { newText: CharSequence? ->
-                transformCompletion(
-                    markdownNewTableRowsParams, newText
-                )
-            }
-        ) { newText: CharSequence? ->
-            UITools.insertString(
-                document, endOffset,
-                newText!!
-            )
-        }
+            MarkdownNewTableColAction.newRowsRequest(settings, n, rows, ""),
+            "",
+            event,
+            { transformCompletion(markdownNewTableRowsParams, it) },
+            { UITools.insertString(document, endOffset, it!!) })
     }
 
     class MarkdownNewTableRowsParams constructor(val caret: Caret, val table: PsiElement)

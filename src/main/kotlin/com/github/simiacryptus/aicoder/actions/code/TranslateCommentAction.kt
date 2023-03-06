@@ -52,23 +52,17 @@ class TranslateCommentAction : AnAction() {
             )
         val document = editor.document
         UITools.redoableRequest(request, "", event,
-            { newText: CharSequence? ->
-                indent.toString() + commentModel.fromString(newText.toString().trim { it <= ' ' })!!
-                    .withIndent(indent)
-            }
-        ) { newText: CharSequence? ->
-            UITools.replaceString(
-                document, textRange.startOffset, textRange.endOffset,
-                newText!!
-            )
-        }
+            { newText ->
+                indent.toString() + commentModel.fromString(newText.toString().trim { it <= ' ' })!!.withIndent(indent)
+            }, { UITools.replaceString(document, textRange.startOffset, textRange.endOffset, it!!) }
+        )
     }
 
     class RewordCommentParams constructor(val caret: Caret, val largestIntersectingComment: PsiElement)
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return null != getRewordCommentParams(e)
         }
 

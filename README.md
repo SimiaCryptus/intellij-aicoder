@@ -17,6 +17,7 @@ Plaintext actions provide text processing features for any language. The followi
 | Text | Description |
 | --- | --- |
 | Append Text |  The `Append Text` action allows you to quickly append text to the end of the current selection. This is useful to quickly add to the document based on a user-determined prompting context. For example, if you have a document that contains a list of items, you can use the `Append Text` action to quickly add additional items to the list. Additionally, you can use the `Append Text` action to quickly add additional text to the end of a sentence or paragraph. This can be useful for quickly adding additional details or context to a document.  |
+| Dictation |  The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.  |
 | Edit Text... |  The `Edit Text` action allows you to edit the text in the current selection based on an Ad-hoc directive. For example, you can translate, summarize, and correct errors.  |
 | Insert Text |  The `Insert Text` action allows you to quickly insert text at the cursor position. It automatically captures some preceding and following context for the text completion API to make the most accurate suggestions. For example, if you type ‘I had a day’ and place the cursor after 'a' and then use the `Insert Text` action, the API will suggest words like ‘great’, ‘bad’, or ‘delicious’.  |
 | Recent Text Edits |  The `Recent Text Edits` group allows you to quickly access your most recent text edits. This is useful for quickly accessing your most recent edits.  |
@@ -52,11 +53,14 @@ Markdown Actions allow you to quickly and easily add list items, table columns, 
 | Text | Description |
 | --- | --- |
 | Annotate |  The `Annotate` group allows you to transform natural language into a variety of NLP annotatation formats. This is useful for parsing and analyzing natural language.  |
+| Fact Check List |  The `Fact Check List` action allows you to add fact checking links to the selected list items.  |
 | Implement As... |  The `Implement As...` action allows you to quickly implement a markdown prompt in a specific language. This is useful for quickly implementing code in a specific language. For example, if select "find the largest file in the current directory" you can use the `Implement As...` action to quickly implement this idea in Bash.  |
 | Add List Items |  The `Add List Items` action allows you to quickly add list items to your Markdown document. It supports both ordered and unordered lists, and nested lists.  |
 | Add Table Column... |  The `Add Table Column` action allows you to quickly add a table column to your Markdown document. It will prompt you for the column name and attempt to generate new values for all rows.  |
 | Add Table Columns |  The `Add Table Columns` action allows you to quickly add table columns to your Markdown document. Multiple new columns will be generated and filled with generated data.  |
 | Add Table Rows |  The `Add Table Rows` action allows you to quickly add rows to a Markdown document table. The new row will be filled with generated data.  |
+| To Statement List |  The `To Statement List` action allows you to convert the selected text into a list of statements.  |
+| Wiki Links |  The `Wiki Links` action allows you to add wikipedia links to topics in the selected text.  |
 
 # Developer-Mode Actions
 
@@ -64,9 +68,8 @@ Some actions are only available when the plugin is running in developer mode. Th
 
 | Text | Description |
 | --- | --- |
-| Dictation |  The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.  |
 | Print PSI Tree |  The `Print PSI Tree` action allows you to print the PSI tree for the current file. This is useful for debugging and understanding the PSI tree for a file. This is a developer tool and is only visible if the `Developer Mode` setting is enabled.  |
-
+| Recursive To Statement List |  The `Recursive To Statement List` action allows you to convert the selected text into a list of statements, recursively expanding any statements in the list.  |
 
 <!-- Plugin description end -->
 

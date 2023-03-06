@@ -42,9 +42,9 @@ class ConvertFileToLanguage(private val targetLanguage: ComputerLanguage) : AnAc
         root: PsiTranslationSkeleton
     ) {
         val future: ListenableFuture<*> = if (AppSettingsState.getInstance().apiThreads > 1) {
-            root.parallelTranslate(event.project, indent, sourceLanguage!!, targetLanguage)
+            root.parallelTranslate(event.project!!, indent, sourceLanguage!!, targetLanguage)
         } else {
-            root.sequentialTranslate(event.project, indent, sourceLanguage!!, targetLanguage)!!
+            root.sequentialTranslate(event.project!!, indent, sourceLanguage!!, targetLanguage)!!
         }
         Futures.addCallback(future, object : FutureCallback<Any?> {
             override fun onSuccess(newText: Any?) {

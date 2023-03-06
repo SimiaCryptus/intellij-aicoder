@@ -37,17 +37,9 @@ class MarkdownNewTableColAction : AnAction() {
         val startOffset = textRange.startOffset
         val endOffset = textRange.endOffset
         UITools.redoableRequest(request, "", event,
-            { newText: CharSequence? ->
-                transformCompletion(
-                    markdownNewTableColParams, newText, columnName
-                )
-            }
-        ) { newText: CharSequence? ->
-            UITools.replaceString(
-                document, startOffset, endOffset,
-                newText!!
-            )
-        }
+            { transformCompletion(markdownNewTableColParams, it, columnName) },
+            { UITools.replaceString(document, startOffset, endOffset, it!!) }
+        )
     }
 
     class MarkdownNewTableColParams constructor(

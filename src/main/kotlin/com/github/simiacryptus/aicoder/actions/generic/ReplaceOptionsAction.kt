@@ -44,7 +44,7 @@ class ReplaceOptionsAction : AnAction() {
             { newText: CharSequence? ->
                 val options = newText!!.split("\n")
                     .map { it.trim().replace("^\\d+\\. ".toRegex(), "").trim() }.toTypedArray()
-                showRadioButtonDialog("Select an option to fill in the blank:", *options)
+                showRadioButtonDialog("Select an option to fill in the blank:", *options)?:selectedText
             }, { newText: CharSequence? ->
                 UITools.replaceString(document, selectionStart, selectionEnd, newText!!)
             })

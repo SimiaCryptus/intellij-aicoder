@@ -56,19 +56,19 @@ class RewordCommentAction : AnAction() {
             .buildCompletionRequest()
         val document = editor.document
         UITools.redoableRequest(request, "", event,
-            { newText: CharSequence? ->
+            { newText ->
                 indent.toString() + commentModel!!.fromString(
                     StringTools.lineWrapping(
                         newText!!, 120
                     )
                 )!!.withIndent(indent)
+            },{ newText ->
+                UITools.replaceString(
+                    document, startOffset, endOffset,
+                    newText!!
+                )
             }
-        ) { newText: CharSequence? ->
-            UITools.replaceString(
-                document, startOffset, endOffset,
-                newText!!
-            )
-        }
+        )
     }
 
     class RewordCommentParams constructor(val caret: Caret, val largestIntersectingComment: PsiElement)
