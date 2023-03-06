@@ -35,8 +35,8 @@ class WikiLinksAction : AnAction() {
             endOffset = caret.selectionEnd
         } else {
             elementText = elements.flatMap { it.children.map { it.text } }.toTypedArray().joinToString("\n")
-            startOffset = elements.minBy { it.startOffset }.startOffset
-            endOffset = elements.maxBy { it.endOffset }.endOffset
+            startOffset = elements.minByOrNull { it.startOffset }?.startOffset ?: caret.selectionStart
+            endOffset = elements.maxByOrNull { it.endOffset }?.endOffset ?: caret.selectionEnd
         }
         val replaceString = event.getRequiredData(CommonDataKeys.EDITOR).document.text.substring(startOffset, endOffset)
         val completionRequest = settings.createTranslationRequest()

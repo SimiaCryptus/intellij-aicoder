@@ -74,7 +74,7 @@ class AudioPump(
             // While the quiet window size is greater than or equal to the quiet window max, remove the first element
             while (quietWindow.size >= quietWindowMax) quietWindow.removeAt(0)
             // While the quiet window is not empty and the maximum value is greater than the quiet threshold, remove the first element
-            while (quietWindow.isNotEmpty() && quietWindow.max() > quietThreshold) quietWindow.removeAt(0)
+            while (quietWindow.isNotEmpty() && quietWindow.maxOrNull()!! > quietThreshold) quietWindow.removeAt(0)
             // If the percentile is less than the quiet threshold, add the percentile to the quiet window
             if (percentile < quietThreshold) {
                 quietWindow.add(percentile)

@@ -28,8 +28,8 @@ class FactCheckLinkedListAction : AnAction() {
         val psiFile = PsiUtil.getPsiFile(event)!!
         val elements = PsiUtil.getAllIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "ListItem")
         val elementText = elements.flatMap { it.children.map { it.text } }.toTypedArray()
-        startOffset = elements.minBy { it.startOffset }.startOffset
-        endOffset = elements.maxBy { it.endOffset }.endOffset
+        startOffset = elements.minByOrNull { it.startOffset }?.startOffset ?: caret.selectionStart
+        endOffset = elements.maxByOrNull { it.endOffset }?.endOffset ?: caret.selectionEnd
         val replaceString = event.getRequiredData(CommonDataKeys.EDITOR).document.text.substring(startOffset, endOffset)
         val completionRequest = settings.createTranslationRequest()
             .setInstruction(getInstruction("Translate each item into a search query that can be used to fact check each item with a search engine"))

@@ -149,7 +149,7 @@ object PsiUtil {
     }
 
     private fun within(textRange: TextRange, vararg offset: Int) : Boolean =
-        (textRange.startOffset <= offset.max()) && (textRange.endOffset > offset.min())
+        (textRange.startOffset <= offset.maxOrNull()?:0) && (textRange.endOffset > offset.minOrNull()?:0)
 
 
     fun matchesType(element: PsiElement, vararg types: CharSequence): Boolean {
