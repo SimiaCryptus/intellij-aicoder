@@ -43,7 +43,44 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.dev.DictationAction"
+        <action class="com.github.simiacryptus.aicoder.actions.markdown.ToStatementListAction"
+                text="To Statement List"
+                description="To statement list">
+            <!--DOC
+        The `To Statement List` action allows you to convert the selected text into a list of statements.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.dev.RecursiveToStatementListAction"
+                text="Recursive To Statement List"
+                description="Recursive to statement list">
+            <!--DOC
+        The `Recursive To Statement List` action allows you to convert the selected text into a list of statements,
+        recursively expanding any statements in the list.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.markdown.FactCheckLinkedListAction"
+                text="Fact Check List"
+                description="Fact Check List">
+            <!--DOC
+        The `Fact Check List` action allows you to add fact checking links to the selected list items.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.markdown.WikiLinksAction"
+                text="Wiki Links"
+                description="Wiki Links">
+            <!--DOC
+        The `Wiki Links` action allows you to add wikipedia links to topics in the selected text.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.generic.DictationAction"
                 text="Dictation"
                 description="Voice to text dictation">
             <!--DOC
@@ -63,7 +100,7 @@
         the plugin will **_provide an interactive selection UI_** to suggest words like ‘great’, ‘bad’, or ‘delicious’.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="N"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="N"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.InsertAction"
@@ -77,7 +114,7 @@
         the API will suggest words like ‘great’, ‘bad’, or ‘delicious’.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="S"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="S"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="S"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.AppendAction"
@@ -93,7 +130,7 @@
         This can be useful for quickly adding additional details or context to a document.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="A"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.EditAction"
@@ -104,7 +141,7 @@
         For example, you can translate, summarize, and correct errors.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="E"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="E"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="E"/>
         </action>
 
@@ -117,7 +154,7 @@
         This is useful for managing and writing code comments.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="W"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="W"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="W"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.TranslateCommentAction"
@@ -128,7 +165,7 @@
         This is useful for quickly refactoring your code and making it easier to understand.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="L"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="L"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
         </action>
 
@@ -140,7 +177,7 @@
         It supports both ordered and unordered lists, and nested lists.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="L"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="L"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableRowsAction"
@@ -151,7 +188,7 @@
         The new row will be filled with generated data.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="W"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="W"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="W"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableColsAction"
@@ -162,7 +199,7 @@
         Multiple new columns will be generated and filled with generated data.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="O"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableColAction"
@@ -173,7 +210,7 @@
         It will prompt you for the column name and attempt to generate new values for all rows.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="C"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
         </action>
 
@@ -186,7 +223,7 @@
         For example, you can use this action to add logging statements or to quickly refactor your code.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="E"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="E"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="E"/>
         </action>
         <group class="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
@@ -228,7 +265,7 @@
         This is useful for quickly implementing text-based ideas into code.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="F"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="F"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="F"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.ToHumanLanguageAction"
@@ -239,7 +276,7 @@
         This is useful for quickly describing code in plain text.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="T"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="T"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="T"/>
         </action>
 
@@ -251,7 +288,7 @@
         It attempts to process the code context and provide details about this generation context within the API call.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="I"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.DescribeAction"
@@ -263,7 +300,7 @@
         This is useful for quickly documenting your code and making it easier to understand.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="O"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.QuestionAction"
@@ -275,7 +312,7 @@
         The question and response are prepended to the selected code.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="Q"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="Q"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="Q"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.CommentsAction"
@@ -287,7 +324,7 @@
         This is useful for quickly documenting your code and making it easier to understand.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="C"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.RenameVariablesAction"
@@ -299,7 +336,7 @@
         This is useful for quickly refactoring your code and making it easier to understand.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="V"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="V"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="V"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.DocAction"
@@ -312,7 +349,7 @@
         generate more accurate comments.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="O"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
 
@@ -324,7 +361,7 @@
         This is useful for quickly pasting code into your project.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="P"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.RedoLast"
@@ -337,7 +374,7 @@
         quickly retry without having to start from scratch.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="D"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="D"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="D"/>
         </action>
 
@@ -349,7 +386,7 @@
         This is useful for quickly implementing a new method.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control I" second-keystroke="I"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
         </action>
         <group class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"

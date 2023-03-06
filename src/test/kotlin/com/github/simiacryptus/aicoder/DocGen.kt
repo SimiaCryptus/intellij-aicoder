@@ -23,19 +23,6 @@ class DocGen {
         val output = File(base,"actions.md")
         val actions = loadActions(input)
 
-        val codeActions =
-            actions.filter { it["id"].toString().startsWith("com.github.simiacryptus.aicoder.actions.code") }
-                .toTypedArray()
-        val markdownActions =
-            actions.filter { it["id"].toString().startsWith("com.github.simiacryptus.aicoder.actions.markdown") }
-                .toTypedArray()
-        val genericActions =
-            actions.filter { it["id"].toString().startsWith("com.github.simiacryptus.aicoder.actions.generic") }
-                .toTypedArray()
-        val devActions =
-            actions.filter { it["id"].toString().startsWith("com.github.simiacryptus.aicoder.actions.dev") }
-                .toTypedArray()
-
         // Output a markdown table containing the action data
         val writer = PrintWriter(FileOutputStream(output))
 
@@ -48,7 +35,10 @@ class DocGen {
             
             """.trimIndent()
         )
-        printTable2(writer, genericActions)
+        printTable2(
+            writer,
+            actions.filter { it["id"].toString().startsWith("com.github.simiacryptus.aicoder.actions.generic") }
+                .toTypedArray())
 
         writer.println(
             """
@@ -59,7 +49,10 @@ class DocGen {
             
             """.trimIndent()
         )
-        printTable2(writer, codeActions)
+        printTable2(
+            writer,
+            actions.filter { it["id"].toString().startsWith("com.github.simiacryptus.aicoder.actions.code") }
+                .toTypedArray())
 
         writer.println(
             """
@@ -70,7 +63,10 @@ class DocGen {
             
             """.trimIndent()
         )
-        printTable2(writer, markdownActions)
+        printTable2(
+            writer,
+            actions.filter { it["id"].toString().startsWith("com.github.simiacryptus.aicoder.actions.markdown") }
+                .toTypedArray())
 
         writer.println(
             """
@@ -81,16 +77,10 @@ class DocGen {
             
             """.trimIndent()
         )
-        printTable2(writer, devActions)
-
-//        writer.println(
-//            """
-//
-//            # All Actions
-//
-//            """.trimIndent()
-//        )
-//        printTable(writer, actions)
+        printTable2(
+            writer,
+            actions.filter { it["id"].toString().startsWith("com.github.simiacryptus.aicoder.actions.dev") }
+                .toTypedArray())
 
         writer.close()
     }

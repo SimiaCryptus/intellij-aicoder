@@ -26,7 +26,7 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
     val children = ArrayList<PsiTranslationSkeleton>()
 
     @Volatile
-    var translateFuture: ListenableFuture<CharSequence?>? = null
+    var translateFuture: ListenableFuture<CharSequence>? = null
 
     init {
         prefix = StringBuffer(text)
@@ -60,11 +60,11 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
     }
 
     fun translate(
-        project: Project?,
-        indent: CharSequence?,
+        project: Project,
+        indent: CharSequence,
         sourceLanguage: ComputerLanguage,
         targetLanguage: ComputerLanguage
-    ): ListenableFuture<CharSequence?>? {
+    ): ListenableFuture<CharSequence> {
         if (null == translateFuture) {
             synchronized(this) {
                 if (null == translateFuture) {
@@ -88,7 +88,7 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
                 }
             }
         }
-        return translateFuture
+        return translateFuture!!
     }
 
     private fun translationText(): String {
@@ -100,8 +100,8 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
     }
 
     fun sequentialTranslate(
-        project: Project?,
-        indent: CharSequence?,
+        project: Project,
+        indent: CharSequence,
         sourceLanguage: ComputerLanguage,
         targetLanguage: ComputerLanguage
     ): ListenableFuture<*>? {
@@ -117,7 +117,7 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
     }
 
     fun parallelTranslate(
-        project: Project?,
+        project: Project,
         indent: CharSequence,
         sourceLanguage: ComputerLanguage,
         targetLanguage: ComputerLanguage
@@ -130,7 +130,7 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
     }
 
     fun translationFutures(
-        project: Project?,
+        project: Project,
         indent: CharSequence,
         sourceLanguage: ComputerLanguage,
         targetLanguage: ComputerLanguage

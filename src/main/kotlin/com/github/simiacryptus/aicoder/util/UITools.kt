@@ -8,6 +8,7 @@ import com.github.simiacryptus.aicoder.openai.EditRequest
 import com.github.simiacryptus.aicoder.openai.ModerationException
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -43,12 +44,12 @@ import javax.swing.text.JTextComponent
 object UITools {
     private val log = Logger.getInstance(UITools::class.java)
     val retry = WeakHashMap<Document, Runnable>()
-    fun redoableRequest(request: CompletionRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence?, Runnable?>) {
-        redoableRequest(request, indent, event, { x: CharSequence? -> x }, action)
+    fun redoableRequest(request: CompletionRequest, indent: CharSequence, event: AnActionEvent, action: Function<CharSequence, Runnable>) {
+        redoableRequest(request, indent, event, { x: CharSequence -> x }, action)
     }
 
     fun startProgress(): ProgressIndicator? {
-        //if(1==1) return null;
+        if(1==1) return null;
         if (AppSettingsState.getInstance().suppressProgress) return null
         val progressIndicator = ProgressManager.getInstance().progressIndicator
         if (null != progressIndicator) {
@@ -56,6 +57,15 @@ object UITools {
             progressIndicator.text = "Talking to OpenAI..."
         }
         return progressIndicator
+    }
+    fun redoableRequest(
+        request: CompletionRequest,
+        indent: CharSequence,
+        event: AnActionEvent,
+        transformCompletion: Function<CharSequence, CharSequence>,
+        action: Function<CharSequence, Runnable>,
+        postFilter: (CharSequence) -> CharSequence) {
+        redoableRequest(request, indent, event, transformCompletion, action, OpenAI_API.complete(event.project!!, request, postFilter))
     }
 
     /**
@@ -67,16 +77,30 @@ object UITools {
      * @param action  The action to be taken when the request is completed.
      * @return A [Runnable] that can be used to redo the request.
      */
-    fun redoableRequest(request: CompletionRequest, indent: CharSequence?, event: AnActionEvent, transformCompletion: Function<CharSequence?, CharSequence?>, action: Function<CharSequence?, Runnable?>) {
-        val progressIndicator = startProgress()
-        val resultFuture = OpenAI_API.complete(event.project, request, indent!!)
+    fun redoableRequest(
+        request: CompletionRequest,
+        indent: CharSequence,
+        event: AnActionEvent,
+        transformCompletion: Function<CharSequence, CharSequence>,
+        action: Function<CharSequence, Runnable>,
+        resultFuture: ListenableFuture<CharSequence> = OpenAI_API.complete(event.project!!, request, indent?:""),
+        progressIndicator: ProgressIndicator? = startProgress()
+    ) {
         Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
             override fun onSuccess(result: CharSequence?) {
                 progressIndicator?.cancel()
                 val actionFn = AtomicReference<Runnable?>()
-                WriteCommandAction.runWriteCommandAction(event.project) { actionFn.set(action.apply(transformCompletion.apply(result.toString()))) }
+                WriteCommandAction.runWriteCommandAction(event.project) {
+                    actionFn.set(
+                        action.apply(
+                            transformCompletion.apply(
+                                result.toString()
+                            )
+                        )
+                    )
+                }
                 if (null != actionFn.get()) {
-                    val undo = getRetry(request, indent, event, action, actionFn.get(), transformCompletion)
+                    val undo = getRetry(request, indent, event, action, actionFn.get()!!, transformCompletion)
                     val document = event.getRequiredData(CommonDataKeys.EDITOR).document
                     retry[document] = undo
                 }
@@ -105,41 +129,50 @@ object UITools {
      * @param transformCompletion
      * @return a [Runnable] that will attempt to complete the given [CompletionRequest]
      */
-    private fun getRetry(request: CompletionRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence?, Runnable?>, undo: Runnable?, transformCompletion: Function<CharSequence?, CharSequence?>): Runnable {
+    fun getRetry(request: CompletionRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence, Runnable>, undo: Runnable, transformCompletion: Function<CharSequence, CharSequence>): Runnable {
         val document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR))!!.document
         return Runnable {
             val progressIndicator = startProgress()
-            val retryFuture = OpenAI_API.complete(event.project, request, indent!!)
-            Futures.addCallback(retryFuture, object : FutureCallback<CharSequence?> {
-                override fun onSuccess(result: CharSequence?) {
-                    progressIndicator?.cancel()
-                    WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
-                    val nextUndo = AtomicReference<Runnable?>()
-                    WriteCommandAction.runWriteCommandAction(event.project) { nextUndo.set(action.apply(transformCompletion.apply(result.toString()))) }
-                    retry[document] = getRetry(request, indent, event, action, nextUndo.get(), transformCompletion)
-                }
+            Futures.addCallback(
+                OpenAI_API.complete(event.project!!, request, indent!!),
+                object : FutureCallback<CharSequence?> {
+                    override fun onSuccess(result: CharSequence?) {
+                        progressIndicator?.cancel()
+                        WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
+                        val nextUndo = AtomicReference<Runnable?>()
+                        WriteCommandAction.runWriteCommandAction(event.project) {
+                            nextUndo.set(
+                                action.apply(
+                                    transformCompletion.apply(result.toString())
+                                )
+                            )
+                        }
+                        retry[document] = getRetry(request, indent, event, action, nextUndo.get()!!, transformCompletion)
+                    }
 
-                override fun onFailure(t: Throwable) {
-                    progressIndicator?.cancel()
-                    handle(t)
-                }
-            }, OpenAI_API.pool)
+                    override fun onFailure(t: Throwable) {
+                        progressIndicator?.cancel()
+                        handle(t)
+                    }
+                },
+                OpenAI_API.pool
+            )
         }
     }
 
-    fun redoableRequest(request: EditRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence?, Runnable?>) {
-        redoableRequest(request, indent, event, { x: CharSequence? -> x }, action)
+    fun redoableRequest(request: EditRequest, indent: CharSequence, event: AnActionEvent, action: Function<CharSequence, Runnable>) {
+        redoableRequest(request, indent, event, { x: CharSequence -> x }, action)
     }
 
-    fun redoableRequest(request: EditRequest, indent: CharSequence?, event: AnActionEvent, transformCompletion: Function<CharSequence?, CharSequence?>, action: Function<CharSequence?, Runnable?>) {
+    fun redoableRequest(request: EditRequest, indent: CharSequence, event: AnActionEvent, transformCompletion: Function<CharSequence, CharSequence>, action: Function<CharSequence, Runnable>) {
         val editor = event.getData(CommonDataKeys.EDITOR)
         val document = Objects.requireNonNull(editor)!!.document
         val progressIndicator = startProgress()
-        val resultFuture = OpenAI_API.edit(event.project, request.uiIntercept(), indent!!)
+        val resultFuture = OpenAI_API.edit(event.project!!, request.uiIntercept(), indent!!)
         Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
             override fun onSuccess(result: CharSequence?) {
                 progressIndicator?.cancel()
-                val undo = AtomicReference<Runnable?>()
+                val undo = AtomicReference<Runnable>()
                 WriteCommandAction.runWriteCommandAction(event.project) { undo.set(action.apply(transformCompletion.apply(result.toString()))) }
                 retry[document] = getRetry(request, indent, event, action, undo.get())
             }
@@ -151,16 +184,16 @@ object UITools {
         }, OpenAI_API.pool)
     }
 
-    private fun getRetry(request: EditRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence?, Runnable?>, undo: Runnable?): Runnable {
+    private fun getRetry(request: EditRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence, Runnable>, undo: Runnable): Runnable {
         val document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR))!!.document
         return Runnable {
             val progressIndicator = startProgress()
-            val retryFuture = OpenAI_API.edit(event.project, request.uiIntercept(), indent!!)
+            val retryFuture = OpenAI_API.edit(event.project!!, request.uiIntercept(), indent!!)
             Futures.addCallback(retryFuture, object : FutureCallback<CharSequence?> {
                 override fun onSuccess(result: CharSequence?) {
                     progressIndicator?.cancel()
                     WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
-                    val nextUndo = AtomicReference<Runnable?>()
+                    val nextUndo = AtomicReference<Runnable>()
                     WriteCommandAction.runWriteCommandAction(event.project) { nextUndo.set(action.apply(result.toString())) }
                     retry[document] = getRetry(request, indent, event, action, nextUndo.get())
                 }
@@ -250,6 +283,7 @@ object UITools {
         val documentText = document.text
         val lineNumber = document.getLineNumber(caret.selectionStart)
         val lines = documentText.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        if(lines.isEmpty()) return ""
         return IndentedText.fromString(lines[Math.min(Math.max(lineNumber, 0), lines.size - 1)]).indent
     }
 
@@ -558,19 +592,19 @@ object UITools {
     }
 
     fun showRadioButtonDialog(
-        promptMessage: String,
-        vararg radioButtonDescriptions: String
-    ): String? {
+        promptMessage: CharSequence,
+        vararg radioButtonDescriptions: CharSequence
+    ): CharSequence? {
         val formBuilder = FormBuilder.createFormBuilder()
         val radioButtonMap = HashMap<String, JRadioButton>()
         val buttonGroup = ButtonGroup()
         for (i in radioButtonDescriptions.indices) {
-            val radioButton = JRadioButton(radioButtonDescriptions[i], null as Icon?, true)
-            radioButtonMap.put(radioButtonDescriptions[i], radioButton)
+            val radioButton = JRadioButton(radioButtonDescriptions[i].toString(), null as Icon?, true)
+            radioButtonMap.put(radioButtonDescriptions[i].toString(), radioButton)
             buttonGroup.add(radioButton)
             formBuilder.addComponent(radioButton)
         }
-        val dialogResult = showOptionDialog(formBuilder.panel, "OK", title = promptMessage)
+        val dialogResult = showOptionDialog(formBuilder.panel, "OK", title = promptMessage.toString())
         if (dialogResult == 0) {
             for ((radioButtonId, radioButton) in radioButtonMap) {
                 if (radioButton.isSelected) {

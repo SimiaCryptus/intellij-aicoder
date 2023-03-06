@@ -65,18 +65,18 @@ class PsiClassContextAction : AnAction() {
                 """.trimIndent()
             )
         UITools.redoableRequest(request, UITools.getIndent(psiClassContextActionParams.caret), event,
-            { newText: CharSequence? ->
+            { newText ->
                 """
                     
                     $newText
                     """.trimIndent()
+            }, { newText ->
+                UITools.insertString(
+                    editor.document, endOffset,
+                    newText!!
+                )
             }
-        ) { newText: CharSequence? ->
-            UITools.insertString(
-                editor.document, endOffset,
-                newText!!
-            )
-        }
+        )
     }
 
     class PsiClassContextActionParams constructor(
@@ -90,7 +90,7 @@ class PsiClassContextAction : AnAction() {
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return getPsiClassContextActionParams(e).isPresent
         }
 

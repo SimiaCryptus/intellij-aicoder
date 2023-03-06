@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.util
 
+import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
@@ -236,6 +237,30 @@ object StringTools {
 
     fun getSuffixForContext(text: String, idealLength: Int): CharSequence {
         return getSuffixForContext(text, idealLength, ".", "\n", ",", ";")
+    }
+
+    fun restrictCharacterSet(text: String, charset: Charset): String {
+        val encoder = charset.newEncoder()
+        val sb = StringBuilder()
+        text.toCharArray().filter(encoder::canEncode).forEach(sb::append)
+        return sb.toString()
+    }
+
+
+    fun replaceAll(
+        replaceString: String,
+        vararg replacements: Pair<String, String>
+    ) = replacements.fold(replaceString) { acc, (a, b) -> acc.replace(a, b) }
+
+    fun replaceAllNonOverlapping(
+        replaceString: String,
+        vararg replacements: Pair<String, String>
+    ): String {
+        val joinedPattern = replacements.map { Pattern.quote(it.first) }.joinToString("|").toRegex()
+        return joinedPattern.replace(replaceString) { result ->
+            val charSequence: CharSequence = replacements.find {  it.first.compareTo(result.value, true) == 0 }?.second ?: result.value
+            charSequence
+        }
     }
 
     /**

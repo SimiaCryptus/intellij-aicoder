@@ -36,18 +36,19 @@ class MarkdownImplementAction(private val language: String) : AnAction(
             .addStops("```")
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
         redoableRequest(completionRequest, "", event,
-            { docString: CharSequence? ->
+            { docString ->
                 String.format(
                     "\n```%s\n%s\n```",
                     language, docString
                 )
+            },
+            { docString ->
+                insertString(
+                    document, endOffset,
+                    docString!!
+                )
             }
-        ) { docString: CharSequence? ->
-            insertString(
-                document, endOffset,
-                docString!!
-            )
-        }
+        )
     }
 
     companion object {

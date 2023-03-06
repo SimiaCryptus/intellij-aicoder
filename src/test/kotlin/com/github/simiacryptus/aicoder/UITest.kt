@@ -174,7 +174,7 @@ class UITest {
         keyboard.key(KeyEvent.VK_RIGHT)
         keyboard.enterText("src")
         keyboard.key(KeyEvent.VK_CONTEXT_MENU)
-        click("//div[contains(@text.key, 'group.NewGroup.text')]")
+        click("//div[contains(@text.key, 'group.NewGroup.text')]", "//div[contains(@text.key, 'group.WeighingNewGroup.text')]")
         sleep(500)
         click("//div[@class='HeavyWeightWindow'][.//div[@class='MyMenu']]//div[@class='HeavyWeightWindow']//div[contains(@text.key, 'group.FileMenu.text')]")
         keyboard.enterText(name)
@@ -918,8 +918,8 @@ class UITest {
     private fun screenshot(path: String) =
         getComponent(path).getScreenshot()
 
-    private fun click(path: String) {
-        getComponent(path).click()
+    private fun click(vararg path: String) {
+        getComponent(*path).click()
     }
 
     private fun clickr(path: String) {
@@ -936,6 +936,12 @@ class UITest {
         }()
     }
 
-    private fun getComponent(path: String) = robot.find(ComponentFixture::class.java, byXpath(path))
+    private fun getComponent(vararg paths: String) =
+        paths.flatMap { path -> try {
+            listOf(robot.find(ComponentFixture::class.java, byXpath(path))).filter { it != null }
+        } catch (ex : Throwable) {
+            listOf()
+        } }.first()
+
 
 }

@@ -7,6 +7,14 @@
 ### Added
 - 
 
+## [1.0.12]
+
+### Added
+- Improved dictation action with better stream handling and prefix logic
+- Added "add wiki links" action
+- Added "to statement list" action
+- Added "to factcheck links" action
+
 ## [1.0.11]
 
 ### Added

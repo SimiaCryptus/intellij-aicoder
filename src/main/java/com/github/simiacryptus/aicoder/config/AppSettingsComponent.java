@@ -77,6 +77,9 @@ public class AppSettingsComponent {
     @Name("Edit Model")
     public final JComponent model_edit = OpenAI_API.INSTANCE.getModelSelector();
 
+    @Name("API Threads")
+    public final JBTextField apiThreads = new JBTextField();
+
     @Name("API Key")
     public final JBPasswordField apiKey = new JBPasswordField();
     @SuppressWarnings("unused")

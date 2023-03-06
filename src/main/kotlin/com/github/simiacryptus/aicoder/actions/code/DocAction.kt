@@ -56,16 +56,17 @@ class DocAction : AnAction() {
             .addStops(language.multilineCommentSuffix!!)
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
         redoableRequest(completionRequest, "", event,
-            { docString: CharSequence? ->
+            { docString ->
                 language.docComment!!.fromString(docString.toString().trim { it <= ' ' })!!.withIndent(indent)
                     .toString() + "\n" + indent + StringTools.trimPrefix(indentedInput.toString())
+            },
+            { docString ->
+                replaceString(
+                    document, startOffset, endOffset,
+                    docString!!
+                )
             }
-        ) { docString: CharSequence? ->
-            replaceString(
-                document, startOffset, endOffset,
-                docString!!
-            )
-        }
+        )
     }
 
     companion object {
