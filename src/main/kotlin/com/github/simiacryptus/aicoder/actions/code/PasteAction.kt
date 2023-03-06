@@ -60,6 +60,7 @@ class PasteAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             return if (CopyPasteManager.getInstance()
                     .getContents<Any?>(DataFlavor.stringFlavor) == null
             ) false else {

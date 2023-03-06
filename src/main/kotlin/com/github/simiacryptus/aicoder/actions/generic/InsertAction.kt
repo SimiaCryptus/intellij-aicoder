@@ -38,6 +38,7 @@ class InsertAction : AnAction() {
     companion object {
         @Suppress("unused")
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             return !UITools.hasSelection(e)
         }
     }

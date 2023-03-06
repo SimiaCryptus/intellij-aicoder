@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.openai.OpenAI_API
 import com.github.simiacryptus.aicoder.util.AudioPump
 import com.github.simiacryptus.aicoder.util.AudioRecorder
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -106,6 +107,7 @@ class DictationAction : AnAction() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
+        if(UITools.isSanctioned()) return false
         try {
             AudioSystem.getTargetDataLine(AudioRecorder.audioFormat)
         } catch (e: Exception) {

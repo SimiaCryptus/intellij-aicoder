@@ -47,6 +47,7 @@ class CommentsAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             if (!UITools.hasSelection(e)) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if(computerLanguage == ComputerLanguage.Text) return false

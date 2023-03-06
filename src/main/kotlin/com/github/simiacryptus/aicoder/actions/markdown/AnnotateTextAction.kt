@@ -69,6 +69,7 @@ class AnnotateTextAction : ActionGroup() {
         return children.toTypedArray()
     }
     private fun isEnabled(e: AnActionEvent): Boolean {
+        if(UITools.isSanctioned()) return false
         if (!UITools.hasSelection(e)) return false
         if(!setOf(
                 ComputerLanguage.Markdown,

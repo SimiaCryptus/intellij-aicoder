@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.openai.OpenAI_API
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.StringTools.replaceAllNonOverlapping
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getInstruction
 import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
@@ -77,6 +78,7 @@ class WikiLinksAction : AnAction() {
     }
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if (ComputerLanguage.Markdown != computerLanguage) return false
             val caret = e.getData(CommonDataKeys.CARET) ?: return false

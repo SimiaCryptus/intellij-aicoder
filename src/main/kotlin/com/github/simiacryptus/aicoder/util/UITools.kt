@@ -614,4 +614,33 @@ object UITools {
         }
         return null
     }
+
+    fun isSanctioned(): Boolean {
+        // Due to the invasion of Ukraine, Russia and allied groups are currently sanctioned.
+        // Slava Ukraini!
+        val locale = Locale.getDefault()
+        // ISO 3166 - Russia
+        if(locale.country.compareTo("RU", true) == 0) return true
+        // ISO 3166 - Belarus
+        if(locale.country.compareTo("BY", true) == 0) return true
+        // ISO 639 - Russian
+        if(locale.language.compareTo("ru", true) == 0) {
+            // ISO 3166 - Ukraine
+            if (locale.country.compareTo("UA", true) == 0) return false
+            // ISO 3166 - United States
+            if (locale.country.compareTo("US", true) == 0) return false
+            // ISO 3166 - Britian
+            if (locale.country.compareTo("GB", true) == 0) return false
+            // ISO 3166 - Georgia
+            if (locale.country.compareTo("GE", true) == 0) return false
+            // ISO 3166 - Kazakhstan
+            if (locale.country.compareTo("KZ", true) == 0) return false
+            // ISO 3166 - Germany
+            if (locale.country.compareTo("DE", true) == 0) return false
+            // ISO 3166 - Poland
+            if (locale.country.compareTo("PL", true) == 0) return false
+            return true
+        }
+        return false
+    }
 }

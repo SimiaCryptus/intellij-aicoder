@@ -21,6 +21,7 @@ class QuestionAction : AnAction() {
         super.update(e)
     }
     private fun isEnabled(e: AnActionEvent): Boolean {
+        if(UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         return true

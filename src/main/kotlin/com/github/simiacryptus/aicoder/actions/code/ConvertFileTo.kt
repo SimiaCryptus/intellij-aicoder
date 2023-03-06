@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -29,6 +30,7 @@ class ConvertFileTo : ActionGroup() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
+        if(UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if(computerLanguage == ComputerLanguage.Text) return false
         return supportedLanguages.contains(computerLanguage)
