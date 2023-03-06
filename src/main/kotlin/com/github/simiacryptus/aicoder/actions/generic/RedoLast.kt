@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.retry
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -22,6 +23,7 @@ class RedoLast : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             return null != retry[e.getRequiredData(CommonDataKeys.EDITOR).document]
         }
     }

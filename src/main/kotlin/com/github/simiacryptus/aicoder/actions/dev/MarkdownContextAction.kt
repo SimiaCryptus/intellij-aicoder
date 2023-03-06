@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getIndent
 import com.github.simiacryptus.aicoder.util.UITools.getInstruction
 import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
@@ -73,6 +74,7 @@ class MarkdownContextAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             if (!AppSettingsState.getInstance().devActions) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if(computerLanguage == ComputerLanguage.Text) return false

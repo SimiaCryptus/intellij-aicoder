@@ -7,6 +7,11 @@
 ### Added
 - 
 
+## [1.0.13]
+
+### Removed
+- Access for Russian users due to the invasion of Ukraine
+
 ## [1.0.12]
 
 ### Added

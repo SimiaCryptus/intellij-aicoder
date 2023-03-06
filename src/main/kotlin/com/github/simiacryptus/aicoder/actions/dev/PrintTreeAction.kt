@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -26,6 +27,7 @@ class PrintTreeAction : AnAction() {
     companion object {
         val log = Logger.getInstance(PrintTreeAction::class.java)
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             return if (!AppSettingsState.getInstance().devActions) false else null != PsiUtil.getLargestContainedEntity(e)
         }
     }

@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.markdown
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getIndent
 import com.github.simiacryptus.aicoder.util.UITools.getInstruction
 import com.github.simiacryptus.aicoder.util.UITools.insertString
@@ -82,6 +83,7 @@ class MarkdownListAction : AnAction() {
     class MarkdownListParams constructor(val caret: Caret, val list: PsiElement)
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             return if (ComputerLanguage.Markdown != computerLanguage) false else null != getMarkdownListParams(e)
         }

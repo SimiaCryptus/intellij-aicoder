@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
@@ -63,6 +64,7 @@ class ImplementAction : AnAction() {
     companion object {
 
         private fun isEnabled(event: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             if (!AppSettingsState.getInstance().devActions) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
             if(computerLanguage == ComputerLanguage.Text) return false

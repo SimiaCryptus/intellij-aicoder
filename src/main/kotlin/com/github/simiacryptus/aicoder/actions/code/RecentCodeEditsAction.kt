@@ -71,6 +71,7 @@ class RecentCodeEditsAction : ActionGroup() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             if (!UITools.hasSelection(e)) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e)
             if (null == computerLanguage) return false

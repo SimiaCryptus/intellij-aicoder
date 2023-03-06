@@ -614,4 +614,64 @@ object UITools {
         }
         return null
     }
+
+    /**
+     * Enforces foreign policy using AI-generated code.
+     * If this effects you, you can either compile this yourself, or overthrow your government.
+     * Glory to Ukraine! Glory to the Defenders!
+     *
+     * @return true if the user is sanctioned, false otherwise.
+     */
+    fun isSanctioned(): Boolean {
+        // Due to the invasion of Ukraine, Russia and allied groups are currently sanctioned.
+        // Slava Ukraini!
+        val locale = Locale.getDefault()
+        // ISO 3166 - Russia
+        if(locale.country.compareTo("RU", true) == 0) return true
+        // ISO 3166 - Belarus
+        if(locale.country.compareTo("BY", true) == 0) return true
+        // ISO 639 - Russian
+        if(locale.language.compareTo("ru", true) == 0) {
+            // ISO 3166 - Ukraine
+            if (locale.country.compareTo("UA", true) == 0) return false
+            // ISO 3166 - United States
+            if (locale.country.compareTo("US", true) == 0) return false
+            // ISO 3166 - Britian
+            if (locale.country.compareTo("GB", true) == 0) return false
+            // ISO 3166 - United Kingdom
+            if (locale.country.compareTo("UK", true) == 0) return false
+            // ISO 3166 - Georgia
+            if (locale.country.compareTo("GE", true) == 0) return false
+            // ISO 3166 - Kazakhstan
+            if (locale.country.compareTo("KZ", true) == 0) return false
+            // ISO 3166 - Germany
+            if (locale.country.compareTo("DE", true) == 0) return false
+            // ISO 3166 - Poland
+            if (locale.country.compareTo("PL", true) == 0) return false
+            // ISO 3166 - Latvia
+            if (locale.country.compareTo("LV", true) == 0) return false
+            // ISO 3166 - Lithuania
+            if (locale.country.compareTo("LT", true) == 0) return false
+            // ISO 3166 - Estonia
+            if (locale.country.compareTo("EE", true) == 0) return false
+            // ISO 3166 - Moldova
+            if (locale.country.compareTo("MD", true) == 0) return false
+            // ISO 3166 - Armenia
+            if (locale.country.compareTo("AM", true) == 0) return false
+            // ISO 3166 - Azerbaijan
+            if (locale.country.compareTo("AZ", true) == 0) return false
+            // ISO 3166 - Kyrgyzstan
+            if (locale.country.compareTo("KG", true) == 0) return false
+            // ISO 3166 - Tajikistan
+            if (locale.country.compareTo("TJ", true) == 0) return false
+            // ISO 3166 - Turkmenistan
+            if (locale.country.compareTo("TM", true) == 0) return false
+            // ISO 3166 - Uzbekistan
+            if (locale.country.compareTo("UZ", true) == 0) return false
+            // ISO 3166 - Mongolia
+            if (locale.country.compareTo("MN", true) == 0) return false
+            return true
+        }
+        return false
+    }
 }

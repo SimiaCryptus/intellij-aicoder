@@ -56,6 +56,7 @@ class MarkdownNewTableColsAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             return if (ComputerLanguage.Markdown !== computerLanguage) false else null != getMarkdownNewTableColsParams(
                     e

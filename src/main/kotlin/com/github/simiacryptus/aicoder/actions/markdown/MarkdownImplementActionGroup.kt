@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
@@ -49,6 +50,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
+        if(UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if(computerLanguage == ComputerLanguage.Text) return false
         if (ComputerLanguage.Markdown != computerLanguage) return false

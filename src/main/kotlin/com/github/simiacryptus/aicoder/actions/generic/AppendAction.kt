@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.github.simiacryptus.aicoder.util.UITools.insertString
 import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
@@ -40,6 +41,7 @@ class AppendAction : AnAction() {
     companion object {
         @Suppress("unused")
         private fun isEnabled(e: AnActionEvent): Boolean {
+            if(UITools.isSanctioned()) return false
             return hasSelection(e)
         }
     }
