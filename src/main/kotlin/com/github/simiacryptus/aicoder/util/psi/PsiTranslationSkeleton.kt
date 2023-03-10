@@ -83,7 +83,7 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
                             .setInputAttribute("language", sourceLanguage.name)
                             .setOutputType("translated")
                             .setOutputAttrute("language", targetLanguage.name)
-                            .buildCompletionRequest(), indent!!
+                            .buildCompletionRequest(), indent
                     )
                 }
             }
@@ -212,16 +212,16 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
                 ComputerLanguage.Python -> String.format(
                     "%s\n    %s\n    pass",
                     declaration,
-                    targetLanguage.lineComment!!.fromString(stubID)
+                    targetLanguage.lineComment.fromString(stubID)
                 )
 
                 ComputerLanguage.Go, ComputerLanguage.Kotlin, ComputerLanguage.Scala, ComputerLanguage.Java, ComputerLanguage.JavaScript, ComputerLanguage.Rust -> String.format(
                     "%s {\n%s\n}\n",
                     declaration,
-                    targetLanguage.lineComment!!.fromString(stubID)
+                    targetLanguage.lineComment.fromString(stubID)
                 )
 
-                else -> String.format("%s {\n%s\n}\n", declaration, targetLanguage.lineComment!!.fromString(stubID))
+                else -> String.format("%s {\n%s\n}\n", declaration, targetLanguage.lineComment.fromString(stubID))
             }
         }
 

@@ -67,7 +67,7 @@ class DescribeAction : AnAction() {
         UITools.redoableRequest(request, indent, event,
             { newText ->
                 val wrapping = StringTools.lineWrapping(
-                    newText!!.toString().trim { it <= ' ' }, 120
+                    newText.toString().trim { it <= ' ' }, 120
                 )
                 val numberOfLines = wrapping.trim { it <= ' ' }.split("\n".toRegex()).dropLastWhile { it.isEmpty() }
                     .toTypedArray().size
@@ -86,7 +86,7 @@ class DescribeAction : AnAction() {
                     editor.document,
                     selectionStart,
                     selectionEnd,
-                    newText!!
+                    newText
                 )
             })
     }

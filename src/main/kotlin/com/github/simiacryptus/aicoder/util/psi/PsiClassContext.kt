@@ -1,11 +1,12 @@
 package com.github.simiacryptus.aicoder.util.psi
 
+import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import java.util.ArrayList
 
-class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boolean) {
+class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boolean, val language: ComputerLanguage) {
     val children = ArrayList<PsiClassContext>()
 
     /**
@@ -36,22 +37,36 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
                 val within =
                     textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart && textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd
                 if (PsiUtil.matchesType(element, "ImportList")) {
-                    currentContext.children.add(PsiClassContext(text.trim { it <= ' ' }, isPrior, isOverlap))
+                    currentContext.children.add(PsiClassContext(text.trim { it <= ' ' }, isPrior, isOverlap, language))
                 } else if (PsiUtil.matchesType(element, "Comment", "DocComment")) {
                     if (within) {
-                        currentContext.children.add(PsiClassContext(indent + text.trim { it <= ' ' }, false, true))
+                        currentContext.children.add(PsiClassContext(indent + text.trim { it <= ' ' }, false, true, language))
                     }
-                } else if (PsiUtil.matchesType(element, "Method", "Field")) {
+                } else if (PsiUtil.matchesType(element, "Field")) {
                     processChildren(
                         element,
                         self,
                         isPrior,
                         isOverlap,
                         indent + PsiUtil.getDeclaration(element).trim { it <= ' ' } + if (isOverlap) " {" else ";")
+                } else if (PsiUtil.matchesType(element, "Method", "Function", "FunctionDefinition", "Constructor")) {
+                    val methodTerminator = when (language) {
+                        ComputerLanguage.Java -> " { /* ... */}"
+                        ComputerLanguage.Kotlin -> " { /* ... */}"
+                        ComputerLanguage.Scala -> " { /* ... */}"
+                        else -> ";"
+                    }
+                    processChildren(
+                        element,
+                        self,
+                        isPrior,
+                        isOverlap,
+                        indent + PsiUtil.getDeclaration(element).trim { it <= ' ' } + (if (isOverlap) " {" else methodTerminator))
                 } else if (PsiUtil.matchesType(element, "LocalVariable")) {
                     currentContext.children.add(PsiClassContext(indent + text.trim { it <= ' ' } + ";",
                         isPrior,
-                        isOverlap))
+                        isOverlap,
+                        language))
                 } else if (PsiUtil.matchesType(element, "Class")) {
                     processChildren(
                         element,
@@ -60,7 +75,7 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
                         isOverlap,
                         indent + text.substring(0, text.indexOf('{')).trim { it <= ' ' } + " {")
                     if (!isOverlap) {
-                        currentContext.children.add(PsiClassContext("}", isPrior, false))
+                        currentContext.children.add(PsiClassContext("}", isPrior, false, language))
                     }
                 } else if (!isOverlap && PsiUtil.matchesType(element, "CodeBlock", "ForStatement")) {
                     // Skip
@@ -76,7 +91,7 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
                 isOverlap: Boolean,
                 declarationText: String
             ): PsiClassContext {
-                val newNode = PsiClassContext(declarationText, isPrior, isOverlap)
+                val newNode = PsiClassContext(declarationText, isPrior, isOverlap, language)
                 currentContext.children.add(newNode)
                 val prevclassBuffer = currentContext
                 currentContext = newNode
@@ -110,12 +125,12 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
     }
 
     companion object {
-        fun getContext(psiFile: PsiFile, selectionStart: Int, selectionEnd: Int): PsiClassContext {
-            return PsiClassContext("", false, true).init(psiFile, selectionStart, selectionEnd)
+        fun getContext(psiFile: PsiFile, selectionStart: Int, selectionEnd: Int, language: ComputerLanguage): PsiClassContext {
+            return PsiClassContext("", false, true, language).init(psiFile, selectionStart, selectionEnd)
         }
 
-        fun getContext(psiFile: PsiFile): PsiClassContext {
-            return getContext(psiFile, 0, psiFile.textLength)
+        fun getContext(language: ComputerLanguage, psiFile: PsiFile): PsiClassContext {
+            return getContext(psiFile, 0, psiFile.textLength, language)
         }
     }
 }

@@ -24,13 +24,11 @@ class FactCheckLinkedListAction : AnAction() {
         val settings = AppSettingsState.getInstance()
         val caret = event.getRequiredData(CommonDataKeys.EDITOR).caretModel.primaryCaret
         val languageName = ComputerLanguage.getComputerLanguage(event)!!.name
-        val endOffset: Int
-        val startOffset: Int
         val psiFile = PsiUtil.getPsiFile(event)!!
         val elements = PsiUtil.getAllIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "ListItem")
         val elementText = elements.flatMap { it.children.map { it.text } }.toTypedArray()
-        startOffset = elements.minByOrNull { it.startOffset }?.startOffset ?: caret.selectionStart
-        endOffset = elements.maxByOrNull { it.endOffset }?.endOffset ?: caret.selectionEnd
+        val startOffset = elements.minByOrNull { it.startOffset }?.startOffset ?: caret.selectionStart
+        val endOffset = elements.maxByOrNull { it.endOffset }?.endOffset ?: caret.selectionEnd
         val replaceString = event.getRequiredData(CommonDataKeys.EDITOR).document.text.substring(startOffset, endOffset)
         val completionRequest = settings.createTranslationRequest()
             .setInstruction(getInstruction("Translate each item into a search query that can be used to fact check each item with a search engine"))
@@ -43,7 +41,7 @@ class FactCheckLinkedListAction : AnAction() {
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
         redoableRequest(completionRequest, "", event,
             { newText ->
-                val queries = newText!!.replace("\"".toRegex(), "").split("\n\\d+\\.\\s+".toRegex()).toTypedArray()
+                val queries = newText.replace("\"".toRegex(), "").split("\n\\d+\\.\\s+".toRegex()).toTypedArray()
                 if (queries.size != elementText.size) {
                     throw RuntimeException("Invalid response: " + newText)
                 }
@@ -55,7 +53,7 @@ class FactCheckLinkedListAction : AnAction() {
                 }
             },
             { newText ->
-                replaceString(document, startOffset, endOffset, newText!!)
+                replaceString(document, startOffset, endOffset, newText)
             })
     }
 

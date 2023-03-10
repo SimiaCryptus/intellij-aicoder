@@ -59,13 +59,13 @@ class RewordCommentAction : AnAction() {
             { newText ->
                 indent.toString() + commentModel!!.fromString(
                     StringTools.lineWrapping(
-                        newText!!, 120
+                        newText, 120
                     )
                 )!!.withIndent(indent)
             },{ newText ->
                 UITools.replaceString(
                     document, startOffset, endOffset,
-                    newText!!
+                    newText
                 )
             }
         )

@@ -58,13 +58,13 @@ class DocAction : AnAction() {
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
         redoableRequest(completionRequest, "", event,
             { docString ->
-                language.docComment!!.fromString(docString.toString().trim { it <= ' ' })!!.withIndent(indent)
+                language.docComment.fromString(docString.toString().trim { it <= ' ' })!!.withIndent(indent)
                     .toString() + "\n" + indent + StringTools.trimPrefix(indentedInput.toString())
             },
             { docString ->
                 replaceString(
                     document, startOffset, endOffset,
-                    docString!!
+                    docString
                 )
             }
         )
