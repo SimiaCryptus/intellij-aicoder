@@ -41,7 +41,7 @@ class MarkdownNewTableColsAction : AnAction() {
                     event.getRequiredData(CommonDataKeys.EDITOR)
                         .document,
                     markdownNewTableColsParams.table.textRange.startOffset,
-                    markdownNewTableColsParams.table.textRange.endOffset, newText!!
+                    markdownNewTableColsParams.table.textRange.endOffset, newText
                 )
             }
         )

@@ -40,7 +40,7 @@ class RenameVariablesAction : AnAction() {
         @NotNull val mainCursor = caretModel.primaryCaret
         @NotNull val outputLanguage = AppSettingsState.getInstance().humanLanguage
         val sourceFile = actionEvent.getRequiredData(CommonDataKeys.PSI_FILE)
-        val codeElement = PsiUtil.getSmallestIntersectingMajorCodeElement(sourceFile, mainCursor) ?: return
+        val codeElement = PsiUtil.getSmallestIntersectingMajorCodeElement(sourceFile, mainCursor) ?: throw IllegalStateException()
         @NotNull val programmingLanguage = ComputerLanguage.getComputerLanguage(actionEvent)
         val appSettings = AppSettingsState.getInstance()
 
@@ -61,7 +61,7 @@ class RenameVariablesAction : AnAction() {
         val textIndent = UITools.getIndent(textCursor)
         UITools.redoableRequest(completionRequest, textIndent, actionEvent) { completionText ->
 
-            val renameSuggestions = completionText!!.split('\n').stream().map { x ->
+            val renameSuggestions = completionText.split('\n').stream().map { x ->
                 val kv = StringTools.stripSuffix(StringTools.stripPrefix(x.trim(), "|"), "|").split('|')
                     .map { x -> x.trim() }
                 kv[0] to kv[1]

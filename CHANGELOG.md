@@ -7,6 +7,11 @@
 ### Added
 - 
 
+## [1.0.14]
+
+### Fixed
+- Various issues with "Insert Implementation" action
+
 ## [1.0.13]
 
 ### Removed

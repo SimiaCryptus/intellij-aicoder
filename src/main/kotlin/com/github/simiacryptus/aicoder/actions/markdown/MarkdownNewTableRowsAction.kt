@@ -35,7 +35,7 @@ class MarkdownNewTableRowsAction : AnAction() {
             "",
             event,
             { transformCompletion(markdownNewTableRowsParams, it) },
-            { UITools.insertString(document, endOffset, it!!) })
+            { UITools.insertString(document, endOffset, it) })
     }
 
     class MarkdownNewTableRowsParams constructor(val caret: Caret, val table: PsiElement)

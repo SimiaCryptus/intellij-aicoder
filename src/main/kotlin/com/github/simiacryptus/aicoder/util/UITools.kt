@@ -1,3 +1,5 @@
+@file:Suppress("UNNECESSARY_SAFE_CALL")
+
 package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.openai.OpenAI_API
@@ -83,7 +85,7 @@ object UITools {
         event: AnActionEvent,
         transformCompletion: Function<CharSequence, CharSequence>,
         action: Function<CharSequence, Runnable>,
-        resultFuture: ListenableFuture<CharSequence> = OpenAI_API.complete(event.project!!, request, indent?:""),
+        resultFuture: ListenableFuture<CharSequence> = OpenAI_API.complete(event.project!!, request, indent),
         progressIndicator: ProgressIndicator? = startProgress()
     ) {
         Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
@@ -168,7 +170,7 @@ object UITools {
         val editor = event.getData(CommonDataKeys.EDITOR)
         val document = Objects.requireNonNull(editor)!!.document
         val progressIndicator = startProgress()
-        val resultFuture = OpenAI_API.edit(event.project!!, request.uiIntercept(), indent!!)
+        val resultFuture = OpenAI_API.edit(event.project!!, request.uiIntercept(), indent)
         Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
             override fun onSuccess(result: CharSequence?) {
                 progressIndicator?.cancel()

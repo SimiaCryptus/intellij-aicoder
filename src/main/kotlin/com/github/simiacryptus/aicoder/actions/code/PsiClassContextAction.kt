@@ -43,6 +43,12 @@ class PsiClassContextAction : AnAction() {
             .filter { x: String -> !x.isEmpty() }
             .reduce { a: String, b: String -> "$a $b" }.get()
         val endOffset = psiClassContextActionParams.largestIntersectingComment.textRange.endOffset
+        val psiClassContext = PsiClassContext.getContext(
+            psiClassContextActionParams.psiFile,
+            psiClassContextActionParams.selectionStart,
+            psiClassContextActionParams.selectionEnd,
+            computerLanguage
+        )
         val request = settings.createTranslationRequest()
             .setInstruction("Implement " + humanLanguage + " as " + computerLanguage.name + " code")
             .setInputType(humanLanguage)
@@ -54,13 +60,7 @@ class PsiClassContextAction : AnAction() {
             .buildCompletionRequest()
             .appendPrompt(
                 """
-                ${
-                    PsiClassContext.getContext(
-                        psiClassContextActionParams.psiFile,
-                        psiClassContextActionParams.selectionStart,
-                        psiClassContextActionParams.selectionEnd
-                    )
-                }
+                $psiClassContext
                 
                 """.trimIndent()
             )

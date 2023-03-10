@@ -110,7 +110,7 @@ object PsiUtil {
         visitor.set(object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 val textRange = element.textRange
-                if (within(textRange, selectionStart, selectionEnd)) {
+                if (intersects(TextRange(selectionStart, selectionEnd), textRange)) {
                     if (matchesType(element, *types)) {
                         largest.updateAndGet { s: PsiElement? -> if ((s?.text?.length ?: Int.MAX_VALUE) < element.text.length) s else element }
                     }
@@ -123,6 +123,7 @@ object PsiUtil {
         element.accept(visitor.get())
         return largest.get()
     }
+
 
     fun getAllIntersecting(
         element: PsiElement,
@@ -149,7 +150,11 @@ object PsiUtil {
     }
 
     private fun within(textRange: TextRange, vararg offset: Int) : Boolean =
-        (textRange.startOffset <= offset.maxOrNull()?:0) && (textRange.endOffset > offset.minOrNull()?:0)
+        offset.filter { it in textRange.startOffset..textRange.endOffset }.isNotEmpty()
+
+    private fun intersects(a: TextRange, b: TextRange): Boolean {
+        return within(a, b.startOffset, b.endOffset) || within(b, a.startOffset, a.endOffset)
+    }
 
 
     fun matchesType(element: PsiElement, vararg types: CharSequence): Boolean {
