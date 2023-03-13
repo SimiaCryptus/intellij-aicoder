@@ -23,8 +23,9 @@ public class CompletionRequest {
     public CompletionRequest.CompletionRequestWithModel uiIntercept() {
         CompletionRequestWithModel withModel;
         if (!(this instanceof CompletionRequestWithModel)) {
-            if (!AppSettingsState.getInstance().devActions) {
-                withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model_completion);
+            AppSettingsState settingsState = AppSettingsState.getInstance();
+            if (!settingsState.devActions) {
+                withModel = new CompletionRequestWithModel(this, settingsState.model_completion);
             } else {
                 withModel = showModelEditDialog();
             }
@@ -130,7 +131,8 @@ public class CompletionRequest {
 
     public @NotNull CompletionRequestWithModel showModelEditDialog() {
         @NotNull FormBuilder formBuilder = FormBuilder.createFormBuilder();
-        @NotNull CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, AppSettingsState.getInstance().model_completion);
+        AppSettingsState instance = AppSettingsState.getInstance();
+        @NotNull CompletionRequestWithModel withModel = new CompletionRequestWithModel(this, instance.model_completion);
         @NotNull InteractiveCompletionRequest ui = new InteractiveCompletionRequest(withModel);
         UITools.INSTANCE.addFields(ui, formBuilder);
         UITools.INSTANCE.writeUI(ui, withModel);
