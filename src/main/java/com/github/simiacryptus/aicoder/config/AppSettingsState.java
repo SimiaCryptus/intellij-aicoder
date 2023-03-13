@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.openai.CompletionRequest;
 import com.github.simiacryptus.aicoder.openai.EditRequest;
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequest;
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequestTemplate;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -50,8 +51,9 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
     public AppSettingsState() {
     }
 
-    public static AppSettingsState getInstance() {
-        return ApplicationManager.getApplication().getService(AppSettingsState.class);
+    @NotNull public static AppSettingsState getInstance() {
+        Application application = ApplicationManager.getApplication();
+        return null==application?new AppSettingsState():application.getService(AppSettingsState.class);
     }
 
     public TranslationRequest createTranslationRequest() {

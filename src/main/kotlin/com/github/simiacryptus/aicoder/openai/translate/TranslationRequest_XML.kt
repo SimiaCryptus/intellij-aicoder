@@ -6,11 +6,7 @@ import java.util.*
 import java.util.stream.Collectors
 
 class TranslationRequest_XML(settings: AppSettingsState) :
-    BaseTranslationRequest<TranslationRequest_XML>() {
-    init {
-        setTemperature(settings.temperature)
-        setMaxTokens(settings.maxTokens)
-    }
+    BaseTranslationRequest<TranslationRequest_XML>(settings) {
 
     override fun buildCompletionRequest(): CompletionRequest {
         val inputAttrStr: CharSequence = if (inputAttr.isEmpty()) "" else " " + inputAttr.entries.stream()

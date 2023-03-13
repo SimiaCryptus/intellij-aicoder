@@ -57,8 +57,8 @@ object OpenAI_API {
     @JvmStatic
     val pool: ListeningExecutorService = MoreExecutors.listeningDecorator(
         ThreadPoolExecutor(
-            AppSettingsState.getInstance().apiThreads,
-            AppSettingsState.getInstance().apiThreads,
+            settingsState?.apiThreads ?: 1,
+            settingsState?.apiThreads ?: 1,
             0L, TimeUnit.MILLISECONDS,
             LinkedBlockingQueue(),
             threadFactory,
@@ -74,22 +74,27 @@ object OpenAI_API {
     private val activeModelUI = WeakHashMap<ComboBox<CharSequence?>, Any>()
 
     @Transient
-    private var settings: AppSettingsState? = null
+    var settings: AppSettingsState? = null
 
     @Transient
     private var comboBox: ComboBox<CharSequence?>? = null
     val modelSelector: JComponent
         get() {
             if (null != comboBox) {
-                val element = ComboBox((IntStream.range(0, comboBox!!.itemCount).mapToObj(comboBox!!::getItemAt)).collect(Collectors.toList()).toTypedArray())
+                val element = ComboBox(
+                    (IntStream.range(0, comboBox!!.itemCount)
+                        .mapToObj(comboBox!!::getItemAt)).collect(Collectors.toList()).toTypedArray()
+                )
                 activeModelUI[element] = Any()
                 return element
             }
-            val settings = AppSettingsState.getInstance()
-            val apiKey: CharSequence = settings.apiKey
+            val apiKey: CharSequence = settingsState!!.apiKey
             if (apiKey.toString().trim { it <= ' ' }.length > 0) {
                 try {
-                    comboBox = ComboBox(arrayOf<CharSequence?>(settings.model_completion, settings.model_edit))
+                    comboBox = ComboBox(arrayOf<CharSequence?>(
+                        settingsState!!.model_completion,
+                        settingsState!!.model_edit
+                    ))
                     activeModelUI[comboBox] = Any()
                     onSuccess(
                         engines
@@ -137,9 +142,11 @@ object OpenAI_API {
         return map(edit(project, request)) { it.firstChoice.map(filter).orElse("") }
     }
 
-    private val settingsState: AppSettingsState?
+    var lastFetchedSettingsState = 0L
+    open val settingsState: AppSettingsState?
         get() {
-            if (null == settings) {
+            if (null == settings || lastFetchedSettingsState < System.currentTimeMillis() - (TimeUnit.SECONDS.toMillis(1))) {
+                lastFetchedSettingsState = System.currentTimeMillis()
                 settings = AppSettingsState.getInstance()
             }
             return settings
@@ -217,7 +224,7 @@ object OpenAI_API {
                             }
                         }
                     }
-                if (null != project && !AppSettingsState.getInstance().suppressProgress) {
+                if (null != project && !settingsState!!.suppressProgress) {
                     return@map ProgressManager.getInstance()
                         .run(task)
                 } else {
@@ -559,7 +566,7 @@ object OpenAI_API {
 
     private fun <T> run(project: Project?, task: Task.WithResult<T, Exception?>, retries: Int): T {
         return try {
-            if (null != project && !AppSettingsState.getInstance().suppressProgress) {
+            if (null != project && !settingsState!!.suppressProgress) {
                 ProgressManager.getInstance().run(task)
             } else {
                 task.run(AbstractProgressIndicatorBase())
@@ -616,8 +623,7 @@ object OpenAI_API {
     }
 
     fun text_to_speech(wavAudio: ByteArray, prompt: String = ""): String {
-        val settings = AppSettingsState.getInstance()
-        val url = settings!!.apiBase + "/audio/transcriptions"
+        val url = settingsState!!.apiBase + "/audio/transcriptions"
         val request = HttpPost(url)
         request.addHeader("Accept", "application/json")
         authorize(request)

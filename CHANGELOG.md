@@ -7,6 +7,11 @@
 ### Added
 - 
 
+## [1.0.15]
+
+### Added
+- Improved logic for dictation action, particularly silence detection and prefix handling- 
+
 ## [1.0.14]
 
 ### Fixed

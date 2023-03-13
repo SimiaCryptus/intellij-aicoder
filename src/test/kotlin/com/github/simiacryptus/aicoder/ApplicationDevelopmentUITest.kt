@@ -72,6 +72,16 @@ class ApplicationDevelopmentUITest {
         test(name, language, description, seedPrompt, functionalHandle)
     }
 
+    private fun python(name: String) =
+        Triple("py", "def main", """def $name():\n""")
+
+    @Test
+    fun python_test() {
+        if (!canRunTests()) return
+        val (name, description) = test_problem_calculator()
+        val (language, functionalHandle, seedPrompt) = python(name)
+        test(name, language, description, seedPrompt, functionalHandle)
+    }
 
     private fun test_problem_calculator(): Pair<String, List<String>> {
         return Pair(

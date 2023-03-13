@@ -1,8 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
-import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.openai.OpenAI_API
-import com.github.simiacryptus.aicoder.util.AudioPump
+import com.github.simiacryptus.aicoder.util.LoudnessWindowBuffer
 import com.github.simiacryptus.aicoder.util.AudioRecorder
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.*
@@ -38,7 +37,7 @@ class DictationAction : AnAction() {
         Thread({
             log.warn("Audio processing thread started")
             try {
-                AudioPump(event, rawBuffer, wavBuffer, continueFn).run()
+                LoudnessWindowBuffer(event, rawBuffer, wavBuffer, continueFn).run()
             } catch (e: Throwable) {
                 log.error(e)
             }
@@ -74,20 +73,23 @@ class DictationAction : AnAction() {
         private val offset: AtomicInteger = AtomicInteger(offsetStart)
 
         fun run() {
-            while (this.continueFn()) {
+            while (this.continueFn() || audioBuffer.isNotEmpty()) {
                 val recordAudio = audioBuffer.poll()
                 if (null == recordAudio) {
                     Thread.sleep(1)
-                    continue
-                }
-                log.warn("Speech-To-Text Starting...")
-                var text = OpenAI_API.text_to_speech(recordAudio, prompt)
-                if (!prompt.isEmpty()) text = " " + text
-                prompt = text
-                log.warn("Speech-To-Text Result: $text")
-                WriteCommandAction.runWriteCommandAction(event.project) {
-                    val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-                    editor.document.insertString(offset.getAndAdd(text.length), text)
+                } else {
+                    log.warn("Speech-To-Text Starting...")
+                    var text = OpenAI_API.text_to_speech(recordAudio, prompt)
+                    if (prompt.isNotEmpty()) text = " " + text
+                    val newPrompt = (prompt + text).split(" ").takeLast(32).joinToString(" ")
+                    log.warn("""Speech-To-Text Complete
+                        |   Prompt: $prompt
+                        |   Result: $text""".trimMargin())
+                    prompt = newPrompt
+                    WriteCommandAction.runWriteCommandAction(event.project) {
+                        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+                        editor.document.insertString(offset.getAndAdd(text.length), text)
+                    }
                 }
             }
         }

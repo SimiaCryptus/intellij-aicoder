@@ -1,9 +1,8 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.intellij.openapi.diagnostic.Logger
-import java.io.ByteArrayOutputStream
+import org.apache.commons.io.input.buffer.CircularByteBuffer
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedDeque
 import javax.sound.sampled.*
 
 class AudioRecorder(
@@ -11,19 +10,24 @@ class AudioRecorder(
     private val secondsPerPacket: Double,
     val continueFn: () -> Boolean
 ) {
+    val packetLength = (audioFormat.frameRate * audioFormat.frameSize * secondsPerPacket).toInt()
+
     fun run() {
         openMic().use { targetDataLine ->
-            val buffer = ByteArray((audioFormat.frameRate * audioFormat.frameSize * secondsPerPacket).toInt())
+            val buffer = ByteArray(packetLength)
+            val circularBuffer = CircularByteBuffer(packetLength * 2)
             while (continueFn()) {
-                val byteArrayOutputStream = ByteArrayOutputStream()
                 var bytesRead = 0
                 val endTime = (System.currentTimeMillis() + secondsPerPacket * 1000).toLong()
                 while (bytesRead != -1 && System.currentTimeMillis() < endTime) {
                     bytesRead = targetDataLine.read(buffer, 0, buffer.size)
-                    if (bytesRead >= 0) byteArrayOutputStream.write(buffer, 0, bytesRead)
+                    circularBuffer.add(buffer, 0, bytesRead)
+                    while(circularBuffer.currentNumberOfBytes >= packetLength) {
+                        val array = ByteArray(packetLength)
+                        circularBuffer.read(array, 0, packetLength)
+                        audioBuffer.add(array)
+                    }
                 }
-                byteArrayOutputStream.close()
-                audioBuffer.add(byteArrayOutputStream.toByteArray())
             }
         }
     }

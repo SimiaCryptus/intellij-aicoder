@@ -1,8 +1,14 @@
 package com.github.simiacryptus.aicoder.openai.translate
 
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import java.util.*
 
-abstract class BaseTranslationRequest<T : BaseTranslationRequest<T>> : TranslationRequest {
+abstract class BaseTranslationRequest<T : BaseTranslationRequest<T>>(settings: AppSettingsState) : TranslationRequest {
+    init {
+        setTemperature(settings.temperature)
+        setMaxTokens(settings.maxTokens)
+    }
+
     override var inputTag: CharSequence? = null
     override var outputTag: CharSequence? = null
     override var instruction: CharSequence? = null
