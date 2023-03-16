@@ -1,17 +1,21 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
-import com.github.simiacryptus.aicoder.openai.OpenAI_API
-import com.github.simiacryptus.aicoder.util.LoudnessWindowBuffer
+import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
 import com.github.simiacryptus.aicoder.util.AudioRecorder
+import com.github.simiacryptus.aicoder.util.LoudnessWindowBuffer
 import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicInteger
-import javax.sound.sampled.*
-import javax.swing.*
+import javax.sound.sampled.AudioSystem
+import javax.swing.JFrame
+import javax.swing.JLabel
 
 class DictationAction : AnAction() {
     override fun update(e: AnActionEvent) {
@@ -46,7 +50,7 @@ class DictationAction : AnAction() {
 
         val caretModel = event.getRequiredData(CommonDataKeys.EDITOR).caretModel
         val primaryCaret = caretModel.primaryCaret
-        val dictationPump = if(primaryCaret.hasSelection()) {
+        val dictationPump = if (primaryCaret.hasSelection()) {
             DictationPump(event, wavBuffer, continueFn, primaryCaret.selectionEnd, primaryCaret.selectedText ?: "")
         } else {
             DictationPump(event, wavBuffer, continueFn, caretModel.offset)
@@ -82,9 +86,11 @@ class DictationAction : AnAction() {
                     var text = OpenAI_API.text_to_speech(recordAudio, prompt)
                     if (prompt.isNotEmpty()) text = " " + text
                     val newPrompt = (prompt + text).split(" ").takeLast(32).joinToString(" ")
-                    log.warn("""Speech-To-Text Complete
+                    log.warn(
+                        """Speech-To-Text Complete
                         |   Prompt: $prompt
-                        |   Result: $text""".trimMargin())
+                        |   Result: $text""".trimMargin()
+                    )
                     prompt = newPrompt
                     WriteCommandAction.runWriteCommandAction(event.project) {
                         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
@@ -99,7 +105,7 @@ class DictationAction : AnAction() {
     private fun statusDialog(e1: AnActionEvent): JFrame {
         val dialog = JFrame("Dictation")
         val jLabel = JLabel("Close this window to stop recording and dictation")
-        jLabel.setFont(jLabel.getFont().deriveFont(48f))
+        jLabel.font = jLabel.font.deriveFont(48f)
         dialog.add(jLabel)
         dialog.pack()
         dialog.location = e1.getData(PlatformDataKeys.CONTEXT_COMPONENT)?.locationOnScreen!!
@@ -109,7 +115,7 @@ class DictationAction : AnAction() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         try {
             AudioSystem.getTargetDataLine(AudioRecorder.audioFormat)
         } catch (e: Exception) {

@@ -27,7 +27,7 @@ class MarkdownNewTableRowsAction : AnAction() {
             ).stream().map { obj: PsiElement -> obj.text!! }.collect(Collectors.toList()), 10, true
         )
         val n: CharSequence = Integer.toString(rows.size * 2)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val endOffset = markdownNewTableRowsParams.table.textRange.endOffset
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
         UITools.redoableRequest(
@@ -41,7 +41,7 @@ class MarkdownNewTableRowsAction : AnAction() {
     class MarkdownNewTableRowsParams constructor(val caret: Caret, val table: PsiElement)
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             return if (ComputerLanguage.Markdown !== computerLanguage) false else null != getMarkdownNewTableRowsParams(
                 e

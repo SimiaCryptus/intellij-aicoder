@@ -34,7 +34,7 @@ class MarkdownListAction : AnAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
         val markdownListParams = getMarkdownListParams(event)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val items = StringTools.trim(
             getAll(
                 Objects.requireNonNull(markdownListParams)!!.list, "MarkdownListItemImpl"
@@ -83,7 +83,7 @@ class MarkdownListAction : AnAction() {
     class MarkdownListParams constructor(val caret: Caret, val list: PsiElement)
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             return if (ComputerLanguage.Markdown != computerLanguage) false else null != getMarkdownListParams(e)
         }

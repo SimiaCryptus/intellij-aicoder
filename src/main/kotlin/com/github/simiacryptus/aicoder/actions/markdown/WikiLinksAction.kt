@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.OpenAI_API
+import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.StringTools.replaceAllNonOverlapping
 import com.github.simiacryptus.aicoder.util.UITools
@@ -22,7 +22,7 @@ class WikiLinksAction : AnAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val caret = event.getRequiredData(CommonDataKeys.EDITOR).caretModel.primaryCaret
         val languageName = ComputerLanguage.getComputerLanguage(event)!!.name
         val endOffset: Int
@@ -30,7 +30,7 @@ class WikiLinksAction : AnAction() {
         val psiFile = PsiUtil.getPsiFile(event)!!
         val elements = PsiUtil.getAllIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "ListItem")
         val elementText: CharSequence
-        if(elements.isEmpty()) {
+        if (elements.isEmpty()) {
             elementText = caret.selectedText!!
             startOffset = caret.selectionStart
             endOffset = caret.selectionEnd
@@ -70,15 +70,16 @@ class WikiLinksAction : AnAction() {
                             .map { it.trim() }.filter { it.isNotBlank() }
                         (extraWords + listOf(mainTerm)).distinct().map { it to "[$it]($linkTarget)" }
                     }
-                replaceAllNonOverlapping(replaceString, *replacements.toTypedArray() )
+                replaceAllNonOverlapping(replaceString, *replacements.toTypedArray())
             },
             { replaceString(document, startOffset, endOffset, it) },
             OpenAI_API.filterStringResult(stripUnbalancedTerminators = false)
         )
     }
+
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if (ComputerLanguage.Markdown != computerLanguage) return false
             val caret = e.getData(CommonDataKeys.CARET) ?: return false

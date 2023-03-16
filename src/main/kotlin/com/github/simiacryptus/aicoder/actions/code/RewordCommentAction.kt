@@ -24,11 +24,11 @@ class RewordCommentAction : AnAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val humanLanguage = AppSettingsState.getInstance().humanLanguage
+        val humanLanguage = AppSettingsState.instance.humanLanguage
         val computerLanguage = ComputerLanguage.getComputerLanguage(event)
         val rewordCommentParams = getRewordCommentParams(event)
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val text = Objects.requireNonNull(rewordCommentParams)!!.largestIntersectingComment.text
         val commentModel = computerLanguage!!.getCommentModel(text)
         val commentText = Objects.requireNonNull(commentModel)!!.fromString(text.trim { it <= ' ' })!!
@@ -57,12 +57,12 @@ class RewordCommentAction : AnAction() {
         val document = editor.document
         UITools.redoableRequest(request, "", event,
             { newText ->
-                indent.toString() + commentModel!!.fromString(
+                indent.toString() + commentModel.fromString(
                     StringTools.lineWrapping(
                         newText, 120
                     )
                 )!!.withIndent(indent)
-            },{ newText ->
+            }, { newText ->
                 UITools.replaceString(
                     document, startOffset, endOffset,
                     newText
@@ -74,9 +74,9 @@ class RewordCommentAction : AnAction() {
     class RewordCommentParams constructor(val caret: Caret, val largestIntersectingComment: PsiElement)
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return null != getRewordCommentParams(e)
         }
 

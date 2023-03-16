@@ -2,25 +2,33 @@
 
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.openai.OpenAI_API
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
-import com.github.simiacryptus.aicoder.openai.CompletionRequest
-import com.github.simiacryptus.aicoder.openai.EditRequest
-import com.github.simiacryptus.aicoder.openai.ModerationException
+import com.github.simiacryptus.aicoder.openai.*
+import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
+import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
+import com.github.simiacryptus.aicoder.openai.core.EditRequest
+import com.github.simiacryptus.aicoder.openai.core.ModerationException
+import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -42,17 +50,28 @@ import java.util.function.Function
 import java.util.stream.Collectors
 import javax.swing.*
 import javax.swing.text.JTextComponent
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.javaType
 
 object UITools {
     private val log = Logger.getInstance(UITools::class.java)
     val retry = WeakHashMap<Document, Runnable>()
-    fun redoableRequest(request: CompletionRequest, indent: CharSequence, event: AnActionEvent, action: Function<CharSequence, Runnable>) {
+    fun redoableRequest(
+        request: CompletionRequest,
+        indent: CharSequence,
+        event: AnActionEvent,
+        action: Function<CharSequence, Runnable>
+    ) {
         redoableRequest(request, indent, event, { x: CharSequence -> x }, action)
     }
 
     fun startProgress(): ProgressIndicator? {
-        if(1==1) return null;
-        if (AppSettingsState.getInstance().suppressProgress) return null
+        if (1 == 1) return null
+        if (AppSettingsState.instance.suppressProgress) return null
         val progressIndicator = ProgressManager.getInstance().progressIndicator
         if (null != progressIndicator) {
             progressIndicator.isIndeterminate = true
@@ -60,14 +79,23 @@ object UITools {
         }
         return progressIndicator
     }
+
     fun redoableRequest(
         request: CompletionRequest,
         indent: CharSequence,
         event: AnActionEvent,
         transformCompletion: Function<CharSequence, CharSequence>,
         action: Function<CharSequence, Runnable>,
-        postFilter: (CharSequence) -> CharSequence) {
-        redoableRequest(request, indent, event, transformCompletion, action, OpenAI_API.complete(event.project!!, request, postFilter))
+        postFilter: (CharSequence) -> CharSequence
+    ) {
+        redoableRequest(
+            request,
+            indent,
+            event,
+            transformCompletion,
+            action,
+            OpenAI_API.getCompletion(event.project!!, request, postFilter)
+        )
     }
 
     /**
@@ -85,7 +113,7 @@ object UITools {
         event: AnActionEvent,
         transformCompletion: Function<CharSequence, CharSequence>,
         action: Function<CharSequence, Runnable>,
-        resultFuture: ListenableFuture<CharSequence> = OpenAI_API.complete(event.project!!, request, indent),
+        resultFuture: ListenableFuture<CharSequence> = OpenAI_API.getCompletion(event.project!!, request, indent),
         progressIndicator: ProgressIndicator? = startProgress()
     ) {
         Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
@@ -112,7 +140,7 @@ object UITools {
                 progressIndicator?.cancel()
                 handle(t)
             }
-        }, OpenAI_API.pool)
+        }, AsyncAPI.pool)
     }
 
     /**
@@ -131,12 +159,19 @@ object UITools {
      * @param transformCompletion
      * @return a [Runnable] that will attempt to complete the given [CompletionRequest]
      */
-    fun getRetry(request: CompletionRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence, Runnable>, undo: Runnable, transformCompletion: Function<CharSequence, CharSequence>): Runnable {
+    fun getRetry(
+        request: CompletionRequest,
+        indent: CharSequence?,
+        event: AnActionEvent,
+        action: Function<CharSequence, Runnable>,
+        undo: Runnable,
+        transformCompletion: Function<CharSequence, CharSequence>
+    ): Runnable {
         val document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR))!!.document
         return Runnable {
             val progressIndicator = startProgress()
             Futures.addCallback(
-                OpenAI_API.complete(event.project!!, request, indent!!),
+                OpenAI_API.getCompletion(event.project!!, request, indent!!),
                 object : FutureCallback<CharSequence?> {
                     override fun onSuccess(result: CharSequence?) {
                         progressIndicator?.cancel()
@@ -149,7 +184,8 @@ object UITools {
                                 )
                             )
                         }
-                        retry[document] = getRetry(request, indent, event, action, nextUndo.get()!!, transformCompletion)
+                        retry[document] =
+                            getRetry(request, indent, event, action, nextUndo.get()!!, transformCompletion)
                     }
 
                     override fun onFailure(t: Throwable) {
@@ -157,16 +193,27 @@ object UITools {
                         handle(t)
                     }
                 },
-                OpenAI_API.pool
+                AsyncAPI.pool
             )
         }
     }
 
-    fun redoableRequest(request: EditRequest, indent: CharSequence, event: AnActionEvent, action: Function<CharSequence, Runnable>) {
+    fun redoableRequest(
+        request: EditRequest,
+        indent: CharSequence,
+        event: AnActionEvent,
+        action: Function<CharSequence, Runnable>
+    ) {
         redoableRequest(request, indent, event, { x: CharSequence -> x }, action)
     }
 
-    fun redoableRequest(request: EditRequest, indent: CharSequence, event: AnActionEvent, transformCompletion: Function<CharSequence, CharSequence>, action: Function<CharSequence, Runnable>) {
+    fun redoableRequest(
+        request: EditRequest,
+        indent: CharSequence,
+        event: AnActionEvent,
+        transformCompletion: Function<CharSequence, CharSequence>,
+        action: Function<CharSequence, Runnable>
+    ) {
         val editor = event.getData(CommonDataKeys.EDITOR)
         val document = Objects.requireNonNull(editor)!!.document
         val progressIndicator = startProgress()
@@ -175,7 +222,15 @@ object UITools {
             override fun onSuccess(result: CharSequence?) {
                 progressIndicator?.cancel()
                 val undo = AtomicReference<Runnable>()
-                WriteCommandAction.runWriteCommandAction(event.project) { undo.set(action.apply(transformCompletion.apply(result.toString()))) }
+                WriteCommandAction.runWriteCommandAction(event.project) {
+                    undo.set(
+                        action.apply(
+                            transformCompletion.apply(
+                                result.toString()
+                            )
+                        )
+                    )
+                }
                 retry[document] = getRetry(request, indent, event, action, undo.get())
             }
 
@@ -183,10 +238,16 @@ object UITools {
                 progressIndicator?.cancel()
                 handle(t)
             }
-        }, OpenAI_API.pool)
+        }, AsyncAPI.pool)
     }
 
-    private fun getRetry(request: EditRequest, indent: CharSequence?, event: AnActionEvent, action: Function<CharSequence, Runnable>, undo: Runnable): Runnable {
+    private fun getRetry(
+        request: EditRequest,
+        indent: CharSequence?,
+        event: AnActionEvent,
+        action: Function<CharSequence, Runnable>,
+        undo: Runnable
+    ): Runnable {
         val document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR))!!.document
         return Runnable {
             val progressIndicator = startProgress()
@@ -204,7 +265,7 @@ object UITools {
                     progressIndicator?.cancel()
                     handle(t)
                 }
-            }, OpenAI_API.pool)
+            }, AsyncAPI.pool)
         }
     }
 
@@ -215,7 +276,7 @@ object UITools {
      * @return A string containing the instruction and the style
      */
     fun getInstruction(instruction: String): String {
-        val style: CharSequence = AppSettingsState.getInstance().style
+        val style: CharSequence = AppSettingsState.instance.style
         return if (style.length == 0) instruction else String.format("%s (%s)", instruction, style)
     }
 
@@ -231,15 +292,39 @@ object UITools {
     fun replaceString(document: Document, startOffset: Int, endOffset: Int, newText: CharSequence): Runnable {
         val oldText: CharSequence = document.getText(TextRange(startOffset, endOffset))
         document.replaceString(startOffset, endOffset, newText)
-        logEdit(String.format("FWD replaceString from %s to %s (%s->%s): %s", startOffset, endOffset, endOffset - startOffset, newText.length, newText))
+        logEdit(
+            String.format(
+                "FWD replaceString from %s to %s (%s->%s): %s",
+                startOffset,
+                endOffset,
+                endOffset - startOffset,
+                newText.length,
+                newText
+            )
+        )
         return Runnable {
             val verifyTxt = document.getText(TextRange(startOffset, startOffset + newText.length))
             if (verifyTxt != newText) {
-                val msg = String.format("The text range from %d to %d does not match the expected text \"%s\" and is instead \"%s\"", startOffset, startOffset + newText.length, newText, verifyTxt)
+                val msg = String.format(
+                    "The text range from %d to %d does not match the expected text \"%s\" and is instead \"%s\"",
+                    startOffset,
+                    startOffset + newText.length,
+                    newText,
+                    verifyTxt
+                )
                 throw IllegalStateException(msg)
             }
             document.replaceString(startOffset, startOffset + newText.length, oldText)
-            logEdit(String.format("REV replaceString from %s to %s (%s->%s): %s", startOffset, startOffset + newText.length, newText.length, oldText.length, oldText))
+            logEdit(
+                String.format(
+                    "REV replaceString from %s to %s (%s->%s): %s",
+                    startOffset,
+                    startOffset + newText.length,
+                    newText.length,
+                    oldText.length,
+                    oldText
+                )
+            )
         }
     }
 
@@ -257,7 +342,13 @@ object UITools {
         return Runnable {
             val verifyTxt = document.getText(TextRange(startOffset, startOffset + newText.length))
             if (verifyTxt != newText) {
-                val message = String.format("The text range from %d to %d does not match the expected text \"%s\" and is instead \"%s\"", startOffset, startOffset + newText.length, newText, verifyTxt)
+                val message = String.format(
+                    "The text range from %d to %d does not match the expected text \"%s\" and is instead \"%s\"",
+                    startOffset,
+                    startOffset + newText.length,
+                    newText,
+                    verifyTxt
+                )
                 throw AssertionError(message)
             }
             document.deleteString(startOffset, startOffset + newText.length)
@@ -285,7 +376,7 @@ object UITools {
         val documentText = document.text
         val lineNumber = document.getLineNumber(caret.selectionStart)
         val lines = documentText.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        if(lines.isEmpty()) return ""
+        if (lines.isEmpty()) return ""
         return IndentedText.fromString(lines[Math.min(Math.max(lineNumber, 0), lines.size - 1)]).indent
     }
 
@@ -319,14 +410,16 @@ object UITools {
         panel.add(pass)
         val options = arrayOf<Any>("OK", "Cancel")
         return if (JOptionPane.showOptionDialog(
-                        null,
-                        panel,
-                        "API Key",
-                        JOptionPane.NO_OPTION,
-                        JOptionPane.PLAIN_MESSAGE,
-                        null,
-                        options,
-                        options[1]) == JOptionPane.OK_OPTION) {
+                null,
+                panel,
+                "API Key",
+                JOptionPane.NO_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options,
+                options[1]
+            ) == JOptionPane.OK_OPTION
+        ) {
             val password = pass.password
             java.lang.String(password)
         } else {
@@ -334,10 +427,12 @@ object UITools {
         }
     }
 
-    fun <T : Any> readUI(component: Any, settings: T) {
+    fun <T : Any> readJavaUI(component: Any, settings: T) {
         val componentClass: Class<*> = component.javaClass
-        val declaredUIFields = Arrays.stream(componentClass.fields).map { obj: Field -> obj.name }.collect(Collectors.toSet())
+        val declaredUIFields =
+            Arrays.stream(componentClass.fields).map { obj: Field -> obj.name }.collect(Collectors.toSet())
         for (settingsField in settings.javaClass.fields) {
+            if (Modifier.isStatic(settingsField.modifiers)) continue
             settingsField.isAccessible = true
             val settingsFieldName = settingsField.name
             try {
@@ -377,7 +472,8 @@ object UITools {
                         if (uiVal is ComboBox<*>) {
                             val comboBox = uiVal
                             val item = comboBox.item
-                            newSettingsValue = java.lang.Enum.valueOf(settingsField.type as Class<out Enum<*>?>, item.toString())
+                            newSettingsValue =
+                                java.lang.Enum.valueOf(settingsField.type as Class<out Enum<*>?>, item.toString())
                         }
                     }
                 }
@@ -388,9 +484,74 @@ object UITools {
         }
     }
 
-    fun <T : Any> writeUI(component: Any, settings: T) {
+    fun <T : Any, R : Any> readKotlinUI(component: R, settings: T) {
         val componentClass: Class<*> = component.javaClass
-        val declaredUIFields = Arrays.stream(componentClass.fields).map { obj: Field -> obj.name }.collect(Collectors.toSet())
+        val declaredUIFields =
+            componentClass.kotlin.memberProperties.map { it.name }.toSet()
+        for (settingsField in settings.javaClass.kotlin.memberProperties) {
+            if (settingsField is KMutableProperty<*>) {
+                settingsField.isAccessible = true
+                val settingsFieldName = settingsField.name
+                try {
+                    var newSettingsValue: Any? = null
+                    if (!declaredUIFields.contains(settingsFieldName)) continue
+                    val uiField: KProperty1<R, *> =
+                        (componentClass.kotlin.memberProperties.find { it.name.equals(settingsFieldName) } as KProperty1<R, *>?)!!
+                    var uiVal = uiField.get(component)
+                    if (uiVal is JScrollPane) {
+                        uiVal = uiVal.viewport.view
+                    }
+                    val name = settingsField.returnType.javaType.typeName
+                    when (name) {
+                        "java.lang.String" -> if (uiVal is JTextComponent) {
+                            newSettingsValue = uiVal.text
+                        } else if (uiVal is ComboBox<*>) {
+                            newSettingsValue = uiVal.item
+                        }
+
+                        "int", "java.lang.Integer" -> if (uiVal is JTextComponent) {
+                            newSettingsValue = uiVal.text.toInt()
+                        }
+
+                        "long" -> if (uiVal is JTextComponent) {
+                            newSettingsValue = uiVal.text.toLong()
+                        }
+
+                        "double", "java.lang.Double" -> if (uiVal is JTextComponent) {
+                            newSettingsValue = uiVal.text.toDouble()
+                        }
+
+                        "boolean" -> if (uiVal is JCheckBox) {
+                            newSettingsValue = uiVal.isSelected
+                        } else if (uiVal is JTextComponent) {
+                            newSettingsValue = java.lang.Boolean.parseBoolean(uiVal.text)
+                        }
+
+                        else ->
+                            if (Enum::class.java.isAssignableFrom(settingsField.returnType.javaType as Class<*>)) {
+                                if (uiVal is ComboBox<*>) {
+                                    val comboBox = uiVal
+                                    val item = comboBox.item
+                                    newSettingsValue =
+                                        java.lang.Enum.valueOf(
+                                            settingsField.returnType.javaType as Class<out Enum<*>?>,
+                                            item.toString()
+                                        )
+                                }
+                            }
+                    }
+                    settingsField.setter.call(settings, newSettingsValue)
+                } catch (e: Throwable) {
+                    RuntimeException("Error processing $settingsField", e).printStackTrace()
+                }
+            }
+        }
+    }
+
+    fun <T : Any> writeJavaUI(component: Any, settings: T) {
+        val componentClass: Class<*> = component.javaClass
+        val declaredUIFields =
+            Arrays.stream(componentClass.fields).map { obj: Field -> obj.name }.collect(Collectors.toSet())
         for (settingsField in settings.javaClass.fields) {
             val fieldName = settingsField.name
             try {
@@ -405,7 +566,7 @@ object UITools {
                     "java.lang.String" -> if (uiVal is JTextComponent) {
                         uiVal.text = settingsVal.toString()
                     } else if (uiVal is ComboBox<*>) {
-                        (uiVal as ComboBox<CharSequence?>).item = settingsVal.toString()
+                        uiVal.item = settingsVal.toString()
                     }
 
                     "int", "java.lang.Integer" -> if (uiVal is JTextComponent) {
@@ -427,7 +588,7 @@ object UITools {
                     }
 
                     else -> if (uiVal is ComboBox<*>) {
-                        (uiVal as ComboBox<CharSequence?>).item = settingsVal.toString()
+                        uiVal.item = settingsVal.toString()
                     }
                 }
             } catch (e: Throwable) {
@@ -436,13 +597,89 @@ object UITools {
         }
     }
 
-    fun <T> addFields(ui: Any, formBuilder: FormBuilder) {
+    fun <T : Any, R : Any> writeKotlinUI(component: R, settings: T) {
+        val componentClass: Class<*> = component.javaClass
+        val declaredUIFields =
+            componentClass.kotlin.memberProperties.map { it.name }.toSet()
+        for (settingsField in settings.javaClass.kotlin.memberProperties) {
+            val fieldName = settingsField.name
+            try {
+                if (!declaredUIFields.contains(fieldName)) continue
+                val uiField: KProperty1<R, *> =
+                    (componentClass.kotlin.memberProperties.find { it.name.equals(fieldName) } as KProperty1<R, *>?)!!
+                val settingsVal = settingsField.get(settings) ?: continue
+                var uiVal = uiField.get(component)
+                if (uiVal is JScrollPane) {
+                    uiVal = uiVal.viewport.view
+                }
+                val name = settingsField.returnType.javaType.typeName
+                when (name) {
+                    "java.lang.String" -> if (uiVal is JTextComponent) {
+                        uiVal.text = settingsVal.toString()
+                    } else if (uiVal is ComboBox<*>) {
+                        uiVal.item = settingsVal.toString()
+                    }
+
+                    "int", "java.lang.Integer" -> if (uiVal is JTextComponent) {
+                        uiVal.text = (settingsVal as Int).toString()
+                    }
+
+                    "long" -> if (uiVal is JTextComponent) {
+                        uiVal.text = (settingsVal as Int).toLong().toString()
+                    }
+
+                    "boolean" -> if (uiVal is JCheckBox) {
+                        uiVal.isSelected = (settingsVal as Boolean)
+                    } else if (uiVal is JTextComponent) {
+                        uiVal.text = java.lang.Boolean.toString((settingsVal as Boolean))
+                    }
+
+                    "double", "java.lang.Double" -> if (uiVal is JTextComponent) {
+                        uiVal.text = java.lang.Double.toString((settingsVal as Double))
+                    }
+
+                    else -> if (uiVal is ComboBox<*>) {
+                        uiVal.item = settingsVal.toString()
+                    }
+                }
+            } catch (e: Throwable) {
+                RuntimeException("Error processing $settingsField", e).printStackTrace()
+            }
+        }
+    }
+
+    fun <T> addJavaFields(ui: Any, formBuilder: FormBuilder) {
         var first = true
         for (field in ui.javaClass.fields) {
             if (Modifier.isStatic(field.modifiers)) continue
             try {
                 val nameAnnotation = field.getDeclaredAnnotation(Name::class.java)
                 val component = field[ui] as JComponent
+                if (nameAnnotation != null) {
+                    if (first) {
+                        first = false
+                        formBuilder.addLabeledComponentFillVertically(nameAnnotation.value + ": ", component)
+                    } else {
+                        formBuilder.addLabeledComponent(JBLabel(nameAnnotation.value + ": "), component, 1, false)
+                    }
+                } else {
+                    formBuilder.addComponentToRightColumn(component, 1)
+                }
+            } catch (e: IllegalAccessException) {
+                throw RuntimeException(e)
+            } catch (e: Throwable) {
+                log.warn("Error processing " + field.name, e)
+            }
+        }
+    }
+
+    fun <T : Any> addKotlinFields(ui: T, formBuilder: FormBuilder) {
+        var first = true
+        for (field in ui.javaClass.kotlin.memberProperties) {
+            if (field.javaField == null) continue
+            try {
+                val nameAnnotation = field.annotations.find { it is Name } as Name?
+                val component = field.get(ui) as JComponent
                 if (nameAnnotation != null) {
                     if (first) {
                         first = false
@@ -468,9 +705,10 @@ object UITools {
 
     fun showOptionDialog(mainPanel: JPanel?, vararg options: Any, title: String): Int {
         val pane = JOptionPane(
-                mainPanel, JOptionPane.PLAIN_MESSAGE,
-                JOptionPane.NO_OPTION, null,
-                options, options[0])
+            mainPanel, JOptionPane.PLAIN_MESSAGE,
+            JOptionPane.NO_OPTION, null,
+            options, options[0]
+        )
         pane.initialValue = options[0]
         pane.componentOrientation = JOptionPane.getRootFrame().componentOrientation
         val dialog: JDialog
@@ -547,7 +785,10 @@ object UITools {
     fun configureTextArea(textArea: JBTextArea): JBTextArea {
         val font = textArea.font
         val fontMetrics = textArea.getFontMetrics(font)
-        textArea.preferredSize = Dimension((fontMetrics.charWidth(' ') * textArea.columns * 1.2).toInt(), (fontMetrics.height * textArea.rows * 1.2).toInt())
+        textArea.preferredSize = Dimension(
+            (fontMetrics.charWidth(' ') * textArea.columns * 1.2).toInt(),
+            (fontMetrics.height * textArea.rows * 1.2).toInt()
+        )
         textArea.autoscrolls = true
         return textArea
     }
@@ -629,11 +870,11 @@ object UITools {
         // Slava Ukraini!
         val locale = Locale.getDefault()
         // ISO 3166 - Russia
-        if(locale.country.compareTo("RU", true) == 0) return true
+        if (locale.country.compareTo("RU", true) == 0) return true
         // ISO 3166 - Belarus
-        if(locale.country.compareTo("BY", true) == 0) return true
+        if (locale.country.compareTo("BY", true) == 0) return true
         // ISO 639 - Russian
-        if(locale.language.compareTo("ru", true) == 0) {
+        if (locale.language.compareTo("ru", true) == 0) {
             // ISO 3166 - Ukraine
             if (locale.country.compareTo("UA", true) == 0) return false
             // ISO 3166 - United States
@@ -676,4 +917,56 @@ object UITools {
         }
         return false
     }
+
+    fun <T : Any> build(
+        component: T,
+        formBuilder: FormBuilder = FormBuilder.createFormBuilder()
+    ): JPanel? {
+        addKotlinFields(component, formBuilder)
+        return formBuilder.addComponentFillVertically(JPanel(), 0).panel
+    }
+
+    fun <T : Any, C : Any> showDialog(e: AnActionEvent, uiClass: Class<T>, configClass: Class<C>, onComplete: (C) -> Unit) {
+        val project = e.project
+        val component = uiClass.getConstructor().newInstance()
+        val config = configClass.getConstructor().newInstance()
+        val dialog = object : DialogWrapper(project) {
+            init {
+                this.init()
+                this.title = "Generate Project"
+                this.setOKButtonText("Generate")
+                this.setCancelButtonText("Cancel")
+                this.setResizable(true)
+                //this.setPreferredFocusedComponent(this)
+                //this.setContent(this)
+            }
+
+            override fun createCenterPanel(): JComponent? {
+                return build(component)
+            }
+        }
+        dialog.show()
+        if (dialog.isOK) {
+            readKotlinUI(component, config)
+            onComplete(config)
+        }
+    }
+
+    fun getSelectedFolder(e: AnActionEvent): VirtualFile? {
+        val project = e.project
+        val dataContext = e.dataContext
+        val data = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext)
+        if (data != null && data.isDirectory) {
+            return data
+        }
+        val editor = PlatformDataKeys.EDITOR.getData(dataContext)
+        if (editor != null) {
+            val file = FileDocumentManager.getInstance().getFile(editor.document)
+            if (file != null) {
+                return file.parent
+            }
+        }
+        return project?.baseDir
+    }
+
 }

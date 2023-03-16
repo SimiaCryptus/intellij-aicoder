@@ -29,13 +29,13 @@ class ToHumanLanguageAction : AnAction() {
         val selectedText = primaryCaret.selectedText
         val language = ComputerLanguage.getComputerLanguage(event)
         val computerLanguage = language!!.name
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val request = settings.createTranslationRequest()
             .setInstruction(UITools.getInstruction("Describe this code"))
             .setInputText(selectedText)
             .setInputType(computerLanguage)
             .setInputAttribute("type", "input")
-            .setOutputType(AppSettingsState.getInstance().humanLanguage.lowercase(Locale.getDefault()))
+            .setOutputType(AppSettingsState.instance.humanLanguage.lowercase(Locale.getDefault()))
             .setOutputAttrute("type", "output")
             .setOutputAttrute("style", settings.style)
             .buildCompletionRequest()
@@ -54,10 +54,10 @@ class ToHumanLanguageAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             if (!UITools.hasSelection(e)) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return true
         }
     }

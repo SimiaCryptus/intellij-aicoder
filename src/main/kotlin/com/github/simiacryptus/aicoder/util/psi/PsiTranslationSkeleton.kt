@@ -1,8 +1,8 @@
 package com.github.simiacryptus.aicoder.util.psi
 
-import com.github.simiacryptus.aicoder.openai.OpenAI_API.complete
-import com.github.simiacryptus.aicoder.openai.OpenAI_API.pool
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
+import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API.getCompletion
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.google.common.collect.Streams
 import com.google.common.util.concurrent.Futures
@@ -56,7 +56,7 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
                 regex = if (Pattern.compile(regex).matcher(translatedOuter).find()) regex else stubId
             }
         }
-        return translatedOuter.toString().replace(regex.toRegex(), translatedInner.toString())
+        return translatedOuter.toString().replace(regex.toRegex(), translatedInner.toString().replace("\$", "\\\$"))
     }
 
     fun translate(
@@ -68,8 +68,8 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
         if (null == translateFuture) {
             synchronized(this) {
                 if (null == translateFuture) {
-                    translateFuture = complete(
-                        project, AppSettingsState.getInstance()
+                    translateFuture = getCompletion(
+                        project, AppSettingsState.instance
                             .createTranslationRequest()
                             .setInstruction(
                                 String.format(
@@ -110,7 +110,7 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
             future = Futures.transformAsync(
                 future,
                 { _: Any? -> stub.sequentialTranslate(project, indent, sourceLanguage, targetLanguage) },
-                pool
+                AsyncAPI.pool
             )
         }
         return future

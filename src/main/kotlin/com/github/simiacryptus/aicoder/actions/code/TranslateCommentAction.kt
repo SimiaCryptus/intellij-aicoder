@@ -23,11 +23,11 @@ class TranslateCommentAction : AnAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val humanLanguage = AppSettingsState.getInstance().humanLanguage
+        val humanLanguage = AppSettingsState.instance.humanLanguage
         val computerLanguage = Objects.requireNonNull(ComputerLanguage.getComputerLanguage(event))
         val rewordCommentParams = Objects.requireNonNull(getRewordCommentParams(event))!!
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val largestIntersectingComment = rewordCommentParams.largestIntersectingComment
         val indent = UITools.getIndent(rewordCommentParams.caret)
         val text = largestIntersectingComment.text
@@ -61,7 +61,7 @@ class TranslateCommentAction : AnAction() {
     class RewordCommentParams constructor(val caret: Caret, val largestIntersectingComment: PsiElement)
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if (computerLanguage == ComputerLanguage.Text) return false
             return null != getRewordCommentParams(e)

@@ -1,8 +1,7 @@
 package com.github.simiacryptus.aicoder.openai.translate
 
-import com.github.simiacryptus.aicoder.openai.CompletionRequest
+import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
 import java.util.*
-import kotlin.collections.HashMap
 
 
 interface TranslationRequest {
@@ -37,7 +36,10 @@ interface TranslationRequest {
     fun setInstruction(instruction: CharSequence?): TranslationRequest
     fun setInputAttribute(key: CharSequence?, value: CharSequence?): TranslationRequest
     fun setOutputAttrute(key: CharSequence?, value: CharSequence?): TranslationRequest
-    fun addExample(exampleText: CharSequence, attributes: Map<CharSequence, CharSequence> = HashMap()): TranslationRequest
+    fun addExample(
+        exampleText: CharSequence,
+        attributes: Map<CharSequence, CharSequence> = HashMap()
+    ): TranslationRequest
 
     fun setInputText(originalText: CharSequence?): TranslationRequest
 

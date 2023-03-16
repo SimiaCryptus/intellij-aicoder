@@ -23,7 +23,7 @@ class RedoLast : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             return null != retry[e.getRequiredData(CommonDataKeys.EDITOR).document]
         }
     }

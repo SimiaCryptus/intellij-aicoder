@@ -20,13 +20,13 @@ class PsiClassContextAction : AnAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val humanLanguage = AppSettingsState.getInstance().humanLanguage
+        val humanLanguage = AppSettingsState.instance.humanLanguage
         val computerLanguage = ComputerLanguage.getComputerLanguage(event)
         val psiClassContextActionParams = getPsiClassContextActionParams(event).get()
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         var instruct = psiClassContextActionParams.largestIntersectingComment.text.trim { it <= ' ' }
         if (primaryCaret.selectionEnd > primaryCaret.selectionStart) {
             val selectedText = Objects.requireNonNull(primaryCaret.selectedText)
@@ -89,7 +89,7 @@ class PsiClassContextAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if (computerLanguage == ComputerLanguage.Text) return false
             return getPsiClassContextActionParams(e).isPresent

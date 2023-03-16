@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import java.util.*
 
 /**
  * The RecentCodeEditsAction is an IntelliJ action that allows users to quickly access and apply recent code edits.
@@ -41,9 +40,9 @@ class AnnotateTextAction : ActionGroup() {
                     val selectionStart = primaryCaret.selectionStart
                     val selectionEnd = primaryCaret.selectionEnd
                     val selectedText = primaryCaret.selectedText
-                    val settings = AppSettingsState.getInstance()
+                    val settings = AppSettingsState.instance
                     settings.addInstructionToHistory(encoding)
-                    val humanLanguage = AppSettingsState.getInstance().humanLanguage
+                    val humanLanguage = AppSettingsState.instance.humanLanguage
                     val request = settings.createTranslationRequest()
                         .setInstruction("Parse and output as $encoding")
                         .setInputType("text")
@@ -68,13 +67,15 @@ class AnnotateTextAction : ActionGroup() {
         }
         return children.toTypedArray()
     }
+
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         if (!UITools.hasSelection(e)) return false
-        if(!setOf(
+        if (!setOf(
                 ComputerLanguage.Markdown,
                 ComputerLanguage.Text
-            ).contains(ComputerLanguage.getComputerLanguage(e))) return false
+            ).contains(ComputerLanguage.getComputerLanguage(e))
+        ) return false
         return null != ComputerLanguage.getComputerLanguage(e)
     }
 }

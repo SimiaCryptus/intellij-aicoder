@@ -9,6 +9,14 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 object StringTools {
+
+    fun indentJoin(fields: List<Any>, indent: String = "\t"): String {
+        val joinToString = fields
+            .map { it.toString().replace("\n", "\n$indent") }
+            .joinToString("\n$indent")
+        return "{\n$indent$joinToString\n}"
+    }
+
     fun stripUnbalancedTerminators(input: CharSequence): CharSequence {
         var openCount = 0
         var inQuotes = false
@@ -258,7 +266,8 @@ object StringTools {
     ): String {
         val joinedPattern = replacements.map { Pattern.quote(it.first) }.joinToString("|").toRegex()
         return joinedPattern.replace(replaceString) { result ->
-            val charSequence: CharSequence = replacements.find {  it.first.compareTo(result.value, true) == 0 }?.second ?: result.value
+            val charSequence: CharSequence =
+                replacements.find { it.first.compareTo(result.value, true) == 0 }?.second ?: result.value
             charSequence
         }
     }
@@ -272,7 +281,7 @@ object StringTools {
      * @param delimiters The delimiters to use when splitting the text.
      * @return The suffix for the given context.
      */
-        fun getSuffixForContext(text: String, idealLength: Int, vararg delimiters: CharSequence?): CharSequence {
+    fun getSuffixForContext(text: String, idealLength: Int, vararg delimiters: CharSequence?): CharSequence {
         // Create a list of candidates by splitting the text by each of the delimiters
         val candidates = Stream.of(*delimiters).flatMap { d: CharSequence? ->
             // Create a string builder to store the split strings

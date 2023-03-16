@@ -1,7 +1,10 @@
 package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.*
+import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.IndentedText
+import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -19,6 +22,7 @@ class DescribeAction : AnAction() {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)
     }
+
     override fun actionPerformed(event: AnActionEvent) {
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
         val caretModel = editor.caretModel
@@ -39,12 +43,14 @@ class DescribeAction : AnAction() {
         }
         actionPerformed(event, editor, selectionStart, selectionEnd, selectedText, language)
     }
+
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         return true
     }
+
     private fun actionPerformed(
         event: AnActionEvent,
         editor: Editor,
@@ -54,7 +60,7 @@ class DescribeAction : AnAction() {
         language: ComputerLanguage
     ) {
         val indent = UITools.getIndent(event)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val request = settings.createTranslationRequest()
             .setInputType(language.name)
             .setOutputType(settings.humanLanguage)

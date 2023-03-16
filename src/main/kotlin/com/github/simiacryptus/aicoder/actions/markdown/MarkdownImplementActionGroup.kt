@@ -50,9 +50,9 @@ class MarkdownImplementActionGroup : ActionGroup() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-        if(computerLanguage == ComputerLanguage.Text) return false
+        if (computerLanguage == ComputerLanguage.Text) return false
         if (ComputerLanguage.Markdown != computerLanguage) return false
         return hasSelection(e)
     }

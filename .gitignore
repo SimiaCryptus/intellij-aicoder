@@ -6,3 +6,6 @@ openai.key
 .run
 chain.crt
 *.pem
+api.log.json
+*.log.java
+*.log

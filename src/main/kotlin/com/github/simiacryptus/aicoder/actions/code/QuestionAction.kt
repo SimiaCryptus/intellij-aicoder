@@ -1,12 +1,12 @@
 package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.*
+import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
-import java.util.*
 import javax.swing.JOptionPane
 
 /**
@@ -20,12 +20,14 @@ class QuestionAction : AnAction() {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)
     }
+
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         return true
     }
+
     override fun actionPerformed(event: AnActionEvent) {
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
         val caretModel = editor.caretModel
@@ -46,6 +48,7 @@ class QuestionAction : AnAction() {
         }
         actionPerformed(event, editor, selectionStart, selectionEnd, selectedText, language)
     }
+
     private fun actionPerformed(
         event: AnActionEvent,
         editor: Editor,
@@ -55,11 +58,13 @@ class QuestionAction : AnAction() {
         language: ComputerLanguage
     ) {
         val indent = UITools.getIndent(event)
-        val settings = AppSettingsState.getInstance()
-        val question = JOptionPane.showInputDialog(null, "Question:", "Question", JOptionPane.QUESTION_MESSAGE) ?: return
-        if(question.isBlank()) return
+        val settings = AppSettingsState.instance
+        val question =
+            JOptionPane.showInputDialog(null, "Question:", "Question", JOptionPane.QUESTION_MESSAGE) ?: return
+        if (question.isBlank()) return
         val request = settings.createCompletionRequest()
-            .appendPrompt("""
+            .appendPrompt(
+                """
                 Analyze the following code to answer the question "$question"
                 ```$language
                     ${selectedText.replace("\n", "\n    ")}
@@ -67,7 +72,8 @@ class QuestionAction : AnAction() {
                 
                 Question: $question
                 Answer:
-            """.trimIndent())
+            """.trimIndent()
+            )
         UITools.redoableRequest(request, indent, event,
             { newText ->
                 var text = """

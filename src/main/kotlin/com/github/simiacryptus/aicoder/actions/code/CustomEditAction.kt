@@ -7,7 +7,6 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import java.util.*
 import javax.swing.JOptionPane
 
 /**
@@ -34,9 +33,10 @@ class CustomEditAction : AnAction() {
         val selectionEnd = primaryCaret.selectionEnd
         val selectedText = primaryCaret.selectedText
         val computerLanguage = ComputerLanguage.getComputerLanguage(e)!!.name
-        val instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE) ?: return
-        if(instruction.isBlank()) return
-        val settings = AppSettingsState.getInstance()
+        val instruction =
+            JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE) ?: return
+        if (instruction.isBlank()) return
+        val settings = AppSettingsState.instance
         settings.addInstructionToHistory(instruction)
         val request = settings.createTranslationRequest()
             .setInputType(computerLanguage)
@@ -60,10 +60,10 @@ class CustomEditAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             if (!UITools.hasSelection(e)) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return true
         }
     }

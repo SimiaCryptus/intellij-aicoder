@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import java.util.*
 
 /**
  * The RecentCodeEditsAction is an IntelliJ action that allows users to quickly access and apply recent code edits.
@@ -25,7 +24,7 @@ class RecentCodeEditsAction : ActionGroup() {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val children = ArrayList<AnAction>()
-        for (instruction in AppSettingsState.getInstance().editHistory) {
+        for (instruction in AppSettingsState.instance.editHistory) {
             val id = children.size + 1
             var text: String
             text = if (id < 10) {
@@ -42,7 +41,7 @@ class RecentCodeEditsAction : ActionGroup() {
                     val selectionStart = primaryCaret.selectionStart
                     val selectionEnd = primaryCaret.selectionEnd
                     val selectedText = primaryCaret.selectedText
-                    val settings = AppSettingsState.getInstance()
+                    val settings = AppSettingsState.instance
                     settings.addInstructionToHistory(instruction)
                     val request = settings.createTranslationRequest()
                         .setInputType(computerLanguage)
@@ -71,11 +70,11 @@ class RecentCodeEditsAction : ActionGroup() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             if (!UITools.hasSelection(e)) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e)
             if (null == computerLanguage) return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return null != computerLanguage
         }
     }

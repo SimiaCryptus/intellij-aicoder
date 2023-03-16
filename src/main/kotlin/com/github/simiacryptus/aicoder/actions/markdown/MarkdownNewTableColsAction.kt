@@ -22,7 +22,7 @@ class MarkdownNewTableColsAction : AnAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
         val markdownNewTableColsParams = getMarkdownNewTableColsParams(event)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val indent = UITools.getIndent(Objects.requireNonNull(markdownNewTableColsParams)!!.caret)
         val request = MarkdownNewTableColAction.newRowsRequest(
             settings,
@@ -56,11 +56,11 @@ class MarkdownNewTableColsAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             return if (ComputerLanguage.Markdown !== computerLanguage) false else null != getMarkdownNewTableColsParams(
-                    e
-                )
+                e
+            )
         }
 
         fun getMarkdownNewTableColsParams(e: AnActionEvent): MarkdownNewTableColsParams? {

@@ -33,6 +33,7 @@ dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:0.11.16") // https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/remoterobot/remote-robot/
     testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.16")
     testImplementation("com.squareup.okhttp3:okhttp:3.14.9")
+    testImplementation(kotlin("script-runtime"))
 }
 
 
@@ -41,6 +42,7 @@ kotlin {
     jvmToolchain(11)
 //    jvmToolchain(17)
 }
+
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
@@ -72,6 +74,12 @@ kover.xmlReport {
 }
 
 tasks {
+    compileTestKotlin {
+        kotlinOptions {
+            javaParameters = true
+        }
+    }
+
     wrapper {
         gradleVersion = properties("gradleVersion")
     }

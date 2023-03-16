@@ -18,7 +18,7 @@ class ToStatementListAction : AnAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val caret = event.getRequiredData(CommonDataKeys.EDITOR).caretModel.primaryCaret
         val languageName = ComputerLanguage.getComputerLanguage(event)!!.name
         val endOffset: Int
@@ -53,7 +53,7 @@ class ToStatementListAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if (ComputerLanguage.Markdown != computerLanguage) return false
             val caret = e.getData(CommonDataKeys.CARET) ?: return false

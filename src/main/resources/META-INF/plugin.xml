@@ -279,6 +279,14 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="T"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="T"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.dev.GenerateProjectAction"
+                text="_Generate Project"
+                description="Generate a new software project from a description">
+            <!--DOC
+        The `Generate Project` action allows you to quickly generate a new software project from a description.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+        </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.code.PsiClassContextAction"
                 text="Insert _Implementation"

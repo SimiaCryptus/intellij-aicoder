@@ -1,7 +1,6 @@
 package com.github.simiacryptus.aicoder.openai.translate
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import java.util.*
 
 abstract class BaseTranslationRequest<T : BaseTranslationRequest<T>>(settings: AppSettingsState) : TranslationRequest {
     init {
