@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.showRadioButtonDialog
 import com.intellij.openapi.actionSystem.AnAction

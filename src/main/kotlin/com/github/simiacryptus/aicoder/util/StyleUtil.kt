@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI.Companion.map
 import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API.getCompletion
-import com.github.simiacryptus.aicoder.util.StringTools.lineWrapping
+import com.github.simiacryptus.util.StringTools.lineWrapping
 import com.google.common.util.concurrent.ListenableFuture
 import com.intellij.openapi.diagnostic.Logger
 import java.util.*

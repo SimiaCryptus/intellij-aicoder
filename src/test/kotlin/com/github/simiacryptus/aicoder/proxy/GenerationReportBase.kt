@@ -15,20 +15,23 @@ open class GenerationReportBase {
         }.log.json"
     )
     val outputDir = File("../intellij-aicoder-docs")
-    fun <T : Any> runReport(prefix: String, kClass: KClass<T>, fn: (T, (Any) -> Unit, (Any) -> Unit) -> Unit) {
+    fun <T : Any> runReport(prefix: String, kClass: KClass<T>, fn: (T, (Any?) -> Unit, (Any?) -> Unit) -> Unit) {
         if (!ProxyTest.keyFile.exists()) return
         val markdownOutputFile = File(
             outputDir,
             "${prefix}_${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))}.md"
         )
         BufferedWriter(markdownOutputFile.writer()).use { writer ->
-            fun out(s: Any) {
+            fun out(s: Any?) {
+                if (null == s) return
                 println(s.toString())
                 writer.write(s.toString())
                 writer.newLine()
+                writer.flush()
             }
 
-            fun logJson(obj: Any) {
+            fun logJson(obj: Any?) {
+                if (null == obj) return
                 out(
                     """
                             |```json

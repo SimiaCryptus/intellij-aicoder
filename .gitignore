@@ -9,3 +9,4 @@ chain.crt
 api.log.json
 *.log.java
 *.log
+api.*

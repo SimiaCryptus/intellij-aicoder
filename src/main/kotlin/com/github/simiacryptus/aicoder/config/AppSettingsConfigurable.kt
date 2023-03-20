@@ -2,7 +2,6 @@ package com.github.simiacryptus.aicoder.config
 
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.options.Configurable
-import com.intellij.util.ui.FormBuilder
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.JComponent

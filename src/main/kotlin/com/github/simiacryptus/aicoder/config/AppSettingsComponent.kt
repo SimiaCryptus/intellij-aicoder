@@ -86,6 +86,9 @@ class AppSettingsComponent {
     @Name("Edit Model")
     val model_edit = OpenAI_API.modelSelector
 
+    @Name("Chat Model")
+    val model_chat = OpenAI_API.modelSelector
+
     @Name("API Threads")
     val apiThreads = JBTextField()
 

@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.openai.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.core.CoreAPI
+import com.github.simiacryptus.openai.CoreAPI
 
 class CoreAPIImpl(
     private val appSettingsState: AppSettingsState

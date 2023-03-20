@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.openai.core
+package com.github.simiacryptus.openai
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonProcessingException
@@ -7,10 +7,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
-import com.github.simiacryptus.aicoder.openai.core.*
 import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
-import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
+import com.google.common.util.concurrent.ListeningScheduledExecutorService
+import com.google.common.util.concurrent.MoreExecutors
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.openapi.diagnostic.Logger
@@ -30,22 +32,29 @@ import java.awt.image.BufferedImage
 import java.io.IOException
 import java.net.URL
 import java.nio.charset.Charset
+import java.time.Duration
 import java.util.*
 import java.util.Map
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
 import javax.imageio.ImageIO
+import kotlin.collections.ArrayList
+import kotlin.collections.List
 import kotlin.collections.MutableMap
 import kotlin.collections.first
-import kotlin.collections.joinToString
-import kotlin.collections.map
 import kotlin.collections.set
 
+@Suppress("unused")
 open class CoreAPI(
     val apiBase: String,
     var key: String,
     val logLevel: LogLevel
 ) {
+
+
     fun getEngines(): Array<CharSequence?> {
         val engines = mapper.readValue(
             get(OpenAI_API.settingsState!!.apiBase + "/engines"),
@@ -61,7 +70,7 @@ open class CoreAPI(
         return items
     }
 
-    val clients: MutableMap<Thread, CloseableHttpClient> = ConcurrentHashMap()
+    private val clients: MutableMap<Thread, CloseableHttpClient> = WeakHashMap()
 
     @Throws(IOException::class, InterruptedException::class)
     fun post(url: String, body: String): String {
@@ -72,7 +81,7 @@ open class CoreAPI(
     fun logComplete(completionResult: CharSequence) {
         log(
             logLevel, String.format(
-                "Text Completion Completion:\n\t%s",
+                "Chat Completion:\n\t%s",
                 completionResult.toString().replace("\n", "\n\t")
             )
         )
@@ -107,16 +116,20 @@ open class CoreAPI(
         retries: Int
     ): String {
         try {
-            val client = HttpClientBuilder.create()
+            val client = getClient()
             try {
-                client.build().use { httpClient ->
-                    clients[Thread.currentThread()] = httpClient
+                client.use { httpClient ->
+                    synchronized(clients) {
+                        clients[Thread.currentThread()] = httpClient
+                    }
                     val response: HttpResponse = httpClient.execute(request)
                     val entity = response.entity
                     return EntityUtils.toString(entity)
                 }
             } finally {
-                clients.remove(Thread.currentThread())
+                synchronized(clients) {
+                    clients.remove(Thread.currentThread())
+                }
             }
         } catch (e: IOException) {
             if (retries > 0) {
@@ -161,17 +174,25 @@ open class CoreAPI(
      */
     @Throws(IOException::class)
     operator fun get(url: String?): String {
-        val client = HttpClientBuilder.create()
+        val client = getClient()
         val request = HttpGet(url)
         request.addHeader("Content-Type", "application/json")
         request.addHeader("Accept", "application/json")
         authorize(request)
-        client.build().use { httpClient ->
+        client.use { httpClient ->
             val response: HttpResponse = httpClient.execute(request)
             val entity = response.entity
             return EntityUtils.toString(entity)
         }
     }
+
+    fun getClient(thread: Thread = Thread.currentThread()): CloseableHttpClient =
+        if (thread in clients) clients[thread]!!
+        else synchronized(clients) {
+            val client = HttpClientBuilder.create().build()
+            clients.put(thread, client)
+            client
+        }
 
     fun text_to_speech(wavAudio: ByteArray, prompt: String = ""): String {
         val url = apiBase + "/audio/transcriptions"
@@ -244,10 +265,6 @@ open class CoreAPI(
         return response
     }
 
-    private val maxTokenErrorMessage = Pattern.compile(
-        """This model's maximum context length is (\d+) tokens. However, you requested (\d+) tokens \((\d+) in the messages, (\d+) in the completion\). Please reduce the length of the messages or completion."""
-    )
-
     private fun checkError(result: String) {
         try {
             val jsonObject = Gson().fromJson(
@@ -257,6 +274,9 @@ open class CoreAPI(
             if (jsonObject.has("error")) {
                 val errorObject = jsonObject.getAsJsonObject("error")
                 val errorMessage = errorObject["message"].asString
+                if (errorMessage.startsWith("That model is currently overloaded with other requests.")) {
+                    throw RequestOverloadException(errorMessage)
+                }
                 val matcher = maxTokenErrorMessage.matcher(errorMessage)
                 if (matcher.find()) {
                     val modelMax = matcher.group(1).toInt()
@@ -272,6 +292,9 @@ open class CoreAPI(
         }
     }
 
+    class RequestOverloadException(message: String = "That model is currently overloaded with other requests.") :
+        IOException(message)
+
     open fun incrementTokens(totalTokens: Int) {}
 
     companion object {
@@ -286,20 +309,77 @@ open class CoreAPI(
                 else -> log.debug(message)
             }
         }
+
+        val mapper: ObjectMapper
+            get() {
+                val mapper = ObjectMapper()
+                mapper
+                    .enable(SerializationFeature.INDENT_OUTPUT)
+                    .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+                    .enable(MapperFeature.USE_STD_BEAN_NAMING)
+                    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                    .activateDefaultTyping(mapper.polymorphicTypeValidator)
+                return mapper
+            }
+        val allowedCharset = Charset.forName("ASCII")
+        private val maxTokenErrorMessage = Pattern.compile(
+            """This model's maximum context length is (\d+) tokens. However, you requested (\d+) tokens \((\d+) in the messages, (\d+) in the completion\). Please reduce the length of the messages or completion."""
+        )
+
+        private val threadFactory: ThreadFactory = ThreadFactoryBuilder().setNameFormat("API Thread %d").build()
+        private val scheduledPool: ListeningScheduledExecutorService =
+            MoreExecutors.listeningDecorator(ScheduledThreadPoolExecutor(1, threadFactory))
     }
 
-    val allowedCharset = Charset.forName("ASCII")
-    val mapper: ObjectMapper
-        get() {
-            val mapper = ObjectMapper()
-            mapper
-                .enable(SerializationFeature.INDENT_OUTPUT)
-                .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-                .enable(MapperFeature.USE_STD_BEAN_NAMING)
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                .activateDefaultTyping(mapper.polymorphicTypeValidator)
-            return mapper
+    fun <T> withCancellationMonitor(fn: () -> T, cancelCheck: () -> Boolean) : T {
+        val thread = Thread.currentThread()
+        val isCompleted = AtomicBoolean(false)
+        val future = scheduledPool.scheduleAtFixedRate({
+            if (cancelCheck()) {
+                log.warn("Request cancelled")
+                closeClient(thread)
+            }
+            while(true) {
+                Thread.sleep(1000)
+                if(!isCompleted.get()) {
+                    log.warn("Request still not completed; killing thread $thread")
+                    thread.stop()
+                } else {
+                    break
+                }
+            }
+        }, 0, 10, TimeUnit.MILLISECONDS)
+        try {
+            return fn()
+        } finally {
+            isCompleted.set(true)
+            future.cancel(false)
         }
+    }
+
+    fun <T> withTimeout(duration: Duration, fn: () -> T) : T {
+        val thread = Thread.currentThread()
+        val isCompleted = AtomicBoolean(false)
+        val future = scheduledPool.schedule({
+            log.warn("Request timed out after $duration; closing client for thread $thread")
+            closeClient(thread)
+            while(true) {
+                Thread.sleep(1000)
+                if(!isCompleted.get()) {
+                    log.warn("Request still not completed; killing thread $thread")
+                    thread.stop()
+                } else {
+                    break
+                }
+            }
+        }, duration.toMillis(), TimeUnit.MILLISECONDS)
+        try {
+            return fn()
+        } finally {
+            isCompleted.set(true)
+            future.cancel(false)
+        }
+    }
 
     fun complete(
         completionRequest: CompletionRequest,
@@ -309,7 +389,7 @@ open class CoreAPI(
         val completionResponse = try {
             val request: String =
                 StringTools.restrictCharacterSet(
-                    AsyncAPI.mapper.writeValueAsString(completionRequest),
+                    mapper.writeValueAsString(completionRequest),
                     allowedCharset
                 )
             val result =
@@ -319,7 +399,7 @@ open class CoreAPI(
             completionRequest.max_tokens = (e.modelMax - e.messages) - 1
             val request: String =
                 StringTools.restrictCharacterSet(
-                    AsyncAPI.mapper.writeValueAsString(completionRequest),
+                    mapper.writeValueAsString(completionRequest),
                     allowedCharset
                 )
             val result =
@@ -339,40 +419,41 @@ open class CoreAPI(
         logStart(completionRequest)
         val url = apiBase + "/chat/completions"
         val completionResponse = try {
-            val result = post(
-                url, StringTools.restrictCharacterSet(
-                    AsyncAPI.mapper.writeValueAsString(completionRequest),
-                    allowedCharset
+            processChatResponse(
+                post(
+                    url, StringTools.restrictCharacterSet(
+                        mapper.writeValueAsString(completionRequest),
+                        allowedCharset
+                    )
                 )
             )
-            processChatResponse(result)
         } catch (e: ModelMaxException) {
             completionRequest.max_tokens = (e.modelMax - e.messages) - 1
-            val result = post(
-                url, StringTools.restrictCharacterSet(
-                    AsyncAPI.mapper.writeValueAsString(completionRequest),
-                    allowedCharset
+            processChatResponse(
+                post(
+                    url, StringTools.restrictCharacterSet(
+                        mapper.writeValueAsString(completionRequest),
+                        allowedCharset
+                    )
                 )
             )
-            processChatResponse(result)
         }
-        val completionResult = completionResponse.choices.first().message!!.content!!.trim { it <= ' ' }
-        logComplete(completionResult)
+        logComplete(completionResponse.choices.first().message!!.content!!.trim { it <= ' ' })
         return completionResponse
     }
 
     private fun logStart(completionRequest: ChatRequest) {
         log(
             logLevel, String.format(
-                "Text Completion Request\nPrefix:\n\t%s\n",
-                completionRequest.messages.map { it.content }.joinToString { "\n" }.replace("\n", "\n\t")
+                "Chat Request\nPrefix:\n\t%s\n",
+                mapper.writeValueAsString(completionRequest).replace("\n", "\n\t")
             )
         )
     }
 
     fun moderate(text: String) {
         val body: String = try {
-            AsyncAPI.mapper.writeValueAsString(
+            mapper.writeValueAsString(
                 Map.of(
                     "input",
                     StringTools.restrictCharacterSet(text, allowedCharset)
@@ -419,6 +500,16 @@ open class CoreAPI(
                         .orElse("???")
                 )
             )
+        }
+    }
+
+    fun closeClient(thread: Thread) {
+        try {
+            synchronized(clients) {
+                clients[thread]
+            }?.close()
+        } catch (e: IOException) {
+            log.warn("Error closing client: " + e.message)
         }
     }
 

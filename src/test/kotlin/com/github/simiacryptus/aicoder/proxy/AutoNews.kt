@@ -8,6 +8,81 @@ import org.junit.Test
  *  cover a story, and generate a report.
  */
 class AutoNews : GenerationReportBase() {
+    @Test
+    fun newsWebsite() {
+        runReport("News", News::class) { api, logJson, out ->
+
+            val publication = News.Publication(
+                description = "A humorous celebration of the absurdity of modern life",
+                tags = listOf("satire", "funny", "irish", "st patrick's day"),
+                name = "St Patty's Journal",
+                publishing_date = "2023-03-16 (St Patrick's Day)",
+            )
+            val categories = listOf(
+                "politics",
+                "science",
+                "technology",
+                "business",
+                "finance",
+            )
+            logJson(publication)
+            out(
+                """
+                |
+                |# ${publication.name}
+                |
+                |${publication.description}
+                |
+                |Tags: ${publication.tags.joinToString(", ")}
+                |
+                |""".trimMargin()
+            )
+            for (category in categories) {
+                out(
+                    """
+                    |
+                    |## ${category.capitalize()}
+                    |
+                    |""".trimMargin()
+                )
+                try {
+                    val stories = api.getStories(publication, category)
+                    logJson(stories)
+                    for (story in stories.stories) {
+                        try {
+                            val article = api.coverStory(publication, story)
+                            logJson(article)
+                            out(
+                                """
+                                |
+                                |### ${article.title}
+                                |
+                                |![${story.image!!.detailedCaption}](${
+                                    writeImage(
+                                        proxy.api.text_to_image(
+                                            story.image.detailedCaption,
+                                            resolution = 512
+                                        )[0]
+                                    )
+                                })
+                                |
+                                |${article.content.joinToString("\n\n")}
+                                |
+                                |Keywords: ${article.keywords}
+                                |
+                                |""".trimMargin()
+                            )
+                        } catch (e: Throwable) {
+                            e.printStackTrace()
+                        }
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     interface News {
 
         fun getPublication(publicationName: String): Publication
@@ -22,7 +97,7 @@ class AutoNews : GenerationReportBase() {
         fun getStories(
             publication: Publication,
             category: String,
-            storyCount: Int = 3,
+            storyCount: Int = 5,
             funny: Boolean = true
         ): StoryList
 
@@ -60,82 +135,4 @@ class AutoNews : GenerationReportBase() {
         )
 
     }
-
-    @Test
-    fun newsWebsite() {
-        runReport("News", News::class) { api, logJson, out ->
-            val categories = listOf(
-                "politics",
-                "science",
-                "technology",
-                "entertainment",
-                "sports",
-                "business",
-                "health",
-                "travel",
-                "food",
-                "weather",
-                "fashion",
-                "lifestyle",
-                "finance",
-                "education",
-                "environment",
-                "religion",
-            )
-            val publication = News.Publication(
-                description = "A humorous exploration of the unknown",
-                tags = listOf("satire", "funny", "science fiction", "future"),
-                name = "Beyond Imagination",
-                publishing_date = "2023-07-04",
-            )
-            logJson(publication)
-            out(
-                """
-                |
-                |# ${publication.name}
-                |
-                |${publication.description}
-                |
-                |Tags: ${publication.tags.joinToString(", ")}
-                |
-                |""".trimMargin()
-            )
-            for (category in categories) {
-                out(
-                    """
-                    |
-                    |## ${category.capitalize()}
-                    |
-                    |""".trimMargin()
-                )
-                val stories = api.getStories(publication, category)
-                logJson(stories)
-                for (story in stories.stories) {
-                    val article = api.coverStory(publication, story)
-                    logJson(article)
-                    out(
-                        """
-                        |
-                        |### ${article.title}
-                        |
-                        |![${story.image!!.detailedCaption}](${
-                            writeImage(
-                                proxy.api.text_to_image(
-                                    story.image.detailedCaption,
-                                    resolution = 512
-                                )[0]
-                            )
-                        })
-                        |
-                        |${article.content.joinToString("\n\n")}
-                        |
-                        |Keywords: ${article.keywords}
-                        |
-                        |""".trimMargin()
-                    )
-                }
-            }
-        }
-    }
 }
-

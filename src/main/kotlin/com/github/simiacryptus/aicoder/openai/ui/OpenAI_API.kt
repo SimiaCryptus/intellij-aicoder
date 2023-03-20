@@ -5,12 +5,9 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI.Companion.map
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPIImpl
-import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
-import com.github.simiacryptus.aicoder.openai.core.CompletionResponse
-import com.github.simiacryptus.aicoder.openai.core.CoreAPI
-import com.github.simiacryptus.aicoder.openai.core.EditRequest
 import com.github.simiacryptus.aicoder.util.IndentedText
-import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.util.StringTools
+import com.github.simiacryptus.openai.*
 import com.google.common.util.concurrent.ListenableFuture
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -99,6 +96,14 @@ object OpenAI_API {
         return map(complete(project, request)) { it.firstChoice.map(filter).orElse("") }
     }
 
+    fun getChat(
+        project: Project?,
+        request: ChatRequest,
+        filter: (CharSequence) -> CharSequence = { it }
+    ): ListenableFuture<CharSequence> {
+        return map(chat(project, request)) { it.response.map(filter).orElse("") }
+    }
+
     fun edit(project: Project?, request: EditRequest, indent: CharSequence): ListenableFuture<CharSequence?> {
         return edit(project, request, filterStringResult(indent))
     }
@@ -120,7 +125,7 @@ object OpenAI_API {
         }
     private val engines: ListenableFuture<ObjectNode>
         get() = AsyncAPI.pool.submit<ObjectNode> {
-            coreAPI.mapper.readValue(
+            CoreAPI.mapper.readValue(
                 coreAPI.get(settingsState!!.apiBase + "/engines"),
                 ObjectNode::class.java
             )
@@ -139,6 +144,17 @@ object OpenAI_API {
 
     private fun edit(project: Project?, request: EditRequest): ListenableFuture<CompletionResponse> {
         return edit(project, request, settingsState!!)
+    }
+
+    fun chat(
+        project: Project?,
+        chatRequest: ChatRequest
+    ): ListenableFuture<ChatResponse> {
+        val settings = settingsState
+        val withModel = chatRequest.uiIntercept()
+        //withModel.fixup(settings!!)
+        val newRequest = ChatRequest(withModel)
+        return asyncAPI.chat(project, newRequest, settings)
     }
 
     private fun edit(

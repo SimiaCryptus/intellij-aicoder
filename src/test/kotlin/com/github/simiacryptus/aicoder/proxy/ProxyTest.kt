@@ -1,22 +1,31 @@
 package com.github.simiacryptus.aicoder.proxy
 
-import com.github.simiacryptus.aicoder.openai.proxy.ChatProxy
-import com.github.simiacryptus.aicoder.openai.proxy.CompletionProxy
+import com.github.simiacryptus.openai.proxy.ChatProxy
+import com.github.simiacryptus.openai.proxy.CompletionProxy
 import com.intellij.openapi.util.io.FileUtil
+import com.jetbrains.rd.util.LogLevel
 import org.junit.Test
 import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class ProxyTest {
     companion object {
         val keyFile = File("C:\\Users\\andre\\code\\all-projects\\openai.key")
-        fun chatProxy(apiLog: String = "api.log.json"): ChatProxy = ChatProxy(
-                apiKey = FileUtil.loadFile(keyFile).trim(),
-                apiLog = apiLog
-            )
+        fun chatProxy(apiLog: String = "api.${
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
+        }.log.json"): ChatProxy = ChatProxy(
+            apiKey = FileUtil.loadFile(keyFile).trim(),
+            apiLog = apiLog,
+            logLevel = LogLevel.Warn,
+            model = "gpt-3.5-turbo-0301",
+            //model = "gpt-4-0314",
+            maxTokens = 8912
+        )
         fun completionProxy(apiLog: String = "api.log.json"): CompletionProxy = CompletionProxy(
-                apiKey = FileUtil.loadFile(keyFile).trim(),
-                apiLog = apiLog
-            )
+            apiKey = FileUtil.loadFile(keyFile).trim(),
+            apiLog = apiLog
+        )
     }
 
     interface TestAPI {

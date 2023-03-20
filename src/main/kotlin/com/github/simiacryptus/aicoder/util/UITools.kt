@@ -6,10 +6,11 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.openai.*
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
-import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
-import com.github.simiacryptus.aicoder.openai.core.EditRequest
-import com.github.simiacryptus.aicoder.openai.core.ModerationException
 import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
+import com.github.simiacryptus.openai.ChatRequest
+import com.github.simiacryptus.openai.CompletionRequest
+import com.github.simiacryptus.openai.EditRequest
+import com.github.simiacryptus.openai.ModerationException
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -20,11 +21,12 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
@@ -62,6 +64,15 @@ object UITools {
     val retry = WeakHashMap<Document, Runnable>()
     fun redoableRequest(
         request: CompletionRequest,
+        indent: CharSequence,
+        event: AnActionEvent,
+        action: Function<CharSequence, Runnable>
+    ) {
+        redoableRequest(request, indent, event, { x: CharSequence -> x }, action)
+    }
+
+    fun redoableRequest(
+        request: ChatRequest,
         indent: CharSequence,
         event: AnActionEvent,
         action: Function<CharSequence, Runnable>
@@ -114,6 +125,42 @@ object UITools {
         transformCompletion: Function<CharSequence, CharSequence>,
         action: Function<CharSequence, Runnable>,
         resultFuture: ListenableFuture<CharSequence> = OpenAI_API.getCompletion(event.project!!, request, indent),
+        progressIndicator: ProgressIndicator? = startProgress()
+    ) {
+        Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
+            override fun onSuccess(result: CharSequence?) {
+                progressIndicator?.cancel()
+                val actionFn = AtomicReference<Runnable?>()
+                WriteCommandAction.runWriteCommandAction(event.project) {
+                    actionFn.set(
+                        action.apply(
+                            transformCompletion.apply(
+                                result.toString()
+                            )
+                        )
+                    )
+                }
+                if (null != actionFn.get()) {
+                    val undo = getRetry(request, indent, event, action, actionFn.get()!!, transformCompletion)
+                    val document = event.getRequiredData(CommonDataKeys.EDITOR).document
+                    retry[document] = undo
+                }
+            }
+
+            override fun onFailure(t: Throwable) {
+                progressIndicator?.cancel()
+                handle(t)
+            }
+        }, AsyncAPI.pool)
+    }
+
+    fun redoableRequest(
+        request: ChatRequest,
+        indent: CharSequence,
+        event: AnActionEvent,
+        transformCompletion: Function<CharSequence, CharSequence>,
+        action: Function<CharSequence, Runnable>,
+        resultFuture: ListenableFuture<CharSequence> = OpenAI_API.getChat(event.project!!, request),
         progressIndicator: ProgressIndicator? = startProgress()
     ) {
         Futures.addCallback(resultFuture, object : FutureCallback<CharSequence?> {
@@ -197,6 +244,46 @@ object UITools {
             )
         }
     }
+
+    fun getRetry(
+        request: ChatRequest,
+        indent: CharSequence?,
+        event: AnActionEvent,
+        action: Function<CharSequence, Runnable>,
+        undo: Runnable,
+        transformCompletion: Function<CharSequence, CharSequence>
+    ): Runnable {
+        val document = Objects.requireNonNull(event.getData(CommonDataKeys.EDITOR))!!.document
+        return Runnable {
+            val progressIndicator = startProgress()
+            Futures.addCallback(
+                OpenAI_API.getChat(event.project!!, request) { it },
+                object : FutureCallback<CharSequence?> {
+                    override fun onSuccess(result: CharSequence?) {
+                        progressIndicator?.cancel()
+                        WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
+                        val nextUndo = AtomicReference<Runnable?>()
+                        WriteCommandAction.runWriteCommandAction(event.project) {
+                            nextUndo.set(
+                                action.apply(
+                                    transformCompletion.apply(result.toString())
+                                )
+                            )
+                        }
+                        retry[document] =
+                            getRetry(request, indent, event, action, nextUndo.get()!!, transformCompletion)
+                    }
+
+                    override fun onFailure(t: Throwable) {
+                        progressIndicator?.cancel()
+                        handle(t)
+                    }
+                },
+                AsyncAPI.pool
+            )
+        }
+    }
+
 
     fun redoableRequest(
         request: EditRequest,
@@ -926,7 +1013,12 @@ object UITools {
         return formBuilder.addComponentFillVertically(JPanel(), 0).panel
     }
 
-    fun <T : Any, C : Any> showDialog(e: AnActionEvent, uiClass: Class<T>, configClass: Class<C>, onComplete: (C) -> Unit) {
+    fun <T : Any, C : Any> showDialog(
+        e: AnActionEvent,
+        uiClass: Class<T>,
+        configClass: Class<C>,
+        onComplete: (C) -> Unit
+    ) {
         val project = e.project
         val component = uiClass.getConstructor().newInstance()
         val config = configClass.getConstructor().newInstance()
@@ -969,4 +1061,58 @@ object UITools {
         return project?.baseDir
     }
 
+    fun isInterruptedException(e: Throwable?): Boolean {
+        if (e is InterruptedException) return true
+        return if (e!!.cause != null && e.cause !== e) isInterruptedException( e.cause ) else false
+    }
+
+    fun <T> run(
+        project : Project?,
+        title: String,
+        canBeCancelled: Boolean,
+        retries: Int = 3,
+        suppressProgress: Boolean = false,
+        task: (ProgressIndicator) -> T
+        ): T
+    {
+        return run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
+            override fun compute(indicator: ProgressIndicator): T {
+                return task(indicator)
+            }
+        }, retries, suppressProgress)
+    }
+
+    fun <T> run(task: Task.WithResult<T, Exception?>, retries: Int = 3, suppressProgress: Boolean = false): T {
+        return try {
+            if (!suppressProgress) {
+                ProgressManager.getInstance().run(task)
+            } else {
+                task.run(AbstractProgressIndicatorBase())
+                task.result
+            }
+        } catch (e: RuntimeException) {
+            if (isInterruptedException(e)) throw e
+            if (retries > 0) {
+                AsyncAPI.log.warn("Retrying request", e)
+                run(task = task, retries - 1)
+            } else {
+                throw e
+            }
+        } catch (e: InterruptedException) {
+            throw RuntimeException(e)
+        } catch (e: Exception) {
+            if (isInterruptedException(e)) throw RuntimeException(e)
+            if (retries > 0) {
+                AsyncAPI.log.warn("Retrying request", e)
+                try {
+                    Thread.sleep(15000)
+                } catch (ex: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
+                run(task = task, retries - 1)
+            } else {
+                throw RuntimeException(e)
+            }
+        }
+    }
 }
