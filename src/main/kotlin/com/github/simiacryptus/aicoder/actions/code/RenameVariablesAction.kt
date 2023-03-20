@@ -4,21 +4,17 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.*
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
 import com.github.simiacryptus.aicoder.util.UITools.showCheckboxDialog
-import com.github.simiacryptus.aicoder.util.UITools.showOptionDialog
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
-import com.intellij.util.ui.FormBuilder
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import java.util.*
 import java.util.stream.Collectors
-import javax.swing.Icon
-import javax.swing.JCheckBox
 
 class RenameVariablesAction : AnAction() {
 
@@ -28,7 +24,7 @@ class RenameVariablesAction : AnAction() {
     }
 
     private fun isEnabled(@NotNull e: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         return true
@@ -38,11 +34,12 @@ class RenameVariablesAction : AnAction() {
         @NotNull val textEditor = actionEvent.getRequiredData(CommonDataKeys.EDITOR)
         @NotNull val caretModel = textEditor.caretModel
         @NotNull val mainCursor = caretModel.primaryCaret
-        @NotNull val outputLanguage = AppSettingsState.getInstance().humanLanguage
+        @NotNull val outputLanguage = AppSettingsState.instance.humanLanguage
         val sourceFile = actionEvent.getRequiredData(CommonDataKeys.PSI_FILE)
-        val codeElement = PsiUtil.getSmallestIntersectingMajorCodeElement(sourceFile, mainCursor) ?: throw IllegalStateException()
+        val codeElement =
+            PsiUtil.getSmallestIntersectingMajorCodeElement(sourceFile, mainCursor) ?: throw IllegalStateException()
         @NotNull val programmingLanguage = ComputerLanguage.getComputerLanguage(actionEvent)
-        val appSettings = AppSettingsState.getInstance()
+        val appSettings = AppSettingsState.instance
 
         @Language("Markdown")
         @NotNull val completionRequest = appSettings.createCompletionRequest()

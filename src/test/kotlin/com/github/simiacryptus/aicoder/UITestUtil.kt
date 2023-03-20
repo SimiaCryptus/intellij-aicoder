@@ -66,7 +66,7 @@ class UITestUtil {
 
         private fun isStillRunning(): Boolean {
             val resultText =
-                componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]") ?: return false
+                componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]")
             return !(resultText.contains("Process finished"))
         }
 
@@ -127,12 +127,12 @@ class UITestUtil {
         }
 
         fun clickText(element: ComponentFixture, text: String) {
-            val (leftPoint, rightPoint) = findText(element, text) ?: throw Exception("Could not find text $text")
+            val (leftPoint, _) = findText(element, text) ?: throw Exception("Could not find text $text")
             element.runJs("robot.click(component, new Point(${leftPoint.x}, ${leftPoint.y}))")
         }
 
         fun rightClickText(element: ComponentFixture, text: String) {
-            val (leftPoint, rightPoint) = findText(element, text) ?: throw Exception("Could not find text $text")
+            val (leftPoint, _) = findText(element, text) ?: throw Exception("Could not find text $text")
             element.runJs("robot.rightClick(component, new Point(${leftPoint.x}, ${leftPoint.y}))")
         }
 
@@ -829,7 +829,7 @@ class UITestUtil {
         fun getComponent(vararg paths: String) =
             paths.flatMap { path ->
                 try {
-                    listOf(robot.find(ComponentFixture::class.java, byXpath(path))).filter { it != null }
+                    listOf(robot.find(ComponentFixture::class.java, byXpath(path)))
                 } catch (ex: Throwable) {
                     listOf()
                 }

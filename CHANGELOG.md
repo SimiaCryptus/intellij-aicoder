@@ -7,10 +7,18 @@
 ### Added
 - 
 
+## [1.0.16]
+
+### Added
+- Completed transition to Kotlin
+- Improved "max tokens" logic
+- Added new proxy api feature
+- Added "Generate Project" action (beta)
+
 ## [1.0.15]
 
 ### Added
-- Improved logic for dictation action, particularly silence detection and prefix handling- 
+- Improved logic for dictation action, particularly silence detection and prefix handling-
 
 ## [1.0.14]
 

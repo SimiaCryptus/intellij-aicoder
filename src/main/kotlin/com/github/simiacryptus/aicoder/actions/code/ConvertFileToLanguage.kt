@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.code
 
-import com.github.simiacryptus.aicoder.openai.OpenAI_API.pool
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools.getIndent
 import com.github.simiacryptus.aicoder.util.psi.PsiTranslationSkeleton
@@ -41,7 +41,7 @@ class ConvertFileToLanguage(private val targetLanguage: ComputerLanguage) : AnAc
         indent: CharSequence,
         root: PsiTranslationSkeleton
     ) {
-        val future: ListenableFuture<*> = if (AppSettingsState.getInstance().apiThreads > 1) {
+        val future: ListenableFuture<*> = if (AppSettingsState.instance.apiThreads > 1) {
             root.parallelTranslate(event.project!!, indent, sourceLanguage!!, targetLanguage)
         } else {
             root.sequentialTranslate(event.project!!, indent, sourceLanguage!!, targetLanguage)!!
@@ -68,7 +68,7 @@ class ConvertFileToLanguage(private val targetLanguage: ComputerLanguage) : AnAc
             override fun onFailure(e: Throwable) {
                 log.error("Error translating file", e)
             }
-        }, pool)
+        }, AsyncAPI.pool)
     }
 
     companion object {

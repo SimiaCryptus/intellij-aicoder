@@ -21,7 +21,7 @@ class FactCheckLinkedListAction : AnAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val caret = event.getRequiredData(CommonDataKeys.EDITOR).caretModel.primaryCaret
         val languageName = ComputerLanguage.getComputerLanguage(event)!!.name
         val psiFile = PsiUtil.getPsiFile(event)!!
@@ -34,7 +34,7 @@ class FactCheckLinkedListAction : AnAction() {
             .setInstruction(getInstruction("Translate each item into a search query that can be used to fact check each item with a search engine"))
             .setInputType(languageName)
             .setInputAttribute("type", "before")
-            .setInputText(elementText.mapIndexed { index, s -> "${index+1}. $s" }.joinToString("\n"))
+            .setInputText(elementText.mapIndexed { index, s -> "${index + 1}. $s" }.joinToString("\n"))
             .setOutputType(languageName)
             .setOutputAttrute("type", "after")
             .buildCompletionRequest()
@@ -59,7 +59,7 @@ class FactCheckLinkedListAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if (ComputerLanguage.Markdown != computerLanguage) return false
             val caret = e.getData(CommonDataKeys.CARET) ?: return false

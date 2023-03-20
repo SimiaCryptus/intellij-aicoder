@@ -408,7 +408,7 @@ enum class ComputerLanguage(configuration: Configuration) {
             docComment.blockSuffix
         } else null
 
-    fun getCommentModel(text: String?): TextBlockFactory<*>? {
+    fun getCommentModel(text: String?): TextBlockFactory<*> {
         if (Objects.requireNonNull(docComment)!!.looksLike(text)) return docComment
         return if (Objects.requireNonNull(blockComment)!!.looksLike(text)) blockComment else lineComment
     }

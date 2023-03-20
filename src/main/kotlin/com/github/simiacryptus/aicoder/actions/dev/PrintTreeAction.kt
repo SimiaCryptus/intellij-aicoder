@@ -27,8 +27,10 @@ class PrintTreeAction : AnAction() {
     companion object {
         val log = Logger.getInstance(PrintTreeAction::class.java)
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
-            return if (!AppSettingsState.getInstance().devActions) false else null != PsiUtil.getLargestContainedEntity(e)
+            if (UITools.isSanctioned()) return false
+            return if (!AppSettingsState.instance.devActions) false else null != PsiUtil.getLargestContainedEntity(
+                e
+            )
         }
     }
 }

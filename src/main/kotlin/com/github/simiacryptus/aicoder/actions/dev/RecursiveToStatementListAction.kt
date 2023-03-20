@@ -1,7 +1,8 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.OpenAI_API
+import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
+import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getInstruction
@@ -26,7 +27,7 @@ class RecursiveToStatementListAction : AnAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val caret = event.getRequiredData(CommonDataKeys.EDITOR).caretModel.primaryCaret
         val languageName = ComputerLanguage.getComputerLanguage(event)!!.name
         val endOffset: Int
@@ -44,7 +45,7 @@ class RecursiveToStatementListAction : AnAction() {
         }
         val progressIndicator = startProgress()
         transform(
-            OpenAI_API.complete(event.project, topicsRequest(settings, languageName, text), ""),
+            OpenAI_API.getCompletion(event.project, topicsRequest(settings, languageName, text), ""),
             { topicsTxt ->
                 val topics: List<String> = topicsTxt.replace("\"".toRegex(), "").split("\n\\d+\\.\\s+".toRegex())
                 var future = expand(settings, event, languageName, text!!, topics)
@@ -66,9 +67,9 @@ class RecursiveToStatementListAction : AnAction() {
                         progressIndicator?.cancel()
                         handle(t)
                     }
-                }, OpenAI_API.pool)
+                }, AsyncAPI.pool)
             },
-            OpenAI_API.pool
+            AsyncAPI.pool
         )
     }
 
@@ -80,12 +81,13 @@ class RecursiveToStatementListAction : AnAction() {
         topics: List<String>,
         cache: ConcurrentHashMap<String, ListenableFuture<List<String>>> = ConcurrentHashMap<String, ListenableFuture<List<String>>>()
     ): ListenableFuture<List<String>> = cache.computeIfAbsent(text) {
-        var rawFuture = OpenAI_API.complete(event.project, completionRequest(settings, languageName, text, topics), "")
-        rawFuture = transform(rawFuture, { result -> "1. $result" }, OpenAI_API.pool)
+        var rawFuture =
+            OpenAI_API.getCompletion(event.project, completionRequest(settings, languageName, text, topics), "")
+        rawFuture = transform(rawFuture, { result -> "1. $result" }, AsyncAPI.pool)
         var listFuture = transform(
             rawFuture,
             { it!!.split("(?<![^\n])\\d+\\.\\s*".toRegex()).map { it.trim() }.filter { it.isNotEmpty() } },
-            OpenAI_API.pool
+            AsyncAPI.pool
         )
         listFuture = transformAsync(
             listFuture,
@@ -112,14 +114,14 @@ class RecursiveToStatementListAction : AnAction() {
                             )
                         )
                         it.flatten()
-                    }, OpenAI_API.pool)
+                    }, AsyncAPI.pool)
                 },
-            OpenAI_API.pool
+            AsyncAPI.pool
         )
         catching(listFuture, Throwable::class.java, {
             log.warn("Expansion failed: $text", it)
             listOf(text)
-        }, OpenAI_API.pool)
+        }, AsyncAPI.pool)
     }
 
     private fun completionRequest(
@@ -128,10 +130,14 @@ class RecursiveToStatementListAction : AnAction() {
         text: @NlsSafe String?,
         topics: List<String>
     ) = settings.createTranslationRequest()
-        .setInstruction(getInstruction("""
+        .setInstruction(
+            getInstruction(
+                """
             Transform into a list of independent statements of fact. 
             Resolve all pronouns and fully qualify each item.
-            """.trimIndent().trim()))
+            """.trimIndent().trim()
+            )
+        )
         .setInputType(languageName)
         .setInputAttribute("type", "before")
         .setInputText(text)
@@ -148,9 +154,13 @@ class RecursiveToStatementListAction : AnAction() {
         languageName: String,
         text: @NlsSafe String?
     ) = settings.createTranslationRequest()
-        .setInstruction(getInstruction("""
+        .setInstruction(
+            getInstruction(
+                """
             Describe the context of this text by listing terms and topics.
-            """.trimIndent()))
+            """.trimIndent()
+            )
+        )
         .setInputType(languageName)
         .setInputAttribute("type", "before")
         .setInputText(text)
@@ -164,8 +174,8 @@ class RecursiveToStatementListAction : AnAction() {
     companion object {
         val log = org.slf4j.LoggerFactory.getLogger(RecursiveToStatementListAction::class.java)!!
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
-            if (!AppSettingsState.getInstance().devActions) return false
+            if (UITools.isSanctioned()) return false
+            if (!AppSettingsState.instance.devActions) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if (ComputerLanguage.Markdown != computerLanguage) return false
             val caret = e.getData(CommonDataKeys.CARET) ?: return false

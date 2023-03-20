@@ -27,7 +27,7 @@ class EditAction : AnAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val instruction = JOptionPane.showInputDialog(null, "Instruction:", "Edit Text", JOptionPane.QUESTION_MESSAGE)
         settings.addInstructionToHistory(instruction)
         val caret = event.getData(CommonDataKeys.CARET)
@@ -51,7 +51,7 @@ class EditAction : AnAction() {
     companion object {
         @Suppress("unused")
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             return UITools.hasSelection(e)
         }
     }

@@ -31,9 +31,9 @@ class MarkdownContextAction : AnAction() {
         val selectionStart = primaryCaret.selectionStart
         val selectionEnd = primaryCaret.selectionEnd
         val selectedText = primaryCaret.selectedText
-        val humanLanguage = AppSettingsState.getInstance().humanLanguage
+        val humanLanguage = AppSettingsState.instance.humanLanguage
         val markdownContextParams = getMarkdownContextParams(event, humanLanguage)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
         var context = PsiMarkdownContext.getContext(
             psiFile,
@@ -74,13 +74,13 @@ class MarkdownContextAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
-            if (!AppSettingsState.getInstance().devActions) return false
+            if (UITools.isSanctioned()) return false
+            if (!AppSettingsState.instance.devActions) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return if (ComputerLanguage.Markdown != computerLanguage) false else null != getMarkdownContextParams(
                 e,
-                AppSettingsState.getInstance().humanLanguage
+                AppSettingsState.instance.humanLanguage
             )
         }
 

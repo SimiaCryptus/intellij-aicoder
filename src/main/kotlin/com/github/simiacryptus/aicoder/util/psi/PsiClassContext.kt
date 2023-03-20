@@ -4,7 +4,6 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import java.util.ArrayList
 
 class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boolean, val language: ComputerLanguage) {
     val children = ArrayList<PsiClassContext>()
@@ -40,7 +39,14 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
                     currentContext.children.add(PsiClassContext(text.trim { it <= ' ' }, isPrior, isOverlap, language))
                 } else if (PsiUtil.matchesType(element, "Comment", "DocComment")) {
                     if (within) {
-                        currentContext.children.add(PsiClassContext(indent + text.trim { it <= ' ' }, false, true, language))
+                        currentContext.children.add(
+                            PsiClassContext(
+                                indent + text.trim { it <= ' ' },
+                                false,
+                                true,
+                                language
+                            )
+                        )
                     }
                 } else if (PsiUtil.matchesType(element, "Field")) {
                     processChildren(
@@ -61,7 +67,8 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
                         self,
                         isPrior,
                         isOverlap,
-                        indent + PsiUtil.getDeclaration(element).trim { it <= ' ' } + (if (isOverlap) " {" else methodTerminator))
+                        indent + PsiUtil.getDeclaration(element)
+                            .trim { it <= ' ' } + (if (isOverlap) " {" else methodTerminator))
                 } else if (PsiUtil.matchesType(element, "LocalVariable")) {
                     currentContext.children.add(PsiClassContext(indent + text.trim { it <= ' ' } + ";",
                         isPrior,
@@ -125,7 +132,12 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
     }
 
     companion object {
-        fun getContext(psiFile: PsiFile, selectionStart: Int, selectionEnd: Int, language: ComputerLanguage): PsiClassContext {
+        fun getContext(
+            psiFile: PsiFile,
+            selectionStart: Int,
+            selectionEnd: Int,
+            language: ComputerLanguage
+        ): PsiClassContext {
             return PsiClassContext("", false, true, language).init(psiFile, selectionStart, selectionEnd)
         }
 

@@ -112,7 +112,9 @@ object PsiUtil {
                 val textRange = element.textRange
                 if (intersects(TextRange(selectionStart, selectionEnd), textRange)) {
                     if (matchesType(element, *types)) {
-                        largest.updateAndGet { s: PsiElement? -> if ((s?.text?.length ?: Int.MAX_VALUE) < element.text.length) s else element }
+                        largest.updateAndGet { s: PsiElement? ->
+                            if ((s?.text?.length ?: Int.MAX_VALUE) < element.text.length) s else element
+                        }
                     }
                 }
                 //System.out.printf("%s : %s%n", simpleName, element.getText());
@@ -149,7 +151,7 @@ object PsiUtil {
         return elements
     }
 
-    private fun within(textRange: TextRange, vararg offset: Int) : Boolean =
+    private fun within(textRange: TextRange, vararg offset: Int): Boolean =
         offset.filter { it in textRange.startOffset..textRange.endOffset }.isNotEmpty()
 
     private fun intersects(a: TextRange, b: TextRange): Boolean {
@@ -333,7 +335,7 @@ object PsiUtil {
         return fileFromText.get()
     }
 
-    fun getPsiFile(e: AnActionEvent) : PsiFile? {
+    fun getPsiFile(e: AnActionEvent): PsiFile? {
         return e.getData(CommonDataKeys.PSI_FILE)
     }
 }

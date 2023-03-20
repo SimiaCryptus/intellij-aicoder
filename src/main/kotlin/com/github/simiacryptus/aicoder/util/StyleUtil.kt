@@ -1,9 +1,9 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.openai.OpenAI_API.complete
-import com.github.simiacryptus.aicoder.openai.OpenAI_API.map
-import com.github.simiacryptus.aicoder.openai.OpenAI_API.onSuccess
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
+import com.github.simiacryptus.aicoder.openai.async.AsyncAPI.Companion.map
+import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API.getCompletion
 import com.github.simiacryptus.aicoder.util.StringTools.lineWrapping
 import com.google.common.util.concurrent.ListenableFuture
 import com.intellij.openapi.diagnostic.Logger
@@ -126,7 +126,7 @@ object StyleUtil {
                     "int randomIndex = rand.nextInt(items.size());\n" +
                     "String randomItem = items.get(randomIndex);"
     ) {
-        onSuccess(
+        AsyncAPI.onSuccess(
             describeTest(style, language, code)
         ) { description: CharSequence ->
             val message: CharSequence = String.format(
@@ -152,7 +152,7 @@ object StyleUtil {
      * @return A description of the test in the specified style and language.
      */
     fun describeTest(style: CharSequence?, language: ComputerLanguage, code: String?): ListenableFuture<CharSequence> {
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val completionRequest = settings.createTranslationRequest()
             .setInstruction(String.format("Explain this %s in %s (%s)", language.name, settings.humanLanguage, style))
             .setInputText(IndentedText.fromString((code)!!).textBlock.toString().trim())
@@ -162,7 +162,7 @@ object StyleUtil {
             .setOutputAttrute("type", "description")
             .setOutputAttrute("style", style)
             .buildCompletionRequest()
-        val future = complete(null, completionRequest, "")
+        val future = getCompletion(null, completionRequest, "")
         return map(future) { x: CharSequence? ->
             lineWrapping(
                 x.toString().trim { it <= ' ' },

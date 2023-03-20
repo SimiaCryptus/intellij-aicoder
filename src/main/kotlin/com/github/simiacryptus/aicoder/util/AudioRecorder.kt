@@ -3,7 +3,9 @@ package com.github.simiacryptus.aicoder.util
 import com.intellij.openapi.diagnostic.Logger
 import org.apache.commons.io.input.buffer.CircularByteBuffer
 import java.util.*
-import javax.sound.sampled.*
+import javax.sound.sampled.AudioFormat
+import javax.sound.sampled.AudioSystem
+import javax.sound.sampled.TargetDataLine
 
 class AudioRecorder(
     private val audioBuffer: Deque<ByteArray>,
@@ -22,7 +24,7 @@ class AudioRecorder(
                 while (bytesRead != -1 && System.currentTimeMillis() < endTime) {
                     bytesRead = targetDataLine.read(buffer, 0, buffer.size)
                     circularBuffer.add(buffer, 0, bytesRead)
-                    while(circularBuffer.currentNumberOfBytes >= packetLength) {
+                    while (circularBuffer.currentNumberOfBytes >= packetLength) {
                         val array = ByteArray(packetLength)
                         circularBuffer.read(array, 0, packetLength)
                         audioBuffer.add(array)

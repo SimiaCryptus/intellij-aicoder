@@ -105,7 +105,6 @@ class DocGen {
         writer.println("| Text | Description |")
         writer.println("| --- | --- |")
         actions.forEach { action ->
-            val file = "src/main/kotlin/${action["id"].toString().replace(".", "/")}.kt"
             val uiText = action["text"].toString().replace("_", "")
             writer.println("| $uiText | ${action["long_description"]} |")
         }

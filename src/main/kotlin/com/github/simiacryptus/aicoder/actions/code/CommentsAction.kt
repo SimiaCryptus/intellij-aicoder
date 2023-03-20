@@ -27,30 +27,31 @@ class CommentsAction : AnAction() {
         val selectionStart = primaryCaret.selectionStart
         val selectionEnd = primaryCaret.selectionEnd
         val selectedText = primaryCaret.selectedText
-        val outputHumanLanguage = AppSettingsState.getInstance().humanLanguage
+        val outputHumanLanguage = AppSettingsState.instance.humanLanguage
         val language = ComputerLanguage.getComputerLanguage(e)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val request = settings.createTranslationRequest()
-                .setInputType(Objects.requireNonNull(language)!!.name)
-                .setOutputType(language!!.name)
-                .setInstruction(UITools.getInstruction("Rewrite to include detailed $outputHumanLanguage code comments for every line"))
-                .setInputAttribute("type", "commented")
-                .setOutputAttrute("type", "uncommented")
-                .setOutputAttrute("style", settings.style)
-                .setInputText(selectedText)
-                .buildCompletionRequest()
+            .setInputType(Objects.requireNonNull(language)!!.name)
+            .setOutputType(language!!.name)
+            .setInstruction(UITools.getInstruction("Rewrite to include detailed $outputHumanLanguage code comments for every line"))
+            .setInputAttribute("type", "commented")
+            .setOutputAttrute("type", "uncommented")
+            .setOutputAttrute("style", settings.style)
+            .setInputText(selectedText)
+            .buildCompletionRequest()
         val caret = e.getData(CommonDataKeys.CARET)
         val indent = UITools.getIndent(caret)
-        UITools.redoableRequest(request, indent, e
+        UITools.redoableRequest(
+            request, indent, e
         ) { newText: CharSequence? -> UITools.replaceString(editor.document, selectionStart, selectionEnd, newText!!) }
     }
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             if (!UITools.hasSelection(e)) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return true
         }
     }

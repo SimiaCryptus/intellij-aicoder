@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
 import java.awt.datatransfer.DataFlavor
-import java.util.*
 
 /**
  * The PasteAction class is an action that is used to paste text into an IntelliJ editor with GPT translation.
@@ -34,7 +33,7 @@ class PasteAction : AnAction() {
         val text =
             CopyPasteManager.getInstance().getContents<Any>(DataFlavor.stringFlavor)!!.toString()
                 .trim { it <= ' ' }
-        val request = AppSettingsState.getInstance().createTranslationRequest()
+        val request = AppSettingsState.instance.createTranslationRequest()
             .setInputType("source")
             .setOutputType("translated")
             .setInstruction("Translate this input into $language")
@@ -60,7 +59,7 @@ class PasteAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             return if (CopyPasteManager.getInstance()
                     .getContents<Any?>(DataFlavor.stringFlavor) == null
             ) false else {

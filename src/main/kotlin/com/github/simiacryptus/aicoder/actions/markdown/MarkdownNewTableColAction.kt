@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.CompletionRequest
+import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
@@ -24,7 +24,7 @@ class MarkdownNewTableColAction : AnAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
         val markdownNewTableColParams = getMarkdownNewTableColParams(event)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val columnName: CharSequence =
             JOptionPane.showInputDialog(null, "Column Name:", "Add Column", JOptionPane.QUESTION_MESSAGE)
                 .trim { it <= ' ' }
@@ -38,7 +38,7 @@ class MarkdownNewTableColAction : AnAction() {
         val endOffset = textRange.endOffset
         UITools.redoableRequest(request, "", event,
             { transformCompletion(markdownNewTableColParams, it, columnName) },
-            { UITools.replaceString(document, startOffset, endOffset, it!!) }
+            { UITools.replaceString(document, startOffset, endOffset, it) }
         )
     }
 
@@ -51,7 +51,7 @@ class MarkdownNewTableColAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             return if (ComputerLanguage.Markdown !== computerLanguage) false else null != getMarkdownNewTableColParams(e)
         }

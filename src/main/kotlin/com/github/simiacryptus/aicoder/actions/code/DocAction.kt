@@ -12,7 +12,6 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import java.util.*
 
 /**
  * The DocAction is an IntelliJ action that enables users to add detailed documentation to their code.
@@ -39,7 +38,7 @@ class DocAction : AnAction() {
         val smallestIntersectingMethod =
             PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, caret!!)
                 ?: return
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val code = smallestIntersectingMethod.text
         val indentedInput = IndentedText.fromString(code)
         val indent = indentedInput.indent
@@ -72,9 +71,9 @@ class DocAction : AnAction() {
 
     companion object {
         private fun isEnabled(event: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             if (computerLanguage.docStyle.isEmpty()) return false
             val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
             val caret = event.getData(CommonDataKeys.CARET)

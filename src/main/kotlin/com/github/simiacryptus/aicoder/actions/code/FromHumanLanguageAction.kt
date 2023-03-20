@@ -26,8 +26,8 @@ class FromHumanLanguageAction : AnAction() {
         val selectionStart = primaryCaret.selectionStart
         val selectionEnd = primaryCaret.selectionEnd
         val selectedText = primaryCaret.selectedText
-        val request = AppSettingsState.getInstance().createTranslationRequest()
-            .setInputType(AppSettingsState.getInstance().humanLanguage.lowercase(Locale.getDefault()))
+        val request = AppSettingsState.instance.createTranslationRequest()
+            .setInputType(AppSettingsState.instance.humanLanguage.lowercase(Locale.getDefault()))
             .setOutputType(ComputerLanguage.getComputerLanguage(event)!!.name)
             .setInstruction("Implement this specification")
             .setInputAttribute("type", "input")
@@ -48,10 +48,10 @@ class FromHumanLanguageAction : AnAction() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             if (!UITools.hasSelection(e)) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             return true
         }
     }

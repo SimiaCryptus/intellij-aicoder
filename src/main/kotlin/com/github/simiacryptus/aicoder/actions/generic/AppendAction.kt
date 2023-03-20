@@ -24,8 +24,8 @@ class AppendAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val before: CharSequence? = Objects.requireNonNull(caret)!!.selectedText
-        val settings = AppSettingsState.getInstance()
-        val completionRequest = settings.createCompletionRequest().appendPrompt(before)
+        val settings = AppSettingsState.instance
+        val completionRequest = settings.createCompletionRequest().appendPrompt(before ?: "")
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
         val selectionEnd = caret!!.selectionEnd
         redoableRequest(
@@ -41,7 +41,7 @@ class AppendAction : AnAction() {
     companion object {
         @Suppress("unused")
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             return hasSelection(e)
         }
     }

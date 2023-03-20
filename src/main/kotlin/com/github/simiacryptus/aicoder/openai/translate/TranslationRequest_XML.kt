@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.openai.translate
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.CompletionRequest
+import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
 import java.util.*
 import java.util.stream.Collectors
 
@@ -18,7 +18,8 @@ class TranslationRequest_XML(settings: AppSettingsState) :
         val inputTagTxt = inputTag.toString().lowercase(Locale.getDefault())
         val outputTagTxt = outputTag.toString().lowercase(Locale.getDefault())
         val inputText = originalText.toString().trim { it <= ' ' }
-        return CompletionRequest("""
+        return CompletionRequest(
+            """
             <!-- $instruction -->
             <$inputTagTxt$inputAttrStr>$inputText</$inputTagTxt>
             $exampleStr

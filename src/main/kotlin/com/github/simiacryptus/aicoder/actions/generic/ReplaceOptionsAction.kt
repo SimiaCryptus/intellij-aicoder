@@ -20,7 +20,8 @@ class ReplaceOptionsAction : AnAction() {
         val caret = event.getData(CommonDataKeys.CARET)
         val document = caret!!.editor.document
         val selectedText = caret.selectedText
-        val idealLength = Math.pow(2.0, 2 + Math.ceil(Math.log(selectedText!!.length.toDouble()) / Math.log(2.0))).toInt()
+        val idealLength =
+            Math.pow(2.0, 2 + Math.ceil(Math.log(selectedText!!.length.toDouble()) / Math.log(2.0))).toInt()
         val newlines = "\n".toRegex()
         val selectionStart = caret.selectionStart
         val allBefore = document.getText(TextRange(0, selectionStart))
@@ -28,7 +29,7 @@ class ReplaceOptionsAction : AnAction() {
         val allAfter = document.getText(TextRange(selectionEnd, document.textLength))
         val before = StringTools.getSuffixForContext(allBefore, idealLength).replace(newlines, " ")
         val after = StringTools.getPrefixForContext(allAfter, idealLength).replace(newlines, " ")
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val completionRequest = settings.createCompletionRequest()
             .appendPrompt(
                 """
@@ -44,7 +45,7 @@ class ReplaceOptionsAction : AnAction() {
             { newText: CharSequence? ->
                 val options = newText!!.split("\n")
                     .map { it.trim().replace("^\\d+\\. ".toRegex(), "").trim() }.toTypedArray()
-                showRadioButtonDialog("Select an option to fill in the blank:", *options)?:selectedText
+                showRadioButtonDialog("Select an option to fill in the blank:", *options) ?: selectedText
             }, { newText: CharSequence? ->
                 UITools.replaceString(document, selectionStart, selectionEnd, newText!!)
             })
@@ -52,7 +53,7 @@ class ReplaceOptionsAction : AnAction() {
 
     @Suppress("unused")
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         return UITools.hasSelection(e)
     }
 }

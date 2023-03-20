@@ -28,7 +28,7 @@ class MarkdownImplementAction(private val language: String) : AnAction(
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val caret = event.getData(CommonDataKeys.CARET)
         val selectedText = caret!!.selectedText
         val endOffset = caret.selectionEnd
@@ -54,7 +54,7 @@ class MarkdownImplementAction(private val language: String) : AnAction(
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             if (ComputerLanguage.Markdown != computerLanguage) return false
             return hasSelection(e)

@@ -7,7 +7,6 @@ import com.github.simiacryptus.aicoder.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
-import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getCode
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getDocComment
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersectingMajorCodeElement
@@ -31,7 +30,7 @@ class ImplementAction : AnAction() {
         val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
         val smallestIntersectingMethod = getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val code = smallestIntersectingMethod.text
         val indentedInput = IndentedText.fromString(code)
         var declaration: CharSequence = smallestIntersectingMethod.text
@@ -64,10 +63,10 @@ class ImplementAction : AnAction() {
     companion object {
 
         private fun isEnabled(event: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
-            if (!AppSettingsState.getInstance().devActions) return false
+            if (UITools.isSanctioned()) return false
+            if (!AppSettingsState.instance.devActions) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
-            if(computerLanguage == ComputerLanguage.Text) return false
+            if (computerLanguage == ComputerLanguage.Text) return false
             val caret = event.getData(CommonDataKeys.CARET)
             val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
             val smallestIntersectingMethod =

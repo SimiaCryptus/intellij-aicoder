@@ -21,7 +21,7 @@ class InsertAction : AnAction() {
         val caretPosition = caret.offset
         val before = StringTools.getSuffixForContext(document.getText(TextRange(0, caretPosition)), 32)
         val after = StringTools.getPrefixForContext(document.getText(TextRange(caretPosition, document.textLength)), 32)
-        val settings = AppSettingsState.getInstance()
+        val settings = AppSettingsState.instance
         val completionRequest = settings.createCompletionRequest()
             .appendPrompt(before)
             .setSuffix(after)
@@ -38,7 +38,7 @@ class InsertAction : AnAction() {
     companion object {
         @Suppress("unused")
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if(UITools.isSanctioned()) return false
+            if (UITools.isSanctioned()) return false
             return !UITools.hasSelection(e)
         }
     }

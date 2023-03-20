@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.util.psi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import java.util.ArrayList
 import java.util.concurrent.atomic.AtomicReference
 
 class PsiMarkdownContext(private val parent: PsiMarkdownContext?, val text: String, private val start: Int) {
