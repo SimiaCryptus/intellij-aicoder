@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.util.psi
 
-import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.util.StringTools
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys

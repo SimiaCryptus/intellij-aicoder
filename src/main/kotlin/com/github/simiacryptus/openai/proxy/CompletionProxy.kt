@@ -1,7 +1,7 @@
-package com.github.simiacryptus.aicoder.openai.proxy
+package com.github.simiacryptus.openai.proxy
 
-import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
-import com.github.simiacryptus.aicoder.openai.core.CoreAPI
+import com.github.simiacryptus.openai.CompletionRequest
+import com.github.simiacryptus.openai.CoreAPI
 import com.jetbrains.rd.util.LogLevel
 
 class CompletionProxy(
@@ -10,9 +10,10 @@ class CompletionProxy(
     private val maxTokens: Int = 1000,
     private val temperature: Double = 0.7,
     private val verbose: Boolean = false,
+    private val moderated: Boolean = true,
     base: String = "https://api.openai.com/v1",
     apiLog: String
-) : GPTProxyBase(apiLog) {
+) : GPTProxyBase(apiLog, 3) {
     val api: CoreAPI
 
     init {
@@ -39,6 +40,7 @@ class CompletionProxy(
             {""".trimIndent()
         request.max_tokens = maxTokens
         request.temperature = temperature
+        if (moderated) api.moderate(toJson(request))
         val completion = api.complete(request, model).firstChoice.get().toString()
         if(verbose) println(completion)
         return "{$completion"

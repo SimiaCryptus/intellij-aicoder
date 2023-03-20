@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.openai.translate
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
+import com.github.simiacryptus.openai.CompletionRequest
 import java.util.*
 import java.util.stream.Collectors
 

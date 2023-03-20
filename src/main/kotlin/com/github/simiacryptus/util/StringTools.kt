@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.util
+package com.github.simiacryptus.util
 
 import java.nio.charset.Charset
 import java.util.*

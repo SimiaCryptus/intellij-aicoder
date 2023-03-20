@@ -7,6 +7,19 @@
 ### Added
 - 
 
+## [1.0.17]
+
+### Added
+- Ability to develop entire software projects from scratch (not a joke)
+- Support for self-aware artificial intelligence (joke)
+
+### Removed
+- Human value and significance (joke)
+- Barriers to information warfare (not a joke)
+
+### Fixed
+- Human nature (joke)
+
 ## [1.0.16]
 
 ### Added

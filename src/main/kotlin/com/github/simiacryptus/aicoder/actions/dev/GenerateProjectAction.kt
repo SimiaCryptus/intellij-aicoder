@@ -1,53 +1,160 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.proxy.ChatProxy
-import com.github.simiacryptus.aicoder.openai.proxy.SoftwareProjectAI
+import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.openai.proxy.SoftwareProjectAI
+import com.github.simiacryptus.openai.proxy.ChatProxy
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import java.io.File
+import javax.swing.JCheckBox
 import javax.swing.JTextArea
+import javax.swing.JTextField
 
 class GenerateProjectAction : AnAction() {
-
-    fun createProjectFiles(e: AnActionEvent, description: String) {
-        val outputDir = File(UITools.getSelectedFolder(e)!!.canonicalPath)
-        val api = ChatProxy(apiKey = AppSettingsState.instance.apiKey, base = AppSettingsState.instance.apiBase).create(
-            SoftwareProjectAI::class.java
-        )
-        val project = api.newProject(description)
-        val requirements = api.getProjectStatements(project)
-        val projectDesign = api.buildProjectDesign(project, requirements)
-        val files = api.buildProjectFileSpecifications(project, requirements, projectDesign)
-        for (file in files.files) {
-            val sourceCode = api.implement(
-                project,
-                files.files.map { it.location }.filter { file.requires.contains(it) }.toList(),
-                file
-            )
-            val outFile =
-                outputDir.resolve(file.location.path.replace('\\','/').trimEnd('/') + "/${file.location.name}.${file.location.extension}")
-            outFile.parentFile.mkdirs()
-            outFile.writeText(sourceCode.code)
-            log.warn("Wrote ${outFile.canonicalPath}")
-        }
-
-    }
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)
     }
 
-    data class SettingsUI(val description: JTextArea = JTextArea())
-    data class Settings(var description: String = "")
+    @Suppress("UNUSED")
+    class SettingsUI {
+        @Name("Project Description")
+        val description: JTextArea = JTextArea()
+        @Name("Drafts Per File")
+        val drafts: JTextField = JTextField("2")
+        val saveAlternates: JCheckBox = JCheckBox("Save Alternates")
+    }
+
+    data class Settings(
+        var description: String = "",
+        var drafts: Int = 2,
+        var saveAlternates: Boolean = false
+    )
 
     override fun actionPerformed(e: AnActionEvent) {
         UITools.showDialog(e, SettingsUI::class.java, Settings::class.java) { config ->
-            createProjectFiles(e, config.description)
+            handleImplement(e, config)
         }
     }
+
+    private fun handleImplement(
+        e: AnActionEvent,
+        config: Settings
+    ) = Thread {
+        val selectedFolder = UITools.getSelectedFolder(e)!!
+        val api = ChatProxy(
+            apiKey = AppSettingsState.instance.apiKey,
+            base = AppSettingsState.instance.apiBase,
+            logLevel = AppSettingsState.instance.apiLogLevel,
+            maxTokens = AppSettingsState.instance.maxTokens,
+        ).create(
+            SoftwareProjectAI::class.java
+        )
+        val project = UITools.run(
+            e.project, "Parsing Request", true
+        ) {
+            val newProject = api.newProject("""
+                ${config.description}
+                """.trimIndent().trim())
+            if (it.isCanceled) throw InterruptedException()
+            newProject
+        }
+        val requirements = UITools.run(
+            e.project, "Specifying Project", true
+        ) {
+            val projectStatements = api.getProjectStatements(config.description, project)
+            if (it.isCanceled) throw InterruptedException()
+            projectStatements
+        }
+        val projectDesign = UITools.run(
+            e.project, "Designing Project", true
+        ) {
+            val buildProjectDesign = api.buildProjectDesign(project, requirements)
+            if (it.isCanceled) throw InterruptedException()
+            buildProjectDesign
+        }
+        val files = UITools.run(
+            e.project, "Specifying Files", true
+        ) {
+            val buildProjectFileSpecifications =
+                api.buildProjectFileSpecifications(project, requirements, projectDesign)
+            if (it.isCanceled) throw InterruptedException()
+            buildProjectFileSpecifications
+        }
+
+        val components =
+            UITools.run(
+                e.project, "Specifying Components", true
+            ) {
+                projectDesign.components.map { it to api.buildComponentFileSpecifications(project, requirements, it) }
+                    .toMap()
+            }
+
+        val documents =
+            UITools.run(
+                e.project, "Specifying Documents", true
+            ) {
+                projectDesign.documents.map {
+                    it to api.buildDocumentationFileSpecifications(
+                        project,
+                        requirements,
+                        it
+                    )
+                }.toMap()
+            }
+
+        val tests = UITools.run(
+            e.project, "Specifying Tests", true
+        ) { projectDesign.tests.map { it to api.buildTestFileSpecifications(project, requirements, it) }.toMap() }
+
+        val sourceCodeMap = UITools.run(
+            e.project, "Implementing Files", true
+        ) {
+            SoftwareProjectAI.parallelImplementWithAlternates(
+                api,
+                project,
+                components,
+                documents,
+                tests,
+                config.drafts,
+                AppSettingsState.instance.apiThreads
+            ) { progress ->
+                if (it.isCanceled) throw InterruptedException()
+                it.fraction = progress
+            }
+        }
+        UITools.run(e.project, "Writing Files", false) {
+            val outputDir = File(selectedFolder.canonicalPath!!)
+            sourceCodeMap.forEach { (file, sourceCode) ->
+                val relative = file.fullFilePathName
+                    .trimEnd('/')
+                    .trimStart('/', '.')
+                if (File(relative).isRooted) {
+                    log.warn("Invalid path: $relative")
+                } else {
+                    val outFile = outputDir.resolve(relative)
+                    outFile.parentFile.mkdirs()
+                    val best = sourceCode.maxByOrNull { it.code.length }!!
+                    outFile.writeText(best.code)
+                    log.debug("Wrote ${outFile.canonicalPath} (Resolved from $relative)")
+                    if (config.saveAlternates)
+                        for ((index, alternate) in sourceCode.filter { it != best }.withIndex()) {
+                            val outFileAlternate =
+                                outputDir.resolve(
+                                    relative + ".${index + 1}"
+                                )
+                            outFileAlternate.parentFile.mkdirs()
+                            outFileAlternate.writeText(alternate.code)
+                            log.debug("Wrote ${outFileAlternate.canonicalPath} (Resolved from $relative)")
+                        }
+                }
+            }
+            selectedFolder.refresh(false, true)
+        }
+    }.start()
 
     private fun isEnabled(e: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false

@@ -1,8 +1,8 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.util.StringTools.getWhitespacePrefix
-import com.github.simiacryptus.aicoder.util.StringTools.getWhitespacePrefix2
-import com.github.simiacryptus.aicoder.util.StringTools.stripPrefix
+import com.github.simiacryptus.util.StringTools.getWhitespacePrefix
+import com.github.simiacryptus.util.StringTools.getWhitespacePrefix2
+import com.github.simiacryptus.util.StringTools.stripPrefix
 import java.util.*
 import java.util.stream.Collectors
 

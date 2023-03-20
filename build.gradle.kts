@@ -74,6 +74,11 @@ kover.xmlReport {
 }
 
 tasks {
+    compileKotlin {
+        kotlinOptions {
+            javaParameters = true
+        }
+    }
     compileTestKotlin {
         kotlinOptions {
             javaParameters = true
