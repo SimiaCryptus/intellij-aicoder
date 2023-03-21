@@ -2,8 +2,8 @@ package com.github.simiacryptus.aicoder.openai.ui
 
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
-import com.github.simiacryptus.aicoder.openai.core.EditRequest
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.openai.EditRequest
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.intellij.ui.components.JBScrollPane

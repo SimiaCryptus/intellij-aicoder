@@ -84,7 +84,7 @@ class ComicBook: GenerationReportBase() {
                     |
                     |![${character.image!!.detailedCaption}](${
                         writeImage(
-                            proxy.api.text_to_image(
+                            proxy.api.render(
                                 character.image.detailedCaption,
                                 resolution = 512
                             )[0]
@@ -132,7 +132,7 @@ class ComicBook: GenerationReportBase() {
                     |
                     |![${page.image!!.detailedCaption}](${
                         writeImage(
-                            proxy.api.text_to_image(
+                            proxy.api.render(
                                 page.image.detailedCaption,
                                 resolution = 512
                             )[0]

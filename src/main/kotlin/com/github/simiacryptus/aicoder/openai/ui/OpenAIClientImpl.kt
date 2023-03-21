@@ -1,11 +1,11 @@
 package com.github.simiacryptus.aicoder.openai.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.core.CoreAPI
+import com.github.simiacryptus.openai.OpenAIClient
 
-class CoreAPIImpl(
+class OpenAIClientImpl(
     private val appSettingsState: AppSettingsState
-) : CoreAPI(
+) : OpenAIClient(
     appSettingsState.apiBase,
     appSettingsState.apiKey,
     appSettingsState.apiLogLevel

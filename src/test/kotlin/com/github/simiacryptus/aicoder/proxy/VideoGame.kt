@@ -90,7 +90,7 @@ class VideoGame : GenerationReportBase() {
                     |
                     |![${character.image!!.detailedCaption}](${
                         writeImage(
-                            proxy.api.text_to_image(
+                            proxy.api.render(
                                 character.image.detailedCaption,
                                 resolution = 512
                             )[0]
@@ -138,7 +138,7 @@ class VideoGame : GenerationReportBase() {
                     |
                     |![${level.image!!.detailedCaption}](${
                         writeImage(
-                            proxy.api.text_to_image(
+                            proxy.api.render(
                                 level.image.detailedCaption,
                                 resolution = 512
                             )[0]

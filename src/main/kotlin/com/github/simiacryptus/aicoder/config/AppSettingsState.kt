@@ -1,9 +1,10 @@
 package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
-import com.github.simiacryptus.aicoder.openai.core.EditRequest
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequest
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequestTemplate
+import com.github.simiacryptus.openai.ChatRequest
+import com.github.simiacryptus.openai.CompletionRequest
+import com.github.simiacryptus.openai.EditRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -31,6 +32,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var apiKey = ""
     var model_completion = "text-davinci-003"
     var model_edit = "text-davinci-edit-001"
+    var model_chat = "gpt-3.5-turbo-0301"
     var maxTokens = 1000
     var temperature = 0.1
     var style = ""
@@ -59,6 +61,10 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         return EditRequest(this)
     }
 
+    fun createChatRequest(): ChatRequest {
+        return ChatRequest(this)
+    }
+
     override fun getState(): AppSettingsState {
         return this
     }
@@ -79,6 +85,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         if (apiKey != that.apiKey) return false
         if (model_completion != that.model_completion) return false
         if (model_edit != that.model_edit) return false
+        if (model_chat != that.model_chat) return false
         if (translationRequestTemplate != that.translationRequestTemplate) return false
         if (apiLogLevel != that.apiLogLevel) return false
         if (devActions != that.devActions) return false
@@ -91,6 +98,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
             apiKey,
             model_completion,
             model_edit,
+            model_chat,
             maxTokens,
             temperature,
             translationRequestTemplate,

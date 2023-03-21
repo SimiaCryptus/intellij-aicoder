@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.openai.core
+package com.github.simiacryptus.openai
 
 class Usage @Suppress("unused") constructor() {
     @Suppress("unused")

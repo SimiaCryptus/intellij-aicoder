@@ -1,16 +1,10 @@
 package com.github.simiacryptus.aicoder.openai.async
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.openai.core.CompletionRequest
-import com.github.simiacryptus.aicoder.openai.core.CompletionResponse
-import com.github.simiacryptus.aicoder.openai.core.CoreAPI
-import com.github.simiacryptus.aicoder.openai.core.EditRequest
-import com.github.simiacryptus.aicoder.util.StringTools
+import com.github.simiacryptus.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.UITools.run
+import com.github.simiacryptus.openai.*
 import com.google.common.util.concurrent.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,7 +22,7 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 
 open class AsyncAPI(
-    val coreAPI: CoreAPI,
+    val openAIClient: OpenAIClient,
     private val suppressProgress: Boolean = false
 ) {
 
@@ -49,33 +43,7 @@ open class AsyncAPI(
                     ) {
                         override fun compute(indicator: ProgressIndicator): CompletionResponse {
                             try {
-                                if (editRequest.input == null) {
-                                    log(
-                                        settings.apiLogLevel, String.format(
-                                            "Text Edit Request\nInstruction:\n\t%s\n",
-                                            editRequest.instruction.replace("\n", "\n\t")
-                                        )
-                                    )
-                                } else {
-                                    log(
-                                        settings.apiLogLevel, String.format(
-                                            "Text Edit Request\nInstruction:\n\t%s\nInput:\n\t%s\n",
-                                            editRequest.instruction.replace("\n", "\n\t"),
-                                            editRequest.input!!.replace("\n", "\n\t")
-                                        )
-                                    )
-                                }
-                                val request: String =
-                                    StringTools.restrictCharacterSet(
-                                        mapper.writeValueAsString(editRequest),
-                                        allowedCharset
-                                    )
-                                val result = coreAPI.post(settings.apiBase + "/edits", request)
-                                val completionResponse = coreAPI.processCompletionResponse(result)
-                                coreAPI.logComplete(
-                                    completionResponse.firstChoice.orElse("").toString().trim { it <= ' ' }
-                                )
-                                return completionResponse
+                                return openAIClient.edit(editRequest)
                             } catch (e: IOException) {
                                 throw RuntimeException(e)
                             } catch (e: InterruptedException) {
@@ -111,7 +79,7 @@ open class AsyncAPI(
             )
         ) { _: Any? ->
             run(
-                object : Task.WithResult<CompletionResponse, Exception?>(
+                task = object : Task.WithResult<CompletionResponse, Exception?>(
                     project,
                     "Text Completion",
                     canBeCancelled
@@ -129,7 +97,7 @@ open class AsyncAPI(
                             )
                         threadRef.getAndSet(Thread.currentThread())
                         try {
-                            return coreAPI.complete(completionRequest, model)
+                            return openAIClient.complete(completionRequest, model)
                         } catch (e: IOException) {
                             log.error(e)
                             throw RuntimeException(e)
@@ -163,10 +131,10 @@ open class AsyncAPI(
 
     private fun moderateAsync(project: Project?, text: String): ListenableFuture<*> {
         return run(
-            object : Task.WithResult<ListenableFuture<*>, Exception?>(project, "Moderation", false) {
+            task = object : Task.WithResult<ListenableFuture<*>, Exception?>(project, "Moderation", false) {
                 override fun compute(indicator: ProgressIndicator): ListenableFuture<*> {
                     return pool.submit {
-                        coreAPI.moderate(text)
+                        openAIClient.moderate(text)
                     }
                 }
             },
@@ -174,45 +142,35 @@ open class AsyncAPI(
         )
     }
 
-    fun <T> run(task: Task.WithResult<T, Exception?>, retries: Int): T {
-        return try {
-            if (!suppressProgress) {
-                ProgressManager.getInstance().run(task)
-            } else {
-                task.run(AbstractProgressIndicatorBase())
-                task.result
-            }
-        } catch (e: RuntimeException) {
-            if (isInterruptedException(e)) throw e
-            if (retries > 0) {
-                log.warn("Retrying request", e)
-                run(task, retries - 1)
-            } else {
-                throw e
-            }
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-        } catch (e: Exception) {
-            if (isInterruptedException(e)) throw RuntimeException(e)
-            if (retries > 0) {
-                log.warn("Retrying request", e)
-                try {
-                    Thread.sleep(15000)
-                } catch (ex: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                }
-                run(task, retries - 1)
-            } else {
-                throw RuntimeException(e)
-            }
+    fun chat(project: Project?, newRequest: ChatRequest, settings: AppSettingsState?): ListenableFuture<ChatResponse> {
+        return map(
+            moderateAsync(
+                project,
+                StringTools.restrictCharacterSet(newRequest.messages.map { "${it.role?.name ?: "?"}: ${it.content}" }.joinToString { "\n" }, allowedCharset)
+            )
+        ) { _: Any? ->
+            run(
+                task = object : Task.WithResult<ChatResponse, Exception?>(
+                    project,
+                    "Chat",
+                    true
+                ) {
+                    override fun compute(indicator: ProgressIndicator): ChatResponse {
+                        try {
+                            newRequest.max_tokens = settings!!.maxTokens
+                            newRequest.temperature = settings.temperature
+                            newRequest.model = settings.model_chat
+                            return openAIClient.chat(newRequest)
+                        } catch (e: IOException) {
+                            throw RuntimeException(e)
+                        } catch (e: InterruptedException) {
+                            throw RuntimeException(e)
+                        }
+                    }
+                },
+                3
+            )
         }
-    }
-
-    private fun isInterruptedException(e: Throwable?): Boolean {
-        if (e is InterruptedException) return true
-        return if (e!!.cause != null && e.cause !== e) isInterruptedException(
-            e.cause
-        ) else false
     }
 
     companion object {
@@ -222,10 +180,10 @@ open class AsyncAPI(
         fun log(level: LogLevel, msg: String) {
             val message = msg.trim { it <= ' ' }.replace("\n", "\n\t")
             when (level) {
-                LogLevel.Error -> CoreAPI.log.error(message)
-                LogLevel.Warn -> CoreAPI.log.warn(message)
-                LogLevel.Info -> CoreAPI.log.info(message)
-                else -> CoreAPI.log.debug(message)
+                LogLevel.Error -> OpenAIClient.log.error(message)
+                LogLevel.Warn -> OpenAIClient.log.warn(message)
+                LogLevel.Info -> OpenAIClient.log.info(message)
+                else -> OpenAIClient.log.debug(message)
             }
         }
 
@@ -234,20 +192,10 @@ open class AsyncAPI(
             o: com.google.common.base.Function<in I, out O>
         ): ListenableFuture<O> = Futures.transform(moderateAsync, o, pool)
 
-        val mapper: ObjectMapper
-            get() {
-                val mapper = ObjectMapper()
-                mapper
-                    .enable(SerializationFeature.INDENT_OUTPUT)
-                    .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-                    .enable(MapperFeature.USE_STD_BEAN_NAMING)
-                    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                    .activateDefaultTyping(mapper.polymorphicTypeValidator)
-                return mapper
-            }
+
+
 
         val threadFactory: ThreadFactory = ThreadFactoryBuilder().setNameFormat("API Thread %d").build()
-
         val pool: ListeningExecutorService = MoreExecutors.listeningDecorator(
             ThreadPoolExecutor(
                 apiThreads,
@@ -272,6 +220,7 @@ open class AsyncAPI(
                 }
             }, pool)
         }
+
     }
 
     val allowedCharset: Charset = Charset.forName("ASCII")

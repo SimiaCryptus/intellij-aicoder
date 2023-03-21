@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.openai.core
+package com.github.simiacryptus.openai
 
 import java.util.*
 

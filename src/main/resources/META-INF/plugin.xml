@@ -133,6 +133,16 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.ChatAppendAction"
+                text="_Chat Append Text"
+                description="Append text using the Chat API">
+            <!--DOC
+        The `Chat Append Text` action allows you to quickly append text to the end of the current selection.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.EditAction"
                 text="_Edit Text..."
                 description="Edit Text (Generic)">
