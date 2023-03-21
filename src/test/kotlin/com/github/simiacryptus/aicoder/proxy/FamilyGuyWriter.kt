@@ -54,7 +54,7 @@ class FamilyGuyWriter : GenerationReportBase(){
                                 """
                                 |![${imageCaption.caption}](${
                                     writeImage(
-                                        proxy.api.text_to_image(
+                                        proxy.api.render(
                                             imageCaption.caption,
                                             resolution = 512
                                         )[0]
@@ -74,7 +74,7 @@ class FamilyGuyWriter : GenerationReportBase(){
                             """
                             |![${cutaway.imageCaption}](${
                                 writeImage(
-                                    proxy.api.text_to_image(
+                                    proxy.api.render(
                                         cutaway.imageCaption,
                                         resolution = 512
                                     )[0]

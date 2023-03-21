@@ -22,7 +22,7 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 
 open class AsyncAPI(
-    val coreAPI: CoreAPI,
+    val openAIClient: OpenAIClient,
     private val suppressProgress: Boolean = false
 ) {
 
@@ -43,33 +43,7 @@ open class AsyncAPI(
                     ) {
                         override fun compute(indicator: ProgressIndicator): CompletionResponse {
                             try {
-                                if (editRequest.input == null) {
-                                    log(
-                                        settings.apiLogLevel, String.format(
-                                            "Text Edit Request\nInstruction:\n\t%s\n",
-                                            editRequest.instruction.replace("\n", "\n\t")
-                                        )
-                                    )
-                                } else {
-                                    log(
-                                        settings.apiLogLevel, String.format(
-                                            "Text Edit Request\nInstruction:\n\t%s\nInput:\n\t%s\n",
-                                            editRequest.instruction.replace("\n", "\n\t"),
-                                            editRequest.input!!.replace("\n", "\n\t")
-                                        )
-                                    )
-                                }
-                                val request: String =
-                                    StringTools.restrictCharacterSet(
-                                        CoreAPI.mapper.writeValueAsString(editRequest),
-                                        allowedCharset
-                                    )
-                                val result = coreAPI.post(settings.apiBase + "/edits", request)
-                                val completionResponse = coreAPI.processCompletionResponse(result)
-                                coreAPI.logComplete(
-                                    completionResponse.firstChoice.orElse("").toString().trim { it <= ' ' }
-                                )
-                                return completionResponse
+                                return openAIClient.edit(editRequest)
                             } catch (e: IOException) {
                                 throw RuntimeException(e)
                             } catch (e: InterruptedException) {
@@ -123,7 +97,7 @@ open class AsyncAPI(
                             )
                         threadRef.getAndSet(Thread.currentThread())
                         try {
-                            return coreAPI.complete(completionRequest, model)
+                            return openAIClient.complete(completionRequest, model)
                         } catch (e: IOException) {
                             log.error(e)
                             throw RuntimeException(e)
@@ -160,7 +134,7 @@ open class AsyncAPI(
             task = object : Task.WithResult<ListenableFuture<*>, Exception?>(project, "Moderation", false) {
                 override fun compute(indicator: ProgressIndicator): ListenableFuture<*> {
                     return pool.submit {
-                        coreAPI.moderate(text)
+                        openAIClient.moderate(text)
                     }
                 }
             },
@@ -186,7 +160,7 @@ open class AsyncAPI(
                             newRequest.max_tokens = settings!!.maxTokens
                             newRequest.temperature = settings.temperature
                             newRequest.model = settings.model_chat
-                            return coreAPI.chat(newRequest)
+                            return openAIClient.chat(newRequest)
                         } catch (e: IOException) {
                             throw RuntimeException(e)
                         } catch (e: InterruptedException) {
@@ -206,10 +180,10 @@ open class AsyncAPI(
         fun log(level: LogLevel, msg: String) {
             val message = msg.trim { it <= ' ' }.replace("\n", "\n\t")
             when (level) {
-                LogLevel.Error -> CoreAPI.log.error(message)
-                LogLevel.Warn -> CoreAPI.log.warn(message)
-                LogLevel.Info -> CoreAPI.log.info(message)
-                else -> CoreAPI.log.debug(message)
+                LogLevel.Error -> OpenAIClient.log.error(message)
+                LogLevel.Warn -> OpenAIClient.log.warn(message)
+                LogLevel.Info -> OpenAIClient.log.info(message)
+                else -> OpenAIClient.log.debug(message)
             }
         }
 

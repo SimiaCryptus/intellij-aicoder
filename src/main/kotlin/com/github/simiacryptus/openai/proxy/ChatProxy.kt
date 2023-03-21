@@ -1,32 +1,31 @@
 package com.github.simiacryptus.openai.proxy
 
-import com.github.simiacryptus.openai.ChatRequest
 import com.github.simiacryptus.openai.ChatMessage
-import com.github.simiacryptus.openai.CoreAPI
+import com.github.simiacryptus.openai.ChatRequest
+import com.github.simiacryptus.openai.OpenAIClient
 import com.jetbrains.rd.util.LogLevel
-import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("MemberVisibilityCanBePrivate")
 class ChatProxy(
     apiKey: String,
-    private val model: String = "gpt-3.5-turbo",
-    private val maxTokens: Int = 3500,
-    private val temperature: Double = 0.7,
-    private val verbose: Boolean = false,
+    var model: String = "gpt-3.5-turbo",
+    var maxTokens: Int = 3500,
+    var temperature: Double = 0.7,
+    var verbose: Boolean = false,
     private val moderated: Boolean = true,
     base: String = "https://api.openai.com/v1",
     apiLog: String? = null,
     logLevel: LogLevel
 ) : GPTProxyBase(apiLog, 3) {
-    val api: CoreAPI
+    val api: OpenAIClient
     val totalPrefixLength = AtomicInteger(0)
     val totalSuffixLength = AtomicInteger(0)
     val totalInputLength = AtomicInteger(0)
     val totalOutputLength = AtomicInteger(0)
 
     init {
-        api = CoreAPI(base, apiKey, logLevel)
+        api = OpenAIClient(base, apiKey, logLevel)
     }
 
     override fun complete(prompt: ProxyRequest, vararg examples: ProxyRecord): String {
@@ -36,14 +35,12 @@ class ChatProxy(
                 listOf(
                     ChatMessage(
                         ChatMessage.Role.system, """
-                |You are a JSON-RPC Service serving the following method:
-                |${prompt.methodName}
-                |Requests contain the following arguments:
-                |${prompt.argList.keys.joinToString("\n  ")}
-                |Responses are of type:
-                |${prompt.responseType}
+                |You are a JSON-RPC Service
                 |Responses are expected to be a single JSON object without explaining text.
                 |All input arguments are optional
+                |You will respond to the following method:
+                |
+                |${prompt.apiYaml}
                 |""".trimMargin().trim()
                     )
                 ) +
@@ -69,12 +66,11 @@ class ChatProxy(
         request.model = model
         request.max_tokens = maxTokens
         request.temperature = temperature
-        val completion = api.withTimeout(Duration.ofMinutes(10)) {
-            val json = toJson(request)
-            if (moderated) api.moderate(json)
-            totalInputLength.addAndGet(json.length)
-            api.chat(request).response.get().toString()
-        }
+        val json = toJson(request)
+        if (moderated) api.moderate(json)
+        totalInputLength.addAndGet(json.length)
+
+        val completion = api.chat(request).response.get().toString()
         if (verbose) println(completion)
         totalOutputLength.addAndGet(completion.length)
         val trimPrefix = trimPrefix(completion)

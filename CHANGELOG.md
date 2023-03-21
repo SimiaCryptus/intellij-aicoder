@@ -7,6 +7,13 @@
 ### Added
 - 
 
+## [1.0.18]
+
+### Improved
+- API stability and performance
+- Various bug fixes
+- Max tokens handling
+
 ## [1.0.17]
 
 ### Added

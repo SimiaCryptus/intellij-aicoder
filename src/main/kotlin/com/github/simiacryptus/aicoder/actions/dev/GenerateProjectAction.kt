@@ -3,7 +3,7 @@ package com.github.simiacryptus.aicoder.actions.dev
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.openai.proxy.SoftwareProjectAI
+import com.github.simiacryptus.aicoder.SoftwareProjectAI
 import com.github.simiacryptus.openai.proxy.ChatProxy
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -89,26 +89,26 @@ class GenerateProjectAction : AnAction() {
             UITools.run(
                 e.project, "Specifying Components", true
             ) {
-                projectDesign.components.map { it to api.buildComponentFileSpecifications(project, requirements, it) }
-                    .toMap()
+                projectDesign.components?.map { it to api.buildComponentFileSpecifications(project, requirements, it) }
+                    ?.toMap()
             }
 
         val documents =
             UITools.run(
                 e.project, "Specifying Documents", true
             ) {
-                projectDesign.documents.map {
+                projectDesign.documents?.map {
                     it to api.buildDocumentationFileSpecifications(
                         project,
                         requirements,
                         it
                     )
-                }.toMap()
+                }?.toMap()
             }
 
         val tests = UITools.run(
             e.project, "Specifying Tests", true
-        ) { projectDesign.tests.map { it to api.buildTestFileSpecifications(project, requirements, it) }.toMap() }
+        ) { projectDesign.tests?.map { it to api.buildTestFileSpecifications(project, requirements, it) }?.toMap() }
 
         val sourceCodeMap = UITools.run(
             e.project, "Implementing Files", true
@@ -116,9 +116,9 @@ class GenerateProjectAction : AnAction() {
             SoftwareProjectAI.parallelImplementWithAlternates(
                 api,
                 project,
-                components,
-                documents,
-                tests,
+                components ?: emptyMap(),
+                documents ?: emptyMap(),
+                tests ?: emptyMap(),
                 config.drafts,
                 AppSettingsState.instance.apiThreads
             ) { progress ->
@@ -129,16 +129,16 @@ class GenerateProjectAction : AnAction() {
         UITools.run(e.project, "Writing Files", false) {
             val outputDir = File(selectedFolder.canonicalPath!!)
             sourceCodeMap.forEach { (file, sourceCode) ->
-                val relative = file.fullFilePathName
-                    .trimEnd('/')
-                    .trimStart('/', '.')
+                val relative = file.file
+                    ?.trimEnd('/')
+                    ?.trimStart('/', '.') ?: ""
                 if (File(relative).isRooted) {
                     log.warn("Invalid path: $relative")
                 } else {
                     val outFile = outputDir.resolve(relative)
                     outFile.parentFile.mkdirs()
-                    val best = sourceCode.maxByOrNull { it.code.length }!!
-                    outFile.writeText(best.code)
+                    val best = sourceCode.maxByOrNull { it.code?.length ?: 0 }!!
+                    outFile.writeText(best?.code ?: "")
                     log.debug("Wrote ${outFile.canonicalPath} (Resolved from $relative)")
                     if (config.saveAlternates)
                         for ((index, alternate) in sourceCode.filter { it != best }.withIndex()) {
@@ -147,7 +147,7 @@ class GenerateProjectAction : AnAction() {
                                     relative + ".${index + 1}"
                                 )
                             outFileAlternate.parentFile.mkdirs()
-                            outFileAlternate.writeText(alternate.code)
+                            outFileAlternate.writeText(alternate?.code ?: "")
                             log.debug("Wrote ${outFileAlternate.canonicalPath} (Resolved from $relative)")
                         }
                 }

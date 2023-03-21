@@ -149,7 +149,7 @@ class ChildrensStory : GenerationReportBase(){
                     |
                     |![${it.image.detailedCaption}](${
                         writeImage(
-                            proxy.api.text_to_image(
+                            proxy.api.render(
                                 it.image.detailedCaption,
                                 resolution = 512
                             )[0]

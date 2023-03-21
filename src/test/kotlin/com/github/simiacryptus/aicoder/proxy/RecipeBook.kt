@@ -78,7 +78,7 @@ class RecipeBook : GenerationReportBase() {
                             |
                             |![${recipe.image!!.detailedCaption}](${
                                 writeImage(
-                                    proxy.api.text_to_image(
+                                    proxy.api.render(
                                         recipe.image.detailedCaption,
                                         resolution = 512
                                     )[0]

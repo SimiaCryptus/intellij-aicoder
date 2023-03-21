@@ -1,6 +1,5 @@
 package com.github.simiacryptus.aicoder.openai.ui
 
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI.Companion.map
@@ -26,10 +25,10 @@ object OpenAI_API {
     private val log = Logger.getInstance(OpenAI_API::class.java)
 
     @JvmStatic
-    val coreAPI: CoreAPI = CoreAPIImpl(settingsState!!)
+    val openAIClient: OpenAIClient = OpenAIClientImpl(settingsState!!)
 
     @JvmStatic
-    val asyncAPI = AsyncAPIImpl(coreAPI, settingsState!!)
+    val asyncAPI = AsyncAPIImpl(openAIClient, settingsState!!)
 
     private val activeModelUI = WeakHashMap<ComboBox<CharSequence?>, Any>()
 
@@ -60,16 +59,10 @@ object OpenAI_API {
                     activeModelUI[comboBox] = Any()
                     AsyncAPI.onSuccess(
                         engines
-                    ) { engines: ObjectNode ->
-                        val data = engines["data"]
-                        val items =
-                            arrayOfNulls<CharSequence>(data.size())
-                        for (i in 0 until data.size()) {
-                            items[i] = data[i]["id"].asText()
-                        }
-                        Arrays.sort(items)
+                    ) { engines: Array<CharSequence?> ->
+                        Arrays.sort(engines)
                         activeModelUI.keys.forEach(Consumer { ui: ComboBox<CharSequence?> ->
-                            Arrays.stream(items).forEach(ui::addItem)
+                            Arrays.stream(engines).forEach(ui::addItem)
                         })
                     }
                     return comboBox!!
@@ -123,12 +116,9 @@ object OpenAI_API {
             }
             return settings
         }
-    private val engines: ListenableFuture<ObjectNode>
-        get() = AsyncAPI.pool.submit<ObjectNode> {
-            CoreAPI.mapper.readValue(
-                coreAPI.get(settingsState!!.apiBase + "/engines"),
-                ObjectNode::class.java
-            )
+    private val engines: ListenableFuture<Array<CharSequence?>>
+        get() = AsyncAPI.pool.submit<Array<CharSequence?>> {
+            openAIClient.getEngines()
         }
 
     fun complete(
@@ -185,6 +175,6 @@ object OpenAI_API {
         }
     }
 
-    fun text_to_speech(wavAudio: ByteArray, prompt: String = ""): String = coreAPI.text_to_speech(wavAudio, prompt)
+    fun text_to_speech(wavAudio: ByteArray, prompt: String = ""): String = openAIClient.dictate(wavAudio, prompt)
 
 }

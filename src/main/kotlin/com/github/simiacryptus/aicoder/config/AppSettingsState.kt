@@ -85,6 +85,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         if (apiKey != that.apiKey) return false
         if (model_completion != that.model_completion) return false
         if (model_edit != that.model_edit) return false
+        if (model_chat != that.model_chat) return false
         if (translationRequestTemplate != that.translationRequestTemplate) return false
         if (apiLogLevel != that.apiLogLevel) return false
         if (devActions != that.devActions) return false
@@ -97,6 +98,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
             apiKey,
             model_completion,
             model_edit,
+            model_chat,
             maxTokens,
             temperature,
             translationRequestTemplate,

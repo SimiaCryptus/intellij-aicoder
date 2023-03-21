@@ -59,7 +59,7 @@ class AutoNews : GenerationReportBase() {
                                 |
                                 |![${story.image!!.detailedCaption}](${
                                     writeImage(
-                                        proxy.api.text_to_image(
+                                        proxy.api.render(
                                             story.image.detailedCaption,
                                             resolution = 512
                                         )[0]

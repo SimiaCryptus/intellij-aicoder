@@ -1,25 +1,29 @@
 package com.github.simiacryptus.openai.proxy
 
-import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.github.simiacryptus.util.StringTools.indentJoin
+import com.fasterxml.jackson.module.kotlin.isKotlinClass
+import com.google.common.reflect.TypeToken
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.lang.reflect.*
-import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaType
+
 
 abstract class GPTProxyBase(
     apiLogFile: String?,
-    private val deserializerRetries: Int = 3
+    private val deserializerRetries: Int = 5
 ) {
     abstract fun complete(prompt: ProxyRequest, vararg examples: ProxyRecord): String
 
     fun <T : Any> create(clazz: Class<T>): T {
         return Proxy.newProxyInstance(clazz.classLoader, arrayOf(clazz)) { proxy, method, args ->
             if (method.name == "toString") return@newProxyInstance clazz.simpleName
-            val typeString = typeToName(method.genericReturnType)
+            val type = method.genericReturnType
+            val typeString = method.toYaml().trimIndent()
             val prompt = ProxyRequest(
                 method.name,
                 typeString,
@@ -29,25 +33,42 @@ abstract class GPTProxyBase(
                         param.name to toJson(arg!!)
                     }.toMap()
             )
+
+            var lastException: Exception? = null
             for (retry in 0 until deserializerRetries) {
-                val result = complete(prompt, *examples[method.name]?.toTypedArray() ?: arrayOf())
-                writeToJsonLog(ProxyRecord(prompt.methodName, prompt.argList, result))
+                var result = complete(prompt, *examples[method.name]?.toTypedArray() ?: arrayOf())
+                // If the requested `type` is a list, check that result is a list
+                if (type is ParameterizedType && List::class.java.isAssignableFrom(type.rawType as Class<*>) && !result.startsWith(
+                        "["
+                    )
+                ) {
+                    result = "[$result]"
+                }
+                writeToJsonLog(ProxyRecord(method.name, prompt.argList, result))
                 try {
-                    return@newProxyInstance fromJson(result, method.genericReturnType)
-                } catch (e: JsonParseException) {
+                    val obj = fromJson<Any>(type, result)
+                    if (obj is ValidatedObject && !obj.validate()) {
+                        log.warn("Invalid response: $result")
+                        continue
+                    }
+                    return@newProxyInstance obj
+                } catch (e: Exception) {
                     log.warn("Failed to parse response: $result", e)
-                    log.info("Retrying...")
+                    lastException = e
+                    log.info("Retry $retry of $deserializerRetries")
                 }
             }
+            throw RuntimeException("Failed to parse response", lastException)
         } as T
     }
+
 
     private val apiLog = apiLogFile?.let { openApiLog(it) }
     private val examples = HashMap<String, List<ProxyRecord>>()
     private fun loadExamples(file: File = File("api.examples.json")): List<ProxyRecord> {
         if (!file.exists()) return listOf<ProxyRecord>()
         val json = file.readText()
-        return fromJson(json, object : ArrayList<ProxyRecord>() {}.javaClass)
+        return fromJson(object : ArrayList<ProxyRecord>() {}.javaClass, json)
     }
 
     fun addExamples(file: File) {
@@ -75,39 +96,9 @@ abstract class GPTProxyBase(
         return objectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(data)
     }
 
-    open fun <T> fromJson(data: String, type: Type): T {
-        if (data.isNotEmpty()) try {
+    open fun <T> fromJson(type: Type, data: String): T {
             if (type is Class<*> && type.isAssignableFrom(String::class.java)) return data as T
-            return objectMapper().readValue(data, objectMapper().typeFactory.constructType(type)) as T
-        } catch (e: JsonParseException) {
-            throw e
-        } catch (e: Exception) {
-            log.error("Error parsing JSON", e)
-        }
-        if (type is Class<*>) return newInstance(type) as T
-        return null as T
-    }
-
-    open fun <T> newInstance(type: Class<T>): T {
-        if (type.isAssignableFrom(String::class.java)) return "" as T
-        if (type.isAssignableFrom(Boolean::class.java)) return false as T
-        if (type.isAssignableFrom(Int::class.java)) return 0 as T
-        if (type.isAssignableFrom(Long::class.java)) return 0L as T
-        if (type.isAssignableFrom(Double::class.java)) return 0.0 as T
-        if (type.isAssignableFrom(Float::class.java)) return 0.0f as T
-        if (type.isAssignableFrom(Short::class.java)) return 0 as T
-        if (type.isAssignableFrom(Byte::class.java)) return 0 as T
-        if (type.isAssignableFrom(Char::class.java)) return 0 as T
-        if (type.isAssignableFrom(Void::class.java)) return null as T
-        if (type.isAssignableFrom(Any::class.java)) return null as T
-        if (type.isAssignableFrom(Unit::class.java)) return null as T
-        if (type.isAssignableFrom(Nothing::class.java)) return null as T
-        if (type.isAssignableFrom(List::class.java)) return listOf<Any>() as T
-        if (type.isAssignableFrom(Map::class.java)) return mapOf<Any, Any>() as T
-        if (type.isAssignableFrom(Set::class.java)) return setOf<Any>() as T
-        if (type.isAssignableFrom(Array::class.java)) return arrayOf<Any>() as T
-        if (type.isAssignableFrom(Iterable::class.java)) return listOf<Any>() as T
-        return type.getConstructor().newInstance()
+        return objectMapper().readValue(data, objectMapper().typeFactory.constructType(type)) as T
     }
 
     open fun objectMapper(): ObjectMapper {
@@ -118,7 +109,7 @@ abstract class GPTProxyBase(
 
     data class ProxyRequest(
         val methodName: String = "",
-        val responseType: String = "",
+        val apiYaml: String = "",
         val argList: Map<String, String> = mapOf()
     )
 
@@ -131,160 +122,118 @@ abstract class GPTProxyBase(
     companion object {
         val log = org.slf4j.LoggerFactory.getLogger(GPTProxyBase::class.java)
 
-        fun typeToName(type: Type?): String {
-            // Convert a type to API documentation including type name and type structure, recusively expanding child types
-            if (type == null) {
-                return "null"
-            }
-            if(type is KClass<*>) {
-                return typeToName(type.java)
-            }
-            val javaClass = if (type is Class<*>) {
-                type
-            } else if (type is ParameterizedType) {
-                type.rawType as Class<*>
-            } else if (type is GenericArrayType) {
-                type.genericComponentType as Class<*>
-            } else if (type is TypeVariable<*>) {
-                type.bounds[0] as Class<*>
-            } else if (type is WildcardType) {
-                type.upperBounds[0] as Class<*>
-            } else if (type is KClass<*>) {
-                type.java
+        fun Parameter.toYaml(): String {
+            val description = getAnnotation(Description::class.java)?.value
+            val yaml = if (description != null) {
+                """
+                |- name: ${this.name}
+                |    description: $description
+                |    ${this.parameterizedType.toYaml().replace("\n", "\n    ")}
+                |""".trimMargin().trim()
             } else {
-                null
+                """
+                |- name: ${this.name}
+                |    ${this.parameterizedType.toYaml().replace("\n", "\n    ")}
+                |""".trimMargin().trim()
             }
-            if (javaClass != null) {
-                if (javaClass.isPrimitive) {
-                    return javaClass.simpleName
-                }
-                if (javaClass.isArray) {
-                    return "Array<${typeToName(javaClass.componentType)}>"
-                }
-                if (javaClass.isEnum) {
-                    return javaClass.simpleName
-                }
-                if (javaClass.isAssignableFrom(List::class.java)) {
-                    if (type is ParameterizedType) {
-                        val genericType = type.actualTypeArguments[0]
-                        return "List<${typeToName(genericType as Class<*>)}>"
-                    } else {
-                        return "List"
-                    }
-                }
-                if (javaClass.isAssignableFrom(Map::class.java)) {
-                    if (type is ParameterizedType) {
-                        val keyType = type.actualTypeArguments[0]
-                        val valueType = type.actualTypeArguments[1]
-                        return "Map<${typeToName(keyType as Class<*>)}, ${typeToName(valueType as Class<*>)}>"
-                    } else {
-                        return "Map"
-                    }
-                }
-                if (javaClass.getPackage()?.name?.startsWith("java") == true) {
-                    return javaClass.simpleName
-                }
-            }
-            return typeDescription(type).toString()
+            return yaml
         }
 
-        private fun typeDescription(clazz: Class<*>): TypeDescription {
-            val apiDocumentation = if (clazz.isArray) {
-                return TypeDescription("Array<${typeDescription(clazz.componentType)}>")
-            } else if (clazz.isAssignableFrom(List::class.java)) {
-                if (clazz.isAssignableFrom(ParameterizedType::class.java)) {
-                    val genericType = (clazz as ParameterizedType).actualTypeArguments[0]
-                    return TypeDescription("List<${typeDescription(genericType as Class<*>)}>")
-                } else {
-                    return TypeDescription("List")
-                }
-            } else if (clazz.isAssignableFrom(Map::class.java)) {
-                if (clazz.isAssignableFrom(ParameterizedType::class.java)) {
-                    val keyType = (clazz as ParameterizedType).actualTypeArguments[0]
-                    val valueType = (clazz as ParameterizedType).actualTypeArguments[1]
-                    return TypeDescription("Map<${typeDescription(keyType as Class<*>)}, ${typeDescription(valueType as Class<*>)}}>")
-                } else {
-                    return TypeDescription("Map")
-                }
-            } else if (clazz == String::class.java) {
-                return TypeDescription(clazz.simpleName)
+
+        fun Type.toYaml(): String {
+            val typeName = this.typeName.substringAfterLast('.').replace('$', '.').toLowerCase()
+            val yaml = if (typeName in setOf("boolean", "integer", "number", "string")) {
+                "type: $typeName"
+            } else if (this is ParameterizedType && List::class.java.isAssignableFrom(this.rawType as Class<*>)) {
+                """
+                |type: array
+                |items:
+                |    ${this.actualTypeArguments[0].toYaml().replace("\n", "\n    ")}
+                |""".trimMargin()
+            } else if (this.isArray) {
+                """
+                |type: array
+                |items:
+                |    ${this.componentType?.toYaml()?.replace("\n", "\n    ")}
+                |""".trimMargin()
             } else {
-                TypeDescription(clazz.simpleName)
-            }
-            if (clazz.isPrimitive) return apiDocumentation
-            if (clazz.isEnum) return apiDocumentation
-
-            for (field in clazz.declaredFields) {
-                if (field.name.startsWith("\$")) continue
-                var annotation = getAnnotation(field, clazz, Notes::class)
-                val notes = if (annotation == null) "" else {
-                    " /* " + annotation.value + " */"
+                val rawType = TypeToken.of(this).rawType
+                val declaredFieldYaml = rawType.declaredFields.map {
+                    """
+                    |${it.name}:
+                    |    ${it.genericType.toYaml().replace("\n", "\n    ")}
+                    """.trimMargin().trim()
+                }.toTypedArray()
+                val propertiesYaml = if (rawType.isKotlinClass() && rawType.kotlin.isData) {
+                    rawType.kotlin.memberProperties.map {
+                        val allAnnotations =
+                            getAllAnnotations(rawType, it)
+                        val description = allAnnotations.find { x -> x is Description } as? Description
+                        // Find annotation on the kotlin data class constructor parameter
+                        val yaml = if (description != null) {
+                            """
+                            |${it.name}:
+                            |    description: ${description.value}
+                            |    ${it.returnType.javaType.toYaml().replace("\n", "\n    ")}
+                            """.trimMargin().trim()
+                        } else {
+                            """
+                            |${it.name}:
+                            |    ${it.returnType.javaType.toYaml().replace("\n", "\n    ")}
+                            """.trimMargin().trim()
+                        }
+                        yaml
+                    }.toTypedArray()
+                } else {
+                    arrayOf()
                 }
-                // Get ParameterizedType for field
-                val type = field.genericType
-                if (type is ParameterizedType) {
-                    // Get raw type
-                    if ((type.rawType as Class<*>).isAssignableFrom(List::class.java)) {
-                        // Get type of list elements
-                        val elementType = type.actualTypeArguments[0] as Class<*>
-                        apiDocumentation.fields.add(
-                            FieldData(
-                                field.name + notes,
-                                TypeDescription("List<${typeDescription(elementType)}>")
-                            )
-                        )
-                        continue
-                    }
-                }
-                apiDocumentation.fields.add(FieldData(field.name + notes, typeDescription(field.genericType)))
+                val fieldsYaml = (declaredFieldYaml.toList() + propertiesYaml.toList()).distinct().joinToString("\n")
+                """
+                    |type: object
+                    |properties:
+                    |    ${fieldsYaml.replace("\n", "\n    ")}
+                    """.trimMargin()
             }
-            return apiDocumentation
+            return yaml
         }
 
-        private fun getAnnotation(
-            field: Field,
-            clazz: Class<*>,
-            attributeClass: KClass<Notes>
-        ): Notes? {
-            var annotation = field.getAnnotation(attributeClass.java)
-            if (annotation != null) return annotation
-            // If this is a kotlin data class, look for the annotation on the constructor parameter
-            if (clazz.kotlin.isData) {
-                val constructor = clazz.kotlin.constructors.first()
-                val parameter = constructor.parameters.firstOrNull { it.name == field.name }
-                if (parameter != null) {
-                    val parameterAnnotation = parameter.annotations.firstOrNull { it is Notes }
-                    if (parameterAnnotation != null) {
-                        return parameterAnnotation as Notes
-                    }
-                }
-            }
-            return null
+        private fun getAllAnnotations(
+            rawType: Class<in Nothing>,
+            property: KProperty1<out Any, *>
+        ) = property.annotations + (rawType.kotlin.constructors.first().parameters.find { x -> x.name == property.name }?.annotations
+                ?: listOf())
+
+        fun Method.toYaml(): String {
+            val parameterYaml = parameters.map { it.toYaml() }.toTypedArray().joinToString("").trim()
+            val returnTypeYaml = genericReturnType.toYaml().trim()
+            val responseYaml = """
+                |responses:
+                |    application/json:
+                |        schema:
+                |            ${returnTypeYaml.replace("\n", "\n            ")}
+                """.trimMargin().trim()
+            val yaml = """
+                |operationId: ${"${declaringClass.simpleName}.$name"}
+                |parameters:
+                |    ${parameterYaml.replace("\n", "\n    ")}
+                |$responseYaml
+                """.trimMargin()
+            return yaml
         }
 
-        private fun typeDescription(clazz: Type): TypeDescription {
-            if (clazz is Class<*>) return typeDescription(clazz)
-            if (clazz is ParameterizedType) {
-                val rawType = clazz.rawType as Class<*>
-                if (rawType.isAssignableFrom(List::class.java)) {
-                    // Get type of list elements
-                    val elementType = clazz.actualTypeArguments[0] as Class<*>
-                    return TypeDescription("List<${typeDescription(elementType)}>")
+        val Type.isArray: Boolean
+            get() {
+                return this is Class<*> && this.isArray
+            }
+
+        val Type.componentType: Type?
+            get() {
+                return when (this) {
+                    is Class<*> -> if (this.isArray) this.componentType else null
+                    is ParameterizedType -> this.actualTypeArguments.firstOrNull()
+                    else -> null
                 }
             }
-            return TypeDescription(clazz.typeName)
-        }
-
-        class TypeDescription(val name: String) {
-            val fields: ArrayList<FieldData> = ArrayList()
-            override fun toString(): String {
-                return if (fields.isEmpty()) name else indentJoin(fields)
-            }
-        }
-
-        class FieldData(val name: String, val type: TypeDescription) {
-            override fun toString(): String = """"$name": $type"""
-        }
     }
 
 }
