@@ -46,7 +46,7 @@ abstract class GPTProxyBase(
                 }
                 writeToJsonLog(ProxyRecord(method.name, prompt.argList, result))
                 try {
-                    val obj = fromJson<Any>(type, result)
+                    val obj = fromJson<Any>(result, type)
                     if (obj is ValidatedObject && !obj.validate()) {
                         log.warn("Invalid response: $result")
                         continue
@@ -68,7 +68,7 @@ abstract class GPTProxyBase(
     private fun loadExamples(file: File = File("api.examples.json")): List<ProxyRecord> {
         if (!file.exists()) return listOf<ProxyRecord>()
         val json = file.readText()
-        return fromJson(object : ArrayList<ProxyRecord>() {}.javaClass, json)
+        return fromJson(json, object : ArrayList<ProxyRecord>() {}.javaClass)
     }
 
     fun addExamples(file: File) {
@@ -96,9 +96,11 @@ abstract class GPTProxyBase(
         return objectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(data)
     }
 
-    open fun <T> fromJson(type: Type, data: String): T {
-            if (type is Class<*> && type.isAssignableFrom(String::class.java)) return data as T
-        return objectMapper().readValue(data, objectMapper().typeFactory.constructType(type)) as T
+    open fun <T> fromJson(data: String, type: Type): T {
+        if (type is Class<*> && type.isAssignableFrom(String::class.java)) return data as T
+        val value = objectMapper().readValue(data, objectMapper().typeFactory.constructType(type)) as T
+        //log.debug("Deserialized $data to $value")
+        return value
     }
 
     open fun objectMapper(): ObjectMapper {
@@ -127,13 +129,13 @@ abstract class GPTProxyBase(
             val yaml = if (description != null) {
                 """
                 |- name: ${this.name}
-                |    description: $description
-                |    ${this.parameterizedType.toYaml().replace("\n", "\n    ")}
+                |  description: $description
+                |  ${this.parameterizedType.toYaml().replace("\n", "\n  ")}
                 |""".trimMargin().trim()
             } else {
                 """
                 |- name: ${this.name}
-                |    ${this.parameterizedType.toYaml().replace("\n", "\n    ")}
+                |  ${this.parameterizedType.toYaml().replace("\n", "\n  ")}
                 |""".trimMargin().trim()
             }
             return yaml
@@ -148,51 +150,48 @@ abstract class GPTProxyBase(
                 """
                 |type: array
                 |items:
-                |    ${this.actualTypeArguments[0].toYaml().replace("\n", "\n    ")}
+                |  ${this.actualTypeArguments[0].toYaml().replace("\n", "\n  ")}
                 |""".trimMargin()
             } else if (this.isArray) {
                 """
                 |type: array
                 |items:
-                |    ${this.componentType?.toYaml()?.replace("\n", "\n    ")}
+                |  ${this.componentType?.toYaml()?.replace("\n", "\n  ")}
                 |""".trimMargin()
             } else {
                 val rawType = TypeToken.of(this).rawType
-                val declaredFieldYaml = rawType.declaredFields.map {
-                    """
-                    |${it.name}:
-                    |    ${it.genericType.toYaml().replace("\n", "\n    ")}
-                    """.trimMargin().trim()
-                }.toTypedArray()
                 val propertiesYaml = if (rawType.isKotlinClass() && rawType.kotlin.isData) {
                     rawType.kotlin.memberProperties.map {
-                        val allAnnotations =
-                            getAllAnnotations(rawType, it)
-                        val description = allAnnotations.find { x -> x is Description } as? Description
+                        val description = getAllAnnotations(rawType, it).find { x -> x is Description } as? Description
                         // Find annotation on the kotlin data class constructor parameter
                         val yaml = if (description != null) {
                             """
                             |${it.name}:
-                            |    description: ${description.value}
-                            |    ${it.returnType.javaType.toYaml().replace("\n", "\n    ")}
+                            |  description: ${description.value}
+                            |  ${it.returnType.javaType.toYaml().replace("\n", "\n  ")}
                             """.trimMargin().trim()
                         } else {
                             """
                             |${it.name}:
-                            |    ${it.returnType.javaType.toYaml().replace("\n", "\n    ")}
+                            |  ${it.returnType.javaType.toYaml().replace("\n", "\n  ")}
                             """.trimMargin().trim()
                         }
                         yaml
                     }.toTypedArray()
                 } else {
-                    arrayOf()
+                    rawType.declaredFields.map {
+                        """
+                        |${it.name}:
+                        |  ${it.genericType.toYaml().replace("\n", "\n  ")}
+                        """.trimMargin().trim()
+                    }.toTypedArray()
                 }
-                val fieldsYaml = (declaredFieldYaml.toList() + propertiesYaml.toList()).distinct().joinToString("\n")
+                val fieldsYaml = propertiesYaml.toList().joinToString("\n")
                 """
-                    |type: object
-                    |properties:
-                    |    ${fieldsYaml.replace("\n", "\n    ")}
-                    """.trimMargin()
+                |type: object
+                |properties:
+                |  ${fieldsYaml.replace("\n", "\n  ")}
+                """.trimMargin()
             }
             return yaml
         }
@@ -200,24 +199,25 @@ abstract class GPTProxyBase(
         private fun getAllAnnotations(
             rawType: Class<in Nothing>,
             property: KProperty1<out Any, *>
-        ) = property.annotations + (rawType.kotlin.constructors.first().parameters.find { x -> x.name == property.name }?.annotations
+        ) =
+            property.annotations + (rawType.kotlin.constructors.first().parameters.find { x -> x.name == property.name }?.annotations
                 ?: listOf())
 
         fun Method.toYaml(): String {
-            val parameterYaml = parameters.map { it.toYaml() }.toTypedArray().joinToString("").trim()
+            val parameterYaml = parameters.map { it.toYaml() }.toTypedArray().joinToString("\n").trim()
             val returnTypeYaml = genericReturnType.toYaml().trim()
             val responseYaml = """
-                |responses:
-                |    application/json:
-                |        schema:
-                |            ${returnTypeYaml.replace("\n", "\n            ")}
-                """.trimMargin().trim()
+                                      |responses:
+                                      |  application/json:
+                                      |    schema:
+                                      |      ${returnTypeYaml.replace("\n", "\n      ")}
+                                      """.trimMargin().trim()
             val yaml = """
-                |operationId: ${"${declaringClass.simpleName}.$name"}
-                |parameters:
-                |    ${parameterYaml.replace("\n", "\n    ")}
-                |$responseYaml
-                """.trimMargin()
+                              |operationId: $name
+                              |parameters:
+                              |  ${parameterYaml.replace("\n", "\n  ")}
+                              |$responseYaml
+                              """.trimMargin()
             return yaml
         }
 

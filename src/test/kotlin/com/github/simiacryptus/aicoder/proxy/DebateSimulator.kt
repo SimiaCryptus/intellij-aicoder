@@ -67,14 +67,6 @@ class DebateSimulator : GenerationReportBase() {
             val writingStyle: String = "",
         )
 
-        /**
-        *
-        *  A data class representing the judgement of a debate.
-        *
-        *  @property winner the team judged to have won the debate
-        *  @property reasoning the judge's reasoning for the judgement
-        *  @property pointsAwarded the number of points awarded to the winner
-        */
         data class DebateJudgement(
             val winner: String = "", val reasoning: String = "", val pointsAwarded: Int = 0
         )

@@ -13,11 +13,27 @@ interface ValidatedObject {
                 if (value is ValidatedObject && !value.validate()) {
                     return false
                 }
+                // If the property is a list, validate each element
+                if (value is List<*>) {
+                    value.forEach {
+                        if (it is ValidatedObject && !it.validate()) {
+                            return false
+                        }
+                    }
+                }
             }
             obj.javaClass.kotlin.memberProperties.forEach { property ->
                 val value = property.getter.call(obj)
                 if (value is ValidatedObject && !value.validate()) {
                     return false
+                }
+                // If the property is a list, validate each element
+                if (value is List<*>) {
+                    value.forEach {
+                        if (it is ValidatedObject && !it.validate()) {
+                            return false
+                        }
+                    }
                 }
             }
             return true

@@ -36,9 +36,11 @@ class ChatProxy(
                     ChatMessage(
                         ChatMessage.Role.system, """
                 |You are a JSON-RPC Service
-                |Responses are expected to be a single JSON object without explaining text.
+                |Responses are in JSON format
+                |Do not include explaining text outside the JSON
                 |All input arguments are optional
-                |You will respond to the following method:
+                |Outputs are based on inputs, with any missing information filled randomly
+                |You will respond to the following method
                 |
                 |${prompt.apiYaml}
                 |""".trimMargin().trim()

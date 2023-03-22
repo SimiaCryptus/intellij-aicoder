@@ -76,20 +76,12 @@ class GenerateProjectAction : AnAction() {
             if (it.isCanceled) throw InterruptedException()
             buildProjectDesign
         }
-        val files = UITools.run(
-            e.project, "Specifying Files", true
-        ) {
-            val buildProjectFileSpecifications =
-                api.buildProjectFileSpecifications(project, requirements, projectDesign)
-            if (it.isCanceled) throw InterruptedException()
-            buildProjectFileSpecifications
-        }
 
         val components =
             UITools.run(
                 e.project, "Specifying Components", true
             ) {
-                projectDesign.components?.map { it to api.buildComponentFileSpecifications(project, requirements, it) }
+                projectDesign.components?.map { it to api.getComponentFiles(project, requirements, it) }
                     ?.toMap()
             }
 
@@ -108,19 +100,19 @@ class GenerateProjectAction : AnAction() {
 
         val tests = UITools.run(
             e.project, "Specifying Tests", true
-        ) { projectDesign.tests?.map { it to api.buildTestFileSpecifications(project, requirements, it) }?.toMap() }
+        ) { projectDesign.testCases?.map { it to api.getTestFiles(project, requirements, it) }?.toMap() }
 
         val sourceCodeMap = UITools.run(
             e.project, "Implementing Files", true
         ) {
             SoftwareProjectAI.parallelImplementWithAlternates(
-                api,
-                project,
-                components ?: emptyMap(),
-                documents ?: emptyMap(),
-                tests ?: emptyMap(),
-                config.drafts,
-                AppSettingsState.instance.apiThreads
+                api = api,
+                project = project,
+                components = components ?: emptyMap(),
+                documents = documents ?: emptyMap(),
+                tests = tests ?: emptyMap(),
+                drafts = config.drafts,
+                threads = AppSettingsState.instance.apiThreads
             ) { progress ->
                 if (it.isCanceled) throw InterruptedException()
                 it.fraction = progress

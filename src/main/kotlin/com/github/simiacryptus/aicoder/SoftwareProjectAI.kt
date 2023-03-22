@@ -19,7 +19,7 @@ interface SoftwareProjectAI {
     data class Project(
         val name: String? = "",
         val description: String? = "",
-        val language: String? = "",
+        val languages: List<String>? = listOf(),
         val features: List<String>? = listOf(),
         val libraries: List<String>? = listOf(),
         val buildTools: List<String>? = listOf(),
@@ -42,16 +42,17 @@ interface SoftwareProjectAI {
         @Description("Documentation files e.g. README.md, LICENSE, etc.")
         val documents: List<DocumentationDetails>? = listOf(),
         @Description("Individual test cases")
-        val tests: List<TestDetails>? = listOf(),
+        val testCases: List<TestCase>? = listOf(),
     ) : ValidatedObject
 
     data class ComponentDetails(
         val name: String? = "",
         val description: String? = "",
-        val features: List<String>? = listOf(),
-    ) : ValidatedObject
+        val requirements: List<String>? = listOf(),
+        val dependencies: List<String>? = listOf(),
+    )
 
-    data class TestDetails(
+    data class TestCase(
         val name: String? = "",
         val steps: List<String>? = listOf(),
         val expectations: List<String>? = listOf(),
@@ -63,33 +64,36 @@ interface SoftwareProjectAI {
         val sections: List<String>? = listOf(),
     ) : ValidatedObject
 
-    fun buildProjectFileSpecifications(
-        project: Project,
-        requirements: ProjectStatements,
-        design: ProjectDesign,
-        recursive: Boolean = true
-    ): List<CodeSpecification>
+    data class CodeSpecifications(
+        val specifications: List<CodeSpecification>? = listOf(),
+    ) : ValidatedObject
 
-    fun buildComponentFileSpecifications(
+    fun getComponentFiles(
         project: Project,
         requirements: ProjectStatements,
         design: ComponentDetails,
-        recursive: Boolean = true
-    ): List<CodeSpecification>
+    ): CodeSpecifications
 
-    fun buildTestFileSpecifications(
+    fun getTestFiles(
         project: Project,
         requirements: ProjectStatements,
-        design: TestDetails,
-        recursive: Boolean = true
-    ): List<TestSpecification>
+        test: TestCase,
+    ): TestSpecifications
+
+    data class TestSpecifications(
+        val specifications: List<TestSpecification>? = listOf(),
+    ) : ValidatedObject
 
     fun buildDocumentationFileSpecifications(
         project: Project,
         requirements: ProjectStatements,
         design: DocumentationDetails,
-        recursive: Boolean = true
-    ): List<DocumentSpecification>
+    ): DocumentSpecifications
+
+    data class DocumentSpecifications(
+        @Description("Specifications for each human-language document. Does not include code files.")
+        val documents: List<DocumentSpecification>? = listOf(),
+    ) : ValidatedObject
 
     data class CodeSpecification(
         val description: String? = "",
@@ -98,7 +102,12 @@ interface SoftwareProjectAI {
         val publicMethodSignatures: List<String>? = listOf(),
         val language: String? = "",
         val location: FilePath? = FilePath(),
-    ) : ValidatedObject
+    ) : ValidatedObject {
+        override fun validate(): Boolean {
+            if(description?.isBlank() != false) return false
+            return super.validate()
+        }
+    }
 
     data class DocumentSpecification(
         val description: String? = "",
@@ -106,7 +115,12 @@ interface SoftwareProjectAI {
         val sections: List<String>? = listOf(),
         val language: String? = "",
         val location: FilePath? = FilePath(),
-    ) : ValidatedObject
+    ) : ValidatedObject {
+        override fun validate(): Boolean {
+            if(description?.isBlank() != false) return false
+            return super.validate()
+        }
+    }
 
     data class TestSpecification(
         val description: String? = "",
@@ -115,7 +129,12 @@ interface SoftwareProjectAI {
         val expectations: List<String>? = listOf(),
         val language: String? = "",
         val location: FilePath? = FilePath(),
-    ) : ValidatedObject
+    ) : ValidatedObject {
+        override fun validate(): Boolean {
+            if(description?.isBlank() != false) return false
+            return super.validate()
+        }
+    }
 
     data class FilePath(
         @Description("File name relative to project root, e.g. src/main/java/Foo.java")
@@ -131,7 +150,7 @@ interface SoftwareProjectAI {
         }
     }
 
-    fun implementComponentSpecification(
+    fun implementCode(
         project: Project,
         component: ComponentDetails,
         imports: List<Any>,
@@ -139,27 +158,32 @@ interface SoftwareProjectAI {
     ): SourceCode
 
 
-    fun implementTestSpecification(
+    fun implementTest(
         project: Project,
-        specification: TestSpecification,
-        test: TestDetails,
+        test: TestCase,
         imports: List<Any>,
-        specificationAgain: TestSpecification,
+        specification: TestSpecification,
     ): SourceCode
 
 
-    fun implementDocumentationSpecification(
+    fun writeDocument(
         project: Project,
-        specification: DocumentSpecification,
         documentation: DocumentationDetails,
         imports: List<Any>,
-        specificationAgain: DocumentSpecification,
-    ): SourceCode
+        specification: DocumentSpecification,
+    ): Document
+
+    data class Document(
+        @Description("e.g. \"markdown\" or \"text\"")
+        val language: String? = "",
+        @Description("Complete Document Text")
+        val text: String? = "",
+    ) : ValidatedObject
 
     data class SourceCode(
-        @Description("language of the code, e.g. \"java\" or \"kotlin\"")
+        @Description("e.g. \"java\" or \"kotlin\"")
         val language: String? = "",
-        @Description("Fully implemented source code")
+        @Description("Raw File Contents")
         val code: String? = "",
     ) : ValidatedObject
 
@@ -168,9 +192,9 @@ interface SoftwareProjectAI {
         fun parallelImplement(
             api: SoftwareProjectAI,
             project: Project,
-            components: Map<ComponentDetails, List<CodeSpecification>>?,
-            documents: Map<DocumentationDetails, List<DocumentSpecification>>?,
-            tests: Map<TestDetails, List<TestSpecification>>?,
+            components: Map<ComponentDetails, CodeSpecifications>?,
+            documents: Map<DocumentationDetails, DocumentSpecifications>?,
+            tests: Map<TestCase, TestSpecifications>?,
             drafts: Int,
             threads: Int
         ): Map<FilePath, SourceCode?> = parallelImplementWithAlternates(
@@ -186,16 +210,20 @@ interface SoftwareProjectAI {
         fun parallelImplementWithAlternates(
             api: SoftwareProjectAI,
             project: Project,
-            components: Map<ComponentDetails, List<CodeSpecification>>,
-            documents: Map<DocumentationDetails, List<DocumentSpecification>>,
-            tests: Map<TestDetails, List<TestSpecification>>,
+            components: Map<ComponentDetails, CodeSpecifications>,
+            documents: Map<DocumentationDetails, DocumentSpecifications>,
+            tests: Map<TestCase, TestSpecifications>,
             drafts: Int,
             threads: Int,
             progress: (Double) -> Unit = {}
         ): Map<FilePath, List<SourceCode>> {
             val threadPool = Executors.newFixedThreadPool(threads)
             try {
-                val totalDrafts = (components + tests + documents).values.sumOf { it.size } * drafts
+                val totalDrafts = (
+                        components.values.sumOf { it.specifications?.size ?: 0 } +
+                                tests.values.sumOf { it.specifications?.size ?: 0 } +
+                                documents.values.sumOf { it.documents?.size ?: 0 }
+                        ) * drafts
                 val currentDraft = AtomicInteger(0)
                 val fileImplCache = ConcurrentHashMap<String, List<Future<Pair<FilePath, SourceCode>>>>()
                 val normalizeFileName: (String?) -> String = {
@@ -214,7 +242,7 @@ interface SoftwareProjectAI {
                     return fileImplCache.getOrPut(normalizeFileName(file.location.file)) {
                         (0 until drafts).map { _ ->
                             threadPool.submit(Callable {
-                                val implement = api.implementComponentSpecification(
+                                val implement = api.implementCode(
                                     project,
                                     component,
                                     files.filter { file.requires?.contains(it.location) ?: false }.toList(),
@@ -239,7 +267,7 @@ interface SoftwareProjectAI {
                 }
 
                 val componentFutures = components.flatMap { (component, files) ->
-                    buildComponentDetails(component, files)
+                    buildComponentDetails(component, files.specifications ?: listOf())
                 }.toTypedArray()
 
                 // Build Documents
@@ -254,9 +282,8 @@ interface SoftwareProjectAI {
                     return fileImplCache.getOrPut(normalizeFileName(file.location.file)) {
                         (0 until drafts).map { _ ->
                             threadPool.submit(Callable {
-                                val implement = api.implementDocumentationSpecification(
+                                val implement = api.writeDocument(
                                     project,
-                                    file.copy(requires = listOf()),
                                     documentation,
                                     files.filter { file.requires?.contains(it.location) ?: false }.toList(),
                                     file.copy(requires = listOf())
@@ -264,7 +291,10 @@ interface SoftwareProjectAI {
                                 (currentDraft.incrementAndGet().toDouble() / totalDrafts)
                                     .also { progress(it) }
                                     .also { log.info("Progress: $it") }
-                                file.location to implement
+                                file.location to SourceCode(
+                                    language = implement.language,
+                                    code = implement.text
+                                )
                             })
                         }
                     }
@@ -280,12 +310,12 @@ interface SoftwareProjectAI {
                 }
 
                 val documentFutures = documents.flatMap { (documentation, files) ->
-                    buildDocumentDetails(documentation, files)
+                    buildDocumentDetails(documentation, files.documents ?: listOf())
                 }.toTypedArray()
 
                 // Build Tests
                 fun buildTestSpec(
-                    test: TestDetails,
+                    test: TestCase,
                     files: List<TestSpecification>,
                     file: TestSpecification
                 ): List<Future<Pair<FilePath, SourceCode>>> {
@@ -295,9 +325,8 @@ interface SoftwareProjectAI {
                     return fileImplCache.getOrPut(normalizeFileName(file.location.file)) {
                         (0 until drafts).map { _ ->
                             threadPool.submit(Callable {
-                                val implement = api.implementTestSpecification(
+                                val implement = api.implementTest(
                                     project,
-                                    file.copy(requires = listOf()),
                                     test,
                                     files.filter { file.requires?.contains(it.location) ?: false }.toList(),
                                     file.copy(requires = listOf())
@@ -312,7 +341,7 @@ interface SoftwareProjectAI {
                 }
 
                 fun buildTestDetails(
-                    test: TestDetails,
+                    test: TestCase,
                     files: List<TestSpecification>
                 ): List<Future<Pair<FilePath, SourceCode>>> {
                     return files.flatMap(fun(file: TestSpecification): List<Future<Pair<FilePath, SourceCode>>> {
@@ -321,7 +350,7 @@ interface SoftwareProjectAI {
                 }
 
                 val testFutures = tests.flatMap { (test, files) ->
-                    buildTestDetails(test, files)
+                    buildTestDetails(test, files.specifications ?: listOf())
                 }.toTypedArray()
 
                 return (getAll(componentFutures) + getAll(documentFutures) + getAll(testFutures)).mapValues {

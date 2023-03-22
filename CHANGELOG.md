@@ -7,6 +7,11 @@
 ### Added
 - 
 
+## [1.0.19]
+
+### Improved
+- Quality for generated projects
+
 ## [1.0.18]
 
 ### Improved
