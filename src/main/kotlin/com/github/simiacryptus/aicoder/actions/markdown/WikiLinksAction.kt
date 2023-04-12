@@ -3,12 +3,12 @@ package com.github.simiacryptus.aicoder.actions.markdown
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.util.StringTools.replaceAllNonOverlapping
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getInstruction
 import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.simiacryptus.util.StringTools.replaceAllNonOverlapping
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys

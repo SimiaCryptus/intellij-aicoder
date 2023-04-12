@@ -298,6 +298,15 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
         </action>
 
+        <action class="com.github.simiacryptus.aicoder.actions.dev.GenerateStoryAction"
+                text="_Write a Story"
+                description="Write a story">
+            <!--DOC
+        The `Generate Story` action allows you to quickly generate a new story!
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+        </action>
+
         <action class="com.github.simiacryptus.aicoder.actions.code.PsiClassContextAction"
                 text="Insert _Implementation"
                 description="Insert implementation">

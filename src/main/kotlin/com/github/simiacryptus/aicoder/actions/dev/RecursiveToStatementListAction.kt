@@ -41,14 +41,14 @@ class RecursiveToStatementListAction : AnAction() {
             val element = PsiUtil.getSmallestIntersecting(psiFile, caret.offset, caret.offset, "ListItem") ?: return
             startOffset = element.textOffset
             endOffset = element.textOffset + element.textLength
-            element.children.map { it.text }.joinToString("\n")
+            element.children.joinToString("\n") { it.text }
         }
         val progressIndicator = startProgress()
         transform(
             OpenAI_API.getCompletion(event.project, topicsRequest(settings, languageName, text), ""),
             { topicsTxt ->
                 val topics: List<String> = topicsTxt.replace("\"".toRegex(), "").split("\n\\d+\\.\\s+".toRegex())
-                var future = expand(settings, event, languageName, text!!, topics)
+                val future = expand(settings, event, languageName, text!!, topics)
                 val document = event.getRequiredData(CommonDataKeys.EDITOR).document
                 addCallback(future, object : FutureCallback<List<String>> {
                     override fun onSuccess(result: List<String>) {

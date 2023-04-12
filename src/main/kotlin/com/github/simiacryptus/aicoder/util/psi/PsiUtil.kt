@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.util.psi
 
-import com.github.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringTools
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -14,7 +14,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Supplier
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
@@ -62,7 +61,7 @@ object PsiUtil {
                     ) && textRange.startOffset <= selectionEnd && textRange.endOffset + 1 >= selectionEnd
                 if (matchesType(element, *types)) {
                     if (within) {
-                        largest.updateAndGet { s: PsiElement? -> if (s?.text?.length ?: 0 > element.text.length) s else element }
+                        largest.updateAndGet { s: PsiElement? -> if ((s?.text?.length ?: 0) > element.text.length) s else element }
                     }
                 }
                 super.visitElement(element)
@@ -152,7 +151,7 @@ object PsiUtil {
     }
 
     private fun within(textRange: TextRange, vararg offset: Int): Boolean =
-        offset.filter { it in textRange.startOffset..textRange.endOffset }.isNotEmpty()
+        offset.any { it in textRange.startOffset..textRange.endOffset }
 
     private fun intersects(a: TextRange, b: TextRange): Boolean {
         return within(a, b.startOffset, b.endOffset) || within(b, a.startOffset, a.endOffset)
@@ -180,7 +179,7 @@ object PsiUtil {
 
     fun getFirstBlock(element: PsiElement, vararg blockType: CharSequence): PsiElement? {
         val children = element.children
-        if (0 == children.size) return null
+        if (children.isEmpty()) return null
         val first = children[0]
         return if (matchesType(first, *blockType)) first else null
     }
@@ -210,7 +209,7 @@ object PsiUtil {
     }
 
     private fun printTree(element: PsiElement, builder: StringBuilder, level: Int) {
-        builder.append("  ".repeat(Math.max(0, level)))
+        builder.append("  ".repeat(0.coerceAtLeast(level)))
         val elementClass: Class<out PsiElement> = element.javaClass
         val simpleName = getName(elementClass)
         builder.append(simpleName).append("    ").append(element.text.replace("\n".toRegex(), "\\\\n"))
@@ -225,7 +224,7 @@ object PsiUtil {
         val stringBuilder = StringBuilder()
         val interfaces = getInterfaces(elementClass)
         while (elementClass != Any::class.java) {
-            if (stringBuilder.length > 0) stringBuilder.append("/")
+            if (stringBuilder.isNotEmpty()) stringBuilder.append("/")
             stringBuilder.append(elementClass.simpleName)
             elementClass = elementClass.superclass
         }
@@ -238,8 +237,7 @@ object PsiUtil {
     private fun getInterfaces(elementClass: Class<*>): Set<String> {
         val strings = Arrays.stream(elementClass.interfaces).map { obj: Class<*> -> obj.simpleName }
             .collect(
-                Collectors.toCollection(
-                    Supplier { HashSet() })
+                Collectors.toCollection { HashSet() }
             )
         if (elementClass.superclass != Any::class.java) strings.addAll(getInterfaces(elementClass.superclass))
         return strings

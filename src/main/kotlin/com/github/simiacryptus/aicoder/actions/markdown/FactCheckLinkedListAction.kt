@@ -43,7 +43,7 @@ class FactCheckLinkedListAction : AnAction() {
             { newText ->
                 val queries = newText.replace("\"".toRegex(), "").split("\n\\d+\\.\\s+".toRegex()).toTypedArray()
                 if (queries.size != elementText.size) {
-                    throw RuntimeException("Invalid response: " + newText)
+                    throw RuntimeException("Invalid response: $newText")
                 }
                 elementText.zip(queries).fold(replaceString) { acc, (statement, validationQuery) ->
                     acc.replace(

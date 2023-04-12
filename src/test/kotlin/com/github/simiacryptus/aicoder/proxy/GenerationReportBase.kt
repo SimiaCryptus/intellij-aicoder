@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.proxy
 
+import com.simiacryptus.util.JsonUtil.toJson
 import java.awt.image.BufferedImage
 import java.io.BufferedWriter
 import java.io.File
@@ -8,14 +9,17 @@ import java.time.format.DateTimeFormatter
 import javax.imageio.ImageIO
 import kotlin.reflect.KClass
 
-open class GenerationReportBase {
+open class GenerationReportBase<T:Any>(
+    kClass: KClass<T>,
+) {
     val proxy = ProxyTest.chatProxy(
+        kClass.java,
         "api.${
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
         }.log.json"
     )
     val outputDir = File("../intellij-aicoder-docs")
-    fun <T : Any> runReport(prefix: String, kClass: KClass<T>, fn: (T, (Any?) -> Unit, (Any?) -> Unit) -> Unit) {
+    fun runReport(prefix: String, fn: (T, (Any?) -> Unit, (Any?) -> Unit) -> Unit) {
         if (!ProxyTest.keyFile.exists()) return
         val markdownOutputFile = File(
             outputDir,
@@ -35,7 +39,7 @@ open class GenerationReportBase {
                 out(
                     """
                             |```json
-                            |${proxy.toJson(obj)}
+                            |${toJson(obj)}
                             |```
                             |""".trimMargin()
                 )
@@ -43,7 +47,11 @@ open class GenerationReportBase {
 
             val file = File("$prefix.examples.json")
             if (file.exists()) proxy.addExamples(file)
-            fn(proxy.create(kClass.java), ::logJson, ::out)
+            fn(proxy.create(), ::logJson, ::out)
+
+            // Print proxy's metrics
+            logJson(proxy.metrics)
+
         }
     }
 

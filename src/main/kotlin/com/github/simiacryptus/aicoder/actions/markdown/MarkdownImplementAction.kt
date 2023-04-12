@@ -46,7 +46,7 @@ class MarkdownImplementAction(private val language: String) : AnAction(
             { docString ->
                 insertString(
                     document, endOffset,
-                    docString!!
+                    docString
                 )
             }
         )

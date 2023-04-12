@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.openai.CompletionRequest
+import com.simiacryptus.openai.CompletionRequest
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.intellij.ui.components.JBScrollPane
@@ -49,10 +49,10 @@ class InteractiveCompletionRequest(parent: CompletionRequest) {
                     override fun onSuccess(result: CharSequence) {
                         isEnabled = true
                         val text = result.toString()
-                        val rows = Math.min(50, text.split("\n".toRegex()).dropLastWhile { it.isEmpty() }
+                        val rows = 50.coerceAtMost(text.split("\n".toRegex()).dropLastWhile { it.isEmpty() }
                             .toTypedArray().size)
                         val columns =
-                            Math.min(200, Arrays.stream(text.split("\n".toRegex()).dropLastWhile { it.isEmpty() }
+                            200.coerceAtMost(Arrays.stream(text.split("\n".toRegex()).dropLastWhile { it.isEmpty() }
                                 .toTypedArray()).mapToInt { obj: String -> obj.length }.max().asInt)
                         val area = JBTextArea(rows, columns)
                         area.text = text

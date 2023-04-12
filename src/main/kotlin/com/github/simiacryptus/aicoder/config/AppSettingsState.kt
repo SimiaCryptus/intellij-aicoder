@@ -2,15 +2,15 @@ package com.github.simiacryptus.aicoder.config
 
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequest
 import com.github.simiacryptus.aicoder.openai.translate.TranslationRequestTemplate
-import com.github.simiacryptus.openai.ChatRequest
-import com.github.simiacryptus.openai.CompletionRequest
-import com.github.simiacryptus.openai.EditRequest
+import com.simiacryptus.openai.ChatRequest
+import com.simiacryptus.openai.CompletionRequest
+import com.simiacryptus.openai.EditRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.jetbrains.rd.util.LogLevel
+import org.slf4j.event.Level
 import java.util.*
 import java.util.Map
 import java.util.stream.Collectors
@@ -45,7 +45,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var humanLanguage = "English"
     var maxPrompt = 5000
     var translationRequestTemplate = TranslationRequestTemplate.XML
-    var apiLogLevel = LogLevel.Debug
+    var apiLogLevel = Level.DEBUG
     var devActions = false
     var suppressProgress = false
     var apiThreads = 4
@@ -54,15 +54,25 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     }
 
     fun createCompletionRequest(): CompletionRequest {
-        return CompletionRequest(this)
+        val completionRequest = CompletionRequest()
+        completionRequest.temperature = temperature
+        completionRequest.max_tokens = maxTokens
+        return completionRequest
     }
 
     fun createEditRequest(): EditRequest {
-        return EditRequest(this)
+        val editRequest = EditRequest()
+        editRequest.setModel(model_edit)
+        editRequest.setTemperature(temperature)
+        return editRequest
     }
 
     fun createChatRequest(): ChatRequest {
-        return ChatRequest(this)
+        val chatRequest = ChatRequest()
+        chatRequest.model = model_chat
+        chatRequest.temperature = temperature
+        chatRequest.max_tokens = maxTokens
+        return chatRequest
     }
 
     override fun getState(): AppSettingsState {
@@ -73,13 +83,13 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         XmlSerializerUtil.copyBean(state, this)
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (this === o) return true
-        if (o == null || javaClass != o.javaClass) return false
-        val that = o as AppSettingsState
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as AppSettingsState
         if (maxTokens != that.maxTokens) return false
         if (maxPrompt != that.maxPrompt) return false
-        if (java.lang.Double.compare(that.temperature, temperature) != 0) return false
+        if (that.temperature.compareTo(temperature) != 0) return false
         if (humanLanguage != that.humanLanguage) return false
         if (apiBase != that.apiBase) return false
         if (apiKey != that.apiKey) return false
@@ -140,8 +150,8 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
                     Collectors.toList()
                 )
             val toRemove = HashSet<CharSequence>(mostUsedHistory.keys)
-            toRemove.removeAll(retain)
-            toRemove.removeAll(mostRecentHistory)
+            toRemove.removeAll(retain.toSet())
+            toRemove.removeAll(mostRecentHistory.toSet())
             toRemove.forEach { key: CharSequence? ->
                 mostUsedHistory.remove(
                     key

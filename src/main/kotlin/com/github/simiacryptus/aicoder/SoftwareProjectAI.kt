@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder
 
-import com.github.simiacryptus.openai.proxy.Description
-import com.github.simiacryptus.openai.proxy.ValidatedObject
+import com.simiacryptus.openai.proxy.Description
+import com.simiacryptus.openai.proxy.ValidatedObject
 import java.io.File
 import java.util.*
 import java.util.concurrent.Callable

@@ -23,6 +23,7 @@ class AnnotateTextAction : ActionGroup() {
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        if(null == e) return arrayOf()
         val children = ArrayList<AnAction>()
         for (encoding in listOf(
             "Universal Dependencies (UD)",
@@ -42,7 +43,6 @@ class AnnotateTextAction : ActionGroup() {
                     val selectedText = primaryCaret.selectedText
                     val settings = AppSettingsState.instance
                     settings.addInstructionToHistory(encoding)
-                    val humanLanguage = AppSettingsState.instance.humanLanguage
                     val request = settings.createTranslationRequest()
                         .setInstruction("Parse and output as $encoding")
                         .setInputType("text")

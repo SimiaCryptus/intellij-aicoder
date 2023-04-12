@@ -2,9 +2,9 @@ package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.simiacryptus.util.StringTools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -26,7 +26,7 @@ class MarkdownNewTableRowsAction : AnAction() {
                 markdownNewTableRowsParams!!.table, "MarkdownTableRowImpl"
             ).stream().map { obj: PsiElement -> obj.text!! }.collect(Collectors.toList()), 10, true
         )
-        val n: CharSequence = Integer.toString(rows.size * 2)
+        val n: CharSequence = (rows.size * 2).toString()
         val settings = AppSettingsState.instance
         val endOffset = markdownNewTableRowsParams.table.textRange.endOffset
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
@@ -75,7 +75,7 @@ class MarkdownNewTableRowsAction : AnAction() {
             val indent = UITools.getIndent(markdownNewTableRowsParams.caret)
             val newRows = Arrays.stream(("" + complete).split("\n".toRegex()).dropLastWhile { it.isEmpty() }
                 .toTypedArray())
-                .map { obj: String -> obj.trim { it <= ' ' } }.filter { x: String -> x.length > 0 }
+                .map { obj: String -> obj.trim { it <= ' ' } }.filter { x: String -> x.isNotEmpty() }
                 .collect(Collectors.toList())
             return "\n$indent" + newRows.stream().collect(Collectors.joining("\n$indent"))
         }

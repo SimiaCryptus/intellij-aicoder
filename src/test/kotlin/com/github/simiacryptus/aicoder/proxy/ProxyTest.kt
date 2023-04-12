@@ -1,10 +1,12 @@
 package com.github.simiacryptus.aicoder.proxy
 
-import com.github.simiacryptus.openai.proxy.ChatProxy
-import com.github.simiacryptus.openai.proxy.CompletionProxy
+import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.openai.proxy.CompletionProxy
 import com.intellij.openapi.util.io.FileUtil
-import com.jetbrains.rd.util.LogLevel
+import com.simiacryptus.openai.OpenAIClient
 import org.junit.Test
+import org.slf4j.event.Level
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -12,19 +14,28 @@ import java.time.format.DateTimeFormatter
 class ProxyTest {
     companion object {
         val keyFile = File("C:\\Users\\andre\\code\\all-projects\\openai.key")
-        fun chatProxy(apiLog: String = "api.${
+        fun <T:Any> chatProxy(clazz : Class<T>,
+                              apiLog: String = "api.${
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
-        }.log.json"): ChatProxy = ChatProxy(
+        }.log.json"): ChatProxy<T> = ChatProxy(
+            clazz,
+            api = OpenAIClient(
+                key = FileUtil.loadFile(keyFile).trim(),
+                apiBase = AppSettingsState.instance.apiBase,
+                logLevel = Level.WARN
+            ),
+            model = "gpt-3.5-turbo-0301",
+            maxTokens = 8912,
+            apiLog = apiLog,
+            //model = "gpt-4-0314",
+            deserializerRetries = 5
+        )
+        fun <T:Any> completionProxy(clazz : Class<T>,
+                            apiLog: String = "api.log.json"): CompletionProxy<T> = CompletionProxy(
+            clazz,
             apiKey = FileUtil.loadFile(keyFile).trim(),
             apiLog = apiLog,
-            logLevel = LogLevel.Warn,
-            model = "gpt-3.5-turbo-0301",
-            //model = "gpt-4-0314",
-            maxTokens = 8912
-        )
-        fun completionProxy(apiLog: String = "api.log.json"): CompletionProxy = CompletionProxy(
-            apiKey = FileUtil.loadFile(keyFile).trim(),
-            apiLog = apiLog
+            deserializerRetries = 5
         )
     }
 
@@ -84,12 +95,12 @@ class ProxyTest {
         if (!keyFile.exists()) return
         //println(TestGPTInterfaceProxy().api.getEngines().joinToString("\n"))
         val statement = "The meaning of life is to live a life of meaning."
-        for (proxyFactory in listOf(completionProxy(), chatProxy())) {
-            val proxy = proxyFactory.create(EssayAPI::class.java)
+        for (proxyFactory in listOf(completionProxy(EssayAPI::class.java), chatProxy(EssayAPI::class.java))) {
+            val proxy = proxyFactory.create()
             val essayOutline = proxy.essayOutline(
                 EssayAPI.Thesis(statement), "5000 words"
             )
-            println(essayOutline.introduction!!.thesis.statement)
+            println(essayOutline.introduction.thesis.statement)
         }
     }
 
@@ -97,8 +108,8 @@ class ProxyTest {
     fun test_simpleQuestion() {
         if (!keyFile.exists()) return
         val question = "What is the meaning of life?"
-        for (proxyFactory in listOf(completionProxy(), chatProxy())) {
-            val proxy = proxyFactory.create(TestAPI::class.java)
+        for (proxyFactory in listOf(completionProxy(TestAPI::class.java), chatProxy(TestAPI::class.java))) {
+            val proxy = proxyFactory.create()
             println(proxy.simpleQuestion(TestAPI.SimpleQuestion(question)).answer)
         }
     }
@@ -107,7 +118,7 @@ class ProxyTest {
     @Test
     fun test_topTen() {
         if (!keyFile.exists()) return
-        val proxy = chatProxy().create(TestAPI::class.java)
+        val proxy = chatProxy(TestAPI::class.java).create()
         println(proxy.topTen(TestAPI.TopTenQuestion()).answers.joinToString("\n"))
     }
 

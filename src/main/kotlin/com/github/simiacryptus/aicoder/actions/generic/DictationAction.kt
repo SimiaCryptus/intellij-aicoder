@@ -1,8 +1,8 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
-import com.github.simiacryptus.aicoder.util.AudioRecorder
-import com.github.simiacryptus.aicoder.util.LoudnessWindowBuffer
+import com.simiacryptus.util.AudioRecorder
+import com.simiacryptus.util.LoudnessWindowBuffer
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
+import com.simiacryptus.util.LookbackLoudnessWindowBuffer
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicInteger
@@ -19,7 +20,7 @@ import javax.swing.JLabel
 
 class DictationAction : AnAction() {
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
+        e.presentation.isEnabledAndVisible = isEnabled()
         super.update(e)
     }
 
@@ -41,7 +42,7 @@ class DictationAction : AnAction() {
         Thread({
             log.warn("Audio processing thread started")
             try {
-                LoudnessWindowBuffer(event, rawBuffer, wavBuffer, continueFn).run()
+                LookbackLoudnessWindowBuffer(rawBuffer, wavBuffer, continueFn).run()
             } catch (e: Throwable) {
                 log.error(e)
             }
@@ -84,7 +85,7 @@ class DictationAction : AnAction() {
                 } else {
                     log.warn("Speech-To-Text Starting...")
                     var text = OpenAI_API.text_to_speech(recordAudio, prompt)
-                    if (prompt.isNotEmpty()) text = " " + text
+                    if (prompt.isNotEmpty()) text = " $text"
                     val newPrompt = (prompt + text).split(" ").takeLast(32).joinToString(" ")
                     log.warn(
                         """Speech-To-Text Complete
@@ -114,7 +115,7 @@ class DictationAction : AnAction() {
         return dialog
     }
 
-    private fun isEnabled(e: AnActionEvent): Boolean {
+    private fun isEnabled(): Boolean {
         if (UITools.isSanctioned()) return false
         try {
             AudioSystem.getTargetDataLine(AudioRecorder.audioFormat)

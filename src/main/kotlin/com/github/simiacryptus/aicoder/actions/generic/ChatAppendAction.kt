@@ -5,7 +5,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.github.simiacryptus.aicoder.util.UITools.insertString
 import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
-import com.github.simiacryptus.openai.ChatMessage
+import com.simiacryptus.openai.ChatMessage
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys

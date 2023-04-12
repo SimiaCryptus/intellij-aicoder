@@ -5,13 +5,14 @@ import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI.Companion.map
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPIImpl
 import com.github.simiacryptus.aicoder.util.IndentedText
-import com.github.simiacryptus.util.StringTools
-import com.github.simiacryptus.openai.*
+import com.github.simiacryptus.aicoder.util.UITools.uiIntercept
+import com.simiacryptus.util.StringTools
 import com.google.common.util.concurrent.ListenableFuture
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBTextField
+import com.simiacryptus.openai.*
 import java.util.*
 import java.util.function.Consumer
 import java.util.stream.Collectors
@@ -48,7 +49,7 @@ object OpenAI_API {
                 return element
             }
             val apiKey: CharSequence = settingsState!!.apiKey
-            if (apiKey.toString().trim { it <= ' ' }.length > 0) {
+            if (apiKey.toString().trim { it <= ' ' }.isNotEmpty()) {
                 try {
                     comboBox = ComboBox(
                         arrayOf<CharSequence?>(
@@ -129,11 +130,7 @@ object OpenAI_API {
         val withModel = completionRequest.uiIntercept()
         withModel.fixup(settings!!)
         val newRequest = CompletionRequest(withModel)
-        return complete(project, newRequest, settings, withModel.model)
-    }
-
-    private fun edit(project: Project?, request: EditRequest): ListenableFuture<CompletionResponse> {
-        return edit(project, request, settingsState!!)
+        return complete(project, newRequest, withModel.model)
     }
 
     fun chat(
@@ -149,14 +146,12 @@ object OpenAI_API {
 
     private fun edit(
         project: Project?,
-        editRequest: EditRequest,
-        settings: AppSettingsState
-    ): ListenableFuture<CompletionResponse> = asyncAPI.edit(project, editRequest, settings)
+        editRequest: EditRequest
+    ): ListenableFuture<CompletionResponse> = asyncAPI.edit(project, editRequest)
 
     fun complete(
         project: Project?,
         completionRequest: CompletionRequest,
-        settings: AppSettingsState,
         model: String
     ): ListenableFuture<CompletionResponse> = asyncAPI.complete(project, completionRequest, model)
 
@@ -175,6 +170,6 @@ object OpenAI_API {
         }
     }
 
-    fun text_to_speech(wavAudio: ByteArray, prompt: String = ""): String = openAIClient.dictate(wavAudio, prompt)
+    fun text_to_speech(wavAudio: ByteArray, prompt: String = ""): String = openAIClient.transcription(wavAudio, prompt)
 
 }

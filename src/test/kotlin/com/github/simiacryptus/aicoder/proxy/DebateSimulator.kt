@@ -4,47 +4,62 @@ import org.junit.Test
 
 /**
  * Simulate several participants debating a topic with a moderator
+ *
  */
-class DebateSimulator : GenerationReportBase() {
+class DebateSimulator : GenerationReportBase<DebateSimulator.Debate>(Debate::class) {
 
     @Test
     fun judgeDebate() {
-        runReport("Debate", Debate::class) { api, logJson, out ->
+        runReport("Debate") { api, logJson, out ->
+            proxy.model = "gpt-4-0314"
+            proxy.temperature = 0.5
             val debate = api.newRandomDebate(
                 topic = "What is the best way to solve a problem?",
                 participantNames = listOf("Socrates", "Buddha", "Jesus", "Confucius", "Nietzsche"),
             )
             logJson(debate)
+            val pointsAwarded = HashMap<String, Double>()
             for (question in debate.questions) {
-                val argument = api.poseQuestion(debate, question)
-                val dialog = listOf(argument).toMutableList()
-                logJson(argument)
-                api.writeArgumentText(debate, argument).let { spokenText ->
-                    out(
-                        """
-                        |
-                        |${spokenText.speaker}: ${spokenText.text}
-                        |
-                        |""".trimMargin()
-                    )
-                }
-                debate.participants.map { it.name }.filter { it != argument.speaker }.shuffled().forEach { speaker ->
-                    val rebuttal =
-                        api.rebuttal(debate, question, speaker, Debate.DebateArguments(dialog.takeLast(1)))
-                    logJson(rebuttal)
-                    api.writeArgumentText(debate, rebuttal).let { spokenText ->
+
+                out(
+                    """
+                    |
+                    |## $question
+                    |
+                    |""".trimMargin()
+                )
+
+                val arguments = api.poseQuestion(question, debate.participants.shuffled())
+                logJson(arguments)
+                for (argument in arguments.lines) {
+                    api.writeArgumentText(debate, argument).let { spokenText ->
                         out(
                             """
                             |
-                            |${spokenText.speaker}: ${spokenText.text}
+                            |### ${spokenText.speaker}
+                            |
+                            |${spokenText.text}
                             |
                             |""".trimMargin()
                         )
+                        logJson(spokenText)
                     }
-                    dialog.add(rebuttal)
                 }
-                logJson(api.judgeDebate(debate, Debate.DebateArguments(dialog)))
+                val judgement = api.judgeDebate(debate, arguments)
+                judgement.pointsAwarded.forEach { (name, points) ->
+                    pointsAwarded[name] = (pointsAwarded[name] ?: 0.0) + points
+                }
+                logJson(judgement)
             }
+            logJson(pointsAwarded)
+            val winner = pointsAwarded.maxByOrNull { it.value }?.key
+            out(
+                """
+                |
+                |Winner: $winner
+                |
+                |""".trimMargin()
+            )
         }
     }
 
@@ -67,24 +82,7 @@ class DebateSimulator : GenerationReportBase() {
             val writingStyle: String = "",
         )
 
-        /**
-        *
-        *  A data class representing the judgement of a debate.
-        *
-        *  @property winner the team judged to have won the debate
-        *  @property reasoning the judge's reasoning for the judgement
-        *  @property pointsAwarded the number of points awarded to the winner
-        */
-        data class DebateJudgement(
-            val winner: String = "", val reasoning: String = "", val pointsAwarded: Int = 0
-        )
-
-        fun judgeDebate(debate: DebateSummary, dialog: DebateArguments): DebateJudgement
-        fun poseQuestion(debate: DebateSummary, question: String): DebateArgument
-        fun rebuttal(
-            debate: DebateSummary, question: String, speaker: String, argument: DebateArguments
-        ): DebateArgument
-
+        fun poseQuestion(question: String, speakers: List<DebateParticipant>): DebateArguments
         data class DebateArguments(
             val lines: List<DebateArgument> = listOf()
         )
@@ -101,6 +99,13 @@ class DebateSimulator : GenerationReportBase() {
             val speaker: String = "",
             val text: String = "",
         )
+
+        data class DebateJudgement(
+            val winner: String = "", val reasoning: String = "", val pointsAwarded: Map<String, Double> = mapOf()
+        )
+
+        fun judgeDebate(debate: DebateSummary, dialog: DebateArguments): DebateJudgement
+
     }
 
 }

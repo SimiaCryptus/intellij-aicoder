@@ -8,7 +8,7 @@ import org.junit.Test
  * Each recipe has a title, a list of ingredients, and a list of steps.
  * Also included are substitutions for ingredients, a list of related recipes, and cooking tips.
  */
-class RecipeBook : GenerationReportBase() {
+class RecipeBook : GenerationReportBase<RecipeBook.Recipes>(Recipes::class) {
     interface Recipes {
 
         fun getRecipes(
@@ -44,7 +44,7 @@ class RecipeBook : GenerationReportBase() {
 
     @Test
     fun recipeBook() {
-        runReport("Recipes", Recipes::class) { api, logJson, out ->
+        runReport("Recipes") { api, logJson, out ->
             val theme = "Italian"
             val ingredients = listOf(
                 "beef",

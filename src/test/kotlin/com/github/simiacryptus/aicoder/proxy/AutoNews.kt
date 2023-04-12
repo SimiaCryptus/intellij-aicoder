@@ -7,10 +7,10 @@ import org.junit.Test
  *  It provides methods to get a publication, get stories,
  *  cover a story, and generate a report.
  */
-class AutoNews : GenerationReportBase() {
+class AutoNews : GenerationReportBase<AutoNews.News>(News::class) {
     @Test
     fun newsWebsite() {
-        runReport("News", News::class) { api, logJson, out ->
+        runReport("News") { api, logJson, out ->
 
             val publication = News.Publication(
                 description = "A humorous celebration of the absurdity of modern life",

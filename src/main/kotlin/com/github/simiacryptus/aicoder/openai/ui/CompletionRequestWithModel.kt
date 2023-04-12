@@ -1,24 +1,19 @@
 package com.github.simiacryptus.aicoder.openai.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.openai.CompletionRequest
+import com.simiacryptus.openai.CompletionRequest
 
-class CompletionRequestWithModel : CompletionRequest {
-    var model: String
-
-    constructor(other: CompletionRequest, model: String) : super(other) {
-        this.model = model
-    }
+class CompletionRequestWithModel(other: CompletionRequest, var model: String) : CompletionRequest(other) {
 
     fun fixup(settings: AppSettingsState) {
         if (null != suffix) {
-            if (suffix!!.trim { it <= ' ' }.length == 0) {
+            if (suffix!!.trim { it <= ' ' }.isEmpty()) {
                 setSuffix(null)
             } else {
                 echo = false
             }
         }
-        if (null != stop && stop!!.size == 0) {
+        if (null != stop && stop!!.isEmpty()) {
             stop = null
         }
         require(prompt.length <= settings.maxPrompt) { "Prompt too long:" + prompt.length + " chars" }

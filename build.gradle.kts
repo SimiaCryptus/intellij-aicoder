@@ -19,8 +19,8 @@ plugins {
     id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
 
-group = properties("pluginGroup")
-version = properties("pluginVersion")
+group = "com.github.simiacryptus"
+version = "1.0.20"
 
 // Configure project's dependencies
 repositories {
@@ -29,7 +29,11 @@ repositories {
 }
 
 dependencies {
-    implementation("org.openimaj:JTransforms:1.3.10")
+
+    implementation("com.simiacryptus:joe-penai:1.0.5")
+    implementation("com.simiacryptus:skyenet:1.0.1")
+//    implementation(project(":JoePenai"))
+
     testImplementation("com.intellij.remoterobot:remote-robot:0.11.16") // https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/remoterobot/remote-robot/
     testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.16")
     testImplementation("com.squareup.okhttp3:okhttp:3.14.9")

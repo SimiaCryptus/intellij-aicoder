@@ -21,11 +21,11 @@ class RecentTextEditsAction : ActionGroup() {
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        if(null == e) return arrayOf()
         val children = ArrayList<AnAction>()
         for (instruction in AppSettingsState.instance.editHistory) {
             val id = children.size + 1
-            var text: String
-            text = if (id < 10) {
+            var text: String = if (id < 10) {
                 String.format("_%d: %s", id, instruction)
             } else {
                 String.format("%d: %s", id, instruction)

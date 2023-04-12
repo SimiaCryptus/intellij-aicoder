@@ -230,235 +230,229 @@ class ApplicationDevelopmentUITest {
         val reportPrefix = "${name}_${language}_"
         val testOutputFile = File(outputDir, "${name}_${language}.md")
         val out = PrintWriter(FileOutputStream(testOutputFile))
-        try {
-            try {
-                out.println(
-                    """
-                    
-                    # $name
-                    
-                    In this test we will used AI Coding Assistant to implement the $name class to solve the following problem:
-                    
-                    """.trimIndent()
-                )
-                out.println("```\n$description\n```")
-                newFile("$name.$language")
+        out.use { out ->
+            out.println(
+                """
+                                
+                                # $name
+                                
+                                In this test we will used AI Coding Assistant to implement the $name class to solve the following problem:
+                                
+                                """.trimIndent()
+            )
+            out.println("```\n$description\n```")
+            newFile("$name.$language")
 
 
-                out.println(
-                    """
-                    
-                    ## Implementation
-                    
-                    The first step is to translate the problem into code. We can do this by using the "Insert Implementation" command.
-                    
-                    """.trimIndent()
-                )
+            out.println(
+                """
+                                
+                                ## Implementation
+                                
+                                The first step is to translate the problem into code. We can do this by using the "Insert Implementation" command.
+                                
+                                """.trimIndent()
+            )
+            click("//div[@class='EditorComponentImpl']")
+            keyboard.selectAll()
+            keyboard.key(KeyEvent.VK_DELETE)
+            enterLines(seedPrompt)
+
+            for (line in description) {
                 click("//div[@class='EditorComponentImpl']")
-                keyboard.selectAll()
-                keyboard.key(KeyEvent.VK_DELETE)
-                enterLines(seedPrompt)
-
-                for (line in description) {
-                    click("//div[@class='EditorComponentImpl']")
-                    newEndOfLine()
-                    enterLines("// $line")
-                    writeImage(
-                        menuAction("Insert Implementation"), outputDir,
-                        name, "${reportPrefix}menu", out
-                    )
-                    awaitProcessing()
-                    //keyboard.hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_UP)
-                    //keyboard.hotKey(KeyEvent.VK_DELETE)
-                    keyboard.hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_ALT, KeyEvent.VK_DOWN) // Move current line down
-                    keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_L) // Reformat
-                    keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
-                }
-
-
-                out.println(
-                    """
-                    
-                    This results in the following code:
-                    
-                    ```$language""".trimIndent()
-                )
-                out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$language"), "UTF-8"))
-                out.println("```")
-
-
-//                out.println(
-//                    """
-//
-//                    ## Execution
-//
-//                    This code can be executed by pressing the "Run" button in the top right corner of the IDE.
-//                    What could possibly go wrong?
-//
-//                    """.trimIndent()
-//                )
-//                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_F10) // Run
-//                awaitRunCompletion()
-//                out.println(
-//                    """
-//
-//                    ```""".trimIndent()
-//                )
-//                out.println(componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]"))
-//                out.println(
-//                    """
-//                    ```
-//                    """.trimIndent()
-//                )
-//                writeImage(
-//                    screenshot("//div[@class='IdeRootPane']"),
-//                    outputDir,
-//                    name, "${reportPrefix}result", out
-//                )
-//                // Close run tab
-//                sleep(100)
-//                clickr("//div[@class='ContentTabLabel']")
-//                sleep(100)
-//                click("//div[contains(@text.key, 'action.CloseContent.text')]")
-//                sleep(100)
-
-
-                out.println(
-                    """
-                    
-                    ## Rename Variables
-                    
-                    We can use the "Rename Variables" command to make the code more readable...
-                    
-                    """.trimIndent()
-                )
-                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
-                selectText(
-                    getEditor(), functionalHandle
-                )
-                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
+                newEndOfLine()
+                enterLines("// $line")
                 writeImage(
-                    menuAction("Rename Variables"),
-                    outputDir,
-                    name, "${reportPrefix}Rename_Variables", out
+                    menuAction("Insert Implementation"), outputDir,
+                    name, "${reportPrefix}menu", out
                 )
                 awaitProcessing()
-                sleep(1000)
-                writeImage(
-                    screenshot("//div[@class='JDialog']"),
-                    outputDir,
-                    name,
-                    "${reportPrefix}Rename_Variables_Dialog",
-                    out
-                )
-                click("//div[@text.key='button.ok']")
-
-
-                out.println(
-                    """
-                    
-                    ## Documentation Comments
-                    
-                    We also want good documentation for our code. We can use the "Add Documentation Comments" command to do 
-                    
-                    """.trimIndent()
-                )
-                selectText(getEditor(), functionalHandle)
-                writeImage(
-                    menuAction("Doc Comments"),
-                    outputDir,
-                    name, "${reportPrefix}Add_Doc_Comments", out
-                )
-                awaitProcessing()
-                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
-                writeImage(
-                    screenshot("//div[@class='IdeRootPane']"),
-                    outputDir,
-                    name,
-                    "${reportPrefix}Add_Doc_Comments2",
-                    out
-                )
-
-
-                out.println(
-                    """
-                    
-                    ## Ad-Hoc Questions
-                    
-                    We can also ask questions about the code. For example, we can ask what the big-O runtime is for this code.
-                    
-                    """.trimIndent()
-                )
-                selectText(getEditor(), functionalHandle)
-                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
-                writeImage(
-                    menuAction("Ask a question"),
-                    outputDir,
-                    name, "${reportPrefix}Ask_Q", out
-                )
-                click("//div[@class='MultiplexingTextField']")
-                keyboard.enterText(question)
-                writeImage(
-                    screenshot("//div[@class='JDialog']"),
-                    outputDir,
-                    name, "${reportPrefix}Ask_Q2", out
-                )
-                click("//div[@text.key='button.ok']")
-                awaitProcessing()
-                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
-                writeImage(
-                    screenshot("//div[@class='IdeRootPane']"),
-                    outputDir,
-                    name, "${reportPrefix}Ask_Q3", out
-                )
-
-                out.println(
-                    """
-                    
-                    ## Code Comments
-                    
-                    We can also add code comments to the code. This is useful for explaining the code to other developers.
-                    
-                    """.trimIndent()
-                )
-                selectText(getEditor(), functionalHandle)
-                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
-                writeImage(
-                    menuAction("Code Comments"),
-                    outputDir,
-                    name, "${reportPrefix}Add_Code_Comments", out
-                )
-                awaitProcessing()
-                writeImage(
-                    screenshot("//div[@class='IdeRootPane']"),
-                    outputDir,
-                    name,
-                    "${reportPrefix}Add_Code_Comments2",
-                    out
-                )
+                //keyboard.hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_UP)
+                //keyboard.hotKey(KeyEvent.VK_DELETE)
+                keyboard.hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_ALT, KeyEvent.VK_DOWN) // Move current line down
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_L) // Reformat
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
-                out.println(
-                    """
-                    
-                    ```$language""".trimIndent()
-                )
-                out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$language"), "UTF-8"))
-                out.println(
-                    """
-                    ```
-                    
-                    """.trimIndent()
-                )
-
-
-                // Close editor
-                click("//div[@class='InplaceButton']")
-            } finally {
-                out.close()
             }
-        } finally {
-            out.close() // Close file
+
+
+            out.println(
+                """
+                                
+                                This results in the following code:
+                                
+                                ```$language""".trimIndent()
+            )
+            out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$language"), "UTF-8"))
+            out.println("```")
+
+
+            //                out.println(
+            //                    """
+            //
+            //                    ## Execution
+            //
+            //                    This code can be executed by pressing the "Run" button in the top right corner of the IDE.
+            //                    What could possibly go wrong?
+            //
+            //                    """.trimIndent()
+            //                )
+            //                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_F10) // Run
+            //                awaitRunCompletion()
+            //                out.println(
+            //                    """
+            //
+            //                    ```""".trimIndent()
+            //                )
+            //                out.println(componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]"))
+            //                out.println(
+            //                    """
+            //                    ```
+            //                    """.trimIndent()
+            //                )
+            //                writeImage(
+            //                    screenshot("//div[@class='IdeRootPane']"),
+            //                    outputDir,
+            //                    name, "${reportPrefix}result", out
+            //                )
+            //                // Close run tab
+            //                sleep(100)
+            //                clickr("//div[@class='ContentTabLabel']")
+            //                sleep(100)
+            //                click("//div[contains(@text.key, 'action.CloseContent.text')]")
+            //                sleep(100)
+
+
+            out.println(
+                """
+                                
+                                ## Rename Variables
+                                
+                                We can use the "Rename Variables" command to make the code more readable...
+                                
+                                """.trimIndent()
+            )
+            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
+            selectText(
+                getEditor(), functionalHandle
+            )
+            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
+            writeImage(
+                menuAction("Rename Variables"),
+                outputDir,
+                name, "${reportPrefix}Rename_Variables", out
+            )
+            awaitProcessing()
+            sleep(1000)
+            writeImage(
+                screenshot("//div[@class='JDialog']"),
+                outputDir,
+                name,
+                "${reportPrefix}Rename_Variables_Dialog",
+                out
+            )
+            click("//div[@text.key='button.ok']")
+
+
+            out.println(
+                """
+                                
+                                ## Documentation Comments
+                                
+                                We also want good documentation for our code. We can use the "Add Documentation Comments" command to do 
+                                
+                                """.trimIndent()
+            )
+            selectText(getEditor(), functionalHandle)
+            writeImage(
+                menuAction("Doc Comments"),
+                outputDir,
+                name, "${reportPrefix}Add_Doc_Comments", out
+            )
+            awaitProcessing()
+            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
+            writeImage(
+                screenshot("//div[@class='IdeRootPane']"),
+                outputDir,
+                name,
+                "${reportPrefix}Add_Doc_Comments2",
+                out
+            )
+
+
+            out.println(
+                """
+                                
+                                ## Ad-Hoc Questions
+                                
+                                We can also ask questions about the code. For example, we can ask what the big-O runtime is for this code.
+                                
+                                """.trimIndent()
+            )
+            selectText(getEditor(), functionalHandle)
+            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
+            writeImage(
+                menuAction("Ask a question"),
+                outputDir,
+                name, "${reportPrefix}Ask_Q", out
+            )
+            click("//div[@class='MultiplexingTextField']")
+            keyboard.enterText(question)
+            writeImage(
+                screenshot("//div[@class='JDialog']"),
+                outputDir,
+                name, "${reportPrefix}Ask_Q2", out
+            )
+            click("//div[@text.key='button.ok']")
+            awaitProcessing()
+            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
+            writeImage(
+                screenshot("//div[@class='IdeRootPane']"),
+                outputDir,
+                name, "${reportPrefix}Ask_Q3", out
+            )
+
+            out.println(
+                """
+                                
+                                ## Code Comments
+                                
+                                We can also add code comments to the code. This is useful for explaining the code to other developers.
+                                
+                                """.trimIndent()
+            )
+            selectText(getEditor(), functionalHandle)
+            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
+            writeImage(
+                menuAction("Code Comments"),
+                outputDir,
+                name, "${reportPrefix}Add_Code_Comments", out
+            )
+            awaitProcessing()
+            writeImage(
+                screenshot("//div[@class='IdeRootPane']"),
+                outputDir,
+                name,
+                "${reportPrefix}Add_Code_Comments2",
+                out
+            )
+            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_L) // Reformat
+            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
+            out.println(
+                """
+                                
+                                ```$language""".trimIndent()
+            )
+            out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$language"), "UTF-8"))
+            out.println(
+                """
+                                ```
+                                
+                                """.trimIndent()
+            )
+
+
+            // Close editor
+            click("//div[@class='InplaceButton']")
         }
     }
 

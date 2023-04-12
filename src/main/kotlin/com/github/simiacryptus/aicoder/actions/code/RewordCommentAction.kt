@@ -2,9 +2,9 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.simiacryptus.util.StringTools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -35,7 +35,7 @@ class RewordCommentAction : AnAction() {
             .stream()
             .map { obj: CharSequence -> obj.toString() }
             .map { obj: String -> obj.trim { it <= ' ' } }
-            .filter { x: String -> !x.isEmpty() }
+            .filter { x: String -> x.isNotEmpty() }
             .reduce { a: String, b: String ->
                 """
                      $a

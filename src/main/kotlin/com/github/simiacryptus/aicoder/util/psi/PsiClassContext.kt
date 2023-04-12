@@ -31,10 +31,10 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
                 val isPrior = textRangeEndOffset < selectionStart
                 // Check if the element overlaps with the selection
                 val isOverlap =
-                    textRangeStartOffset >= selectionStart && textRangeStartOffset <= selectionEnd || textRangeEndOffset >= selectionStart && textRangeEndOffset <= selectionEnd || textRangeStartOffset <= selectionStart && textRangeEndOffset >= selectionStart || textRangeStartOffset <= selectionEnd && textRangeEndOffset >= selectionEnd
+                    textRangeStartOffset in selectionStart..selectionEnd || textRangeEndOffset in selectionStart..selectionEnd || selectionStart in textRangeStartOffset..textRangeEndOffset || selectionEnd in textRangeStartOffset..textRangeEndOffset
                 // Check if the element is within the selection
                 val within =
-                    textRangeStartOffset <= selectionStart && textRangeEndOffset > selectionStart && textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd
+                    selectionStart in textRangeStartOffset until textRangeEndOffset && textRangeStartOffset <= selectionEnd && textRangeEndOffset > selectionEnd
                 if (PsiUtil.matchesType(element, "ImportList")) {
                     currentContext.children.add(PsiClassContext(text.trim { it <= ' ' }, isPrior, isOverlap, language))
                 } else if (PsiUtil.matchesType(element, "Comment", "DocComment")) {

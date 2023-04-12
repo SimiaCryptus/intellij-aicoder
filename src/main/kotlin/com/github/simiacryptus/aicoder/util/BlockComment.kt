@@ -2,7 +2,7 @@ package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.util.TextBlock.Companion.DELIMITER
 import com.github.simiacryptus.aicoder.util.TextBlock.Companion.TAB_REPLACEMENT
-import com.github.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringTools
 import java.util.*
 import java.util.stream.Collectors
 

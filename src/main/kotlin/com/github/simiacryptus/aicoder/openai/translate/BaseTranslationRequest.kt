@@ -38,18 +38,18 @@ abstract class BaseTranslationRequest<T : BaseTranslationRequest<T>>(settings: A
         return this as T
     }
 
-    override fun setTemperature(temperature: Double): T {
+    final override fun setTemperature(temperature: Double): T {
         this.temperature = temperature
         return this as T
     }
 
-    override fun setMaxTokens(maxTokens: Int): T {
+    final override fun setMaxTokens(maxTokens: Int): T {
         this.maxTokens = maxTokens
         return this as T
     }
 
     override fun setInputAttribute(key: CharSequence?, value: CharSequence?): T {
-        if (null == value || value.length == 0) {
+        if (value.isNullOrEmpty()) {
             inputAttr.remove(key)
         } else {
             inputAttr[key] = value
@@ -58,7 +58,7 @@ abstract class BaseTranslationRequest<T : BaseTranslationRequest<T>>(settings: A
     }
 
     override fun setOutputAttrute(key: CharSequence?, value: CharSequence?): T {
-        if (null == value || value.length == 0) {
+        if (value.isNullOrEmpty()) {
             outputAttr.remove(key)
         } else {
             outputAttr[key] = value
