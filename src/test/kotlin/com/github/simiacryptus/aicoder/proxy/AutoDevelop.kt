@@ -100,11 +100,11 @@ class AutoDevelop : GenerationReportBase<SoftwareProjectAI>(SoftwareProjectAI::c
 
 
         var project: SoftwareProjectAI.Project? = null
-        var requirements: SoftwareProjectAI.ProjectStatements? = null
-        var projectDesign: SoftwareProjectAI.ProjectDesign? = null
-        var components: Map<SoftwareProjectAI.ComponentDetails, List<SoftwareProjectAI.CodeSpecification>>? = null
-        var documents: Map<SoftwareProjectAI.DocumentationDetails, List<SoftwareProjectAI.DocumentSpecification>>? = null
-        var tests: Map<SoftwareProjectAI.TestDetails, List<SoftwareProjectAI.TestSpecification>>? = null
+        var requirements: SoftwareProjectAI.ProjectStatements?
+        var projectDesign: SoftwareProjectAI.ProjectDesign?
+        var components: Map<SoftwareProjectAI.ComponentDetails, List<SoftwareProjectAI.CodeSpecification>>?
+        var documents: Map<SoftwareProjectAI.DocumentationDetails, List<SoftwareProjectAI.DocumentSpecification>>?
+        var tests: Map<SoftwareProjectAI.TestDetails, List<SoftwareProjectAI.TestSpecification>>?
         var implementations: Map<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode?>? = null
 
         try {

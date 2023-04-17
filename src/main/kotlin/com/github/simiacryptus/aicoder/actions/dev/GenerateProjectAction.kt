@@ -47,7 +47,7 @@ class GenerateProjectAction : AnAction() {
     ) = Thread {
         val selectedFolder = UITools.getSelectedFolder(e)!!
         val api = ChatProxy(
-            clazz = SoftwareProjectAI::class.java,
+            SoftwareProjectAI::class.java,
             api = OpenAIClient(
                 key = AppSettingsState.instance.apiKey,
                 apiBase = AppSettingsState.instance.apiBase,

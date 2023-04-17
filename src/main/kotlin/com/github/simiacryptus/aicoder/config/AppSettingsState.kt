@@ -23,7 +23,6 @@ import kotlin.collections.Set
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.forEach
-import kotlin.collections.getOrDefault
 import kotlin.collections.remove
 
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
@@ -129,7 +128,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         synchronized(mostUsedHistory) {
             mostUsedHistory.put(
                 instruction.toString(),
-                mostUsedHistory.getOrDefault(instruction, 0) + 1
+                (mostUsedHistory[instruction] ?:0) + 1
             )
         }
 

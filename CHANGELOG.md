@@ -7,6 +7,19 @@
 ### Added
 - 
 
+## [1.0.20]
+
+### Added
+- Prototype integration with the "Skyenet" AI tool 
+
+### Improved
+- Various bug fixes
+
+## [1.0.19]
+
+### Improved
+- Various bug fixes
+
 ## [1.0.18]
 
 ### Improved

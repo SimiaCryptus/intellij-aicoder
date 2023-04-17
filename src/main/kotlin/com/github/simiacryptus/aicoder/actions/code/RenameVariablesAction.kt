@@ -61,7 +61,7 @@ class RenameVariablesAction : AnAction() {
 
             val renameSuggestions = completionText.split('\n').stream().map { x ->
                 val kv = StringTools.stripSuffix(StringTools.stripPrefix(x.trim(), "|"), "|").split('|')
-                    .map { x -> x.trim() }
+                    .map { it.trim() }
                 kv[0] to kv[1]
             }.collect(Collectors.toMap({ x -> x.first }, { x -> x.second }))
 

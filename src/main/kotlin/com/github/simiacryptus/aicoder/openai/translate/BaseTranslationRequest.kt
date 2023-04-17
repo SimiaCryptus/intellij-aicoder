@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.openai.translate
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 
+@Suppress("UNCHECKED_CAST")
 abstract class BaseTranslationRequest<T : BaseTranslationRequest<T>>(settings: AppSettingsState) : TranslationRequest {
     init {
         setTemperature(settings.temperature)

@@ -307,6 +307,15 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
         </action>
 
+        <action class="com.github.simiacryptus.aicoder.actions.dev.LaunchSkyenetAction"
+                text="_Launch Skyenet"
+                description="Launch Skyenet">
+            <!--DOC
+        The `Launch Skyenet` action opens the Skyenet interactive auto-scritping interface.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+        </action>
+
         <action class="com.github.simiacryptus.aicoder.actions.code.PsiClassContextAction"
                 text="Insert _Implementation"
                 description="Insert implementation">
