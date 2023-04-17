@@ -8,9 +8,9 @@ import org.apache.http.client.methods.HttpRequestBase
 class OpenAIClientImpl(
     private val appSettingsState: AppSettingsState
 ) : OpenAIClient(
-    appSettingsState.apiBase,
-    appSettingsState.apiKey,
-    appSettingsState.apiLogLevel
+    key = appSettingsState.apiKey,
+    apiBase = appSettingsState.apiBase,
+    logLevel = appSettingsState.apiLogLevel
 ) {
 
     override fun incrementTokens(totalTokens: Int) {

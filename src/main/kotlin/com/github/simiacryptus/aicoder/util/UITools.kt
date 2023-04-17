@@ -562,7 +562,7 @@ object UITools {
                             val comboBox = uiVal
                             val item = comboBox.item
                             newSettingsValue =
-                                java.lang.Enum.valueOf(settingsField.type as Class<out Enum<*>?>, item.toString())
+                                findValue(settingsField.type as Class<out Enum<*>?>, item.toString())
                         }
                     }
                 }
@@ -620,11 +620,10 @@ object UITools {
                                 if (uiVal is ComboBox<*>) {
                                     val comboBox = uiVal
                                     val item = comboBox.item
+                                    val enumClass = settingsField.returnType.javaType as Class<out Enum<*>?>
+                                    val string = item.toString()
                                     newSettingsValue =
-                                        java.lang.Enum.valueOf(
-                                            settingsField.returnType.javaType as Class<out Enum<*>?>,
-                                            item.toString()
-                                        )
+                                        findValue(enumClass, string)
                                 }
                             }
                     }
@@ -634,6 +633,14 @@ object UITools {
                 }
             }
         }
+    }
+
+    fun findValue(enumClass: Class<out Enum<*>?>, string: String): Enum<*>? {
+        enumClass.enumConstants?.filter { it?.name?.compareTo(string, true) == 0 }?.forEach { return it }
+        return java.lang.Enum.valueOf(
+            enumClass,
+            string
+        )
     }
 
     fun <T : Any> writeJavaUI(component: Any, settings: T) {
