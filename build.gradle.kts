@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "com.github.simiacryptus"
-version = "1.0.20"
+version = properties("pluginVersion")
 
 repositories {
     mavenCentral()
@@ -32,7 +32,8 @@ dependencies {
 //    implementation("com.simiacryptus:SkyeNet:1.0.3")
 //    implementation(files("../SkyeNet/lib/ui.jar"))
 
-    implementation("org.codehaus.groovy:groovy-all:2.5.14")
+//    implementation("org.codehaus.groovy:groovy-all:2.5.14")
+    implementation("org.codehaus.groovy:groovy-all:3.0.13")
 
 //    // Used in KotlinInterpreterAlternate
 //    implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlin_version")
