@@ -2,9 +2,9 @@ package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.simiacryptus.util.StringTools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -77,14 +77,14 @@ class MarkdownNewTableColsAction : AnAction() {
                         )
                     if (null != table) {
                         val rows =
-                            Arrays.asList<CharSequence>(*StringTools.transposeMarkdownTable(
+                            listOf<CharSequence>(*StringTools.transposeMarkdownTable(
                                 PsiUtil.getAll(table, "MarkdownTableRowImpl")
                                     .stream().map { obj: PsiElement -> obj.text }.collect(Collectors.joining("\n")),
                                 false,
                                 false
                             ).split("\n".toRegex()).dropLastWhile { it.isEmpty() }
                                 .toTypedArray())
-                        val n: CharSequence = Integer.toString(rows.size * 2)
+                        val n: CharSequence = (rows.size * 2).toString()
                         return MarkdownNewTableColsParams(caret, table, rows, n)
                     }
                 }
@@ -99,7 +99,7 @@ class MarkdownNewTableColsAction : AnAction() {
         ): String {
             val newRows = Arrays.stream(("" + complete).split("\n".toRegex()).dropLastWhile { it.isEmpty() }
                 .toTypedArray()).map { obj: String -> obj.trim { it <= ' ' } }
-                .filter { x: String -> x.length > 0 }.collect(Collectors.toList())
+                .filter { x: String -> x.isNotEmpty() }.collect(Collectors.toList())
             val newTableTxt = StringTools.transposeMarkdownTable(
                 Stream.concat(markdownNewTableColsParams.rows.stream(), newRows.stream())
                     .collect(Collectors.joining("\n")), false, true

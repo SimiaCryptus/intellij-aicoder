@@ -2,7 +2,6 @@ package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getIndent
 import com.github.simiacryptus.aicoder.util.UITools.getInstruction
@@ -10,6 +9,7 @@ import com.github.simiacryptus.aicoder.util.UITools.insertString
 import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getAll
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersecting
+import com.simiacryptus.util.StringTools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -46,7 +46,7 @@ class MarkdownListAction : AnAction() {
                 }.collect(Collectors.toList()), 10, false
         )
         val indent = getIndent(markdownListParams!!.caret)
-        val n: CharSequence = Integer.toString(items.size * 2)
+        val n: CharSequence = (items.size * 2).toString()
         val endOffset = markdownListParams.list.textRange.endOffset
         val listPrefix = "* "
         val completionRequest = settings.createTranslationRequest()
@@ -106,7 +106,7 @@ class MarkdownListAction : AnAction() {
         ): String {
             val newItems = Arrays.stream(complete.toString().split("\n".toRegex()).dropLastWhile { it.isEmpty() }
                 .toTypedArray()).map { obj: String -> obj.trim { it <= ' ' } }
-                .filter { x1: String -> x1.length > 0 }.map { x1: String? ->
+                .filter { x1: String -> x1.isNotEmpty() }.map { x1: String? ->
                     StringTools.stripPrefix(
                         x1!!, listPrefix
                     )
@@ -114,7 +114,7 @@ class MarkdownListAction : AnAction() {
             val strippedList =
                 Arrays.stream(markdownListParams.list.text.split("\n".toRegex()).dropLastWhile { it.isEmpty() }
                     .toTypedArray())
-                    .map { obj: String -> obj.trim { it <= ' ' } }.filter { x: String -> x.length > 0 }
+                    .map { obj: String -> obj.trim { it <= ' ' } }.filter { x: String -> x.isNotEmpty() }
                     .collect(Collectors.joining("\n"))
             val bulletString = Stream.of("- [ ] ", "- ", "* ")
                 .filter { prefix: String? -> strippedList.startsWith(prefix!!) }.findFirst().orElse("1. ")

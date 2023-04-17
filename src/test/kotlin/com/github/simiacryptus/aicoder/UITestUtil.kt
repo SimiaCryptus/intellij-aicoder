@@ -5,7 +5,6 @@ import com.intellij.remoterobot.fixtures.ComponentFixture
 import com.intellij.remoterobot.fixtures.dataExtractor.RemoteText
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.Keyboard
-import com.jetbrains.rd.util.first
 import com.jetbrains.rd.util.firstOrNull
 import org.apache.commons.io.FileUtils
 import java.awt.Point
@@ -29,7 +28,7 @@ class UITestUtil {
 
         val outputDir = File("C:\\Users\\andre\\code\\aicoder\\intellij-aicoder-docs")
         val testProjectPath = File("C:\\Users\\andre\\IdeaProjects\\automated-ui-test-workspace")
-        private val testIdeUrl = "http://127.0.0.1:8082"
+        private const val testIdeUrl = "http://127.0.0.1:8082"
         private val robot = RemoteRobot(testIdeUrl)
         val keyboard = Keyboard(robot)
 
@@ -136,14 +135,6 @@ class UITestUtil {
             element.runJs("robot.rightClick(component, new Point(${leftPoint.x}, ${leftPoint.y}))")
         }
 
-        /**
-         *
-         *  Implements a Java class with the given name and task.
-         *
-         *  @param name The name of the class to be implemented.
-         *  @param task The task to be implemented in the class.
-         *  @return A [BufferedImage] of the command used.
-         */
         fun implementCode(prompt: String): BufferedImage {
             click("//div[@class='EditorComponentImpl']")
             keyboard.selectAll()
@@ -237,20 +228,18 @@ class UITestUtil {
         ) {
             val reportPrefix = "${name}_${language}_"
             val testOutputFile = File(outputDir, "$reportPrefix$name.md")
-            val out2 = PrintWriter(FileOutputStream(testOutputFile))
 
-            try {
+            PrintWriter(FileOutputStream(testOutputFile)).use { out ->
                 out1.println("[$directive ($language)]($reportPrefix$name.md)\n\n")
-                val out = out2
 
                 out.println(
                     """
-                
-                # $name
-                
-                In this test we will used AI Coding Assistant to implement the $name class to solve the following problem:
-                
-                """.trimIndent()
+                        
+                        # $name
+                        
+                        In this test we will used AI Coding Assistant to implement the $name class to solve the following problem:
+                        
+                        """.trimIndent()
                 )
                 out.println("```\n$directive\n```")
                 newFile("$name.$extension")
@@ -258,12 +247,12 @@ class UITestUtil {
 
                 out.println(
                     """
-                
-                ## Implementation
-                
-                The first step is to translate the problem into code. We can do this by using the "Insert Implementation" command.
-                
-                """.trimIndent()
+                        
+                        ## Implementation
+                        
+                        The first step is to translate the problem into code. We can do this by using the "Insert Implementation" command.
+                        
+                        """.trimIndent()
                 )
                 val image = implementCode(prompt)
                 writeImage(image, reportDir, name, "${reportPrefix}menu", out)
@@ -273,10 +262,10 @@ class UITestUtil {
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
                 out.println(
                     """
-                
-                This results in the following code:
-                
-                ```$language""".trimIndent()
+                        
+                        This results in the following code:
+                        
+                        ```$language""".trimIndent()
                 )
                 out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$extension"), "UTF-8"))
                 out.println("```")
@@ -284,26 +273,26 @@ class UITestUtil {
 
                 out.println(
                     """
-                
-                ## Execution
-                
-                This code can be executed by pressing the "Run" button in the top right corner of the IDE. 
-                What could possibly go wrong?
-                
-                """.trimIndent()
+                        
+                        ## Execution
+                        
+                        This code can be executed by pressing the "Run" button in the top right corner of the IDE. 
+                        What could possibly go wrong?
+                        
+                        """.trimIndent()
                 )
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_F10) // Run
                 awaitRunCompletion()
                 out.println(
                     """
-                
-                ```""".trimIndent()
+                        
+                        ```""".trimIndent()
                 )
                 out.println(componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]"))
                 out.println(
                     """
-                ```
-                """.trimIndent()
+                        ```
+                        """.trimIndent()
                 )
                 writeImage(screenshot("//div[@class='IdeRootPane']"), reportDir, name, "${reportPrefix}result", out)
                 // Close run tab
@@ -316,12 +305,12 @@ class UITestUtil {
 
                 out.println(
                     """
-                
-                ## Rename Variables
-                
-                The code is not very readable. We can use the "Rename Variables" command to make it more readable...
-                
-                """.trimIndent()
+                        
+                        ## Rename Variables
+                        
+                        The code is not very readable. We can use the "Rename Variables" command to make it more readable...
+                        
+                        """.trimIndent()
                 )
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
                 selectText(getEditor(), selector)
@@ -341,12 +330,12 @@ class UITestUtil {
 
                 out.println(
                     """
-                
-                ## Documentation Comments
-                
-                We also want good documentation for our code. We can use the "Add Documentation Comments" command to do this.
-                
-                """.trimIndent()
+                        
+                        ## Documentation Comments
+                        
+                        We also want good documentation for our code. We can use the "Add Documentation Comments" command to do this.
+                        
+                        """.trimIndent()
                 )
                 selectText(getEditor(), selector)
                 writeImage(menuAction("Doc Comments"), reportDir, name, "${reportPrefix}Add_Doc_Comments", out)
@@ -363,12 +352,12 @@ class UITestUtil {
 
                 out.println(
                     """
-                
-                ## Ad-Hoc Questions
-                
-                We can also ask questions about the code. For example, we can ask what the big-O runtime is for this code.
-                
-                """.trimIndent()
+                        
+                        ## Ad-Hoc Questions
+                        
+                        We can also ask questions about the code. For example, we can ask what the big-O runtime is for this code.
+                        
+                        """.trimIndent()
                 )
                 selectText(getEditor(), selector)
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
@@ -383,12 +372,12 @@ class UITestUtil {
 
                 out.println(
                     """
-                
-                ## Code Comments
-                
-                We can also add code comments to the code. This is useful for explaining the code to other developers.
-                
-                """.trimIndent()
+                        
+                        ## Code Comments
+                        
+                        We can also add code comments to the code. This is useful for explaining the code to other developers.
+                        
+                        """.trimIndent()
                 )
                 selectText(getEditor(), selector)
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
@@ -405,28 +394,28 @@ class UITestUtil {
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
                 out.println(
                     """
-                
-                ```$language""".trimIndent()
+                        
+                        ```$language""".trimIndent()
                 )
                 out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$extension"), "UTF-8"))
                 out.println(
                     """
-                ```
-                
-                """.trimIndent()
+                        ```
+                        
+                        """.trimIndent()
                 )
 
 
                 out.println(
                     """
-                
-                ## Conversion to other languages
-                
-                ### JavaScript
-                
-                We can also convert the code to other languages. For example, we can convert the code to JavaScript.
-                
-                """.trimIndent()
+                        
+                        ## Conversion to other languages
+                        
+                        ### JavaScript
+                        
+                        We can also convert the code to other languages. For example, we can convert the code to JavaScript.
+                        
+                        """.trimIndent()
                 )
                 clickText(getComponent("//div[@class='ProjectViewTree']"), name)
                 menuAction("Convert To")
@@ -444,24 +433,24 @@ class UITestUtil {
                 }
                 out.println(
                     """
-                
-                ```js""".trimIndent()
+                        
+                        ```js""".trimIndent()
                 )
                 out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.js"), "UTF-8"))
                 out.println(
                     """
-                ```
-                """.trimIndent()
+                        ```
+                        """.trimIndent()
                 )
 
 
                 out.println(
                     """
-                ### Conversion to Scala
-                
-                We can also convert the code to Scala.
-                
-                """.trimIndent()
+                        ### Conversion to Scala
+                        
+                        We can also convert the code to Scala.
+                        
+                        """.trimIndent()
                 )
                 clickText(getComponent("//div[@class='ProjectViewTree']"), name)
                 menuAction("Convert To")
@@ -480,19 +469,17 @@ class UITestUtil {
                 }
                 out.println(
                     """
-                ```scala""".trimIndent()
+                        ```scala""".trimIndent()
                 )
                 out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.scala"), "UTF-8"))
                 out.println(
                     """
-                ```
-                """.trimIndent()
+                        ```
+                        """.trimIndent()
                 )
 
                 // Close editor
                 click("//div[@class='InplaceButton']")
-            } finally {
-                out2.close()
             }
         }
 
@@ -523,9 +510,8 @@ class UITestUtil {
             keyboard.key(KeyEvent.VK_DELETE)
             enterLines(directive)
             keyboard.selectAll()
-            val image1 = menuAction("Append Text")
+            val image = menuAction("Append Text")
             awaitProcessing()
-            val image = image1
             writeImage(image, file, name, "${reportPrefix}menu", out)
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
 
@@ -817,8 +803,8 @@ class UITestUtil {
         }
 
         fun enterLines(input: String) {
-            input.split("\n").map { line -> { -> keyboard.enterText(line, 5) } }.reduce { a, b ->
-                { ->
+            input.split("\n").map { line -> { keyboard.enterText(line, 5) } }.reduce { a, b ->
+                {
                     a()
                     keyboard.enter()
                     b()

@@ -5,7 +5,7 @@ import com.github.simiacryptus.aicoder.util.*
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
 import com.github.simiacryptus.aicoder.util.UITools.showCheckboxDialog
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
-import com.github.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringTools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -61,7 +61,7 @@ class RenameVariablesAction : AnAction() {
 
             val renameSuggestions = completionText.split('\n').stream().map { x ->
                 val kv = StringTools.stripSuffix(StringTools.stripPrefix(x.trim(), "|"), "|").split('|')
-                    .map { x -> x.trim() }
+                    .map { it.trim() }
                 kv[0] to kv[1]
             }.collect(Collectors.toMap({ x -> x.first }, { x -> x.second }))
 

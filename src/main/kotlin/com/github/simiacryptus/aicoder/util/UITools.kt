@@ -6,11 +6,14 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.openai.*
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
+import com.github.simiacryptus.aicoder.openai.ui.CompletionRequestWithModel
+import com.github.simiacryptus.aicoder.openai.ui.InteractiveCompletionRequest
+import com.github.simiacryptus.aicoder.openai.ui.InteractiveEditRequest
 import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
-import com.github.simiacryptus.openai.ChatRequest
-import com.github.simiacryptus.openai.CompletionRequest
-import com.github.simiacryptus.openai.EditRequest
-import com.github.simiacryptus.openai.ModerationException
+import com.simiacryptus.openai.ChatRequest
+import com.simiacryptus.openai.CompletionRequest
+import com.simiacryptus.openai.EditRequest
+import com.simiacryptus.openai.ModerationException
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -364,7 +367,7 @@ object UITools {
      */
     fun getInstruction(instruction: String): String {
         val style: CharSequence = AppSettingsState.instance.style
-        return if (style.length == 0) instruction else String.format("%s (%s)", instruction, style)
+        return if (style.isEmpty()) instruction else String.format("%s (%s)", instruction, style)
     }
 
     /**
@@ -464,7 +467,7 @@ object UITools {
         val lineNumber = document.getLineNumber(caret.selectionStart)
         val lines = documentText.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         if (lines.isEmpty()) return ""
-        return IndentedText.fromString(lines[Math.min(Math.max(lineNumber, 0), lines.size - 1)]).indent
+        return IndentedText.fromString(lines[Math.max(lineNumber, 0).coerceAtMost(lines.size - 1)]).indent
     }
 
     @Suppress("unused")
@@ -480,8 +483,7 @@ object UITools {
 
     fun getIndent(event: AnActionEvent): CharSequence {
         val caret = event.getData(CommonDataKeys.CARET)
-        val indent: CharSequence
-        indent = if (null == caret) {
+        val indent: CharSequence = if (null == caret) {
             ""
         } else {
             getIndent(caret)
@@ -560,7 +562,7 @@ object UITools {
                             val comboBox = uiVal
                             val item = comboBox.item
                             newSettingsValue =
-                                java.lang.Enum.valueOf(settingsField.type as Class<out Enum<*>?>, item.toString())
+                                findValue(settingsField.type as Class<out Enum<*>?>, item.toString())
                         }
                     }
                 }
@@ -583,13 +585,12 @@ object UITools {
                     var newSettingsValue: Any? = null
                     if (!declaredUIFields.contains(settingsFieldName)) continue
                     val uiField: KProperty1<R, *> =
-                        (componentClass.kotlin.memberProperties.find { it.name.equals(settingsFieldName) } as KProperty1<R, *>?)!!
+                        (componentClass.kotlin.memberProperties.find { it.name == settingsFieldName } as KProperty1<R, *>?)!!
                     var uiVal = uiField.get(component)
                     if (uiVal is JScrollPane) {
                         uiVal = uiVal.viewport.view
                     }
-                    val name = settingsField.returnType.javaType.typeName
-                    when (name) {
+                    when (settingsField.returnType.javaType.typeName) {
                         "java.lang.String" -> if (uiVal is JTextComponent) {
                             newSettingsValue = uiVal.text
                         } else if (uiVal is ComboBox<*>) {
@@ -619,11 +620,10 @@ object UITools {
                                 if (uiVal is ComboBox<*>) {
                                     val comboBox = uiVal
                                     val item = comboBox.item
+                                    val enumClass = settingsField.returnType.javaType as Class<out Enum<*>?>
+                                    val string = item.toString()
                                     newSettingsValue =
-                                        java.lang.Enum.valueOf(
-                                            settingsField.returnType.javaType as Class<out Enum<*>?>,
-                                            item.toString()
-                                        )
+                                        findValue(enumClass, string)
                                 }
                             }
                     }
@@ -633,6 +633,14 @@ object UITools {
                 }
             }
         }
+    }
+
+    fun findValue(enumClass: Class<out Enum<*>?>, string: String): Enum<*>? {
+        enumClass.enumConstants?.filter { it?.name?.compareTo(string, true) == 0 }?.forEach { return it }
+        return java.lang.Enum.valueOf(
+            enumClass,
+            string
+        )
     }
 
     fun <T : Any> writeJavaUI(component: Any, settings: T) {
@@ -671,7 +679,7 @@ object UITools {
                     }
 
                     "double", "java.lang.Double" -> if (uiVal is JTextComponent) {
-                        uiVal.text = java.lang.Double.toString((settingsVal as Double))
+                        uiVal.text = (settingsVal as Double).toString()
                     }
 
                     else -> if (uiVal is ComboBox<*>) {
@@ -693,14 +701,13 @@ object UITools {
             try {
                 if (!declaredUIFields.contains(fieldName)) continue
                 val uiField: KProperty1<R, *> =
-                    (componentClass.kotlin.memberProperties.find { it.name.equals(fieldName) } as KProperty1<R, *>?)!!
+                    (componentClass.kotlin.memberProperties.find { it.name == fieldName } as KProperty1<R, *>?)!!
                 val settingsVal = settingsField.get(settings) ?: continue
                 var uiVal = uiField.get(component)
                 if (uiVal is JScrollPane) {
                     uiVal = uiVal.viewport.view
                 }
-                val name = settingsField.returnType.javaType.typeName
-                when (name) {
+                when (settingsField.returnType.javaType.typeName) {
                     "java.lang.String" -> if (uiVal is JTextComponent) {
                         uiVal.text = settingsVal.toString()
                     } else if (uiVal is ComboBox<*>) {
@@ -722,7 +729,7 @@ object UITools {
                     }
 
                     "double", "java.lang.Double" -> if (uiVal is JTextComponent) {
-                        uiVal.text = java.lang.Double.toString((settingsVal as Double))
+                        uiVal.text = (settingsVal as Double).toString()
                     }
 
                     else -> if (uiVal is ComboBox<*>) {
@@ -798,9 +805,8 @@ object UITools {
         )
         pane.initialValue = options[0]
         pane.componentOrientation = JOptionPane.getRootFrame().componentOrientation
-        val dialog: JDialog
         JOptionPane.getRootFrame()
-        dialog = JDialog(JOptionPane.getRootFrame(), title, true)
+        val dialog: JDialog = JDialog(JOptionPane.getRootFrame(), title, true)
         dialog.componentOrientation = JOptionPane.getRootFrame().componentOrientation
         val contentPane = dialog.contentPane
         contentPane.layout = BorderLayout()
@@ -906,7 +912,7 @@ object UITools {
         val checkboxMap = HashMap<String, JCheckBox>()
         for (i in checkboxIds.indices) {
             val checkbox = JCheckBox(checkboxDescriptions[i], null as Icon?, true)
-            checkboxMap.put(checkboxIds[i], checkbox)
+            checkboxMap[checkboxIds[i]] = checkbox
             formBuilder.addComponent(checkbox)
         }
         val dialogResult = showOptionDialog(formBuilder.panel, "OK", title = promptMessage)
@@ -930,7 +936,7 @@ object UITools {
         val buttonGroup = ButtonGroup()
         for (i in radioButtonDescriptions.indices) {
             val radioButton = JRadioButton(radioButtonDescriptions[i].toString(), null as Icon?, true)
-            radioButtonMap.put(radioButtonDescriptions[i].toString(), radioButton)
+            radioButtonMap[radioButtonDescriptions[i].toString()] = radioButton
             buttonGroup.add(radioButton)
             formBuilder.addComponent(radioButton)
         }
@@ -1063,18 +1069,17 @@ object UITools {
 
     fun isInterruptedException(e: Throwable?): Boolean {
         if (e is InterruptedException) return true
-        return if (e!!.cause != null && e.cause !== e) isInterruptedException( e.cause ) else false
+        return if (e!!.cause != null && e.cause !== e) isInterruptedException(e.cause) else false
     }
 
     fun <T> run(
-        project : Project?,
+        project: Project?,
         title: String,
         canBeCancelled: Boolean,
         retries: Int = 3,
         suppressProgress: Boolean = false,
         task: (ProgressIndicator) -> T
-        ): T
-    {
+    ): T {
         return run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
             override fun compute(indicator: ProgressIndicator): T {
                 return task(indicator)
@@ -1115,4 +1120,57 @@ object UITools {
             }
         }
     }
+
+    fun EditRequest.uiIntercept(): EditRequest {
+        return if (AppSettingsState.instance.devActions) {
+            showEditDialog(this)
+        } else {
+            this
+        }
+    }
+
+    private fun showEditDialog(edit: EditRequest): EditRequest {
+        val formBuilder = FormBuilder.createFormBuilder()
+        val withModel = EditRequest(edit)
+        val ui = InteractiveEditRequest()
+        addKotlinFields<Any>(ui, formBuilder)
+        writeKotlinUI(ui, withModel)
+        val mainPanel = formBuilder.panel
+        return if (showOptionDialog(mainPanel, arrayOf("OK"), title = "Completion Request") == 0) {
+            readKotlinUI(ui, withModel)
+            withModel
+        } else {
+            withModel
+        }
+    }
+
+    fun CompletionRequest.uiIntercept(): CompletionRequestWithModel {
+        return if (this !is CompletionRequestWithModel) {
+            val settingsState = AppSettingsState.instance
+            if (!settingsState.devActions) {
+                CompletionRequestWithModel(this, settingsState.model_completion)
+            } else {
+                showCompletionDialog(this)
+            }
+        } else {
+            this
+        }
+    }
+
+    private fun showCompletionDialog(completion: CompletionRequest): CompletionRequestWithModel {
+        val formBuilder = FormBuilder.createFormBuilder()
+        val instance = AppSettingsState.instance
+        val withModel = CompletionRequestWithModel(completion, instance.model_completion)
+        val ui = InteractiveCompletionRequest(withModel)
+        addKotlinFields<Any>(ui, formBuilder)
+        writeKotlinUI(ui, withModel)
+        val mainPanel = formBuilder.panel
+        return if (showOptionDialog(mainPanel, arrayOf<Any>("OK"), title = "Completion Request") == 0) {
+            readKotlinUI(ui, withModel)
+            withModel
+        } else {
+            withModel
+        }
+    }
+
 }

@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.openai.translate
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.openai.CompletionRequest
+import com.simiacryptus.openai.CompletionRequest
 import java.util.*
 import java.util.stream.Collectors
 
@@ -18,8 +18,9 @@ class TranslationRequest_XML(settings: AppSettingsState) :
         val inputTagTxt = inputTag.toString().lowercase(Locale.getDefault())
         val outputTagTxt = outputTag.toString().lowercase(Locale.getDefault())
         val inputText = originalText.toString().trim { it <= ' ' }
-        return CompletionRequest(
-            """
+        val completionRequest = CompletionRequest()
+        /*
+        """
             <!-- $instruction -->
             <$inputTagTxt$inputAttrStr>$inputText</$inputTagTxt>
             $exampleStr
@@ -29,7 +30,17 @@ class TranslationRequest_XML(settings: AppSettingsState) :
             maxTokens,
             null,
             """</$outputTagTxt>"""
-        )
+         */
+        completionRequest.prompt = """
+            <!-- $instruction -->
+            <$inputTagTxt$inputAttrStr>$inputText</$inputTagTxt>
+            $exampleStr
+            <$outputTagTxt$outputAttrStr>
+            """.trimIndent().trim()
+        completionRequest.temperature = temperature
+        completionRequest.max_tokens = maxTokens
+        completionRequest.stop = (listOf("</$outputTagTxt>") + (completionRequest.stop?.toList() ?: listOf())).toTypedArray()
+        return completionRequest
     }
 
     private val examples: MutableList<CharSequence> = ArrayList()

@@ -12,7 +12,7 @@ class AppSettingsConfigurable : Configurable {
 
     @Volatile
     private var mainPanel: JPanel? = null
-    override fun getDisplayName(): @Nls(capitalization = Nls.Capitalization.Title) String {
+    override fun getDisplayName(): String {
         return "AICoder Settings"
     }
 

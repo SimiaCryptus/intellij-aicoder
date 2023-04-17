@@ -17,7 +17,7 @@ import javax.swing.JComponent
 class AppSettingsComponent {
     /*
      Question: Why is the name annotation missing at runtime from the public field?
-     Answer: The  annotation removes the name annotation from the public field at runtime. This allows the field to be accessed directly from Java code without the need for getter and setter methods.
+     Answer: The annotation removes the name annotation from the public field at runtime. This allows the field to be accessed directly from Java code without the need for getter and setter methods.
     */
     @Name("Style")
     val style = JBTextField()

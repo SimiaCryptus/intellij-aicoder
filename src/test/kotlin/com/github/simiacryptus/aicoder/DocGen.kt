@@ -114,8 +114,7 @@ class DocGen {
         return shortcut.trim()
             .split(" ")
             .map { it.substringAfter("=").replace("\"", "").trim() }
-            .map { "<kbd>${it.capitalize()}</kbd>" }
-            .joinToString(" + ")
+            .joinToString(" + ") { "<kbd>${it.capitalize()}</kbd>" }
     }
 
     private fun loadActions(input: File): Array<Map<String, String>> {
@@ -132,8 +131,8 @@ class DocGen {
         "id" to action.substringAfter("class=\"").substringBefore("\""),
         "text" to action.substringAfter("text=\"").substringBefore("\""),
         "description" to action.substringAfter("description=\"").substringBefore("\""),
-        "long_description" to action.substringAfter("<!--DOC").substringBefore("-->").split("\n").map { it.trim() }
-            .joinToString(" "),
+        "long_description" to action.substringAfter("<!--DOC").substringBefore("-->").split("\n")
+            .joinToString(" ") { it.trim() },
         "shortcut" to if (action.contains("keyboard-shortcut")) {
             formatShortcut(action.substringAfter("keymap=\"\$default\"").substringBefore("/>"))
         } else {

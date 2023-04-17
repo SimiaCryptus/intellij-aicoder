@@ -4,7 +4,7 @@ import org.junit.Test
 
 import java.io.File
 
-class ImageTest: GenerationReportBase() {
+class ImageTest: GenerationReportBase<Object>(Object::class) {
     @Test
     fun imageGenerationTest() {
         val image = proxy.api.render("Hello World")[0]

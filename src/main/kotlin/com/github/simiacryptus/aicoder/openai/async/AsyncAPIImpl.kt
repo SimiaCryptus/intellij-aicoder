@@ -2,7 +2,7 @@ package com.github.simiacryptus.aicoder.openai.async
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
-import com.github.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.OpenAIClient
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.jetbrains.rd.util.AtomicReference

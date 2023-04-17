@@ -1,10 +1,9 @@
 package com.github.simiacryptus.aicoder.openai.async
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.util.StringTools
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.run
-import com.github.simiacryptus.openai.*
+import com.simiacryptus.util.StringTools
 import com.google.common.util.concurrent.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,6 +13,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.AtomicReference
 import com.jetbrains.rd.util.LogLevel
+import com.simiacryptus.openai.*
 import java.io.IOException
 import java.nio.charset.Charset
 import java.util.*
@@ -30,8 +30,7 @@ open class AsyncAPI(
 
     fun edit(
         project: Project?,
-        editRequest: EditRequest,
-        settings: AppSettingsState
+        editRequest: EditRequest
     ): ListenableFuture<CompletionResponse> {
         return map(moderateAsync(project, editRequest.toString())) { _: Any? ->
             try {

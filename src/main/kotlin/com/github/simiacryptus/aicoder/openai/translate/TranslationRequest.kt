@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.openai.translate
 
-import com.github.simiacryptus.openai.CompletionRequest
+import com.simiacryptus.openai.CompletionRequest
 import java.util.*
 
 

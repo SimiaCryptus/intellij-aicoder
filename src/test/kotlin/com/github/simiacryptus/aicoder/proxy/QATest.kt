@@ -2,9 +2,9 @@ package com.github.simiacryptus.aicoder.proxy
 
 import org.junit.Test
 
-class QATest {
+class QATest : GenerationReportBase<QATest.QATest>(QATest::class) {
 
-    interface QA {
+    interface QATest {
         fun simpleQuestion(question: SimpleQuestion): SimpleResponse
 
         class SimpleQuestion(var question: String = "")
@@ -17,9 +17,9 @@ class QATest {
 
     @Test
     fun test_question() {
-        if (!ProxyTest.keyFile.exists()) return
-        val proxy = ProxyTest.completionProxy().create(QA::class.java)
-        println(proxy.simpleQuestion(QA.SimpleQuestion("What is the meaning of life?")).answer)
+        runReport("", { api, logJson, out ->
+            out(api.simpleQuestion(QATest.SimpleQuestion("What is the meaning of life?")).answer)
+        })
     }
 
 

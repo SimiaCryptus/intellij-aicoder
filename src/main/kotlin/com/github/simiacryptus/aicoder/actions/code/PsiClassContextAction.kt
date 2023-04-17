@@ -40,7 +40,7 @@ class PsiClassContextAction : AnAction() {
             .fromString(instruct)!!.stream()
             .map { obj: CharSequence -> obj.toString() }
             .map { obj: String -> obj.trim { it <= ' ' } }
-            .filter { x: String -> !x.isEmpty() }
+            .filter { x: String -> x.isNotEmpty() }
             .reduce { a: String, b: String -> "$a $b" }.get()
         val endOffset = psiClassContextActionParams.largestIntersectingComment.textRange.endOffset
         val psiClassContext = PsiClassContext.getContext(
@@ -73,7 +73,7 @@ class PsiClassContextAction : AnAction() {
             }, { newText ->
                 UITools.insertString(
                     editor.document, endOffset,
-                    newText!!
+                    newText
                 )
             }
         )

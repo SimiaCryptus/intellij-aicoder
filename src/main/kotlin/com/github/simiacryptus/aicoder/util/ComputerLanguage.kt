@@ -392,7 +392,7 @@ enum class ComputerLanguage(configuration: Configuration) {
     val docComment: TextBlockFactory<*>
 
     init {
-        extensions = Arrays.asList(*configuration.fileExtensions)
+        extensions = listOf(*configuration.fileExtensions)
         docStyle = configuration.documentationStyle
         lineComment = configuration.lineComments!!
         blockComment = configuration.getBlockComments()!!

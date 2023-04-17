@@ -135,7 +135,7 @@ class PsiTranslationSkeleton(private val stubId: String?, text: String?, private
         sourceLanguage: ComputerLanguage,
         targetLanguage: ComputerLanguage
     ): Stream<ListenableFuture<*>?> {
-        return if (!stubs.isEmpty()) {
+        return if (stubs.isNotEmpty()) {
             Streams.concat(
                 Stream.of(translate(project, indent, sourceLanguage, targetLanguage)),
                 stubs.stream().flatMap { stub: PsiTranslationSkeleton ->

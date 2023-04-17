@@ -76,7 +76,7 @@ class QuestionAction : AnAction() {
             )
         UITools.redoableRequest(request, indent, event,
             { newText ->
-                var text = """
+                val text = """
                     Question: $question
                     Answer: ${newText.toString().trim()}
                 """.trimMargin()
@@ -87,7 +87,7 @@ class QuestionAction : AnAction() {
                     editor.document,
                     selectionStart,
                     selectionEnd,
-                    newText!!
+                    newText
                 )
             })
     }

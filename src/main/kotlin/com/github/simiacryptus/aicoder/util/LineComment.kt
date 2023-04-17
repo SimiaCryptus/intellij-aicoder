@@ -1,10 +1,9 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.util.StringTools.getWhitespacePrefix
-import com.github.simiacryptus.util.StringTools.stripPrefix
-import com.github.simiacryptus.util.StringTools.trimPrefix
+import com.simiacryptus.util.StringTools.getWhitespacePrefix
+import com.simiacryptus.util.StringTools.stripPrefix
+import com.simiacryptus.util.StringTools.trimPrefix
 import java.util.*
-import java.util.function.Function
 import java.util.stream.Collectors
 
 class LineComment(private val commentPrefix: CharSequence, indent: CharSequence?, vararg lines: CharSequence) :
@@ -25,7 +24,7 @@ class LineComment(private val commentPrefix: CharSequence, indent: CharSequence?
                             s!!, indent
                         )
                     }
-                    .map(Function<CharSequence, CharSequence> { obj: CharSequence -> trimPrefix(obj) })
+                    .map { obj: CharSequence -> trimPrefix(obj) }
                     .map { s: CharSequence? ->
                         stripPrefix(
                             s!!,
@@ -46,7 +45,7 @@ class LineComment(private val commentPrefix: CharSequence, indent: CharSequence?
     }
 
     override fun toString(): String {
-        return commentPrefix.toString() + " " + Arrays.stream(rawString())
+        return "$commentPrefix " + Arrays.stream(rawString())
             .collect(Collectors.joining(TextBlock.DELIMITER + indent + commentPrefix + " "))
     }
 

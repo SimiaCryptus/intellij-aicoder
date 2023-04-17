@@ -4,9 +4,10 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.SoftwareProjectAI
-import com.github.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.openai.proxy.ChatProxy
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.simiacryptus.openai.OpenAIClient
 import java.io.File
 import javax.swing.JCheckBox
 import javax.swing.JTextArea
@@ -15,7 +16,7 @@ import javax.swing.JTextField
 class GenerateProjectAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
+        e.presentation.isEnabledAndVisible = isEnabled()
         super.update(e)
     }
 
@@ -46,13 +47,15 @@ class GenerateProjectAction : AnAction() {
     ) = Thread {
         val selectedFolder = UITools.getSelectedFolder(e)!!
         val api = ChatProxy(
-            apiKey = AppSettingsState.instance.apiKey,
-            base = AppSettingsState.instance.apiBase,
-            logLevel = AppSettingsState.instance.apiLogLevel,
+            SoftwareProjectAI::class.java,
+            api = OpenAIClient(
+                key = AppSettingsState.instance.apiKey,
+                apiBase = AppSettingsState.instance.apiBase,
+                logLevel = AppSettingsState.instance.apiLogLevel
+            ),
             maxTokens = AppSettingsState.instance.maxTokens,
-        ).create(
-            SoftwareProjectAI::class.java
-        )
+            deserializerRetries = 5,
+        ).create()
         val project = UITools.run(
             e.project, "Parsing Request", true
         ) {
@@ -76,51 +79,42 @@ class GenerateProjectAction : AnAction() {
             if (it.isCanceled) throw InterruptedException()
             buildProjectDesign
         }
-        val files = UITools.run(
-            e.project, "Specifying Files", true
-        ) {
-            val buildProjectFileSpecifications =
-                api.buildProjectFileSpecifications(project, requirements, projectDesign)
-            if (it.isCanceled) throw InterruptedException()
-            buildProjectFileSpecifications
-        }
 
         val components =
             UITools.run(
                 e.project, "Specifying Components", true
             ) {
-                projectDesign.components?.map { it to api.buildComponentFileSpecifications(project, requirements, it) }
-                    ?.toMap()
+                projectDesign.components?.associate { it to api.buildComponentFileSpecifications(project, requirements, it) }
             }
 
         val documents =
             UITools.run(
                 e.project, "Specifying Documents", true
             ) {
-                projectDesign.documents?.map {
+                projectDesign.documents?.associate {
                     it to api.buildDocumentationFileSpecifications(
                         project,
                         requirements,
                         it
                     )
-                }?.toMap()
+                }
             }
 
         val tests = UITools.run(
             e.project, "Specifying Tests", true
-        ) { projectDesign.tests?.map { it to api.buildTestFileSpecifications(project, requirements, it) }?.toMap() }
+        ) { projectDesign.tests?.associate { it to api.buildTestFileSpecifications(project, requirements, it) } }
 
         val sourceCodeMap = UITools.run(
             e.project, "Implementing Files", true
         ) {
             SoftwareProjectAI.parallelImplementWithAlternates(
-                api,
-                project,
-                components ?: emptyMap(),
-                documents ?: emptyMap(),
-                tests ?: emptyMap(),
-                config.drafts,
-                AppSettingsState.instance.apiThreads
+                api = api,
+                project = project,
+                components = components ?: emptyMap(),
+                documents = documents ?: emptyMap(),
+                tests = tests ?: emptyMap(),
+                drafts = config.drafts,
+                threads = AppSettingsState.instance.apiThreads
             ) { progress ->
                 if (it.isCanceled) throw InterruptedException()
                 it.fraction = progress
@@ -138,7 +132,7 @@ class GenerateProjectAction : AnAction() {
                     val outFile = outputDir.resolve(relative)
                     outFile.parentFile.mkdirs()
                     val best = sourceCode.maxByOrNull { it.code?.length ?: 0 }!!
-                    outFile.writeText(best?.code ?: "")
+                    outFile.writeText(best.code ?: "")
                     log.debug("Wrote ${outFile.canonicalPath} (Resolved from $relative)")
                     if (config.saveAlternates)
                         for ((index, alternate) in sourceCode.filter { it != best }.withIndex()) {
@@ -147,7 +141,7 @@ class GenerateProjectAction : AnAction() {
                                     relative + ".${index + 1}"
                                 )
                             outFileAlternate.parentFile.mkdirs()
-                            outFileAlternate.writeText(alternate?.code ?: "")
+                            outFileAlternate.writeText(alternate.code ?: "")
                             log.debug("Wrote ${outFileAlternate.canonicalPath} (Resolved from $relative)")
                         }
                 }
@@ -156,7 +150,7 @@ class GenerateProjectAction : AnAction() {
         }
     }.start()
 
-    private fun isEnabled(e: AnActionEvent): Boolean {
+    private fun isEnabled(): Boolean {
         if (UITools.isSanctioned()) return false
         if (!AppSettingsState.instance.devActions) return false
         return true

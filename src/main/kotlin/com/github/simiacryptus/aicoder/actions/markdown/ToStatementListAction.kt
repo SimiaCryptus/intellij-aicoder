@@ -32,7 +32,7 @@ class ToStatementListAction : AnAction() {
             val element = PsiUtil.getSmallestIntersecting(psiFile, caret.offset, caret.offset, "ListItem") ?: return
             startOffset = element.textOffset
             endOffset = element.textOffset + element.textLength
-            element.children.map { it.text }.joinToString("\n")
+            element.children.joinToString("\n") { it.text }
         }
         val completionRequest = settings.createTranslationRequest()
             .setInstruction(getInstruction("Transform into a list of independent statements of fact. Resolve all pronouns and fully qualify each item."))

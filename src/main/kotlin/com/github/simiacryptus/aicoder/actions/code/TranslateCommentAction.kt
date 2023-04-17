@@ -54,7 +54,7 @@ class TranslateCommentAction : AnAction() {
         UITools.redoableRequest(request, "", event,
             { newText ->
                 indent.toString() + commentModel.fromString(newText.toString().trim { it <= ' ' })!!.withIndent(indent)
-            }, { UITools.replaceString(document, textRange.startOffset, textRange.endOffset, it!!) }
+            }, { UITools.replaceString(document, textRange.startOffset, textRange.endOffset, it) }
         )
     }
 
