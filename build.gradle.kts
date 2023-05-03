@@ -22,38 +22,38 @@ repositories {
 }
 
 val kotlin_version = "1.7.21"
-val kotlinCompiler by configurations.creating
+val jetty_version = "11.0.15"
 dependencies {
 
-//    implementation("com.simiacryptus:JoePenai:1.0.7")
-    implementation("com.simiacryptus:joe-penai:1.0.6")
+//    implementation("com.simiacryptus:JoePenai:1.0.8")
+    implementation("com.simiacryptus:joe-penai:1.0.7")
 
-    implementation("com.simiacryptus:skyenet:1.0.2")
-//    implementation("com.simiacryptus:SkyeNet:1.0.3")
-//    implementation(files("../SkyeNet/lib/ui.jar"))
+    implementation("com.simiacryptus.skyenet:util:1.0.6")
+    implementation("com.simiacryptus.skyenet:core:1.0.6")
+    implementation("com.simiacryptus.skyenet:webui:1.0.6")
 
-//    implementation("org.codehaus.groovy:groovy-all:2.5.14")
-    implementation("org.codehaus.groovy:groovy-all:3.0.13")
-
-//    // Used in KotlinInterpreterAlternate
-//    implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlin_version")
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlin_version")
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:$kotlin_version")
+    implementation("org.eclipse.jetty:jetty-server:$jetty_version")
+    implementation("org.eclipse.jetty:jetty-servlet:$jetty_version")
+    implementation("org.eclipse.jetty:jetty-annotations:$jetty_version")
+    implementation("org.eclipse.jetty.websocket:websocket-jetty-server:$jetty_version")
+    implementation("org.eclipse.jetty.websocket:websocket-jetty-client:$jetty_version")
+    implementation("org.eclipse.jetty.websocket:websocket-servlet:$jetty_version")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
+    testImplementation(kotlin("script-runtime"))
 
     implementation("org.slf4j:slf4j-api:2.0.5")
 
     testImplementation("com.intellij.remoterobot:remote-robot:0.11.16")
     testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.16")
     testImplementation("com.squareup.okhttp3:okhttp:3.14.9")
-    testImplementation(kotlin("script-runtime"))
 }
 
 
 kotlin {
     jvmToolchain(11)
+//    jvmToolchain(17)
 }
 
 tasks {
@@ -100,7 +100,6 @@ tasks {
     }
 
     runIdeForUiTests {
-        systemProperty("kotlin.compiler.classpath", kotlinCompiler.joinToString(separator = File.pathSeparator) { it.absolutePath })
         systemProperty("robot-server.port", "8082")
         systemProperty("ide.mac.message.dialogs.as.sheets", "false")
         systemProperty("jb.privacy.policy.text", "<!--999.999-->")

@@ -4,7 +4,6 @@ package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
-import com.github.simiacryptus.aicoder.openai.*
 import com.github.simiacryptus.aicoder.openai.async.AsyncAPI
 import com.github.simiacryptus.aicoder.openai.ui.CompletionRequestWithModel
 import com.github.simiacryptus.aicoder.openai.ui.InteractiveCompletionRequest
@@ -38,10 +37,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Toolkit
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
@@ -50,6 +46,7 @@ import java.beans.PropertyChangeEvent
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.util.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 import java.util.stream.Collectors
@@ -797,20 +794,43 @@ object UITools {
         return Dimension((screenSize.getWidth() * factor).toInt(), (screenSize.getHeight() * factor).toInt())
     }
 
-    fun showOptionDialog(mainPanel: JPanel?, vararg options: Any, title: String): Int {
+    fun showOptionDialog(mainPanel: JPanel?, vararg options: Any, title: String, modal: Boolean = true): Int {
+        val pane = getOptionPane(mainPanel, options)
+        val rootFrame = JOptionPane.getRootFrame()
+        pane.componentOrientation = rootFrame.componentOrientation
+        val dialog = JDialog(rootFrame, title, modal)
+        dialog.componentOrientation = rootFrame.componentOrientation
+
+        val latch = if (!modal) CountDownLatch(1) else null
+        configure(dialog, pane, latch)
+        dialog.isVisible = true
+        if (!modal) latch?.await()
+
+        dialog.dispose()
+        return getSelectedValue(pane, options)
+    }
+
+    fun getOptionPane(
+        mainPanel: JPanel?,
+        options: Array<out Any>,
+    ): JOptionPane {
         val pane = JOptionPane(
-            mainPanel, JOptionPane.PLAIN_MESSAGE,
-            JOptionPane.NO_OPTION, null,
-            options, options[0]
+            mainPanel,
+            JOptionPane.PLAIN_MESSAGE,
+            JOptionPane.NO_OPTION,
+            null,
+            options,
+            options[0]
         )
         pane.initialValue = options[0]
-        pane.componentOrientation = JOptionPane.getRootFrame().componentOrientation
-        JOptionPane.getRootFrame()
-        val dialog: JDialog = JDialog(JOptionPane.getRootFrame(), title, true)
-        dialog.componentOrientation = JOptionPane.getRootFrame().componentOrientation
+        return pane
+    }
+
+    fun configure(dialog: JDialog, pane: JOptionPane, latch: CountDownLatch? = null) {
         val contentPane = dialog.contentPane
         contentPane.layout = BorderLayout()
         contentPane.add(pane, BorderLayout.CENTER)
+
         if (JDialog.isDefaultLookAndFeelDecorated() && UIManager.getLookAndFeel().supportsWindowDecorations) {
             dialog.isUndecorated = true
             pane.rootPane.windowDecorationStyle = JRootPane.PLAIN_DIALOG
@@ -819,32 +839,7 @@ object UITools {
         dialog.maximumSize = getMaximumSize(0.9)
         dialog.pack()
         dialog.setLocationRelativeTo(null as Component?)
-        val adapter: WindowAdapter = object : WindowAdapter() {
-            private var gotFocus = false
-            override fun windowClosing(we: WindowEvent) {
-                pane.value = null
-            }
-
-            override fun windowClosed(e: WindowEvent) {
-                pane.removePropertyChangeListener { event: PropertyChangeEvent ->
-                    // Let the defaultCloseOperation handle the closing
-                    // if the user closed the window without selecting a button
-                    // (newValue = null in that case).  Otherwise, close the dialog.
-                    if (dialog.isVisible && event.source === pane && event.propertyName == JOptionPane.VALUE_PROPERTY && event.newValue != null && event.newValue !== JOptionPane.UNINITIALIZED_VALUE) {
-                        dialog.isVisible = false
-                    }
-                }
-                dialog.contentPane.removeAll()
-            }
-
-            override fun windowGainedFocus(we: WindowEvent) {
-                // Once window gets focus, set initial focus
-                if (!gotFocus) {
-                    pane.selectInitialValue()
-                    gotFocus = true
-                }
-            }
-        }
+        val adapter: WindowAdapter = windowAdapter(pane, dialog)
         dialog.addWindowListener(adapter)
         dialog.addWindowFocusListener(adapter)
         dialog.addComponentListener(object : ComponentAdapter() {
@@ -856,12 +851,37 @@ object UITools {
         pane.addPropertyChangeListener { event: PropertyChangeEvent ->
             if (dialog.isVisible && event.source === pane && event.propertyName == JOptionPane.VALUE_PROPERTY && event.newValue != null && event.newValue !== JOptionPane.UNINITIALIZED_VALUE) {
                 dialog.isVisible = false
+                latch?.countDown()
             }
         }
+
         pane.selectInitialValue()
-        dialog.isVisible = true
-        dialog.dispose()
-        return getSelectedValue(pane, options)
+    }
+
+    private fun windowAdapter(pane: JOptionPane, dialog: JDialog): WindowAdapter {
+        val adapter: WindowAdapter = object : WindowAdapter() {
+            private var gotFocus = false
+            override fun windowClosing(we: WindowEvent) {
+                pane.value = null
+            }
+
+            override fun windowClosed(e: WindowEvent) {
+                pane.removePropertyChangeListener { event: PropertyChangeEvent ->
+                    if (dialog.isVisible && event.source === pane && event.propertyName == JOptionPane.VALUE_PROPERTY && event.newValue != null && event.newValue !== JOptionPane.UNINITIALIZED_VALUE) {
+                        dialog.isVisible = false
+                    }
+                }
+                dialog.contentPane.removeAll()
+            }
+
+            override fun windowGainedFocus(we: WindowEvent) {
+                if (!gotFocus) {
+                    pane.selectInitialValue()
+                    gotFocus = true
+                }
+            }
+        }
+        return adapter
     }
 
     private fun getSelectedValue(pane: JOptionPane, options: Array<out Any>): Int {

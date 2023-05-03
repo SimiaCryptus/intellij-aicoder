@@ -6,6 +6,10 @@
 
     <depends>com.intellij.modules.platform</depends>
 
+    <applicationListeners>
+        <listener class="com.github.simiacryptus.aicoder.MyFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
+    </applicationListeners>
+
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.simiacryptus.aicoder.config.AppSettingsState"/>
         <applicationConfigurable parentId="tools"
