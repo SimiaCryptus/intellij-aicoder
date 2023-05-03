@@ -68,7 +68,8 @@ class ImplementAction : AnAction() {
             val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
             if (computerLanguage == ComputerLanguage.Text) return false
             val caret = event.getData(CommonDataKeys.CARET)
-            val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
+            val psiFile = event.getData(CommonDataKeys.PSI_FILE)
+            if(psiFile == null) return false
             val smallestIntersectingMethod =
                 getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return false
             return isStub(smallestIntersectingMethod)
