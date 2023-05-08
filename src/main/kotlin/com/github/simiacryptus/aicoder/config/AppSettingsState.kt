@@ -1,10 +1,6 @@
 package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.openai.translate.TranslationRequest
-import com.github.simiacryptus.aicoder.openai.translate.TranslationRequestTemplate
 import com.simiacryptus.openai.ChatRequest
-import com.simiacryptus.openai.CompletionRequest
-import com.simiacryptus.openai.EditRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -30,7 +26,6 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var model_completion = "text-davinci-003"
-    var model_edit = "text-davinci-edit-001"
     var model_chat = "gpt-3.5-turbo-0301"
     var maxTokens = 1000
     var temperature = 0.1
@@ -43,28 +38,9 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var historyLimit = 10
     var humanLanguage = "English"
     var maxPrompt = 5000
-    var translationRequestTemplate = TranslationRequestTemplate.XML
     var apiLogLevel = Level.DEBUG
     var devActions = false
-    var suppressProgress = false
     var apiThreads = 4
-    fun createTranslationRequest(): TranslationRequest {
-        return translationRequestTemplate[this]
-    }
-
-    fun createCompletionRequest(): CompletionRequest {
-        val completionRequest = CompletionRequest()
-        completionRequest.temperature = temperature
-        completionRequest.max_tokens = maxTokens
-        return completionRequest
-    }
-
-    fun createEditRequest(): EditRequest {
-        val editRequest = EditRequest()
-        editRequest.setModel(model_edit)
-        editRequest.setTemperature(temperature)
-        return editRequest
-    }
 
     fun createChatRequest(): ChatRequest {
         val chatRequest = ChatRequest()
@@ -93,12 +69,10 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         if (apiBase != that.apiBase) return false
         if (apiKey != that.apiKey) return false
         if (model_completion != that.model_completion) return false
-        if (model_edit != that.model_edit) return false
         if (model_chat != that.model_chat) return false
-        if (translationRequestTemplate != that.translationRequestTemplate) return false
         if (apiLogLevel != that.apiLogLevel) return false
         if (devActions != that.devActions) return false
-        return if (suppressProgress != that.suppressProgress) false else style == that.style
+        return style == that.style
     }
 
     override fun hashCode(): Int {
@@ -106,14 +80,11 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
             apiBase,
             apiKey,
             model_completion,
-            model_edit,
             model_chat,
             maxTokens,
             temperature,
-            translationRequestTemplate,
             apiLogLevel,
             devActions,
-            suppressProgress,
             style
         )
     }

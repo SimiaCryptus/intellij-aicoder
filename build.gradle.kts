@@ -23,14 +23,15 @@ repositories {
 
 val kotlin_version = "1.7.21"
 val jetty_version = "11.0.15"
+val slf4j_version = "2.0.5"
+val skyenet_version = "1.0.7"
 dependencies {
 
-//    implementation("com.simiacryptus:JoePenai:1.0.8")
-    implementation("com.simiacryptus:joe-penai:1.0.7")
+    implementation("com.simiacryptus:joe-penai:1.0.9")
 
-    implementation("com.simiacryptus.skyenet:util:1.0.6")
-    implementation("com.simiacryptus.skyenet:core:1.0.6")
-    implementation("com.simiacryptus.skyenet:webui:1.0.6")
+    implementation("com.simiacryptus.skyenet:util:$skyenet_version")
+    implementation("com.simiacryptus.skyenet:core:$skyenet_version")
+    implementation("com.simiacryptus.skyenet:webui:$skyenet_version")
 
     implementation("org.eclipse.jetty:jetty-server:$jetty_version")
     implementation("org.eclipse.jetty:jetty-servlet:$jetty_version")
@@ -43,7 +44,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
     testImplementation(kotlin("script-runtime"))
 
-    implementation("org.slf4j:slf4j-api:2.0.5")
+    implementation("org.slf4j:slf4j-api:$slf4j_version")
 
     testImplementation("com.intellij.remoterobot:remote-robot:0.11.16")
     testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.16")
@@ -104,6 +105,7 @@ tasks {
         systemProperty("ide.mac.message.dialogs.as.sheets", "false")
         systemProperty("jb.privacy.policy.text", "<!--999.999-->")
         systemProperty("jb.consents.confirmation.enabled", "false")
+        jvmArgs("-Xmx8G")
     }
 
     signPlugin {

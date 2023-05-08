@@ -1,23 +1,35 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.showRadioButtonDialog
 import com.simiacryptus.util.StringTools
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.util.TextRange
-import java.util.*
+import com.simiacryptus.openai.proxy.ChatProxy
 import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.pow
 
-class ReplaceOptionsAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
+class ReplaceOptionsAction : BaseAction() {
+
+    interface VirtualAPI {
+        fun suggestText(prefix: String, example: String, suffix: String): Suggestions
+        data class Suggestions(
+            val choices: List<String>? = null
+        )
     }
+
+    val proxy: VirtualAPI
+        get() = ChatProxy(
+            clazz = VirtualAPI::class.java,
+            api = api,
+            maxTokens = AppSettingsState.instance.maxTokens,
+            deserializerRetries = 5,
+        ).create()
+
 
     override fun actionPerformed(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
@@ -32,30 +44,30 @@ class ReplaceOptionsAction : AnAction() {
         val allAfter = document.getText(TextRange(selectionEnd, document.textLength))
         val before = StringTools.getSuffixForContext(allBefore, idealLength).replace(newlines, " ")
         val after = StringTools.getPrefixForContext(allAfter, idealLength).replace(newlines, " ")
-        val settings = AppSettingsState.instance
-        val completionRequest = settings.createCompletionRequest()
-            .appendPrompt(
-                """
-                Give several options to fill in the blank:
 
-                ${before}_______${after}
-
-                1. $selectedText
-                2.""".trimIndent()
-            )
-        UITools.redoableRequest(
-            completionRequest, "", event,
-            { newText: CharSequence? ->
-                val options = newText!!.split("\n")
-                    .map { it.trim().replace("^\\d+\\. ".toRegex(), "").trim() }.toTypedArray()
-                showRadioButtonDialog("Select an option to fill in the blank:", *options) ?: selectedText
-            }, { newText: CharSequence? ->
-                UITools.replaceString(document, selectionStart, selectionEnd, newText!!)
-            })
+        UITools.redoableTask(event) {
+            val options = UITools.run(
+                event.project, "Brainstorming Options...", true
+            ) {
+                proxy.suggestText(
+                    before,
+                    selectedText,
+                    after
+                ).choices
+            }
+            val choice = showRadioButtonDialog("Select an option to fill in the blank:", *(options!!.toTypedArray()))
+            if (null != choice) {
+                UITools.writeableFn(event) {
+                    UITools.replaceString(
+                        document, selectionStart, selectionEnd,
+                        choice
+                    )
+                }
+            } else Runnable { }
+        }
     }
 
-    @Suppress("unused")
-    private fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(e: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
         return UITools.hasSelection(e)
     }

@@ -54,12 +54,6 @@ class LaunchSkyenetAction : AnAction() {
         ) {
             override val baseResource: Resource?
                 get() = ClasspathResource(javaClass.classLoader.getResource(resourceBase))
-            override val api: OpenAIClient
-                get() = OpenAIClient(
-                    AppSettingsState.instance.apiKey,
-                    AppSettingsState.instance.apiBase,
-                    AppSettingsState.instance.apiLogLevel
-                )
 
             override fun hands() = Map.of(
                 "ide",

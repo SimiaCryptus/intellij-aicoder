@@ -1,12 +1,13 @@
 package com.github.simiacryptus.aicoder.actions.code
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
+import com.simiacryptus.openai.proxy.ChatProxy
 import javax.swing.JOptionPane
 
 /**
@@ -15,13 +16,27 @@ import javax.swing.JOptionPane
  * The action will then generate a description of the code in the user's chosen language.
  * The description will be formatted according to the user's chosen style and will be inserted prior to the code as a comment.
  */
-class QuestionAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
+class QuestionAction : BaseAction() {
+
+    interface VirtualAPI {
+        fun questionCode(
+            code: String,
+            question: String,
+        ): Answer
+        data class Answer(
+            val text: String? = null,
+        )
     }
 
-    private fun isEnabled(e: AnActionEvent): Boolean {
+    val proxy: VirtualAPI
+        get() = ChatProxy(
+            clazz = VirtualAPI::class.java,
+            api = api,
+            maxTokens = AppSettingsState.instance.maxTokens,
+            deserializerRetries = 5,
+        ).create()
+
+    override fun isEnabled(e: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
@@ -46,49 +61,33 @@ class QuestionAction : AnAction() {
             selectionEnd = lineEndOffset
             selectedText = currentLine
         }
-        actionPerformed(event, editor, selectionStart, selectionEnd, selectedText, language)
-    }
 
-    private fun actionPerformed(
-        event: AnActionEvent,
-        editor: Editor,
-        selectionStart: Int,
-        selectionEnd: Int,
-        selectedText: String,
-        language: ComputerLanguage
-    ) {
         val indent = UITools.getIndent(event)
-        val settings = AppSettingsState.instance
         val question =
             JOptionPane.showInputDialog(null, "Question:", "Question", JOptionPane.QUESTION_MESSAGE) ?: return
         if (question.isBlank()) return
-        val request = settings.createCompletionRequest()
-            .appendPrompt(
-                """
-                Analyze the following code to answer the question "$question"
-                ```$language
-                    ${selectedText.replace("\n", "\n    ")}
-                ```
-                
-                Question: $question
-                Answer:
-            """.trimIndent()
-            )
-        UITools.redoableRequest(request, indent, event,
-            { newText ->
-                val text = """
-                    Question: $question
-                    Answer: ${newText.toString().trim()}
-                """.trimMargin()
-                //text = StringTools.lineWrapping(text!!.toString().trim { it <= ' ' }, 120)
-                "$indent${language.blockComment.fromString(text)!!.withIndent(indent)}\n$indent$selectedText"
-            }, { newText ->
-                UITools.replaceString(
+
+        UITools.redoableTask(event) {
+            val newText = UITools.run(
+                event.project, "Answering Question", true
+            ) {
+                proxy.questionCode(
+                    code = selectedText,
+                    question = question,
+                ).text ?: ""
+            }
+            val answer = """
+                    |Question: $question
+                    |Answer: ${newText.trim()}
+                    |""".trimMargin().trim()
+            UITools.writeableFn(event) {
+                UITools.insertString(
                     editor.document,
                     selectionStart,
-                    selectionEnd,
-                    newText
+                    "$indent${language.blockComment.fromString(answer)!!.withIndent(indent)}\n$indent"
                 )
-            })
+            }
+        }
+
     }
 }

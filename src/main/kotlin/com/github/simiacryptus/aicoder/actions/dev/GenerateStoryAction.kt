@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
@@ -12,7 +13,7 @@ import java.io.File
 import javax.swing.JTextArea
 import javax.swing.JTextField
 
-class GenerateStoryAction : AnAction() {
+class GenerateStoryAction : BaseAction() {
 
     interface VirtualAPI {
         data class Idea(var title: String? = "", var description: String? = "")
@@ -134,11 +135,6 @@ class GenerateStoryAction : AnAction() {
 
     }
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled()
-        super.update(e)
-    }
-
     @Suppress("UNUSED")
     class SettingsUI {
         @Name("Title")
@@ -174,7 +170,7 @@ class GenerateStoryAction : AnAction() {
 
         val selectedFolder = UITools.getSelectedFolder(e)!!
 
-        val api = ChatProxy(
+        val proxy = ChatProxy(
             clazz = VirtualAPI::class.java,
             api = OpenAIClient(
                 key = AppSettingsState.instance.apiKey,
@@ -189,7 +185,7 @@ class GenerateStoryAction : AnAction() {
             e.project, "Generating Story Entities", true
         ) {
             try {
-                api.generatePlot(
+                proxy.generatePlot(
                     VirtualAPI.Idea(
                         config.title,
                         config.description
@@ -205,7 +201,7 @@ class GenerateStoryAction : AnAction() {
             e.project, "Generating Plot Points", true
         ) {
             try {
-                api.generatePlotPoints(
+                proxy.generatePlotPoints(
                     VirtualAPI.Idea(
                         config.title,
                         config.description
@@ -225,7 +221,7 @@ class GenerateStoryAction : AnAction() {
             var previousSegment: VirtualAPI.ScreenplaySegment? = null
             for (event in storyEvents.storyEvents!!) {
                 try {
-                    segments.add(api.writeScreenplaySegment(storyTemplate, event, previousSegment))
+                    segments.add(proxy.writeScreenplaySegment(storyTemplate, event, previousSegment))
                 } finally {
                     if (it.isCanceled) throw InterruptedException()
                 }
@@ -247,7 +243,7 @@ class GenerateStoryAction : AnAction() {
             var previousPage: VirtualAPI.Page? = null
             for (segment in segments) {
                 try {
-                    pages.add(api.writeStoryPage(config.writingStyle, segment, previousPage))
+                    pages.add(proxy.writeStoryPage(config.writingStyle, segment, previousPage))
                 } finally {
                     if (it.isCanceled) throw InterruptedException()
                 }
@@ -281,7 +277,7 @@ class GenerateStoryAction : AnAction() {
     }.start()
 
 
-    private fun isEnabled(): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
         if (!AppSettingsState.instance.devActions) return false
         return true
