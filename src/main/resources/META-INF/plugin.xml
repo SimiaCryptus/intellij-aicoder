@@ -6,10 +6,6 @@
 
     <depends>com.intellij.modules.platform</depends>
 
-    <applicationListeners>
-        <listener class="com.github.simiacryptus.aicoder.MyFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
-    </applicationListeners>
-
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.simiacryptus.aicoder.config.AppSettingsState"/>
         <applicationConfigurable parentId="tools"
@@ -47,43 +43,6 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.ToStatementListAction"
-                text="To Statement List"
-                description="To statement list">
-            <!--DOC
-        The `To Statement List` action allows you to convert the selected text into a list of statements.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.dev.RecursiveToStatementListAction"
-                text="Recursive To Statement List"
-                description="Recursive to statement list">
-            <!--DOC
-        The `Recursive To Statement List` action allows you to convert the selected text into a list of statements,
-        recursively expanding any statements in the list.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.FactCheckLinkedListAction"
-                text="Fact Check List"
-                description="Fact Check List">
-            <!--DOC
-        The `Fact Check List` action allows you to add fact checking links to the selected list items.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.WikiLinksAction"
-                text="Wiki Links"
-                description="Wiki Links">
-            <!--DOC
-        The `Wiki Links` action allows you to add wikipedia links to topics in the selected text.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
-
         <action class="com.github.simiacryptus.aicoder.actions.generic.DictationAction"
                 text="Dictation"
                 description="Voice to text dictation">
@@ -107,37 +66,7 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="N"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.InsertAction"
-                text="In_sert Text"
-                description="Insert text">
-            <!--DOC
-        The `Insert Text` action allows you to quickly insert text at the cursor position.
-        It automatically captures some preceding and following context for the text completion API to make the most
-        accurate suggestions.
-        For example, if you type ‘I had a day’ and place the cursor after 'a' and then use the `Insert Text` action,
-        the API will suggest words like ‘great’, ‘bad’, or ‘delicious’.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="S"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="S"/>
-        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.AppendAction"
-                text="_Append Text"
-                description="Append text">
-            <!--DOC
-        The `Append Text` action allows you to quickly append text to the end of the current selection.
-        This is useful to quickly add to the document based on a user-determined prompting context.
-        For example, if you have a document that contains a list of items, you can use the `Append Text` action to
-        quickly add additional items to the list.
-        Additionally, you can use the `Append Text` action to quickly add additional text to the end of a sentence or
-        paragraph.
-        This can be useful for quickly adding additional details or context to a document.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.ChatAppendAction"
                 text="_Chat Append Text"
                 description="Append text using the Chat API">
             <!--DOC
@@ -147,41 +76,7 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.EditAction"
-                text="_Edit Text..."
-                description="Edit Text (Generic)">
-            <!--DOC
-        The `Edit Text` action allows you to edit the text in the current selection based on an Ad-hoc directive.
-        For example, you can translate, summarize, and correct errors.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="E"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="E"/>
-        </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.code.RewordCommentAction"
-                text="Re_word Comment"
-                description="Reword comment">
-            <!--DOC
-        The `Reword Comment` action allows you to quickly reword a comment in your code.
-        This is useful for quickly refactoring your code and making it easier to understand.
-        This is useful for managing and writing code comments.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="W"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="W"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.TranslateCommentAction"
-                text="Trans_late Comment"
-                description="Translate comment">
-            <!--DOC
-        The `Translate Comment` action allows you to quickly translate a comment in your code.
-        This is useful for quickly refactoring your code and making it easier to understand.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="L"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
-        </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownListAction"
                 text="Add _List Items"
@@ -193,39 +88,6 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="L"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableRowsAction"
-                text="Add Table Ro_ws"
-                description="Add table rows">
-            <!--DOC
-        The `Add Table Rows` action allows you to quickly add rows to a Markdown document table.
-        The new row will be filled with generated data.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="W"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="W"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableColsAction"
-                text="Add Table C_olumns"
-                description="Add table columns">
-            <!--DOC
-        The `Add Table Columns` action allows you to quickly add table columns to your Markdown document.
-        Multiple new columns will be generated and filled with generated data.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownNewTableColAction"
-                text="Add Table _Column..."
-                description="Add table column...">
-            <!--DOC
-        The `Add Table Column` action allows you to quickly add a table column to your Markdown document.
-        It will prompt you for the column name and attempt to generate new values for all rows.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
         </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.code.CustomEditAction"
@@ -250,49 +112,7 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </group>
-        <group class="com.github.simiacryptus.aicoder.actions.markdown.AnnotateTextAction"
-               text="Annotate"
-               description="Annotate text"
-               popup="true">
-            <!--DOC
-        The `Annotate` group allows you to transform natural language into a variety of NLP annotatation formats.
-        This is useful for parsing and analyzing natural language.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </group>
-        <group class="com.github.simiacryptus.aicoder.actions.generic.RecentTextEditsAction"
-               text="_Recent Text Edits"
-               description="Recent text edits"
-               popup="true">
-            <!--DOC
-        The `Recent Text Edits` group allows you to quickly access your most recent text edits.
-        This is useful for quickly accessing your most recent edits.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </group>
 
-        <action class="com.github.simiacryptus.aicoder.actions.code.FromHumanLanguageAction"
-                text="_From Text"
-                description="Implement text -&gt; code">
-            <!--DOC
-        The `From Text` action allows you to quickly convert text into code.
-        This is useful for quickly implementing text-based ideas into code.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="F"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="F"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.ToHumanLanguageAction"
-                text="_To Text"
-                description="Describe code -&gt; text">
-            <!--DOC
-        The `To Text` action allows you to quickly convert code into text.
-        This is useful for quickly describing code in plain text.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="T"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="T"/>
-        </action>
         <action class="com.github.simiacryptus.aicoder.actions.dev.GenerateProjectAction"
                 text="_Generate Project"
                 description="Generate a new software project from a description">
@@ -320,7 +140,7 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.code.PsiClassContextAction"
+        <action class="com.github.simiacryptus.aicoder.actions.code.InsertImplementationAction"
                 text="Insert _Implementation"
                 description="Insert implementation">
             <!--DOC
@@ -342,6 +162,14 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.dev.CodeChatAction"
+                text="Open Code Chat"
+                description="Open code chat">
+            <!--DOC
+        The `Open Code Chat` action opens a chat window in a browser, allowing the user to discuss the code with ChatGPT.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.QuestionAction"
                 text="Ask a _question about the code"
@@ -418,7 +246,7 @@
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="D"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.code.ImplementAction"
+        <action class="com.github.simiacryptus.aicoder.actions.code.ImplementStubAction"
                 text="_Implement Stub"
                 description="Implement stub">
             <!--DOC
@@ -456,12 +284,6 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
         </group>
 
-
-        <action class="com.github.simiacryptus.aicoder.actions.dev.MarkdownContextAction"
-                text="E_xecute Directive"
-                description="Execute directive">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
-        </action>
 
     </actions>
 

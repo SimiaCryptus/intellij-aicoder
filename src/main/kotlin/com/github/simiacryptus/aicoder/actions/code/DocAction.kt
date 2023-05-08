@@ -1,17 +1,16 @@
 package com.github.simiacryptus.aicoder.actions.code
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.UITools.getInstruction
-import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
+import com.github.simiacryptus.aicoder.util.UITools.insertString
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
-import com.simiacryptus.util.StringTools
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.openai.proxy.ChatProxy
 
 /**
  * The DocAction is an IntelliJ action that enables users to add detailed documentation to their code.
@@ -25,11 +24,53 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
  * DocAction is a useful tool for quickly adding detailed documentation to code.
  * It can save time and effort, and make code easier to read and understand.
  */
-class DocAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
+class DocAction : BaseAction() {
+
+    interface VirtualAPI {
+        fun processCode(
+            code: String,
+            operation: String,
+            computerLanguage: String,
+            humanLanguage: String,
+        ): ConvertedText
+
+        data class ConvertedText(
+            val text: String? = null,
+            val language: String? = null,
+        )
     }
+
+    val proxy: VirtualAPI
+        get() {
+            val chatProxy = ChatProxy(
+                clazz = VirtualAPI::class.java,
+                api = api,
+                maxTokens = AppSettingsState.instance.maxTokens,
+                deserializerRetries = 5,
+            )
+            chatProxy.addExample(
+                VirtualAPI.ConvertedText(
+                    text = """
+                        /**
+                         *  Prints "Hello, world!" to the console
+                         */
+                        """.trimIndent().trim(),
+                    language = "English"
+                )
+            ) {
+                it.processCode(
+                    code = """
+                        fun hello() {
+                            println("Hello, world!")
+                        }
+                        """.trimIndent().trim(),
+                    operation = "Write detailed KDoc prefix for code block",
+                    computerLanguage = "Kotlin",
+                    humanLanguage = "English"
+                )
+            }
+            return chatProxy.create()
+        }
 
     override fun actionPerformed(event: AnActionEvent) {
         val language = ComputerLanguage.getComputerLanguage(event)
@@ -41,46 +82,40 @@ class DocAction : AnAction() {
         val settings = AppSettingsState.instance
         val code = smallestIntersectingMethod.text
         val indentedInput = IndentedText.fromString(code)
-        val indent = indentedInput.indent
         val startOffset = smallestIntersectingMethod.textRange.startOffset
         val endOffset = smallestIntersectingMethod.textRange.endOffset
-        val completionRequest = settings.createTranslationRequest()
-            .setInputType(language!!.name)
-            .setOutputType(language.name)
-            .setInstruction(getInstruction("Rewrite to include detailed " + language.docStyle))
-            .setInputAttribute("type", "uncommented")
-            .setOutputAttrute("type", "commented")
-            .setOutputAttrute("style", settings.style)
-            .setInputText(indentedInput.textBlock)
-            .buildCompletionRequest()
-            .addStops(language.multilineCommentSuffix!!)
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
-        redoableRequest(completionRequest, "", event,
-            { docString ->
-                language.docComment.fromString(docString.toString().trim { it <= ' ' })!!.withIndent(indent)
-                    .toString() + "\n" + indent + StringTools.trimPrefix(indentedInput.toString())
-            },
-            { docString ->
-                replaceString(
+        val outputHumanLanguage = settings.humanLanguage
+
+        UITools.redoableTask(event) {
+            val docString = UITools.run(
+                event.project, "Documenting Code", true
+            ) {
+                proxy.processCode(
+                    code = indentedInput.textBlock.toString(),
+                    operation = "Write detailed " + (language?.docStyle ?: "documentation") + " prefix for code block",
+                    computerLanguage = language!!.name,
+                    humanLanguage = outputHumanLanguage,
+                ).text ?: ""
+            }
+            UITools.writeableFn(event) {
+                insertString(
                     document,
                     startOffset,
-                    endOffset,
                     docString
                 )
             }
-        )
+        }
     }
 
-    companion object {
-        private fun isEnabled(event: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
-            val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
-            if (computerLanguage == ComputerLanguage.Text) return false
-            if (computerLanguage.docStyle.isEmpty()) return false
-            val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
-            val caret = event.getData(CommonDataKeys.CARET)
-            PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return false
-            return true
-        }
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (UITools.isSanctioned()) return false
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+        if (computerLanguage == ComputerLanguage.Text) return false
+        if (computerLanguage.docStyle.isEmpty()) return false
+        val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
+        val caret = event.getData(CommonDataKeys.CARET)
+        PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return false
+        return true
     }
 }

@@ -1,11 +1,11 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.github.simiacryptus.aicoder.util.UITools.insertString
-import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
-import com.intellij.openapi.actionSystem.AnAction
+import com.simiacryptus.openai.ChatMessage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import java.util.*
@@ -15,36 +15,42 @@ import java.util.*
  * To use, select some text and then select the GenericAppend action from the editor context menu.
  * The action will insert the completion at the end of the selected text.
  */
-class AppendAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
-    }
+class AppendAction : BaseAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val before: CharSequence? = Objects.requireNonNull(caret)!!.selectedText
         val settings = AppSettingsState.instance
-        val completionRequest = settings.createCompletionRequest().appendPrompt(before ?: "")
+        val request = settings.createChatRequest() //.appendPrompt(before ?: "")
+        request.messages = arrayOf(
+            ChatMessage(
+                ChatMessage.Role.system,
+                "Append text to the end of the user's prompt"
+            ),
+            ChatMessage(
+                ChatMessage.Role.user,
+                before.toString()
+            )
+        )
         val document = event.getRequiredData(CommonDataKeys.EDITOR).document
         val selectionEnd = caret!!.selectionEnd
-        redoableRequest(
-            completionRequest, "", event
-        ) { newText: CharSequence? ->
-            insertString(
-                document, selectionEnd,
-                newText!!
-            )
+        UITools.redoableTask(event) {
+            val newText = UITools.run(
+                event.project, "Getting completion", true
+            ) {
+                api.chat(request).choices[0].message?.content ?: ""
+            }
+            UITools.writeableFn(event) {
+                insertString(document, selectionEnd, newText)
+            }
         }
+    }
+    @Suppress("unused")
+    override fun isEnabled(e: AnActionEvent): Boolean {
+        if (UITools.isSanctioned()) return false
+        return hasSelection(e)
     }
 
-    companion object {
-        @Suppress("unused")
-        private fun isEnabled(e: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
-            return hasSelection(e)
-        }
-    }
 }
 
 

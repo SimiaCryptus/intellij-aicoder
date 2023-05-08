@@ -7,10 +7,21 @@
 ### Added
 - 
 
+## [1.1.0]
+
+### Added
+- "Code Chat" action
+
+### Removed
+- Various legacy actions that are no longer supported - Sorry, too many experiments to maintain! However, if you have a favorite that's now missing, let me know and I'll look into it.
+
+### Improved
+- All remaining actions have been rewritten to use the Chat API, thus making newer models available 
+
 ## [1.0.20]
 
 ### Added
-- Prototype integration with the "Skyenet" AI tool 
+- Prototype integration with the "Skyenet" AI tool
 
 ### Improved
 - Various bug fixes

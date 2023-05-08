@@ -1,24 +1,17 @@
 package com.github.simiacryptus.aicoder.actions.markdown
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getIndent
-import com.github.simiacryptus.aicoder.util.UITools.getInstruction
 import com.github.simiacryptus.aicoder.util.UITools.insertString
-import com.github.simiacryptus.aicoder.util.UITools.redoableRequest
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getAll
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersecting
-import com.simiacryptus.util.StringTools
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.editor.Caret
-import com.intellij.psi.PsiElement
-import java.util.*
-import java.util.function.Function
-import java.util.stream.Collectors
-import java.util.stream.Stream
+import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.util.StringTools
 
 /**
  * The MarkdownListAction class is an action that allows users to quickly expand a list of items in IntelliJ.
@@ -26,103 +19,88 @@ import java.util.stream.Stream
  * The action will then use current list items to generate further items via OpenAI's GPT-3 API.
  * These new items will be inserted into the document at the end of the list.
  */
-class MarkdownListAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
-    }
+class MarkdownListAction : BaseAction() {
 
-    override fun actionPerformed(event: AnActionEvent) {
-        val markdownListParams = getMarkdownListParams(event)
-        val settings = AppSettingsState.instance
-        val items = StringTools.trim(
-            getAll(
-                Objects.requireNonNull(markdownListParams)!!.list, "MarkdownListItemImpl"
-            )
-                .stream().map { item: PsiElement? ->
-                    getAll(
-                        item!!, "MarkdownParagraphImpl"
-                    )[0].text
-                }.collect(Collectors.toList()), 10, false
+    interface VirtualAPI {
+        fun newListItems(
+            items: List<String?>?,
+            count: Int,
+        ): Items
+
+        data class Items(
+            val items: List<String?>? = null,
         )
-        val indent = getIndent(markdownListParams!!.caret)
-        val n: CharSequence = (items.size * 2).toString()
-        val endOffset = markdownListParams.list.textRange.endOffset
-        val listPrefix = "* "
-        val completionRequest = settings.createTranslationRequest()
-            .setInstruction(getInstruction("List $n items"))
-            .setInputType("instruction")
-            .setInputText("List $n items")
-            .setOutputType("list")
-            .setOutputAttrute("style", settings.style)
-            .buildCompletionRequest()
-            .appendPrompt(
-                """
-                ${
-                    items.stream().map { x2: CharSequence? -> listPrefix + x2 }
-                        .collect(Collectors.joining("\n"))
-                }
-                $listPrefix
-                """.trimIndent()
-            )
-        val document = event.getRequiredData(CommonDataKeys.EDITOR).document
-        redoableRequest(completionRequest, "", event,
-            Function { newText: CharSequence? ->
-                transformCompletion(
-                    markdownListParams, indent, listPrefix, newText!!
-                )
-            },
-            Function { newText: CharSequence? ->
-                insertString(
-                    document, endOffset,
-                    newText!!
-                )
-            })
     }
 
-    class MarkdownListParams constructor(val caret: Caret, val list: PsiElement)
-    companion object {
-        private fun isEnabled(e: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
-            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            return if (ComputerLanguage.Markdown != computerLanguage) false else null != getMarkdownListParams(e)
+    val proxy: VirtualAPI
+        get() {
+            val chatProxy = ChatProxy(
+                clazz = VirtualAPI::class.java,
+                api = api,
+                maxTokens = AppSettingsState.instance.maxTokens,
+                deserializerRetries = 5,
+            )
+            chatProxy.addExample(
+                returnValue = VirtualAPI.Items(
+                    items = listOf("Item 4", "Item 5", "Item 6")
+                )
+            ){
+                it.newListItems(
+                    items = listOf("Item 1", "Item 2", "Item 3"),
+                    count = 6
+                )
+            }
+            return chatProxy.create()
+        }
+    override fun actionPerformed(event: AnActionEvent) {
+        val caret = event.getData(CommonDataKeys.CARET) ?: return
+        val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
+        val list =
+            getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl") ?: return
+        val items = StringTools.trim(
+            getAll(list, "MarkdownListItemImpl")
+                .map {
+                    getAll(it, "MarkdownParagraphImpl")[0].text
+                }.toList(), 10, false
+        )
+        val indent = getIndent(caret)
+        val endOffset = list.textRange.endOffset
+        val bulletTypes = listOf("- [ ] ", "- ", "* ")
+        val document = event.getRequiredData(CommonDataKeys.EDITOR).document
+        val rawItems = items.map(CharSequence::trim).map {
+            val bulletType = bulletTypes.find(it::startsWith)
+            if (null != bulletType) StringTools.stripPrefix(it, bulletType).toString()
+            else it.toString()
         }
 
-        fun getMarkdownListParams(e: AnActionEvent): MarkdownListParams? {
-            val caret = e.getData(CommonDataKeys.CARET)
-                ?: return null
-            val psiFile = e.getData(CommonDataKeys.PSI_FILE)
-                ?: return null
-            val list = getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl")
-                ?: return null
-            return MarkdownListParams(caret, list)
+        UITools.redoableTask(event) {
+            val newItems = UITools.run(
+                event.project, "Generating New Items", true
+            ) {
+                proxy.newListItems(
+                    rawItems,
+                    (items.size * 2)
+                ).items
+            }
+            val strippedList = list.text.split("\n")
+                .map(String::trim).filter(String::isNotEmpty)
+                .joinToString("\n")
+            val bulletString = bulletTypes.find(strippedList::startsWith) ?: "1. "
+            val newList = newItems?.joinToString("\n") { indent.toString() + bulletString + it } ?: ""
+            UITools.writeableFn(event) {
+                insertString(document, endOffset, "\n" + newList)
+            }
         }
+    }
 
-        private fun transformCompletion(
-            markdownListParams: MarkdownListParams,
-            indent: CharSequence,
-            listPrefix: String,
-            complete: CharSequence
-        ): String {
-            val newItems = Arrays.stream(complete.toString().split("\n".toRegex()).dropLastWhile { it.isEmpty() }
-                .toTypedArray()).map { obj: String -> obj.trim { it <= ' ' } }
-                .filter { x1: String -> x1.isNotEmpty() }.map { x1: String? ->
-                    StringTools.stripPrefix(
-                        x1!!, listPrefix
-                    )
-                }.collect(Collectors.toList())
-            val strippedList =
-                Arrays.stream(markdownListParams.list.text.split("\n".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray())
-                    .map { obj: String -> obj.trim { it <= ' ' } }.filter { x: String -> x.isNotEmpty() }
-                    .collect(Collectors.joining("\n"))
-            val bulletString = Stream.of("- [ ] ", "- ", "* ")
-                .filter { prefix: String? -> strippedList.startsWith(prefix!!) }.findFirst().orElse("1. ")
-            val itemText: CharSequence =
-                indent.toString() + newItems.stream().map { x: CharSequence -> bulletString + x }
-                    .collect(Collectors.joining("\n$indent"))
-            return "\n$itemText"
-        }
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (UITools.isSanctioned()) return false
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+        if (ComputerLanguage.Markdown != computerLanguage) return false
+        val caret = event.getData(CommonDataKeys.CARET) ?: return false
+        val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return false
+        getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl") ?: return false
+        return true
     }
 }
 

@@ -1,23 +1,41 @@
 package com.github.simiacryptus.aicoder.actions.code
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiClassContext
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Caret
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.simiacryptus.openai.proxy.ChatProxy
 import java.util.*
 
-class PsiClassContextAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
+class InsertImplementationAction : BaseAction() {
+
+    interface VirtualAPI {
+        fun implementCode(
+            specification: String,
+            prefix: String,
+            computerLanguage: String,
+            humanLanguage: String,
+        ): ConvertedText
+        data class ConvertedText(
+            val code: String? = null,
+            val language: String? = null
+        )
     }
+
+    val proxy: VirtualAPI
+        get() = ChatProxy(
+            clazz = VirtualAPI::class.java,
+            api = api,
+            maxTokens = AppSettingsState.instance.maxTokens,
+            deserializerRetries = 5,
+        ).create()
 
     override fun actionPerformed(event: AnActionEvent) {
         val humanLanguage = AppSettingsState.instance.humanLanguage
@@ -49,37 +67,29 @@ class PsiClassContextAction : AnAction() {
             psiClassContextActionParams.selectionEnd,
             computerLanguage
         )
-        val request = settings.createTranslationRequest()
-            .setInstruction("Implement " + humanLanguage + " as " + computerLanguage.name + " code")
-            .setInputType(humanLanguage)
-            .setInputAttribute("type", "instruction")
-            .setInputText(specification)
-            .setOutputType(computerLanguage.name)
-            .setOutputAttrute("type", "code")
-            .setOutputAttrute("style", settings.style)
-            .buildCompletionRequest()
-            .appendPrompt(
-                """
-                $psiClassContext
-                
-                """.trimIndent()
-            )
-        UITools.redoableRequest(request, UITools.getIndent(psiClassContextActionParams.caret), event,
-            { newText ->
-                """
-                    
-                    $newText
-                    """.trimIndent()
-            }, { newText ->
+
+
+        UITools.redoableTask(event) {
+            val newText = UITools.run(
+                event.project, "Converting for Paste", true
+            ) {
+                proxy.implementCode(
+                    specification = specification,
+                    prefix = psiClassContext.toString(),
+                    computerLanguage = computerLanguage.name,
+                    humanLanguage = humanLanguage,
+                ).code ?: ""
+            }
+            UITools.writeableFn(event) {
                 UITools.insertString(
                     editor.document, endOffset,
                     newText
                 )
             }
-        )
+        }
     }
 
-    class PsiClassContextActionParams constructor(
+    class PsiClassContextActionParams(
         val psiFile: PsiFile,
         val caret: Caret,
         val selectionStart: Int,
@@ -87,14 +97,14 @@ class PsiClassContextAction : AnAction() {
         val largestIntersectingComment: PsiElement
     )
 
-    companion object {
-        private fun isEnabled(e: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
-            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if (computerLanguage == ComputerLanguage.Text) return false
-            return getPsiClassContextActionParams(e).isPresent
-        }
+    override fun isEnabled(e: AnActionEvent): Boolean {
+        if (UITools.isSanctioned()) return false
+        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+        if (computerLanguage == ComputerLanguage.Text) return false
+        return getPsiClassContextActionParams(e).isPresent
+    }
 
+    companion object {
         fun getPsiClassContextActionParams(e: AnActionEvent): Optional<PsiClassContextActionParams> {
             val psiFile = e.getData(CommonDataKeys.PSI_FILE)
             if (null != psiFile) {

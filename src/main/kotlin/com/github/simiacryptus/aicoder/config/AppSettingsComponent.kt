@@ -1,13 +1,13 @@
+@file:Suppress("unused")
+
 package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.openai.ui.OpenAI_API
-import com.github.simiacryptus.aicoder.util.StyleUtil
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
-import com.jetbrains.rd.util.LogLevel
 import java.awt.event.ActionEvent
 import java.util.*
 import javax.swing.AbstractAction
@@ -15,26 +15,6 @@ import javax.swing.JButton
 import javax.swing.JComponent
 
 class AppSettingsComponent {
-    /*
-     Question: Why is the name annotation missing at runtime from the public field?
-     Answer: The annotation removes the name annotation from the public field at runtime. This allows the field to be accessed directly from Java code without the need for getter and setter methods.
-    */
-    @Name("Style")
-    val style = JBTextField()
-
-    @Suppress("unused")
-    val randomizeStyle = JButton(object : AbstractAction("Randomize Style") {
-        override fun actionPerformed(e: ActionEvent) {
-            style.text = StyleUtil.randomStyle()
-        }
-    })
-
-    @Suppress("unused")
-    val testStyle = JButton(object : AbstractAction("Test Style") {
-        override fun actionPerformed(e: ActionEvent) {
-            StyleUtil.demoStyle(style.text)
-        }
-    })
 
     @Name("Token Counter")
     val tokenCounter = JBTextField()
@@ -59,13 +39,8 @@ class AppSettingsComponent {
     val devActions = JBCheckBox()
 
     @Suppress("unused")
-    @Name("Suppress Progress (UNSAFE)")
-    val suppressProgress = JBCheckBox()
-
-    @Suppress("unused")
     @Name("API Log Level")
-    val apiLogLevel = ComboBox(Arrays.stream(LogLevel.values()).map { obj: LogLevel -> obj.name }
-        .toArray { size: Int -> arrayOfNulls<String>(size) })
+    val apiLogLevel = ComboBox(org.slf4j.event.Level.values().map { it.name }.toTypedArray())
 
     @Suppress("unused")
     @Name("Temperature")
@@ -81,13 +56,10 @@ class AppSettingsComponent {
 
     @Suppress("unused")
     @Name("Completion Model")
-    val model_completion = OpenAI_API.modelSelector
-
-    @Name("Edit Model")
-    val model_edit = OpenAI_API.modelSelector
+    val model_completion = UITools.modelSelector
 
     @Name("Chat Model")
-    val model_chat = OpenAI_API.modelSelector
+    val model_chat = UITools.modelSelector
 
     @Name("API Threads")
     val apiThreads = JBTextField()

@@ -1,12 +1,13 @@
 package com.github.simiacryptus.aicoder.actions.code
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
+import com.simiacryptus.openai.proxy.ChatProxy
 import java.awt.datatransfer.DataFlavor
 
 /**
@@ -16,11 +17,22 @@ import java.awt.datatransfer.DataFlavor
  * If the text is successfully translated, it will be inserted into the editor at the current cursor position.
  * If there is already text selected, the translated text will replace the selected text.
  */
-class PasteAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
+class PasteAction : BaseAction() {
+    interface VirtualAPI {
+        fun convert(text: String, from_language: String, to_language: String): ConvertedText
+        data class ConvertedText(
+            val code: String? = null,
+            val language: String? = null
+        )
     }
+
+    val proxy: VirtualAPI
+        get() = ChatProxy(
+            clazz = VirtualAPI::class.java,
+            api = api,
+            maxTokens = AppSettingsState.instance.maxTokens,
+            deserializerRetries = 5,
+        ).create()
 
     override fun actionPerformed(event: AnActionEvent) {
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
@@ -33,39 +45,36 @@ class PasteAction : AnAction() {
         val text =
             CopyPasteManager.getInstance().getContents<Any>(DataFlavor.stringFlavor)!!.toString()
                 .trim { it <= ' ' }
-        val request = AppSettingsState.instance.createTranslationRequest()
-            .setInputType("source")
-            .setOutputType("translated")
-            .setInstruction("Translate this input into $language")
-            .setInputAttribute("language", "autodetect")
-            .setOutputAttrute("language", language)
-            .setInputText(text)
-            .buildCompletionRequest()
-        val caret = event.getData(CommonDataKeys.CARET)
-        val indent = UITools.getIndent(caret)
-        UITools.redoableRequest(
-            request, indent, event
-        ) { newText: CharSequence? ->
-            if (selectedText == null) {
-                return@redoableRequest UITools.insertString(editor.document, selectionStart, newText!!)
-            } else {
-                return@redoableRequest UITools.replaceString(
-                    editor.document, selectionStart, selectionEnd,
-                    newText!!
-                )
+
+        UITools.redoableTask(event) {
+            val newText = UITools.run(
+                event.project, "Converting for Paste", true
+            ) {
+                proxy.convert(text = text, "autodetect", language).code ?: ""
+            }
+            UITools.writeableFn(event) {
+                if (selectedText == null) {
+                    UITools.insertString(editor.document, selectionStart, newText)
+                } else {
+                    UITools.replaceString(
+                        editor.document, selectionStart, selectionEnd,
+                        newText
+                    )
+                }
             }
         }
     }
 
-    companion object {
-        private fun isEnabled(e: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
-            return if (CopyPasteManager.getInstance()
-                    .getContents<Any?>(DataFlavor.stringFlavor) == null
-            ) false else {
-                val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-                computerLanguage != ComputerLanguage.Text
-            }
+    override fun isEnabled(e: AnActionEvent): Boolean {
+        if (UITools.isSanctioned()) return false
+        return if (CopyPasteManager.getInstance()
+                .getContents<Any?>(DataFlavor.stringFlavor) == null
+        ) false else {
+            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+            computerLanguage != ComputerLanguage.Text
         }
     }
+
 }
+
+

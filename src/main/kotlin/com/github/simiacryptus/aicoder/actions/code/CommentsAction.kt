@@ -1,12 +1,12 @@
 package com.github.simiacryptus.aicoder.actions.code
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import java.util.*
+import com.simiacryptus.openai.proxy.ChatProxy
 
 /**
  * The CommentsAction class is an IntelliJ action that allows users to add detailed comments to their code.
@@ -14,45 +14,63 @@ import java.util.*
  * Then, select the action in the context menu.
  * The action will then generate a new version of the code with comments added.
  */
-class CommentsAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
+class CommentsAction : BaseAction() {
+
+    interface VirtualAPI {
+        fun editCode(
+            code: String,
+            operations: String,
+            computerLanguage: String,
+            humanLanguage: String,
+        ): ConvertedText
+        data class ConvertedText(
+            val code: String? = null,
+            val language: String? = null
+        )
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-        val editor = e.getRequiredData(CommonDataKeys.EDITOR)
+    val proxy: VirtualAPI
+        get() = ChatProxy(
+            clazz = VirtualAPI::class.java,
+            api = api,
+            maxTokens = AppSettingsState.instance.maxTokens,
+            deserializerRetries = 5,
+        ).create()
+
+
+    override fun actionPerformed(event: AnActionEvent) {
+        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         val selectionStart = primaryCaret.selectionStart
         val selectionEnd = primaryCaret.selectionEnd
         val selectedText = primaryCaret.selectedText
         val outputHumanLanguage = AppSettingsState.instance.humanLanguage
-        val language = ComputerLanguage.getComputerLanguage(e)
-        val settings = AppSettingsState.instance
-        val request = settings.createTranslationRequest()
-            .setInputType(Objects.requireNonNull(language)!!.name)
-            .setOutputType(language!!.name)
-            .setInstruction(UITools.getInstruction("Rewrite to include detailed $outputHumanLanguage code comments for every line"))
-            .setInputAttribute("type", "commented")
-            .setOutputAttrute("type", "uncommented")
-            .setOutputAttrute("style", settings.style)
-            .setInputText(selectedText)
-            .buildCompletionRequest()
-        val caret = e.getData(CommonDataKeys.CARET)
-        val indent = UITools.getIndent(caret)
-        UITools.redoableRequest(
-            request, indent, e
-        ) { newText: CharSequence? -> UITools.replaceString(editor.document, selectionStart, selectionEnd, newText!!) }
+        val language = ComputerLanguage.getComputerLanguage(event)
+
+        UITools.redoableTask(event) {
+            val newText = UITools.run(
+                event.project, "Commenting Code", true
+            ) {
+                proxy.editCode(
+                    code = selectedText!!,
+                    operations = "Add comments to each line explaining the code",
+                    computerLanguage = language!!.name,
+                    humanLanguage = outputHumanLanguage,
+                ).code ?: ""
+            }
+            UITools.writeableFn(event) {
+                UITools.replaceString(editor.document, selectionStart, selectionEnd, newText!!)
+            }
+        }
+
     }
 
-    companion object {
-        private fun isEnabled(e: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
-            if (!UITools.hasSelection(e)) return false
-            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if (computerLanguage == ComputerLanguage.Text) return false
-            return true
-        }
+    override fun isEnabled(e: AnActionEvent): Boolean {
+        if (UITools.isSanctioned()) return false
+        if (!UITools.hasSelection(e)) return false
+        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+        if (computerLanguage == ComputerLanguage.Text) return false
+        return true
     }
 }
