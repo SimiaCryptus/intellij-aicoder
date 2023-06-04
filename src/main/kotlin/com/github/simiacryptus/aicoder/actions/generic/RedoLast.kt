@@ -13,8 +13,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
  * This will redo the last action that was performed in the editor.
  */
 class RedoLast : BaseAction() {
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)

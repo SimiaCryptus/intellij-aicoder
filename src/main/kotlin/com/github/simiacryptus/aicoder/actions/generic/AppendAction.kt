@@ -18,8 +18,6 @@ import java.util.*
  */
 class AppendAction : BaseAction() {
 
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
     override fun actionPerformed(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val before: CharSequence? = Objects.requireNonNull(caret)!!.selectedText

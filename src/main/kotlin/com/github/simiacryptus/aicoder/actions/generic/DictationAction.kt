@@ -22,8 +22,6 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 
 class DictationAction : BaseAction() {
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
     override fun actionPerformed(event: AnActionEvent) {
         val continueFn = statusDialog(event)::isVisible
 

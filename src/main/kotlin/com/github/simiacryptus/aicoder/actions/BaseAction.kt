@@ -13,7 +13,7 @@ abstract class BaseAction(
     icon: Icon? = null,
     ) : AnAction(name, description, icon) {
 
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+    //override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     val api: OpenAIClient
         get() = UITools.api

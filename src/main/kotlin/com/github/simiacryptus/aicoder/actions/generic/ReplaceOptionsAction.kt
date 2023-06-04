@@ -15,9 +15,6 @@ import kotlin.math.ln
 import kotlin.math.pow
 
 class ReplaceOptionsAction : BaseAction() {
-
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
     interface VirtualAPI {
         fun suggestText(prefix: String, example: String, suffix: String): Suggestions
         data class Suggestions(
