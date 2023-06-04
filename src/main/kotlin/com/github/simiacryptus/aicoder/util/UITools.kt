@@ -1,4 +1,4 @@
-@file:Suppress("UNNECESSARY_SAFE_CALL")
+@file:Suppress("UNNECESSARY_SAFE_CALL", "UNCHECKED_CAST")
 
 package com.github.simiacryptus.aicoder.util
 
@@ -66,16 +66,22 @@ object UITools {
     ) {
         Futures.addCallback(pool.submit<Runnable> {
             request.get()
-        }, object : FutureCallback<Runnable> {
-            override fun onSuccess(undo: Runnable) {
-                val document = event.getRequiredData(CommonDataKeys.EDITOR).document
-                retry[document] = getRetry(event, request, undo)
-            }
+        }, futureCallback(event, request), pool)
+    }
 
-            override fun onFailure(t: Throwable) {
-                handle(t)
-            }
-        }, pool)
+    fun futureCallback(
+        event: AnActionEvent,
+        request: Supplier<Runnable>,
+    ) = object : FutureCallback<Runnable> {
+        override fun onSuccess(undo: Runnable) {
+            val requiredData = event.getData(CommonDataKeys.EDITOR) ?: return
+            val document = requiredData.document
+            retry[document] = getRetry(event, request, undo)
+        }
+
+        override fun onFailure(t: Throwable) {
+            handle(t)
+        }
     }
 
     fun getRetry(
@@ -89,16 +95,7 @@ object UITools {
                     WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
                     request.get()
                 },
-                object : FutureCallback<Runnable> {
-                    override fun onSuccess(nextUndo: Runnable) {
-                        val document = event.getRequiredData(CommonDataKeys.EDITOR).document
-                        retry[document] = getRetry(event, request, nextUndo)
-                    }
-
-                    override fun onFailure(t: Throwable) {
-                        handle(t)
-                    }
-                },
+                futureCallback(event, request),
                 pool
             )
         }
@@ -773,8 +770,7 @@ object UITools {
             // ISO 3166 - Uzbekistan
             if (locale.country.compareTo("UZ", true) == 0) return false
             // ISO 3166 - Mongolia
-            if (locale.country.compareTo("MN", true) == 0) return false
-            return true
+            return locale.country.compareTo("MN", true) != 0
         }
         return false
     }
@@ -791,6 +787,7 @@ object UITools {
         e: AnActionEvent,
         uiClass: Class<T>,
         configClass: Class<C>,
+        title: String = "Generate Project",
         onComplete: (C) -> Unit,
     ) {
         val project = e.project
@@ -799,10 +796,10 @@ object UITools {
         val dialog = object : DialogWrapper(project) {
             init {
                 this.init()
-                this.title = "Generate Project"
+                this.title = title
                 this.setOKButtonText("Generate")
                 this.setCancelButtonText("Cancel")
-                this.setResizable(true)
+                this.isResizable = true
                 //this.setPreferredFocusedComponent(this)
                 //this.setContent(this)
             }
@@ -833,6 +830,21 @@ object UITools {
             }
         }
         return project?.baseDir
+    }
+    fun getSelectedFile(e: AnActionEvent): VirtualFile? {
+        val dataContext = e.dataContext
+        val data = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext)
+        if (data != null && !data.isDirectory) {
+            return data
+        }
+        val editor = PlatformDataKeys.EDITOR.getData(dataContext)
+        if (editor != null) {
+            val file = FileDocumentManager.getInstance().getFile(editor.document)
+            if (file != null) {
+                return file
+            }
+        }
+        return null
     }
 
     fun isInterruptedException(e: Throwable?): Boolean {
@@ -931,7 +943,7 @@ object UITools {
     fun checkApiKey(k: String = AppSettingsState.instance.apiKey): String {
         var key = k
         if (key.isEmpty()) {
-            synchronized(OpenAIClient.javaClass) {
+            synchronized(OpenAIClient::class.java) {
                 key = AppSettingsState.instance.apiKey
                 if (key.isEmpty()) {
                     key = queryAPIKey()!!.toString()
@@ -961,7 +973,7 @@ object UITools {
     fun <I : Any?, O : Any?> map(
         moderateAsync: ListenableFuture<I>,
         o: com.google.common.base.Function<in I, out O>,
-    ): ListenableFuture<O> = Futures.transform(moderateAsync, o, UITools.pool)
+    ): ListenableFuture<O> = Futures.transform(moderateAsync, o, pool)
 
     fun filterStringResult(
         indent: CharSequence = "",

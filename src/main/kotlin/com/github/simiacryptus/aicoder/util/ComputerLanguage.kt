@@ -465,9 +465,8 @@ enum class ComputerLanguage(configuration: Configuration) {
             }.findAny().orElse(null)
         }
 
-        fun getComputerLanguage(e: AnActionEvent): ComputerLanguage? {
-            val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
-                ?: return null
+        fun getComputerLanguage(e: AnActionEvent?): ComputerLanguage? {
+            val file = e?.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
             val extension = if (file.extension != null) file.extension!!.lowercase(Locale.getDefault()) else ""
             return findByExtension(extension)
         }

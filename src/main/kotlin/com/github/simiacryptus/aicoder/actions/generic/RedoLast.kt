@@ -1,8 +1,9 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.retry
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 
@@ -11,7 +12,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
  * To use this action, open the editor and select the RedoLast action from the editor context menu.
  * This will redo the last action that was performed in the editor.
  */
-class RedoLast : AnAction() {
+class RedoLast : BaseAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)

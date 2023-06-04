@@ -5,7 +5,6 @@ fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
     id("java")
-    id("scala")
     id("org.jetbrains.kotlin.jvm") version "1.7.21"
     id("org.jetbrains.intellij") version "1.13.3"
     id("org.jetbrains.changelog") version "2.0.0"
@@ -24,31 +23,31 @@ repositories {
 val kotlin_version = "1.7.21"
 val jetty_version = "11.0.15"
 val slf4j_version = "2.0.5"
-val skyenet_version = "1.0.7"
+val skyenet_version = "1.0.8"
 dependencies {
 
-    implementation("com.simiacryptus:joe-penai:1.0.9")
+    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.10")
 
-    implementation("com.simiacryptus.skyenet:util:$skyenet_version")
-    implementation("com.simiacryptus.skyenet:core:$skyenet_version")
-    implementation("com.simiacryptus.skyenet:webui:$skyenet_version")
+    implementation(group = "com.simiacryptus.skyenet", name = "util", version = skyenet_version)
+    implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
+    implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
 
-    implementation("org.eclipse.jetty:jetty-server:$jetty_version")
-    implementation("org.eclipse.jetty:jetty-servlet:$jetty_version")
-    implementation("org.eclipse.jetty:jetty-annotations:$jetty_version")
-    implementation("org.eclipse.jetty.websocket:websocket-jetty-server:$jetty_version")
-    implementation("org.eclipse.jetty.websocket:websocket-jetty-client:$jetty_version")
-    implementation("org.eclipse.jetty.websocket:websocket-servlet:$jetty_version")
+    implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
+    implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
+    implementation(group = "org.eclipse.jetty", name = "jetty-annotations", version = jetty_version)
+    implementation(group = "org.eclipse.jetty.websocket", name = "websocket-jetty-server", version = jetty_version)
+    implementation(group = "org.eclipse.jetty.websocket", name = "websocket-jetty-client", version = jetty_version)
+    implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
+    implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = kotlin_version)
+    implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = kotlin_version)
     testImplementation(kotlin("script-runtime"))
 
-    implementation("org.slf4j:slf4j-api:$slf4j_version")
+    implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
 
-    testImplementation("com.intellij.remoterobot:remote-robot:0.11.16")
-    testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.16")
-    testImplementation("com.squareup.okhttp3:okhttp:3.14.9")
+    testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = "0.11.16")
+    testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = "0.11.16")
+    testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "3.14.9")
 }
 
 

@@ -43,7 +43,7 @@ class MarkdownImplementAction(private val language: String) : BaseAction(
         val caret = event.getData(CommonDataKeys.CARET)
         val selectedText = caret!!.selectedText ?: return
         val endOffset = caret.selectionEnd
-        val document = event.getRequiredData(CommonDataKeys.EDITOR).document
+        val document = (event.getData(CommonDataKeys.EDITOR) ?: return).document
 
         UITools.redoableTask(event) {
             val code = UITools.run(
@@ -64,10 +64,10 @@ class MarkdownImplementAction(private val language: String) : BaseAction(
         }
     }
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (ComputerLanguage.Markdown != computerLanguage) return false
-        return hasSelection(e)
+        return hasSelection(event)
     }
 }

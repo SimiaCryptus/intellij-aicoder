@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.simiacryptus.util.AudioRecorder
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -11,12 +12,17 @@ import com.intellij.openapi.diagnostic.Logger
 import com.simiacryptus.util.LookbackLoudnessWindowBuffer
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sound.sampled.AudioSystem
+import javax.sound.sampled.TargetDataLine
 import javax.swing.JFrame
 import javax.swing.JLabel
 
 class DictationAction : BaseAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun actionPerformed(event: AnActionEvent) {
         val continueFn = statusDialog(event)::isVisible
@@ -43,7 +49,7 @@ class DictationAction : BaseAction() {
             log.warn("Audio processing thread complete")
         }, "dictation-audio-processor").start()
 
-        val caretModel = event.getRequiredData(CommonDataKeys.EDITOR).caretModel
+        val caretModel = (event.getData(CommonDataKeys.EDITOR) ?: return).caretModel
         val primaryCaret = caretModel.primaryCaret
         val dictationPump = if (primaryCaret.hasSelection()) {
             DictationPump(event, wavBuffer, continueFn, primaryCaret.selectionEnd, primaryCaret.selectedText ?: "")
@@ -88,7 +94,7 @@ class DictationAction : BaseAction() {
                     )
                     prompt = newPrompt
                     WriteCommandAction.runWriteCommandAction(event.project) {
-                        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+                        val editor = event.getData(CommonDataKeys.EDITOR) ?: return@runWriteCommandAction
                         editor.document.insertString(offset.getAndAdd(text.length), text)
                     }
                 }
@@ -111,16 +117,23 @@ class DictationAction : BaseAction() {
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        try {
-            AudioSystem.getTargetDataLine(AudioRecorder.audioFormat)
+        return try {
+            null != targetDataLine.get(50, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
-            return false
+            false
         }
-        return true
     }
 
     companion object {
         val log = Logger.getInstance(DictationAction::class.java)
+
+        val pool = Executors.newFixedThreadPool(1)
+
+        val targetDataLine: Future<TargetDataLine?> by lazy {
+            pool.submit<TargetDataLine?> {
+                AudioSystem.getTargetDataLine(AudioRecorder.audioFormat)
+            }
+        }
     }
 
 }

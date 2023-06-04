@@ -6,7 +6,6 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.editor.Editor
 import com.simiacryptus.openai.proxy.ChatProxy
 import javax.swing.JOptionPane
 
@@ -36,19 +35,17 @@ class QuestionAction : BaseAction() {
             deserializerRetries = 5,
         ).create()
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-        if (computerLanguage == ComputerLanguage.Text) return false
-        return true
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+        return computerLanguage != ComputerLanguage.Text
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         var selectionStart = primaryCaret.selectionStart
-        var selectionEnd = primaryCaret.selectionEnd
         var selectedText = primaryCaret.selectedText
         val language = ComputerLanguage.getComputerLanguage(event)!!
         if (selectedText.isNullOrEmpty()) {
@@ -58,7 +55,6 @@ class QuestionAction : BaseAction() {
             val lineEndOffset = document.getLineEndOffset(lineNumber)
             val currentLine = document.text.substring(lineStartOffset, lineEndOffset)
             selectionStart = lineStartOffset
-            selectionEnd = lineEndOffset
             selectedText = currentLine
         }
 

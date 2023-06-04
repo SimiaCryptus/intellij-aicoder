@@ -31,7 +31,7 @@ class RecentCodeEditsAction : ActionGroup() {
                 String.format("%d: %s", id, instruction)
             }
             children.add(object : CustomEditAction(text, instruction, null) {
-                override fun getInstruction(): String? {
+                override fun getInstruction(): String {
                     return instruction
                 }
             })

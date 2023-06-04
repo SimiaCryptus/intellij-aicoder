@@ -1,3 +1,5 @@
+@file:Suppress("NAME_SHADOWING")
+
 package com.github.simiacryptus.aicoder
 
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.canRunTests

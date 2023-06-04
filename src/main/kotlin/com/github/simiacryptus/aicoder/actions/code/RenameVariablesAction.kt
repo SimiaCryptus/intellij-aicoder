@@ -2,7 +2,8 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.*
+import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.replaceString
 import com.github.simiacryptus.aicoder.util.UITools.showCheckboxDialog
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
@@ -12,7 +13,6 @@ import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.simiacryptus.openai.proxy.ChatProxy
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 
 class RenameVariablesAction : BaseAction() {
 
@@ -41,17 +41,14 @@ class RenameVariablesAction : BaseAction() {
 
 
     override fun actionPerformed(@NotNull event: AnActionEvent) {
-        @NotNull val textEditor = event.getRequiredData(CommonDataKeys.EDITOR)
+        @NotNull val textEditor = event.getData(CommonDataKeys.EDITOR) ?: return
         @NotNull val caretModel = textEditor.caretModel
         @NotNull val mainCursor = caretModel.primaryCaret
         @NotNull val outputLanguage = AppSettingsState.instance.humanLanguage
-        val sourceFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
+        val sourceFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val codeElement =
             PsiUtil.getSmallestIntersectingMajorCodeElement(sourceFile, mainCursor) ?: throw IllegalStateException()
         @NotNull val programmingLanguage = ComputerLanguage.getComputerLanguage(event)
-        val appSettings = AppSettingsState.instance
-        @Nullable val textCursor = event.getData(CommonDataKeys.CARET)
-        val textIndent = UITools.getIndent(textCursor)
 
         UITools.redoableTask(event) {
 
@@ -87,11 +84,10 @@ class RenameVariablesAction : BaseAction() {
         }
     }
 
-    override fun isEnabled(@NotNull e: AnActionEvent): Boolean {
+    override fun isEnabled(@NotNull event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-        if (computerLanguage == ComputerLanguage.Text) return false
-        return true
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+        return computerLanguage != ComputerLanguage.Text
     }
 }
 

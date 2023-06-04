@@ -7,6 +7,14 @@
 ### Added
 - 
 
+## [1.1.1]
+
+### Added
+- "Analogue File" action
+
+### Improved
+- Various bug fixes
+
 ## [1.1.0]
 
 ### Added

@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.proxy
 
 import org.junit.Test
+import java.util.*
 
 /**
  *  FakeNews is a class that implements the News interface.
@@ -41,7 +42,7 @@ class AutoNews : GenerationReportBase<AutoNews.News>(News::class) {
                 out(
                     """
                     |
-                    |## ${category.capitalize()}
+                    |## ${category.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}
                     |
                     |""".trimMargin()
                 )

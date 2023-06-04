@@ -48,7 +48,7 @@ open class CustomEditAction(
         ).create()
 
     override fun actionPerformed(event: AnActionEvent) {
-        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         val selectionStart = primaryCaret.selectionStart
@@ -75,7 +75,7 @@ open class CustomEditAction(
             UITools.writeableFn(event) {
                 UITools.replaceString(
                     editor.document, selectionStart, selectionEnd,
-                    newText!!
+                    newText
                 )
             }
         }
@@ -85,11 +85,10 @@ open class CustomEditAction(
     open fun getInstruction(): String? =
         JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE)
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        if (!UITools.hasSelection(e)) return false
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-        if (computerLanguage == ComputerLanguage.Text) return false
-        return true
+        if (!UITools.hasSelection(event)) return false
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+        return computerLanguage != ComputerLanguage.Text
     }
 }

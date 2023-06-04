@@ -9,7 +9,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import java.awt.event.ActionEvent
-import java.util.*
 import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.JComponent

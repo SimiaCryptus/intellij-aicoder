@@ -35,7 +35,7 @@ class PasteAction : BaseAction() {
         ).create()
 
     override fun actionPerformed(event: AnActionEvent) {
-        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         val selectionStart = primaryCaret.selectionStart
@@ -65,12 +65,12 @@ class PasteAction : BaseAction() {
         }
     }
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
         return if (CopyPasteManager.getInstance()
                 .getContents<Any?>(DataFlavor.stringFlavor) == null
         ) false else {
-            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+            val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
             computerLanguage != ComputerLanguage.Text
         }
     }

@@ -1,9 +1,9 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 
@@ -14,7 +14,7 @@ import com.intellij.openapi.diagnostic.Logger
  * Finally, select the "PrintTreeAction" action from the editor context menu.
  * This will print the tree structure of the file to the log.
  */
-class PrintTreeAction : AnAction() {
+class PrintTreeAction : BaseAction() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)
