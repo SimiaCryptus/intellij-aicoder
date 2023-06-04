@@ -7,11 +7,12 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.readText
+import com.intellij.openapi.vfs.VfsUtilCore.loadText
 import com.simiacryptus.openai.ChatMessage
 import com.simiacryptus.openai.ChatRequest
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.skyenet.Brain
+import org.apache.commons.io.IOUtils
 import java.io.File
 import javax.swing.JTextArea
 
@@ -55,7 +56,7 @@ class AnalogueFileAction : BaseAction() {
                 val directive = config.directive
                 val baseFile = ProjectFile(
                     path = virtualFile.canonicalPath!!,
-                    code = virtualFile.readText()
+                    code = IOUtils.toString(virtualFile.inputStream, "UTF-8")
                 )
                 generateFile(baseFile, directive)
             } finally {
