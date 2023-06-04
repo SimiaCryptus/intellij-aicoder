@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.github.simiacryptus.aicoder.util.UITools.insertString
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.simiacryptus.openai.ChatMessage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -32,7 +33,7 @@ class AppendAction : BaseAction() {
                 before.toString()
             )
         )
-        val document = event.getRequiredData(CommonDataKeys.EDITOR).document
+        val document = (event.getData(CommonDataKeys.EDITOR) ?: return).document
         val selectionEnd = caret!!.selectionEnd
         UITools.redoableTask(event) {
             val newText = UITools.run(
@@ -46,9 +47,9 @@ class AppendAction : BaseAction() {
         }
     }
     @Suppress("unused")
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        return hasSelection(e)
+        return hasSelection(event)
     }
 
 }

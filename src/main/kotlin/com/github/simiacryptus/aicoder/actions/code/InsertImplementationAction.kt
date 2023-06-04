@@ -41,10 +41,9 @@ class InsertImplementationAction : BaseAction() {
         val humanLanguage = AppSettingsState.instance.humanLanguage
         val computerLanguage = ComputerLanguage.getComputerLanguage(event)
         val psiClassContextActionParams = getPsiClassContextActionParams(event).get()
-        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
-        val settings = AppSettingsState.instance
         var instruct = psiClassContextActionParams.largestIntersectingComment.text.trim { it <= ' ' }
         if (primaryCaret.selectionEnd > primaryCaret.selectionStart) {
             val selectedText = Objects.requireNonNull(primaryCaret.selectedText)
@@ -97,11 +96,11 @@ class InsertImplementationAction : BaseAction() {
         val largestIntersectingComment: PsiElement
     )
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
-        return getPsiClassContextActionParams(e).isPresent
+        return getPsiClassContextActionParams(event).isPresent
     }
 
     companion object {

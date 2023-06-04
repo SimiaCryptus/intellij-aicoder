@@ -41,7 +41,7 @@ class DescribeAction : BaseAction() {
 
 
     override fun actionPerformed(event: AnActionEvent) {
-        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         var selectionStart = primaryCaret.selectionStart
@@ -67,7 +67,7 @@ class DescribeAction : BaseAction() {
             ) {
                 proxy.describeCode(
                     code = IndentedText.fromString(selectedText).textBlock.toString().trim(),
-                    computerLanguage = language!!.name,
+                    computerLanguage = language.name,
                     humanLanguage = settings.humanLanguage,
                 ).text ?: ""
             }
@@ -94,11 +94,10 @@ class DescribeAction : BaseAction() {
         }
     }
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-        if (computerLanguage == ComputerLanguage.Text) return false
-        return true
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+        return computerLanguage != ComputerLanguage.Text
     }
 
 }

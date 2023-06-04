@@ -60,6 +60,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         if(null == e) return arrayOf()
         val computerLanguage = ComputerLanguage.getComputerLanguage(e)
+        if (null == computerLanguage) return arrayOf()
         val actions = ArrayList<AnAction>()
         for (language in markdownLanguages) {
             if (computerLanguage!!.name == language) continue

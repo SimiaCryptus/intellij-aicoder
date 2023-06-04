@@ -1,33 +1,29 @@
+@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+
 package com.github.simiacryptus.aicoder.actions.dev
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.proxy.Description
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.OutputInterceptor
 import com.simiacryptus.skyenet.body.ClasspathResource
 import com.simiacryptus.skyenet.body.SessionServerUtil.asJava
-import com.simiacryptus.skyenet.body.SkyenetSessionServer
+import com.simiacryptus.skyenet.body.SkyenetCodingSessionServer
 import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
-import com.simiacryptus.skyenet.util.AbbrevWhitelistYamlDescriber
-import org.apache.commons.io.output.NullOutputStream
-import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.util.resource.Resource
-import org.eclipse.jetty.webapp.WebAppContext
 import org.jdesktop.swingx.JXButton
 import java.awt.Desktop
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
+import java.io.File
 import java.util.Map
 import java.util.function.Supplier
 
-class LaunchSkyenetAction : AnAction() {
+class LaunchSkyenetAction : BaseAction() {
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled()
@@ -44,15 +40,13 @@ class LaunchSkyenetAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         // Random port from range 8000-9000
         val port = (8000 + (Math.random() * 1000).toInt())
-        val skyenet = object : SkyenetSessionServer(
+        val skyenet = object : SkyenetCodingSessionServer(
             applicationName = "IdeaAgent",
-            yamlDescriber = AbbrevWhitelistYamlDescriber(
-                "com.simiacryptus",
-            ),
             baseURL = "http://localhost:$port",
-            model = AppSettingsState.instance.model_chat
+            model = AppSettingsState.instance.model_chat,
+            apiKey = AppSettingsState.instance.apiKey
         ) {
-            override val baseResource: Resource?
+            override val baseResource: Resource
                 get() = ClasspathResource(javaClass.classLoader.getResource(resourceBase))
 
             override fun hands() = Map.of(
@@ -82,7 +76,7 @@ class LaunchSkyenetAction : AnAction() {
                 return e.message ?: e.toString()
             }
 
-            override fun heart(hands: java.util.Map<String, Object>): Heart = object : WeakGroovyInterpreter(hands) {
+            override fun heart(hands: Map<String, Object>): Heart = object : WeakGroovyInterpreter(hands) {
                 override fun <T : Any> wrapExecution(fn: Supplier<T?>): T? {
                     return UITools.run(
                         e.project, "Running Script", false
@@ -123,9 +117,8 @@ class LaunchSkyenetAction : AnAction() {
     }
 
     private fun isEnabled(): Boolean {
-        if (UITools.isSanctioned()) return false
+        return !UITools.isSanctioned()
         //if (!AppSettingsState.instance.devActions) return false
-        return true
     }
 
     companion object {

@@ -170,8 +170,7 @@ interface SoftwareProjectAI {
         }
 
         override fun validate(): Boolean {
-            if (file?.isBlank() != false) return false
-            return true
+            return file?.isBlank() == false
 //            return super.validate()
         }
     }

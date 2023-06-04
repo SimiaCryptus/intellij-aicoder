@@ -39,7 +39,7 @@ class CommentsAction : BaseAction() {
 
 
     override fun actionPerformed(event: AnActionEvent) {
-        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         val selectionStart = primaryCaret.selectionStart
@@ -60,17 +60,16 @@ class CommentsAction : BaseAction() {
                 ).code ?: ""
             }
             UITools.writeableFn(event) {
-                UITools.replaceString(editor.document, selectionStart, selectionEnd, newText!!)
+                UITools.replaceString(editor.document, selectionStart, selectionEnd, newText)
             }
         }
 
     }
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        if (!UITools.hasSelection(e)) return false
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-        if (computerLanguage == ComputerLanguage.Text) return false
-        return true
+        if (!UITools.hasSelection(event)) return false
+        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
+        return computerLanguage != ComputerLanguage.Text
     }
 }

@@ -1,3 +1,5 @@
+@file:Suppress("NAME_SHADOWING")
+
 package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.util.TextBlock.Companion.DELIMITER

@@ -24,7 +24,7 @@ import javax.imageio.ImageIO
  */
 class UITestUtil {
 
-    public companion object {
+    companion object {
 
         val outputDir = File("C:\\Users\\andre\\code\\aicoder\\intellij-aicoder-docs")
         val testProjectPath = File("C:\\Users\\andre\\IdeaProjects\\automated-ui-test-workspace")

@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.proxy
 
 import org.junit.Test
+import java.util.*
 
 /**
  * RecipeBook builds a recipe book centered around a theme.
@@ -55,7 +56,7 @@ class RecipeBook : GenerationReportBase<RecipeBook.Recipes>(Recipes::class) {
             out(
                 """
                 |
-                |# ${theme.capitalize()} Recipes
+                |# ${theme.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} Recipes
                 |
                 |""".trimMargin()
             )

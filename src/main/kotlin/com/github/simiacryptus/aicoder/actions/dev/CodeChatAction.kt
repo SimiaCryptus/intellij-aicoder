@@ -1,3 +1,5 @@
+@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
+
 package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
@@ -12,13 +14,14 @@ import com.simiacryptus.openai.ChatMessage
 import com.simiacryptus.openai.ChatRequest
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.body.ClasspathResource
-import com.simiacryptus.skyenet.body.SkyenetSessionServer
+import com.simiacryptus.skyenet.body.InterviewSession
+import com.simiacryptus.skyenet.body.SkyenetCodingSession
+import com.simiacryptus.skyenet.body.SkyenetCodingSessionServer
 import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
-import com.simiacryptus.skyenet.util.AbbrevWhitelistYamlDescriber
 import org.eclipse.jetty.util.resource.Resource
 import org.jdesktop.swingx.JXButton
 import java.awt.Desktop
-import java.util.Map
+import java.io.File
 import java.util.function.Supplier
 
 class CodeChatAction : BaseAction() {
@@ -28,36 +31,32 @@ class CodeChatAction : BaseAction() {
         port: Int,
         val language: String,
         val codeSelection: String,
-    ) : SkyenetSessionServer(
+    ) : SkyenetCodingSessionServer(
         applicationName = "Code Chat",
-        yamlDescriber = AbbrevWhitelistYamlDescriber(
-            "com.simiacryptus",
-        ),
         baseURL = "http://localhost:$port",
-        model = AppSettingsState.instance.model_chat
+        model = AppSettingsState.instance.model_chat,
+        apiKey = AppSettingsState.instance.apiKey,
     ) {
 
         val rootOperationID = (0..5).map { ('a'..'z').random() }.joinToString("")
         var rootMessageTrail: String = ""
 
-        override fun newSession(sessionId: String): SessionState {
+        override fun newSession(sessionId: String): SkyenetCodingSession {
             val newSession = CodeChatSession(sessionId)
             rootMessageTrail = """$rootOperationID,<div><h3>Code:</h3><pre><code class="language-$language">$codeSelection</code></pre></div>"""
             newSession.send(rootMessageTrail)
             return newSession
         }
 
-        open inner class CodeChatSession(sessionId: String) : SkyenetSession(sessionId) {
+        open inner class CodeChatSession(sessionId: String) : SkyenetCodingSession(sessionId, this@CodeChatServer) {
             override fun run(userMessage: String) {
-                val operationID = (0..5).map { ('a'..'z').random() }.joinToString("")
-                var messageTrail = """$operationID,<button class="cancel-button" data-id="$operationID">&times;</button>"""
-                messageTrail += """<div>$userMessage</div>"""
+                var messageTrail = InterviewSession.initialText(userMessage)
                 send("""$messageTrail<div>$spinner</div>""")
                 messages += ChatMessage(ChatMessage.Role.user, userMessage)
                 val response = api.chat(chatRequest).response.orNull()?.toString() ?: "???"
                 messages += ChatMessage(ChatMessage.Role.assistant, response)
                 messageTrail += """<div><pre>$response</pre></div>"""
-                send("""$messageTrail""")
+                send(messageTrail)
             }
 
             val messages = listOf(
@@ -85,7 +84,7 @@ class CodeChatAction : BaseAction() {
         override val baseResource: Resource
             get() = ClasspathResource(javaClass.classLoader.getResource(resourceBase))
 
-        override fun hands() = java.util.HashMap<String, Object>() as Map<String, Object>
+        override fun hands() = java.util.HashMap<String, Object>() as java.util.Map<String, Object>
 
         override fun toString(e: Throwable): String {
             return e.message ?: e.toString()
@@ -103,7 +102,7 @@ class CodeChatAction : BaseAction() {
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         val selectedText = primaryCaret.selectedText ?: editor.document.text
@@ -150,10 +149,9 @@ class CodeChatAction : BaseAction() {
         }.start()
     }
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        return !UITools.isSanctioned()
         //if (!AppSettingsState.instance.devActions) return false
-        return true
     }
 
     companion object {

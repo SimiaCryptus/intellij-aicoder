@@ -6,6 +6,7 @@ import org.junit.Test
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintWriter
+import java.util.*
 
 /**
  * See Also:
@@ -114,11 +115,11 @@ class DocGen {
         return shortcut.trim()
             .split(" ")
             .map { it.substringAfter("=").replace("\"", "").trim() }
-            .joinToString(" + ") { "<kbd>${it.capitalize()}</kbd>" }
+            .joinToString(" + ") { "<kbd>${it.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}</kbd>" }
     }
 
     private fun loadActions(input: File): Array<Map<String, String>> {
-        val pluginXml = FileUtils.readFileToString(input, "UTF-8");
+        val pluginXml = FileUtils.readFileToString(input, "UTF-8")
         return (pluginXml.split("<action").map { it.substringBefore("</action>") }
                 + pluginXml.split("<group").map { it.substringBefore("</group>") })
             .filter { it.contains("<!--DOC") }

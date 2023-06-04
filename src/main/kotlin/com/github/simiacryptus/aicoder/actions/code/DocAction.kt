@@ -6,7 +6,6 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.insertString
-import com.github.simiacryptus.aicoder.util.UITools.replaceString
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -75,7 +74,7 @@ class DocAction : BaseAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val language = ComputerLanguage.getComputerLanguage(event)
         val caret = event.getData(CommonDataKeys.CARET)
-        val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
+        val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val smallestIntersectingMethod =
             PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, caret!!)
                 ?: return
@@ -83,8 +82,7 @@ class DocAction : BaseAction() {
         val code = smallestIntersectingMethod.text
         val indentedInput = IndentedText.fromString(code)
         val startOffset = smallestIntersectingMethod.textRange.startOffset
-        val endOffset = smallestIntersectingMethod.textRange.endOffset
-        val document = event.getRequiredData(CommonDataKeys.EDITOR).document
+        val document = (event.getData(CommonDataKeys.EDITOR) ?: return).document
         val outputHumanLanguage = settings.humanLanguage
 
         UITools.redoableTask(event) {
@@ -113,7 +111,7 @@ class DocAction : BaseAction() {
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         if (computerLanguage.docStyle.isEmpty()) return false
-        val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
+        val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return false
         val caret = event.getData(CommonDataKeys.CARET)
         PsiUtil.getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return false
         return true

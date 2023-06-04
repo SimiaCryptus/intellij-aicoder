@@ -1,19 +1,18 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
+import com.github.simiacryptus.aicoder.SoftwareProjectAI
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.SoftwareProjectAI
-import com.simiacryptus.openai.proxy.ChatProxy
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.proxy.ChatProxy
 import java.io.File
 import javax.swing.JCheckBox
 import javax.swing.JTextArea
 import javax.swing.JTextField
 
-class GenerateProjectAction : AnAction() {
+class GenerateProjectAction : BaseAction() {
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled()
@@ -148,8 +147,7 @@ class GenerateProjectAction : AnAction() {
 
     private fun isEnabled(): Boolean {
         if (UITools.isSanctioned()) return false
-        if (!AppSettingsState.instance.devActions) return false
-        return true
+        return AppSettingsState.instance.devActions
     }
 
     companion object {

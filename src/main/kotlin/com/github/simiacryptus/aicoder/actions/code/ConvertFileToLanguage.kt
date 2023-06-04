@@ -1,10 +1,10 @@
 package com.github.simiacryptus.aicoder.actions.code
 
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getIndent
 import com.github.simiacryptus.aicoder.util.psi.PsiTranslationTree
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -14,14 +14,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 
-class ConvertFileToLanguage(private val targetLanguage: ComputerLanguage) : AnAction(
+class ConvertFileToLanguage(private val targetLanguage: ComputerLanguage) : BaseAction(
     targetLanguage.name
 ) {
     override fun actionPerformed(event: AnActionEvent) {
         val sourceLanguage = ComputerLanguage.getComputerLanguage(event)
         val indent = getIndent(event.getData(CommonDataKeys.CARET))
-        val virtualFile = event.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
-        val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
+        val virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+        val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val project = event.project!!
         Thread {
             UITools.run(project, "Converting to " + targetLanguage.name) {

@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.showRadioButtonDialog
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.simiacryptus.util.StringTools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -14,7 +15,6 @@ import kotlin.math.ln
 import kotlin.math.pow
 
 class ReplaceOptionsAction : BaseAction() {
-
     interface VirtualAPI {
         fun suggestText(prefix: String, example: String, suffix: String): Suggestions
         data class Suggestions(
@@ -67,8 +67,8 @@ class ReplaceOptionsAction : BaseAction() {
         }
     }
 
-    override fun isEnabled(e: AnActionEvent): Boolean {
+    override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        return UITools.hasSelection(e)
+        return UITools.hasSelection(event)
     }
 }

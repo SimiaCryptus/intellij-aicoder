@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.actions
 
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.openai.OpenAIClient
@@ -12,13 +13,15 @@ abstract class BaseAction(
     icon: Icon? = null,
     ) : AnAction(name, description, icon) {
 
+    //override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     val api: OpenAIClient
         get() = UITools.api
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
+    override fun update(event: AnActionEvent) {
+        event.presentation.isEnabledAndVisible = isEnabled(event)
+        super.update(event)
     }
 
-    open fun isEnabled(e: AnActionEvent): Boolean = true
+    open fun isEnabled(event: AnActionEvent): Boolean = true
 }

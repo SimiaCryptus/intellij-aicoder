@@ -66,7 +66,7 @@ class MarkdownListAction : BaseAction() {
         val indent = getIndent(caret)
         val endOffset = list.textRange.endOffset
         val bulletTypes = listOf("- [ ] ", "- ", "* ")
-        val document = event.getRequiredData(CommonDataKeys.EDITOR).document
+        val document = (event.getData(CommonDataKeys.EDITOR) ?: return).document
         val rawItems = items.map(CharSequence::trim).map {
             val bulletType = bulletTypes.find(it::startsWith)
             if (null != bulletType) StringTools.stripPrefix(it, bulletType).toString()

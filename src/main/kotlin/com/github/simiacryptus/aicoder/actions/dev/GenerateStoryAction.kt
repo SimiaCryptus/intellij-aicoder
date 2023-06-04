@@ -4,11 +4,10 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.openai.proxy.ChatProxy
-import com.simiacryptus.openai.proxy.Description
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.openai.proxy.Description
 import java.io.File
 import javax.swing.JTextArea
 import javax.swing.JTextField
@@ -279,8 +278,7 @@ class GenerateStoryAction : BaseAction() {
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        if (!AppSettingsState.instance.devActions) return false
-        return true
+        return AppSettingsState.instance.devActions
     }
 
     companion object {

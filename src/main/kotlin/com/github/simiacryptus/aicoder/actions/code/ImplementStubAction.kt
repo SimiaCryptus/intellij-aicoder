@@ -44,7 +44,7 @@ class ImplementStubAction : BaseAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
-        val psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE)
+        val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val smallestIntersectingMethod = getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return
         val settings = AppSettingsState.instance
@@ -53,7 +53,7 @@ class ImplementStubAction : BaseAction() {
         //declaration = StringTools.stripPrefix(declaration.toString().trim(), PsiUtil.getDocComment(smallestIntersectingMethod).trim());
         declaration = StringTools.stripSuffix(declaration.toString().trim(), getCode(smallestIntersectingMethod).trim())
         declaration = declaration.toString().trim()
-        val document = event.getRequiredData(CommonDataKeys.EDITOR).document
+        val document = (event.getData(CommonDataKeys.EDITOR) ?: return).document
         val textRange = smallestIntersectingMethod.textRange
         val finalDeclaration = declaration
         val outputHumanLanguage = settings.humanLanguage
