@@ -5,8 +5,8 @@ fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.7.21"
-    id("org.jetbrains.intellij") version "1.13.3"
+    id("org.jetbrains.kotlin.jvm") version "1.8.21"
+    id("org.jetbrains.intellij") version "1.14.0"
     id("org.jetbrains.changelog") version "2.0.0"
     id("org.jetbrains.qodana") version "0.1.13"
     id("org.jetbrains.kotlinx.kover") version "0.6.1"
@@ -20,7 +20,7 @@ repositories {
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 }
 
-val kotlin_version = "1.7.21"
+val kotlin_version = "1.8.21"
 val jetty_version = "11.0.15"
 val slf4j_version = "2.0.5"
 val skyenet_version = "1.0.8"
@@ -52,8 +52,8 @@ dependencies {
 
 
 kotlin {
-    jvmToolchain(11)
-//    jvmToolchain(17)
+//    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 tasks {
