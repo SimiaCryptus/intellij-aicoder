@@ -150,8 +150,9 @@ class CodeChatAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        return !UITools.isSanctioned()
-        //if (!AppSettingsState.instance.devActions) return false
+        if(UITools.isSanctioned()) return false
+        if (!AppSettingsState.instance.devActions) return false
+        return true
     }
 
     companion object {

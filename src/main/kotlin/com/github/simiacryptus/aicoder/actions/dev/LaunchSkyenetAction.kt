@@ -117,8 +117,9 @@ class LaunchSkyenetAction : BaseAction() {
     }
 
     private fun isEnabled(): Boolean {
-        return !UITools.isSanctioned()
-        //if (!AppSettingsState.instance.devActions) return false
+        if(UITools.isSanctioned()) return false
+        if (!AppSettingsState.instance.devActions) return false
+        return true
     }
 
     companion object {

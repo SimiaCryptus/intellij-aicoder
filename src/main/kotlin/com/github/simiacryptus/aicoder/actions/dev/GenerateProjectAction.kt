@@ -146,8 +146,9 @@ class GenerateProjectAction : BaseAction() {
     }.start()
 
     private fun isEnabled(): Boolean {
-        if (UITools.isSanctioned()) return false
-        return AppSettingsState.instance.devActions
+        if(UITools.isSanctioned()) return false
+        if (!AppSettingsState.instance.devActions) return false
+        return true
     }
 
     companion object {

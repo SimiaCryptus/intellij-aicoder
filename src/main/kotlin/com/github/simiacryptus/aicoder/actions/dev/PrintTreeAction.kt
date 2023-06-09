@@ -24,13 +24,13 @@ class PrintTreeAction : BaseAction() {
         log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e1)!!))
     }
 
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if(UITools.isSanctioned()) return false
+        if (!AppSettingsState.instance.devActions) return false
+        return true
+    }
+
     companion object {
         val log = Logger.getInstance(PrintTreeAction::class.java)
-        private fun isEnabled(e: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
-            return if (!AppSettingsState.instance.devActions) false else null != PsiUtil.getLargestContainedEntity(
-                e
-            )
-        }
     }
 }
