@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.proxy
 
-import com.simiacryptus.openai.proxy.Description
+import com.simiacryptus.util.describe.Description
 import org.junit.Test
 
 class PersonalityTest : GenerationReportBase<PersonalityTest.PersonalityTest>(PersonalityTest::class) {

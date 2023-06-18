@@ -5,7 +5,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.simiacryptus.openai.proxy.ChatProxy
@@ -35,7 +35,6 @@ class DescribeAction : BaseAction() {
         get() = ChatProxy(
             clazz = VirtualAPI::class.java,
             api = api,
-            maxTokens = AppSettingsState.instance.maxTokens,
             deserializerRetries = 5,
         ).create()
 
@@ -71,7 +70,7 @@ class DescribeAction : BaseAction() {
                     humanLanguage = settings.humanLanguage,
                 ).text ?: ""
             }
-            val wrapping = StringTools.lineWrapping(newText.trim(), 120)
+            val wrapping = StringUtil.lineWrapping(newText.trim(), 120)
             val numberOfLines = wrapping.trim().split("\n")
                 .dropLastWhile { it.isEmpty() }.toTypedArray<String>().size
             val commentStyle =

@@ -7,6 +7,12 @@
 ### Added
 - 
 
+## [1.1.2]
+
+### Improved
+- Various bug fixes and performance improvements
+- Simplified plugin configuration and model selection
+
 ## [1.1.1]
 
 ### Added

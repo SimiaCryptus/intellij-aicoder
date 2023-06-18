@@ -1,5 +1,7 @@
 package com.github.simiacryptus.aicoder.proxy
 
+import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.openai.OpenAIClient
 import org.junit.Test
 
 /**
@@ -11,7 +13,7 @@ class DebateSimulator : GenerationReportBase<DebateSimulator.Debate>(Debate::cla
     @Test
     fun judgeDebate() {
         runReport("Debate") { api, logJson, out ->
-            proxy.model = "gpt-4-0314"
+            proxy.model = AppSettingsState.instance.defaultChatModel()
             proxy.temperature = 0.5
             val debate = api.newRandomDebate(
                 topic = "What is the best way to solve a problem?",

@@ -1,11 +1,12 @@
 package com.github.simiacryptus.aicoder.config
 
-import com.simiacryptus.openai.ChatRequest
+import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
+import com.simiacryptus.openai.OpenAIClient
 import org.slf4j.event.Level
 import java.util.*
 import java.util.Map
@@ -21,32 +22,33 @@ import kotlin.collections.component2
 import kotlin.collections.forEach
 import kotlin.collections.remove
 
+@Suppress("MemberVisibilityCanBePrivate")
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
-    var model_completion = "text-davinci-003"
-    var model_chat = "gpt-3.5-turbo-0301"
-    var maxTokens = 1000
     var temperature = 0.1
-    var style = ""
-
-    @Suppress("unused")
+    var useGPT4 = false
     var tokenCounter = 0
     private val mostUsedHistory: MutableMap<String, Int> = HashMap()
     private val mostRecentHistory: MutableList<String> = ArrayList()
     var historyLimit = 10
     var humanLanguage = "English"
-    var maxPrompt = 5000
     var apiLogLevel = Level.DEBUG
     var devActions = false
     var apiThreads = 4
 
     fun createChatRequest(): ChatRequest {
+        return createChatRequest(defaultChatModel())
+    }
+
+    fun defaultChatModel() = if (useGPT4) OpenAIClient.Models.GPT4 else OpenAIClient.Models.GPT35Turbo
+
+    fun createChatRequest(model: OpenAIClient.Model): ChatRequest {
         val chatRequest = ChatRequest()
-        chatRequest.model = model_chat
+        chatRequest.model = model.modelName
         chatRequest.temperature = temperature
-        chatRequest.max_tokens = maxTokens
+        chatRequest.max_tokens = model.maxTokens
         return chatRequest
     }
 
@@ -62,30 +64,24 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false
         val that = other as AppSettingsState
-        if (maxTokens != that.maxTokens) return false
-        if (maxPrompt != that.maxPrompt) return false
         if (that.temperature.compareTo(temperature) != 0) return false
         if (humanLanguage != that.humanLanguage) return false
         if (apiBase != that.apiBase) return false
         if (apiKey != that.apiKey) return false
-        if (model_completion != that.model_completion) return false
-        if (model_chat != that.model_chat) return false
+        if (useGPT4 != that.useGPT4) return false
         if (apiLogLevel != that.apiLogLevel) return false
         if (devActions != that.devActions) return false
-        return style == that.style
+        return true
     }
 
     override fun hashCode(): Int {
         return Objects.hash(
             apiBase,
             apiKey,
-            model_completion,
-            model_chat,
-            maxTokens,
             temperature,
+            useGPT4,
             apiLogLevel,
             devActions,
-            style
         )
     }
 

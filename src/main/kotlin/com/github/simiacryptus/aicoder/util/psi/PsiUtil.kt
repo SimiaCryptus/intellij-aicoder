@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.util.psi
 
-import com.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringUtil
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -160,17 +160,17 @@ object PsiUtil {
 
     fun matchesType(element: PsiElement, vararg types: CharSequence): Boolean {
         var simpleName: CharSequence = element.javaClass.simpleName
-        simpleName = StringTools.stripSuffix(simpleName, "Impl")
-        simpleName = StringTools.stripPrefix(simpleName, "Psi")
+        simpleName = StringUtil.stripSuffix(simpleName, "Impl")
+        simpleName = StringUtil.stripPrefix(simpleName, "Psi")
         val str = simpleName.toString()
         return Stream.of(*types)
             .map { s: CharSequence? ->
-                StringTools.stripSuffix(
+                StringUtil.stripSuffix(
                     s!!, "Impl"
                 )
             }
             .map { s: String? ->
-                StringTools.stripPrefix(
+                StringUtil.stripPrefix(
                     s!!, "Psi"
                 )
             }
@@ -277,10 +277,10 @@ object PsiUtil {
 
     fun getDeclaration(element: PsiElement): String {
         var declaration: CharSequence = element.text
-        declaration = StringTools.stripPrefix(declaration.toString().trim { it <= ' ' },
+        declaration = StringUtil.stripPrefix(declaration.toString().trim { it <= ' ' },
             getDocComment(element).trim { it <= ' ' })
         declaration =
-            StringTools.stripSuffix(declaration.toString().trim { it <= ' ' }, getCode(element).trim { it <= ' ' })
+            StringUtil.stripSuffix(declaration.toString().trim { it <= ' ' }, getCode(element).trim { it <= ' ' })
         return declaration.toString().trim { it <= ' ' }
     }
 

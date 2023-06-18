@@ -3,6 +3,8 @@ package com.github.simiacryptus.aicoder.proxy
 import com.github.simiacryptus.aicoder.SoftwareProjectAI
 import com.github.simiacryptus.aicoder.SoftwareProjectAI.Companion.parallelImplement
 import com.github.simiacryptus.aicoder.SoftwareProjectAI.Companion.write
+import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.JsonUtil.fromJson
 import org.junit.Test
 import java.util.*
@@ -53,7 +55,7 @@ class AutoDevelop : GenerationReportBase<SoftwareProjectAI>(SoftwareProjectAI::c
         val drafts = 1
         val threads = 7
         proxy.temperature = 0.5
-        proxy.model = "gpt-4-0314"
+        proxy.model = AppSettingsState.instance.defaultChatModel()
 
         @Suppress("JoinDeclarationAndAssignment")
         val description: String

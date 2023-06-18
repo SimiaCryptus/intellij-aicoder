@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.proxy
 
+import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.JsonUtil.toJson
 import java.awt.image.BufferedImage
 import java.io.BufferedWriter
@@ -20,7 +21,7 @@ open class GenerationReportBase<T:Any>(
     )
     val outputDir = File("../intellij-aicoder-docs")
     fun runReport(prefix: String, fn: (T, (Any?) -> Unit, (Any?) -> Unit) -> Unit) {
-        if (!ProxyTest.keyFile.exists()) return
+        if (OpenAIClient.keyTxt.isBlank()) return
         val markdownOutputFile = File(
             outputDir,
             "${prefix}_${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))}.md"

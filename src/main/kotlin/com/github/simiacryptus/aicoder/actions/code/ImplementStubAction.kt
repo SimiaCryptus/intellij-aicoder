@@ -10,7 +10,7 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getCode
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getDocComment
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersectingMajorCodeElement
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.matchesType
-import com.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiElement
@@ -38,7 +38,6 @@ class ImplementStubAction : BaseAction() {
         get() = ChatProxy(
             clazz = VirtualAPI::class.java,
             api = api,
-            maxTokens = AppSettingsState.instance.maxTokens,
             deserializerRetries = 5,
         ).create()
 
@@ -51,7 +50,7 @@ class ImplementStubAction : BaseAction() {
         val code = smallestIntersectingMethod.text
         var declaration: CharSequence = smallestIntersectingMethod.text
         //declaration = StringTools.stripPrefix(declaration.toString().trim(), PsiUtil.getDocComment(smallestIntersectingMethod).trim());
-        declaration = StringTools.stripSuffix(declaration.toString().trim(), getCode(smallestIntersectingMethod).trim())
+        declaration = StringUtil.stripSuffix(declaration.toString().trim(), getCode(smallestIntersectingMethod).trim())
         declaration = declaration.toString().trim()
         val document = (event.getData(CommonDataKeys.EDITOR) ?: return).document
         val textRange = smallestIntersectingMethod.textRange
@@ -99,15 +98,15 @@ class ImplementStubAction : BaseAction() {
 
         private fun isStub(element: PsiElement): Boolean {
             var declaration: CharSequence = element.text
-            declaration = StringTools.stripPrefix(declaration.toString().trim(),
+            declaration = StringUtil.stripPrefix(declaration.toString().trim(),
                 getDocComment(element).trim())
             declaration =
-                StringTools.stripSuffix(declaration.toString().trim(), getCode(element).trim())
+                StringUtil.stripSuffix(declaration.toString().trim(), getCode(element).trim())
             declaration = declaration.toString().trim()
-            var sansComments = StringTools.stripPrefix(compacted(element).trim(), declaration).toString()
+            var sansComments = StringUtil.stripPrefix(compacted(element).trim(), declaration).toString()
                 .trim()
             sansComments =
-                StringTools.stripSuffix(StringTools.stripPrefix(sansComments, "{").toString().trim(), "}")
+                StringUtil.stripSuffix(StringUtil.stripPrefix(sansComments, "{").toString().trim(), "}")
                     .trim()
             if (sansComments.isBlank()) return true
             return Pattern.compile("(?s)\\{\\s*}").matcher(sansComments).matches()

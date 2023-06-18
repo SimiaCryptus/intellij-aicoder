@@ -44,7 +44,6 @@ class DocAction : BaseAction() {
             val chatProxy = ChatProxy(
                 clazz = VirtualAPI::class.java,
                 api = api,
-                maxTokens = AppSettingsState.instance.maxTokens,
                 deserializerRetries = 5,
             )
             chatProxy.addExample(

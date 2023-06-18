@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder
 
-import com.simiacryptus.openai.proxy.Description
+import com.simiacryptus.util.describe.Description
 import com.simiacryptus.openai.proxy.ValidatedObject
 import java.io.File
 import java.util.*

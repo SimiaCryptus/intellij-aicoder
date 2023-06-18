@@ -4,7 +4,7 @@ package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.util.TextBlock.Companion.DELIMITER
 import com.github.simiacryptus.aicoder.util.TextBlock.Companion.TAB_REPLACEMENT
-import com.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringUtil
 import java.util.*
 import java.util.stream.Collectors
 
@@ -20,20 +20,20 @@ class BlockComment(
         TextBlockFactory<BlockComment?> {
         override fun fromString(text: String?): BlockComment {
             var text = text!!
-            text = StringTools.stripSuffix(
-                StringTools.trimSuffix(text.replace("\t", TAB_REPLACEMENT.toString(), false)),
+            text = StringUtil.stripSuffix(
+                StringUtil.trimSuffix(text.replace("\t", TAB_REPLACEMENT.toString(), false)),
                 blockSuffix.trim { it <= ' ' })
-            val indent = StringTools.getWhitespacePrefix(*text.split(DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }
+            val indent = StringUtil.getWhitespacePrefix(*text.split(DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }
                 .toTypedArray())
             return BlockComment(blockPrefix,
                 linePrefix,
                 blockSuffix,
                 indent,
                 *(Arrays.stream(text.split(DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
-                    .map { s: CharSequence? -> StringTools.stripPrefix(s!!, indent) }
-                    .map { text: CharSequence? -> StringTools.trimPrefix(text!!) }
-                    .map { s: CharSequence? -> StringTools.stripPrefix(s!!, blockPrefix.trim { it <= ' ' }) }
-                    .map { s: CharSequence? -> StringTools.stripPrefix(s!!, linePrefix.trim { it <= ' ' }) }
+                    .map { s: CharSequence? -> StringUtil.stripPrefix(s!!, indent) }
+                    .map { text: CharSequence? -> StringUtil.trimPrefix(text!!) }
+                    .map { s: CharSequence? -> StringUtil.stripPrefix(s!!, blockPrefix.trim { it <= ' ' }) }
+                    .map { s: CharSequence? -> StringUtil.stripPrefix(s!!, linePrefix.trim { it <= ' ' }) }
                     .collect(Collectors.toList()).toTypedArray()))
         }
 

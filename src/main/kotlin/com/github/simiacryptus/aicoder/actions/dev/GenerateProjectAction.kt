@@ -48,7 +48,6 @@ class GenerateProjectAction : BaseAction() {
         val api = ChatProxy(
             SoftwareProjectAI::class.java,
             api = UITools.api,
-            maxTokens = AppSettingsState.instance.maxTokens,
             deserializerRetries = 5,
         ).create()
         val project = UITools.run(
@@ -146,7 +145,7 @@ class GenerateProjectAction : BaseAction() {
     }.start()
 
     private fun isEnabled(): Boolean {
-        if (UITools.isSanctioned()) return false
+        if(UITools.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 

@@ -6,7 +6,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.github.simiacryptus.aicoder.util.UITools.insertString
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.simiacryptus.openai.ChatMessage
+import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import java.util.*
@@ -39,7 +39,7 @@ class AppendAction : BaseAction() {
             val newText = UITools.run(
                 event.project, "Getting completion", true
             ) {
-                api.chat(request).choices[0].message?.content ?: ""
+                (api.chat(request).choices[0].message?.content ?: "").trimPrefix(before ?: "")
             }
             UITools.writeableFn(event) {
                 insertString(document, selectionEnd, newText)
@@ -52,6 +52,12 @@ class AppendAction : BaseAction() {
         return hasSelection(event)
     }
 
+}
+
+private fun String.trimPrefix(charSequence: CharSequence) = if (this.startsWith(charSequence)) {
+    this.substring(charSequence.length)
+} else {
+    this
 }
 
 

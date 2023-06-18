@@ -10,3 +10,4 @@ api.log.json
 *.log.java
 *.log
 api.*
+.skynet

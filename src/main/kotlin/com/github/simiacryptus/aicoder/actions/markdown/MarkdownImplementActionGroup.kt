@@ -63,7 +63,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
         if (null == computerLanguage) return arrayOf()
         val actions = ArrayList<AnAction>()
         for (language in markdownLanguages) {
-            if (computerLanguage!!.name == language) continue
+            if (computerLanguage.name == language) continue
             actions.add(MarkdownImplementAction(language))
         }
         return actions.toArray(arrayOf())

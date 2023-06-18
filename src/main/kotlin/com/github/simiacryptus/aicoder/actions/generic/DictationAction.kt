@@ -1,15 +1,14 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.simiacryptus.util.AudioRecorder
+import com.simiacryptus.util.audio.AudioRecorder
 import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
-import com.simiacryptus.util.LookbackLoudnessWindowBuffer
+import com.simiacryptus.util.audio.LookbackLoudnessWindowBuffer
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Executors
