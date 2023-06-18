@@ -2,7 +2,9 @@
 
 package com.github.simiacryptus.aicoder.proxy
 
-import com.simiacryptus.openai.proxy.Description
+import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.util.describe.Description
 import org.junit.Test
 
 
@@ -189,7 +191,7 @@ class FractalBookTest : GenerationReportBase<FractalBookTest.FractalBook>(Fracta
                 // out is a function to write markdown to the report
                 out: (Any?) -> Unit ->
 
-            proxy.model = "gpt-4-0314"
+            proxy.model = AppSettingsState.instance.defaultChatModel()
             proxy.temperature = 0.1
             val expansionIterations = 0
             val idea = FractalBook.Idea(

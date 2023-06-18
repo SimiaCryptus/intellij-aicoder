@@ -34,6 +34,10 @@ class AppSettingsComponent {
     val historyLimit = JBTextField()
 
     @Suppress("unused")
+    @Name("Use GPT-4")
+    val useGPT4 = JBCheckBox()
+
+    @Suppress("unused")
     @Name("Developer Tools")
     val devActions = JBCheckBox()
 
@@ -44,21 +48,6 @@ class AppSettingsComponent {
     @Suppress("unused")
     @Name("Temperature")
     val temperature = JBTextField()
-
-    @Suppress("unused")
-    @Name("Max Tokens")
-    val maxTokens = JBTextField()
-
-    @Suppress("unused")
-    @Name("Max Prompt (Characters)")
-    val maxPrompt = JBTextField()
-
-    @Suppress("unused")
-    @Name("Completion Model")
-    val model_completion = UITools.modelSelector
-
-    @Name("Chat Model")
-    val model_chat = UITools.modelSelector
 
     @Name("API Threads")
     val apiThreads = JBTextField()

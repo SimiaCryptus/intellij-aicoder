@@ -66,7 +66,6 @@ class CommentsAction : BaseAction() {
                 ChatProxy(
                         clazz = VirtualAPI::class.java,
                         api = api,
-                        maxTokens = AppSettingsState.instance.maxTokens,
                         deserializerRetries = 5,
                 ).create().editCode(
                         code = selectedText!!,

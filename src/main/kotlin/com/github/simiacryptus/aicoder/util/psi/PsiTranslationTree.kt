@@ -235,7 +235,6 @@ class PsiTranslationTree(
             get() = ChatProxy(
                 clazz = VirtualAPI::class.java,
                 api = api,
-                maxTokens = AppSettingsState.instance.maxTokens,
                 deserializerRetries = 5,
             ).create()
     }

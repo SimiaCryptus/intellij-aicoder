@@ -7,8 +7,8 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.simiacryptus.openai.ChatMessage
-import com.simiacryptus.openai.ChatRequest
+import com.simiacryptus.openai.OpenAIClient.ChatMessage
+import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.skyenet.Brain
 import org.apache.commons.io.IOUtils
@@ -80,6 +80,7 @@ class AnalogueFileAction : BaseAction() {
                     }
                     outputPath.parent.toFile().mkdirs()
                     outputPath.toFile().writeText(analogue.code!!)
+                    Thread.sleep(100)
                     val localFileSystem = LocalFileSystem.getInstance()
                     localFileSystem.findFileByIoFile(outputPath.toFile().parentFile)?.refresh(false, true)
                     val generatedFile = localFileSystem.findFileByIoFile(outputPath.toFile())
@@ -109,8 +110,9 @@ class AnalogueFileAction : BaseAction() {
                 logLevel = AppSettingsState.instance.apiLogLevel
             )
         val chatRequest = ChatRequest()
-        chatRequest.model = AppSettingsState.instance.model_chat
-        chatRequest.max_tokens = AppSettingsState.instance.maxTokens
+        val model = AppSettingsState.instance.defaultChatModel()
+        chatRequest.model = model.modelName
+        chatRequest.max_tokens = model.maxTokens
         chatRequest.temperature = AppSettingsState.instance.temperature
         chatRequest.messages = arrayOf(
                 //language=TEXT
@@ -135,11 +137,11 @@ class AnalogueFileAction : BaseAction() {
                 """.trimMargin()
                 )
             )
-        val response = api.chat(chatRequest).response.get().toString()
+        val response = api.chat(chatRequest).choices?.first()?.message?.content.orEmpty()
         val codeBlocks = Brain.extractCodeBlocks(response).filter { it.first != "text" }
         require(codeBlocks.size == 1) { "Expected 1 code block, but found ${codeBlocks.size}" }
         var outputPath = baseFile.path
-        val pathPattern = Regex("""(?s)\n?File(?:name)?: (?:'|`|")?([^\n]+)(?:'|`|")\n""")
+        val pathPattern = Regex("""(?s)\n?File(?:name)?: ['`"]?([^\n]+)['`"]?\n""")
         if (pathPattern.containsMatchIn(response)) {
                 val match = pathPattern.find(response)!!
                 outputPath = match.groupValues[1]
@@ -151,8 +153,7 @@ class AnalogueFileAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
-        return true
+        return !UITools.isSanctioned()
     }
 
     companion object {

@@ -24,7 +24,7 @@ class AppSettingsConfigurable : Configurable {
             synchronized(this) {
                 if (null == mainPanel) {
                     settingsComponent = AppSettingsComponent()
-                    mainPanel = UITools.build(settingsComponent!!)
+                    mainPanel = UITools.build(settingsComponent!!, false)
                 }
             }
         }

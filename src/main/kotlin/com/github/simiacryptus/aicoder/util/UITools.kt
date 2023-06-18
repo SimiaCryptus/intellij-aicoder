@@ -28,7 +28,7 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.openai.ModerationException
 import com.simiacryptus.openai.OpenAIClient
-import com.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringUtil
 import org.apache.http.client.methods.HttpRequestBase
 import org.slf4j.event.Level
 import java.awt.BorderLayout
@@ -509,7 +509,7 @@ object UITools {
         }
     }
 
-    fun <T : Any> addKotlinFields(ui: T, formBuilder: FormBuilder) {
+    fun <T : Any> addKotlinFields(ui: T, formBuilder: FormBuilder, fillVertically: Boolean) {
         var first = true
         for (field in ui.javaClass.kotlin.memberProperties) {
             if (field.javaField == null) continue
@@ -517,7 +517,7 @@ object UITools {
                 val nameAnnotation = field.annotations.find { it is Name } as Name?
                 val component = field.get(ui) as JComponent
                 if (nameAnnotation != null) {
-                    if (first) {
+                    if (first && fillVertically) {
                         first = false
                         formBuilder.addLabeledComponentFillVertically(nameAnnotation.value + ": ", component)
                     } else {
@@ -777,9 +777,10 @@ object UITools {
 
     fun <T : Any> build(
         component: T,
+        fillVertically: Boolean = true,
         formBuilder: FormBuilder = FormBuilder.createFormBuilder(),
     ): JPanel? {
-        addKotlinFields(component, formBuilder)
+        addKotlinFields(component, formBuilder, fillVertically)
         return formBuilder.addComponentFillVertically(JPanel(), 0).panel
     }
 
@@ -982,27 +983,12 @@ object UITools {
         return { text ->
             var result: CharSequence = text.toString().trim { it <= ' ' }
             if (stripUnbalancedTerminators) {
-                result = StringTools.stripUnbalancedTerminators(result)
+                result = StringUtil.stripUnbalancedTerminators(result)
             }
             result = IndentedText.fromString2(result).withIndent(indent).toString()
             indent.toString() + result
         }
     }
 
-    val modelSelector: JComponent
-        get() {
-            val comboBox = ComboBox(
-                arrayOf(
-                    AppSettingsState.instance.model_completion,
-                    AppSettingsState.instance.model_chat,
-                )
-            )
-            if (AppSettingsState.instance.apiKey.toString().trim().isNotEmpty()) Thread {
-                api.getEngines().toList().forEach {
-                    if(null != it) comboBox.addItem(it.toString())
-                }
-            }.start()
-            return comboBox
-        }
 
 }

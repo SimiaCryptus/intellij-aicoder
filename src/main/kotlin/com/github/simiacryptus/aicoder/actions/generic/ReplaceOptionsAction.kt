@@ -4,8 +4,7 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.showRadioButtonDialog
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.util.TextRange
@@ -26,7 +25,6 @@ class ReplaceOptionsAction : BaseAction() {
         get() = ChatProxy(
             clazz = VirtualAPI::class.java,
             api = api,
-            maxTokens = AppSettingsState.instance.maxTokens,
             deserializerRetries = 5,
         ).create()
 
@@ -42,8 +40,8 @@ class ReplaceOptionsAction : BaseAction() {
         val allBefore = document.getText(TextRange(0, selectionStart))
         val selectionEnd = caret.selectionEnd
         val allAfter = document.getText(TextRange(selectionEnd, document.textLength))
-        val before = StringTools.getSuffixForContext(allBefore, idealLength).replace(newlines, " ")
-        val after = StringTools.getPrefixForContext(allAfter, idealLength).replace(newlines, " ")
+        val before = StringUtil.getSuffixForContext(allBefore, idealLength).replace(newlines, " ")
+        val after = StringUtil.getPrefixForContext(allAfter, idealLength).replace(newlines, " ")
 
         UITools.redoableTask(event) {
             val options = UITools.run(

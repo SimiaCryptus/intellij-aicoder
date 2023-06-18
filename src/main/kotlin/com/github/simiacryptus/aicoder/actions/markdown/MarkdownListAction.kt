@@ -11,7 +11,7 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersecting
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.simiacryptus.openai.proxy.ChatProxy
-import com.simiacryptus.util.StringTools
+import com.simiacryptus.util.StringUtil
 
 /**
  * The MarkdownListAction class is an action that allows users to quickly expand a list of items in IntelliJ.
@@ -37,7 +37,6 @@ class MarkdownListAction : BaseAction() {
             val chatProxy = ChatProxy(
                 clazz = VirtualAPI::class.java,
                 api = api,
-                maxTokens = AppSettingsState.instance.maxTokens,
                 deserializerRetries = 5,
             )
             chatProxy.addExample(
@@ -57,7 +56,7 @@ class MarkdownListAction : BaseAction() {
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val list =
             getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl") ?: return
-        val items = StringTools.trim(
+        val items = StringUtil.trim(
             getAll(list, "MarkdownListItemImpl")
                 .map {
                     getAll(it, "MarkdownParagraphImpl")[0].text
@@ -69,7 +68,7 @@ class MarkdownListAction : BaseAction() {
         val document = (event.getData(CommonDataKeys.EDITOR) ?: return).document
         val rawItems = items.map(CharSequence::trim).map {
             val bulletType = bulletTypes.find(it::startsWith)
-            if (null != bulletType) StringTools.stripPrefix(it, bulletType).toString()
+            if (null != bulletType) StringUtil.stripPrefix(it, bulletType).toString()
             else it.toString()
         }
 

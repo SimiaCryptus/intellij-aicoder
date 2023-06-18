@@ -8,10 +8,10 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.util.containers.orNull
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.ChatMessage
-import com.simiacryptus.openai.ChatRequest
+import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.OpenAIClient.ChatMessage
+import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.body.ClasspathResource
 import com.simiacryptus.skyenet.body.InterviewSession
@@ -21,7 +21,6 @@ import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
 import org.eclipse.jetty.util.resource.Resource
 import org.jdesktop.swingx.JXButton
 import java.awt.Desktop
-import java.io.File
 import java.util.function.Supplier
 
 class CodeChatAction : BaseAction() {
@@ -34,7 +33,7 @@ class CodeChatAction : BaseAction() {
     ) : SkyenetCodingSessionServer(
         applicationName = "Code Chat",
         baseURL = "http://localhost:$port",
-        model = AppSettingsState.instance.model_chat,
+        model = AppSettingsState.instance.defaultChatModel(),
         apiKey = AppSettingsState.instance.apiKey,
     ) {
 
@@ -53,7 +52,7 @@ class CodeChatAction : BaseAction() {
                 var messageTrail = InterviewSession.initialText(userMessage)
                 send("""$messageTrail<div>$spinner</div>""")
                 messages += ChatMessage(ChatMessage.Role.user, userMessage)
-                val response = api.chat(chatRequest).response.orNull()?.toString() ?: "???"
+                val response = api.chat(chatRequest).choices?.first()?.message?.content.orEmpty()
                 messages += ChatMessage(ChatMessage.Role.assistant, response)
                 messageTrail += """<div><pre>$response</pre></div>"""
                 send(messageTrail)
@@ -73,8 +72,9 @@ class CodeChatAction : BaseAction() {
             val chatRequest: ChatRequest
                 get() {
                     val chatRequest = ChatRequest()
-                    chatRequest.model = AppSettingsState.instance.model_chat
-                    chatRequest.max_tokens = AppSettingsState.instance.maxTokens
+                    val model = AppSettingsState.instance.defaultChatModel()
+                    chatRequest.model = model.modelName
+                    chatRequest.max_tokens = model.maxTokens
                     chatRequest.temperature = AppSettingsState.instance.temperature
                     chatRequest.messages = messages.toTypedArray()
                     return chatRequest
@@ -151,8 +151,7 @@ class CodeChatAction : BaseAction() {
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if(UITools.isSanctioned()) return false
-        if (!AppSettingsState.instance.devActions) return false
-        return true
+        return AppSettingsState.instance.devActions
     }
 
     companion object {

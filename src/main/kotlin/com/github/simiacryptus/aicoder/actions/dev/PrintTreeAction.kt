@@ -26,8 +26,7 @@ class PrintTreeAction : BaseAction() {
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if(UITools.isSanctioned()) return false
-        if (!AppSettingsState.instance.devActions) return false
-        return true
+        return AppSettingsState.instance.devActions
     }
 
     companion object {
