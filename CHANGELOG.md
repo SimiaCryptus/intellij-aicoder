@@ -4,9 +4,6 @@
 
 ## [Unreleased]
 
-### Added
-- 
-
 ## [1.1.2]
 
 ### Improved
@@ -30,7 +27,7 @@
 - Various legacy actions that are no longer supported - Sorry, too many experiments to maintain! However, if you have a favorite that's now missing, let me know and I'll look into it.
 
 ### Improved
-- All remaining actions have been rewritten to use the Chat API, thus making newer models available 
+- All remaining actions have been rewritten to use the Chat API, thus making newer models available
 
 ## [1.0.20]
 
@@ -239,7 +236,27 @@
 - Initial implementation
 - Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
 
-[Unreleased]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.20...v1.1.0
+[1.0.20]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.19...v1.0.20
+[1.0.19]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.18...v1.0.19
+[1.0.18]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.17...v1.0.18
+[1.0.17]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.16...v1.0.17
+[1.0.16]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.15...v1.0.16
+[1.0.15]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.14...v1.0.15
+[1.0.14]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.13...v1.0.14
+[1.0.13]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.12...v1.0.13
+[1.0.12]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.11...v1.0.12
+[1.0.11]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.10...v1.0.11
+[1.0.10]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.9...v1.0.10
+[1.0.9]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.8...v1.0.9
+[1.0.8]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.7...v1.0.8
+[1.0.7]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.6...v1.0.7
+[1.0.6]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.5...v1.0.6
+[1.0.5]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.3...v1.0.5
+[1.0.3]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.0.0...v1.0.2
 [1.0.0]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v0.1.9...v1.0.0
 [0.1.9]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v0.1.8...v0.1.9
