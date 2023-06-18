@@ -30,10 +30,6 @@ class AppSettingsComponent {
     val humanLanguage = JBTextField()
 
     @Suppress("unused")
-    @Name("History Limit")
-    val historyLimit = JBTextField()
-
-    @Suppress("unused")
     @Name("Use GPT-4")
     val useGPT4 = JBCheckBox()
 
@@ -48,9 +44,6 @@ class AppSettingsComponent {
     @Suppress("unused")
     @Name("Temperature")
     val temperature = JBTextField()
-
-    @Name("API Threads")
-    val apiThreads = JBTextField()
 
     @Name("API Key")
     val apiKey = JBPasswordField()

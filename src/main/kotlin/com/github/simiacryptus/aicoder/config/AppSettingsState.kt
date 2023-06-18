@@ -22,15 +22,13 @@ import kotlin.collections.component2
 import kotlin.collections.forEach
 import kotlin.collections.remove
 
+@Suppress("MemberVisibilityCanBePrivate")
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
-    var style = ""
     var useGPT4 = false
-
-    @Suppress("unused")
     var tokenCounter = 0
     private val mostUsedHistory: MutableMap<String, Int> = HashMap()
     private val mostRecentHistory: MutableList<String> = ArrayList()
@@ -73,7 +71,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         if (useGPT4 != that.useGPT4) return false
         if (apiLogLevel != that.apiLogLevel) return false
         if (devActions != that.devActions) return false
-        return style == that.style
+        return true
     }
 
     override fun hashCode(): Int {
@@ -84,7 +82,6 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
             useGPT4,
             apiLogLevel,
             devActions,
-            style
         )
     }
 

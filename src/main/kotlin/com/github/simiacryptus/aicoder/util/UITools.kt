@@ -102,17 +102,6 @@ object UITools {
     }
 
     /**
-     * Get an instruction with a style
-     *
-     * @param instruction The instruction to be returned
-     * @return A string containing the instruction and the style
-     */
-    fun getInstruction(instruction: String): String {
-        val style: CharSequence = AppSettingsState.instance.style
-        return if (style.isEmpty()) instruction else String.format("%s (%s)", instruction, style)
-    }
-
-    /**
      * Replaces a string in a document with a new string.
      *
      * @param document    The document to replace the string in.
@@ -955,16 +944,15 @@ object UITools {
         return key
     }
 
-    private val apiThreads = AppSettingsState.instance.apiThreads
     val threadFactory: ThreadFactory = ThreadFactoryBuilder().setNameFormat("API Thread %d").build()
     val pool: ListeningExecutorService = MoreExecutors.listeningDecorator(
         ThreadPoolExecutor(
-            apiThreads,
-            apiThreads,
-            0L, TimeUnit.MILLISECONDS,
-            LinkedBlockingQueue(),
-            threadFactory,
-            ThreadPoolExecutor.AbortPolicy()
+            /* corePoolSize = */ AppSettingsState.instance.apiThreads,
+            /* maximumPoolSize = */ AppSettingsState.instance.apiThreads,
+            /* keepAliveTime = */ 0L, /* unit = */ TimeUnit.MILLISECONDS,
+            /* workQueue = */ LinkedBlockingQueue(),
+            /* threadFactory = */ threadFactory,
+            /* handler = */ ThreadPoolExecutor.AbortPolicy()
         )
     )
 

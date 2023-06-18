@@ -13,7 +13,6 @@ open class WeakGroovyInterpreter(defs: java.util.Map<String, Object>) : Heart {
     private val setVariableMethod: Method
 
     init {
-        //val groovyClassLoader = ClassLoader.getSystemClassLoader()
         val groovyClassLoader = WeakGroovyInterpreter::class.java.classLoader
         val compilerConfigurationClass = groovyClassLoader.loadClass("org.codehaus.groovy.control.CompilerConfiguration")
         val groovyShellClass = groovyClassLoader.loadClass("groovy.lang.GroovyShell")
