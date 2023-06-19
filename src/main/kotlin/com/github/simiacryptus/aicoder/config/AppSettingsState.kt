@@ -28,7 +28,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
-    var useGPT4 = false
+    var useGPT4 = true
     var tokenCounter = 0
     private val mostUsedHistory: MutableMap<String, Int> = HashMap()
     private val mostRecentHistory: MutableList<String> = ArrayList()
