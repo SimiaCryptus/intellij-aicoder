@@ -47,6 +47,7 @@ class GenerateProjectAction : BaseAction() {
         val selectedFolder = UITools.getSelectedFolder(e)!!
         val api = ChatProxy(
             SoftwareProjectAI::class.java,
+            model = AppSettingsState.instance.defaultChatModel(),
             api = UITools.api,
             deserializerRetries = 5,
         ).create()

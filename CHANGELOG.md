@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added
+- 
+
+## [1.1.3]
+
+### Improved
+- GPT4 enabled by default
+- Fixed bug to allow selected model (GPT4/3.5Turbo) for all actions
+
 ## [1.1.2]
 
 ### Improved

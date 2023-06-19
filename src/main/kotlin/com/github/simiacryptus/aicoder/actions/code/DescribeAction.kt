@@ -34,6 +34,7 @@ class DescribeAction : BaseAction() {
     val proxy: VirtualAPI
         get() = ChatProxy(
             clazz = VirtualAPI::class.java,
+            model = AppSettingsState.instance.defaultChatModel(),
             api = api,
             deserializerRetries = 5,
         ).create()
