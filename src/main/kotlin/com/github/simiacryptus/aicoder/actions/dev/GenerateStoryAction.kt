@@ -171,12 +171,11 @@ class GenerateStoryAction : BaseAction() {
 
         val proxy = ChatProxy(
             clazz = VirtualAPI::class.java,
-            model = AppSettingsState.instance.defaultChatModel(),
             api = OpenAIClient(
                 key = AppSettingsState.instance.apiKey,
                 apiBase = AppSettingsState.instance.apiBase,
-                logLevel = AppSettingsState.instance.apiLogLevel
             ),
+            model = AppSettingsState.instance.defaultChatModel(),
             deserializerRetries = 5,
         ).create()
 

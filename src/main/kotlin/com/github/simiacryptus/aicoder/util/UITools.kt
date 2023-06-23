@@ -862,7 +862,20 @@ object UITools {
         checkApiKey()
         return run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
             override fun compute(indicator: ProgressIndicator): T {
-                return task(indicator)
+                val currentThread = Thread.currentThread()
+                val threads = ArrayList<Thread>()
+                val scheduledFuture = scheduledPool.scheduleAtFixedRate({
+                    if (indicator.isCanceled) {
+                        threads.forEach { it.interrupt() }
+                    }
+                }, 0, 1, TimeUnit.SECONDS)
+                threads.add(currentThread)
+                try {
+                    return task(indicator)
+                } finally {
+                    threads.remove(currentThread)
+                    scheduledFuture.cancel(true)
+                }
             }
         }, retries, suppressProgress)
     }
@@ -905,7 +918,6 @@ object UITools {
         get() = object : OpenAIClient(
             key = AppSettingsState.instance.apiKey,
             apiBase = AppSettingsState.instance.apiBase,
-            logLevel = AppSettingsState.instance.apiLogLevel
         ) {
 
             override fun incrementTokens(totalTokens: Int) {

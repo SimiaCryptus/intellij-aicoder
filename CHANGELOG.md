@@ -7,6 +7,14 @@
 ### Added
 - 
 
+## [1.1.4]
+
+### Added
+- "Create File" action
+
+### Improved
+- Exception, timeout, and cancellation handling for API calls
+
 ## [1.1.3]
 
 ### Improved

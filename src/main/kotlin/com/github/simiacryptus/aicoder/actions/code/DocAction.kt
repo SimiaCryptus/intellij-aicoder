@@ -43,8 +43,8 @@ class DocAction : BaseAction() {
         get() {
             val chatProxy = ChatProxy(
                 clazz = VirtualAPI::class.java,
-                model = AppSettingsState.instance.defaultChatModel(),
                 api = api,
+                model = AppSettingsState.instance.defaultChatModel(),
                 deserializerRetries = 5,
             )
             chatProxy.addExample(

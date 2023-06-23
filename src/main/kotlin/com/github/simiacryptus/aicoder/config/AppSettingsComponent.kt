@@ -2,12 +2,16 @@
 
 package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
+import com.simiacryptus.openai.OpenAIClient
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JButton
@@ -34,12 +38,32 @@ class AppSettingsComponent {
     val useGPT4 = JBCheckBox()
 
     @Suppress("unused")
-    @Name("Developer Tools")
-    val devActions = JBCheckBox()
+    @Name("Enable API Log")
+    val apiLog = JBCheckBox()
 
     @Suppress("unused")
-    @Name("API Log Level")
-    val apiLogLevel = ComboBox(org.slf4j.event.Level.values().map { it.name }.toTypedArray())
+    val openApiLog = JButton(object : AbstractAction("Open API Log") {
+        override fun actionPerformed(e: ActionEvent) {
+            OpenAIClient.auxillaryLog?.let {
+                val project = ApplicationManager.getApplication().runReadAction<Project> {
+                    com.intellij.openapi.project.ProjectManager.getInstance().openProjects.firstOrNull()
+                }
+                if (it.exists()) {
+                    ApplicationManager.getApplication().invokeLater {
+                        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(it)
+                        FileEditorManager.getInstance(project!!).openFile(virtualFile!!, true)
+                    }
+                } else {
+                    log.warn("Log file not found: ${it.absolutePath}")
+                }
+            }
+        }
+    })
+
+
+    @Suppress("unused")
+    @Name("Developer Tools")
+    val devActions = JBCheckBox()
 
     @Suppress("unused")
     @Name("Temperature")

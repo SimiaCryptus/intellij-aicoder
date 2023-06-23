@@ -64,10 +64,10 @@ class CommentsAction : BaseAction() {
 
         fun edit(api: OpenAIClient, selectedText: @NlsSafe String?, language: ComputerLanguage?, outputHumanLanguage: String) =
                 ChatProxy(
-                        clazz = VirtualAPI::class.java,
-                        model = AppSettingsState.instance.defaultChatModel(),
-                        api = api,
-                        deserializerRetries = 5,
+                    clazz = VirtualAPI::class.java,
+                    api = api,
+                    model = AppSettingsState.instance.defaultChatModel(),
+                    deserializerRetries = 5,
                 ).create().editCode(
                         code = selectedText!!,
                         operations = "Add comments to each line explaining the code",
