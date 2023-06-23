@@ -14,6 +14,9 @@
                                  displayName="AI Coder"/>
     </extensions>
 
+    <applicationListeners>
+        <listener class="com.github.simiacryptus.aicoder.ApplicationEvents" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    </applicationListeners>
     <actions>
         <group id="com.github.simiacryptus.aicoder.EditorMenu"
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"
@@ -136,6 +139,15 @@
                 description="Launch Skyenet">
             <!--DOC
         The `Launch Skyenet` action opens the Skyenet interactive auto-scritping interface.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateFileFromRequirementsAction"
+                text="_Create File"
+                description="Create file">
+            <!--DOC
+        The `Create File` action allows you to quickly create a new file via a user-supplied directive.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
         </action>

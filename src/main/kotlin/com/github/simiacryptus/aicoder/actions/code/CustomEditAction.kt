@@ -12,9 +12,6 @@ import javax.swing.JOptionPane
 
 /**
  * The CustomEditAction class is an IntelliJ action that allows users to edit computer language code.
- * When the action is triggered, a dialog box will appear prompting the user to enter an instruction.
- * The instruction will then be used to transform the selected code.
- *
  * To use the CustomEditAction, first select the code that you want to edit.
  * Then, select the action in the context menu.
  * A dialog box will appear, prompting you to enter an instruction.
@@ -32,21 +29,39 @@ open class CustomEditAction(
             operation: String,
             computerLanguage: String,
             humanLanguage: String,
-        ): ConvertedText
-        data class ConvertedText(
+        ): EditedText
+        data class EditedText(
             val code: String? = null,
             val language: String? = null
         )
     }
 
     val proxy: VirtualAPI
-        get() = ChatProxy(
-            clazz = VirtualAPI::class.java,
-            model = AppSettingsState.instance.defaultChatModel(),
-            api = api,
-            deserializerRetries = 5,
-        ).create()
-
+        get() {
+            val chatProxy = ChatProxy(
+                clazz = VirtualAPI::class.java,
+                api = api,
+                model = AppSettingsState.instance.defaultChatModel(),
+            )
+            chatProxy.addExample(
+                returnValue = VirtualAPI.EditedText(
+                    //language=JAVA
+                    code = """
+                        |// Print Hello, World! to the console
+                        |println("Hello, World!")
+                        """.trimMargin(),
+                    language = "java"
+                )
+            ) {
+                it.editCode(
+                //language=JAVA
+                code="""println("Hello, World!")""",
+                operation = "Add code comments",
+                computerLanguage = "java",
+                humanLanguage = "English"
+            ) }
+            return chatProxy.create()
+        }
     override fun actionPerformed(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
@@ -60,7 +75,6 @@ open class CustomEditAction(
         val settings = AppSettingsState.instance
         val outputHumanLanguage = AppSettingsState.instance.humanLanguage
         settings.addInstructionToHistory(instruction)
-
         UITools.redoableTask(event) {
             val newText = UITools.run(
                 event.project, "Editing Code", true
@@ -79,7 +93,6 @@ open class CustomEditAction(
                 )
             }
         }
-
     }
 
     open fun getInstruction(): String? =

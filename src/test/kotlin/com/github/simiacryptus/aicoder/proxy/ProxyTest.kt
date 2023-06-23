@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.proxy
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.openai.proxy.ChatProxy
 import com.simiacryptus.openai.proxy.CompletionProxy
-import com.intellij.openapi.util.io.FileUtil
 import com.simiacryptus.openai.OpenAIClient
 import org.junit.Test
 import org.slf4j.event.Level
@@ -23,14 +22,12 @@ class ProxyTest {
                 logLevel = Level.WARN
             ),
             model = AppSettingsState.instance.defaultChatModel(),
-            apiLog = apiLog,
             deserializerRetries = 5
         )
         fun <T:Any> completionProxy(clazz : Class<T>,
                             apiLog: String = "api.log.json"): CompletionProxy<T> = CompletionProxy(
             clazz,
             apiKey = OpenAIClient.keyTxt,
-            apiLog = apiLog,
             deserializerRetries = 5
         )
     }

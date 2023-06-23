@@ -1,30 +1,22 @@
 package com.github.simiacryptus.aicoder.config
 
-import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.openai.OpenAIClient
-import org.slf4j.event.Level
+import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import java.util.*
 import java.util.Map
 import java.util.stream.Collectors
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
-import kotlin.collections.MutableList
-import kotlin.collections.MutableMap
-import kotlin.collections.Set
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.forEach
-import kotlin.collections.remove
 
 @Suppress("MemberVisibilityCanBePrivate")
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
+    var apiLog: Boolean = false
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
@@ -34,7 +26,6 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     private val mostRecentHistory: MutableList<String> = ArrayList()
     var historyLimit = 10
     var humanLanguage = "English"
-    var apiLogLevel = Level.DEBUG
     var devActions = false
     var apiThreads = 4
 
@@ -69,7 +60,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         if (apiBase != that.apiBase) return false
         if (apiKey != that.apiKey) return false
         if (useGPT4 != that.useGPT4) return false
-        if (apiLogLevel != that.apiLogLevel) return false
+        if (apiLog != that.apiLog) return false
         if (devActions != that.devActions) return false
         return true
     }
@@ -80,7 +71,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
             apiKey,
             temperature,
             useGPT4,
-            apiLogLevel,
+            apiLog,
             devActions,
         )
     }
@@ -99,15 +90,6 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
             )
         }
 
-        // If the instruction history is bigger than the history limit,
-        // We'll make a set of strings to retain,
-        // We'll sort the instruction history by its value,
-        // And limit it to the history limit,
-        // Then we'll map the entry key and collect it in a set,
-        // Then we'll make a new hash set of the instruction history keys,
-        // And remove all the ones we want to retain,
-        // Then we'll remove all the ones we don't want to keep,
-        // And that's how we'll make sure the instruction history is neat!
         if (mostUsedHistory.size > historyLimit) {
             val retain = mostUsedHistory.entries.stream()
                 .sorted(Map.Entry.comparingByValue<String, Int>().reversed())
