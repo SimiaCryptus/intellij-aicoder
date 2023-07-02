@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 class ConvertFileToLanguage(private val targetLanguage: ComputerLanguage) : BaseAction(
     targetLanguage.name
 ) {
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun actionPerformed2(event: AnActionEvent) {
         val sourceLanguage = ComputerLanguage.getComputerLanguage(event)
         val indent = getIndent(event.getData(CommonDataKeys.CARET))
         val virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE) ?: return

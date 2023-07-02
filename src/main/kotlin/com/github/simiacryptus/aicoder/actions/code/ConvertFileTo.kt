@@ -1,11 +1,11 @@
 package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
+import com.simiacryptus.openai.APIClientBase
 
 /**
  * The ConvertFileTo ActionGroup provides a way to quickly convert a file from one language to another.
@@ -29,7 +29,7 @@ class ConvertFileTo : ActionGroup() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         return supportedLanguages.contains(computerLanguage)

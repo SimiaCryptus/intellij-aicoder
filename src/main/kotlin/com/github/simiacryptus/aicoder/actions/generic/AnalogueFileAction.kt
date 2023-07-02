@@ -3,13 +3,14 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
-import com.simiacryptus.openai.OpenAIClient
 import org.apache.commons.io.IOUtils
 import java.io.File
 import javax.swing.JTextArea
@@ -37,7 +38,7 @@ class AnalogueFileAction : BaseAction() {
         var directive: String = "",
     )
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun actionPerformed2(e: AnActionEvent) {
         UITools.showDialog(e, SettingsUI::class.java, Settings::class.java, "Create Analogue File") { config ->
             handleImplement(e, config)
         }
@@ -103,10 +104,7 @@ class AnalogueFileAction : BaseAction() {
         baseFile: ProjectFile,
         directive: String,
     ): ProjectFile {
-        val api = OpenAIClient(
-            key = AppSettingsState.instance.apiKey,
-            apiBase = AppSettingsState.instance.apiBase,
-        )
+        val api = IdeaOpenAIClient.api
         val chatRequest = ChatRequest()
         val model = AppSettingsState.instance.defaultChatModel()
         chatRequest.model = model.modelName
@@ -140,7 +138,7 @@ class AnalogueFileAction : BaseAction() {
         var outputPath = baseFile.path
         val header = response.split("\n").first()
         var body = response.split("\n").drop(1).joinToString("\n").trim()
-        if(body.startsWith("```")) {
+        if (body.startsWith("```")) {
             body = body.split("\n").drop(1).dropLast(1).joinToString("\n").trim()
         }
         val pathPattern = Regex("""File(?:name)?: ['`"]?([^'`"]+)['`"]?""")
@@ -155,7 +153,7 @@ class AnalogueFileAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         val virtualFile = UITools.getSelectedFile(event) ?: return false
         if (virtualFile.isDirectory) return false
         return true

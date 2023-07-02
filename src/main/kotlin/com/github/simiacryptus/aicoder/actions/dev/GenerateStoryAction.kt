@@ -3,9 +3,10 @@ package com.github.simiacryptus.aicoder.actions.dev
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import com.simiacryptus.util.describe.Description
 import java.io.File
@@ -156,7 +157,7 @@ class GenerateStoryAction : BaseAction() {
         val writingStyle: String = "",
     )
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun actionPerformed2(e: AnActionEvent) {
         UITools.showDialog(e, SettingsUI::class.java, Settings::class.java) { config ->
             handleImplement(e, config)
         }
@@ -171,10 +172,7 @@ class GenerateStoryAction : BaseAction() {
 
         val proxy = ChatProxy(
             clazz = VirtualAPI::class.java,
-            api = OpenAIClient(
-                key = AppSettingsState.instance.apiKey,
-                apiBase = AppSettingsState.instance.apiBase,
-            ),
+            api = IdeaOpenAIClient.api,
             model = AppSettingsState.instance.defaultChatModel(),
             deserializerRetries = 5,
         ).create()
@@ -276,7 +274,7 @@ class GenerateStoryAction : BaseAction() {
 
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 

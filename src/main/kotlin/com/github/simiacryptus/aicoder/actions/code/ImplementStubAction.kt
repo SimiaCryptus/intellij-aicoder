@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import java.util.*
 import java.util.regex.Pattern
@@ -42,7 +43,7 @@ class ImplementStubAction : BaseAction() {
             deserializerRetries = 5,
         ).create()
 
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun actionPerformed2(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val smallestIntersectingMethod = getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return
@@ -83,13 +84,13 @@ class ImplementStubAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         if (!AppSettingsState.instance.devActions) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         val caret = event.getData(CommonDataKeys.CARET)
         val psiFile = event.getData(CommonDataKeys.PSI_FILE)
-        if(psiFile == null) return false
+        if (psiFile == null) return false
         val smallestIntersectingMethod =
             getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return false
         return isStub(smallestIntersectingMethod)

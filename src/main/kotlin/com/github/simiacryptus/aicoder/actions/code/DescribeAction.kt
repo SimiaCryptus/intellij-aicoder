@@ -8,6 +8,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.util.StringUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 
 /**
@@ -40,7 +41,7 @@ class DescribeAction : BaseAction() {
         ).create()
 
 
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun actionPerformed2(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
@@ -95,7 +96,7 @@ class DescribeAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         return computerLanguage != ComputerLanguage.Text
     }

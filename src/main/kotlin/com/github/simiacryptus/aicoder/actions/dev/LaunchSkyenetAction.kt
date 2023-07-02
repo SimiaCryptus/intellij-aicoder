@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.util.describe.Description
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.OutputInterceptor
@@ -37,7 +37,7 @@ class LaunchSkyenetAction : BaseAction() {
         fun print(msg:String): Unit
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun actionPerformed2(e: AnActionEvent) {
         // Random port from range 8000-9000
         val port = (8000 + (Math.random() * 1000).toInt())
         val skyenet = object : SkyenetCodingSessionServer(
@@ -117,7 +117,7 @@ class LaunchSkyenetAction : BaseAction() {
     }
 
     private fun isEnabled(): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 

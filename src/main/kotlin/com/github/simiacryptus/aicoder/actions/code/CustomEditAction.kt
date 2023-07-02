@@ -6,6 +6,7 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import javax.swing.Icon
 import javax.swing.JOptionPane
@@ -62,7 +63,7 @@ open class CustomEditAction(
             ) }
             return chatProxy.create()
         }
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun actionPerformed2(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
@@ -99,7 +100,7 @@ open class CustomEditAction(
         JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE)
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         if (!UITools.hasSelection(event)) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         return computerLanguage != ComputerLanguage.Text

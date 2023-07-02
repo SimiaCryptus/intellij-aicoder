@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import org.jetbrains.annotations.NotNull
 
@@ -40,7 +41,7 @@ class RenameVariablesAction : BaseAction() {
         ).create()
 
 
-    override fun actionPerformed(@NotNull event: AnActionEvent) {
+    override fun actionPerformed2(@NotNull event: AnActionEvent) {
         @NotNull val textEditor = event.getData(CommonDataKeys.EDITOR) ?: return
         @NotNull val caretModel = textEditor.caretModel
         @NotNull val mainCursor = caretModel.primaryCaret
@@ -85,7 +86,7 @@ class RenameVariablesAction : BaseAction() {
     }
 
     override fun isEnabled(@NotNull event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         return computerLanguage != ComputerLanguage.Text
     }
