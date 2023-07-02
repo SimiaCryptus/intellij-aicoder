@@ -1,8 +1,21 @@
-<!-- Keep a Changelog guide -> https://keepachangelog.com -->
+﻿<!-- Keep a Changelog guide -> https://keepachangelog.com -->
 
 # intellij-aicoder Changelog
 
 ## [Unreleased]
+
+### Added
+- 
+
+## [1.2.0]
+
+### Added
+- API edit dialog
+- Toolbar widget for token count
+- Toolbar widget for model selection
+
+### Improved
+- Token count handling
 
 ## [1.1.4]
 
@@ -286,3 +299,4 @@
 [0.1.0]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v0.0.4...v0.1.0
 [0.0.4]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v0.0.1...v0.0.4
 [0.0.1]: https://github.com/SimiaCryptus/intellij-aicoder/commits/v0.0.1
+

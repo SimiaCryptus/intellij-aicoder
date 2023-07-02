@@ -1,4 +1,4 @@
-package com.simiacryptus.skyenet.heart
+﻿package com.simiacryptus.skyenet.heart
 
 import com.simiacryptus.skyenet.Heart
 import java.lang.reflect.Method

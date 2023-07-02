@@ -1,12 +1,12 @@
-package com.github.simiacryptus.aicoder.actions.markdown
+﻿package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
+import com.simiacryptus.openai.APIClientBase
 
 /**
  * The ConvertFileTo ActionGroup provides a way to quickly insert code snippets into markdown documents in various languages.
@@ -50,7 +50,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         if (ComputerLanguage.Markdown != computerLanguage) return false

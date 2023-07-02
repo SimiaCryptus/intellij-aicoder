@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.util
+﻿package com.github.simiacryptus.aicoder.util
 
 interface TextBlockFactory<T : TextBlock?> {
     fun fromString(text: String?): T

@@ -1,4 +1,4 @@
-# intellij-aicoder
+﻿# intellij-aicoder
 
 ![Build](https://github.com/SimiaCryptus/intellij-aicoder/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
@@ -20,7 +20,7 @@ Plaintext actions provide text processing features for any language. The followi
 | Chat Append Text | The `Chat Append Text` action allows you to quickly append text to the end of the current selection.                                                                                                                                                                                                                                                                                                                                                                     |
 | Dictation        | The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.                                                                                                                                                                                                                                                                                                               |
 | Redo Last        | The `Redo Last` action allows you to quickly redo the last action you performed. This is useful for getting variations from the generative AI. For example, if you generate something and want to see an alternate, you can use the `Redo Last` action to quickly retry without having to start from scratch.                                                                                                                                                            |
-| Replace Options  | The `Replace Options` action allows you to quickly replace selected text with one of a set of suggested options. This also captures some preceding and following context, but uses a different prompting method to suggest the options. For example, if you type �I had a day� and place the cursor after 'a' and then use the `Replace Options` action, the plugin will **_provide an interactive selection UI_** to suggest words like �great�, �bad�, or �delicious�. |
+| Replace Options  | The `Replace Options` action allows you to quickly replace selected text with one of a set of suggested options. This also captures some preceding and following context, but uses a different prompting method to suggest the options. For example, if you type ï¿½I had a dayï¿½ and place the cursor after 'a' and then use the `Replace Options` action, the plugin will **_provide an interactive selection UI_** to suggest words like ï¿½greatï¿½, ï¿½badï¿½, or ï¿½deliciousï¿½. |
 
 # Code Actions
 
@@ -73,7 +73,7 @@ Some actions are only available when the plugin is running in developer mode. Th
 - Manually:
 
   Download the [latest release](https://github.com/SimiaCryptus/intellij-aicoder/releases/latest) and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>âš™ï¸</kbd> > <kbd>Install plugin from disk...</kbd>
 
 ## Usage
 
@@ -98,3 +98,4 @@ We can also iterate and use the AI to refactor the code using custom edits:
 Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 [template]: https://github.com/JetBrains/intellij-platform-plugin-template
+

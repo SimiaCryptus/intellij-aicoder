@@ -1,11 +1,10 @@
-package com.github.simiacryptus.aicoder.actions.generic
+﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.retry
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.openai.APIClientBase
 
 /**
  * The RedoLast action is an IntelliJ action that allows users to redo the last AI Coder action they performed in the editor.
@@ -13,19 +12,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
  * This will redo the last action that was performed in the editor.
  */
 class RedoLast : BaseAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
-    }
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         retry[e.getRequiredData(CommonDataKeys.EDITOR).document]!!.run()
     }
 
-    companion object {
-        private fun isEnabled(e: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
-            return null != retry[e.getRequiredData(CommonDataKeys.EDITOR).document]
-        }
+    override fun isEnabled(e: AnActionEvent): Boolean {
+        if (APIClientBase.isSanctioned()) return false
+        return null != retry[e.getRequiredData(CommonDataKeys.EDITOR).document]
     }
+
 }

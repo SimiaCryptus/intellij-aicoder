@@ -1,4 +1,4 @@
-@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+﻿@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package com.simiacryptus.skyenet.heart
 
@@ -22,7 +22,8 @@ open class WeakGroovyInterpreter(defs: java.util.Map<String, Object>) : Heart {
         runMethod = scriptClass.getMethod("run")
         setVariableMethod = groovyShellClass.getMethod("setVariable", String::class.java, Any::class.java)
 
-        val compilerConfiguration = compilerConfigurationClass.getDeclaredConstructor().newInstance()
+        val compilerConfiguration = compilerConfigurationClass.getDeclaredConstructor().newInstance() //as org.codehaus.groovy.control.CompilerConfiguration
+        compilerConfiguration.javaClass.getMethod("setParameters", Boolean::class.java).invoke(compilerConfiguration, true)
         shell = groovyShellClass.getDeclaredConstructor(compilerConfigurationClass).newInstance(compilerConfiguration)
 
         defs.entrySet().forEach { (key, value) ->
@@ -63,3 +64,4 @@ open class WeakGroovyInterpreter(defs: java.util.Map<String, Object>) : Heart {
         }
     }
 }
+

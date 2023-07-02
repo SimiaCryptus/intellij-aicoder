@@ -1,4 +1,4 @@
-
+ï»¿
 # Plaintext Actions
 
 Plaintext actions provide text processing features for any language. The following actions are available for plaintext in the AI Coder plugin:
@@ -8,7 +8,7 @@ Plaintext actions provide text processing features for any language. The followi
 | Chat Append Text |  The `Chat Append Text` action allows you to quickly append text to the end of the current selection.  |
 | Dictation |  The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.  |
 | Redo Last |  The `Redo Last` action allows you to quickly redo the last action you performed. This is useful for getting variations from the generative AI. For example, if you generate something and want to see an alternate, you can use the `Redo Last` action to quickly retry without having to start from scratch.  |
-| Replace Options |  The `Replace Options` action allows you to quickly replace selected text with one of a set of suggested options. This also captures some preceding and following context, but uses a different prompting method to suggest the options. For example, if you type ‘I had a day’ and place the cursor after 'a' and then use the `Replace Options` action, the plugin will **_provide an interactive selection UI_** to suggest words like ‘great’, ‘bad’, or ‘delicious’.  |
+| Replace Options |  The `Replace Options` action allows you to quickly replace selected text with one of a set of suggested options. This also captures some preceding and following context, but uses a different prompting method to suggest the options. For example, if you type â€˜I had a dayâ€™ and place the cursor after 'a' and then use the `Replace Options` action, the plugin will **_provide an interactive selection UI_** to suggest words like â€˜greatâ€™, â€˜badâ€™, or â€˜deliciousâ€™.  |
 
 # Code Actions
 
@@ -48,3 +48,4 @@ Some actions are only available when the plugin is running in developer mode. Th
 | Write a Story |  The `Generate Story` action allows you to quickly generate a new story!  |
 | Launch Skyenet |  The `Launch Skyenet` action opens the Skyenet interactive auto-scritping interface.  |
 | Print PSI Tree |  The `Print PSI Tree` action allows you to print the PSI tree for the current file. This is useful for debugging and understanding the PSI tree for a file. This is a developer tool and is only visible if the `Developer Mode` setting is enabled.  |
+

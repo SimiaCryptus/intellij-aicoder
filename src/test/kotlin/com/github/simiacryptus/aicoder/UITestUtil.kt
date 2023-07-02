@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder
+﻿package com.github.simiacryptus.aicoder
 
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.ComponentFixture

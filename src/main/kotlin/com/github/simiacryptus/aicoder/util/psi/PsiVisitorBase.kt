@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.util.psi
+﻿package com.github.simiacryptus.aicoder.util.psi
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor

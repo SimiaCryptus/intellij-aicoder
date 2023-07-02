@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.code
+﻿package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Caret
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import java.util.*
 
@@ -37,7 +38,7 @@ class InsertImplementationAction : BaseAction() {
             deserializerRetries = 5,
         ).create()
 
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val humanLanguage = AppSettingsState.instance.humanLanguage
         val computerLanguage = ComputerLanguage.getComputerLanguage(event)
         val psiClassContextActionParams = getPsiClassContextActionParams(event).get()
@@ -97,7 +98,7 @@ class InsertImplementationAction : BaseAction() {
     )
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         return getPsiClassContextActionParams(event).isPresent

@@ -1,4 +1,4 @@
-# GitHub Actions Workflow created for testing and preparing the plugin release in following steps:
+﻿# GitHub Actions Workflow created for testing and preparing the plugin release in following steps:
 # - validate Gradle Wrapper,
 # - run 'test' and 'verifyPlugin' tasks,
 # - run Qodana inspections,
@@ -166,3 +166,4 @@ jobs:
           ${{ needs.build.outputs.changelog }}
           EOM
           )"
+

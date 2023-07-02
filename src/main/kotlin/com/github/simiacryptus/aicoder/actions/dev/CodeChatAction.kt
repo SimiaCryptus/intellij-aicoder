@@ -1,4 +1,4 @@
-@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
+﻿@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
 
 package com.github.simiacryptus.aicoder.actions.dev
 
@@ -9,6 +9,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.util.ui.FormBuilder
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
@@ -52,7 +53,7 @@ class CodeChatAction : BaseAction() {
                 var messageTrail = InterviewSession.initialText(userMessage)
                 send("""$messageTrail<div>$spinner</div>""")
                 messages += ChatMessage(ChatMessage.Role.user, userMessage)
-                val response = api.chat(chatRequest).choices?.first()?.message?.content.orEmpty()
+                val response = api.chat(chatRequest, model).choices?.first()?.message?.content.orEmpty()
                 messages += ChatMessage(ChatMessage.Role.assistant, response)
                 messageTrail += """<div><pre>$response</pre></div>"""
                 send(messageTrail)
@@ -101,12 +102,12 @@ class CodeChatAction : BaseAction() {
         }
     }
 
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         val selectedText = primaryCaret.selectedText ?: editor.document.text
-        val language = ComputerLanguage.getComputerLanguage(event)!!.name
+        val language = ComputerLanguage.getComputerLanguage(event)?.name ?: return
 
         val port = (8000 + (Math.random() * 1000).toInt())
         val skyenet = CodeChatServer(event, port, language, selectedText)
@@ -150,7 +151,7 @@ class CodeChatAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 

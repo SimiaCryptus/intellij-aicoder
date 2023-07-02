@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder
+﻿package com.github.simiacryptus.aicoder
 
 import org.apache.commons.io.FileUtils
 import org.junit.Test

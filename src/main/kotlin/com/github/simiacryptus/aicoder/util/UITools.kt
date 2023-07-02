@@ -1,4 +1,4 @@
-@file:Suppress("UNNECESSARY_SAFE_CALL", "UNCHECKED_CAST")
+﻿@file:Suppress("UNNECESSARY_SAFE_CALL", "UNCHECKED_CAST")
 
 package com.github.simiacryptus.aicoder.util
 
@@ -29,8 +29,6 @@ import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.openai.ModerationException
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.StringUtil
-import org.apache.http.client.methods.HttpRequestBase
-import org.slf4j.event.Level
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -329,15 +327,15 @@ object UITools {
                         }
 
                         "int", "java.lang.Integer" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = uiVal.text.toInt()
+                            newSettingsValue = if(uiVal.text.isBlank()) -1 else uiVal.text.toInt()
                         }
 
                         "long" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = uiVal.text.toLong()
+                            newSettingsValue = if(uiVal.text.isBlank()) -1 else uiVal.text.toLong()
                         }
 
                         "double", "java.lang.Double" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = uiVal.text.toDouble()
+                            newSettingsValue = if(uiVal.text.isBlank()) 0.0 else uiVal.text.toDouble()
                         }
 
                         "boolean" -> if (uiVal is JCheckBox) {
@@ -705,65 +703,6 @@ object UITools {
         return null
     }
 
-    /**
-     * Enforces foreign policy using AI-generated code.
-     * If this effects you, you can either compile this yourself, or overthrow your government.
-     * Glory to Ukraine! Glory to the Defenders!
-     *
-     * @return true if the user is sanctioned, false otherwise.
-     */
-    fun isSanctioned(): Boolean {
-        // Due to the invasion of Ukraine, Russia and allied groups are currently sanctioned.
-        // Slava Ukraini!
-        val locale = Locale.getDefault()
-        // ISO 3166 - Russia
-        if (locale.country.compareTo("RU", true) == 0) return true
-        // ISO 3166 - Belarus
-        if (locale.country.compareTo("BY", true) == 0) return true
-        // ISO 639 - Russian
-        if (locale.language.compareTo("ru", true) == 0) {
-            // ISO 3166 - Ukraine
-            if (locale.country.compareTo("UA", true) == 0) return false
-            // ISO 3166 - United States
-            if (locale.country.compareTo("US", true) == 0) return false
-            // ISO 3166 - Britian
-            if (locale.country.compareTo("GB", true) == 0) return false
-            // ISO 3166 - United Kingdom
-            if (locale.country.compareTo("UK", true) == 0) return false
-            // ISO 3166 - Georgia
-            if (locale.country.compareTo("GE", true) == 0) return false
-            // ISO 3166 - Kazakhstan
-            if (locale.country.compareTo("KZ", true) == 0) return false
-            // ISO 3166 - Germany
-            if (locale.country.compareTo("DE", true) == 0) return false
-            // ISO 3166 - Poland
-            if (locale.country.compareTo("PL", true) == 0) return false
-            // ISO 3166 - Latvia
-            if (locale.country.compareTo("LV", true) == 0) return false
-            // ISO 3166 - Lithuania
-            if (locale.country.compareTo("LT", true) == 0) return false
-            // ISO 3166 - Estonia
-            if (locale.country.compareTo("EE", true) == 0) return false
-            // ISO 3166 - Moldova
-            if (locale.country.compareTo("MD", true) == 0) return false
-            // ISO 3166 - Armenia
-            if (locale.country.compareTo("AM", true) == 0) return false
-            // ISO 3166 - Azerbaijan
-            if (locale.country.compareTo("AZ", true) == 0) return false
-            // ISO 3166 - Kyrgyzstan
-            if (locale.country.compareTo("KG", true) == 0) return false
-            // ISO 3166 - Tajikistan
-            if (locale.country.compareTo("TJ", true) == 0) return false
-            // ISO 3166 - Turkmenistan
-            if (locale.country.compareTo("TM", true) == 0) return false
-            // ISO 3166 - Uzbekistan
-            if (locale.country.compareTo("UZ", true) == 0) return false
-            // ISO 3166 - Mongolia
-            return locale.country.compareTo("MN", true) != 0
-        }
-        return false
-    }
-
     fun <T : Any> build(
         component: T,
         fillVertically: Boolean = true,
@@ -855,12 +794,34 @@ object UITools {
         project: Project?,
         title: String,
         canBeCancelled: Boolean = true,
-        retries: Int = 3,
-        suppressProgress: Boolean = false,
+        suppressProgress: Boolean = true,
+        task: (ProgressIndicator) -> T,
+    ): T {
+        if(suppressProgress == AppSettingsState.instance.editRequests) {
+            return run1(project, title, canBeCancelled, task)
+        } else {
+            return run2(project, title, canBeCancelled, task)
+        }
+    }
+
+    fun <T> run1(
+        project: Project?,
+        title: String,
+        canBeCancelled: Boolean = true,
         task: (ProgressIndicator) -> T,
     ): T {
         checkApiKey()
-        return run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
+        return task(AbstractProgressIndicatorBase())
+    }
+
+    fun <T> run2(
+        project: Project?,
+        title: String,
+        canBeCancelled: Boolean = true,
+        task: (ProgressIndicator) -> T,
+    ): T {
+        checkApiKey()
+        return ProgressManager.getInstance().run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
             override fun compute(indicator: ProgressIndicator): T {
                 val currentThread = Thread.currentThread()
                 val threads = ArrayList<Thread>()
@@ -877,70 +838,8 @@ object UITools {
                     scheduledFuture.cancel(true)
                 }
             }
-        }, retries, suppressProgress)
+        })
     }
-
-    fun <T> run(task: Task.WithResult<T, Exception?>, retries: Int = 3, suppressProgress: Boolean = false): T {
-        return try {
-            if (!suppressProgress) {
-                ProgressManager.getInstance().run(task)
-            } else {
-                task.run(AbstractProgressIndicatorBase())
-                task.result
-            }
-        } catch (e: RuntimeException) {
-            if (isInterruptedException(e)) throw e
-            if (retries > 0) {
-                log.warn("Retrying request", e)
-                run(task = task, retries - 1)
-            } else {
-                throw e
-            }
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-        } catch (e: Exception) {
-            if (isInterruptedException(e)) throw RuntimeException(e)
-            if (retries > 0) {
-                log.warn("Retrying request", e)
-                try {
-                    Thread.sleep(15000)
-                } catch (ex: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                }
-                run(task = task, retries - 1)
-            } else {
-                throw RuntimeException(e)
-            }
-        }
-    }
-
-    val api: OpenAIClient
-        get() = object : OpenAIClient(
-            key = AppSettingsState.instance.apiKey,
-            apiBase = AppSettingsState.instance.apiBase,
-        ) {
-
-            override fun incrementTokens(totalTokens: Int) {
-                AppSettingsState.instance.tokenCounter += totalTokens
-            }
-
-            override fun authorize(request: HttpRequestBase) {
-                key = checkApiKey(key)
-                request.addHeader("Authorization", "Bearer $key")
-            }
-
-            override fun log(level: Level, msg: String) {
-                val message = msg.trim().replace("\n", "\n\t")
-                when (level) {
-                    Level.ERROR -> this@UITools.log.error(message)
-                    Level.WARN -> this@UITools.log.warn(message)
-                    Level.INFO -> this@UITools.log.info(message)
-                    Level.DEBUG -> this@UITools.log.debug(message)
-                    Level.TRACE -> this@UITools.log.debug(message)
-                    else -> this@UITools.log.debug(message)
-                }
-            }
-        }
 
     fun checkApiKey(k: String = AppSettingsState.instance.apiKey): String {
         var key = k
@@ -992,3 +891,4 @@ object UITools {
 
 
 }
+

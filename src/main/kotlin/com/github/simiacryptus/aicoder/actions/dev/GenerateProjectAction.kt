@@ -1,11 +1,13 @@
-package com.github.simiacryptus.aicoder.actions.dev
+﻿package com.github.simiacryptus.aicoder.actions.dev
 
-import com.github.simiacryptus.aicoder.SoftwareProjectAI
+import com.github.simiacryptus.aicoder.util.SoftwareProjectAI
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import java.io.File
 import javax.swing.JCheckBox
@@ -14,9 +16,9 @@ import javax.swing.JTextField
 
 class GenerateProjectAction : BaseAction() {
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled()
-        super.update(e)
+
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        return isEnabled()
     }
 
     @Suppress("UNUSED")
@@ -34,7 +36,7 @@ class GenerateProjectAction : BaseAction() {
         var saveAlternates: Boolean = false
     )
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         UITools.showDialog(e, SettingsUI::class.java, Settings::class.java) { config ->
             handleImplement(e, config)
         }
@@ -47,7 +49,7 @@ class GenerateProjectAction : BaseAction() {
         val selectedFolder = UITools.getSelectedFolder(e)!!
         val api = ChatProxy(
             SoftwareProjectAI::class.java,
-            api = UITools.api,
+            api = IdeaOpenAIClient.api,
             model = AppSettingsState.instance.defaultChatModel(),
             deserializerRetries = 5,
         ).create()
@@ -146,7 +148,7 @@ class GenerateProjectAction : BaseAction() {
     }.start()
 
     private fun isEnabled(): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 
@@ -154,3 +156,4 @@ class GenerateProjectAction : BaseAction() {
         private val log = org.slf4j.LoggerFactory.getLogger(GenerateProjectAction::class.java)
     }
 }
+

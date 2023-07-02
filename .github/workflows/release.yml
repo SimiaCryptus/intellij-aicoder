@@ -1,4 +1,4 @@
-# GitHub Actions Workflow created for handling the release process based on the draft release prepared
+﻿# GitHub Actions Workflow created for handling the release process based on the draft release prepared
 # with the Build workflow. Running the publishPlugin task requires the PUBLISH_TOKEN secret provided.
 
 name: Release
@@ -95,3 +95,4 @@ jobs:
             --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
             --label "$LABEL" \
             --head $BRANCH
+

@@ -1,8 +1,8 @@
-package com.github.simiacryptus.aicoder.util.psi
+﻿package com.github.simiacryptus.aicoder.util.psi
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.UITools.api
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools.filterStringResult
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -234,7 +234,7 @@ class PsiTranslationTree(
         val proxy: VirtualAPI
             get() = ChatProxy(
                 clazz = VirtualAPI::class.java,
-                api = api,
+                api = IdeaOpenAIClient.api,
                 model = AppSettingsState.instance.defaultChatModel(),
                 deserializerRetries = 5,
             ).create()

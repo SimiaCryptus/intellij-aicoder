@@ -1,4 +1,4 @@
-<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+﻿<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
@@ -17,9 +17,20 @@
     <applicationListeners>
         <listener class="com.github.simiacryptus.aicoder.ApplicationEvents" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
+    <extensions defaultExtensionNs="com.intellij">
+        <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
+                                id="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
+                                order="first" />
+        <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.ModelSelectionWidgetFactory"
+                                id="com.github.simiacryptus.aicoder.ui.ModelSelectionWidgetFactory"
+                                order="first" />
+        <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
+                                id="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
+                                order="first" />
+    </extensions>
     <actions>
-        <group id="com.github.simiacryptus.aicoder.EditorMenu"
-               class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+        <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"
+               class="com.github.simiacryptus.aicoder.ui.EditorMenu"
                popup="true"
                text="_AI Coder"
                icon="AllIcons.Actions.Lightning"
@@ -43,7 +54,7 @@
         This is useful for debugging and understanding the PSI tree for a file.
         This is a developer tool and is only visible if the `Developer Mode` setting is enabled.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.generic.DictationAction"
@@ -52,7 +63,7 @@
             <!--DOC
         The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.generic.ReplaceOptionsAction"
@@ -62,10 +73,10 @@
         The `Replace Options` action allows you to quickly replace selected text with one of a set of suggested options.
         This also captures some preceding and following context, but uses a different prompting method to suggest the
         options.
-        For example, if you type ‘I had a day’ and place the cursor after 'a' and then use the `Replace Options` action,
-        the plugin will **_provide an interactive selection UI_** to suggest words like ‘great’, ‘bad’, or ‘delicious’.
+        For example, if you type â€˜I had a dayâ€™ and place the cursor after 'a' and then use the `Replace Options` action,
+        the plugin will **_provide an interactive selection UI_** to suggest words like â€˜greatâ€™, â€˜badâ€™, or â€˜deliciousâ€™.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="N"/>
         </action>
@@ -75,7 +86,7 @@
             <!--DOC
         The `Chat Append Text` action allows you to quickly append text to the end of the current selection.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
         </action>
@@ -88,7 +99,7 @@
         The `Add List Items` action allows you to quickly add list items to your Markdown document.
         It supports both ordered and unordered lists, and nested lists.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="L"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
         </action>
@@ -101,7 +112,7 @@
         This is useful for quickly performing ad-hoc code transformations.
         For example, you can use this action to add logging statements or to quickly refactor your code.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="E"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="E"/>
         </action>
@@ -113,7 +124,7 @@
         The `Recent Code Edits` group allows you to quickly access your most recent code edits.
         This is useful for quickly accessing your most recent edits.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </group>
 
         <action class="com.github.simiacryptus.aicoder.actions.dev.GenerateProjectAction"
@@ -169,7 +180,7 @@
         The `Insert Implementation` action allows you to quickly insert the implementation of a comment.
         It attempts to process the code context and provide details about this generation context within the API call.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
         </action>
@@ -181,7 +192,7 @@
         the current selection.
         This is useful for quickly documenting your code and making it easier to understand.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
@@ -191,7 +202,7 @@
             <!--DOC
         The `Open Code Chat` action opens a chat window in a browser, allowing the user to discuss the code with ChatGPT.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.QuestionAction"
                 text="Ask a _question about the code"
@@ -201,7 +212,7 @@
         This is useful for quickly getting help with understanding the code.
         The question and response are prepended to the selected code.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="Q"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="Q"/>
         </action>
@@ -213,7 +224,7 @@
         It will generally add a comment for each line with a description.
         This is useful for quickly documenting your code and making it easier to understand.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
         </action>
@@ -225,7 +236,7 @@
         An interactive dialog is provided to select any/all/none of the rename suggestions.
         This is useful for quickly refactoring your code and making it easier to understand.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="V"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="V"/>
         </action>
@@ -238,7 +249,7 @@
         In contrast to existing code tools that can generate doc comments, this action is based on the full code and can
         generate more accurate comments.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
@@ -250,7 +261,7 @@
         This text will be translated into the current language.
         This is useful for quickly pasting code into your project.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
         </action>
@@ -263,7 +274,7 @@
         For example, if you generate something and want to see an alternate, you can use the `Redo Last` action to
         quickly retry without having to start from scratch.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="D"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="D"/>
         </action>
@@ -275,7 +286,7 @@
         The `Implement Stub` action allows you to quickly implement a stub of a method.
         This is useful for quickly implementing a new method.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
         </action>
@@ -290,7 +301,7 @@
         For example, if select "find the largest file in the current directory" you can use the `Implement As...` action
         to quickly implement this idea in Bash.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </group>
         <group class="com.github.simiacryptus.aicoder.actions.code.ConvertFileTo"
                text="Conver_t To..."
@@ -310,3 +321,4 @@
     </actions>
 
 </idea-plugin>
+

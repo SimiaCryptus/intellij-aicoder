@@ -1,4 +1,4 @@
-@file:Suppress("unused")
+﻿@file:Suppress("unused")
 
 package com.github.simiacryptus.aicoder.config
 
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
@@ -66,6 +65,10 @@ class AppSettingsComponent {
     val devActions = JBCheckBox()
 
     @Suppress("unused")
+    @Name("Edit API Requests")
+    val editRequests = JBCheckBox()
+
+    @Suppress("unused")
     @Name("Temperature")
     val temperature = JBTextField()
 
@@ -76,6 +79,9 @@ class AppSettingsComponent {
     @Name("API Base")
     val apiBase = JBTextField()
 
+    @Name("Editor Actions")
+    var editorActions = ActionTable()
+
     init {
         tokenCounter.isEditable = false
     }
@@ -83,9 +89,15 @@ class AppSettingsComponent {
     val preferredFocusedComponent: JComponent
         get() = apiKey
 
+    class ActionChangedListener {
+        fun actionChanged() {
+        }
+    }
+
     companion object {
         private val log = Logger.getInstance(
             AppSettingsComponent::class.java
         )
+        //val ACTIONS_TOPIC = Topic.create("Actions", ActionChangedListener::class.java)
     }
 }

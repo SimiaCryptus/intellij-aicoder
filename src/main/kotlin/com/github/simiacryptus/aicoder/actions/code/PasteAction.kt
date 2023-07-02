@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.code
+﻿package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -7,6 +7,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import java.awt.datatransfer.DataFlavor
 
@@ -34,7 +35,7 @@ class PasteAction : BaseAction() {
             deserializerRetries = 5,
         ).create()
 
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
@@ -66,7 +67,7 @@ class PasteAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         return if (CopyPasteManager.getInstance()
                 .getContents<Any?>(DataFlavor.stringFlavor) == null
         ) false else {
@@ -76,5 +77,6 @@ class PasteAction : BaseAction() {
     }
 
 }
+
 
 

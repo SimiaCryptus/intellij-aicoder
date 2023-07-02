@@ -1,4 +1,4 @@
-
+﻿
 ## Minor Issues Demonstrated by the Tests
 
 - [ ] Lack of space on generic insert
@@ -15,3 +15,4 @@
   - [ ] Markdown Lists
   - [ ] Markdown Tables
 - 
+

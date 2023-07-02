@@ -1,10 +1,9 @@
-package com.github.simiacryptus.aicoder.config
+﻿package com.github.simiacryptus.aicoder.config
 
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.options.Configurable
 import java.util.*
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.*
 
 class AppSettingsConfigurable : Configurable {
     var settingsComponent: AppSettingsComponent? = null
@@ -36,6 +35,7 @@ class AppSettingsConfigurable : Configurable {
         val buffer = AppSettingsState()
         if (settingsComponent != null) {
             UITools.readKotlinUI(settingsComponent!!, buffer)
+            settingsComponent?.editorActions?.read(buffer.editorActions)
         }
         return buffer != AppSettingsState.instance
     }
@@ -43,12 +43,14 @@ class AppSettingsConfigurable : Configurable {
     override fun apply() {
         if (settingsComponent != null) {
             UITools.readKotlinUI(settingsComponent!!, AppSettingsState.instance)
+            settingsComponent?.editorActions?.read(AppSettingsState.instance.editorActions)
         }
     }
 
     override fun reset() {
         if (settingsComponent != null) {
             UITools.writeKotlinUI(settingsComponent!!, AppSettingsState.instance)
+            settingsComponent?.editorActions?.write(AppSettingsState.instance.editorActions)
         }
     }
 
@@ -56,4 +58,6 @@ class AppSettingsConfigurable : Configurable {
         settingsComponent = null
     }
 }
+
+
 

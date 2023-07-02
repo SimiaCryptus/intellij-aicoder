@@ -1,14 +1,14 @@
-package com.github.simiacryptus.aicoder.actions.generic
+﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.github.simiacryptus.aicoder.util.UITools.insertString
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.openai.APIClientBase
 import java.util.*
 
 /**
@@ -18,7 +18,7 @@ import java.util.*
  */
 class AppendAction : BaseAction() {
 
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val before: CharSequence? = Objects.requireNonNull(caret)!!.selectedText
         val settings = AppSettingsState.instance
@@ -39,7 +39,7 @@ class AppendAction : BaseAction() {
             val newText = UITools.run(
                 event.project, "Getting completion", true
             ) {
-                (api.chat(request).choices[0].message?.content ?: "").trimPrefix(before ?: "")
+                (api.chat(request, AppSettingsState.instance.defaultChatModel()).choices[0].message?.content ?: "").trimPrefix(before ?: "")
             }
             UITools.writeableFn(event) {
                 insertString(document, selectionEnd, newText)
@@ -48,7 +48,7 @@ class AppendAction : BaseAction() {
     }
     @Suppress("unused")
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         return hasSelection(event)
     }
 
@@ -59,6 +59,7 @@ private fun String.trimPrefix(charSequence: CharSequence) = if (this.startsWith(
 } else {
     this
 }
+
 
 
 

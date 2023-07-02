@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder
+﻿package com.github.simiacryptus.aicoder
 
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.awaitProcessing
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.canRunTests

@@ -1,5 +1,6 @@
-package com.github.simiacryptus.aicoder.config
+﻿package com.github.simiacryptus.aicoder.config
 
+import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -7,6 +8,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
+import java.io.File
 import java.util.*
 import java.util.Map
 import java.util.stream.Collectors
@@ -27,6 +29,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var historyLimit = 10
     var humanLanguage = "English"
     var devActions = false
+    var editRequests = false
     var apiThreads = 4
 
     fun createChatRequest(): ChatRequest {
@@ -62,6 +65,8 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         if (useGPT4 != that.useGPT4) return false
         if (apiLog != that.apiLog) return false
         if (devActions != that.devActions) return false
+        if (editRequests != that.editRequests) return false
+        if (editorActions != that.editorActions) return false
         return true
     }
 
@@ -73,6 +78,8 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
             useGPT4,
             apiLog,
             devActions,
+            editRequests,
+            editorActions
         )
     }
 
@@ -86,7 +93,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         synchronized(mostUsedHistory) {
             mostUsedHistory.put(
                 instruction.toString(),
-                (mostUsedHistory[instruction] ?:0) + 1
+                (mostUsedHistory[instruction] ?: 0) + 1
             )
         }
 
@@ -108,15 +115,16 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         }
     }
 
+    val editorActions = ActionSettingsRegistry()
+
     val editHistory: Set<String>
         get() = mostUsedHistory.keys
 
     companion object {
         @JvmStatic
-        val instance: AppSettingsState
-            get() {
-                val application = ApplicationManager.getApplication()
-                return if (null == application) AppSettingsState() else application.getService(AppSettingsState::class.java)
-            }
+        val instance: AppSettingsState by lazy {
+            val application = ApplicationManager.getApplication()
+            if (null == application) AppSettingsState() else application.getService(AppSettingsState::class.java)
+        }
     }
 }
