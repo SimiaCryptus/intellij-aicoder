@@ -53,7 +53,7 @@ class MarkdownListAction : BaseAction() {
             }
             return chatProxy.create()
         }
-    override fun actionPerformed2(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET) ?: return
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val list =

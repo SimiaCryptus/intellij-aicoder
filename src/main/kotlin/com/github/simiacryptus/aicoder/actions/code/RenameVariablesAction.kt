@@ -41,7 +41,7 @@ class RenameVariablesAction : BaseAction() {
         ).create()
 
 
-    override fun actionPerformed2(@NotNull event: AnActionEvent) {
+    override fun handle(@NotNull event: AnActionEvent) {
         @NotNull val textEditor = event.getData(CommonDataKeys.EDITOR) ?: return
         @NotNull val caretModel = textEditor.caretModel
         @NotNull val mainCursor = caretModel.primaryCaret

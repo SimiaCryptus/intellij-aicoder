@@ -40,7 +40,7 @@ class MarkdownImplementAction(private val language: String) : BaseAction(
         ).create()
 
 
-    override fun actionPerformed2(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val selectedText = caret!!.selectedText ?: return
         val endOffset = caret.selectionEnd

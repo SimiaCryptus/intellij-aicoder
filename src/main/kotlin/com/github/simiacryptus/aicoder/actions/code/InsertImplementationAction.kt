@@ -38,7 +38,7 @@ class InsertImplementationAction : BaseAction() {
             deserializerRetries = 5,
         ).create()
 
-    override fun actionPerformed2(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val humanLanguage = AppSettingsState.instance.humanLanguage
         val computerLanguage = ComputerLanguage.getComputerLanguage(event)
         val psiClassContextActionParams = getPsiClassContextActionParams(event).get()

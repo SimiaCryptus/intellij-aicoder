@@ -31,7 +31,7 @@ class ReplaceOptionsAction : BaseAction() {
         ).create()
 
 
-    override fun actionPerformed2(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val document = caret!!.editor.document
         val selectedText = caret.selectedText

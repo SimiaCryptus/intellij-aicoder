@@ -7,6 +7,16 @@
 ### Added
 - 
 
+## [1.2.0]
+
+### Added
+- API edit dialog
+- Toolbar widget for token count
+- Toolbar widget for model selection
+
+### Improved
+- Token count handling
+
 ## [1.1.4]
 
 ### Added

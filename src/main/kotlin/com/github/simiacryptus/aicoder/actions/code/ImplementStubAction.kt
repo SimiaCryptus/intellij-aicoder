@@ -43,7 +43,7 @@ class ImplementStubAction : BaseAction() {
             deserializerRetries = 5,
         ).create()
 
-    override fun actionPerformed2(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val smallestIntersectingMethod = getSmallestIntersectingMajorCodeElement(psiFile, caret!!) ?: return
@@ -75,7 +75,7 @@ class ImplementStubAction : BaseAction() {
                     document,
                     textRange.startOffset,
                     textRange.endOffset,
-                    IndentedText.fromString(finalDeclaration.toString() + newText.trim())
+                    IndentedText.fromString((finalDeclaration.toString() + newText.trim()))
                         .withIndent(IndentedText.fromString(code).indent).toString()
                 )
             }

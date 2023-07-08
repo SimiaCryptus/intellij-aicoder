@@ -327,15 +327,15 @@ object UITools {
                         }
 
                         "int", "java.lang.Integer" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = uiVal.text.toInt()
+                            newSettingsValue = if(uiVal.text.isBlank()) -1 else uiVal.text.toInt()
                         }
 
                         "long" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = uiVal.text.toLong()
+                            newSettingsValue = if(uiVal.text.isBlank()) -1 else uiVal.text.toLong()
                         }
 
                         "double", "java.lang.Double" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = uiVal.text.toDouble()
+                            newSettingsValue = if(uiVal.text.isBlank()) 0.0 else uiVal.text.toDouble()
                         }
 
                         "boolean" -> if (uiVal is JCheckBox) {
@@ -797,8 +797,30 @@ object UITools {
         suppressProgress: Boolean = true,
         task: (ProgressIndicator) -> T,
     ): T {
+        if(suppressProgress == AppSettingsState.instance.editRequests) {
+            return run1(project, title, canBeCancelled, task)
+        } else {
+            return run2(project, title, canBeCancelled, task)
+        }
+    }
+
+    fun <T> run1(
+        project: Project?,
+        title: String,
+        canBeCancelled: Boolean = true,
+        task: (ProgressIndicator) -> T,
+    ): T {
         checkApiKey()
-        if (suppressProgress) return task(AbstractProgressIndicatorBase())
+        return task(AbstractProgressIndicatorBase())
+    }
+
+    fun <T> run2(
+        project: Project?,
+        title: String,
+        canBeCancelled: Boolean = true,
+        task: (ProgressIndicator) -> T,
+    ): T {
+        checkApiKey()
         return ProgressManager.getInstance().run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
             override fun compute(indicator: ProgressIndicator): T {
                 val currentThread = Thread.currentThread()

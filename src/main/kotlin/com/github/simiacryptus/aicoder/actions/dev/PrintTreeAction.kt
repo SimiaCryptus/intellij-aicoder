@@ -15,12 +15,9 @@ import com.simiacryptus.openai.APIClientBase
  * This will print the tree structure of the file to the log.
  */
 class PrintTreeAction : BaseAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
-    }
 
-    override fun actionPerformed2(e1: AnActionEvent) {
+
+    override fun handle(e1: AnActionEvent) {
         log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e1)!!))
     }
 

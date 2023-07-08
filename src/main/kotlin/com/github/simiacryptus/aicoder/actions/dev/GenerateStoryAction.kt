@@ -157,7 +157,7 @@ class GenerateStoryAction : BaseAction() {
         val writingStyle: String = "",
     )
 
-    override fun actionPerformed2(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         UITools.showDialog(e, SettingsUI::class.java, Settings::class.java) { config ->
             handleImplement(e, config)
         }

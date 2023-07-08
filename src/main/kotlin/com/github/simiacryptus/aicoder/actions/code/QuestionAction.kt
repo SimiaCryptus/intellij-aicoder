@@ -42,7 +42,7 @@ class QuestionAction : BaseAction() {
         return computerLanguage != ComputerLanguage.Text
     }
 
-    override fun actionPerformed2(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret

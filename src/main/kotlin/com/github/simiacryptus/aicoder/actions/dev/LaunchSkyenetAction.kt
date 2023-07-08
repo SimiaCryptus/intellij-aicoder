@@ -25,9 +25,8 @@ import java.util.function.Supplier
 
 class LaunchSkyenetAction : BaseAction() {
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled()
-        super.update(e)
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        return isEnabled()
     }
 
     interface TestTools {
@@ -37,7 +36,7 @@ class LaunchSkyenetAction : BaseAction() {
         fun print(msg:String): Unit
     }
 
-    override fun actionPerformed2(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         // Random port from range 8000-9000
         val port = (8000 + (Math.random() * 1000).toInt())
         val skyenet = object : SkyenetCodingSessionServer(

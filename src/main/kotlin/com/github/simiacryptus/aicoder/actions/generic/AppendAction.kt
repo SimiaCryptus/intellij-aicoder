@@ -18,7 +18,7 @@ import java.util.*
  */
 class AppendAction : BaseAction() {
 
-    override fun actionPerformed2(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val before: CharSequence? = Objects.requireNonNull(caret)!!.selectedText
         val settings = AppSettingsState.instance
@@ -39,7 +39,7 @@ class AppendAction : BaseAction() {
             val newText = UITools.run(
                 event.project, "Getting completion", true
             ) {
-                (api.chat(request).choices[0].message?.content ?: "").trimPrefix(before ?: "")
+                (api.chat(request, AppSettingsState.instance.defaultChatModel()).choices[0].message?.content ?: "").trimPrefix(before ?: "")
             }
             UITools.writeableFn(event) {
                 insertString(document, selectionEnd, newText)

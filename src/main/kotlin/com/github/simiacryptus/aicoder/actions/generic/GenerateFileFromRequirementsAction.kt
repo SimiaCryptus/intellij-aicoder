@@ -42,7 +42,7 @@ class GenerateFileFromRequirementsAction : BaseAction() {
         var directive: String = "",
     )
 
-    override fun actionPerformed2(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         UITools.showDialog(e, SettingsUI::class.java, Settings::class.java, "Create File from Requirements") { config ->
             handleImplement(e, config)
         }
@@ -138,7 +138,7 @@ class GenerateFileFromRequirementsAction : BaseAction() {
                 """.trimMargin()
             )
         )
-        val response = api.chat(chatRequest).choices?.first()?.message?.content.orEmpty().trim()
+        val response = api.chat(chatRequest, AppSettingsState.instance.defaultChatModel()).choices?.first()?.message?.content.orEmpty().trim()
         var outputPath = basePath
         val header = response.split("\n").first()
         var body = response.split("\n").drop(1).joinToString("\n").trim()

@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
-import com.github.simiacryptus.aicoder.SoftwareProjectAI
+import com.github.simiacryptus.aicoder.util.SoftwareProjectAI
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
@@ -16,9 +16,9 @@ import javax.swing.JTextField
 
 class GenerateProjectAction : BaseAction() {
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled()
-        super.update(e)
+
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        return isEnabled()
     }
 
     @Suppress("UNUSED")
@@ -36,7 +36,7 @@ class GenerateProjectAction : BaseAction() {
         var saveAlternates: Boolean = false
     )
 
-    override fun actionPerformed2(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         UITools.showDialog(e, SettingsUI::class.java, Settings::class.java) { config ->
             handleImplement(e, config)
         }

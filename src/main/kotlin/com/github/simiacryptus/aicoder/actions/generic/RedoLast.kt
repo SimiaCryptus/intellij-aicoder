@@ -12,19 +12,14 @@ import com.simiacryptus.openai.APIClientBase
  * This will redo the last action that was performed in the editor.
  */
 class RedoLast : BaseAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
-    }
 
-    override fun actionPerformed2(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         retry[e.getRequiredData(CommonDataKeys.EDITOR).document]!!.run()
     }
 
-    companion object {
-        private fun isEnabled(e: AnActionEvent): Boolean {
-            if (APIClientBase.isSanctioned()) return false
-            return null != retry[e.getRequiredData(CommonDataKeys.EDITOR).document]
-        }
+    override fun isEnabled(e: AnActionEvent): Boolean {
+        if (APIClientBase.isSanctioned()) return false
+        return null != retry[e.getRequiredData(CommonDataKeys.EDITOR).document]
     }
+
 }

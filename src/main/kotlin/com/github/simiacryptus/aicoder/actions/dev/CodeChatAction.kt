@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.openai.APIClientBase
+import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.skyenet.Heart
@@ -52,7 +53,7 @@ class CodeChatAction : BaseAction() {
                 var messageTrail = InterviewSession.initialText(userMessage)
                 send("""$messageTrail<div>$spinner</div>""")
                 messages += ChatMessage(ChatMessage.Role.user, userMessage)
-                val response = api.chat(chatRequest).choices?.first()?.message?.content.orEmpty()
+                val response = api.chat(chatRequest, AppSettingsState.instance.defaultChatModel()).choices?.first()?.message?.content.orEmpty()
                 messages += ChatMessage(ChatMessage.Role.assistant, response)
                 messageTrail += """<div><pre>$response</pre></div>"""
                 send(messageTrail)
@@ -101,7 +102,7 @@ class CodeChatAction : BaseAction() {
         }
     }
 
-    override fun actionPerformed2(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
