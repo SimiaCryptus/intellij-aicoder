@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.actions.code
+package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState

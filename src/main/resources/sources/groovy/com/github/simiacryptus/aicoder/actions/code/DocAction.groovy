@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.actions.code
+package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -10,15 +10,15 @@ import kotlin.Pair
 
 class DocAction extends SelectionAction {
 
-    interface VirtualAPI {
-        ConvertedText processCode(
+    interface DocAction_VirtualAPI {
+        DocAction_ConvertedText processCode(
                 String code,
                 String operation,
                 String computerLanguage,
                 String humanLanguage
         )
 
-        public class ConvertedText {
+        public class DocAction_ConvertedText {
             public String text;
             public String language;
 
@@ -26,8 +26,8 @@ class DocAction extends SelectionAction {
         }
     }
 
-    VirtualAPI getProxy() {
-        ChatProxy<VirtualAPI> chatProxy = new ChatProxy(
+    DocAction_VirtualAPI getProxy() {
+        ChatProxy<DocAction_VirtualAPI> chatProxy = new ChatProxy(
                 clazz: VirtualAPI,
                 api: api,
                 model: AppSettingsState.instance.defaultChatModel(),
@@ -35,7 +35,7 @@ class DocAction extends SelectionAction {
                 deserializerRetries: 5
         )
         chatProxy.addExample(
-                new VirtualAPI.ConvertedText(
+                new DocAction_VirtualAPI.DocAction_ConvertedText(
                         text: '''
                     /**
                      *  Prints "Hello, world!" to the console
@@ -44,7 +44,7 @@ class DocAction extends SelectionAction {
                         language: "English"
                 )
         ) {
-            (VirtualAPI x) ->
+            (DocAction_VirtualAPI x) ->
                     x.processCode(
                             '''
                     fun hello() {
@@ -56,7 +56,7 @@ class DocAction extends SelectionAction {
                             "English"
                     )
         }
-        return chatProxy.create() as VirtualAPI
+        return chatProxy.create() as DocAction_VirtualAPI
     }
 
     @Override

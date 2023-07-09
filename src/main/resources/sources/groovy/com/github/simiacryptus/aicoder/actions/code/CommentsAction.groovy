@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.actions.code
+package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -13,8 +13,8 @@ class CommentsAction extends SelectionAction {
     }
 
     String processSelection(SelectionState state) {
-        return new ChatProxy<VirtualAPI>(
-                clazz: VirtualAPI.class,
+        return new ChatProxy<CommentsAction_VirtualAPI>(
+                clazz: CommentsAction_VirtualAPI.class,
                 api: api,
                 temperature: AppSettingsState.instance.temperature,
                 model: AppSettingsState.instance.defaultChatModel(),
@@ -27,15 +27,15 @@ class CommentsAction extends SelectionAction {
         ).code ?: ""
     }
 
-    interface VirtualAPI {
-        ConvertedText editCode(
+    interface CommentsAction_VirtualAPI {
+        CommentsAction_ConvertedText editCode(
                 String code,
                 String operations,
                 String computerLanguage,
                 String humanLanguage
         )
 
-        public class ConvertedText {
+        public class CommentsAction_ConvertedText {
             public String code;
             public String language;
 
