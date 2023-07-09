@@ -24,6 +24,7 @@ class InsertImplementationAction : BaseAction() {
             computerLanguage: String,
             humanLanguage: String,
         ): ConvertedText
+
         data class ConvertedText(
             val code: String? = null,
             val language: String? = null

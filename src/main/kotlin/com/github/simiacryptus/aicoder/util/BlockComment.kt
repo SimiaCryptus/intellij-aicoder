@@ -2,8 +2,6 @@
 
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.util.TextBlock.DELIMITER
-import com.github.simiacryptus.aicoder.util.TextBlock.TAB_REPLACEMENT
 import com.simiacryptus.util.StringUtil
 import java.util.*
 import java.util.stream.Collectors

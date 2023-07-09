@@ -23,6 +23,7 @@ class QuestionAction : BaseAction() {
             code: String,
             question: String,
         ): Answer
+
         data class Answer(
             val text: String? = null,
         )

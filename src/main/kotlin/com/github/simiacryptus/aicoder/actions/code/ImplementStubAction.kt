@@ -10,13 +10,13 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getCode
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getDocComment
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersectingMajorCodeElement
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.matchesType
-import com.simiacryptus.util.StringUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.util.StringUtil
 import java.util.*
 import java.util.regex.Pattern
 
@@ -29,6 +29,7 @@ class ImplementStubAction : BaseAction() {
             computerLanguage: String,
             humanLanguage: String,
         ): ConvertedText
+
         data class ConvertedText(
             val code: String? = null,
             val language: String? = null
@@ -100,8 +101,10 @@ class ImplementStubAction : BaseAction() {
 
         private fun isStub(element: PsiElement): Boolean {
             var declaration: CharSequence = element.text
-            declaration = StringUtil.stripPrefix(declaration.toString().trim(),
-                getDocComment(element).trim())
+            declaration = StringUtil.stripPrefix(
+                declaration.toString().trim(),
+                getDocComment(element).trim()
+            )
             declaration =
                 StringUtil.stripSuffix(declaration.toString().trim(), getCode(element).trim())
             declaration = declaration.toString().trim()

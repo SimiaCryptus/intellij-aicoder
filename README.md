@@ -6,20 +6,23 @@
 
 <!-- Plugin description -->
 
-Behold, a revolutionary new plugin for code editors that useth the power of artificial intelligence to make coding swifter and simpler. 'Tis compatible with popular autocomplete-based AI plugins such as GitHub Copilot and AWS CodeWhisperer, and is explicitly invoked through the context menu.
+Behold, a revolutionary new plugin for code editors that useth the power of artificial intelligence to make coding
+swifter and simpler. 'Tis compatible with popular autocomplete-based AI plugins such as GitHub Copilot and AWS
+CodeWhisperer, and is explicitly invoked through the context menu.
 
-To use AI Coding Assistant, thou must possess an OpenAI access token. With this token, thou canst access a variety of features, including generics and system-wide functions, Markdown support, and general code editing.
-
+To use AI Coding Assistant, thou must possess an OpenAI access token. With this token, thou canst access a variety of
+features, including generics and system-wide functions, Markdown support, and general code editing.
 
 # Plaintext Actions
 
-Plaintext actions provide text processing features for any language. The following actions are available for plaintext in the AI Coder plugin:
+Plaintext actions provide text processing features for any language. The following actions are available for plaintext
+in the AI Coder plugin:
 
-| Text             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Chat Append Text | The `Chat Append Text` action allows you to quickly append text to the end of the current selection.                                                                                                                                                                                                                                                                                                                                                                     |
-| Dictation        | The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.                                                                                                                                                                                                                                                                                                               |
-| Redo Last        | The `Redo Last` action allows you to quickly redo the last action you performed. This is useful for getting variations from the generative AI. For example, if you generate something and want to see an alternate, you can use the `Redo Last` action to quickly retry without having to start from scratch.                                                                                                                                                            |
+| Text             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Chat Append Text | The `Chat Append Text` action allows you to quickly append text to the end of the current selection.                                                                                                                                                                                                                                                                                                                                                                                     |
+| Dictation        | The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.                                                                                                                                                                                                                                                                                                                               |
+| Redo Last        | The `Redo Last` action allows you to quickly redo the last action you performed. This is useful for getting variations from the generative AI. For example, if you generate something and want to see an alternate, you can use the `Redo Last` action to quickly retry without having to start from scratch.                                                                                                                                                                            |
 | Replace Options  | The `Replace Options` action allows you to quickly replace selected text with one of a set of suggested options. This also captures some preceding and following context, but uses a different prompting method to suggest the options. For example, if you type ï¿½I had a dayï¿½ and place the cursor after 'a' and then use the `Replace Options` action, the plugin will **_provide an interactive selection UI_** to suggest words like ï¿½greatï¿½, ï¿½badï¿½, or ï¿½deliciousï¿½. |
 
 # Code Actions
@@ -51,7 +54,8 @@ Markdown Actions allow you to quickly and easily add list items, table columns, 
 
 # Developer-Mode Actions
 
-Some actions are only available when the plugin is running in developer mode. These may be useful for debugging or development, but also contain experimental features that may not be fully functional.
+Some actions are only available when the plugin is running in developer mode. These may be useful for debugging or
+development, but also contain experimental features that may not be fully functional.
 
 | Text             | Description                                                                                                                                                                                                                                         |
 |------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -66,13 +70,15 @@ Some actions are only available when the plugin is running in developer mode. Th
 ## Installation
 
 - Using IDE built-in plugin system:
-  
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "intellij-aicoder"</kbd> >
+
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "
+  intellij-aicoder"</kbd> >
   <kbd>Install Plugin</kbd>
-  
+
 - Manually:
 
-  Download the [latest release](https://github.com/SimiaCryptus/intellij-aicoder/releases/latest) and install it manually using
+  Download the [latest release](https://github.com/SimiaCryptus/intellij-aicoder/releases/latest) and install it
+  manually using
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>âš™ï¸</kbd> > <kbd>Install plugin from disk...</kbd>
 
 ## Usage
@@ -80,7 +86,7 @@ Some actions are only available when the plugin is running in developer mode. Th
 After installation, edit the settings and add your API key. If desired, customize your style!
 ![aicoder_settings.png](docs/aicoder_settings.png)
 
-Use the context menu to access features. In this example, we use the "Insert Implementation" tool. 
+Use the context menu to access features. In this example, we use the "Insert Implementation" tool.
 _Note: After inserting, the code needs reformatting and some manual cleanup (e.g. correcting additional ending braces)_
 ![aicoder_implement.png](docs/aicoder_implement.png)
 

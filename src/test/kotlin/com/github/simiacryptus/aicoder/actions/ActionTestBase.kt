@@ -1,9 +1,8 @@
 ﻿package com.github.simiacryptus.aicoder.actions
 
-import com.github.simiacryptus.aicoder.util.MarkdownProcessor
-import com.github.simiacryptus.aicoder.actions.code.DocAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.MarkdownProcessor
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.JsonUtil
 import org.junit.jupiter.api.Assertions
@@ -12,7 +11,7 @@ open class ActionTestBase {
     companion object {
 
         data class TestData(
-            val indent : String? = null,
+            val indent: String? = null,
         )
 
         fun testActionScript(docAction: SelectionAction, scriptPath: String) {
@@ -33,7 +32,10 @@ open class ActionTestBase {
                         testData.indent ?: ""
                     )
                     val result = docAction.processSelection(selectionState)
-                    Assertions.assertEquals(toSection.code.trim().replace("\r\n", "\n"), result.trim().replace("\r\n", "\n"))
+                    Assertions.assertEquals(
+                        toSection.code.trim().replace("\r\n", "\n"),
+                        result.trim().replace("\r\n", "\n")
+                    )
                 } else {
                     throw RuntimeException("Invalid test data")
                 }

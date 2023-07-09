@@ -1,13 +1,13 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.simiacryptus.util.audio.AudioRecorder
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.simiacryptus.openai.APIClientBase
+import com.simiacryptus.util.audio.AudioRecorder
 import com.simiacryptus.util.audio.LookbackLoudnessWindowBuffer
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -31,7 +31,7 @@ class DictationAction : BaseAction() {
                 AudioRecorder(rawBuffer, 0.05, continueFn).run()
                 log.warn("Recording thread complete")
             } catch (e: Throwable) {
-                log.error("Error",e)
+                log.error("Error", e)
             }
         }, "dication-audio-recorder").start()
 
@@ -41,7 +41,7 @@ class DictationAction : BaseAction() {
             try {
                 LookbackLoudnessWindowBuffer(rawBuffer, wavBuffer, continueFn).run()
             } catch (e: Throwable) {
-                log.error("Error",e)
+                log.error("Error", e)
             }
             log.warn("Audio processing thread complete")
         }, "dictation-audio-processor").start()
@@ -58,7 +58,7 @@ class DictationAction : BaseAction() {
             try {
                 dictationPump.run()
             } catch (e: Throwable) {
-                log.error("Error",e)
+                log.error("Error", e)
             }
             log.warn("Speech-To-Text thread complete")
         }, "dictation-api-processor").start()

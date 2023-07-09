@@ -12,47 +12,49 @@ class DocAction extends SelectionAction {
 
     interface VirtualAPI {
         ConvertedText processCode(
-            String code,
-            String operation,
-            String computerLanguage,
-            String humanLanguage
+                String code,
+                String operation,
+                String computerLanguage,
+                String humanLanguage
         )
 
         public class ConvertedText {
             public String text;
             public String language;
-            public ConvertedText() { }
+
+            public ConvertedText() {}
         }
     }
 
     VirtualAPI getProxy() {
         ChatProxy<VirtualAPI> chatProxy = new ChatProxy(
-            clazz: VirtualAPI,
-            api: api,
-            model: AppSettingsState.instance.defaultChatModel(),
-            temperature: AppSettingsState.instance.temperature,
-            deserializerRetries: 5
+                clazz: VirtualAPI,
+                api: api,
+                model: AppSettingsState.instance.defaultChatModel(),
+                temperature: AppSettingsState.instance.temperature,
+                deserializerRetries: 5
         )
         chatProxy.addExample(
-            new VirtualAPI.ConvertedText(
-                text: '''
+                new VirtualAPI.ConvertedText(
+                        text: '''
                     /**
                      *  Prints "Hello, world!" to the console
                      */
                     '''.trim(),
-                language: "English"
-            )
-        ) { (VirtualAPI x) ->
-            x.processCode(
-                '''
+                        language: "English"
+                )
+        ) {
+            (VirtualAPI x) ->
+                    x.processCode(
+                            '''
                     fun hello() {
                         println("Hello, world!")
                     }
                     '''.trim(),
-                "Write detailed KDoc prefix for code block",
-                "Kotlin",
-                "English"
-            )
+                            "Write detailed KDoc prefix for code block",
+                            "Kotlin",
+                            "English"
+                    )
         }
         return chatProxy.create() as VirtualAPI
     }
@@ -62,10 +64,10 @@ class DocAction extends SelectionAction {
         CharSequence code = state.selectedText
         IndentedText indentedInput = IndentedText.fromString3(code.toString() as java.lang.CharSequence)
         String docString = proxy.processCode(
-            indentedInput.textBlock.toString(),
-            "Write detailed " + (state.language?.docStyle ?: "documentation") + " prefix for code block",
-            state.language.name(),
-            AppSettingsState.instance.humanLanguage
+                indentedInput.textBlock.toString(),
+                "Write detailed " + (state.language?.docStyle ?: "documentation") + " prefix for code block",
+                state.language.name(),
+                AppSettingsState.instance.humanLanguage
         ).text ?: ""
         return docString + code
     }

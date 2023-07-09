@@ -40,7 +40,7 @@ class ConvertFileTo : ActionGroup() {
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-        if(null == e) return arrayOf()
+        if (null == e) return arrayOf()
         val computerLanguage = ComputerLanguage.getComputerLanguage(e)
         val actions = ArrayList<AnAction>()
         for (language in supportedLanguages) {

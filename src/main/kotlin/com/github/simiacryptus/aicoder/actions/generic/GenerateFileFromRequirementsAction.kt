@@ -21,6 +21,7 @@ class GenerateFileFromRequirementsAction : BaseAction() {
     companion object {
         private val log = org.slf4j.LoggerFactory.getLogger(GenerateFileFromRequirementsAction::class.java)
     }
+
     private data class ProjectFile(
         var path: String? = "",
         var code: String? = "",
@@ -138,7 +139,10 @@ class GenerateFileFromRequirementsAction : BaseAction() {
                 """.trimMargin()
             )
         )
-        val response = api.chat(chatRequest, AppSettingsState.instance.defaultChatModel()).choices?.first()?.message?.content.orEmpty().trim()
+        val response = api.chat(
+            chatRequest,
+            AppSettingsState.instance.defaultChatModel()
+        ).choices?.first()?.message?.content.orEmpty().trim()
         var outputPath = basePath
         val header = response.split("\n").first()
         var body = response.split("\n").drop(1).joinToString("\n").trim()

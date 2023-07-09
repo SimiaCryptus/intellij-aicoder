@@ -327,15 +327,15 @@ object UITools {
                         }
 
                         "int", "java.lang.Integer" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = if(uiVal.text.isBlank()) -1 else uiVal.text.toInt()
+                            newSettingsValue = if (uiVal.text.isBlank()) -1 else uiVal.text.toInt()
                         }
 
                         "long" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = if(uiVal.text.isBlank()) -1 else uiVal.text.toLong()
+                            newSettingsValue = if (uiVal.text.isBlank()) -1 else uiVal.text.toLong()
                         }
 
                         "double", "java.lang.Double" -> if (uiVal is JTextComponent) {
-                            newSettingsValue = if(uiVal.text.isBlank()) 0.0 else uiVal.text.toDouble()
+                            newSettingsValue = if (uiVal.text.isBlank()) 0.0 else uiVal.text.toDouble()
                         }
 
                         "boolean" -> if (uiVal is JCheckBox) {
@@ -760,6 +760,7 @@ object UITools {
         }
         return project?.baseDir
     }
+
     fun getSelectedFile(e: AnActionEvent): VirtualFile? {
         val dataContext = e.dataContext
         val data = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext)
@@ -797,7 +798,7 @@ object UITools {
         suppressProgress: Boolean = true,
         task: (ProgressIndicator) -> T,
     ): T {
-        if(suppressProgress == AppSettingsState.instance.editRequests) {
+        if (suppressProgress == AppSettingsState.instance.editRequests) {
             return run1(project, title, canBeCancelled, task)
         } else {
             return run2(project, title, canBeCancelled, task)
@@ -821,24 +822,25 @@ object UITools {
         task: (ProgressIndicator) -> T,
     ): T {
         checkApiKey()
-        return ProgressManager.getInstance().run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
-            override fun compute(indicator: ProgressIndicator): T {
-                val currentThread = Thread.currentThread()
-                val threads = ArrayList<Thread>()
-                val scheduledFuture = scheduledPool.scheduleAtFixedRate({
-                    if (indicator.isCanceled) {
-                        threads.forEach { it.interrupt() }
+        return ProgressManager.getInstance()
+            .run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
+                override fun compute(indicator: ProgressIndicator): T {
+                    val currentThread = Thread.currentThread()
+                    val threads = ArrayList<Thread>()
+                    val scheduledFuture = scheduledPool.scheduleAtFixedRate({
+                        if (indicator.isCanceled) {
+                            threads.forEach { it.interrupt() }
+                        }
+                    }, 0, 1, TimeUnit.SECONDS)
+                    threads.add(currentThread)
+                    try {
+                        return task(indicator)
+                    } finally {
+                        threads.remove(currentThread)
+                        scheduledFuture.cancel(true)
                     }
-                }, 0, 1, TimeUnit.SECONDS)
-                threads.add(currentThread)
-                try {
-                    return task(indicator)
-                } finally {
-                    threads.remove(currentThread)
-                    scheduledFuture.cancel(true)
                 }
-            }
-        })
+            })
     }
 
     fun checkApiKey(k: String = AppSettingsState.instance.apiKey): String {

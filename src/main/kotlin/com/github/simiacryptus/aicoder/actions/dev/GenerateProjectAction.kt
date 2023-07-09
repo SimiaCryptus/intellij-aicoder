@@ -1,10 +1,10 @@
 ﻿package com.github.simiacryptus.aicoder.actions.dev
 
-import com.github.simiacryptus.aicoder.util.SoftwareProjectAI
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.github.simiacryptus.aicoder.util.SoftwareProjectAI
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.openai.APIClientBase
@@ -25,6 +25,7 @@ class GenerateProjectAction : BaseAction() {
     class SettingsUI {
         @Name("Project Description")
         val description: JTextArea = JTextArea()
+
         @Name("Drafts Per File")
         val drafts: JTextField = JTextField("2")
         val saveAlternates: JCheckBox = JCheckBox("Save Alternates")
@@ -56,9 +57,11 @@ class GenerateProjectAction : BaseAction() {
         val project = UITools.run(
             e.project, "Parsing Request", true
         ) {
-            val newProject = api.newProject("""
+            val newProject = api.newProject(
+                """
                 ${config.description}
-                """.trimIndent().trim())
+                """.trimIndent().trim()
+            )
             if (it.isCanceled) throw InterruptedException()
             newProject
         }
@@ -81,7 +84,13 @@ class GenerateProjectAction : BaseAction() {
             UITools.run(
                 e.project, "Specifying Components", true
             ) {
-                projectDesign.components?.associate { it to api.buildComponentFileSpecifications(project, requirements, it) }
+                projectDesign.components?.associate {
+                    it to api.buildComponentFileSpecifications(
+                        project,
+                        requirements,
+                        it
+                    )
+                }
             }
 
         val documents =

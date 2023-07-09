@@ -26,9 +26,11 @@ object MarkdownProcessor {
                     }
                     name = line.removePrefix("# ").trim()
                 }
+
                 line.startsWith("## ") -> {
                     title = line.removePrefix("## ").trim()
                 }
+
                 line.startsWith("```") -> {
                     if (codeType == null) {
                         codeType = line.removePrefix("```").trim()
@@ -40,6 +42,7 @@ object MarkdownProcessor {
                         codeType = null
                     }
                 }
+
                 else -> code += "$line\n"
             }
         }

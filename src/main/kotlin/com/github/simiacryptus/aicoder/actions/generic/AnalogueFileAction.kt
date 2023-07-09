@@ -134,7 +134,10 @@ class AnalogueFileAction : BaseAction() {
                 """.trimMargin()
             )
         )
-        val response = api.chat(chatRequest, AppSettingsState.instance.defaultChatModel()).choices?.first()?.message?.content.orEmpty().trim()
+        val response = api.chat(
+            chatRequest,
+            AppSettingsState.instance.defaultChatModel()
+        ).choices?.first()?.message?.content.orEmpty().trim()
         var outputPath = baseFile.path
         val header = response.split("\n").first()
         var body = response.split("\n").drop(1).joinToString("\n").trim()

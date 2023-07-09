@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.openai.APIClientBase
-import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.skyenet.Heart
@@ -43,7 +42,8 @@ class CodeChatAction : BaseAction() {
 
         override fun newSession(sessionId: String): SkyenetCodingSession {
             val newSession = CodeChatSession(sessionId)
-            rootMessageTrail = """$rootOperationID,<div><h3>Code:</h3><pre><code class="language-$language">$codeSelection</code></pre></div>"""
+            rootMessageTrail =
+                """$rootOperationID,<div><h3>Code:</h3><pre><code class="language-$language">$codeSelection</code></pre></div>"""
             newSession.send(rootMessageTrail)
             return newSession
         }

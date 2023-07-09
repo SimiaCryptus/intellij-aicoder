@@ -10,13 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.openai.APIClientBase
-import com.simiacryptus.util.describe.Description
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.OutputInterceptor
 import com.simiacryptus.skyenet.body.ClasspathResource
 import com.simiacryptus.skyenet.body.SessionServerUtil.asJava
 import com.simiacryptus.skyenet.body.SkyenetCodingSessionServer
 import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
+import com.simiacryptus.util.describe.Description
 import org.eclipse.jetty.util.resource.Resource
 import org.jdesktop.swingx.JXButton
 import java.awt.Desktop
@@ -32,8 +32,9 @@ class LaunchSkyenetAction : BaseAction() {
     interface TestTools {
         fun getProject(): Project
         fun getSelectedFolder(): VirtualFile
+
         @Description("Prints to script output")
-        fun print(msg:String): Unit
+        fun print(msg: String): Unit
     }
 
     override fun handle(e: AnActionEvent) {
@@ -106,7 +107,12 @@ class LaunchSkyenetAction : BaseAction() {
                 }
                 formBuilder.addLabeledComponent("Server Running on $port", openButton)
                 val showOptionDialog =
-                    UITools.showOptionDialog(formBuilder.panel, "Close", title = "Server Running on $port", modal = false)
+                    UITools.showOptionDialog(
+                        formBuilder.panel,
+                        "Close",
+                        title = "Server Running on $port",
+                        modal = false
+                    )
                 log.info("showOptionDialog = $showOptionDialog")
             } finally {
                 log.info("Stopping Server")

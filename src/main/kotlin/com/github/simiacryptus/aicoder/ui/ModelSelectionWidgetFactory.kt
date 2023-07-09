@@ -39,7 +39,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         }
 
         override fun install(statusBar: StatusBar) {
-            this.statusBar= statusBar
+            this.statusBar = statusBar
         }
 
         override fun dispose() {

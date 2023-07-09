@@ -14,31 +14,32 @@ class CommentsAction extends SelectionAction {
 
     String processSelection(SelectionState state) {
         return new ChatProxy<VirtualAPI>(
-            clazz: VirtualAPI.class,
-            api: api,
-            temperature: AppSettingsState.instance.temperature,
-            model: AppSettingsState.instance.defaultChatModel(),
-            deserializerRetries: 5,
+                clazz: VirtualAPI.class,
+                api: api,
+                temperature: AppSettingsState.instance.temperature,
+                model: AppSettingsState.instance.defaultChatModel(),
+                deserializerRetries: 5,
         ).create().editCode(
                 state.selectedText,
-            "Add comments to each line explaining the code",
+                "Add comments to each line explaining the code",
                 state.language.toString(),
-            AppSettingsState.instance.humanLanguage
+                AppSettingsState.instance.humanLanguage
         ).code ?: ""
     }
 
     interface VirtualAPI {
         ConvertedText editCode(
-            String code,
-            String operations,
-            String computerLanguage,
-            String humanLanguage
+                String code,
+                String operations,
+                String computerLanguage,
+                String humanLanguage
         )
 
         public class ConvertedText {
             public String code;
             public String language;
-            public ConvertedText() { }
+
+            public ConvertedText() {}
         }
     }
 

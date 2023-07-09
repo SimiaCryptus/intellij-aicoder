@@ -27,7 +27,7 @@ class GenerateStoryAction : BaseAction() {
             var role: String? = "",
             var development: String? = "",
 
-        )
+            )
 
         data class Setting(
             var location: String? = "",
@@ -35,6 +35,7 @@ class GenerateStoryAction : BaseAction() {
             var description: String? = "",
             var significance: String? = "",
         )
+
         data class StoryTemplate(
             var characters: List<Character>? = listOf(),
             var settings: List<Setting>? = listOf(),
@@ -71,7 +72,7 @@ class GenerateStoryAction : BaseAction() {
 
             var origins: List<StoryObjectOrigin>? = listOf(),
 
-        )
+            )
 
         data class StoryObjectOrigin(
             @Description("Actor or object name")
@@ -141,11 +142,13 @@ class GenerateStoryAction : BaseAction() {
         val title = JTextField("How to write a book")
 
         @Name("Description")
-        val description = JTextArea("""
+        val description = JTextArea(
+            """
             |A software developer teaches a computer how to teach another computer how to write a book. 
             |They then teach another computer to use that computer to publish and sell books online.
             |Chaos ensues. Society collapses. The world ends.
-            |""".trimMargin().trim())
+            |""".trimMargin().trim()
+        )
 
         @Name("Title")
         val writingStyle = JTextField("First Person Narrative, Present Tense, 8th Grade Reading Level, Funny")
@@ -224,11 +227,15 @@ class GenerateStoryAction : BaseAction() {
                 previousSegment = segments.last()
             }
             File(File(selectedFolder.canonicalPath!!), config.title + "_screenplay.md")
-                .writeText(segments.joinToString("\n\n") { it.items!!.joinToString("\n") { """
+                .writeText(segments.joinToString("\n\n") {
+                    it.items!!.joinToString("\n") {
+                        """
                     |
                     |**${it.actor}**: ${it.text}
                     |
-                """.trimMargin() } })
+                """.trimMargin()
+                    }
+                })
         }
 
         // Write pages

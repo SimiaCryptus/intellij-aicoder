@@ -1,5 +1,4 @@
-﻿
-## Minor Issues Demonstrated by the Tests
+﻿## Minor Issues Demonstrated by the Tests
 
 - [ ] Lack of space on generic insert
 - [ ] `*.txt` files are recognized as computer language
@@ -8,11 +7,11 @@
 
 ## Tests to be added
 
-- [ ] Generic Operations 
-  - [ ] Edit
-  - [ ] Insert
+- [ ] Generic Operations
+    - [ ] Edit
+    - [ ] Insert
 - [ ] Markdown
-  - [ ] Markdown Lists
-  - [ ] Markdown Tables
+    - [ ] Markdown Lists
+    - [ ] Markdown Tables
 - 
 

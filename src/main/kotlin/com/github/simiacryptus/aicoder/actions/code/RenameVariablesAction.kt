@@ -23,9 +23,11 @@ class RenameVariablesAction : BaseAction() {
             computerLanguage: String? = null,
             humanLanguage: String? = null,
         ): SuggestionResponse
+
         data class SuggestionResponse(
             val suggestions: List<Suggestion> = emptyList(),
         )
+
         data class Suggestion(
             val identifier: String? = null,
             val suggestion: String? = null,

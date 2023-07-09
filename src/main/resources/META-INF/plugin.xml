@@ -15,18 +15,19 @@
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.simiacryptus.aicoder.ApplicationEvents" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+        <listener class="com.github.simiacryptus.aicoder.ApplicationEvents"
+                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
     <extensions defaultExtensionNs="com.intellij">
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
-                                order="first" />
+                                order="first"/>
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.ModelSelectionWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.ModelSelectionWidgetFactory"
-                                order="first" />
+                                order="first"/>
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
-                                order="first" />
+                                order="first"/>
     </extensions>
     <actions>
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"

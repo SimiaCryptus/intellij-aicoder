@@ -22,7 +22,7 @@ class RecentCodeEditsAction : ActionGroup() {
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-        if(null == e) return arrayOf()
+        if (null == e) return arrayOf()
         val children = ArrayList<AnAction>()
         for (instruction in AppSettingsState.instance.editHistory) {
             val id = children.size + 1

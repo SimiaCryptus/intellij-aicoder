@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.actions.code
+package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -11,13 +11,6 @@ import com.simiacryptus.openai.proxy.ChatProxy
 import javax.swing.Icon
 import javax.swing.JOptionPane
 
-/**
- * The CustomEditAction class is an IntelliJ action that allows users to edit computer language code.
- * To use the CustomEditAction, first select the code that you want to edit.
- * Then, select the action in the context menu.
- * A dialog box will appear, prompting you to enter an instruction.
- * Enter the instruction and press OK.
- */
 open class CustomEditAction(
     name: String? = null,
     description: String? = null,
@@ -31,6 +24,7 @@ open class CustomEditAction(
             computerLanguage: String,
             humanLanguage: String,
         ): EditedText
+
         data class EditedText(
             val code: String? = null,
             val language: String? = null
@@ -46,7 +40,6 @@ open class CustomEditAction(
             )
             chatProxy.addExample(
                 returnValue = VirtualAPI.EditedText(
-                    //language=JAVA
                     code = """
                         |// Print Hello, World! to the console
                         |println("Hello, World!")
@@ -55,14 +48,15 @@ open class CustomEditAction(
                 )
             ) {
                 it.editCode(
-                //language=JAVA
-                code="""println("Hello, World!")""",
-                operation = "Add code comments",
-                computerLanguage = "java",
-                humanLanguage = "English"
-            ) }
+                    code = """println("Hello, World!")""",
+                    operation = "Add code comments",
+                    computerLanguage = "java",
+                    humanLanguage = "English"
+                )
+            }
             return chatProxy.create()
         }
+
     override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel

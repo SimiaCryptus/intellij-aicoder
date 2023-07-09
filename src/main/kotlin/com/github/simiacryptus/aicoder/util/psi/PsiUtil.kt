@@ -67,7 +67,9 @@ object PsiUtil {
                     ) && textRange.startOffset <= selectionEnd && textRange.endOffset + 1 >= selectionEnd
                 if (matchesType(element, *types)) {
                     if (within) {
-                        largest.updateAndGet { s: PsiElement? -> if ((s?.text?.length ?: 0) > element.text.length) s else element }
+                        largest.updateAndGet { s: PsiElement? ->
+                            if ((s?.text?.length ?: 0) > element.text.length) s else element
+                        }
                     }
                 }
                 super.visitElement(element)

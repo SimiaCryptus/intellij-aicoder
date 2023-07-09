@@ -1,6 +1,5 @@
 ﻿package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -8,7 +7,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
-import java.io.File
 import java.util.*
 import java.util.Map
 import java.util.stream.Collectors

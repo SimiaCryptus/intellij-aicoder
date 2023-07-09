@@ -12,7 +12,8 @@ open class WeakKotlinInterpreter(
     init {
         // Use WeakKotlinInterpreter classloader to load Kotlin classes
         val groovyClassLoader = WeakKotlinInterpreter::class.java.classLoader
-        val factoryClass = groovyClassLoader.loadClass("org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmLocalScriptEngineFactory")
+        val factoryClass =
+            groovyClassLoader.loadClass("org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmLocalScriptEngineFactory")
         val factory = factoryClass.getDeclaredConstructor().newInstance()
         val getScriptEngineMethod: Method = factoryClass.getMethod("getScriptEngine")
         engine = getScriptEngineMethod.invoke(factory)
@@ -33,7 +34,8 @@ open class WeakKotlinInterpreter(
 
     override fun validate(code: String): Exception? {
         return try {
-            val compileMethod: Method = engine.javaClass.getMethod("compile", String::class.java, Class.forName("javax.script.ScriptContext"))
+            val compileMethod: Method =
+                engine.javaClass.getMethod("compile", String::class.java, Class.forName("javax.script.ScriptContext"))
             compileMethod.invoke(engine, wrapCode(code), engine.javaClass.getMethod("getContext").invoke(engine))
             null
         } catch (e: Exception) {

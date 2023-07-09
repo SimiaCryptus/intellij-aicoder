@@ -30,14 +30,16 @@ class IdeaOpenAIClient : OpenAIClient(
         super.authorize(request)
     }
 
-    override fun chat(completionRequest: ChatRequest,
-                      model: Model): ChatResponse {
+    override fun chat(
+        completionRequest: ChatRequest,
+        model: Model
+    ): ChatResponse {
         lastEvent ?: return super.chat(completionRequest, model)
-        if(isInRequest.getAndSet(true)) {
+        if (isInRequest.getAndSet(true)) {
             return super.chat(completionRequest, model)
         } else {
             try {
-                if(!AppSettingsState.instance.editRequests) return super.chat(completionRequest, model)
+                if (!AppSettingsState.instance.editRequests) return super.chat(completionRequest, model)
                 return withJsonDialog(completionRequest, {
                     val chatRequest = it
                     UITools.run(
@@ -55,11 +57,11 @@ class IdeaOpenAIClient : OpenAIClient(
 
     override fun complete(request: CompletionRequest, model: Model): CompletionResponse {
         lastEvent ?: return super.complete(request, model)
-        if(isInRequest.getAndSet(true)) {
+        if (isInRequest.getAndSet(true)) {
             return super.complete(request, model)
         } else {
             try {
-                if(!AppSettingsState.instance.editRequests) return super.complete(request, model)
+                if (!AppSettingsState.instance.editRequests) return super.complete(request, model)
                 return withJsonDialog(request, {
                     val completionRequest = it
                     UITools.run(
@@ -76,11 +78,11 @@ class IdeaOpenAIClient : OpenAIClient(
 
     override fun edit(editRequest: EditRequest): CompletionResponse {
         lastEvent ?: return super.edit(editRequest)
-        if(isInRequest.getAndSet(true)) {
+        if (isInRequest.getAndSet(true)) {
             return super.edit(editRequest)
         } else {
             try {
-                if(!AppSettingsState.instance.editRequests) return super.edit(editRequest)
+                if (!AppSettingsState.instance.editRequests) return super.edit(editRequest)
                 return withJsonDialog(editRequest, {
                     val editRequest = it
                     UITools.run(
@@ -99,9 +101,11 @@ class IdeaOpenAIClient : OpenAIClient(
 
         val api: OpenAIClient by lazy { IdeaOpenAIClient() }
         var lastEvent: AnActionEvent? = null
-        fun uiEdit(project: Project? = null,
-                   title: String = "Edit Request",
-                   jsonTxt: String): String {
+        fun uiEdit(
+            project: Project? = null,
+            title: String = "Edit Request",
+            jsonTxt: String
+        ): String {
             return execute {
                 val json = JTextArea(
                     /* text = */ "",
@@ -138,7 +142,7 @@ class IdeaOpenAIClient : OpenAIClient(
             } ?: jsonTxt
         }
 
-        fun <T : Any>execute(
+        fun <T : Any> execute(
             fn: () -> T
         ): T? {
             val application = ApplicationManager.getApplication()

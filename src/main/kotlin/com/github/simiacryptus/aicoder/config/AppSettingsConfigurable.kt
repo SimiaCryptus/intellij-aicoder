@@ -3,7 +3,8 @@
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.options.Configurable
 import java.util.*
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 class AppSettingsConfigurable : Configurable {
     var settingsComponent: AppSettingsComponent? = null

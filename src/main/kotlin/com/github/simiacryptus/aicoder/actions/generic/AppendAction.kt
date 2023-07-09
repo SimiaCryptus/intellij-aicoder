@@ -5,10 +5,10 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.github.simiacryptus.aicoder.util.UITools.insertString
-import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.simiacryptus.openai.APIClientBase
+import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import java.util.*
 
 /**
@@ -39,13 +39,15 @@ class AppendAction : BaseAction() {
             val newText = UITools.run(
                 event.project, "Getting completion", true
             ) {
-                (api.chat(request, AppSettingsState.instance.defaultChatModel()).choices[0].message?.content ?: "").trimPrefix(before ?: "")
+                (api.chat(request, AppSettingsState.instance.defaultChatModel()).choices[0].message?.content
+                    ?: "").trimPrefix(before ?: "")
             }
             UITools.writeableFn(event) {
                 insertString(document, selectionEnd, newText)
             }
         }
     }
+
     @Suppress("unused")
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (APIClientBase.isSanctioned()) return false

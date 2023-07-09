@@ -45,7 +45,7 @@ class MarkdownListAction : BaseAction() {
                 returnValue = VirtualAPI.Items(
                     items = listOf("Item 4", "Item 5", "Item 6")
                 )
-            ){
+            ) {
                 it.newListItems(
                     items = listOf("Item 1", "Item 2", "Item 3"),
                     count = 6
@@ -53,6 +53,7 @@ class MarkdownListAction : BaseAction() {
             }
             return chatProxy.create()
         }
+
     override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET) ?: return
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return

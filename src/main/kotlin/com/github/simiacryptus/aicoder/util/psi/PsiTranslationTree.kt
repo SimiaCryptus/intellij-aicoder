@@ -96,8 +96,15 @@ class PsiTranslationTree(
 
     fun getTranslatedDocument(): CharSequence = try {
         var translated = translatedResult.toString()
-        if(!stubs.isEmpty()) {
-            logger.warn("Translating ${stubs.size} stubs in ${stubId ?: "---"} - Initial Code: \n```\n    ${translationText().replace("\n", "\n    ")}\n```\n")
+        if (!stubs.isEmpty()) {
+            logger.warn(
+                "Translating ${stubs.size} stubs in ${stubId ?: "---"} - Initial Code: \n```\n    ${
+                    translationText().replace(
+                        "\n",
+                        "\n    "
+                    )
+                }\n```\n"
+            )
         }
         for (child in stubs) {
             translated = if (child.stubId == null) translated
@@ -105,7 +112,14 @@ class PsiTranslationTree(
                 val regex = child.getStubRegex(targetLanguage, translated)
                 val childDoc = child.getTranslatedDocument().toString()
                 val findAll = regex.findAll(translated).toList()
-                logger.warn("Replacing ${findAll.size} instances of ${child.stubId} with: \n```\n    ${childDoc.replace("\n", "\n    ")}\n```\n")
+                logger.warn(
+                    "Replacing ${findAll.size} instances of ${child.stubId} with: \n```\n    ${
+                        childDoc.replace(
+                            "\n",
+                            "\n    "
+                        )
+                    }\n```\n"
+                )
                 translated.replace(regex, childDoc.replace("\$", "\\\$"))
             }
         }

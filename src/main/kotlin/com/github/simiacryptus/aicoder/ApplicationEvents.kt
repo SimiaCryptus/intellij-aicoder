@@ -8,7 +8,7 @@ import java.io.File
 
 class ApplicationEvents : ApplicationActivationListener {
     override fun applicationActivated(ideFrame: IdeFrame) {
-        if(AppSettingsState.instance.apiLog) {
+        if (AppSettingsState.instance.apiLog) {
             val file = File(logDir(), "openai.log")
             file.deleteOnExit()
             OpenAIClient.auxillaryLog = file

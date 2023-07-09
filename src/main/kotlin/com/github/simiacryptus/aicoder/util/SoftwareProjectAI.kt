@@ -1,7 +1,7 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
-import com.simiacryptus.util.describe.Description
 import com.simiacryptus.openai.proxy.ValidatedObject
+import com.simiacryptus.util.describe.Description
 import java.io.File
 import java.util.*
 import java.util.concurrent.Callable
@@ -36,7 +36,7 @@ interface SoftwareProjectAI {
         val designPatterns: List<String>? = listOf(),
         val requirements: List<String>? = listOf(),
         val risks: List<String>? = listOf(),
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }
@@ -52,7 +52,7 @@ interface SoftwareProjectAI {
         val documents: List<DocumentationDetails>? = listOf(),
         @Description("Individual test cases")
         val tests: List<TestDetails>? = listOf(),
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }
@@ -63,7 +63,7 @@ interface SoftwareProjectAI {
         val name: String? = "",
         val description: String? = "",
         val features: List<String>? = listOf(),
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }
@@ -74,7 +74,7 @@ interface SoftwareProjectAI {
         val name: String? = "",
         val steps: List<String>? = listOf(),
         val expectations: List<String>? = listOf(),
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }
@@ -85,7 +85,7 @@ interface SoftwareProjectAI {
         val name: String? = "",
         val description: String? = "",
         val sections: List<String>? = listOf(),
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }
@@ -127,7 +127,7 @@ interface SoftwareProjectAI {
         val publicMethodSignatures: List<String>? = listOf(),
         val language: String? = "",
         val location: FilePath? = FilePath(),
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }
@@ -140,7 +140,7 @@ interface SoftwareProjectAI {
         val sections: List<String>? = listOf(),
         val language: String? = "",
         val location: FilePath? = FilePath(),
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }
@@ -154,7 +154,7 @@ interface SoftwareProjectAI {
         val expectations: List<String>? = listOf(),
         val language: String? = "",
         val location: FilePath? = FilePath(),
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }
@@ -205,7 +205,7 @@ interface SoftwareProjectAI {
         val language: String? = "",
         @Description("Fully implemented source code")
         val code: String? = "",
-    ) : ValidatedObject{
+    ) : ValidatedObject {
         override fun validate(): Boolean {
             return true
         }

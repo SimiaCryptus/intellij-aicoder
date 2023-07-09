@@ -11,7 +11,7 @@ abstract class BaseAction(
     name: String? = null,
     description: String? = null,
     icon: Icon? = null,
-    ) : AnAction(name, description, icon) {
+) : AnAction(name, description, icon) {
 
     val log by lazy { LoggerFactory.getLogger(javaClass) }
     //override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
