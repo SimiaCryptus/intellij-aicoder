@@ -1,4 +1,4 @@
-﻿# Simple Kotlin Comments Action Test
+# Simple Kotlin Comments Action Test
 
 ## Settings
 

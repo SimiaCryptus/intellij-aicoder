@@ -1,4 +1,4 @@
-﻿# Plaintext Actions
+# Plaintext Actions
 
 Plaintext actions provide text processing features for any language. The following actions are available for plaintext
 in the AI Coder plugin:

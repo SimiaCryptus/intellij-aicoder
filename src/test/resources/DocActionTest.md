@@ -1,4 +1,4 @@
-﻿# Simple Kotlin Doc Action Test
+# Simple Kotlin Doc Action Test
 
 ## Settings
 

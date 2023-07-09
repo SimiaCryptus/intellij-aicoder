@@ -1,4 +1,4 @@
-﻿# intellij-aicoder
+# intellij-aicoder
 
 ![Build](https://github.com/SimiaCryptus/intellij-aicoder/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)

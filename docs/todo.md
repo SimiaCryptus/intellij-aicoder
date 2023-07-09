@@ -1,4 +1,4 @@
-﻿## Minor Issues Demonstrated by the Tests
+## Minor Issues Demonstrated by the Tests
 
 - [ ] Lack of space on generic insert
 - [ ] `*.txt` files are recognized as computer language
