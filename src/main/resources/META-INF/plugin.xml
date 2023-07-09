@@ -1,5 +1,4 @@
-﻿<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
-<idea-plugin>
+﻿<idea-plugin>
     <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
     <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
@@ -322,4 +321,3 @@
     </actions>
 
 </idea-plugin>
-
