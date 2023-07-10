@@ -1,4 +1,4 @@
-# GitHub Actions Workflow for launching UI tests on Linux, Windows, and Mac in the following steps:
+﻿# GitHub Actions Workflow for launching UI tests on Linux, Windows, and Mac in the following steps:
 # - prepare and launch IDE with your plugin and robot-server plugin, which is needed to interact with UI
 # - wait for IDE to start
 # - run UI tests with separate Gradle task
@@ -57,3 +57,4 @@ jobs:
       # Run tests
       - name: Tests
         run: ./gradlew test
+

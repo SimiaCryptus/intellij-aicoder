@@ -1,24 +1,20 @@
-package com.github.simiacryptus.aicoder.util.psi
+﻿package com.github.simiacryptus.aicoder.util.psi
 
-import com.simiacryptus.util.StringUtil
-import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
+import com.simiacryptus.util.StringUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
 object PsiUtil {
-    val ELEMENTS_CODE = arrayOf<CharSequence>(
+    private val ELEMENTS_CODE = arrayOf<CharSequence>(
         "Method",
         "Field",
         "Class",
@@ -26,50 +22,13 @@ object PsiUtil {
         "CssBlock",
         "FunctionDefinition"
     )
-    val ELEMENTS_COMMENTS = arrayOf<CharSequence>(
+    private val ELEMENTS_COMMENTS = arrayOf<CharSequence>(
         "Comment"
     )
 
+    @JvmStatic
     fun getLargestIntersectingComment(element: PsiElement, selectionStart: Int, selectionEnd: Int): PsiElement? {
         return getLargestIntersecting(element, selectionStart, selectionEnd, *ELEMENTS_COMMENTS)
-    }
-
-    /**
-     * This method is used to get the largest element that intersects with the given selection range.
-     *
-     * @param element        The element to search within.
-     * @param selectionStart The start of the selection range.
-     * @param selectionEnd   The end of the selection range.
-     * @param types          The types of elements to search for.
-     * @return The largest element that intersects with the given selection range.
-     */
-    fun getLargestIntersecting(
-        element: PsiElement,
-        selectionStart: Int,
-        selectionEnd: Int,
-        vararg types: CharSequence
-    ): PsiElement? {
-        val largest = AtomicReference<PsiElement?>(null)
-        val visitor = AtomicReference<PsiElementVisitor>()
-        visitor.set(object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                val textRange = element.textRange
-                val within =
-                    within(
-                        textRange,
-                        selectionStart
-                    ) && textRange.startOffset <= selectionEnd && textRange.endOffset + 1 >= selectionEnd
-                if (matchesType(element, *types)) {
-                    if (within) {
-                        largest.updateAndGet { s: PsiElement? -> if ((s?.text?.length ?: 0) > element.text.length) s else element }
-                    }
-                }
-                super.visitElement(element)
-                element.acceptChildren(visitor.get())
-            }
-        })
-        element.accept(visitor.get())
-        return largest.get()
     }
 
     fun getAll(element: PsiElement, vararg types: CharSequence): List<PsiElement> {
@@ -89,15 +48,39 @@ object PsiUtil {
         return elements
     }
 
-    /**
-     * This method is used to get the smallest intersecting entity from a given PsiElement.
-     *
-     * @param element        The PsiElement from which the smallest intersecting entity is to be retrieved.
-     * @param selectionStart The start of the selection.
-     * @param selectionEnd   The end of the selection.
-     * @param types          The types of the elements to be retrieved.
-     * @return The smallest intersecting entity from the given PsiElement.
-     */
+    @JvmStatic
+    private fun getLargestIntersecting(
+        element: PsiElement,
+        selectionStart: Int,
+        selectionEnd: Int,
+        vararg types: CharSequence
+    ): PsiElement? {
+        val largest = AtomicReference<PsiElement?>(null)
+        val visitor = AtomicReference<PsiElementVisitor>()
+        visitor.set(object : PsiElementVisitor() {
+            override fun visitElement(element: PsiElement) {
+                val textRange = element.textRange
+                val within =
+                    within(
+                        textRange,
+                        selectionStart
+                    ) && textRange.startOffset <= selectionEnd && textRange.endOffset + 1 >= selectionEnd
+                if (matchesType(element, *types)) {
+                    if (within) {
+                        largest.updateAndGet { s: PsiElement? ->
+                            if ((s?.text?.length ?: 0) > element.text.length) s else element
+                        }
+                    }
+                }
+                super.visitElement(element)
+                element.acceptChildren(visitor.get())
+            }
+        })
+        element.accept(visitor.get())
+        return largest.get()
+    }
+
+    @JvmStatic
     fun getSmallestIntersecting(
         element: PsiElement,
         selectionStart: Int,
@@ -125,31 +108,7 @@ object PsiUtil {
         return largest.get()
     }
 
-
-    fun getAllIntersecting(
-        element: PsiElement,
-        selectionStart: Int,
-        selectionEnd: Int,
-        vararg types: CharSequence
-    ): List<PsiElement> {
-        val elements: MutableList<PsiElement> = ArrayList()
-        val visitor = AtomicReference<PsiElementVisitor>()
-        visitor.set(object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                val textRange = element.textRange
-                if (matchesType(element, *types)) {
-                    if (within(textRange, selectionStart, selectionEnd)) {
-                        elements.add(element)
-                    }
-                }
-                super.visitElement(element)
-                element.acceptChildren(visitor.get())
-            }
-        })
-        element.accept(visitor.get())
-        return elements
-    }
-
+    @JvmStatic
     private fun within(textRange: TextRange, vararg offset: Int): Boolean =
         offset.any { it in textRange.startOffset..textRange.endOffset }
 
@@ -177,14 +136,16 @@ object PsiUtil {
             .anyMatch { t: CharSequence -> str.endsWith(t.toString()) }
     }
 
-    fun getFirstBlock(element: PsiElement, vararg blockType: CharSequence): PsiElement? {
+    @JvmStatic
+    private fun getFirstBlock(element: PsiElement, vararg blockType: CharSequence): PsiElement? {
         val children = element.children
         if (children.isEmpty()) return null
         val first = children[0]
         return if (matchesType(first, *blockType)) first else null
     }
 
-    fun getLargestBlock(element: PsiElement, vararg blockType: CharSequence): PsiElement? {
+    @JvmStatic
+    private fun getLargestBlock(element: PsiElement, vararg blockType: CharSequence): PsiElement? {
         val largest = AtomicReference<PsiElement?>(null)
         val visitor = AtomicReference<PsiElementVisitor>()
         visitor.set(object : PsiElementVisitor() {
@@ -234,6 +195,7 @@ object PsiUtil {
         return stringBuilder.toString()
     }
 
+    @JvmStatic
     private fun getInterfaces(elementClass: Class<*>): Set<String> {
         val strings = Arrays.stream(elementClass.interfaces).map { obj: Class<*> -> obj.simpleName }
             .collect(
@@ -243,7 +205,8 @@ object PsiUtil {
         return strings
     }
 
-    fun getLargestContainedEntity(element: PsiElement?, selectionStart: Int, selectionEnd: Int): PsiElement? {
+    @JvmStatic
+    private fun getLargestContainedEntity(element: PsiElement?, selectionStart: Int, selectionEnd: Int): PsiElement? {
         if (null == element) return null
         val textRange = element.textRange
         if (textRange.startOffset >= selectionStart && textRange.endOffset <= selectionEnd) return element
@@ -271,10 +234,18 @@ object PsiUtil {
         return psiFile
     }
 
-    fun getSmallestIntersectingMajorCodeElement(psiFile: PsiFile, caret: Caret): PsiElement? {
-        return getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, *ELEMENTS_CODE)
-    }
+    @JvmStatic
+    fun getSmallestIntersectingMajorCodeElement(psiFile: PsiFile, caret: Caret) =
+        getCodeElement(psiFile, Integer(caret.selectionStart), Integer(caret.selectionEnd))
 
+    @JvmStatic
+    fun getCodeElement(
+        psiFile: PsiElement?,
+        selectionStart: java.lang.Integer?,
+        selectionEnd: java.lang.Integer?
+    ) = getSmallestIntersecting(psiFile!!, selectionStart?.toInt() ?: 0, selectionEnd?.toInt() ?: 0, *ELEMENTS_CODE)
+
+    @JvmStatic
     fun getDeclaration(element: PsiElement): String {
         var declaration: CharSequence = element.text
         declaration = StringUtil.stripPrefix(declaration.toString().trim { it <= ' ' },
@@ -284,6 +255,7 @@ object PsiUtil {
         return declaration.toString().trim { it <= ' ' }
     }
 
+    @JvmStatic
     fun getCode(element: PsiElement): String {
         val codeBlock = getLargestBlock(
             element,
@@ -301,6 +273,7 @@ object PsiUtil {
         return code
     }
 
+    @JvmStatic
     fun getDocComment(element: PsiElement): String {
         var docComment = getLargestBlock(element, "DocComment")
         if (null == docComment) docComment = getFirstBlock(element, "Comment")
@@ -311,31 +284,7 @@ object PsiUtil {
         return prefix
     }
 
-    /**
-     * Parses a file from a given text and language.
-     *
-     * @param project  The project to which the file belongs.
-     * @param language The language of the file.
-     * @param text     The text of the file.
-     * @return The parsed file.
-     */
-    fun parseFile(project: Project?, language: Language?, text: CharSequence?): PsiFile {
-        val fileFromText = AtomicReference<PsiFile>()
-        WriteCommandAction.runWriteCommandAction(
-            project
-        ) {
-            fileFromText.set(
-                PsiFileFactory.getInstance(project).createFileFromText(
-                    language!!, text!!
-                )
-            )
-        }
-        return fileFromText.get()
-    }
-
-    fun getPsiFile(e: AnActionEvent): PsiFile? {
-        return e.getData(CommonDataKeys.PSI_FILE)
-    }
 }
+
 
 

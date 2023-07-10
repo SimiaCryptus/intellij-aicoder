@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.code
+﻿package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
@@ -6,6 +6,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.simiacryptus.openai.APIClientBase
 
 /**
  * The RecentCodeEditsAction is an IntelliJ action that allows users to quickly access and apply recent code edits.
@@ -21,7 +22,7 @@ class RecentCodeEditsAction : ActionGroup() {
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-        if(null == e) return arrayOf()
+        if (null == e) return arrayOf()
         val children = ArrayList<AnAction>()
         for (instruction in AppSettingsState.instance.editHistory) {
             val id = children.size + 1
@@ -41,7 +42,7 @@ class RecentCodeEditsAction : ActionGroup() {
 
     companion object {
         private fun isEnabled(e: AnActionEvent): Boolean {
-            if (UITools.isSanctioned()) return false
+            if (APIClientBase.isSanctioned()) return false
             if (!UITools.hasSelection(e)) return false
             val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
             return computerLanguage != ComputerLanguage.Text

@@ -1,4 +1,4 @@
-@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+﻿@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package com.github.simiacryptus.aicoder.actions.dev
 
@@ -9,14 +9,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.OpenAIClient
-import com.simiacryptus.util.describe.Description
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.OutputInterceptor
 import com.simiacryptus.skyenet.body.ClasspathResource
 import com.simiacryptus.skyenet.body.SessionServerUtil.asJava
 import com.simiacryptus.skyenet.body.SkyenetCodingSessionServer
 import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
+import com.simiacryptus.util.describe.Description
 import org.eclipse.jetty.util.resource.Resource
 import org.jdesktop.swingx.JXButton
 import java.awt.Desktop
@@ -25,19 +25,19 @@ import java.util.function.Supplier
 
 class LaunchSkyenetAction : BaseAction() {
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled()
-        super.update(e)
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        return isEnabled()
     }
 
     interface TestTools {
         fun getProject(): Project
         fun getSelectedFolder(): VirtualFile
+
         @Description("Prints to script output")
-        fun print(msg:String): Unit
+        fun print(msg: String): Unit
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         // Random port from range 8000-9000
         val port = (8000 + (Math.random() * 1000).toInt())
         val skyenet = object : SkyenetCodingSessionServer(
@@ -107,7 +107,12 @@ class LaunchSkyenetAction : BaseAction() {
                 }
                 formBuilder.addLabeledComponent("Server Running on $port", openButton)
                 val showOptionDialog =
-                    UITools.showOptionDialog(formBuilder.panel, "Close", title = "Server Running on $port", modal = false)
+                    UITools.showOptionDialog(
+                        formBuilder.panel,
+                        "Close",
+                        title = "Server Running on $port",
+                        modal = false
+                    )
                 log.info("showOptionDialog = $showOptionDialog")
             } finally {
                 log.info("Stopping Server")
@@ -117,7 +122,7 @@ class LaunchSkyenetAction : BaseAction() {
     }
 
     private fun isEnabled(): Boolean {
-        if(UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 

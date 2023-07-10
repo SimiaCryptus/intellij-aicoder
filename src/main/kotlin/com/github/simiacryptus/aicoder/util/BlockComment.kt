@@ -1,9 +1,7 @@
-@file:Suppress("NAME_SHADOWING")
+﻿@file:Suppress("NAME_SHADOWING")
 
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.util.TextBlock.Companion.DELIMITER
-import com.github.simiacryptus.aicoder.util.TextBlock.Companion.TAB_REPLACEMENT
 import com.simiacryptus.util.StringUtil
 import java.util.*
 import java.util.stream.Collectors

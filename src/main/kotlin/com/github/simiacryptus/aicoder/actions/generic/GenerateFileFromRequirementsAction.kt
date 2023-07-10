@@ -1,18 +1,18 @@
-package com.github.simiacryptus.aicoder.actions.generic
+﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
-import com.simiacryptus.openai.OpenAIClient
 import java.io.File
+import java.nio.file.Path
 import javax.swing.JTextArea
 
 class GenerateFileFromRequirementsAction : BaseAction() {
@@ -21,6 +21,7 @@ class GenerateFileFromRequirementsAction : BaseAction() {
     companion object {
         private val log = org.slf4j.LoggerFactory.getLogger(GenerateFileFromRequirementsAction::class.java)
     }
+
     private data class ProjectFile(
         var path: String? = "",
         var code: String? = "",
@@ -42,7 +43,7 @@ class GenerateFileFromRequirementsAction : BaseAction() {
         var directive: String = "",
     )
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         UITools.showDialog(e, SettingsUI::class.java, Settings::class.java, "Create File from Requirements") { config ->
             handleImplement(e, config)
         }
@@ -60,11 +61,15 @@ class GenerateFileFromRequirementsAction : BaseAction() {
         UITools.run(
             project, "Generating File", true
         ) {
-            val moduleRoot = getModuleRoot(project, virtualFile)
-            val projectRoot = File(moduleRoot).toPath()
-            val inputPath = projectRoot.relativize(File(virtualFile.canonicalPath!!).toPath())
+            val projectRoot: Path = File(project.basePath!!).toPath()
+            val inputPath = projectRoot.relativize(File(virtualFile.canonicalPath!!).toPath()).toString()
+            val pathSegments = inputPath.split("/").toTypedArray()
+            val updirSegments = pathSegments.takeWhile { it == ".." }.toTypedArray()
+            val moduleRoot = projectRoot.resolve(pathSegments.take(updirSegments.size * 2).joinToString { "/" })
+            val filePath = pathSegments.drop(updirSegments.size * 2).joinToString { "/" }
+
             val generatedFile = try {
-                generateFile(inputPath.toString(), config.directive)
+                generateFile(filePath, config.directive)
             } finally {
                 if (it.isCanceled) throw InterruptedException()
             }
@@ -72,7 +77,7 @@ class GenerateFileFromRequirementsAction : BaseAction() {
             UITools.writeableFn(e) {
                 try {
                     var path = generatedFile.path!!
-                    var outputPath = projectRoot.resolve(path)
+                    var outputPath = moduleRoot.resolve(path)
                     if (outputPath.toFile().exists()) {
                         val extension = path.split(".").takeLast(1).first()
                         val name = path.split(".").dropLast(1).joinToString(".")
@@ -100,43 +105,15 @@ class GenerateFileFromRequirementsAction : BaseAction() {
                     throw RuntimeException(e)
                 }
             }
+
         }
     }.start()
-
-    private fun getModuleRoot(project: Project, virtualFile: VirtualFile): String {
-        val moduleRoots = getModuleRoots(project)
-        val moduleRoot = moduleRoots.firstOrNull { virtualFile.path.startsWith(it) }
-        return moduleRoot ?: moduleRoots.first()
-    }
-
-    private fun getModuleRoots(project: Project): List<String> {
-
-        project.actualComponentManager
-
-        val moduleRoots = mutableListOf<String>()
-        val projectRoot = File(project.basePath!!)
-        val projectRootPath = projectRoot.toPath()
-        val moduleFiles = projectRoot.listFiles()!!
-        for (moduleFile in moduleFiles) {
-            if (moduleFile.isDirectory) {
-                val moduleRootPath = moduleFile.toPath()
-                if (moduleRootPath.startsWith(projectRootPath)) {
-                    moduleRoots.add(moduleRootPath.toString())
-                    log.info("Module root: ${moduleRootPath.toString()}")
-                }
-            }
-        }
-        return moduleRoots
-    }
 
     private fun generateFile(
         basePath: String,
         directive: String,
     ): ProjectFile {
-        val api = OpenAIClient(
-            key = AppSettingsState.instance.apiKey,
-            apiBase = AppSettingsState.instance.apiBase,
-        )
+        val api = IdeaOpenAIClient.api
         val chatRequest = ChatRequest()
         val model = AppSettingsState.instance.defaultChatModel()
         chatRequest.model = model.modelName
@@ -162,11 +139,14 @@ class GenerateFileFromRequirementsAction : BaseAction() {
                 """.trimMargin()
             )
         )
-        val response = api.chat(chatRequest).choices?.first()?.message?.content.orEmpty().trim()
+        val response = api.chat(
+            chatRequest,
+            AppSettingsState.instance.defaultChatModel()
+        ).choices?.first()?.message?.content.orEmpty().trim()
         var outputPath = basePath
         val header = response.split("\n").first()
         var body = response.split("\n").drop(1).joinToString("\n").trim()
-        if(body.startsWith("```")) {
+        if (body.startsWith("```")) {
             // Remove beginning ``` (optionally ```language) and ending ```
             body = body.split("\n").drop(1).dropLast(1).joinToString("\n").trim()
         }
@@ -182,8 +162,8 @@ class GenerateFileFromRequirementsAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if(UITools.isSanctioned()) return false
-        if(null != UITools.getSelectedFile(event)) return false
+        if (APIClientBase.isSanctioned()) return false
+        if (null != UITools.getSelectedFile(event)) return false
         val virtualFolder = UITools.getSelectedFolder(event) ?: return false
         if (!virtualFolder.isDirectory) return false
         return true

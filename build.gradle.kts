@@ -1,10 +1,11 @@
-import org.jetbrains.changelog.Changelog
+﻿import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
 fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
     id("java")
+    id("groovy")
     id("org.jetbrains.kotlin.jvm") version "1.7.22"
     id("org.jetbrains.intellij") version "1.14.1"
     id("org.jetbrains.changelog") version "2.0.0"
@@ -23,10 +24,10 @@ repositories {
 val kotlin_version = "1.7.22"
 val jetty_version = "11.0.15"
 val slf4j_version = "2.0.5"
-val skyenet_version = "1.0.10"
+val skyenet_version = "1.0.11"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.12")
+    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.13")
 
     implementation(group = "com.simiacryptus.skyenet", name = "util", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
@@ -39,17 +40,35 @@ dependencies {
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-jetty-client", version = jetty_version)
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
-    implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = kotlin_version)
-    implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = kotlin_version)
-    testImplementation(kotlin("script-runtime"))
+    implementation("org.codehaus.groovy:groovy-all:3.0.13")
+
+
+//    implementation(kotlin("compiler-embeddable"))
+//    implementation(kotlin("scripting-compiler-embeddable"))
+//    implementation(kotlin("script-util"))
+
+    implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
+
+    testImplementation(kotlin("script-runtime"))
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = "0.11.16")
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = "0.11.16")
     testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "3.14.9")
+
+
 }
 
+
+tasks.register<Copy>("copyGroovySourcesToResources") {
+    from("src/main/groovy")
+    into("src/main/resources/sources/groovy")
+}
+tasks.named("processResources") {
+    dependsOn("copyGroovySourcesToResources")
+}
 
 kotlin {
     jvmToolchain(11)
@@ -60,8 +79,16 @@ tasks {
     compileKotlin {
         kotlinOptions {
             javaParameters = true
+            jvmTarget = "1.8"
         }
     }
+
+    compileGroovy {
+        dependsOn += compileKotlin
+        classpath += files(compileKotlin.get().destinationDirectory)
+        groovyOptions.isParameters = true
+    }
+
     compileTestKotlin {
         kotlinOptions {
             javaParameters = true
@@ -97,6 +124,10 @@ tasks {
                 )
             }
         })
+    }
+
+    runIde {
+        maxHeapSize = "8g"
     }
 
     runIdeForUiTests {
@@ -142,3 +173,4 @@ qodana {
 kover.xmlReport {
     onCheck.set(true)
 }
+

@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.util.psi
+﻿package com.github.simiacryptus.aicoder.util.psi
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.psi.PsiElement

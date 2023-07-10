@@ -1,4 +1,4 @@
-.gradle
+﻿.gradle
 .idea
 .qodana
 build
@@ -11,3 +11,4 @@ api.log.json
 *.log
 api.*
 .skynet
+

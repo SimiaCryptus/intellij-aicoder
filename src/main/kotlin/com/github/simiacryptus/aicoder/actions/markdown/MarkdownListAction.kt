@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.markdown
+﻿package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -10,6 +10,7 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getAll
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersecting
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import com.simiacryptus.util.StringUtil
 
@@ -44,7 +45,7 @@ class MarkdownListAction : BaseAction() {
                 returnValue = VirtualAPI.Items(
                     items = listOf("Item 4", "Item 5", "Item 6")
                 )
-            ){
+            ) {
                 it.newListItems(
                     items = listOf("Item 1", "Item 2", "Item 3"),
                     count = 6
@@ -52,7 +53,8 @@ class MarkdownListAction : BaseAction() {
             }
             return chatProxy.create()
         }
-    override fun actionPerformed(event: AnActionEvent) {
+
+    override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET) ?: return
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         val list =
@@ -94,7 +96,7 @@ class MarkdownListAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (ComputerLanguage.Markdown != computerLanguage) return false
         val caret = event.getData(CommonDataKeys.CARET) ?: return false
@@ -103,5 +105,6 @@ class MarkdownListAction : BaseAction() {
         return true
     }
 }
+
 
 

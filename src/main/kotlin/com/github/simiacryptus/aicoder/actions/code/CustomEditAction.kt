@@ -6,17 +6,11 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 import javax.swing.Icon
 import javax.swing.JOptionPane
 
-/**
- * The CustomEditAction class is an IntelliJ action that allows users to edit computer language code.
- * To use the CustomEditAction, first select the code that you want to edit.
- * Then, select the action in the context menu.
- * A dialog box will appear, prompting you to enter an instruction.
- * Enter the instruction and press OK.
- */
 open class CustomEditAction(
     name: String? = null,
     description: String? = null,
@@ -30,6 +24,7 @@ open class CustomEditAction(
             computerLanguage: String,
             humanLanguage: String,
         ): EditedText
+
         data class EditedText(
             val code: String? = null,
             val language: String? = null
@@ -45,7 +40,6 @@ open class CustomEditAction(
             )
             chatProxy.addExample(
                 returnValue = VirtualAPI.EditedText(
-                    //language=JAVA
                     code = """
                         |// Print Hello, World! to the console
                         |println("Hello, World!")
@@ -54,15 +48,16 @@ open class CustomEditAction(
                 )
             ) {
                 it.editCode(
-                //language=JAVA
-                code="""println("Hello, World!")""",
-                operation = "Add code comments",
-                computerLanguage = "java",
-                humanLanguage = "English"
-            ) }
+                    code = """println("Hello, World!")""",
+                    operation = "Add code comments",
+                    computerLanguage = "java",
+                    humanLanguage = "English"
+                )
+            }
             return chatProxy.create()
         }
-    override fun actionPerformed(event: AnActionEvent) {
+
+    override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
@@ -99,7 +94,7 @@ open class CustomEditAction(
         JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE)
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         if (!UITools.hasSelection(event)) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         return computerLanguage != ComputerLanguage.Text

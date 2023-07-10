@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.util
+﻿package com.github.simiacryptus.aicoder.util
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent

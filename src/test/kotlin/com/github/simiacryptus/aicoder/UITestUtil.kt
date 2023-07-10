@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder
+﻿package com.github.simiacryptus.aicoder
 
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.ComponentFixture
@@ -83,8 +83,9 @@ class UITestUtil {
 
         fun findText(element: ComponentFixture, text: String): Pair<Point, Point>? {
             val lines: Map<Int, Iterable<RemoteText>> = element.data.getAll().groupBy { it.point.y }
-            val line = lines.filter { it.value.map { it.text }.reduce { a, b -> a + b }.contains(text) }.firstOrNull()?.value
-                ?: return null
+            val line =
+                lines.filter { it.value.map { it.text }.reduce { a, b -> a + b }.contains(text) }.firstOrNull()?.value
+                    ?: return null
             val index = line.map { it.text }.reduce { a, b -> a + b }.indexOf(text)
             val lineBuffer = line.toMutableList()
             var left = index

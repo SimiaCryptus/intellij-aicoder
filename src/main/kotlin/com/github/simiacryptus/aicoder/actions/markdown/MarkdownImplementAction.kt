@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.markdown
+﻿package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -8,6 +8,7 @@ import com.github.simiacryptus.aicoder.util.UITools.hasSelection
 import com.github.simiacryptus.aicoder.util.UITools.insertString
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.proxy.ChatProxy
 
 /**
@@ -39,7 +40,7 @@ class MarkdownImplementAction(private val language: String) : BaseAction(
         ).create()
 
 
-    override fun actionPerformed(event: AnActionEvent) {
+    override fun handle(event: AnActionEvent) {
         val caret = event.getData(CommonDataKeys.CARET)
         val selectedText = caret!!.selectedText ?: return
         val endOffset = caret.selectionEnd
@@ -65,7 +66,7 @@ class MarkdownImplementAction(private val language: String) : BaseAction(
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
+        if (APIClientBase.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (ComputerLanguage.Markdown != computerLanguage) return false
         return hasSelection(event)

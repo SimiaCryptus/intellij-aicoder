@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.util
+﻿package com.github.simiacryptus.aicoder.util
 
 import com.simiacryptus.util.StringUtil.getWhitespacePrefix
 import com.simiacryptus.util.StringUtil.stripPrefix
