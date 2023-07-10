@@ -1,5 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.config
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.github.simiacryptus.aicoder.ui.EditorMenu
 import com.intellij.openapi.actionSystem.AnAction
 import groovy.lang.GroovyClassLoader
@@ -123,6 +124,7 @@ class ActionSettingsRegistry {
         }
     }
 
+    @JsonIgnore
     fun getDynamicActions(): List<ActionSettings> {
         return actionSettings.entries.stream().filter { it.value.isDynamic && it.value.enabled }.map { it.value }
             .collect(Collectors.toList())
