@@ -11,7 +11,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.simiacryptus.openai.APIClientBase
 
-abstract class SelectionAction : BaseAction() {
+abstract class SelectionAction(
+    val requiresSelection: Boolean = true
+) : BaseAction() {
 
     final override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
@@ -78,16 +80,18 @@ abstract class SelectionAction : BaseAction() {
         )
     }
 
-    final override fun isEnabled(event: AnActionEvent): Boolean {
+
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
         if (APIClientBase.isSanctioned()) return false
-
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
-        if (editor.caretModel.primaryCaret.selectedText.isNullOrEmpty()) {
-            val editorState = editorState(editor)
-            val (start, end) = defaultSelection(editorState)
-            if (start >= end) return false
+        if (requiresSelection) {
+            if (editor.caretModel.primaryCaret.selectedText.isNullOrEmpty()) {
+                val editorState = editorState(editor)
+                val (start, end) = defaultSelection(editorState)
+                if (start >= end) return false
+            }
         }
-
         val computerLanguage = ComputerLanguage.getComputerLanguage(event)
         return isLanguageSupported(computerLanguage)
     }

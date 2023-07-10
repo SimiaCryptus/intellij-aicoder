@@ -8,7 +8,7 @@ import java.util.stream.Collectors
 
 class ActionSettingsRegistry {
 
-    var actionSettings: MutableMap<String, ActionSettings> = HashMap()
+    val actionSettings: MutableMap<String, ActionSettings> = HashMap()
 
     fun edit(superChildren: Array<out AnAction>): Array<AnAction> {
         val children = superChildren.toList().toMutableList()
@@ -145,7 +145,7 @@ class ActionSettingsRegistry {
 
         val actionCache = HashMap<String, AnAction>()
         fun load(actionPackage: String, actionName: String, language: String) =
-            load("/${language}_sources/$actionPackage/$actionName.$language")
+            load("/sources/${language}/$actionPackage/$actionName.$language")
 
         fun load(path: String) =
             EditorMenu::class.java.getResourceAsStream(path)?.readAllBytes()?.toString(Charsets.UTF_8)

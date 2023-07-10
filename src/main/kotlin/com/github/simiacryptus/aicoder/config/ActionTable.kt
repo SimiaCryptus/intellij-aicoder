@@ -25,12 +25,14 @@ class ActionTable(
 ) : JPanel(BorderLayout()) {
 
     fun read(registry: ActionSettingsRegistry) {
-        registry.actionSettings = rowData.map { row ->
-            (actionSettings.find { it.id == row[2] })!!.copy(
+        registry.actionSettings.clear()
+        rowData.map { row ->
+            val copy = (actionSettings.find { it.id == row[2] })!!.copy(
                 enabled = ((row[0] as String) == "true"),
                 displayText = row[1] as String
             )
-        }.groupBy { it.id }.mapValues { it.value.first() }.toMutableMap()
+            registry.actionSettings.put(copy.id, copy)
+        }
     }
 
     fun write(registry: ActionSettingsRegistry) {

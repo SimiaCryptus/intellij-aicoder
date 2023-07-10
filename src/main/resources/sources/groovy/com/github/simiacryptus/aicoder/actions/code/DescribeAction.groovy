@@ -16,11 +16,12 @@ class DescribeAction extends SelectionAction {
                 String humanLanguage
         )
 
-    }
-
-    class DescribeAction_ConvertedText {
-        String text = null
-        String language = null
+        public class DescribeAction_ConvertedText {
+            public String text = null
+            public String language = null
+            public DescribeAction_ConvertedText() {
+            }
+        }
     }
 
     def getProxy() {

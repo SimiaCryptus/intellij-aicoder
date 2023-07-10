@@ -14,13 +14,13 @@ open class ActionTestBase {
             val indent: String? = null,
         )
 
-        fun testActionScript(docAction: SelectionAction, scriptPath: String) {
+        fun testActionScript(selectionAction: SelectionAction, scriptPath: String) {
             AppSettingsState.instance.apiKey = OpenAIClient.keyTxt
             AppSettingsState.instance.temperature = 0.0
             AppSettingsState.instance.useGPT4 = false
-            MarkdownProcessor.parse(
-                docAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8) ?: ""
-            ).forEach { markdownData ->
+            val input =
+                selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8) ?: ""
+            MarkdownProcessor.parse(input).forEach { markdownData ->
                 val jsonSection = markdownData.sections.find { it.title.lowercase() == "settings" }
                 val fromSection = markdownData.sections.find { it.title.lowercase() == "from" }
                 val toSection = markdownData.sections.find { it.title.lowercase() == "to" }
@@ -31,7 +31,7 @@ open class ActionTestBase {
                         ComputerLanguage.values().find { fromSection.codeType.equals(it.name, true) },
                         testData.indent ?: ""
                     )
-                    val result = docAction.processSelection(selectionState)
+                    val result = selectionAction.processSelection(selectionState)
                     Assertions.assertEquals(
                         toSection.code.trim().replace("\r\n", "\n"),
                         result.trim().replace("\r\n", "\n")

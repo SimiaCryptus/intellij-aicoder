@@ -29,6 +29,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
     var devActions = false
     var editRequests = false
     var apiThreads = 4
+    val editorActions = ActionSettingsRegistry()
 
     fun createChatRequest(): ChatRequest {
         return createChatRequest(defaultChatModel())
@@ -112,9 +113,6 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
             }
         }
     }
-
-    val editorActions = ActionSettingsRegistry()
-
     val editHistory: Set<String>
         get() = mostUsedHistory.keys
 

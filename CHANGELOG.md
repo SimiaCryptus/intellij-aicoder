@@ -14,6 +14,7 @@
 - API edit dialog
 - Toolbar widget for token count
 - Toolbar widget for model selection
+- Editable and dynamically-defined actions
 
 ### Improved
 
