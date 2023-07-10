@@ -1,5 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.config
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -7,28 +8,31 @@ import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
+import com.simiacryptus.util.JsonUtil
 import java.util.*
 import java.util.Map
 import java.util.stream.Collectors
 import kotlin.collections.component1
 import kotlin.collections.component2
 
+class SimpleEnvelope(var value: String? = null)
+
 @Suppress("MemberVisibilityCanBePrivate")
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
-class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
+class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     var apiLog: Boolean = false
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
     var useGPT4 = true
     var tokenCounter = 0
-    private val mostUsedHistory: MutableMap<String, Int> = HashMap()
-    private val mostRecentHistory: MutableList<String> = ArrayList()
     var historyLimit = 10
     var humanLanguage = "English"
     var devActions = false
     var editRequests = false
     var apiThreads = 4
+    val mostUsedHistory: MutableMap<String, Int> = HashMap()
+    val mostRecentHistory: MutableList<String> = ArrayList()
     val editorActions = ActionSettingsRegistry()
 
     fun createChatRequest(): ChatRequest {
@@ -45,12 +49,18 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         return chatRequest
     }
 
-    override fun getState(): AppSettingsState {
-        return this
+    @JsonIgnore
+    override fun getState(): SimpleEnvelope {
+        return SimpleEnvelope(JsonUtil.toJson(this))
     }
 
-    override fun loadState(state: AppSettingsState) {
-        XmlSerializerUtil.copyBean(state, this)
+    override fun loadState(state: SimpleEnvelope) {
+        state.value ?: return
+        val fromJson = JsonUtil.fromJson<AppSettingsState>(state.value!!, AppSettingsState::class.java)
+        XmlSerializerUtil.copyBean(fromJson, this)
+        mostRecentHistory.clear(); mostRecentHistory.addAll(fromJson.mostRecentHistory)
+        mostUsedHistory.clear(); mostUsedHistory.putAll(fromJson.mostUsedHistory)
+        editorActions.actionSettings.clear(); editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -114,7 +124,7 @@ class AppSettingsState : PersistentStateComponent<AppSettingsState?> {
         }
     }
     val editHistory: Set<String>
-        get() = mostUsedHistory.keys
+        @JsonIgnore get() = mostUsedHistory.keys
 
     companion object {
         @JvmStatic

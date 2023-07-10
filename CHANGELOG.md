@@ -7,6 +7,12 @@
 ### Added
 - 
 
+## [1.2.1]
+
+### Improved
+
+- Fixed bug preventing user settings from being persisted
+
 ## [1.2.0]
 
 ### Added
