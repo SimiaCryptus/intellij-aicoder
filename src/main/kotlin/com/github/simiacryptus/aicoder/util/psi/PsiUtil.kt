@@ -222,6 +222,7 @@ object PsiUtil {
         return largestContainedChild
     }
 
+    @JvmStatic
     fun getLargestContainedEntity(e: AnActionEvent): PsiElement? {
         val caret = e.getData(CommonDataKeys.CARET)
             ?: return null
@@ -236,13 +237,13 @@ object PsiUtil {
 
     @JvmStatic
     fun getSmallestIntersectingMajorCodeElement(psiFile: PsiFile, caret: Caret) =
-        getCodeElement(psiFile, Integer(caret.selectionStart), Integer(caret.selectionEnd))
+        getCodeElement(psiFile, caret.selectionStart, caret.selectionEnd)
 
     @JvmStatic
     fun getCodeElement(
         psiFile: PsiElement?,
-        selectionStart: java.lang.Integer?,
-        selectionEnd: java.lang.Integer?
+        selectionStart: Int,
+        selectionEnd: Int
     ) = getSmallestIntersecting(psiFile!!, selectionStart?.toInt() ?: 0, selectionEnd?.toInt() ?: 0, *ELEMENTS_CODE)
 
     @JvmStatic

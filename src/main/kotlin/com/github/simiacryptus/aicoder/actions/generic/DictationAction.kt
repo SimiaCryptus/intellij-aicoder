@@ -1,6 +1,7 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -113,7 +114,7 @@ class DictationAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         return try {
             null != targetDataLine.get(50, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {

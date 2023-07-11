@@ -85,7 +85,7 @@ class ImplementStubAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         if (!AppSettingsState.instance.devActions) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false

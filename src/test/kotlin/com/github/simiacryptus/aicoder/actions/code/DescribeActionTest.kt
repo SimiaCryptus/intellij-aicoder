@@ -10,7 +10,7 @@ class DescribeActionTest : ActionTestBase() {
 
     @Test
     fun testProcessing() {
-        testActionScript(DescribeAction(), "/DescribeActionTest.md")
+        testScript_SelectionAction(DescribeAction(), "/DescribeActionTest.md")
     }
 
     @Test
@@ -23,7 +23,7 @@ class DescribeActionTest : ActionTestBase() {
     @Test
     fun testEditSelection() {
         val docAction = DescribeAction()
-        val editorState = SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, 10, 0, null)
+        val editorState = SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, Pair(0, 10), null, arrayOf())
         val result = docAction.editSelection(editorState, 0, 10)
         Assertions.assertEquals(Pair(0, 10), result)
     }

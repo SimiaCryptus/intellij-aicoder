@@ -96,7 +96,7 @@ class MarkdownListAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
         if (ComputerLanguage.Markdown != computerLanguage) return false
         val caret = event.getData(CommonDataKeys.CARET) ?: return false

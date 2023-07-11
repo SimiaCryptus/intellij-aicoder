@@ -161,7 +161,7 @@ class GenerateStoryAction : BaseAction() {
     )
 
     override fun handle(e: AnActionEvent) {
-        UITools.showDialog(e, SettingsUI::class.java, Settings::class.java) { config ->
+        UITools.showDialog(project = e.project, SettingsUI::class.java, Settings::class.java) { config ->
             handleImplement(e, config)
         }
     }
@@ -281,7 +281,7 @@ class GenerateStoryAction : BaseAction() {
 
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 

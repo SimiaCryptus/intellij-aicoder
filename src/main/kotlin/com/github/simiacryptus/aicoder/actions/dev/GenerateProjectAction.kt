@@ -38,7 +38,7 @@ class GenerateProjectAction : BaseAction() {
     )
 
     override fun handle(e: AnActionEvent) {
-        UITools.showDialog(e, SettingsUI::class.java, Settings::class.java) { config ->
+        UITools.showDialog(project = e.project, SettingsUI::class.java, Settings::class.java) { config ->
             handleImplement(e, config)
         }
     }
@@ -157,7 +157,7 @@ class GenerateProjectAction : BaseAction() {
     }.start()
 
     private fun isEnabled(): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 

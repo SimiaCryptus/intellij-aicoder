@@ -2,6 +2,7 @@
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -22,7 +23,7 @@ class PrintTreeAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 
