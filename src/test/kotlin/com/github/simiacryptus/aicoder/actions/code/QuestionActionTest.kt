@@ -6,24 +6,29 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 
-class CommentsActionTest : ActionTestBase() {
+class QuestionActionTest : ActionTestBase() {
 
     @Test
     fun testProcessing() {
-        testScript_SelectionAction(CommentsAction(), "/CommentsActionTest.md")
+        testScript_SelectionAction(object : QuestionAction() {
+            override fun getQuestion(): String? {
+                return "How are you feeling?"
+            }
+        }, "/QuestionActionTest.md")
     }
 
     @Test
     fun testIsLanguageSupported() {
-        val docAction = CommentsAction()
+        val docAction = QuestionAction()
         Assertions.assertTrue(docAction.isLanguageSupported(ComputerLanguage.Kotlin))
         Assertions.assertFalse(docAction.isLanguageSupported(ComputerLanguage.Text))
     }
 
     @Test
     fun testEditSelection() {
-        val docAction = CommentsAction()
-        val editorState = SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, Pair(0, 10), null, arrayOf())
+        val docAction = QuestionAction()
+        val editorState =
+            SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, Pair(0, 10), null, arrayOf())
         val result = docAction.editSelection(editorState, 0, 10)
         Assertions.assertEquals(Pair(0, 10), result)
     }

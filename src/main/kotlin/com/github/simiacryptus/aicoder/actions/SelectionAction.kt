@@ -7,13 +7,30 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.simiacryptus.openai.APIClientBase
+import com.intellij.psi.PsiRecursiveElementVisitor
 
 abstract class SelectionAction(
     val requiresSelection: Boolean = true
 ) : BaseAction() {
+
+    fun retarget(editorState: EditorState, selectedText: @NlsSafe String?, selectionStart: Int, selectionEnd: Int) : Pair<Int,Int>? {
+        if (selectedText.isNullOrEmpty()) {
+            var (start, end) = defaultSelection(editorState, selectionStart)
+            if (start >= end && requiresSelection) return null
+            start = start.coerceAtLeast(0)
+            end = end.coerceAtLeast(start).coerceAtMost(editorState.text.length - 1)
+            return Pair(start, end)
+        } else {
+            var (start, end) = editSelection(editorState, selectionStart, selectionEnd)
+            if (start >= end && requiresSelection) return null
+            start = start.coerceAtLeast(0)
+            end = end.coerceAtLeast(start).coerceAtMost(editorState.text.length - 1)
+            return Pair(start, end)
+        }
+    }
 
     final override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
@@ -23,35 +40,24 @@ abstract class SelectionAction(
         var selectionStart = primaryCaret.selectionStart
         var selectionEnd = primaryCaret.selectionEnd
         var selectedText = primaryCaret.selectedText
+        val editorState = editorState(editor)
+        val (start, end) = retarget(editorState, selectedText, selectionStart, selectionEnd) ?: return
+        selectedText = editorState.text.substring(start, end)
+        selectionEnd = end
+        selectionStart = start
 
-        if (selectedText.isNullOrEmpty()) {
-            val editorState = editorState(editor)
-            var (start, end) = defaultSelection(editorState, primaryCaret.offset)
-            if (start >= end && requiresSelection) return
-            start = start.coerceAtLeast(0)
-            end = end.coerceAtLeast(start).coerceAtMost(editorState.text.length - 1)
-            selectedText = editorState.text.substring(start, end)
-            selectionEnd = end
-            selectionStart = start
-        } else {
-            val editorState = editorState(editor)
-            var (start, end) = editSelection(editorState, selectionStart, selectionEnd)
-            if (start >= end && requiresSelection) return
-            start = start.coerceAtLeast(0)
-            end = end.coerceAtLeast(start).coerceAtMost(editorState.text.length - 1)
-            selectedText = editorState.text.substring(start, end)
-            selectionEnd = end
-            selectionStart = start
-        }
-
-        val language = ComputerLanguage.getComputerLanguage(event)
         UITools.redoableTask(event) {
             val newText = UITools.run(event.project, this.templateText!!, true) {
                 processSelection(
                     SelectionState(
                         selectedText = selectedText,
-                        language = language,
-                        indent = indent
+                        selectionOffset = selectionStart,
+                        selectionLength = selectionEnd - selectionStart,
+                        entireDocument = editor.document.text,
+                        language = ComputerLanguage.getComputerLanguage(event),
+                        indent = indent,
+                        contextRanges = editorState.contextRanges,
+                        psiFile = editorState.psiFile,
                     )
                 )
             }
@@ -73,7 +79,12 @@ abstract class SelectionAction(
         val name: String,
         val start: Int,
         val end: Int
-    )
+    ) {
+        fun length() = end - start
+        fun range() = Pair(start, end)
+
+        fun subString(text: String) = text.substring(start, end)
+    }
 
     private fun editorState(editor: Editor): EditorState {
         val document = editor.document
@@ -84,9 +95,22 @@ abstract class SelectionAction(
         } else {
             PsiManager.getInstance(editor.project!!).findFile(virtualFile)
         }
+        return EditorState(
+            text = document.text,
+            cursorOffset = editor.caretModel.offset,
+            line = Pair(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)),
+            psiFile = psiFile,
+            contextRanges = contextRanges(psiFile, editor)
+        )
+    }
+
+    fun contextRanges(
+        psiFile: PsiFile?,
+        editor: Editor
+    ): Array<ContextRange> {
         val contextRanges = mutableListOf<ContextRange>()
-        psiFile?.acceptChildren(object : com.intellij.psi.PsiRecursiveElementVisitor() {
-            override fun visitElement(element: com.intellij.psi.PsiElement) {
+        psiFile?.acceptChildren(object : PsiRecursiveElementVisitor() {
+            override fun visitElement(element: PsiElement) {
                 val start = element.textRange.startOffset
                 val end = element.textRange.endOffset
                 if (start <= editor.caretModel.offset && end >= editor.caretModel.offset) {
@@ -95,13 +119,7 @@ abstract class SelectionAction(
                 super.visitElement(element)
             }
         })
-        return EditorState(
-            text = document.text,
-            cursorOffset = editor.caretModel.offset,
-            line = Pair(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)),
-            psiFile = psiFile,
-            contextRanges = contextRanges.toTypedArray()
-        )
+        return contextRanges.toTypedArray()
     }
 
 
@@ -121,9 +139,14 @@ abstract class SelectionAction(
     }
 
     data class SelectionState(
-        val selectedText: String?,
-        val language: ComputerLanguage?,
-        val indent: CharSequence?
+        val selectedText: String? = null,
+        val selectionOffset: Int = 0,
+        val selectionLength: Int? = null,
+        val entireDocument: String? = null,
+        val language: ComputerLanguage? = null,
+        val indent: CharSequence? = null,
+        val contextRanges : Array<ContextRange> = arrayOf(),
+        val psiFile: PsiFile?,
     )
 
     open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
