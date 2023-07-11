@@ -50,7 +50,6 @@ class MarkdownImplementActionGroup extends ActionGroup {
     static boolean isEnabled(AnActionEvent e) {
         def computerLanguage = ComputerLanguage.getComputerLanguage(e)
         if (null == computerLanguage) return false
-        if (computerLanguage == ComputerLanguage.Text) return false
         if (ComputerLanguage.Markdown != computerLanguage) return false
         return UITools.hasSelection(e)
     }
