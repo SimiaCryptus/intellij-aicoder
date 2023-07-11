@@ -10,7 +10,7 @@ import com.simiacryptus.openai.APIClientBase
 
 class RecentCodeEditsAction extends ActionGroup {
     void update(AnActionEvent e) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
+        e.presentation.setEnabledAndVisible(isEnabled(e))
         super.update(e)
     }
 

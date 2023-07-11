@@ -9,9 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.openai.proxy.ChatProxy
 
-/**
- * The ConvertFileTo ActionGroup provides a way to quickly insert code snippets into markdown documents in various languages.
- */
 class MarkdownImplementActionGroup extends ActionGroup {
     List<String> markdownLanguages = [
             "sql",
@@ -53,7 +50,6 @@ class MarkdownImplementActionGroup extends ActionGroup {
     static boolean isEnabled(AnActionEvent e) {
         def computerLanguage = ComputerLanguage.getComputerLanguage(e)
         if (null == computerLanguage) return false
-        if (computerLanguage == ComputerLanguage.Text) return false
         if (ComputerLanguage.Markdown != computerLanguage) return false
         return UITools.hasSelection(e)
     }
@@ -62,11 +58,11 @@ class MarkdownImplementActionGroup extends ActionGroup {
         if (null == e) return []
         def computerLanguage = ComputerLanguage.getComputerLanguage(e)
         if (null == computerLanguage) return []
-        def actions = []
+        ArrayList<AnAction> actions = []
         for (language in markdownLanguages) {
             actions.add(new MarkdownImplementAction(language))
         }
-        return actions.toArray()
+        return actions.toArray(AnAction[]::new)
     }
 
 
@@ -76,6 +72,8 @@ class MarkdownImplementActionGroup extends ActionGroup {
         MarkdownImplementAction(String language) {
             super(true)
             this.language = language
+            this.templatePresentation.text = language
+            this.templatePresentation.description = language
         }
 
         interface VirtualAPI {
