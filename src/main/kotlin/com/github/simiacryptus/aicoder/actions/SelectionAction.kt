@@ -31,8 +31,8 @@ abstract class SelectionAction(
             start = start.coerceAtLeast(0)
             end = end.coerceAtLeast(start).coerceAtMost(editorState.text.length - 1)
             selectedText = editorState.text.substring(start, end)
-            selectionEnd = start
-            selectionStart = end
+            selectionEnd = end
+            selectionStart = start
         } else {
             val editorState = editorState(editor)
             var (start, end) = editSelection(editorState, selectionStart, selectionEnd)
@@ -40,8 +40,8 @@ abstract class SelectionAction(
             start = start.coerceAtLeast(0)
             end = end.coerceAtLeast(start).coerceAtMost(editorState.text.length - 1)
             selectedText = editorState.text.substring(start, end)
-            selectionEnd = start
-            selectionStart = end
+            selectionEnd = end
+            selectionStart = start
         }
 
         val language = ComputerLanguage.getComputerLanguage(event)
