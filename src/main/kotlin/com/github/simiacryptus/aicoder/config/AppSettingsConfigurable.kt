@@ -37,6 +37,7 @@ class AppSettingsConfigurable : Configurable {
         if (settingsComponent != null) {
             UITools.readKotlinUI(settingsComponent!!, buffer)
             settingsComponent?.editorActions?.read(buffer.editorActions)
+            settingsComponent?.fileActions?.read(buffer.fileActions)
         }
         return buffer != AppSettingsState.instance
     }
@@ -45,6 +46,7 @@ class AppSettingsConfigurable : Configurable {
         if (settingsComponent != null) {
             UITools.readKotlinUI(settingsComponent!!, AppSettingsState.instance)
             settingsComponent?.editorActions?.read(AppSettingsState.instance.editorActions)
+            settingsComponent?.fileActions?.read(AppSettingsState.instance.fileActions)
         }
     }
 
@@ -52,6 +54,7 @@ class AppSettingsConfigurable : Configurable {
         if (settingsComponent != null) {
             UITools.writeKotlinUI(settingsComponent!!, AppSettingsState.instance)
             settingsComponent?.editorActions?.write(AppSettingsState.instance.editorActions)
+            settingsComponent?.fileActions?.write(AppSettingsState.instance.fileActions)
         }
     }
 

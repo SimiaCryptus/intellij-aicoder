@@ -122,7 +122,7 @@ class LaunchSkyenetAction : BaseAction() {
     }
 
     private fun isEnabled(): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 

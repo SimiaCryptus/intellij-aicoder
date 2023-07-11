@@ -20,8 +20,7 @@ import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
 class ActionTable(
-    val actionSettings: MutableList<ActionSettingsRegistry.ActionSettings> = AppSettingsState.instance.editorActions.actionSettings.values.map { it.copy() }
-        .toTypedArray().toMutableList()
+    val actionSettings: MutableList<ActionSettingsRegistry.ActionSettings>
 ) : JPanel(BorderLayout()) {
 
     fun read(registry: ActionSettingsRegistry) {
@@ -141,7 +140,12 @@ class ActionTable(
                         enabled = true,
                         isDynamic = true
                     )
-                    newSettings.file.writeText(selectedSettings.file.readText())
+                    newSettings.file.writeText(
+                        selectedSettings.file.readText().replace(
+                            ("""(?<![\w\d])${selectedSettings.className}(?![\w\d])""").toRegex(),
+                            newSettings.className
+                        )
+                    )
                     rowData.add(newRow)
                     actionSettings.add(newSettings)
                     this@ActionTable.parent.invalidate()

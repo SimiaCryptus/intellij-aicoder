@@ -70,7 +70,7 @@ class ActionSettingsRegistry {
                 actionCache.getOrPut("$packageName.$newClassName") {
                     (GroovyClassLoader(EditorMenu::class.java.classLoader).parseClass(
                         code.replace(
-                            ("(?<=class\\s)\\s*" + this.className).toRegex(),
+                            ("""(?<![\w\d])${this.className}(?![\w\d])""").toRegex(),
                             newClassName
                         )
                     ).getDeclaredConstructor().newInstance() as AnAction)

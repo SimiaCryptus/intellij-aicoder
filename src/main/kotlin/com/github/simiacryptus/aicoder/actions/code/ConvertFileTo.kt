@@ -33,7 +33,7 @@ class ConvertFileTo : ActionGroup() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         return supportedLanguages.contains(computerLanguage)

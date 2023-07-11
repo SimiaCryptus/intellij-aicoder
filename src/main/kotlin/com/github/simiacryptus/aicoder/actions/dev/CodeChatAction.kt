@@ -151,12 +151,8 @@ class CodeChatAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         return AppSettingsState.instance.devActions
-    }
-
-    companion object {
-        private val log = org.slf4j.LoggerFactory.getLogger(CodeChatAction::class.java)
     }
 
 }

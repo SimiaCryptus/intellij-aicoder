@@ -26,16 +26,22 @@ abstract class SelectionAction(
 
         if (selectedText.isNullOrEmpty()) {
             val editorState = editorState(editor)
-            val (start, end) = defaultSelection(editorState)
-            if (start >= end) return
+            var (start, end) = defaultSelection(editorState, primaryCaret.offset)
+            if (start >= end && requiresSelection) return
+            start = start.coerceAtLeast(0)
+            end = end.coerceAtLeast(start).coerceAtMost(editorState.text.length - 1)
             selectedText = editorState.text.substring(start, end)
-            selectionEnd = start
-            selectionStart = end
+            selectionEnd = end
+            selectionStart = start
         } else {
             val editorState = editorState(editor)
-            val (start, end) = editSelection(editorState, selectionStart, selectionEnd)
-            if (start >= end) return
+            var (start, end) = editSelection(editorState, selectionStart, selectionEnd)
+            if (start >= end && requiresSelection) return
+            start = start.coerceAtLeast(0)
+            end = end.coerceAtLeast(start).coerceAtMost(editorState.text.length - 1)
             selectedText = editorState.text.substring(start, end)
+            selectionEnd = end
+            selectionStart = start
         }
 
         val language = ComputerLanguage.getComputerLanguage(event)
@@ -58,37 +64,55 @@ abstract class SelectionAction(
     data class EditorState(
         val text: @NlsSafe String,
         val cursorOffset: Int,
-        val lineStartOffset: Int,
-        val lineEndOffset: Int,
-        val psiFile: PsiFile?
+        val line: Pair<Int,Int>,
+        val psiFile: PsiFile?,
+        val contextRanges : Array<ContextRange> = arrayOf(),
+    )
+
+    data class ContextRange(
+        val name: String,
+        val start: Int,
+        val end: Int
     )
 
     private fun editorState(editor: Editor): EditorState {
         val document = editor.document
         val lineNumber = document.getLineNumber(editor.caretModel.offset)
         val virtualFile = FileDocumentManager.getInstance().getFile(editor.document)
-        return EditorState(
-            document.text,
-            editor.caretModel.offset,
-            document.getLineStartOffset(lineNumber),
-            document.getLineEndOffset(lineNumber),
-            if (virtualFile == null) {
-                null
-            } else {
-                PsiManager.getInstance(editor.project!!).findFile(virtualFile)
+        val psiFile = if (virtualFile == null) {
+            null
+        } else {
+            PsiManager.getInstance(editor.project!!).findFile(virtualFile)
+        }
+        val contextRanges = mutableListOf<ContextRange>()
+        psiFile?.acceptChildren(object : com.intellij.psi.PsiRecursiveElementVisitor() {
+            override fun visitElement(element: com.intellij.psi.PsiElement) {
+                val start = element.textRange.startOffset
+                val end = element.textRange.endOffset
+                if (start <= editor.caretModel.offset && end >= editor.caretModel.offset) {
+                    contextRanges.add(ContextRange(element.javaClass.simpleName, start, end))
+                }
+                super.visitElement(element)
             }
+        })
+        return EditorState(
+            text = document.text,
+            cursorOffset = editor.caretModel.offset,
+            line = Pair(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)),
+            psiFile = psiFile,
+            contextRanges = contextRanges.toTypedArray()
         )
     }
 
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
-        if (APIClientBase.isSanctioned()) return false
+        if (UITools.isSanctioned()) return false
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
         if (requiresSelection) {
             if (editor.caretModel.primaryCaret.selectedText.isNullOrEmpty()) {
                 val editorState = editorState(editor)
-                val (start, end) = defaultSelection(editorState)
+                val (start, end) = defaultSelection(editorState, editorState.cursorOffset)
                 if (start >= end) return false
             }
         }
@@ -107,8 +131,7 @@ abstract class SelectionAction(
         return true
     }
 
-    open fun defaultSelection(editorState: EditorState) =
-        Pair(editorState.lineEndOffset, editorState.lineStartOffset)
+    open fun defaultSelection(editorState: EditorState, offset: Int) = editorState.line
 
     open fun editSelection(state: EditorState, start: Int, end: Int) = Pair(start, end)
 

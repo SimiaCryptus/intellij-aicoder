@@ -37,8 +37,8 @@
                description="AI coding assistant tools">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </group>
-        <group id="com.github.simiacryptus.aicoder.ProjectMenu"
-               class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+        <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu"
+               class="com.github.simiacryptus.aicoder.ui.ProjectMenu"
                popup="true"
                text="_AI Coder"
                icon="AllIcons.Actions.Lightning"
@@ -133,7 +133,7 @@
             <!--DOC
         The `Generate Project` action allows you to quickly generate a new software project from a description.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.dev.GenerateStoryAction"
@@ -142,7 +142,7 @@
             <!--DOC
         The `Generate Story` action allows you to quickly generate a new story!
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.dev.LaunchSkyenetAction"
@@ -151,16 +151,16 @@
             <!--DOC
         The `Launch Skyenet` action opens the Skyenet interactive auto-scritping interface.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateFileFromRequirementsAction"
+        <action class="com.github.simiacryptus.aicoder.actions.generic.CreateFileAction"
                 text="_Create File"
                 description="Create file">
             <!--DOC
         The `Create File` action allows you to quickly create a new file via a user-supplied directive.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.generic.AnalogueFileAction"
@@ -170,7 +170,7 @@
         The `Create Analogue File` action allows you to quickly create a new analogue file - a file which is
         automatically generated from the selected file using a user-supplied directive.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.code.InsertImplementationAction"
@@ -314,7 +314,7 @@
         For example, if you have a Java file and want to convert it to Kotlin, you can use the `Convert To...` action to
         quickly convert it.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </group>
 
 

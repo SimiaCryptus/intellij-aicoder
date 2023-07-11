@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
+import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.ModerationException
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.StringUtil
@@ -58,6 +59,10 @@ object UITools {
     private val log = Logger.getInstance(UITools::class.java)
     val retry = WeakHashMap<Document, Runnable>()
 
+    @JvmStatic
+    fun isSanctioned() = APIClientBase.isSanctioned()
+
+    @JvmStatic
     fun redoableTask(
         event: AnActionEvent,
         request: Supplier<Runnable>,
@@ -67,6 +72,7 @@ object UITools {
         }, futureCallback(event, request), pool)
     }
 
+    @JvmStatic
     fun futureCallback(
         event: AnActionEvent,
         request: Supplier<Runnable>,
@@ -82,6 +88,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun getRetry(
         event: AnActionEvent,
         request: Supplier<Runnable>,
@@ -99,15 +106,7 @@ object UITools {
         }
     }
 
-    /**
-     * Replaces a string in a document with a new string.
-     *
-     * @param document    The document to replace the string in.
-     * @param startOffset The start offset of the string to be replaced.
-     * @param endOffset   The end offset of the string to be replaced.
-     * @param newText     The new string to replace the old string.
-     * @return A Runnable that can be used to undo the replacement.
-     */
+    @JvmStatic
     fun replaceString(document: Document, startOffset: Int, endOffset: Int, newText: CharSequence): Runnable {
         val oldText: CharSequence = document.getText(TextRange(startOffset, endOffset))
         document.replaceString(startOffset, endOffset, newText)
@@ -147,14 +146,7 @@ object UITools {
         }
     }
 
-    /**
-     * Inserts a string into a document at a given offset and returns a Runnable to undo the insertion.
-     *
-     * @param document    The document to insert the string into.
-     * @param startOffset The offset at which to insert the string.
-     * @param newText     The string to insert.
-     * @return A Runnable that can be used to undo the insertion.
-     */
+    @JvmStatic
     fun insertString(document: Document, startOffset: Int, newText: CharSequence): Runnable {
         document.insertString(startOffset, newText)
         logEdit(String.format("FWD insertString @ %s (%s): %s", startOffset, newText.length, newText))
@@ -175,10 +167,12 @@ object UITools {
         }
     }
 
+    @JvmStatic
     private fun logEdit(message: String) {
         log.debug(message)
     }
 
+    @JvmStatic
     @Suppress("unused")
     fun deleteString(document: Document, startOffset: Int, endOffset: Int): Runnable {
         val oldText: CharSequence = document.getText(TextRange(startOffset, endOffset))
@@ -189,6 +183,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun getIndent(caret: Caret?): CharSequence {
         if (null == caret) return ""
         val document = caret.editor.document
@@ -199,17 +194,20 @@ object UITools {
         return IndentedText.fromString(lines[Math.max(lineNumber, 0).coerceAtMost(lines.size - 1)]).indent
     }
 
+    @JvmStatic
     @Suppress("unused")
     fun hasSelection(e: AnActionEvent): Boolean {
         val caret = e.getData(CommonDataKeys.CARET)
         return null != caret && caret.hasSelection()
     }
 
+    @JvmStatic
     fun handle(ex: Throwable) {
         if (ex !is ModerationException) log.error(ex)
         JOptionPane.showMessageDialog(null, ex.message, "Warning", JOptionPane.WARNING_MESSAGE)
     }
 
+    @JvmStatic
     fun getIndent(event: AnActionEvent): CharSequence {
         val caret = event.getData(CommonDataKeys.CARET)
         val indent: CharSequence = if (null == caret) {
@@ -220,6 +218,7 @@ object UITools {
         return indent
     }
 
+    @JvmStatic
     fun queryAPIKey(): CharSequence? {
         val panel = JPanel()
         val label = JLabel("Enter OpenAI API Key:")
@@ -245,6 +244,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun <T : Any> readJavaUI(component: Any, settings: T) {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields =
@@ -302,6 +302,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun <T : Any, R : Any> readKotlinUI(component: R, settings: T) {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields =
@@ -364,6 +365,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun findValue(enumClass: Class<out Enum<*>?>, string: String): Enum<*>? {
         enumClass.enumConstants?.filter { it?.name?.compareTo(string, true) == 0 }?.forEach { return it }
         return java.lang.Enum.valueOf(
@@ -372,6 +374,7 @@ object UITools {
         )
     }
 
+    @JvmStatic
     fun <T : Any> writeJavaUI(component: Any, settings: T) {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields =
@@ -421,6 +424,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun <T : Any, R : Any> writeKotlinUI(component: R, settings: T) {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields =
@@ -471,6 +475,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun <T> addJavaFields(ui: Any, formBuilder: FormBuilder) {
         var first = true
         for (field in ui.javaClass.fields) {
@@ -496,6 +501,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun <T : Any> addKotlinFields(ui: T, formBuilder: FormBuilder, fillVertically: Boolean) {
         var first = true
         for (field in ui.javaClass.kotlin.memberProperties) {
@@ -521,11 +527,13 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun getMaximumSize(factor: Double): Dimension {
         val screenSize = Toolkit.getDefaultToolkit().screenSize
         return Dimension((screenSize.getWidth() * factor).toInt(), (screenSize.getHeight() * factor).toInt())
     }
 
+    @JvmStatic
     fun showOptionDialog(mainPanel: JPanel?, vararg options: Any, title: String, modal: Boolean = true): Int {
         val pane = getOptionPane(mainPanel, options)
         val rootFrame = JOptionPane.getRootFrame()
@@ -542,6 +550,7 @@ object UITools {
         return getSelectedValue(pane, options)
     }
 
+    @JvmStatic
     fun getOptionPane(
         mainPanel: JPanel?,
         options: Array<out Any>,
@@ -558,6 +567,7 @@ object UITools {
         return pane
     }
 
+    @JvmStatic
     fun configure(dialog: JDialog, pane: JOptionPane, latch: CountDownLatch? = null) {
         val contentPane = dialog.contentPane
         contentPane.layout = BorderLayout()
@@ -590,6 +600,7 @@ object UITools {
         pane.selectInitialValue()
     }
 
+    @JvmStatic
     private fun windowAdapter(pane: JOptionPane, dialog: JDialog): WindowAdapter {
         val adapter: WindowAdapter = object : WindowAdapter() {
             private var gotFocus = false
@@ -616,6 +627,7 @@ object UITools {
         return adapter
     }
 
+    @JvmStatic
     private fun getSelectedValue(pane: JOptionPane, options: Array<out Any>): Int {
         val selectedValue = pane.value ?: return JOptionPane.CLOSED_OPTION
         var counter = 0
@@ -627,6 +639,7 @@ object UITools {
         return JOptionPane.CLOSED_OPTION
     }
 
+    @JvmStatic
     fun configureTextArea(textArea: JBTextArea): JBTextArea {
         val font = textArea.font
         val fontMetrics = textArea.getFontMetrics(font)
@@ -638,6 +651,7 @@ object UITools {
         return textArea
     }
 
+    @JvmStatic
     fun wrapScrollPane(promptArea: JBTextArea?): JBScrollPane {
         val scrollPane = JBScrollPane(promptArea)
         scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
@@ -645,16 +659,7 @@ object UITools {
         return scrollPane
     }
 
-    /**
-     *
-     *  Displays a dialog with a list of checkboxMap and an OK button.
-     *  When OK is pressed, returns with an array of the selected IDs
-     *
-     *  @param promptMessage The promptMessage to display in the dialog.
-     *  @param checkboxIds The checkboxIds of the checkboxMap.
-     *  @param checkboxDescriptions The checkboxDescriptions of the checkboxMap.
-     *  @return An array of the checkboxIds of the checkboxMap that were checked.
-     */
+    @JvmStatic
     fun showCheckboxDialog(
         promptMessage: String,
         checkboxIds: Array<String>,
@@ -679,6 +684,7 @@ object UITools {
         return selectedIds.toTypedArray()
     }
 
+    @JvmStatic
     fun showRadioButtonDialog(
         promptMessage: CharSequence,
         vararg radioButtonDescriptions: CharSequence,
@@ -703,6 +709,7 @@ object UITools {
         return null
     }
 
+    @JvmStatic
     fun <T : Any> build(
         component: T,
         fillVertically: Boolean = true,
@@ -712,14 +719,14 @@ object UITools {
         return formBuilder.addComponentFillVertically(JPanel(), 0).panel
     }
 
+    @JvmStatic
     fun <T : Any, C : Any> showDialog(
-        e: AnActionEvent,
+        project: Project?,
         uiClass: Class<T>,
         configClass: Class<C>,
         title: String = "Generate Project",
-        onComplete: (C) -> Unit,
-    ) {
-        val project = e.project
+        onComplete: (C) -> Unit = { _ -> },
+    ): C? {
         val component = uiClass.getConstructor().newInstance()
         val config = configClass.getConstructor().newInstance()
         val dialog = object : DialogWrapper(project) {
@@ -742,8 +749,10 @@ object UITools {
             readKotlinUI(component, config)
             onComplete(config)
         }
+        return config
     }
 
+    @JvmStatic
     fun getSelectedFolder(e: AnActionEvent): VirtualFile? {
         val project = e.project
         val dataContext = e.dataContext
@@ -761,6 +770,7 @@ object UITools {
         return project?.baseDir
     }
 
+    @JvmStatic
     fun getSelectedFile(e: AnActionEvent): VirtualFile? {
         val dataContext = e.dataContext
         val data = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext)
@@ -777,11 +787,13 @@ object UITools {
         return null
     }
 
+    @JvmStatic
     fun isInterruptedException(e: Throwable?): Boolean {
         if (e is InterruptedException) return true
         return if (e!!.cause != null && e.cause !== e) isInterruptedException(e.cause) else false
     }
 
+    @JvmStatic
     fun writeableFn(
         event: AnActionEvent,
         fn: () -> Runnable,
@@ -791,6 +803,7 @@ object UITools {
         return runnable.get()
     }
 
+    @JvmStatic
     fun <T> run(
         project: Project?,
         title: String,
@@ -805,6 +818,7 @@ object UITools {
         }
     }
 
+    @JvmStatic
     fun <T> run1(
         project: Project?,
         title: String,
@@ -815,6 +829,7 @@ object UITools {
         return task(AbstractProgressIndicatorBase())
     }
 
+    @JvmStatic
     fun <T> run2(
         project: Project?,
         title: String,
@@ -843,6 +858,7 @@ object UITools {
             })
     }
 
+    @JvmStatic
     fun checkApiKey(k: String = AppSettingsState.instance.apiKey): String {
         var key = k
         if (key.isEmpty()) {
@@ -857,7 +873,10 @@ object UITools {
         return key
     }
 
+    @JvmStatic
     val threadFactory: ThreadFactory = ThreadFactoryBuilder().setNameFormat("API Thread %d").build()
+
+    @JvmStatic
     val pool: ListeningExecutorService = MoreExecutors.listeningDecorator(
         ThreadPoolExecutor(
             /* corePoolSize = */ AppSettingsState.instance.apiThreads,
@@ -869,14 +888,17 @@ object UITools {
         )
     )
 
+    @JvmStatic
     val scheduledPool: ListeningScheduledExecutorService =
         MoreExecutors.listeningDecorator(ScheduledThreadPoolExecutor(1, threadFactory))
 
+    @JvmStatic
     fun <I : Any?, O : Any?> map(
         moderateAsync: ListenableFuture<I>,
         o: com.google.common.base.Function<in I, out O>,
     ): ListenableFuture<O> = Futures.transform(moderateAsync, o, pool)
 
+    @JvmStatic
     fun filterStringResult(
         indent: CharSequence = "",
         stripUnbalancedTerminators: Boolean = true,

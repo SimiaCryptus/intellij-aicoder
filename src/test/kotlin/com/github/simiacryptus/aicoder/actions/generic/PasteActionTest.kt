@@ -13,7 +13,7 @@ class PasteActionTest : ActionTestBase() {
 
     @Test
     fun testProcessing() {
-        testActionScript(object : PasteAction() {
+        testScript_SelectionAction(object : PasteAction() {
             override fun processSelection(state: SelectionAction.SelectionState): String {
                 Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(state.selectedText), null)
                 return super.processSelection(state)
@@ -31,7 +31,7 @@ class PasteActionTest : ActionTestBase() {
     @Test
     fun testEditSelection() {
         val docAction = PasteAction()
-        val editorState = SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, 10, 0, null)
+        val editorState = SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, Pair(0, 10), null, arrayOf())
         val result = docAction.editSelection(editorState, 0, 10)
         Assertions.assertEquals(Pair(0, 10), result)
     }

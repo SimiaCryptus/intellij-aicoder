@@ -26,14 +26,51 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     var temperature = 0.1
     var useGPT4 = true
     var tokenCounter = 0
-    var historyLimit = 10
     var humanLanguage = "English"
     var devActions = false
     var editRequests = false
     var apiThreads = 4
-    val mostUsedHistory: MutableMap<String, Int> = HashMap()
-    val mostRecentHistory: MutableList<String> = ArrayList()
     val editorActions = ActionSettingsRegistry()
+    val fileActions = ActionSettingsRegistry()
+
+
+    class MRUItems {
+        val mostUsedHistory: MutableMap<String, Int> = HashMap()
+        val mostRecentHistory: MutableList<String> = ArrayList()
+        var historyLimit = 10
+        fun addInstructionToHistory(instruction: CharSequence) {
+            synchronized(mostRecentHistory) {
+                mostRecentHistory.add(instruction.toString())
+                while (mostRecentHistory.size > historyLimit) {
+                    mostRecentHistory.removeAt(0)
+                }
+            }
+            synchronized(mostUsedHistory) {
+                mostUsedHistory.put(
+                    instruction.toString(),
+                    (mostUsedHistory[instruction] ?: 0) + 1
+                )
+            }
+
+            if (mostUsedHistory.size > historyLimit) {
+                val retain = mostUsedHistory.entries.stream()
+                    .sorted(Map.Entry.comparingByValue<String, Int>().reversed())
+                    .limit(historyLimit.toLong())
+                    .map { (key, _) -> key }.collect(
+                        Collectors.toList()
+                    )
+                val toRemove = HashSet<CharSequence>(mostUsedHistory.keys)
+                toRemove.removeAll(retain.toSet())
+                toRemove.removeAll(mostRecentHistory.toSet())
+                toRemove.forEach { key: CharSequence? ->
+                    mostUsedHistory.remove(
+                        key
+                    )
+                }
+            }
+        }
+
+    }
 
     fun createChatRequest(): ChatRequest {
         return createChatRequest(defaultChatModel())
@@ -54,13 +91,18 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         return SimpleEnvelope(JsonUtil.toJson(this))
     }
 
+    val _recentCustomEdits = mutableMapOf<String,MRUItems>()
+
+    fun recentCustomEdits(id:String) = _recentCustomEdits.computeIfAbsent(id) { MRUItems() }
+
     override fun loadState(state: SimpleEnvelope) {
         state.value ?: return
         val fromJson = JsonUtil.fromJson<AppSettingsState>(state.value!!, AppSettingsState::class.java)
         XmlSerializerUtil.copyBean(fromJson, this)
-        mostRecentHistory.clear(); mostRecentHistory.addAll(fromJson.mostRecentHistory)
-        mostUsedHistory.clear(); mostUsedHistory.putAll(fromJson.mostUsedHistory)
+
+        _recentCustomEdits.clear(); _recentCustomEdits.putAll(fromJson._recentCustomEdits)
         editorActions.actionSettings.clear(); editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
+        fileActions.actionSettings.clear(); fileActions.actionSettings.putAll(fromJson.fileActions.actionSettings)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -92,39 +134,6 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         )
     }
 
-    fun addInstructionToHistory(instruction: CharSequence) {
-        synchronized(mostRecentHistory) {
-            mostRecentHistory.add(instruction.toString())
-            while (mostRecentHistory.size > historyLimit) {
-                mostRecentHistory.removeAt(0)
-            }
-        }
-        synchronized(mostUsedHistory) {
-            mostUsedHistory.put(
-                instruction.toString(),
-                (mostUsedHistory[instruction] ?: 0) + 1
-            )
-        }
-
-        if (mostUsedHistory.size > historyLimit) {
-            val retain = mostUsedHistory.entries.stream()
-                .sorted(Map.Entry.comparingByValue<String, Int>().reversed())
-                .limit(historyLimit.toLong())
-                .map { (key, _) -> key }.collect(
-                    Collectors.toList()
-                )
-            val toRemove = HashSet<CharSequence>(mostUsedHistory.keys)
-            toRemove.removeAll(retain.toSet())
-            toRemove.removeAll(mostRecentHistory.toSet())
-            toRemove.forEach { key: CharSequence? ->
-                mostUsedHistory.remove(
-                    key
-                )
-            }
-        }
-    }
-    val editHistory: Set<String>
-        @JsonIgnore get() = mostUsedHistory.keys
 
     companion object {
         @JvmStatic

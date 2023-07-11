@@ -7,6 +7,13 @@
 ### Added
 - 
 
+## [1.2.2]
+
+### Improved
+
+- Fixed bug preventing custom actions from being loaded
+- Fixed paste action when no text is selected
+
 ## [1.2.1]
 
 ### Improved

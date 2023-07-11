@@ -28,7 +28,7 @@ class DocAction extends SelectionAction {
 
     DocAction_VirtualAPI getProxy() {
         ChatProxy<DocAction_VirtualAPI> chatProxy = new ChatProxy(
-                clazz: VirtualAPI,
+                clazz: DocAction_VirtualAPI,
                 api: api,
                 model: AppSettingsState.instance.defaultChatModel(),
                 temperature: AppSettingsState.instance.temperature,
