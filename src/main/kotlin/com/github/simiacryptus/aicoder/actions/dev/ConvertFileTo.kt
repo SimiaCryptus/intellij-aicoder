@@ -1,6 +1,7 @@
-﻿package com.github.simiacryptus.aicoder.actions.code
+﻿package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiTranslationTree
@@ -12,7 +13,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.openai.APIClientBase
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 
@@ -34,6 +34,7 @@ class ConvertFileTo : ActionGroup() {
 
     private fun isEnabled(e: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
+        if(!AppSettingsState.instance.devActions) return false
         val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
         if (computerLanguage == ComputerLanguage.Text) return false
         return supportedLanguages.contains(computerLanguage)

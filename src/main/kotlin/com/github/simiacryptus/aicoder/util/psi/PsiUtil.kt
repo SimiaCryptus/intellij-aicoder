@@ -14,7 +14,8 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 object PsiUtil {
-    private val ELEMENTS_CODE = arrayOf<CharSequence>(
+    @JvmStatic
+    val ELEMENTS_CODE = arrayOf<CharSequence>(
         "Method",
         "Field",
         "Class",
@@ -22,7 +23,8 @@ object PsiUtil {
         "CssBlock",
         "FunctionDefinition"
     )
-    private val ELEMENTS_COMMENTS = arrayOf<CharSequence>(
+    @JvmStatic
+    val ELEMENTS_COMMENTS = arrayOf<CharSequence>(
         "Comment"
     )
 
@@ -117,11 +119,17 @@ object PsiUtil {
     }
 
 
+    @JvmStatic
     fun matchesType(element: PsiElement, vararg types: CharSequence): Boolean {
-        var simpleName: CharSequence = element.javaClass.simpleName
-        simpleName = StringUtil.stripSuffix(simpleName, "Impl")
-        simpleName = StringUtil.stripPrefix(simpleName, "Psi")
-        val str = simpleName.toString()
+        return matchesType(element.javaClass.simpleName, types)
+    }
+
+    @JvmStatic
+    fun matchesType(simpleName: CharSequence, types: Array<out CharSequence>): Boolean {
+        var simpleName1 = simpleName
+        simpleName1 = StringUtil.stripSuffix(simpleName1, "Impl")
+        simpleName1 = StringUtil.stripPrefix(simpleName1, "Psi")
+        val str = simpleName1.toString()
         return Stream.of(*types)
             .map { s: CharSequence? ->
                 StringUtil.stripSuffix(

@@ -28,16 +28,29 @@ open class ActionTestBase {
                 val fromSection = markdownData.sections.find { it.title.lowercase() == "from" }
                 val toSection = markdownData.sections.find { it.title.lowercase() == "to" }
                 if (jsonSection != null && fromSection != null && toSection != null) {
-                    val testData = JsonUtil.fromJson<SelectionActionTestData>(
+                    val testData = JsonUtil.fromJson<SelectionAction.SelectionState>(
                         jsonSection.code,
-                        SelectionActionTestData::class.java
+                        SelectionAction.SelectionState::class.java
                     )
-                    val selectionState = SelectionAction.SelectionState(
-                        fromSection.code,
-                        ComputerLanguage.values().find { fromSection.codeType.equals(it.name, true) },
-                        testData.indent ?: ""
+                    var selectionState = testData.copy(
+                        selectedText=fromSection.code,
+                        language=ComputerLanguage.values().find { fromSection.codeType.equals(it.name, true) }
                     )
-                    val result = selectionAction.processSelection(selectionState)
+                    if((selectionState.selectionLength ?: 0) != 0) {
+                        selectionState = selectionState.copy(
+                            entireDocument = selectionState.selectedText,
+                            selectedText = selectionState.selectedText?.substring(
+                                selectionState.selectionOffset,
+                                selectionState.selectionOffset + selectionState.selectionLength!!
+                            ),
+                        )
+                    }
+                    var result = selectionAction.processSelection(selectionState)
+                    if((selectionState.selectionLength ?: 0) != 0) {
+                        result = selectionState.entireDocument?.substring(0, selectionState.selectionOffset) +
+                                result +
+                                selectionState.entireDocument?.substring(selectionState.selectionOffset + selectionState.selectionLength!!)
+                    }
                     Assertions.assertEquals(
                         toSection.code.trim().replace("\r\n", "\n"),
                         result.trim().replace("\r\n", "\n")

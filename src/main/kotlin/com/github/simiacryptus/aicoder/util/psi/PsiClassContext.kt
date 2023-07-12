@@ -18,7 +18,7 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
      * @param selectionEnd
      * @return
      */
-    fun init(psiFile: PsiFile, selectionStart: Int, selectionEnd: Int): PsiClassContext {
+    fun init(psiFile: PsiFile?, selectionStart: Int, selectionEnd: Int): PsiClassContext {
         object : PsiVisitorBase() {
             var currentContext = this@PsiClassContext
             var indent = ""
@@ -109,7 +109,7 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
                 currentContext = prevclassBuffer
                 return newNode
             }
-        }.build(psiFile)
+        }.build(psiFile!!)
         return this
     }
 
@@ -132,8 +132,9 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
     }
 
     companion object {
+        @JvmStatic
         fun getContext(
-            psiFile: PsiFile,
+            psiFile: PsiFile?,
             selectionStart: Int,
             selectionEnd: Int,
             language: ComputerLanguage
