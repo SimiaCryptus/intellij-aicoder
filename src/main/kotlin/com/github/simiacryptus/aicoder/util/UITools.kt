@@ -806,56 +806,36 @@ object UITools {
     @JvmStatic
     fun <T> run(
         project: Project?,
-        title: String,
+        title: String?,
         canBeCancelled: Boolean = true,
         suppressProgress: Boolean = true,
         task: (ProgressIndicator) -> T,
     ): T {
-        if (suppressProgress == AppSettingsState.instance.editRequests) {
-            return run1(project, title, canBeCancelled, task)
+        return if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
+            checkApiKey()
+            task(AbstractProgressIndicatorBase())
         } else {
-            return run2(project, title, canBeCancelled, task)
-        }
-    }
-
-    @JvmStatic
-    fun <T> run1(
-        project: Project?,
-        title: String,
-        canBeCancelled: Boolean = true,
-        task: (ProgressIndicator) -> T,
-    ): T {
-        checkApiKey()
-        return task(AbstractProgressIndicatorBase())
-    }
-
-    @JvmStatic
-    fun <T> run2(
-        project: Project?,
-        title: String,
-        canBeCancelled: Boolean = true,
-        task: (ProgressIndicator) -> T,
-    ): T {
-        checkApiKey()
-        return ProgressManager.getInstance()
-            .run(object : Task.WithResult<T, Exception?>(project, title, canBeCancelled) {
-                override fun compute(indicator: ProgressIndicator): T {
-                    val currentThread = Thread.currentThread()
-                    val threads = ArrayList<Thread>()
-                    val scheduledFuture = scheduledPool.scheduleAtFixedRate({
-                        if (indicator.isCanceled) {
-                            threads.forEach { it.interrupt() }
+            checkApiKey()
+            ProgressManager.getInstance()
+                .run(object : Task.WithResult<T, Exception?>(project, title ?: "", canBeCancelled) {
+                    override fun compute(indicator: ProgressIndicator): T {
+                        val currentThread = Thread.currentThread()
+                        val threads = ArrayList<Thread>()
+                        val scheduledFuture = scheduledPool.scheduleAtFixedRate({
+                            if (indicator.isCanceled) {
+                                threads.forEach { it.interrupt() }
+                            }
+                        }, 0, 1, TimeUnit.SECONDS)
+                        threads.add(currentThread)
+                        try {
+                            return task(indicator)
+                        } finally {
+                            threads.remove(currentThread)
+                            scheduledFuture.cancel(true)
                         }
-                    }, 0, 1, TimeUnit.SECONDS)
-                    threads.add(currentThread)
-                    try {
-                        return task(indicator)
-                    } finally {
-                        threads.remove(currentThread)
-                        scheduledFuture.cancel(true)
                     }
-                }
-            })
+                })
+        }
     }
 
     @JvmStatic

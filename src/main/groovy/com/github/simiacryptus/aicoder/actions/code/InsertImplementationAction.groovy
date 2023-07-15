@@ -5,10 +5,13 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.psi.PsiClassContext
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
+import kotlin.Pair
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
-class InsertImplementationAction extends SelectionAction {
+class InsertImplementationAction extends SelectionAction<String> {
 
     interface VirtualAPI {
         ConvertedText implementCode(
@@ -37,12 +40,41 @@ class InsertImplementationAction extends SelectionAction {
     }
 
     @Override
-    String processSelection(SelectionState state) {
+    String getConfig(@Nullable Project project) {
+        return ""
+    }
+
+    @Override
+    Pair<Integer, Integer> defaultSelection(@NotNull EditorState editorState, int offset) {
+        def foundItem = editorState.contextRanges.findAll {
+            PsiUtil.matchesType(
+                    it.name,
+                    PsiUtil.ELEMENTS_CODE
+            )
+        }.min({ it.length() })
+        return foundItem?.range() ?: editorState.line
+    }
+
+    @Override
+    Pair<Integer, Integer> editSelection(@NotNull EditorState state, int start, int end) {
+        def foundItem = editorState.contextRanges.findAll {
+            PsiUtil.matchesType(
+                    it.name,
+                    PsiUtil.ELEMENTS_CODE
+            )
+        }.min({ it.length() })
+        return foundItem?.range() ?: new Pair<>(start, end)
+    }
+
+    @Override
+    String processSelection(SelectionState state, String config) {
         def humanLanguage = AppSettingsState.instance.humanLanguage
         def computerLanguage = state.language
         def psiClassContextActionParams = getPsiClassContextActionParams(state)
         def selectedText = state.selectedText ?: ""
-        def instruct = psiClassContextActionParams.largestIntersectingComment.subString(state.entireDocument ?: "").trim()
+
+        def comment = psiClassContextActionParams.largestIntersectingComment
+        def instruct = (null == comment) ? selectedText : comment.subString(state.entireDocument ?: "").trim()
         if (selectedText.split(" ").reverse().dropWhile { it.isEmpty() }.reverse().size > 4) {
             instruct = selectedText.trim()
         }

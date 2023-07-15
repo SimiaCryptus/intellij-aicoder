@@ -3,10 +3,13 @@ package com.github.simiacryptus.aicoder.actions.code
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
+import org.jetbrains.annotations.Nullable
+
 import javax.swing.JOptionPane
 
-class QuestionAction extends SelectionAction {
+class QuestionAction extends SelectionAction<String> {
 
     interface VirtualAPI {
         Answer questionCode(
@@ -31,8 +34,13 @@ class QuestionAction extends SelectionAction {
     }
 
     @Override
-    String processSelection(SelectionState state) {
-        def question = getQuestion()
+    String getConfig(@Nullable Project project) {
+        return JOptionPane.showInputDialog(null, "Question:", "Question", JOptionPane.QUESTION_MESSAGE)
+    }
+
+
+    @Override
+    String processSelection(SelectionState state, String question) {
 
         if (question.isBlank()) return ""
 
@@ -49,10 +57,6 @@ class QuestionAction extends SelectionAction {
         def blockComment = state.language?.blockComment
         def fromString = blockComment?.fromString(answer)
         return "${state.indent}${fromString.withIndent(state.indent)}\n${state.indent}" + state.selectedText
-    }
-
-    def getQuestion() {
-        return JOptionPane.showInputDialog(null, "Question:", "Question", JOptionPane.QUESTION_MESSAGE)
     }
 
     @Override

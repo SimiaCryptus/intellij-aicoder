@@ -4,10 +4,12 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.TextBlockFactory
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
 import com.simiacryptus.util.StringUtil
+import org.jetbrains.annotations.Nullable
 
-class DescribeAction extends SelectionAction {
+class DescribeAction extends SelectionAction<String> {
 
     interface DescribeAction_VirtualAPI {
         DescribeAction_ConvertedText describeCode(
@@ -33,9 +35,14 @@ class DescribeAction extends SelectionAction {
                 deserializerRetries: 5
         ).create()
     }
+    @Override
+    String getConfig(@Nullable Project project) {
+        return ""
+    }
+
 
     @Override
-    String processSelection(SelectionState state) {
+    String processSelection(SelectionState state, String config) {
         def description = proxy.describeCode(
                 IndentedText.fromString(state.selectedText).textBlock.toString().trim(),
                 state.language?.name() ?: "",

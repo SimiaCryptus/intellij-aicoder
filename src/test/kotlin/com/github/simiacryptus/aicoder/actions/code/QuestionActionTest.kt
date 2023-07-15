@@ -3,6 +3,7 @@
 import com.github.simiacryptus.aicoder.actions.ActionTestBase
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.intellij.openapi.project.Project
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 
@@ -11,7 +12,7 @@ class QuestionActionTest : ActionTestBase() {
     @Test
     fun testProcessing() {
         testScript_SelectionAction(object : QuestionAction() {
-            override fun getQuestion(): String? {
+            override fun getConfig(project: Project?): String? {
                 return "How are you feeling?"
             }
         }, "/QuestionActionTest.md")

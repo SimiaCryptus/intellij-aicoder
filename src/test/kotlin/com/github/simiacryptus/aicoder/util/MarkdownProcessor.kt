@@ -37,7 +37,7 @@ object MarkdownProcessor {
                         code = ""
                     } else {
                         if (title.isNotEmpty()) {
-                            sections.add(Section(title, codeType ?: "", code.trim()))
+                            sections.add(Section(title, codeType, code.trim()))
                         }
                         codeType = null
                     }
