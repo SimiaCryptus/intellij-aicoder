@@ -6,17 +6,25 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
 
-abstract class SelectionAction(
+abstract class SelectionAction<T : Any>(
     val requiresSelection: Boolean = true
 ) : BaseAction() {
 
-    fun retarget(editorState: EditorState, selectedText: @NlsSafe String?, selectionStart: Int, selectionEnd: Int) : Pair<Int,Int>? {
+    open fun getConfig(project: Project?): T? = null
+
+    fun retarget(
+        editorState: EditorState,
+        selectedText: @NlsSafe String?,
+        selectionStart: Int,
+        selectionEnd: Int
+    ): Pair<Int, Int>? {
         if (selectedText.isNullOrEmpty()) {
             var (start, end) = defaultSelection(editorState, selectionStart)
             if (start >= end && requiresSelection) return null
@@ -34,6 +42,7 @@ abstract class SelectionAction(
 
     final override fun handle(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+        val config = getConfig(event.project)
         val indent = UITools.getIndent(event)
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
@@ -47,20 +56,20 @@ abstract class SelectionAction(
         selectionStart = start
 
         UITools.redoableTask(event) {
-            val newText = UITools.run(event.project, this.templateText!!, true) {
-                processSelection(
-                    SelectionState(
-                        selectedText = selectedText,
-                        selectionOffset = selectionStart,
-                        selectionLength = selectionEnd - selectionStart,
-                        entireDocument = editor.document.text,
-                        language = ComputerLanguage.getComputerLanguage(event),
-                        indent = indent,
-                        contextRanges = editorState.contextRanges,
-                        psiFile = editorState.psiFile,
-                    )
-                )
-            }
+            val newText = processSelection(
+                event = event,
+                SelectionState(
+                    selectedText = selectedText,
+                    selectionOffset = selectionStart,
+                    selectionLength = selectionEnd - selectionStart,
+                    entireDocument = editor.document.text,
+                    language = ComputerLanguage.getComputerLanguage(event),
+                    indent = indent,
+                    contextRanges = editorState.contextRanges,
+                    psiFile = editorState.psiFile,
+                ),
+                config = config
+            )
             UITools.writeableFn(event) {
                 UITools.replaceString(editor.document, selectionStart, selectionEnd, newText)
             }
@@ -70,9 +79,9 @@ abstract class SelectionAction(
     data class EditorState(
         val text: @NlsSafe String,
         val cursorOffset: Int,
-        val line: Pair<Int,Int>,
+        val line: Pair<Int, Int>,
         val psiFile: PsiFile?,
-        val contextRanges : Array<ContextRange> = arrayOf(),
+        val contextRanges: Array<ContextRange> = arrayOf(),
     )
 
     data class ContextRange(
@@ -145,7 +154,7 @@ abstract class SelectionAction(
         val entireDocument: String? = null,
         val language: ComputerLanguage? = null,
         val indent: CharSequence? = null,
-        val contextRanges : Array<ContextRange> = arrayOf(),
+        val contextRanges: Array<ContextRange> = arrayOf(),
         val psiFile: PsiFile?,
     )
 
@@ -158,6 +167,19 @@ abstract class SelectionAction(
 
     open fun editSelection(state: EditorState, start: Int, end: Int) = Pair(start, end)
 
-    abstract fun processSelection(state: SelectionState): String
+
+    open fun processSelection(
+        event: AnActionEvent?,
+        selectionState: SelectionState,
+        config: T?
+    ): String {
+        return UITools.run(event?.project, templateText ?: "", true) {
+            processSelection(selectionState, config)
+        }
+    }
+
+    open fun processSelection(state: SelectionState, config: T?): String {
+        throw NotImplementedError()
+    }
 
 }

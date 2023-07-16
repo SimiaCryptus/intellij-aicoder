@@ -127,7 +127,7 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </group>
 
-        <action class="com.github.simiacryptus.aicoder.actions.dev.GenerateProjectAction"
+        <action class="com.github.simiacryptus.aicoder.actions.code.GenerateProjectAction"
                 text="_Generate Project"
                 description="Generate a new software project from a description">
             <!--DOC
@@ -136,7 +136,7 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.dev.GenerateStoryAction"
+        <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateStoryAction"
                 text="_Write a Story"
                 description="Write a story">
             <!--DOC

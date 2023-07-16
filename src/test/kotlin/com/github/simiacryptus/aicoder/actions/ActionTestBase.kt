@@ -16,7 +16,7 @@ open class ActionTestBase {
             val indent: String? = null,
         )
 
-        fun testScript_SelectionAction(selectionAction: SelectionAction, scriptPath: String) {
+        fun <T:Any>testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
             AppSettingsState.instance.apiKey = OpenAIClient.keyTxt
             AppSettingsState.instance.temperature = 0.0
             AppSettingsState.instance.useGPT4 = false
@@ -33,10 +33,10 @@ open class ActionTestBase {
                         SelectionAction.SelectionState::class.java
                     )
                     var selectionState = testData.copy(
-                        selectedText=fromSection.code,
-                        language=ComputerLanguage.values().find { fromSection.codeType.equals(it.name, true) }
+                        selectedText = fromSection.code,
+                        language = ComputerLanguage.values().find { fromSection.codeType.equals(it.name, true) }
                     )
-                    if((selectionState.selectionLength ?: 0) != 0) {
+                    if ((selectionState.selectionLength ?: 0) != 0) {
                         selectionState = selectionState.copy(
                             entireDocument = selectionState.selectedText,
                             selectedText = selectionState.selectedText?.substring(
@@ -45,8 +45,8 @@ open class ActionTestBase {
                             ),
                         )
                     }
-                    var result = selectionAction.processSelection(selectionState)
-                    if((selectionState.selectionLength ?: 0) != 0) {
+                    var result = selectionAction.processSelection(null, selectionState, selectionAction.getConfig(null))
+                    if ((selectionState.selectionLength ?: 0) != 0) {
                         result = selectionState.entireDocument?.substring(0, selectionState.selectionOffset) +
                                 result +
                                 selectionState.entireDocument?.substring(selectionState.selectionOffset + selectionState.selectionLength!!)
@@ -67,14 +67,16 @@ open class ActionTestBase {
 
         inline fun <reified T : Any> testScript_FileContextAction(
             selectionAction: FileContextAction<T>,
-            scriptPath: String
+            scriptPath: String,
+            useGPT4: Boolean
         ) {
             AppSettingsState.instance.apiKey = OpenAIClient.keyTxt
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.useGPT4 = false
+            AppSettingsState.instance.useGPT4 = useGPT4
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""
+            var lastException: Throwable? = null
             MarkdownProcessor.parse(input).forEach { markdownData ->
                 val configSection = markdownData.sections.find { it.title.lowercase() == "config" }
                 if (configSection != null) {
@@ -89,23 +91,35 @@ open class ActionTestBase {
                             file
                         }
                     val selectionState = FileContextAction.SelectionState(
-                        (inputFiles.firstOrNull() ?: File(projectRoot,"default")).apply { parentFile?.mkdirs() }.absoluteFile,
+                        (inputFiles.firstOrNull() ?: File(
+                            projectRoot,
+                            "default"
+                        )).apply { parentFile?.mkdirs() }.absoluteFile,
                         projectRoot.absoluteFile
                     )
                     val result = selectionAction.processSelection(selectionState, configData)
-                    Assertions.assertEquals(1, result.size)
-                    val file = result.first()
-                    val filePath = projectRoot.toPath().relativize(file.toPath()).toString()
-                    val find = markdownData.sections.find { it.title.lowercase().replace('\\','/') == ("to " + filePath).lowercase().replace('\\','/') }
-                    Assertions.assertTrue((find != null), "Missing section: to " + filePath)
-                    Assertions.assertEquals(
-                        find!!.code.trim().replace("\r\n", "\n"),
-                        file.readText().trim().replace("\r\n", "\n")
-                    )
+                    for (file in result) {
+                        try {
+                            val filePath = projectRoot.toPath().relativize(file.toPath()).toString()
+                            val find = markdownData.sections.find {
+                                it.title.lowercase().replace('\\', '/') == ("to " + filePath).lowercase()
+                                    .replace('\\', '/')
+                            }
+                            Assertions.assertTrue((find != null), "Missing section: to " + filePath)
+                            Assertions.assertEquals(
+                                find!!.code.trim().replace("\r\n", "\n"),
+                                file.readText().trim().replace("\r\n", "\n")
+                            )
+                        } catch (e: Throwable) {
+                            e.printStackTrace()
+                            lastException = e
+                        }
+                    }
                 } else {
                     throw RuntimeException("Invalid test data")
                 }
             }
+            if (lastException != null) throw lastException!!
         }
     }
 

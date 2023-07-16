@@ -27,7 +27,7 @@ val slf4j_version = "2.0.5"
 val skyenet_version = "1.0.11"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.13")
+    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.14")
 
     implementation(group = "com.simiacryptus.skyenet", name = "util", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
@@ -51,6 +51,7 @@ dependencies {
     implementation(kotlin("reflect"))
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
+    testImplementation(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
 
     testImplementation(kotlin("script-runtime"))
 

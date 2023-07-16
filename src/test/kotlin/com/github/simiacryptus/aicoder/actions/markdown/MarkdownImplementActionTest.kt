@@ -11,8 +11,8 @@ class MarkdownImplementActionTest : ActionTestBase() {
     @Test
     fun testProcessing() {
         testScript_SelectionAction(object : MarkdownImplementActionGroup.MarkdownImplementAction("kotlin") {
-            override fun processSelection(state: SelectionState): String {
-                return super.processSelection(state).trim().split("\n").drop(1).dropLast(1).joinToString("\n")
+            override fun processSelection(state: SelectionState, config: String?): String {
+                return super.processSelection(state, config).trim().split("\n").drop(1).dropLast(1).joinToString("\n")
             }
         }, "/MarkdownImplementActionTest.md")
     }

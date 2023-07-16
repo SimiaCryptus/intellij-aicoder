@@ -4,11 +4,13 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
 import com.simiacryptus.util.StringUtil
 import kotlin.Pair
+import org.jetbrains.annotations.Nullable
 
-class ImplementStubAction extends SelectionAction {
+class ImplementStubAction extends SelectionAction<String> {
 
     static interface VirtualAPI {
         ConvertedText editCode(
@@ -45,8 +47,13 @@ class ImplementStubAction extends SelectionAction {
         if (codeRanges.isEmpty()) return editorState.line
         return codeRanges.min { it.length() }.range()
     }
+    @Override
+    String getConfig(@Nullable Project project) {
+        return ""
+    }
 
-    String processSelection(SelectionState state) {
+
+    String processSelection(SelectionState state, String config) {
         def code = state.selectedText ?: ""
         def settings = AppSettingsState.instance
         def outputHumanLanguage = settings.humanLanguage

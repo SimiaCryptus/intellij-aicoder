@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.actions
 
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -23,11 +24,11 @@ abstract class FileContextAction<T : Any>(
 
     final override fun handle(event: AnActionEvent) {
         val config = getConfig(event.project)
+        val virtualFile = UITools.getSelectedFile(event) ?: UITools.getSelectedFolder(event) ?: return
+        val project = event.project ?: return
+        val projectRoot = File(project.basePath!!).toPath()
         Thread {
             try {
-                val virtualFile = UITools.getSelectedFile(event) ?: return@Thread
-                val project = event.project ?: return@Thread
-                val projectRoot = File(project.basePath!!).toPath()
 
                 UITools.redoableTask(event) {
                     UITools.run(event.project, templateText!!, true) {
@@ -68,10 +69,12 @@ abstract class FileContextAction<T : Any>(
 
     open fun getConfig(project: Project?): T? = null
 
+    var isDevAction = false
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
         if (UITools.isSanctioned()) return false
-        val virtualFile = UITools.getSelectedFile(event) ?: return false
+        if(isDevAction && !AppSettingsState.instance.devActions) return false
+        val virtualFile = UITools.getSelectedFile(event) ?: UITools.getSelectedFolder(event) ?: return false
         return if (virtualFile.isDirectory) supportsFolders else supportsFiles
     }
 

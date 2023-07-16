@@ -4,11 +4,14 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
+import org.jetbrains.annotations.Nullable
+
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 
-class PasteAction extends SelectionAction {
+class PasteAction extends SelectionAction<String> {
     PasteAction() {
         super(false)
     }
@@ -21,9 +24,14 @@ class PasteAction extends SelectionAction {
             public ConvertedText() {}
         }
     }
+    @Override
+    String getConfig(@Nullable Project project) {
+        return ""
+    }
+
 
     @Override
-    String processSelection(SelectionState state) {
+    String processSelection(SelectionState state, String config) {
         return new ChatProxy<VirtualAPI>(
             clazz: VirtualAPI.class,
             api: api,

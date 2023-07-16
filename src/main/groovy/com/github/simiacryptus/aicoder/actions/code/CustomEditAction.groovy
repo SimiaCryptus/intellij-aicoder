@@ -2,11 +2,13 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
+import org.jetbrains.annotations.Nullable
 
 import javax.swing.*
 
-class CustomEditAction extends SelectionAction {
+class CustomEditAction extends SelectionAction<String> {
 
     interface VirtualAPI {
         EditedText editCode(
@@ -57,13 +59,18 @@ class CustomEditAction extends SelectionAction {
     }
 
     @Override
-    String processSelection(SelectionState state) {
-        def instruction = getInstruction()
+    String getConfig(@Nullable Project project) {
+        return JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE)
+    }
+
+
+    @Override
+    String processSelection(SelectionState state, String instruction) {
         if (null == instruction) return (state.selectedText ?: "")
         if (instruction.isBlank()) return state.selectedText ?: ""
         def settings = AppSettingsState.instance
         def outputHumanLanguage = AppSettingsState.instance.humanLanguage
-        settings.recentCustomEdits("customEdits").addInstructionToHistory(instruction)
+        settings.getRecentCommands("customEdits").addInstructionToHistory(instruction)
         return proxy.editCode(
                 state.selectedText,
                 instruction.toString(),
@@ -72,8 +79,5 @@ class CustomEditAction extends SelectionAction {
         ).code ?: state.selectedText ?: ""
     }
 
-    def getInstruction() {
-        return JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE)
-    }
 
 }

@@ -3,6 +3,7 @@
 import com.github.simiacryptus.aicoder.actions.ActionTestBase
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.intellij.openapi.project.Project
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 
@@ -13,7 +14,7 @@ class CustomEditActionTest : ActionTestBase() {
     @Test
     fun testProcessing() {
         testScript_SelectionAction(object : CustomEditAction() {
-            override fun getInstruction(): String {
+            override fun getConfig(project: Project?): String {
                 return this@CustomEditActionTest.instruction
             }
         }, "/CustomEditActionTest.md")
@@ -22,7 +23,7 @@ class CustomEditActionTest : ActionTestBase() {
     @Test
     fun testIsLanguageSupported() {
         val docAction = object : CustomEditAction() {
-            override fun getInstruction(): String {
+            override fun getConfig(project: Project?): String {
                 return this@CustomEditActionTest.instruction
             }
         }
@@ -33,7 +34,7 @@ class CustomEditActionTest : ActionTestBase() {
     @Test
     fun testEditSelection() {
         val docAction = object : CustomEditAction() {
-            override fun getInstruction(): String {
+            override fun getConfig(project: Project?): String {
                 return this@CustomEditActionTest.instruction
             }
         }

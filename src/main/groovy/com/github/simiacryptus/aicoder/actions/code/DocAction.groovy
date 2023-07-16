@@ -5,10 +5,12 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
 import kotlin.Pair
+import org.jetbrains.annotations.Nullable
 
-class DocAction extends SelectionAction {
+class DocAction extends SelectionAction<String> {
 
     interface DocAction_VirtualAPI {
         DocAction_ConvertedText processCode(
@@ -60,7 +62,13 @@ class DocAction extends SelectionAction {
     }
 
     @Override
-    String processSelection(SelectionState state) {
+    String getConfig(@Nullable Project project) {
+        return ""
+    }
+
+
+    @Override
+    String processSelection(SelectionState state, String config) {
         CharSequence code = state.selectedText
         IndentedText indentedInput = IndentedText.fromString3(code.toString() as java.lang.CharSequence)
         String docString = proxy.processCode(

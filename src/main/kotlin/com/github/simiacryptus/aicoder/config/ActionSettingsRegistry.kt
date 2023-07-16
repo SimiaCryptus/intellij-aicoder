@@ -10,6 +10,7 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
     val actionSettings: MutableMap<String, ActionSettings> = HashMap()
+    val version = 1.2
 
     fun edit(superChildren: Array<out AnAction>): Array<AnAction> {
         val children = superChildren.toList().toMutableList()
@@ -27,7 +28,10 @@ class ActionSettingsRegistry {
                     }
                     if (!actionConfig.enabled) {
                         children.remove(it)
-                    } else if (!actionConfig.file.exists() || actionConfig.file.readText().isBlank()) {
+                    } else if (!actionConfig.file.exists()
+                        || actionConfig.file.readText().isBlank()
+                        || (actionConfig.version ?: 0.0) < version
+                    ) {
                         actionConfig.file.writeText(code)
                     } else {
                         val localCode = actionConfig.file.readText()
@@ -37,6 +41,7 @@ class ActionSettingsRegistry {
                             children.add(element)
                         }
                     }
+                    actionConfig.version = version
                 } catch (e: Throwable) {
                     log.warn("Error loading ${it.javaClass}", e)
                 }
@@ -58,6 +63,7 @@ class ActionSettingsRegistry {
         val id: String, // Static property
         var enabled: Boolean = true, // User settable
         var displayText: String? = null, // User settable
+        var version: Double? = null, // System property
         var isDynamic: Boolean = false, // Static property
         var language: String? = null, // Static property
     ) {

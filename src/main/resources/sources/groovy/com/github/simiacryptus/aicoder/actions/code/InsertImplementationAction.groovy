@@ -5,10 +5,13 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.psi.PsiClassContext
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
+import kotlin.Pair
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
-class InsertImplementationAction extends SelectionAction {
+class InsertImplementationAction extends SelectionAction<String> {
 
     interface VirtualAPI {
         ConvertedText implementCode(
@@ -37,13 +40,42 @@ class InsertImplementationAction extends SelectionAction {
     }
 
     @Override
-    String processSelection(SelectionState state) {
+    String getConfig(@Nullable Project project) {
+        return ""
+    }
+
+    @Override
+    Pair<Integer, Integer> defaultSelection(@NotNull EditorState editorState, int offset) {
+        def foundItem = editorState.contextRanges.findAll {
+            PsiUtil.matchesType(
+                    it.name,
+                    PsiUtil.ELEMENTS_COMMENTS
+            )
+        }.min({ it.length() })
+        return foundItem?.range() ?: editorState.line
+    }
+
+    @Override
+    Pair<Integer, Integer> editSelection(@NotNull EditorState state, int start, int end) {
+        def foundItem = state.contextRanges.findAll {
+            PsiUtil.matchesType(
+                    it.name,
+                    PsiUtil.ELEMENTS_COMMENTS
+            )
+        }.min({ it.length() })
+        return foundItem?.range() ?: new Pair<>(start, end)
+    }
+
+    @Override
+    String processSelection(SelectionState state, String config) {
         def humanLanguage = AppSettingsState.instance.humanLanguage
         def computerLanguage = state.language
         def psiClassContextActionParams = getPsiClassContextActionParams(state)
         def selectedText = state.selectedText ?: ""
-        def instruct = psiClassContextActionParams.largestIntersectingComment.subString(state.entireDocument ?: "").trim()
-        if (selectedText.split(" ").reverse().dropWhile { it.isEmpty() }.reverse().size > 4) {
+
+        def comment = psiClassContextActionParams.largestIntersectingComment
+        def instruct = (null == comment) ? selectedText : comment.subString(state.entireDocument ?: "").trim()
+        if (selectedText.split(" ").reverse().dropWhile { it.isEmpty() }.reverse().length > 4) {
             instruct = selectedText.trim()
         }
         def specification = Objects.requireNonNull(computerLanguage.getCommentModel(instruct))
@@ -52,19 +84,30 @@ class InsertImplementationAction extends SelectionAction {
                 .map { obj -> obj.trim() }
                 .filter { x -> !x.isEmpty() }
                 .reduce { a, b -> "$a $b" }.get()
-        def psiClassContext = PsiClassContext.getContext(
-                state.psiFile,
-                psiClassContextActionParams.selectionStart,
-                psiClassContextActionParams.selectionEnd,
-                computerLanguage
-        )
-        def newText = proxy.implementCode(
-                specification,
-                psiClassContext.toString(),
-                computerLanguage.name(),
-                humanLanguage,
-        ).code ?: ""
-        return newText
+        if(null != state.psiFile) {
+            def psiClassContext = PsiClassContext.getContext(
+                    state.psiFile,
+                    psiClassContextActionParams.selectionStart,
+                    psiClassContextActionParams.selectionEnd,
+                    computerLanguage
+            ).toString()
+            def code = proxy.implementCode(
+                    specification,
+                    psiClassContext,
+                    computerLanguage.name(),
+                    humanLanguage,
+            ).code
+            if(null != code) return selectedText + "\n${state.indent}" + code
+        } else {
+            def code = proxy.implementCode(
+                    specification,
+                    "",
+                    computerLanguage.name(),
+                    humanLanguage,
+            ).code
+            if(null != code) return selectedText + "\n${state.indent}" + code
+        }
+        return selectedText
     }
 
     static class PsiClassContextActionParams {

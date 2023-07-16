@@ -7,7 +7,9 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
+import org.jetbrains.annotations.Nullable
 
 class MarkdownImplementActionGroup extends ActionGroup {
     List<String> markdownLanguages = [
@@ -66,7 +68,7 @@ class MarkdownImplementActionGroup extends ActionGroup {
     }
 
 
-    static class MarkdownImplementAction extends SelectionAction {
+    static class MarkdownImplementAction extends SelectionAction<String> {
         String language
 
         MarkdownImplementAction(String language) {
@@ -82,6 +84,7 @@ class MarkdownImplementActionGroup extends ActionGroup {
             class ConvertedText {
                 public String code
                 public String language
+
                 public ConvertedText() {
                 }
             }
@@ -97,7 +100,13 @@ class MarkdownImplementActionGroup extends ActionGroup {
             ).create()
         }
 
-        String processSelection(SelectionState state) {
+        @Override
+        java.lang.String getConfig(@Nullable Project project) {
+            return ""
+        }
+
+
+        String processSelection(SelectionState state, String config) {
             def code = proxy.implement(state.selectedText ?: "", "autodetect", language).code ?: ""
             return """
             |

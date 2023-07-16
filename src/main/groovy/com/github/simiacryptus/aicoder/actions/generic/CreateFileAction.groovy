@@ -16,26 +16,30 @@ class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
         super(false, true)
     }
 
-    private static class ProjectFile {
+    public static class ProjectFile {
         public String path = ""
         public String code = ""
         public ProjectFile() {
         }
     }
 
-    class SettingsUI {
+    public static class SettingsUI {
         @Name("Directive")
-        JTextArea directive = new JTextArea(
+        public JTextArea directive = new JTextArea(
             /* text = */ """
                 Create a default log4j configuration file
                 """.stripIndent().trim(),
             /* rows = */ 3,
             /* columns = */ 120
         )
+        public SettingsUI() {
+        }
     }
 
-    static class Settings {
-        String directive = ""
+    public static class Settings {
+        public String directive = ""
+        public Settings() {
+        }
     }
 
     @Override
