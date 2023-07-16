@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [1.2.4]
+
+### Fixed
+- Fixed several major issues preventing various actions from working
+- Ported additional actions to Groovy, including GenerateStory and GenerateProject
+- Improved virtual API protocol / type describers
+
 ## [1.2.2]
 
 ### Improved
