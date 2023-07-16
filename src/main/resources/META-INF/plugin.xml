@@ -127,7 +127,7 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </group>
 
-        <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateProjectAction"
+        <action class="com.github.simiacryptus.aicoder.actions.code.GenerateProjectAction"
                 text="_Generate Project"
                 description="Generate a new software project from a description">
             <!--DOC

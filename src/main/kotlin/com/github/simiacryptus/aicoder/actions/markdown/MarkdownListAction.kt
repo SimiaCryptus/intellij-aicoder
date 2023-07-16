@@ -10,19 +10,13 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getAll
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersecting
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.simiacryptus.openai.APIClientBase
+import com.intellij.openapi.application.ApplicationManager
 import com.simiacryptus.openai.proxy.ChatProxy
 import com.simiacryptus.util.StringUtil
 
-/**
- * The MarkdownListAction class is an action that allows users to quickly expand a list of items in IntelliJ.
- * It is triggered when the user selects a list in the markdown editor and then invokes the action.
- * The action will then use current list items to generate further items via OpenAI's GPT-3 API.
- * These new items will be inserted into the document at the end of the list.
- */
 class MarkdownListAction : BaseAction() {
 
-    interface VirtualAPI {
+    interface ListAPI {
         fun newListItems(
             items: List<String?>?,
             count: Int,
@@ -33,16 +27,16 @@ class MarkdownListAction : BaseAction() {
         )
     }
 
-    val proxy: VirtualAPI
+    val proxy: ListAPI
         get() {
             val chatProxy = ChatProxy(
-                clazz = VirtualAPI::class.java,
+                clazz = ListAPI::class.java,
                 api = api,
                 model = AppSettingsState.instance.defaultChatModel(),
                 deserializerRetries = 5,
             )
             chatProxy.addExample(
-                returnValue = VirtualAPI.Items(
+                returnValue = ListAPI.Items(
                     items = listOf("Item 4", "Item 5", "Item 6")
                 )
             ) {
@@ -62,7 +56,8 @@ class MarkdownListAction : BaseAction() {
         val items = StringUtil.trim(
             getAll(list, "MarkdownListItemImpl")
                 .map {
-                    getAll(it, "MarkdownParagraphImpl")[0].text
+                    val all = getAll(it, "MarkdownParagraphImpl")
+                    if (all.isEmpty()) it.text else all[0].text
                 }.toList(), 10, false
         )
         val indent = getIndent(caret)
@@ -76,19 +71,23 @@ class MarkdownListAction : BaseAction() {
         }
 
         UITools.redoableTask(event) {
-            val newItems = UITools.run(
+            var newItems: List<String?>? = null
+            UITools.run(
                 event.project, "Generating New Items", true
             ) {
-                proxy.newListItems(
+                newItems = proxy.newListItems(
                     rawItems,
                     (items.size * 2)
                 ).items
             }
-            val strippedList = list.text.split("\n")
-                .map(String::trim).filter(String::isNotEmpty)
-                .joinToString("\n")
-            val bulletString = bulletTypes.find(strippedList::startsWith) ?: "1. "
-            val newList = newItems?.joinToString("\n") { indent.toString() + bulletString + it } ?: ""
+            var newList = ""
+            ApplicationManager.getApplication().runReadAction {
+                val strippedList = list.text.split("\n")
+                    .map(String::trim).filter(String::isNotEmpty)
+                    .joinToString("\n")
+                val bulletString = bulletTypes.find(strippedList::startsWith) ?: "1. "
+                newList = newItems?.joinToString("\n") { indent.toString() + bulletString + it } ?: ""
+            }
             UITools.writeableFn(event) {
                 insertString(document, endOffset, "\n" + newList)
             }

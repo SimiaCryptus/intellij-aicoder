@@ -49,7 +49,7 @@ class InsertImplementationAction extends SelectionAction<String> {
         def foundItem = editorState.contextRanges.findAll {
             PsiUtil.matchesType(
                     it.name,
-                    PsiUtil.ELEMENTS_CODE
+                    PsiUtil.ELEMENTS_COMMENTS
             )
         }.min({ it.length() })
         return foundItem?.range() ?: editorState.line
@@ -57,10 +57,10 @@ class InsertImplementationAction extends SelectionAction<String> {
 
     @Override
     Pair<Integer, Integer> editSelection(@NotNull EditorState state, int start, int end) {
-        def foundItem = editorState.contextRanges.findAll {
+        def foundItem = state.contextRanges.findAll {
             PsiUtil.matchesType(
                     it.name,
-                    PsiUtil.ELEMENTS_CODE
+                    PsiUtil.ELEMENTS_COMMENTS
             )
         }.min({ it.length() })
         return foundItem?.range() ?: new Pair<>(start, end)
@@ -75,7 +75,7 @@ class InsertImplementationAction extends SelectionAction<String> {
 
         def comment = psiClassContextActionParams.largestIntersectingComment
         def instruct = (null == comment) ? selectedText : comment.subString(state.entireDocument ?: "").trim()
-        if (selectedText.split(" ").reverse().dropWhile { it.isEmpty() }.reverse().size > 4) {
+        if (selectedText.split(" ").reverse().dropWhile { it.isEmpty() }.reverse().length > 4) {
             instruct = selectedText.trim()
         }
         def specification = Objects.requireNonNull(computerLanguage.getCommentModel(instruct))
@@ -84,19 +84,30 @@ class InsertImplementationAction extends SelectionAction<String> {
                 .map { obj -> obj.trim() }
                 .filter { x -> !x.isEmpty() }
                 .reduce { a, b -> "$a $b" }.get()
-        def psiClassContext = PsiClassContext.getContext(
-                state.psiFile,
-                psiClassContextActionParams.selectionStart,
-                psiClassContextActionParams.selectionEnd,
-                computerLanguage
-        )
-        def newText = proxy.implementCode(
-                specification,
-                psiClassContext.toString(),
-                computerLanguage.name(),
-                humanLanguage,
-        ).code ?: ""
-        return newText
+        if(null != state.psiFile) {
+            def psiClassContext = PsiClassContext.getContext(
+                    state.psiFile,
+                    psiClassContextActionParams.selectionStart,
+                    psiClassContextActionParams.selectionEnd,
+                    computerLanguage
+            ).toString()
+            def code = proxy.implementCode(
+                    specification,
+                    psiClassContext,
+                    computerLanguage.name(),
+                    humanLanguage,
+            ).code
+            if(null != code) return selectedText + "\n${state.indent}" + code
+        } else {
+            def code = proxy.implementCode(
+                    specification,
+                    "",
+                    computerLanguage.name(),
+                    humanLanguage,
+            ).code
+            if(null != code) return selectedText + "\n${state.indent}" + code
+        }
+        return selectedText
     }
 
     static class PsiClassContextActionParams {

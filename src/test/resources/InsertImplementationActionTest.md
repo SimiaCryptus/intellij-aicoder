@@ -18,8 +18,25 @@
 
 ```kotlin
 fun main() {
-  // This is the main function
-  println("Hello, World!") // This prints 'Hello, World!'
+    var sum = 0
+    for (i in 2 until 1000) {
+        if (isPrime(i)) {
+            sum += i
+        }
+    }
+    println("The sum of all prime numbers less than 1000 is: $sum")
+}
+
+fun isPrime(num: Int): Boolean {
+    if (num <= 1) {
+        return false
+    }
+    for (i in 2 until num) {
+        if (num % i == 0) {
+            return false
+        }
+    }
+    return true
 }
 ```
 

@@ -1,7 +1,6 @@
-package com.github.simiacryptus.aicoder.actions.dev
+package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.ActionTestBase
-import com.github.simiacryptus.aicoder.actions.generic.GenerateProjectAction
 import org.junit.Test
 
 class GenerateProjectActionTest : ActionTestBase() {

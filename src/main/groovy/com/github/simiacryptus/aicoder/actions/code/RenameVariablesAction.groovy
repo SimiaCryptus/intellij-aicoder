@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable
 
 class RenameVariablesAction extends SelectionAction<String> {
 
-    interface VirtualAPI {
+    interface RenameAPI {
         SuggestionResponse suggestRenames(
                 String code,
                 String computerLanguage,
@@ -33,8 +33,8 @@ class RenameVariablesAction extends SelectionAction<String> {
     }
 
     def getProxy() {
-        return new ChatProxy<VirtualAPI>(
-                clazz: VirtualAPI.class,
+        return new ChatProxy<RenameAPI>(
+                clazz: RenameAPI.class,
                 api: api,
                 model: AppSettingsState.instance.defaultChatModel(),
                 temperature: AppSettingsState.instance.temperature,
@@ -50,17 +50,19 @@ class RenameVariablesAction extends SelectionAction<String> {
 
     @Override
     String processSelection(AnActionEvent event, SelectionState state, String config) {
-        def renameSuggestions = UITools.run(event==null?null:event.project, templateText, true, true, {
-            return proxy.suggestRenames(
-                    state.selectedText,
-                    state.language?.name(),
-                    AppSettingsState.instance.humanLanguage
-            ).suggestions
+        def renameSuggestions = UITools.run(event == null ? null : event.project, templateText, true, true, {
+            return proxy
+                    .suggestRenames(
+                            state.selectedText,
+                            state.language?.name(),
+                            AppSettingsState.instance.humanLanguage
+                    )
+                    .suggestions
                     .findAll { it.originalName != null && it.suggestedName != null }
-                    .collectEntries { [(it.originalName): it.suggestedName] }
+                    .<String,String, RenameAPI.Suggestion>collectEntries { [(it.originalName): it.suggestedName] }
         })
         def selectedSuggestions = choose(renameSuggestions)
-        return UITools.run(event==null?null:event.project, templateText, true, true, {
+        return UITools.run(event == null ? null : event.project, templateText, true, true, {
             def selectedText = state.selectedText
             def filter = renameSuggestions.findAll { x -> selectedSuggestions.contains(x.key) }
             def txt = selectedText
@@ -73,10 +75,10 @@ class RenameVariablesAction extends SelectionAction<String> {
     }
 
     def choose(Map<String, String> renameSuggestions) {
-        return showCheckboxDialog(
+        return UITools.showCheckboxDialog(
                 "Select which items to rename",
-                renameSuggestions.keySet().toArray(),
-                renameSuggestions.collect { kv -> "${kv.key} -> ${kv.value}" }.toArray()
+                renameSuggestions.keySet().toArray(String[]::new),
+                renameSuggestions.collect { kv -> "${kv.key} -> ${kv.value}".toString() }.toArray(String[]::new)
         )
     }
 

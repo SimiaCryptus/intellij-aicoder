@@ -173,7 +173,7 @@ abstract class SelectionAction<T : Any>(
         selectionState: SelectionState,
         config: T?
     ): String {
-        return UITools.run(event?.project, templateText!!, true) {
+        return UITools.run(event?.project, templateText ?: "", true) {
             processSelection(selectionState, config)
         }
     }
