@@ -11,8 +11,6 @@ import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.util.JsonUtil
 import java.util.*
 
-class SimpleEnvelope(var value: String? = null)
-
 @Suppress("MemberVisibilityCanBePrivate")
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
@@ -75,6 +73,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         if (devActions != that.devActions) return false
         if (editRequests != that.editRequests) return false
         if (editorActions != that.editorActions) return false
+        if (fileActions != that.fileActions) return false
         return true
     }
 
@@ -87,7 +86,8 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
             apiLog,
             devActions,
             editRequests,
-            editorActions
+            editorActions,
+            fileActions
         )
     }
 
@@ -100,3 +100,5 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         }
     }
 }
+
+class SimpleEnvelope(var value: String? = null)
