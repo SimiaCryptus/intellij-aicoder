@@ -67,11 +67,12 @@ open class ActionTestBase {
 
         inline fun <reified T : Any> testScript_FileContextAction(
             selectionAction: FileContextAction<T>,
-            scriptPath: String
+            scriptPath: String,
+            useGPT4: Boolean
         ) {
             AppSettingsState.instance.apiKey = OpenAIClient.keyTxt
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.useGPT4 = false
+            AppSettingsState.instance.useGPT4 = useGPT4
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""

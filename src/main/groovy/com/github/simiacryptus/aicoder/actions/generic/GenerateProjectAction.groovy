@@ -1,16 +1,12 @@
-package com.github.simiacryptus.aicoder.actions.dev
+package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
 import com.simiacryptus.openai.proxy.ValidatedObject
-import groovy.transform.Canonical
-import groovy.transform.EqualsAndHashCode
-import groovy.transform.ToString
 import kotlin.Pair
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -18,41 +14,50 @@ import org.slf4j.LoggerFactory
 import javax.swing.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class GenerateProjectAction extends FileContextAction<Settings> {
+public class GenerateProjectAction extends FileContextAction<Settings> {
     static Logger logger = LoggerFactory.getLogger(GenerateProjectAction.class)
 
 
-    GenerateProjectAction() {
-        super(false,true)
-        setDevAction(true)
+
+    public GenerateProjectAction() {
+        super(false, true)
     }
 
-    static String trimStart(String s1, char[] prefixChars) {
+    static String trimStart(String s1, List<Character> prefixChars) {
         String s = s1
-        while (s.length() > 0 && Arrays.asList(prefixChars).contains(s.charAt(0))) {
+        while (s.length() > 0 && prefixChars.contains(s.charAt(0))) {
             s = s.substring(1)
         }
         return s
+    }
+
+    static String trimEnd(String string, String suffix) {
+        if (string.endsWith(suffix)) {
+            return string.substring(0, string.length() - suffix.length())
+        } else {
+            return string
+        }
     }
 
     interface SoftwareProjectAI {
 
         Project newProject(String description)
 
-        class Project implements ValidatedObject {
-            String name = ''
-            String description = ''
-            String language = ''
-            List<String> features = []
-            List<String> libraries = []
-            List<String> buildTools = []
-
+        public class Project implements ValidatedObject {
+            public String name = ''
+            public String description = ''
+            public String language = ''
+            public List<String> features = []
+            public List<String> libraries = []
+            public List<String> buildTools = []
+            public Project() {}
             boolean validate() {
                 return true
             }
@@ -60,11 +65,12 @@ class GenerateProjectAction extends FileContextAction<Settings> {
 
         ProjectStatements getProjectStatements(String description, Project project)
 
-        class ProjectStatements implements ValidatedObject {
-            List<String> assumptions = []
-            List<String> designPatterns = []
-            List<String> requirements = []
-            List<String> risks = []
+        public class ProjectStatements implements ValidatedObject {
+            public List<String> assumptions = []
+            public List<String> designPatterns = []
+            public List<String> requirements = []
+            public List<String> risks = []
+            public ProjectStatements() {}
 
             boolean validate() {
                 return true
@@ -73,97 +79,121 @@ class GenerateProjectAction extends FileContextAction<Settings> {
 
         ProjectDesign buildProjectDesign(Project project, ProjectStatements requirements)
 
-        class ProjectDesign implements ValidatedObject {
-            List<ComponentDetails> components = []
-            List<DocumentationDetails> documents = []
-            List<TestDetails> tests = []
+        public class ProjectDesign implements ValidatedObject {
+            public List<ComponentDetails> components = []
+            public List<DocumentationDetails> documents = []
+            public List<TestDetails> tests = []
+            public ProjectDesign() {}
 
             boolean validate() {
                 return true
             }
         }
 
-        class ComponentDetails implements ValidatedObject {
-            String name = ''
-            String description = ''
-            List<String> features = []
+        public class ComponentDetails implements ValidatedObject {
+            public String name = ''
+            public String description = ''
+            public List<String> features = []
+            public ComponentDetails() {}
+            boolean validate() {
+                return true
+            }
+        }
+
+        public class TestDetails implements ValidatedObject {
+            public String name = ''
+            public List<String> steps = []
+            public List<String> expectations = []
+            public TestDetails() {}
+            boolean validate() {
+                return true
+            }
+        }
+
+        public class DocumentationDetails implements ValidatedObject {
+            public String name = ''
+            public String description = ''
+            public List<String> sections = []
+            public DocumentationDetails() {}
 
             boolean validate() {
                 return true
             }
         }
 
-        class TestDetails implements ValidatedObject {
-            String name = ''
-            List<String> steps = []
-            List<String> expectations = []
+        CodeSpecificationList buildProjectFileSpecifications(Project project, ProjectStatements requirements, ProjectDesign design, boolean recursive)
 
+        public class CodeSpecificationList implements ValidatedObject {
+            public List<CodeSpecification> files = []
+            public CodeSpecificationList() {}
             boolean validate() {
                 return true
             }
         }
 
-        class DocumentationDetails implements ValidatedObject {
-            String name = ''
-            String description = ''
-            List<String> sections = []
+        CodeSpecificationList buildComponentFileSpecifications(Project project, ProjectStatements requirements, ComponentDetails design)
 
+        TestSpecificationList buildTestFileSpecifications(Project project, ProjectStatements requirements, TestDetails design, boolean recursive)
+
+        public class TestSpecificationList implements ValidatedObject {
+            public List<TestSpecification> files = []
+            public TestSpecificationList() {}
             boolean validate() {
                 return true
             }
         }
 
-        List<CodeSpecification> buildProjectFileSpecifications(Project project, ProjectStatements requirements, ProjectDesign design, boolean recursive)
+        DocumentSpecificationList buildDocumentationFileSpecifications(Project project, ProjectStatements requirements, DocumentationDetails design, boolean recursive)
 
-        List<CodeSpecification> buildComponentFileSpecifications(Project project, ProjectStatements requirements, ComponentDetails design)
-
-        List<TestSpecification> buildTestFileSpecifications(Project project, ProjectStatements requirements, TestDetails design, boolean recursive)
-
-        List<DocumentSpecification> buildDocumentationFileSpecifications(Project project, ProjectStatements requirements, DocumentationDetails design, boolean recursive)
-
-        class CodeSpecification implements ValidatedObject {
-            String description = ''
-            List<FilePath> requires = []
-            List<String> publicProperties = []
-            List<String> publicMethodSignatures = []
-            String language = ''
-            FilePath location = new FilePath()
-
+        public class DocumentSpecificationList implements ValidatedObject {
+            public List<DocumentSpecification> files = []
+            public DocumentSpecificationList() {}
             boolean validate() {
                 return true
             }
         }
 
-        class DocumentSpecification implements ValidatedObject {
-            String description = ''
-            List<FilePath> requires = []
-            List<String> sections = []
-            String language = ''
-            FilePath location = new FilePath()
-
+        public class CodeSpecification implements ValidatedObject {
+            public String description = ''
+            public List<FilePath> requires = []
+            public List<String> publicProperties = []
+            public List<String> publicMethodSignatures = []
+            public String language = ''
+            public FilePath location = new FilePath()
+            public CodeSpecification() {}
             boolean validate() {
                 return true
             }
         }
 
-        class TestSpecification implements ValidatedObject {
-            String description = ''
-            List<FilePath> requires = []
-            List<String> steps = []
-            List<String> expectations = []
-            String language = ''
-            FilePath location = new FilePath()
-
+        public class DocumentSpecification implements ValidatedObject {
+            public String description = ''
+            public List<FilePath> requires = []
+            public List<String> sections = []
+            public String language = ''
+            public FilePath location = new FilePath()
+            public DocumentSpecification() {}
             boolean validate() {
                 return true
             }
         }
 
-        @ToString(includeNames = true)
-        @EqualsAndHashCode()
-        @Canonical
-        class FilePath implements ValidatedObject {
-            String file = ''
+        public class TestSpecification implements ValidatedObject {
+            public String description = ''
+            public List<FilePath> requires = []
+            public List<String> steps = []
+            public List<String> expectations = []
+            public String language = ''
+            public FilePath location = new FilePath()
+            public TestSpecification() {}
+            boolean validate() {
+                return true
+            }
+        }
+
+        public class FilePath implements ValidatedObject {
+            public String file = ''
+            public FilePath() {}
 
             boolean validate() {
                 return file?.isBlank() == false
@@ -176,13 +206,10 @@ class GenerateProjectAction extends FileContextAction<Settings> {
 
         SourceCode implementDocumentationSpecification(Project project, DocumentSpecification specification, DocumentationDetails documentation, List imports, DocumentSpecification specificationAgain)
 
-        @ToString(includeNames = true)
-        @EqualsAndHashCode()
-        @Canonical
-        class SourceCode implements ValidatedObject {
-            String language = ''
-            String code = ''
-
+        public class SourceCode implements ValidatedObject {
+            public String language = ''
+            public String code = ''
+            public SourceCode() {}
             boolean validate() {
                 return true
             }
@@ -225,6 +252,8 @@ class GenerateProjectAction extends FileContextAction<Settings> {
         }
     }
 
+    private static final ExecutorService threadPool = Executors.newCachedThreadPool()
+
     Map<SoftwareProjectAI.FilePath, List<SoftwareProjectAI.SourceCode>> parallelImplementWithAlternates(
             SoftwareProjectAI projectAI,
             Project project,
@@ -235,18 +264,9 @@ class GenerateProjectAction extends FileContextAction<Settings> {
             int threads,
             Closure<Double> progress
     ) {
-        def threadPool = Executors.newFixedThreadPool(threads)
-        try {
-            def totalDrafts = (
-                    components.values.toList().flatten().size() +
-                            tests.values.toList().flatten().size() +
-                            documents.values.toList().flatten().size()
-            ) * drafts
-
-
-            return components.collectMany { entry ->
-                buildComponentDetails(entry.key, entry.value) + buildDocumentDetails(entry.key, entry.value) + buildTestDetails(entry.key, entry.value)
-            }.collect {
+            return (components.collectMany { entry -> buildComponentDetails(project, entry.key, entry.value) } +
+                    documents.collectMany { entry -> buildDocumentDetails(project, entry.key, entry.value) } +
+                    tests.collectMany { entry -> buildTestDetails(project, entry.key, entry.value) }).collect {
                 try {
                     Optional.ofNullable(it.get())
                 } catch (Throwable ignored) {
@@ -256,31 +276,29 @@ class GenerateProjectAction extends FileContextAction<Settings> {
                     .groupBy { it.first }.collectEntries { Map.Entry<SoftwareProjectAI.FilePath, List<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>> entry ->
                 [(entry.key): entry.value.sort { Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode> p -> p.second.code.length() }]
             }
-        } finally {
-            threadPool.shutdown()
-        }
     }
 
     AtomicInteger currentDraft = new AtomicInteger(0)
     ConcurrentHashMap<String, List<Future<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>>> fileImplCache = new ConcurrentHashMap<String, List<Future<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>>>()
 
-    def normalizeFileName(String it) {
-        trimStart(it, ['/', '.']) ?: ""
+    static def normalizeFileName(String it) {
+        trimStart(it, ['/', '.'])
     }
 
-
-    def buildComponentDetails(SoftwareProjectAI.ComponentDetails component, List<SoftwareProjectAI.CodeSpecification> files) {
+    def buildComponentDetails(SoftwareProjectAI.Project project, SoftwareProjectAI.ComponentDetails component, List<SoftwareProjectAI.CodeSpecification> files, int drafts) {
         files.collectMany { SoftwareProjectAI.CodeSpecification file ->
             //buildCodeSpec(component, files, file)
             if (file.location == null) {
                 return new ArrayList<Future<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>>()
             }
-            fileImplCache.getOrPut(normalizeFileName(file.location.file)) {
-                (0..<drafts).collect { _ ->
+
+            def key = normalizeFileName(file.location.file)
+            if(!fileImplCache.containsKey(key)) {
+                def value = (0..<drafts).collect { _ ->
                     threadPool.submit(new Callable<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>() {
                         @Override
                         Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode> call() throws Exception {
-                            SoftwareProjectAI.SourceCode implement = api.implementComponentSpecification(
+                            SoftwareProjectAI.SourceCode implement = projectAI.implementComponentSpecification(
                                     project,
                                     component,
                                     files.findAll { file.requires?.contains(it.location) ?: false },
@@ -293,28 +311,30 @@ class GenerateProjectAction extends FileContextAction<Settings> {
                                             location: file.location
                                     )
                             )
-                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
-                            progress(progressVal)
-                            logger.info("Progress: $progressVal")
+//                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
+//                            progress(progressVal)
+//                            logger.info("Progress: $progressVal")
                             return new Pair(file.location, implement)
                         }
                     })
                 }
+                fileImplCache.put(key, value)
             }
+            return fileImplCache.get(key)
 
         }
     }
 
-    def buildDocumentDetails(SoftwareProjectAI.DocumentationDetails documentation, List<SoftwareProjectAI.DocumentSpecification> files) {
+    def buildDocumentDetails(SoftwareProjectAI.Project project, SoftwareProjectAI.DocumentationDetails documentation, List<SoftwareProjectAI.DocumentSpecification> files, int drafts) {
         files.collectMany { SoftwareProjectAI.DocumentSpecification file ->
             //buildDocumentSpec(documentation, files, file)
             if (file.location == null) {
                 return new ArrayList<Future<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>>()
             }
-            fileImplCache.getOrPut(normalizeFileName(file.location.file)) {
-                (0..<drafts).collect { _ ->
+            def key = normalizeFileName(file.location.file)
+            if(!fileImplCache.containsKey(key)) {
+                def value = (0..<drafts).collect { _ ->
                     threadPool.submit(new Callable<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.DocumentSpecification>>() {
-
                         @Override
                         Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.DocumentSpecification> call() throws Exception {
                             def implement = projectAI.implementDocumentationSpecification(
@@ -336,30 +356,33 @@ class GenerateProjectAction extends FileContextAction<Settings> {
                                             location: file.location
                                     )
                             )
-                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
-                            progress(progressVal)
-                            logger.info("Progress: $progressVal")
+//                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
+//                            progress(progressVal)
+//                            logger.info("Progress: $progressVal")
                             return new Pair(file.location, implement)
                         }
                     })
                 }
+                fileImplCache.put(key, value)
             }
+            return fileImplCache.get(key)
         }
     }
 
-
-    def buildTestDetails(SoftwareProjectAI.TestDetails test, List<SoftwareProjectAI.TestSpecification> files) {
+    def buildTestDetails(SoftwareProjectAI.Project project, SoftwareProjectAI.TestDetails test, List<SoftwareProjectAI.TestSpecification> files, int drafts) {
         files.collectMany { SoftwareProjectAI.TestSpecification file ->
             //buildTestSpec(test, files, file)
             if (file.location == null) {
                 return new ArrayList<Future<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>>()
             }
-            fileImplCache.getOrPut(normalizeFileName(file.location.file)) {
-                def futures = (0..<drafts).collect { _ ->
-                    def future = threadPool.submit(new Callable<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>() {
+
+            def key = normalizeFileName(file.location.file)
+            if(!fileImplCache.containsKey(key)) {
+                def value = (0..<drafts).collect { _ ->
+                    threadPool.submit(new Callable<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>() {
                         @Override
                         Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode> call() throws Exception {
-                            def implement = api.implementTestSpecification(
+                            def implement = projectAI.implementTestSpecification(
                                     project,
                                     new SoftwareProjectAI.TestSpecification(
                                             description: file.description,
@@ -380,129 +403,124 @@ class GenerateProjectAction extends FileContextAction<Settings> {
                                             location: file.location
                                     )
                             )
-                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
-                            progress(progressVal)
-                            logger.info("Progress: $progressVal")
+//                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
+//                            progress(progressVal)
+//                            logger.info("Progress: $progressVal")
                             return new Pair(file.location, implement)
                         }
                     })
-                    future
                 }
-                futures
+                fileImplCache.put(key, value)
             }
+            return fileImplCache.get(key)
         }
     }
 
     @SuppressWarnings("UNUSED")
-    class SettingsUI {
+    public static class SettingsUI {
         @Name("Project Description")
-        JTextArea description = new JTextArea()
+        public JTextArea description = new JTextArea()
 
         @Name("Drafts Per File")
-        JTextField drafts = new JTextField("2")
-        JCheckBox saveAlternates = new JCheckBox("Save Alternates")
+        public JTextField drafts = new JTextField("2")
+        public JCheckBox saveAlternates = new JCheckBox("Save Alternates")
+
+        public SettingsUI() {
+            description.setLineWrap(true)
+            description.setWrapStyleWord(true)
+        }
     }
 
-    static class Settings {
-        String description = ""
-        int drafts = 2
-        boolean saveAlternates = false
+    public static class Settings {
+        public String description = ""
+        public int drafts = 2
+        public boolean saveAlternates = false
+
+        public Settings() {}
     }
 
     @Override
     Settings getConfig(Project project) {
-        return UITools.showDialog(project, SettingsUI.class, Settings.class)
+        return UITools.showDialog(project, SettingsUI.class, Settings.class, "Project Settings", { config -> })
     }
+
+    SoftwareProjectAI projectAI = new ChatProxy<SoftwareProjectAI>(
+            clazz: SoftwareProjectAI.class,
+            api: api,
+            model: AppSettingsState.instance.defaultChatModel(),
+            temperature: AppSettingsState.instance.temperature,
+            deserializerRetries: 2,
+    ).create()
 
     @Override
     File[] processSelection(SelectionState state, Settings config) {
         if (config == null) return new File[0]
 
-        SoftwareProjectAI projectAI = new ChatProxy<SoftwareProjectAI>(
-                clazz: SoftwareProjectAI.class,
-                api: api,
-                model: AppSettingsState.instance.defaultChatModel(),
-                temperature: AppSettingsState.instance.temperature,
-                deserializerRetries: 2,
-        ).create()
 
-        SoftwareProjectAI.Project newProject = projectAI.newProject(config.description.trim())
+        SoftwareProjectAI.Project project = projectAI.newProject(config.description.trim())
+        def projectStatements = projectAI.getProjectStatements(config.description, project)
+        def buildProjectDesign = projectAI.buildProjectDesign(project, projectStatements)
 
-        def projectStatements = projectAI.getProjectStatements(config.description, newProject)
-        def buildProjectDesign = projectAI.buildProjectDesign(newProject, projectStatements)
-
-        def components = buildProjectDesign.components.<SoftwareProjectAI.ComponentDetails,List<SoftwareProjectAI.CodeSpecification>,SoftwareProjectAI.ComponentDetails>collectEntries { SoftwareProjectAI.ComponentDetails details ->
-            List<SoftwareProjectAI.CodeSpecification> specifications = projectAI.buildComponentFileSpecifications(
-                    newProject,
-                    projectStatements,
-                    details
-            )
-            [details: specifications]
+        def components = buildProjectDesign.components.<SoftwareProjectAI.ComponentDetails, List<SoftwareProjectAI.CodeSpecification>, SoftwareProjectAI.ComponentDetails> collectEntries {
+                [(it): projectAI.buildComponentFileSpecifications(
+                        project,
+                        projectStatements,
+                        it
+                ).files]
         }
 
-        def documents = buildProjectDesign.documents.<SoftwareProjectAI.DocumentationDetails,List<SoftwareProjectAI.DocumentSpecification>,SoftwareProjectAI.DocumentationDetails>collectEntries {
+        def documents = buildProjectDesign.documents.<SoftwareProjectAI.DocumentationDetails, List<SoftwareProjectAI.DocumentSpecification>, SoftwareProjectAI.DocumentationDetails> collectEntries {
             [(it): projectAI.buildDocumentationFileSpecifications(
-                    newProject,
+                    project,
                     projectStatements,
                     it,
                     false
-            )]
+            ).files]
         }
 
-        def tests = buildProjectDesign.tests.<SoftwareProjectAI.TestDetails,List<SoftwareProjectAI.TestSpecification>,SoftwareProjectAI.TestDetails>collectEntries {
+        def tests = buildProjectDesign.tests.<SoftwareProjectAI.TestDetails, List<SoftwareProjectAI.TestSpecification>, SoftwareProjectAI.TestDetails> collectEntries {
             [(it): projectAI.buildTestFileSpecifications(
-                    newProject,
+                    project,
                     projectStatements,
                     it,
                     false
-            )]
+            ).files]
         }
         def outputDir = new File(state.selectedFile.canonicalPath)
 
-        def threadPool = Executors.newFixedThreadPool(4)
-        Map<SoftwareProjectAI.FilePath, List<SoftwareProjectAI.SourceCode>> entries
-        try {
-//            def totalDrafts = (
-//                    components.values.toList().flatten().size() +
-//                            tests.values.toList().flatten().size() +
-//                            documents.values.toList().flatten().size()
-//            ) * drafts
-
-            def groupBy = components.collectMany { entry ->
-                buildComponentDetails(entry.key, entry.value) + buildDocumentDetails(entry.key, entry.value) + buildTestDetails(entry.key, entry.value)
-            }.collect {
-                try {
-                    Optional.ofNullable(it.get())
-                } catch (Throwable ignored) {
-                    Optional.<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>> empty()
-                }
-            }.findAll { !it.empty }.collect { it.get() }
-                    .groupBy { it.first }
-            entries = groupBy.<SoftwareProjectAI.FilePath, List<SoftwareProjectAI.SourceCode>, SoftwareProjectAI.FilePath, List<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>> collectEntries { Map.Entry<SoftwareProjectAI.FilePath, List<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>> entry ->
-                [(entry.key): entry.value.sort { Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode> p -> p.second.code.length() }]
-            }
-        } finally {
-            threadPool.shutdown()
+        def entries = (
+                components.collectMany { entry -> buildComponentDetails(project, entry.key, entry.value, config.drafts) }
+                        + documents.collectMany { entry -> buildDocumentDetails(project, entry.key, entry.value, config.drafts) }
+                        + tests.collectMany { entry -> buildTestDetails(project, entry.key, entry.value, config.drafts) })
+                .collect {
+                    try {
+                        Optional.ofNullable(it.get())
+                    } catch (Throwable ignored) {
+                        Optional.<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>> empty()
+                    }
+                }.findAll { !it.empty }.collect { it.get() }
+                .groupBy { it.first }.<SoftwareProjectAI.FilePath, List<SoftwareProjectAI.SourceCode>, SoftwareProjectAI.FilePath, List<Pair<SoftwareProjectAI.FilePath, SoftwareProjectAI.SourceCode>>> collectEntries {
+            entry -> [(entry.key): entry.value.collect { it.second}.sort { a, b -> a.code.length() <=> b.code.length()}]
         }
 
 
         def generatedFiles = []
         entries.each { file, sourceCode ->
-            def relative = trimStart(file.file?.trimEnd('/'), ['/', '.']) ?: ""
+            def relative = trimStart(trimEnd(file.file, '/'), ['/', '.']) ?: ""
             if (new File(relative).isAbsolute()) {
                 logger.warn("Invalid path: $relative")
             } else {
                 def outFile = new File(outputDir, relative)
                 outFile.parentFile.mkdirs()
-                def best = sourceCode.max { it.code?.length() ?: 0 }
-                outFile.text = best.code ?: ""
+                def best = sourceCode.max { it.code.length() }
+                outFile.text = best.code
                 logger.debug("Wrote ${outFile.canonicalPath} (Resolved from $relative)")
                 generatedFiles << outFile
                 if (config.saveAlternates)
                     sourceCode.findAll { it != best }.eachWithIndex { alternate, index ->
                         def outFileAlternate = new File(outputDir, relative + ".${index + 1}")
                         outFileAlternate.parentFile.mkdirs()
-                        outFileAlternate.text = alternate.code ?: ""
+                        outFileAlternate.text = alternate.code
                         logger.debug("Wrote ${outFileAlternate.canonicalPath} (Resolved from $relative)")
                         generatedFiles << outFileAlternate
                     }

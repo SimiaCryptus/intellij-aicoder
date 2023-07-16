@@ -24,11 +24,11 @@ abstract class FileContextAction<T : Any>(
 
     final override fun handle(event: AnActionEvent) {
         val config = getConfig(event.project)
+        val virtualFile = UITools.getSelectedFile(event) ?: UITools.getSelectedFolder(event) ?: return
+        val project = event.project ?: return
+        val projectRoot = File(project.basePath!!).toPath()
         Thread {
             try {
-                val virtualFile = UITools.getSelectedFile(event) ?: return@Thread
-                val project = event.project ?: return@Thread
-                val projectRoot = File(project.basePath!!).toPath()
 
                 UITools.redoableTask(event) {
                     UITools.run(event.project, templateText!!, true) {
@@ -69,7 +69,7 @@ abstract class FileContextAction<T : Any>(
 
     open fun getConfig(project: Project?): T? = null
 
-    var isDevAction = true
+    var isDevAction = false
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
         if (UITools.isSanctioned()) return false

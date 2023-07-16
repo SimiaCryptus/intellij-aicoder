@@ -10,10 +10,6 @@ import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.util.JsonUtil
 import java.util.*
-import java.util.Map
-import java.util.stream.Collectors
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 class SimpleEnvelope(var value: String? = null)
 
@@ -33,44 +29,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     val editorActions = ActionSettingsRegistry()
     val fileActions = ActionSettingsRegistry()
 
-
-    class MRUItems {
-        val mostUsedHistory: MutableMap<String, Int> = HashMap()
-        val mostRecentHistory: MutableList<String> = ArrayList()
-        var historyLimit = 10
-        fun addInstructionToHistory(instruction: CharSequence) {
-            synchronized(mostRecentHistory) {
-                mostRecentHistory.add(instruction.toString())
-                while (mostRecentHistory.size > historyLimit) {
-                    mostRecentHistory.removeAt(0)
-                }
-            }
-            synchronized(mostUsedHistory) {
-                mostUsedHistory.put(
-                    instruction.toString(),
-                    (mostUsedHistory[instruction] ?: 0) + 1
-                )
-            }
-
-            if (mostUsedHistory.size > historyLimit) {
-                val retain = mostUsedHistory.entries.stream()
-                    .sorted(Map.Entry.comparingByValue<String, Int>().reversed())
-                    .limit(historyLimit.toLong())
-                    .map { (key, _) -> key }.collect(
-                        Collectors.toList()
-                    )
-                val toRemove = HashSet<CharSequence>(mostUsedHistory.keys)
-                toRemove.removeAll(retain.toSet())
-                toRemove.removeAll(mostRecentHistory.toSet())
-                toRemove.forEach { key: CharSequence? ->
-                    mostUsedHistory.remove(
-                        key
-                    )
-                }
-            }
-        }
-
-    }
+    val recentCommands = mutableMapOf<String,MRUItems>()
 
     fun createChatRequest(): ChatRequest {
         return createChatRequest(defaultChatModel())
@@ -91,16 +50,14 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         return SimpleEnvelope(JsonUtil.toJson(this))
     }
 
-    val _recentCustomEdits = mutableMapOf<String,MRUItems>()
-
-    fun recentCustomEdits(id:String) = _recentCustomEdits.computeIfAbsent(id) { MRUItems() }
+    fun getRecentCommands(id:String) = recentCommands.computeIfAbsent(id) { MRUItems() }
 
     override fun loadState(state: SimpleEnvelope) {
         state.value ?: return
         val fromJson = JsonUtil.fromJson<AppSettingsState>(state.value!!, AppSettingsState::class.java)
         XmlSerializerUtil.copyBean(fromJson, this)
 
-        _recentCustomEdits.clear(); _recentCustomEdits.putAll(fromJson._recentCustomEdits)
+        recentCommands.clear(); recentCommands.putAll(fromJson.recentCommands)
         editorActions.actionSettings.clear(); editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
         fileActions.actionSettings.clear(); fileActions.actionSettings.putAll(fromJson.fileActions.actionSettings)
     }

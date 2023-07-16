@@ -70,7 +70,7 @@ class CustomEditAction extends SelectionAction<String> {
         if (instruction.isBlank()) return state.selectedText ?: ""
         def settings = AppSettingsState.instance
         def outputHumanLanguage = AppSettingsState.instance.humanLanguage
-        settings.recentCustomEdits("customEdits").addInstructionToHistory(instruction)
+        settings.getRecentCommands("customEdits").addInstructionToHistory(instruction)
         return proxy.editCode(
                 state.selectedText,
                 instruction.toString(),

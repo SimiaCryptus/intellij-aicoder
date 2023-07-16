@@ -6,7 +6,6 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.simiacryptus.openai.APIClientBase
 
 class RecentCodeEditsAction extends ActionGroup {
     void update(AnActionEvent e) {
@@ -17,7 +16,7 @@ class RecentCodeEditsAction extends ActionGroup {
     AnAction[] getChildren(AnActionEvent e) {
         if (null == e) return []
         def children = []
-        for (instruction in AppSettingsState.instance.recentCustomEdits("customEdits").mostUsedHistory.keySet()) {
+        for (instruction in AppSettingsState.instance.getRecentCommands("customEdits").mostUsedHistory.keySet()) {
             def id = children.size() + 1
             def text = id < 10 ? "_${id}: ${instruction}" : "${id}: ${instruction}"
             def element = new CustomEditAction() {

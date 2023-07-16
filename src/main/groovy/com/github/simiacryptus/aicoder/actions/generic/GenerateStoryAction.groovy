@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.dev
+package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -15,10 +15,9 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
 
     GenerateStoryAction() {
         super(false, true)
-        setDevAction(true)
     }
 
-    interface GenerateStoryAction_VirtualAPI {
+    interface AuthorAPI {
         public class Idea {
             public String title = ""
             public String description = ""
@@ -159,19 +158,19 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
     @SuppressWarnings("UNUSED")
     static class SettingsUI {
         @Name("Title")
-        JTextField title = new JTextField("How to write a book")
+        public JTextField title = new JTextField("How to write a book")
 
         @Name("Description")
-        JTextArea description = new JTextArea(
+        public JTextArea description = new JTextArea(
                 """
             |A software developer teaches a computer how to teach another computer how to write a book. 
             |They then teach another computer to use that computer to publish and sell books online.
             |Chaos ensues. Society collapses. The world ends.
-            |""".trimMargin().trim()
+            |""".stripMargin().trim()
         )
 
         @Name("Title")
-        JTextField writingStyle = new JTextField("First Person Narrative, Present Tense, 8th Grade Reading Level, Funny")
+        public JTextField writingStyle = new JTextField("First Person Narrative, Present Tense, 8th Grade Reading Level, Funny")
     }
 
     static class Settings {
@@ -187,27 +186,25 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
         return UITools.showDialog(project, SettingsUI.class, Settings.class, "Generate Story", {})
     }
 
+    def proxy = new ChatProxy<AuthorAPI>(
+            clazz: AuthorAPI.class,
+            api: api,
+            model: AppSettingsState.instance.defaultChatModel(),
+            temperature: AppSettingsState.instance.temperature,
+            deserializerRetries: 2,
+    ).create()
+
     @Override
     File[] processSelection(SelectionState state, Settings config) {
         List<File> outputFiles = []
 
         if (config) {
             File selectedFolder = state.selectedFile
-
-            def proxy = new ChatProxy<GenerateStoryAction_VirtualAPI>(
-                    clazz: GenerateStoryAction_VirtualAPI.class,
-                    api: api,
-                    model: AppSettingsState.instance.defaultChatModel(),
-                    temperature: AppSettingsState.instance.temperature,
-                    deserializerRetries: 2,
-            ).create()
-
-
-            def idea = new GenerateStoryAction_VirtualAPI.Idea(config.title, config.description)
+            def idea = new AuthorAPI.Idea(config.title, config.description)
             def storyTemplate = proxy.generatePlot(idea, 5, 5)
             def storyEvents = proxy.generatePlotPoints(idea, storyTemplate)
-            List<GenerateStoryAction_VirtualAPI.ScreenplaySegment> segments = []
-            GenerateStoryAction_VirtualAPI.ScreenplaySegment previousSegment = null
+            List<AuthorAPI.ScreenplaySegment> segments = []
+            AuthorAPI.ScreenplaySegment previousSegment = null
             storyEvents.storyEvents.each { event ->
                 segments << proxy.writeScreenplaySegment(storyTemplate, event, previousSegment, 5)
                 previousSegment = segments.last()
@@ -225,8 +222,8 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
             }.join("\n\n")
             FileUtils.write(screenplayFile, fileContents, "UTF-8")
             outputFiles << screenplayFile
-            List<GenerateStoryAction_VirtualAPI.Page> pages = []
-            GenerateStoryAction_VirtualAPI.Page previousPage = null
+            List<AuthorAPI.Page> pages = []
+            AuthorAPI.Page previousPage = null
             segments.each { segment ->
                 try {
                     pages << proxy.writeStoryPage(config.writingStyle, segment, previousPage, 2)
