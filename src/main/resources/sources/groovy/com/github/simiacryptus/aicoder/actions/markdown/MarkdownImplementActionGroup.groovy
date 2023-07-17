@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
-import org.jetbrains.annotations.Nullable
 
 class MarkdownImplementActionGroup extends ActionGroup {
     List<String> markdownLanguages = [
@@ -78,7 +77,7 @@ class MarkdownImplementActionGroup extends ActionGroup {
             this.templatePresentation.description = language
         }
 
-        interface VirtualAPI {
+        interface ConversionAPI {
             ConvertedText implement(String text, String humanLanguage, String computerLanguage)
 
             class ConvertedText {
@@ -91,8 +90,8 @@ class MarkdownImplementActionGroup extends ActionGroup {
         }
 
         def getProxy() {
-            return new ChatProxy<VirtualAPI>(
-                    clazz: VirtualAPI.class,
+            return new ChatProxy<ConversionAPI>(
+                    clazz: ConversionAPI.class,
                     api: api,
                     model: AppSettingsState.instance.defaultChatModel(),
                     temperature: AppSettingsState.instance.temperature,
@@ -101,7 +100,7 @@ class MarkdownImplementActionGroup extends ActionGroup {
         }
 
         @Override
-        java.lang.String getConfig(@Nullable Project project) {
+        java.lang.String getConfig(Project project) {
             return ""
         }
 

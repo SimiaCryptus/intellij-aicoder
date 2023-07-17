@@ -63,7 +63,7 @@ class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> 
         Path outputPath = state.projectRoot.toPath().resolve(analogue.path)
         if (outputPath.toFile().exists()) {
             String extension = outputPath.toString().split("\\.").last()
-            String name = outputPath.toString().split("\\.").dropLast(1).joinToString(".")
+            String name = outputPath.toString().split("\\.").dropRight(1).join(".")
             int fileIndex = (1..Integer.MAX_VALUE).find {
                 !new File(state.projectRoot, "$name.$it.$extension").exists()
             }
