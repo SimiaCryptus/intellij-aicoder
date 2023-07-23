@@ -13,10 +13,7 @@ import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.skyenet.Heart
-import com.simiacryptus.skyenet.body.ClasspathResource
-import com.simiacryptus.skyenet.body.InterviewSession
-import com.simiacryptus.skyenet.body.SkyenetCodingSession
-import com.simiacryptus.skyenet.body.SkyenetCodingSessionServer
+import com.simiacryptus.skyenet.body.*
 import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
 import org.eclipse.jetty.util.resource.Resource
 import org.jdesktop.swingx.JXButton
@@ -50,12 +47,12 @@ class CodeChatAction : BaseAction() {
 
         open inner class CodeChatSession(sessionId: String) : SkyenetCodingSession(sessionId, this@CodeChatServer) {
             override fun run(userMessage: String) {
-                var messageTrail = InterviewSession.initialText(userMessage)
-                send("""$messageTrail<div>$spinner</div>""")
+                var messageTrail = ChatSession.divInitializer()
+                send("""$messageTrail<div>$userMessage</div><div>$spinner</div>""")
                 messages += ChatMessage(ChatMessage.Role.user, userMessage)
                 val response = api.chat(chatRequest, model).choices?.first()?.message?.content.orEmpty()
                 messages += ChatMessage(ChatMessage.Role.assistant, response)
-                messageTrail += """<div><pre>$response</pre></div>"""
+                messageTrail += """<div><pre>${ChatSessionFlexmark.renderMarkdown(response)}</pre></div>"""
                 send(messageTrail)
             }
 
@@ -63,10 +60,14 @@ class CodeChatAction : BaseAction() {
                 ChatMessage(
                     ChatMessage.Role.system, """
                         |You are a helpful AI that helps people with coding.
+                        |
                         |You will be answering questions about the following code:
+                        |
                         |```$language
                         |$codeSelection
                         |```
+                        |
+                        |Responses may use markdown formatting.
                         """.trimMargin()
                 )
             ).toMutableList()
