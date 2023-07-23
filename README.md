@@ -9,12 +9,16 @@
 # **AI Coding Assistant Plugin for IntelliJ**
 
 Welcome to the AI Coding Assistant, a robust IntelliJ plugin that empowers developers to streamline their coding
-workflow using ChatGPT/GPT4. Unlike traditional autocomplete AI plugins such as GitHub Copilot or AWS
-CodeWhisperer, our plugin offers actively-invoked actions that complement and enhance your coding experience.
+workflow using ChatGPT/GPT4. Our plugin compliments others such as GitHub Copilot or AWS CodeWhisperer - 
+Where those concentrate on passively enhancing the IDE with autocomplete, our plugin offers actively-invoked actions 
+that complement and enhance your coding experience. An OpenAI access token is required to use this tool.
 
-In addition to our predefined actions, our latest version introduces customizable actions, giving you the power to
-create your own tools through editable Groovy source files. An OpenAI access token is required to unlock these dynamic
-features.
+In addition to our predefined actions, our latest version introduces:
+
+1. Customizable actions, giving you the power to create your own tools through editable Groovy source files
+2. Toolbar UI for quick configuration of temperature/model and display of current token count
+3. Ability to intercept and edit individual API requests
+4. Ability to log api requests and responses to a file
 
 ## **Installation & Configuration**
 
@@ -71,8 +75,9 @@ include `Open Code Chat`, `Launch Skyenet`, and `Print PSI Tree`.
 
 ## **Support**
 
-Should you encounter issues or require further information, please consult our comprehensive documentation and FAQs. For
-further assistance, you can reach our support team through our contact page.
+Should you encounter issues or require further information, please file an issue on our github project.
+
+Understand that this plugin is in active development, and we are constantly working to improve and expand its abilities.
 
 With AI Coding Assistant, coding becomes more efficient, versatile, and customizable, enhancing your productivity and
 creative potential. We look forward to seeing what you will create!
