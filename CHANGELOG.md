@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [1.2.7]
+
+### Improved
+- Clarity of sanctioning logic via UI message
+
 ## [1.2.4]
 
 ### Fixed

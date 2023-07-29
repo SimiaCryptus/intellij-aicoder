@@ -29,7 +29,6 @@ abstract class FileContextAction<T : Any>(
         val projectRoot = File(project.basePath!!).toPath()
         Thread {
             try {
-
                 UITools.redoableTask(event) {
                     UITools.run(event.project, templateText!!, true) {
                         val newFiles = try {
@@ -62,7 +61,7 @@ abstract class FileContextAction<T : Any>(
                     }
                 }
             } catch (e: Throwable) {
-                log.warn("Error in ${javaClass.simpleName}", e)
+                UITools.error(log, "Error in ${javaClass.simpleName}", e)
             }
         }.start()
     }

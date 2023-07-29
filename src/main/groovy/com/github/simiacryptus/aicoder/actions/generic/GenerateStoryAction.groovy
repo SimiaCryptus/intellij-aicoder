@@ -229,7 +229,7 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
                     pages << proxy.writeStoryPage(config.writingStyle, segment, previousPage, 2)
                     previousPage = pages.last()
                 } catch (Exception e) {
-                    log.warn("Failed to write page: ${e.message}", e)
+                    UITools.error(log,"Failed to write page: ${e.message}", e)
                 }
             }
             File storyFile = new File(new File(selectedFolder.path), config.title + ".md")
