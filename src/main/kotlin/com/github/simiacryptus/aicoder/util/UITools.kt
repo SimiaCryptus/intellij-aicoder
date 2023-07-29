@@ -491,7 +491,7 @@ object UITools {
             } catch (e: IllegalAccessException) {
                 throw RuntimeException(e)
             } catch (e: Throwable) {
-                UITools.error(log,"Error processing " + field.name, e)
+                UITools.error(log, "Error processing " + field.name, e)
             }
         }
     }
@@ -517,7 +517,7 @@ object UITools {
             } catch (e: IllegalAccessException) {
                 throw RuntimeException(e)
             } catch (e: Throwable) {
-                UITools.error(log,"Error processing " + field.name, e)
+                UITools.error(log, "Error processing " + field.name, e)
             }
         }
     }
@@ -901,12 +901,20 @@ object UITools {
         log?.error(msg, e)
         errorLog += Pair(msg, e)
         Thread {
-            if (matches(e, ModerationException::class.java)) {
-                JOptionPane.showMessageDialog(null, e.message, "This request was rejected by OpenAI Moderation", JOptionPane.WARNING_MESSAGE)
+            if (e.matches { ModerationException::class.java.isAssignableFrom(it.javaClass) }) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    e.message,
+                    "This request was rejected by OpenAI Moderation",
+                    JOptionPane.WARNING_MESSAGE
+                )
             } else {
                 val formBuilder = FormBuilder.createFormBuilder()
 
-                formBuilder.addLabeledComponent("Error", JLabel("Oops! Something went wrong. An error report has been generated. You can copy and paste the report below into a new issue on our Github page."))
+                formBuilder.addLabeledComponent(
+                    "Error",
+                    JLabel("Oops! Something went wrong. An error report has been generated. You can copy and paste the report below into a new issue on our Github page.")
+                )
 
                 val bugReportTextArea = JBTextArea()
                 bugReportTextArea.rows = 40
@@ -929,16 +937,20 @@ object UITools {
                 |
                 |Action History:
                 |
-                |${actionLog.joinToString("\n") { "* ${it.replace("\n","\n  ")}" } }
+                |${actionLog.joinToString("\n") { "* ${it.replace("\n", "\n  ")}" }}
                 |
                 |Error History:
                 |
-                |${errorLog.filter { it.second != e }.joinToString("\n") { """
+                |${
+                    errorLog.filter { it.second != e }.joinToString("\n") {
+                        """
                     |${it.first}
                     |```
                     |${toString(it.second)}
                     |```
-                    |""".trimMargin() } }
+                    |""".trimMargin()
+                    }
+                }
                 |
                 """.trimMargin()
                 formBuilder.addLabeledComponent("System Report", wrapScrollPane(bugReportTextArea))
@@ -957,17 +969,18 @@ object UITools {
                         modal = true
                     )
                 log.info("showOptionDialog = $showOptionDialog")
-                //JOptionPane.showMessageDialog(null, e.message, "Error", JOptionPane.ERROR_MESSAGE)
             }
         }.start()
     }
 
-    private fun <T : Any> matches(e: Throwable, clazz: Class<T>): Boolean {
-        if (clazz.isAssignableFrom(e.javaClass)) return true
-        if (e.cause != null && e.cause !== e) return matches(e.cause!!, clazz)
+    @JvmStatic
+    fun Throwable.matches(matchFn: (Throwable) -> Boolean): Boolean {
+        if (matchFn(this)) return true
+        if (this.cause != null && this.cause !== this) return this.cause!!.matches(matchFn)
         return false
     }
 
+    @JvmStatic
     fun toString(e: Throwable): String {
         val sw = StringWriter()
         val pw = PrintWriter(sw)

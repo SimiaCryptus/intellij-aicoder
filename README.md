@@ -8,7 +8,7 @@
 
 **IMPORTANT**: Due to the war of aggression, widespread war crimes, and acts of genocide committed by the Russian
 Federation against Ukraine and various other countries, this plugin will not function in Russian locales, or for the
-Russian language outside a locale whitelist. (This is this reason for many of the 1-star reviews.)
+Russian language outside a locale whitelist.
 
 _We are working on a solution to this problem_, but cannot yet promise a date for the Ukrainian victory. 
 **_Slava Ukraini!_**
