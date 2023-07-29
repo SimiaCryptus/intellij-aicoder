@@ -54,6 +54,7 @@ class PasteAction extends SelectionAction<String> {
     @Override
     boolean isEnabled(AnActionEvent event) {
         if (getClipboard() == null) return false
+        if (UITools.isSanctioned()) return false
         return super.isEnabled(event)
     }
 

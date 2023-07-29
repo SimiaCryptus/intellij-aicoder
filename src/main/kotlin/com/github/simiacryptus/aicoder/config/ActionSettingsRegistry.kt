@@ -2,6 +2,7 @@
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.github.simiacryptus.aicoder.ui.EditorMenu
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import groovy.lang.GroovyClassLoader
 import java.io.File
@@ -43,7 +44,7 @@ class ActionSettingsRegistry {
                     }
                     actionConfig.version = version
                 } catch (e: Throwable) {
-                    log.warn("Error loading ${it.javaClass}", e)
+                    UITools.error(log, "Error loading ${it.javaClass}", e)
                 }
             }
         }
@@ -53,7 +54,7 @@ class ActionSettingsRegistry {
                 if (!it.enabled) return@forEach
                 children.add(it.buildAction(it.file.readText()))
             } catch (e: Throwable) {
-                log.warn("Error loading dynamic action", e)
+                UITools.error(log, "Error loading dynamic action", e)
             }
         }
         return children.toTypedArray()

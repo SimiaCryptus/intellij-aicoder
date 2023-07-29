@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -30,17 +29,19 @@ import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.ModerationException
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.StringUtil
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Toolkit
+import org.jdesktop.swingx.JXButton
+import org.slf4j.LoggerFactory
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.beans.PropertyChangeEvent
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import java.net.URI
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
@@ -56,7 +57,7 @@ import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaType
 
 object UITools {
-    private val log = Logger.getInstance(UITools::class.java)
+    private val log = LoggerFactory.getLogger(UITools::class.java)
     val retry = WeakHashMap<Document, Runnable>()
 
     @JvmStatic
@@ -84,7 +85,7 @@ object UITools {
         }
 
         override fun onFailure(t: Throwable) {
-            handle(t)
+            error(log, "Error", t)
         }
     }
 
@@ -202,12 +203,6 @@ object UITools {
     }
 
     @JvmStatic
-    fun handle(ex: Throwable) {
-        if (ex !is ModerationException) log.error(ex)
-        JOptionPane.showMessageDialog(null, ex.message, "Warning", JOptionPane.WARNING_MESSAGE)
-    }
-
-    @JvmStatic
     fun getIndent(event: AnActionEvent): CharSequence {
         val caret = event.getData(CommonDataKeys.CARET)
         val indent: CharSequence = if (null == caret) {
@@ -297,7 +292,7 @@ object UITools {
                 }
                 settingsField[settings] = newSettingsValue
             } catch (e: Throwable) {
-                RuntimeException("Error processing $settingsField", e).printStackTrace()
+                throw RuntimeException("Error processing $settingsField", e)
             }
         }
     }
@@ -359,7 +354,7 @@ object UITools {
                     }
                     settingsField.setter.call(settings, newSettingsValue)
                 } catch (e: Throwable) {
-                    RuntimeException("Error processing $settingsField", e).printStackTrace()
+                    throw RuntimeException("Error processing $settingsField", e)
                 }
             }
         }
@@ -419,7 +414,7 @@ object UITools {
                     }
                 }
             } catch (e: Throwable) {
-                RuntimeException("Error processing $settingsField", e).printStackTrace()
+                throw RuntimeException("Error processing $settingsField", e)
             }
         }
     }
@@ -470,7 +465,7 @@ object UITools {
                     }
                 }
             } catch (e: Throwable) {
-                RuntimeException("Error processing $settingsField", e).printStackTrace()
+                throw RuntimeException("Error processing $settingsField", e)
             }
         }
     }
@@ -496,7 +491,7 @@ object UITools {
             } catch (e: IllegalAccessException) {
                 throw RuntimeException(e)
             } catch (e: Throwable) {
-                log.warn("Error processing " + field.name, e)
+                UITools.error(log, "Error processing " + field.name, e)
             }
         }
     }
@@ -522,7 +517,7 @@ object UITools {
             } catch (e: IllegalAccessException) {
                 throw RuntimeException(e)
             } catch (e: Throwable) {
-                log.warn("Error processing " + field.name, e)
+                UITools.error(log, "Error processing " + field.name, e)
             }
         }
     }
@@ -891,6 +886,106 @@ object UITools {
             result = IndentedText.fromString2(result).withIndent(indent).toString()
             indent.toString() + result
         }
+    }
+
+    private val errorLog = mutableListOf<Pair<String, Throwable>>()
+    private val actionLog = mutableListOf<String>()
+
+    @JvmStatic
+    fun logAction(message: String) {
+        actionLog += message
+    }
+
+    @JvmStatic
+    fun error(log: org.slf4j.Logger, msg: String, e: Throwable) {
+        log?.error(msg, e)
+        errorLog += Pair(msg, e)
+        Thread {
+            if (e.matches { ModerationException::class.java.isAssignableFrom(it.javaClass) }) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    e.message,
+                    "This request was rejected by OpenAI Moderation",
+                    JOptionPane.WARNING_MESSAGE
+                )
+            } else {
+                val formBuilder = FormBuilder.createFormBuilder()
+
+                formBuilder.addLabeledComponent(
+                    "Error",
+                    JLabel("Oops! Something went wrong. An error report has been generated. You can copy and paste the report below into a new issue on our Github page.")
+                )
+
+                val bugReportTextArea = JBTextArea()
+                bugReportTextArea.rows = 40
+                bugReportTextArea.columns = 80
+                bugReportTextArea.isEditable = false
+                bugReportTextArea.text = """
+                |Log Message: $msg
+                |Error Message: ${e.message}
+                |Error Type: ${e.javaClass.name}
+                |API Base: ${AppSettingsState.instance.apiBase}
+                |Token Counter: ${AppSettingsState.instance.tokenCounter}
+                |
+                |OS: ${System.getProperty("os.name")} / ${System.getProperty("os.version")} / ${System.getProperty("os.arch")}
+                |Locale: ${Locale.getDefault().country} / ${Locale.getDefault().language}
+                |
+                |Error Details:
+                |```
+                |${toString(e)}
+                |```
+                |
+                |Action History:
+                |
+                |${actionLog.joinToString("\n") { "* ${it.replace("\n", "\n  ")}" }}
+                |
+                |Error History:
+                |
+                |${
+                    errorLog.filter { it.second != e }.joinToString("\n") {
+                        """
+                    |${it.first}
+                    |```
+                    |${toString(it.second)}
+                    |```
+                    |""".trimMargin()
+                    }
+                }
+                |
+                """.trimMargin()
+                formBuilder.addLabeledComponent("System Report", wrapScrollPane(bugReportTextArea))
+
+                val openButton = JXButton("Open New Issue on our Github page")
+                openButton.addActionListener {
+                    Desktop.getDesktop().browse(URI("https://github.com/SimiaCryptus/intellij-aicoder/issues/new"))
+                }
+                formBuilder.addLabeledComponent("Report Issue/Request Help", openButton)
+
+                val showOptionDialog =
+                    UITools.showOptionDialog(
+                        formBuilder.panel,
+                        "Close",
+                        title = "Error",
+                        modal = true
+                    )
+                log.info("showOptionDialog = $showOptionDialog")
+            }
+        }.start()
+    }
+
+    @JvmStatic
+    fun Throwable.matches(matchFn: (Throwable) -> Boolean): Boolean {
+        if (matchFn(this)) return true
+        if (this.cause != null && this.cause !== this) return this.cause!!.matches(matchFn)
+        return false
+    }
+
+    @JvmStatic
+    fun toString(e: Throwable): String {
+        val sw = StringWriter()
+        val pw = PrintWriter(sw)
+        e.printStackTrace(pw)
+        return sw.toString()
     }
 
 

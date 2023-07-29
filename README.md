@@ -6,11 +6,18 @@
 
 <!-- Plugin description -->
 
+**IMPORTANT**: Due to the war of aggression, widespread war crimes, and acts of genocide committed by the Russian
+Federation against Ukraine and various other countries, this plugin will not function in Russian locales, or for the
+Russian language outside a locale whitelist.
+
+_We are working on a solution to this problem_, but cannot yet promise a date for the Ukrainian victory. 
+**_Slava Ukraini!_**
+
 # **AI Coding Assistant Plugin for IntelliJ**
 
 Welcome to the AI Coding Assistant, a robust IntelliJ plugin that empowers developers to streamline their coding
-workflow using ChatGPT/GPT4. Our plugin compliments others such as GitHub Copilot or AWS CodeWhisperer - 
-Where those concentrate on passively enhancing the IDE with autocomplete, our plugin offers actively-invoked actions 
+workflow using ChatGPT/GPT4. Our plugin compliments others such as GitHub Copilot or AWS CodeWhisperer -
+Where those concentrate on passively enhancing the IDE with autocomplete, our plugin offers actively-invoked actions
 that complement and enhance your coding experience. An OpenAI access token is required to use this tool.
 
 In addition to our predefined actions, our latest version introduces:

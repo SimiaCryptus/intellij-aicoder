@@ -100,7 +100,7 @@ class ConvertFileTo : ActionGroup() {
                         val newFile = getNewFile(project, virtualFile, targetLanguage)
                         write(project, newFile, content.toString())
                     } catch (e: Throwable) {
-                        log.error("Error translating", e)
+                        UITools.error(log, "Error translating", e)
                     }
                 }
             }.start()

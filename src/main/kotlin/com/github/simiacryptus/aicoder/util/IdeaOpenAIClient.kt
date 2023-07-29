@@ -36,16 +36,30 @@ class IdeaOpenAIClient : OpenAIClient(
     ): ChatResponse {
         lastEvent ?: return super.chat(completionRequest, model)
         if (isInRequest.getAndSet(true)) {
-            return super.chat(completionRequest, model)
+            val response = super.chat(completionRequest, model)
+            UITools.logAction("""
+                |Chat Response: ${JsonUtil.toJson(response.usage!!)}
+            """.trimMargin().trim())
+            return response
         } else {
             try {
-                if (!AppSettingsState.instance.editRequests) return super.chat(completionRequest, model)
+                if (!AppSettingsState.instance.editRequests) {
+                    val response = super.chat(completionRequest, model)
+                    UITools.logAction("""
+                        |Chat Response: ${JsonUtil.toJson(response.usage!!)}
+                    """.trimMargin().trim())
+                    return response
+                }
                 return withJsonDialog(completionRequest, {
                     val chatRequest = it
                     UITools.run(
                         lastEvent!!.project, "OpenAI Request", true, suppressProgress = false
                     ) {
-                        super.chat(chatRequest, model)
+                        val response = super.chat(chatRequest, model)
+                        UITools.logAction("""
+                            |Chat Response: ${JsonUtil.toJson(response.usage!!)}
+                        """.trimMargin().trim())
+                        response
                     }
                 }, "Edit Chat Request")
             } finally {
@@ -58,7 +72,11 @@ class IdeaOpenAIClient : OpenAIClient(
     override fun complete(request: CompletionRequest, model: Model): CompletionResponse {
         lastEvent ?: return super.complete(request, model)
         if (isInRequest.getAndSet(true)) {
-            return super.complete(request, model)
+            val response = super.complete(request, model)
+            UITools.logAction("""
+                |Completion Response: ${JsonUtil.toJson(response.usage!!)}
+            """.trimMargin().trim())
+            return response
         } else {
             try {
                 if (!AppSettingsState.instance.editRequests) return super.complete(request, model)
@@ -67,7 +85,11 @@ class IdeaOpenAIClient : OpenAIClient(
                     UITools.run(
                         lastEvent!!.project, "OpenAI Request", true, suppressProgress = false
                     ) {
-                        super.complete(completionRequest, model)
+                        val response = super.complete(completionRequest, model)
+                        UITools.logAction("""
+                            |Completion Response: ${JsonUtil.toJson(response.usage!!)}
+                        """.trimMargin().trim())
+                        response
                     }
                 }, "Edit Completion Request")
             } finally {
@@ -99,7 +121,7 @@ class IdeaOpenAIClient : OpenAIClient(
 
     companion object {
 
-        val api: OpenAIClient by lazy { IdeaOpenAIClient() }
+        val api: OpenAIClient get() = IdeaOpenAIClient()
         var lastEvent: AnActionEvent? = null
         fun uiEdit(
             project: Project? = null,
