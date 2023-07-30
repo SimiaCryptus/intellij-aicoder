@@ -6,13 +6,6 @@
 
 <!-- Plugin description -->
 
-**IMPORTANT**: Due to the war of aggression, widespread war crimes, and acts of genocide committed by the Russian
-Federation against Ukraine and various other countries, this plugin will not function in Russian locales, or for the
-Russian language outside a locale whitelist.
-
-_We are working on a solution to this problem_, but cannot yet promise a date for the Ukrainian victory. 
-**_Slava Ukraini!_**
-
 # **AI Coding Assistant Plugin for IntelliJ**
 
 Welcome to the AI Coding Assistant, a robust IntelliJ plugin that empowers developers to streamline their coding
@@ -26,6 +19,12 @@ In addition to our predefined actions, our latest version introduces:
 2. Toolbar UI for quick configuration of temperature/model and display of current token count
 3. Ability to intercept and edit individual API requests
 4. Ability to log api requests and responses to a file
+
+**NOTE**: Due to the war of aggression, widespread war crimes, and acts of genocide committed by the Russian
+Federation against Ukraine and various other countries, this plugin will not function for Russian users.
+
+_We are working on a solution to this problem_, but cannot yet promise a date for the Ukrainian victory.
+**_Slava Ukraini!_**
 
 ## **Installation & Configuration**
 
