@@ -755,7 +755,6 @@ object UITools {
 
     @JvmStatic
     fun getSelectedFolder(e: AnActionEvent): VirtualFile? {
-        val project = e.project
         val dataContext = e.dataContext
         val data = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext)
         if (data != null && data.isDirectory) {
@@ -768,7 +767,7 @@ object UITools {
                 return file.parent
             }
         }
-        return project?.baseDir
+        return null
     }
 
     @JvmStatic
