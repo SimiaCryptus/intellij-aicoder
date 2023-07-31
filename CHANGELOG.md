@@ -4,9 +4,16 @@
 
 ## [Unreleased]
 
+## [1.2.8]
+
+### Improved
+- Improved error dialog for groovy errors
+- Expanded support for latest IntelliJ versions
+
 ## [1.2.7]
 
 ### Improved
+- Improved error dialog
 - Clarity of sanctioning logic via UI message
 
 ## [1.2.4]

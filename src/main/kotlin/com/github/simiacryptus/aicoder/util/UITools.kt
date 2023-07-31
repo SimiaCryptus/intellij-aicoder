@@ -2,16 +2,20 @@
 
 package com.github.simiacryptus.aicoder.util
 
+import com.github.simiacryptus.aicoder.config.ActionSettingsRegistry
+import com.github.simiacryptus.aicoder.config.ActionTable
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.google.common.util.concurrent.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -20,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -29,6 +34,7 @@ import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.ModerationException
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.StringUtil
+import groovy.lang.GroovyRuntimeException
 import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory
 import java.awt.*
@@ -749,7 +755,6 @@ object UITools {
 
     @JvmStatic
     fun getSelectedFolder(e: AnActionEvent): VirtualFile? {
-        val project = e.project
         val dataContext = e.dataContext
         val data = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext)
         if (data != null && data.isDirectory) {
@@ -762,7 +767,7 @@ object UITools {
                 return file.parent
             }
         }
-        return project?.baseDir
+        return null
     }
 
     @JvmStatic
@@ -896,18 +901,97 @@ object UITools {
         actionLog += message
     }
 
+    val singleThreadPool = Executors.newSingleThreadExecutor()
     @JvmStatic
     fun error(log: org.slf4j.Logger, msg: String, e: Throwable) {
         log?.error(msg, e)
         errorLog += Pair(msg, e)
-        Thread {
-            if (e.matches { ModerationException::class.java.isAssignableFrom(it.javaClass) }) {
+        singleThreadPool.submit {
+            if(AppSettingsState.instance.suppressErrors) {
+                return@submit
+            } else if (e.matches { ModerationException::class.java.isAssignableFrom(it.javaClass) }) {
                 JOptionPane.showMessageDialog(
                     null,
                     e.message,
                     "This request was rejected by OpenAI Moderation",
                     JOptionPane.WARNING_MESSAGE
                 )
+            } else if (e.matches { GroovyRuntimeException::class.java.isAssignableFrom(it.javaClass) }) {
+                val groovyRuntimeException = e.get { GroovyRuntimeException::class.java.isAssignableFrom(it.javaClass) } as GroovyRuntimeException?
+                val dynamicActionException = e.get { ActionSettingsRegistry.DynamicActionException::class.java.isAssignableFrom(it.javaClass) } as ActionSettingsRegistry.DynamicActionException?
+                val formBuilder = FormBuilder.createFormBuilder()
+
+                formBuilder.addLabeledComponent(
+                    "Error",
+                    JLabel("An error occurred while executing the groovy action.")
+                )
+
+                val bugReportTextArea = JBTextArea()
+                bugReportTextArea.rows = 40
+                bugReportTextArea.columns = 80
+                bugReportTextArea.isEditable = false
+                bugReportTextArea.text = """
+                |Action Name: ${dynamicActionException?.actionSetting?.displayText}
+                |Action ID: ${dynamicActionException?.actionSetting?.id}
+                |Groovy Error: ${groovyRuntimeException?.message}
+                |
+                |Error Details:
+                |```
+                |${toString(e)}
+                |```
+                |""".trimMargin()
+                formBuilder.addLabeledComponent("Error Report", wrapScrollPane(bugReportTextArea))
+
+                if(!(dynamicActionException?.actionSetting?.isDynamic ?: true)) {
+                    val openButton = JXButton("Revert to Default")
+                    openButton.addActionListener {
+                        dynamicActionException?.actionSetting?.file?.delete()
+                    }
+                    formBuilder.addLabeledComponent("Revert Built-in Action", openButton)
+                }
+
+                if(null != dynamicActionException) {
+                    val openButton = JXButton("Open Dynamic Action")
+                    openButton.addActionListener {
+                        dynamicActionException?.file?.let {
+                            val project = ApplicationManager.getApplication().runReadAction<Project> {
+                                com.intellij.openapi.project.ProjectManager.getInstance().openProjects.firstOrNull()
+                            }
+                            if (it.exists()) {
+                                ApplicationManager.getApplication().invokeLater {
+                                    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(it)
+                                    FileEditorManager.getInstance(project!!).openFile(virtualFile!!, true)
+                                }
+                            } else {
+                                Thread {
+                                    showOptionDialog(
+                                        formBuilder.panel,
+                                        "Dismiss",
+                                        title = "Error - File Not Found",
+                                        modal = true
+                                    )
+                                }.start()
+                            }
+                        }
+
+                    }
+                    formBuilder.addLabeledComponent("View Code", openButton)
+                }
+
+                val supressFutureErrors = JCheckBox("Suppress Future Error Popups")
+                supressFutureErrors.isSelected = false
+                formBuilder.addComponent(supressFutureErrors)
+
+                val showOptionDialog = showOptionDialog(
+                        formBuilder.panel,
+                        "Dismiss",
+                        title = "Error",
+                        modal = true
+                    )
+                log.info("showOptionDialog = $showOptionDialog")
+                if(supressFutureErrors.isSelected) {
+                    AppSettingsState.instance.suppressErrors = true
+                }
             } else {
                 val formBuilder = FormBuilder.createFormBuilder()
 
@@ -951,8 +1035,7 @@ object UITools {
                     |""".trimMargin()
                     }
                 }
-                |
-                """.trimMargin()
+                |""".trimMargin()
                 formBuilder.addLabeledComponent("System Report", wrapScrollPane(bugReportTextArea))
 
                 val openButton = JXButton("Open New Issue on our Github page")
@@ -961,16 +1044,22 @@ object UITools {
                 }
                 formBuilder.addLabeledComponent("Report Issue/Request Help", openButton)
 
-                val showOptionDialog =
-                    UITools.showOptionDialog(
+                val supressFutureErrors = JCheckBox("Suppress Future Error Popups")
+                supressFutureErrors.isSelected = false
+                formBuilder.addComponent(supressFutureErrors)
+
+                val showOptionDialog = showOptionDialog(
                         formBuilder.panel,
-                        "Close",
+                        "Dismiss",
                         title = "Error",
                         modal = true
                     )
                 log.info("showOptionDialog = $showOptionDialog")
+                if(supressFutureErrors.isSelected) {
+                    AppSettingsState.instance.suppressErrors = true
+                }
             }
-        }.start()
+        }
     }
 
     @JvmStatic
@@ -978,6 +1067,13 @@ object UITools {
         if (matchFn(this)) return true
         if (this.cause != null && this.cause !== this) return this.cause!!.matches(matchFn)
         return false
+    }
+
+    @JvmStatic
+    fun Throwable.get(matchFn: (Throwable) -> Boolean): Throwable? {
+        if (matchFn(this)) return this
+        if (this.cause != null && this.cause !== this) return this.cause!!.get(matchFn)
+        return null
     }
 
     @JvmStatic

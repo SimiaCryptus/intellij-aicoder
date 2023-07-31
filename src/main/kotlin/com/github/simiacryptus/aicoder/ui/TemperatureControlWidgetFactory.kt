@@ -3,16 +3,20 @@
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.ui.IconManager
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.Panel
 import com.intellij.util.Consumer
+import com.intellij.util.IconUtil
+import com.intellij.webSymbols.webTypes.WebTypesSvgStringIconLoader
 import kotlinx.coroutines.CoroutineScope
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.nio.charset.Charset
 import java.util.concurrent.Executors
 import javax.swing.Icon
 import javax.swing.JSlider
@@ -67,13 +71,8 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
             }
         }
 
-        override fun getIcon(): Icon? {
-            return IconManager.getInstance().loadRasterizedIcon(
-                "META-INF/pluginIcon.svg",
-                TemperatureControlWidgetFactory::class.java.classLoader,
-                2071392878, 0
-            )
-        }
+        override fun getIcon(): Icon? =
+            IconLoader.findIcon(javaClass.classLoader.getResource("./META-INF/pluginIcon.svg"))
 
         override fun getPresentation(): StatusBarWidget.WidgetPresentation? {
             return this
@@ -94,5 +93,13 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
 
     override fun createWidget(project: Project): StatusBarWidget {
         return TemperatureControlWidget()
+    }
+
+    override fun isAvailable(project: Project): Boolean {
+        return true
+    }
+
+    override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
+        return true
     }
 }

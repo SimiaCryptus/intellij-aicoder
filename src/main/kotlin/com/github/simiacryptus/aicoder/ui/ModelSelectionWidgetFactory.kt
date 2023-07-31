@@ -50,8 +50,6 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
             return "Current active model"
         }
 
-        override fun getClickConsumer(): com.intellij.util.Consumer<MouseEvent>? = null
-
         override fun getSelectedValue(): String? {
             return activeModel
         }
@@ -101,5 +99,13 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
 
     override fun createWidget(project: Project): StatusBarWidget {
         return ModelSelectionWidget()
+    }
+
+    override fun isAvailable(project: Project): Boolean {
+        return true
+    }
+
+    override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
+        return true
     }
 }

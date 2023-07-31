@@ -1,10 +1,11 @@
 ﻿import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
-fun properties(key: String) = project.findProperty(key).toString()
+fun properties(key: String) = providers.gradleProperty(key).get()
+fun environment(key: String) = providers.environmentVariable(key).get()
 
 plugins {
-    id("java")
+    id("java") // Java support
     id("groovy")
     id("org.jetbrains.kotlin.jvm") version "1.7.22"
     id("org.jetbrains.intellij") version "1.14.1"
@@ -72,8 +73,8 @@ tasks.named("processResources") {
 }
 
 kotlin {
-    jvmToolchain(11)
-//    jvmToolchain(17)
+//    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 tasks {

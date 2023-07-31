@@ -33,6 +33,10 @@ class AppSettingsComponent {
     val humanLanguage = JBTextField()
 
     @Suppress("unused")
+    @Name("Suppress Errors")
+    val suppressErrors = JBCheckBox()
+
+    @Suppress("unused")
     @Name("Use GPT-4")
     val useGPT4 = JBCheckBox()
 

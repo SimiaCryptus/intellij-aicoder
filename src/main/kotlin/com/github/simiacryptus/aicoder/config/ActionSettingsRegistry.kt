@@ -11,7 +11,7 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
     val actionSettings: MutableMap<String, ActionSettings> = HashMap()
-    val version = 1.3
+    val version = 1.4
 
     fun edit(superChildren: Array<out AnAction>): Array<AnAction> {
         val children = superChildren.toList().toMutableList()
@@ -34,12 +34,28 @@ class ActionSettingsRegistry {
                         || (actionConfig.version ?: 0.0) < version
                     ) {
                         actionConfig.file.writeText(code)
+                        actionConfig.version = version
+                    } else if (!actionConfig.isDynamic && (actionConfig.version ?: 0.0) < version) {
+                        val canLoad = try {
+                            ActionSettingsRegistry::class.java.classLoader.loadClass(actionConfig.id)
+                            true
+                        } catch (e: Throwable) {
+                            false
+                        }
+                        if(canLoad) {
+                            actionConfig.file.writeText(code)
+                            actionConfig.version = version
+                        } else {
+                            children.remove(it)
+                        }
                     } else {
                         val localCode = actionConfig.file.readText()
                         if (localCode != code) {
                             val element = actionConfig.buildAction(localCode)
-                            children.remove(it)
-                            children.add(element)
+                            if(null != element) {
+                                children.remove(it)
+                                children.add(element)
+                            }
                         }
                     }
                     actionConfig.version = version
@@ -52,13 +68,16 @@ class ActionSettingsRegistry {
             try {
                 if (!it.file.exists()) return@forEach
                 if (!it.enabled) return@forEach
-                children.add(it.buildAction(it.file.readText()))
+                val element = it.buildAction(it.file.readText())
+                if(null != element) children.add(element)
             } catch (e: Throwable) {
                 UITools.error(log, "Error loading dynamic action", e)
             }
         }
         return children.toTypedArray()
     }
+
+    class DynamicActionException(cause: Throwable, val msg: String, val file: File, val actionSetting: ActionSettings) : Exception(msg, cause)
 
     data class ActionSettings(
         val id: String, // Static property
@@ -71,21 +90,25 @@ class ActionSettingsRegistry {
 
         fun buildAction(
             code: String
-        ): AnAction {
+        ): AnAction? {
             val newClassName = this.className + "_" + Integer.toHexString(code.hashCode())
-            return with(
-                actionCache.getOrPut("$packageName.$newClassName") {
-                    (GroovyClassLoader(EditorMenu::class.java.classLoader).parseClass(
-                        code.replace(
-                            ("""(?<![\w\d])${this.className}(?![\w\d])""").toRegex(),
-                            newClassName
-                        )
-                    ).getDeclaredConstructor().newInstance() as AnAction)
+            try {
+                return with(
+                    actionCache.getOrPut("$packageName.$newClassName") {
+                        (GroovyClassLoader(ActionSettingsRegistry::class.java.classLoader).parseClass(
+                            code.replace(
+                                ("""(?<![\w\d])${this.className}(?![\w\d])""").toRegex(),
+                                newClassName
+                            )
+                        ).getDeclaredConstructor().newInstance() as AnAction)
+                    }
+                ) {
+                    templatePresentation.text = displayText
+                    templatePresentation.description = displayText
+                    this
                 }
-            ) {
-                templatePresentation.text = displayText
-                templatePresentation.description = displayText
-                this
+            } catch (e: Throwable) {
+                throw DynamicActionException(e, "Error in Action " + displayText, file, this)
             }
         }
 

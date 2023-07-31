@@ -116,7 +116,8 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="E"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="E"/>
         </action>
-        <group class="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
+        <group id="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
+               class="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
                text="_Recent Code Edits"
                description="Recent code edits"
                popup="true">
@@ -290,7 +291,8 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
         </action>
-        <group class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
+        <group id="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
+               class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
                text="Imple_ment As..."
                description="Implement as..."
                popup="true"
@@ -303,7 +305,8 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </group>
-        <group class="com.github.simiacryptus.aicoder.actions.dev.ConvertFileTo"
+        <group id="com.github.simiacryptus.aicoder.actions.dev.ConvertFileTo"
+               class="com.github.simiacryptus.aicoder.actions.dev.ConvertFileTo"
                text="Conver_t To..."
                description="Convert to..."
                popup="true"

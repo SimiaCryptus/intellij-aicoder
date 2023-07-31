@@ -113,4 +113,12 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     override fun createWidget(project: Project): StatusBarWidget {
         return TokenCountWidget()
     }
+
+    override fun isAvailable(project: Project): Boolean {
+        return true
+    }
+
+    override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
+        return true
+    }
 }
