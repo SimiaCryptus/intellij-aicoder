@@ -3,7 +3,6 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.config.ActionSettingsRegistry
-import com.github.simiacryptus.aicoder.config.ActionTable
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.google.common.util.concurrent.*
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
@@ -43,6 +43,7 @@ import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.beans.PropertyChangeEvent
+import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.reflect.Field
@@ -902,12 +903,13 @@ object UITools {
     }
 
     val singleThreadPool = Executors.newSingleThreadExecutor()
+
     @JvmStatic
     fun error(log: org.slf4j.Logger, msg: String, e: Throwable) {
         log?.error(msg, e)
         errorLog += Pair(msg, e)
         singleThreadPool.submit {
-            if(AppSettingsState.instance.suppressErrors) {
+            if (AppSettingsState.instance.suppressErrors) {
                 return@submit
             } else if (e.matches { ModerationException::class.java.isAssignableFrom(it.javaClass) }) {
                 JOptionPane.showMessageDialog(
@@ -916,9 +918,70 @@ object UITools {
                     "This request was rejected by OpenAI Moderation",
                     JOptionPane.WARNING_MESSAGE
                 )
+            } else if (e.matches { java.lang.InterruptedException::class.java.isAssignableFrom(it.javaClass) && it.message?.contains("sleep interrupted") == true }) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    "This request was cancelled by the user",
+                    "User Cancelled Request",
+                    JOptionPane.WARNING_MESSAGE
+                )
+            } else if (e.matches { IOException::class.java.isAssignableFrom(it.javaClass) && it.message?.contains("Incorrect API key") == true }) {
+
+                val formBuilder = FormBuilder.createFormBuilder()
+
+                formBuilder.addLabeledComponent(
+                    "Error",
+                    JLabel("The API key was rejected by the server.")
+                )
+
+                val apiKeyInput = JBPasswordField()
+                //bugReportTextArea.rows = 40
+                apiKeyInput.columns = 80
+                apiKeyInput.isEditable = true
+                //apiKeyInput.text = """""".trimMargin()
+                formBuilder.addLabeledComponent("API Key", apiKeyInput)
+
+                val openAccountButton = JXButton("Open Account Page")
+                openAccountButton.addActionListener {
+                    Desktop.getDesktop().browse(URI("https://platform.openai.com/account/api-keys"))
+                }
+                formBuilder.addLabeledComponent("OpenAI Account", openAccountButton)
+
+                val testButton = JXButton("Test Key")
+                testButton.addActionListener {
+                    val apiKey = apiKeyInput.password.joinToString("")
+                    try {
+                        OpenAIClient(key = apiKey).listModels()
+                        JOptionPane.showMessageDialog(
+                            null,
+                            "The API key was accepted by the server. The new value will be saved.",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE
+                        )
+                        AppSettingsState.instance.apiKey = apiKey
+                    } catch (e: Exception) {
+                        JOptionPane.showMessageDialog(
+                            null,
+                            "The API key was rejected by the server.",
+                            "Failure",
+                            JOptionPane.WARNING_MESSAGE
+                        )
+                        return@addActionListener
+                    }
+                }
+                formBuilder.addLabeledComponent("Validation", testButton)
+                val showOptionDialog = showOptionDialog(
+                    formBuilder.panel,
+                    "Dismiss",
+                    title = "Error",
+                    modal = true
+                )
+                log.info("showOptionDialog = $showOptionDialog")
             } else if (e.matches { GroovyRuntimeException::class.java.isAssignableFrom(it.javaClass) }) {
-                val groovyRuntimeException = e.get { GroovyRuntimeException::class.java.isAssignableFrom(it.javaClass) } as GroovyRuntimeException?
-                val dynamicActionException = e.get { ActionSettingsRegistry.DynamicActionException::class.java.isAssignableFrom(it.javaClass) } as ActionSettingsRegistry.DynamicActionException?
+                val groovyRuntimeException =
+                    e.get { GroovyRuntimeException::class.java.isAssignableFrom(it.javaClass) } as GroovyRuntimeException?
+                val dynamicActionException =
+                    e.get { ActionSettingsRegistry.DynamicActionException::class.java.isAssignableFrom(it.javaClass) } as ActionSettingsRegistry.DynamicActionException?
                 val formBuilder = FormBuilder.createFormBuilder()
 
                 formBuilder.addLabeledComponent(
@@ -942,7 +1005,7 @@ object UITools {
                 |""".trimMargin()
                 formBuilder.addLabeledComponent("Error Report", wrapScrollPane(bugReportTextArea))
 
-                if(!(dynamicActionException?.actionSetting?.isDynamic ?: true)) {
+                if (!(dynamicActionException?.actionSetting?.isDynamic ?: true)) {
                     val openButton = JXButton("Revert to Default")
                     openButton.addActionListener {
                         dynamicActionException?.actionSetting?.file?.delete()
@@ -950,7 +1013,7 @@ object UITools {
                     formBuilder.addLabeledComponent("Revert Built-in Action", openButton)
                 }
 
-                if(null != dynamicActionException) {
+                if (null != dynamicActionException) {
                     val openButton = JXButton("Open Dynamic Action")
                     openButton.addActionListener {
                         dynamicActionException?.file?.let {
@@ -983,13 +1046,13 @@ object UITools {
                 formBuilder.addComponent(supressFutureErrors)
 
                 val showOptionDialog = showOptionDialog(
-                        formBuilder.panel,
-                        "Dismiss",
-                        title = "Error",
-                        modal = true
-                    )
+                    formBuilder.panel,
+                    "Dismiss",
+                    title = "Error",
+                    modal = true
+                )
                 log.info("showOptionDialog = $showOptionDialog")
-                if(supressFutureErrors.isSelected) {
+                if (supressFutureErrors.isSelected) {
                     AppSettingsState.instance.suppressErrors = true
                 }
             } else {
@@ -1049,13 +1112,13 @@ object UITools {
                 formBuilder.addComponent(supressFutureErrors)
 
                 val showOptionDialog = showOptionDialog(
-                        formBuilder.panel,
-                        "Dismiss",
-                        title = "Error",
-                        modal = true
-                    )
+                    formBuilder.panel,
+                    "Dismiss",
+                    title = "Error",
+                    modal = true
+                )
                 log.info("showOptionDialog = $showOptionDialog")
-                if(supressFutureErrors.isSelected) {
+                if (supressFutureErrors.isSelected) {
                     AppSettingsState.instance.suppressErrors = true
                 }
             }

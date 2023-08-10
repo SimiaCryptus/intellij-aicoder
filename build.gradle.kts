@@ -28,7 +28,7 @@ val slf4j_version = "2.0.5"
 val skyenet_version = "1.0.14"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.15")
+    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.16")
 
     implementation(group = "com.simiacryptus.skyenet", name = "util", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)

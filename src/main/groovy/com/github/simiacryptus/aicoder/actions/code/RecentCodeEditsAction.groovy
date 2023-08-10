@@ -6,6 +6,8 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nullable
 
 class RecentCodeEditsAction extends ActionGroup {
     void update(AnActionEvent e) {
@@ -20,7 +22,7 @@ class RecentCodeEditsAction extends ActionGroup {
             def id = children.size() + 1
             def text = id < 10 ? "_${id}: ${instruction}" : "${id}: ${instruction}"
             def element = new CustomEditAction() {
-                String getInstruction() {
+                @Override String getConfig(@Nullable Project project) {
                     return instruction
                 }
             }
