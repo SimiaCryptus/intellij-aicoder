@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+## [1.2.10]
+
+### Improved
+- Fixed performance issue with token counter
+
+## [1.2.9]
+
+### Improved
+- Improved error dialogs for API keys and cancallations
+
 ## [1.2.8]
 
 ### Improved
