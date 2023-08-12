@@ -16,6 +16,7 @@ import com.simiacryptus.openai.GPT4Tokenizer
 import kotlinx.coroutines.CoroutineScope
 import java.awt.event.MouseEvent
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
     companion object {
@@ -54,7 +55,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
                     editor?.selectionModel?.addSelectionListener(object : SelectionListener {
                         override fun selectionChanged(event: SelectionEvent) {
                             update(statusBar) {
-                                event.newRanges?.map {
+                                val newTokens = event.newRanges?.map {
                                     codex.estimateTokenCount(
                                         event.editor.document.text.substring(
                                             it.startOffset,
@@ -62,6 +63,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
                                         )
                                     )
                                 }?.sum() ?: 0
+                                newTokens
                             }
                         }
                     })
@@ -69,10 +71,17 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
             })
         }
 
+        val isUpdating = AtomicBoolean()
+
         private fun update(statusBar: StatusBar, tokens: () -> Int) {
             pool.submit {
-                tokenCount = tokens()
-                statusBar.updateWidget(ID())
+                if(!isUpdating.getAndSet(true)) return@submit
+                try {
+                    tokenCount = tokens()
+                    statusBar.updateWidget(ID())
+                } finally {
+                    isUpdating.set(false)
+                }
             }
         }
 
