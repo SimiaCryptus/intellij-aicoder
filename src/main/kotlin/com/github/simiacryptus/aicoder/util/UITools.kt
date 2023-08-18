@@ -877,7 +877,7 @@ object UITools {
     fun <I : Any?, O : Any?> map(
         moderateAsync: ListenableFuture<I>,
         o: com.google.common.base.Function<in I, out O>,
-    ): ListenableFuture<O> = Futures.transform(moderateAsync, o, pool)
+    ): ListenableFuture<O> = Futures.transform(moderateAsync, o::apply, pool)
 
     @JvmStatic
     fun filterStringResult(
