@@ -15,13 +15,19 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.simiacryptus.openai.GPT4Tokenizer
 import kotlinx.coroutines.CoroutineScope
 import java.awt.event.MouseEvent
-import java.util.concurrent.Executors
+import java.util.ArrayDeque
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
     companion object {
         val logger = org.slf4j.LoggerFactory.getLogger(TokenCountWidgetFactory::class.java)
-        val pool = Executors.newCachedThreadPool()
+        val workQueue = LinkedBlockingDeque<Runnable>()
+        val pool = ThreadPoolExecutor(
+            /* corePoolSize = */ 1, /* maximumPoolSize = */ 1,
+            /* keepAliveTime = */ 60L, /* unit = */ TimeUnit.SECONDS,
+            /* workQueue = */ workQueue
+        )
     }
 
     class TokenCountWidget : StatusBarWidget, StatusBarWidget.TextPresentation {
@@ -71,17 +77,11 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
             })
         }
 
-        val isUpdating = AtomicBoolean()
-
         private fun update(statusBar: StatusBar, tokens: () -> Int) {
+            workQueue.clear()
             pool.submit {
-                if(!isUpdating.getAndSet(true)) return@submit
-                try {
-                    tokenCount = tokens()
-                    statusBar.updateWidget(ID())
-                } finally {
-                    isUpdating.set(false)
-                }
+                tokenCount = tokens()
+                statusBar.updateWidget(ID())
             }
         }
 

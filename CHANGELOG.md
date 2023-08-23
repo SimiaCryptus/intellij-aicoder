@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [1.2.11]
+
+### Improved
+- Tasks are now performed in the background, so the UI is no longer blocked
+- Added feedback options and improved settings popup UI
+
 ## [1.2.10]
 
 ### Improved

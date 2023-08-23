@@ -16,6 +16,7 @@ class SimpleEnvelope(var value: String? = null)
 @Suppress("MemberVisibilityCanBePrivate")
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
+    val modalTasks: Boolean = false
     var suppressErrors: Boolean = false
     var apiLog: Boolean = false
     var apiBase = "https://api.openai.com/v1"

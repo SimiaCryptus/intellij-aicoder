@@ -804,6 +804,70 @@ object UITools {
         return runnable.get()
     }
 
+    class ModalTask<T>(
+        project : Project, title : String, canBeCancelled : Boolean, val task : (ProgressIndicator) -> T
+    ) : Task.WithResult<T, Exception>(project, title, canBeCancelled), Supplier<T> {
+        private var result: T? = null
+        override fun compute(indicator: ProgressIndicator): T? {
+            val currentThread = Thread.currentThread()
+            val threads = ArrayList<Thread>()
+            val scheduledFuture = scheduledPool.scheduleAtFixedRate({
+                if (indicator.isCanceled) {
+                    threads.forEach { it.interrupt() }
+                }
+            }, 0, 1, TimeUnit.SECONDS)
+            threads.add(currentThread)
+            return try {
+                result = task(indicator)
+                result!!
+            } catch (e: Throwable) {
+                error(log, "Error running task", e)
+                null
+            } finally {
+                threads.remove(currentThread)
+                scheduledFuture.cancel(true)
+            }
+        }
+
+        override fun get(): T {
+            return result!!
+        }
+
+    }
+
+    class BgTask<T>(
+        project : Project, title : String, canBeCancelled : Boolean, val task : (ProgressIndicator) -> T
+    ) : Task.Backgroundable(project, title ?: "", canBeCancelled, DEAF), Supplier<T> {
+
+        private val ref = AtomicReference<T>()
+        private val semaphore = Semaphore(0)
+        override fun run(indicator: ProgressIndicator) {
+            val currentThread = Thread.currentThread()
+            val threads = ArrayList<Thread>()
+            val scheduledFuture = scheduledPool.scheduleAtFixedRate({
+                if (indicator.isCanceled) {
+                    threads.forEach { it.interrupt() }
+                }
+            }, 0, 1, TimeUnit.SECONDS)
+            threads.add(currentThread)
+            try {
+                val result = task(indicator)
+                ref.set(result)
+                semaphore.release()
+            } catch (e: Throwable) {
+                error(log, "Error running task", e)
+            } finally {
+                threads.remove(currentThread)
+                scheduledFuture.cancel(true)
+            }
+        }
+
+        override fun get(): T {
+            semaphore.acquire()
+            return ref.get()
+        }
+    }
+
     @JvmStatic
     fun <T> run(
         project: Project?,
@@ -817,25 +881,10 @@ object UITools {
             task(AbstractProgressIndicatorBase())
         } else {
             checkApiKey()
-            ProgressManager.getInstance()
-                .run(object : Task.WithResult<T, Exception?>(project, title ?: "", canBeCancelled) {
-                    override fun compute(indicator: ProgressIndicator): T {
-                        val currentThread = Thread.currentThread()
-                        val threads = ArrayList<Thread>()
-                        val scheduledFuture = scheduledPool.scheduleAtFixedRate({
-                            if (indicator.isCanceled) {
-                                threads.forEach { it.interrupt() }
-                            }
-                        }, 0, 1, TimeUnit.SECONDS)
-                        threads.add(currentThread)
-                        try {
-                            return task(indicator)
-                        } finally {
-                            threads.remove(currentThread)
-                            scheduledFuture.cancel(true)
-                        }
-                    }
-                })
+            val t = if(AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
+            else BgTask(project, title ?: "", canBeCancelled, task)
+            ProgressManager.getInstance().run(t)
+            t.get()
         }
     }
 
@@ -877,7 +926,7 @@ object UITools {
     fun <I : Any?, O : Any?> map(
         moderateAsync: ListenableFuture<I>,
         o: com.google.common.base.Function<in I, out O>,
-    ): ListenableFuture<O> = Futures.transform(moderateAsync, o, pool)
+    ): ListenableFuture<O> = Futures.transform(moderateAsync, o::apply, pool)
 
     @JvmStatic
     fun filterStringResult(

@@ -15,7 +15,7 @@ class ApplicationEvents : ApplicationActivationListener {
             file.deleteOnExit()
             OpenAIClient.auxillaryLog = file
         }
-        if(isSanctioned()) {
+        if(isSanctioned() && false) {
             // Open a modal dialog every 5 minutes advising the user to uninstall the plugin
             scheduledPool.scheduleAtFixedRate({
                 showSanctionedDialog(ideFrame)
