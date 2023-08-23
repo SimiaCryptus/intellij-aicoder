@@ -309,7 +309,8 @@
 - Initial scaffold created
   from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
 
-[Unreleased]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.10...HEAD
+[Unreleased]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.11...HEAD
+[1.2.11]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.10...v1.2.11
 [1.2.10]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.9...v1.2.10
 [1.2.9]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.8...v1.2.9
 [1.2.8]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.7...v1.2.8
