@@ -82,10 +82,17 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
                     if (UITools.isSanctioned()) {
                         feedbackPanel.add(
                             link(
-                                JBLabel("<html><a href=''>Why is this disabled?</a></html>"),
+                                JBLabel("<html><a href=''>Why is this plugin disabled?</a></html>"),
                                 URI("https://news.google.com/home?q=russian+war+crimes&hl=ru&gl=RU&ceid=RU:ru")
                             )
                         )
+                        feedbackPanel.add(
+                            link(
+                                JBLabel("<html><a href=''>How can I help?</a></html>"),
+                                URI("https://www.bing.com/search?q=ukrainian+charities")
+                            )
+                        )
+                        tabbedPane.addTab("Info", feedbackPanel)
                     } else {
                         feedbackPanel.add(
                             link(
@@ -99,15 +106,13 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
                                 URI("https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant/reviews")
                             )
                         )
+                        tabbedPane.addTab("Feedback", feedbackPanel)
                     }
-                    tabbedPane.addTab("Feedback", feedbackPanel)
 
                     modePanel.add(tabbedPane)
 
-                    val builder =
-                        JBPopupFactory.getInstance().createComponentPopupBuilder(modePanel, null)
-                    val popup = builder.createPopup()
-                    popup.show(RelativePoint(widgetComp, Point(0, -modePanel.getPreferredSize().height)))
+                    JBPopupFactory.getInstance().createComponentPopupBuilder(modePanel, null).createPopup()
+                        .show(RelativePoint(widgetComp, Point(0, -modePanel.getPreferredSize().height)))
                 }
             }
         }

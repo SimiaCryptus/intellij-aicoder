@@ -56,20 +56,26 @@ abstract class SelectionAction<T : Any>(
         selectionStart = start
 
         UITools.redoableTask(event) {
-            val newText = processSelection(
-                event = event,
-                SelectionState(
-                    selectedText = selectedText,
-                    selectionOffset = selectionStart,
-                    selectionLength = selectionEnd - selectionStart,
-                    entireDocument = editor.document.text,
-                    language = ComputerLanguage.getComputerLanguage(event),
-                    indent = indent,
-                    contextRanges = editorState.contextRanges,
-                    psiFile = editorState.psiFile,
-                ),
-                config = config
-            )
+            val document = event.getData(CommonDataKeys.EDITOR)?.document
+            val rangeMarker = document?.createGuardedBlock(selectionStart, selectionEnd)
+            val newText = try {
+                processSelection(
+                    event = event,
+                    SelectionState(
+                        selectedText = selectedText,
+                        selectionOffset = selectionStart,
+                        selectionLength = selectionEnd - selectionStart,
+                        entireDocument = editor.document.text,
+                        language = ComputerLanguage.getComputerLanguage(event),
+                        indent = indent,
+                        contextRanges = editorState.contextRanges,
+                        psiFile = editorState.psiFile,
+                    ),
+                    config = config
+                )
+            } finally {
+                if(null != rangeMarker) document.removeGuardedBlock(rangeMarker)
+            }
             UITools.writeableFn(event) {
                 UITools.replaceString(editor.document, selectionStart, selectionEnd, newText)
             }
