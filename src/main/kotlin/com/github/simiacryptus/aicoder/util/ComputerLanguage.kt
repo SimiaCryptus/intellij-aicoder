@@ -22,6 +22,14 @@ enum class ComputerLanguage(configuration: Configuration) {
             .setDocComments(BlockComment.Factory("/**", "*", "*/"))
             .setFileExtensions("cpp")
     ),
+    LUA(
+        Configuration()
+            .setDocumentationStyle("LuaDoc")
+            .setLineComments(LineComment.Factory("--"))
+            .setBlockComments(BlockComment.Factory("--[[", "", "]]"))
+            .setDocComments(BlockComment.Factory("---[[", "", "]]"))
+            .setFileExtensions("lua")
+    ),
     SVG(
         Configuration()
             .setDocumentationStyle("SVG")
@@ -170,7 +178,7 @@ enum class ComputerLanguage(configuration: Configuration) {
             .setLineComments(LineComment.Factory("//"))
             .setBlockComments(BlockComment.Factory("/*", "", "*/"))
             .setDocComments(BlockComment.Factory("/**", "*", "*/"))
-            .setFileExtensions("groovy")
+            .setFileExtensions("groovy", "gradle")
     ),
     Haskell(
         Configuration()
