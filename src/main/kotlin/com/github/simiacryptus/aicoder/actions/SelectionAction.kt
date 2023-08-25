@@ -4,7 +4,9 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -57,7 +59,11 @@ abstract class SelectionAction<T : Any>(
 
         UITools.redoableTask(event) {
             val document = event.getData(CommonDataKeys.EDITOR)?.document
-            val rangeMarker = document?.createGuardedBlock(selectionStart, selectionEnd)
+            var rangeMarker: RangeMarker?  = null
+            WriteCommandAction.runWriteCommandAction(event.project) {
+                rangeMarker = document?.createGuardedBlock(selectionStart, selectionEnd)
+            }
+
             val newText = try {
                 processSelection(
                     event = event,
@@ -74,7 +80,10 @@ abstract class SelectionAction<T : Any>(
                     config = config
                 )
             } finally {
-                if(null != rangeMarker) document.removeGuardedBlock(rangeMarker)
+                if(null != rangeMarker)
+                    WriteCommandAction.runWriteCommandAction(event.project) {
+                        document?.removeGuardedBlock(rangeMarker!!)
+                    }
             }
             UITools.writeableFn(event) {
                 UITools.replaceString(editor.document, selectionStart, selectionEnd, newText)
