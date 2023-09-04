@@ -6,6 +6,7 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.inspectopedia.extractor.utils.HtmlUtils
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.util.ui.FormBuilder
@@ -27,9 +28,10 @@ class CodeChatAction : BaseAction() {
         port: Int,
         val language: String,
         val codeSelection: String,
+        baseURL: String = "http://localhost:$port",
     ) : SkyenetCodingSessionServer(
         applicationName = "Code Chat",
-        baseURL = "http://localhost:$port",
+        baseURL = baseURL,
         model = AppSettingsState.instance.defaultChatModel(),
         apiKey = AppSettingsState.instance.apiKey,
     ) {
@@ -39,10 +41,16 @@ class CodeChatAction : BaseAction() {
 
         override fun newSession(sessionId: String): SkyenetCodingSession {
             val newSession = CodeChatSession(sessionId)
-            rootMessageTrail =
-                """$rootOperationID,<div><h3>Code:</h3><pre><code class="language-$language">$codeSelection</code></pre></div>"""
+rootMessageTrail =
+"""$rootOperationID,<div><h3>Code:</h3><pre><code class="language-$language">${htmlEscape(codeSelection)}</code></pre></div>"""
             newSession.send(rootMessageTrail)
             return newSession
+        }
+
+        private fun htmlEscape(html: String): String {
+            return html.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;")
+                .replace("'", "&#039;")
         }
 
         open inner class CodeChatSession(sessionId: String) : SkyenetCodingSession(sessionId, this@CodeChatServer) {
@@ -52,7 +60,7 @@ class CodeChatAction : BaseAction() {
                 messages += ChatMessage(ChatMessage.Role.user, userMessage)
                 val response = api.chat(chatRequest, model).choices?.first()?.message?.content.orEmpty()
                 messages += ChatMessage(ChatMessage.Role.assistant, response)
-                messageTrail += """<div><pre>${ChatSessionFlexmark.renderMarkdown(response)}</pre></div>"""
+                messageTrail += ChatSessionFlexmark.renderMarkdown(response)
                 send(messageTrail)
             }
 
@@ -110,35 +118,25 @@ class CodeChatAction : BaseAction() {
         val selectedText = primaryCaret.selectedText ?: editor.document.text
         val language = ComputerLanguage.getComputerLanguage(event)?.name ?: return
 
-        val port = (8000 + (Math.random() * 1000).toInt())
-        val skyenet = CodeChatServer(event, port, language, selectedText)
+        val port = (8000 + (Math.random() * 8000).toInt())
+        val skyenet = CodeChatServer(event, port, language, selectedText, baseURL = "http://localhost:$port")
         val server = skyenet.start(port)
 
         Thread {
             try {
-                log.info("Server Running on $port")
-                server.join()
-            } finally {
-                log.info("Server Stopped")
-            }
-        }.start()
-
-        Thread {
-            try {
-                val formBuilder = FormBuilder.createFormBuilder()
-                val openButton = JXButton("Open")
-                openButton.addActionListener {
-                    Desktop.getDesktop().browse(server.uri.resolve("/index.html"))
+                UITools.run(
+                    event.project, "Running CodeChat Server on $port", false
+                ) {
+                    while (!it.isCanceled && server.isRunning) {
+                        Thread.sleep(1000)
+                    }
+                    if(it.isCanceled) {
+                        log.info("Server cancelled")
+                        server.stop()
+                    } else {
+                        log.info("Server stopped")
+                    }
                 }
-                formBuilder.addLabeledComponent("Server Running on $port", openButton)
-                val showOptionDialog =
-                    UITools.showOptionDialog(
-                        formBuilder.panel,
-                        "Close",
-                        title = "Server Running on $port",
-                        modal = true
-                    )
-                log.info("showOptionDialog = $showOptionDialog")
             } finally {
                 log.info("Stopping Server")
                 server.stop()
@@ -147,7 +145,11 @@ class CodeChatAction : BaseAction() {
 
         Thread {
             Thread.sleep(500)
-            Desktop.getDesktop().browse(server.uri.resolve("/index.html"))
+            try {
+                Desktop.getDesktop().browse(server.uri.resolve("/index.html"))
+            } catch (e: Throwable) {
+                log.warn("Error opening browser", e)
+            }
         }.start()
     }
 
