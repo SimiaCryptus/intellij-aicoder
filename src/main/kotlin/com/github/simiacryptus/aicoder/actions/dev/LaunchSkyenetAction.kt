@@ -88,35 +88,34 @@ class LaunchSkyenetAction : BaseAction() {
         }
         val server = skyenet.start(port)
 
+
         Thread {
             try {
-                log.info("Server Running on $port")
-                server.join()
+                UITools.run(
+                    e.project, "Running Skyenet Server on $port", false
+                ) {
+                    while (!it.isCanceled && server.isRunning) {
+                        Thread.sleep(1000)
+                    }
+                    if(it.isCanceled) {
+                        log.info("Server cancelled")
+                        server.stop()
+                    } else {
+                        log.info("Server stopped")
+                    }
+                }
             } finally {
-                log.info("Server Stopped")
+                log.info("Stopping Server")
+                server.stop()
             }
         }.start()
 
         Thread {
+            Thread.sleep(500)
             try {
-                val url = server.uri
-                val formBuilder = FormBuilder.createFormBuilder()
-                val openButton = JXButton("Open")
-                openButton.addActionListener {
-                    Desktop.getDesktop().browse(url.resolve("/index.html"))
-                }
-                formBuilder.addLabeledComponent("Server Running on $port", openButton)
-                val showOptionDialog =
-                    UITools.showOptionDialog(
-                        formBuilder.panel,
-                        "Close",
-                        title = "Server Running on $port",
-                        modal = false
-                    )
-                log.info("showOptionDialog = $showOptionDialog")
-            } finally {
-                log.info("Stopping Server")
-                server.stop()
+                Desktop.getDesktop().browse(server.uri.resolve("/index.html"))
+            } catch (e: Throwable) {
+                log.warn("Error opening browser", e)
             }
         }.start()
     }
