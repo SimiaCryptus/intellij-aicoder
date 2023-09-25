@@ -26,29 +26,17 @@ public class IndentedText implements TextBlock {
         this.setLines(lines);
     }
 
+    /**
+     * This method is used to convert a string into an IndentedText object.
+     *
+     * @param text The string to be converted into an IndentedText object.
+     * @return IndentedText object created from the input string.
+     */
     public static IndentedText fromString(String text) {
         text = text == null ? "" : text;
         text = text.replace("\t", TextBlock.TAB_REPLACEMENT.toString());
         CharSequence indent = StringUtil.getWhitespacePrefix(text.split(TextBlock.DELIMITER));
         return new IndentedText(indent, Arrays.stream(text.split(TextBlock.DELIMITER))
-                .map(s -> StringUtil.stripPrefix(s, indent))
-                .toArray(CharSequence[]::new));
-    }
-
-    public static IndentedText fromString2(CharSequence text) {
-        text = text == null ? "" : text;
-        text = text.toString().replace("\t", TextBlock.TAB_REPLACEMENT.toString());
-        CharSequence indent = StringUtil.getWhitespacePrefix2(text.toString().split(TextBlock.DELIMITER));
-        return new IndentedText(indent, Arrays.stream(text.toString().split(TextBlock.DELIMITER))
-                .map(s -> StringUtil.stripPrefix(s, indent))
-                .toArray(CharSequence[]::new));
-    }
-
-    public static IndentedText fromString3(CharSequence text) {
-        text = text == null ? "" : text;
-        text = text.toString().replace("\t", TextBlock.TAB_REPLACEMENT.toString());
-        CharSequence indent = StringUtil.getWhitespacePrefix2(text.toString().split(TextBlock.DELIMITER));
-        return new IndentedText(indent, Arrays.stream(text.toString().split(TextBlock.DELIMITER))
                 .map(s -> StringUtil.stripPrefix(s, indent))
                 .toArray(CharSequence[]::new));
     }

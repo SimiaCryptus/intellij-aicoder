@@ -70,7 +70,7 @@ class DocAction extends SelectionAction<String> {
     @Override
     String processSelection(SelectionState state, String config) {
         CharSequence code = state.selectedText
-        IndentedText indentedInput = IndentedText.fromString3(code.toString() as java.lang.CharSequence)
+        IndentedText indentedInput = IndentedText.fromString(code.toString())
         String docString = proxy.processCode(
                 indentedInput.textBlock.toString(),
                 "Write detailed " + (state.language?.docStyle ?: "documentation") + " prefix for code block",

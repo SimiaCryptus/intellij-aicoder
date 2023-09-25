@@ -952,7 +952,7 @@ object UITools {
             if (stripUnbalancedTerminators) {
                 result = StringUtil.stripUnbalancedTerminators(result)
             }
-            result = IndentedText.fromString2(result).withIndent(indent).toString()
+            result = IndentedText.fromString(result.toString()).withIndent(indent).toString()
             indent.toString() + result
         }
     }
