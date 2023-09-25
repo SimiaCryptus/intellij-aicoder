@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
 import org.jetbrains.annotations.Nullable
@@ -60,7 +61,9 @@ class CustomEditAction extends SelectionAction<String> {
 
     @Override
     String getConfig(@Nullable Project project) {
-        return JOptionPane.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE)
+        return UITools.showInputDialog(null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE
+                //, AppSettingsState.instance.getRecentCommands("customEdits").mostRecentHistory
+        )
     }
 
 
