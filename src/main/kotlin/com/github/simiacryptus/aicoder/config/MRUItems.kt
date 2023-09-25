@@ -12,6 +12,9 @@ class MRUItems {
     var historyLimit = 10
     fun addInstructionToHistory(instruction: CharSequence) {
         synchronized(mostRecentHistory) {
+            if(mostRecentHistory.contains(instruction.toString())) {
+                mostRecentHistory.remove(instruction.toString())
+            }
             mostRecentHistory.add(instruction.toString())
             while (mostRecentHistory.size > historyLimit) {
                 mostRecentHistory.removeAt(0)
@@ -35,9 +38,8 @@ class MRUItems {
             toRemove.removeAll(retain.toSet())
             toRemove.removeAll(mostRecentHistory.toSet())
             toRemove.forEach { key: CharSequence? ->
-                mostUsedHistory.remove(
-                    key
-                )
+                mostUsedHistory.remove(key)
+                mostRecentHistory.remove(key.toString())
             }
         }
     }

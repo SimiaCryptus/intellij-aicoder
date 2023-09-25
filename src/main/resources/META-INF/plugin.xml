@@ -35,7 +35,7 @@
                text="_AI Coder"
                icon="AllIcons.Actions.Lightning"
                description="AI coding assistant tools">
-            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first" />
         </group>
         <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu"
                class="com.github.simiacryptus.aicoder.ui.ProjectMenu"
@@ -43,7 +43,7 @@
                text="_AI Coder"
                icon="AllIcons.Actions.Lightning"
                description="AI coding assistant tools">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
         </group>
 
         <action class="com.github.simiacryptus.aicoder.actions.dev.PrintTreeAction"

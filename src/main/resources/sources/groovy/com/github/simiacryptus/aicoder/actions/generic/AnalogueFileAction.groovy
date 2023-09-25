@@ -53,7 +53,7 @@ class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> 
 
     @Override
     File[] processSelection(SelectionState state, Settings config) {
-        ProjectFile analogue = generateFile(
+                    ProjectFile analogue = generateFile(
                 new ProjectFile(
                         path: state.projectRoot.toPath().relativize(state.selectedFile.toPath()),
                         code: IOUtils.toString(new FileInputStream(state.selectedFile), "UTF-8")
@@ -73,6 +73,7 @@ class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> 
         FileUtils.write(outputPath.toFile(), analogue.code, "UTF-8")
         Thread.sleep(100)
         return [outputPath.toFile()]
+
     }
 
     private ProjectFile generateFile(ProjectFile baseFile, String directive) {

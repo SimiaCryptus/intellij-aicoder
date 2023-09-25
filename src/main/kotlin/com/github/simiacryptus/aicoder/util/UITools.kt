@@ -51,6 +51,7 @@ import java.lang.reflect.Modifier
 import java.net.URI
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import java.util.stream.Collectors
@@ -789,12 +790,6 @@ object UITools {
     }
 
     @JvmStatic
-    fun isInterruptedException(e: Throwable?): Boolean {
-        if (e is InterruptedException) return true
-        return if (e!!.cause != null && e.cause !== e) isInterruptedException(e.cause) else false
-    }
-
-    @JvmStatic
     fun writeableFn(
         event: AnActionEvent,
         fn: () -> Runnable,
@@ -807,7 +802,10 @@ object UITools {
     class ModalTask<T>(
         project : Project, title : String, canBeCancelled : Boolean, val task : (ProgressIndicator) -> T
     ) : Task.WithResult<T, Exception>(project, title, canBeCancelled), Supplier<T> {
-        private var result: T? = null
+        private val result = AtomicReference<T>()
+        private val isError = AtomicBoolean(false)
+        private val error = AtomicReference<Throwable>()
+        private val semaphore = Semaphore(0)
         override fun compute(indicator: ProgressIndicator): T? {
             val currentThread = Thread.currentThread()
             val threads = ArrayList<Thread>()
@@ -818,19 +816,27 @@ object UITools {
             }, 0, 1, TimeUnit.SECONDS)
             threads.add(currentThread)
             return try {
-                result = task(indicator)
-                result!!
+                result.set(task(indicator))
+                result.get()
             } catch (e: Throwable) {
                 error(log, "Error running task", e)
+                isError.set(true)
+                error.set(e)
                 null
             } finally {
+                semaphore.release()
                 threads.remove(currentThread)
                 scheduledFuture.cancel(true)
             }
         }
 
         override fun get(): T {
-            return result!!
+            semaphore.acquire()
+            semaphore.release()
+            if (isError.get()) {
+                throw error.get()
+            }
+            return result.get()
         }
 
     }
@@ -839,7 +845,9 @@ object UITools {
         project : Project, title : String, canBeCancelled : Boolean, val task : (ProgressIndicator) -> T
     ) : Task.Backgroundable(project, title ?: "", canBeCancelled, DEAF), Supplier<T> {
 
-        private val ref = AtomicReference<T>()
+        private val result = AtomicReference<T>()
+        private val isError = AtomicBoolean(false)
+        private val error = AtomicReference<Throwable>()
         private val semaphore = Semaphore(0)
         override fun run(indicator: ProgressIndicator) {
             val currentThread = Thread.currentThread()
@@ -852,11 +860,13 @@ object UITools {
             threads.add(currentThread)
             try {
                 val result = task(indicator)
-                ref.set(result)
-                semaphore.release()
+                this.result.set(result)
             } catch (e: Throwable) {
                 error(log, "Error running task", e)
+                error.set(e)
+                isError.set(true)
             } finally {
+                semaphore.release()
                 threads.remove(currentThread)
                 scheduledFuture.cancel(true)
             }
@@ -864,7 +874,11 @@ object UITools {
 
         override fun get(): T {
             semaphore.acquire()
-            return ref.get()
+            semaphore.release()
+            if (isError.get()) {
+                throw error.get()
+            }
+            return result.get()
         }
     }
 
@@ -1196,6 +1210,65 @@ object UITools {
         return sw.toString()
     }
 
+    // Wrap JOptionPane.showInputDialog
+    @JvmStatic fun showInputDialog(
+        parentComponent: Component?,
+        message: Any?,
+        title: String?,
+        messageType: Int
+    ): Any? {
+        val icon = null
+        val selectionValues = null
+        val initialSelectionValue = null
+        val pane = JOptionPane(
+            message,
+            messageType,
+            JOptionPane.OK_CANCEL_OPTION,
+            icon,
+            null,
+            null
+        )
+        pane.wantsInput = true
+        pane.selectionValues = selectionValues
+        pane.initialSelectionValue = initialSelectionValue
+        //pane.isComponentOrientationLeftToRight = true
+        val dialog = pane.createDialog(parentComponent, title)
+        pane.selectInitialValue()
+        dialog.show()
+        dialog.dispose()
+        val value = pane.inputValue
+        return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
+    }
+
+@JvmStatic fun showInputDialog(
+    parentComponent: Component?,
+    message: Any?,
+    title: String?,
+    messageType: Int,
+    mru: List<String>,
+    providedOptions: List<String>?
+): Any? {
+    val icon = null
+    val selectionValues = (mru + (providedOptions ?: emptyList())).toTypedArray()
+    val initialSelectionValue = null
+    val pane = JOptionPane(
+        message,
+        messageType,
+        JOptionPane.OK_CANCEL_OPTION,
+        icon,
+        null,
+        null
+    )
+    pane.wantsInput = true
+    pane.selectionValues = selectionValues
+    pane.initialSelectionValue = initialSelectionValue
+    val dialog = pane.createDialog(parentComponent, title)
+    pane.selectInitialValue()
+    dialog.show()
+    dialog.dispose()
+    val value = pane.inputValue
+    return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
+}
 
 }
 
