@@ -8,8 +8,6 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.OutputInterceptor
 import com.simiacryptus.skyenet.body.ClasspathResource
@@ -18,7 +16,6 @@ import com.simiacryptus.skyenet.body.SkyenetCodingSessionServer
 import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
 import com.simiacryptus.util.describe.Description
 import org.eclipse.jetty.util.resource.Resource
-import org.jdesktop.swingx.JXButton
 import java.awt.Desktop
 import java.util.Map
 import java.util.function.Supplier
@@ -42,7 +39,6 @@ class LaunchSkyenetAction : BaseAction() {
         val port = (8000 + (Math.random() * 1000).toInt())
         val skyenet = object : SkyenetCodingSessionServer(
             applicationName = "IdeaAgent",
-            baseURL = "http://localhost:$port",
             model = AppSettingsState.instance.defaultChatModel(),
             apiKey = AppSettingsState.instance.apiKey
         ) {
