@@ -6,18 +6,14 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.inspectopedia.extractor.utils.HtmlUtils
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.openai.OpenAIClient.ChatMessage
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.body.*
 import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
 import org.eclipse.jetty.util.resource.Resource
-import org.jdesktop.swingx.JXButton
 import java.awt.Desktop
 import java.util.function.Supplier
 
@@ -31,7 +27,6 @@ class CodeChatAction : BaseAction() {
         baseURL: String = "http://localhost:$port",
     ) : SkyenetCodingSessionServer(
         applicationName = "Code Chat",
-        baseURL = baseURL,
         model = AppSettingsState.instance.defaultChatModel(),
         apiKey = AppSettingsState.instance.apiKey,
     ) {
@@ -58,7 +53,7 @@ rootMessageTrail =
                 var messageTrail = ChatSession.divInitializer()
                 send("""$messageTrail<div>$userMessage</div><div>$spinner</div>""")
                 messages += ChatMessage(ChatMessage.Role.user, userMessage)
-                val response = api.chat(chatRequest, model).choices?.first()?.message?.content.orEmpty()
+                val response = api.chat(chatRequest, model).choices.first()?.message?.content.orEmpty()
                 messages += ChatMessage(ChatMessage.Role.assistant, response)
                 messageTrail += ChatSessionFlexmark.renderMarkdown(response)
                 send(messageTrail)

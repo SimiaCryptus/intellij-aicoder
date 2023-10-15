@@ -19,7 +19,8 @@ class QuestionAction extends SelectionAction<String> {
 
         class Answer {
             public String text = null
-            public Answer() {}
+
+            Answer() {}
         }
     }
 

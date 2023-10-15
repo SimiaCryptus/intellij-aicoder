@@ -184,11 +184,11 @@ class ActionTable(
             val selectedSettings = actionSettings.find {
                 it.id == dataModel.getValueAt(selectedRow, 2)
             }
-            if (!(selectedSettings?.isDynamic ?: false)) {
+            if (selectedSettings?.isDynamic != true) {
                 JOptionPane.showMessageDialog(null, "Cannot remove non-dynamic action")
                 return
             }
-            rowData.removeIf() {
+            rowData.removeIf {
                 it[2] == selectedSettings?.id
             }
             this@ActionTable.parent.invalidate()

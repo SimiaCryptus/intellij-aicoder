@@ -8,37 +8,29 @@
 
 # **AI Coding Assistant Plugin for IntelliJ**
 
-Welcome to the AI Coding Assistant, a robust IntelliJ plugin that empowers developers to streamline their coding
-workflow using ChatGPT/GPT4. Our plugin compliments others such as GitHub Copilot or AWS CodeWhisperer -
-Where those concentrate on passively enhancing the IDE with autocomplete, our plugin offers actively-invoked actions
-that complement and enhance your coding experience. An OpenAI access token is required to use this tool.
+The only fully open source plugin for IntelliJ that integrates with OpenAI's GPT-4 API.
 
-In addition to our predefined actions, our latest version introduces:
+* This requires an OpenAI access token, which you can get by signing up for a developer account at https://platform.openai.com/
+* No membership fees! API access is paid but is billed by usage, with no base fee. The plugin is free and open source.
+* Fully customizable actions in Groovy, including the ability to create your own actions.
+* Toolbar UI for quick configuration of temperature/model and display of current token count
+* Ability to intercept, edit, and log API requests
 
-1. Customizable actions, giving you the power to create your own tools through editable Groovy source files
-2. Toolbar UI for quick configuration of temperature/model and display of current token count
-3. Ability to intercept and edit individual API requests
-4. Ability to log api requests and responses to a file
-
-**NOTE**: Due to the war of aggression, widespread war crimes, and acts of genocide committed by the Russian
-Federation against Ukraine and various other countries, this plugin will not function for Russian users.
-
-_We are working on a solution to this problem_, but cannot yet promise a date for the Ukrainian victory.
+**NOTE**: Due to the war of aggression, widespread war crimes including acts of genocide committed by the Russian
+Federation against Ukraine and various other countries, this plugin will not function for users in Russia and allied countries.
+_We are working on a solution to this problem_, but cannot yet promise a date for the victory.
 **_Slava Ukraini!_**
 
 ## **Installation & Configuration**
 
-To begin with AI Coding Assistant, you will need an OpenAI access token. This key grants you access to a diverse range
-of features, including language-agnostic text processing, extensive code actions, Markdown support, and much more.
-
-After obtaining your OpenAI token, input it into the appropriate field in the plugin's settings panel. There, you'll
-also find options for customizing the actions to suit your coding preferences.
+To begin with AI Coding Assistant, you will need an [OpenAI access token](https://platform.openai.com/account/api-keys). 
+After obtaining your OpenAI token, input it into the appropriate field in the plugin's settings panel.
 
 ## **Usage Overview**
 
 AI Coding Assistant offers a variety of actions, which are tools specifically designed to simplify and speed up your
 coding process. These are not passively triggered by your typing but are invoked on command, giving you full control
-over when and how to use them. You can access these actions via the context menu.
+over when and how to use them. You can access these actions via the context menu within an editor or in the project view.
 
 ## **Action Customization**
 

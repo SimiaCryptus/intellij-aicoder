@@ -18,17 +18,17 @@ class RenameVariablesAction extends SelectionAction<String> {
                 String humanLanguage
         )
 
-        public class SuggestionResponse {
+        class SuggestionResponse {
             public List<Suggestion> suggestions = []
 
-            public SuggestionResponse() {}
+            SuggestionResponse() {}
         }
 
-        public class Suggestion {
+        class Suggestion {
             public String originalName = null
             public String suggestedName = null
 
-            public Suggestion() {}
+            Suggestion() {}
         }
     }
 

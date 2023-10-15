@@ -23,9 +23,9 @@ class CustomEditAction extends SelectionAction<String> {
             public String code = null
             public String language = null
 
-            public EditedText() {}
+            EditedText() {}
 
-            public EditedText(String code, String language) {
+            EditedText(String code, String language) {
                 this.code = code
                 this.language = language
             }

@@ -25,7 +25,7 @@ class InsertImplementationAction extends SelectionAction<String> {
             public String code
             public String language
 
-            public ConvertedText() {}
+            ConvertedText() {}
         }
     }
 
@@ -115,7 +115,7 @@ class InsertImplementationAction extends SelectionAction<String> {
         int selectionEnd
         SelectionAction.ContextRange largestIntersectingComment
 
-        public PsiClassContextActionParams(int selectionStart, int selectionEnd, SelectionAction.ContextRange largestIntersectingComment) {
+        PsiClassContextActionParams(int selectionStart, int selectionEnd, SelectionAction.ContextRange largestIntersectingComment) {
             this.selectionStart = selectionStart
             this.selectionEnd = selectionEnd
             this.largestIntersectingComment = largestIntersectingComment

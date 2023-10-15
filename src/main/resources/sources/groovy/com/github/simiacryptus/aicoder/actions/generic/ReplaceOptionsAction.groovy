@@ -17,9 +17,11 @@ import static java.lang.Math.pow
 class ReplaceOptionsAction extends SelectionAction<String> {
     interface VirtualAPI {
         Suggestions suggestText(String template, List<String> examples)
-        public class Suggestions {
+
+        class Suggestions {
             public List<String> choices = null
-            public Suggestions() {}
+
+            Suggestions() {}
         }
     }
 

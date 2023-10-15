@@ -84,7 +84,7 @@ class MarkdownImplementActionGroup extends ActionGroup {
                 public String code
                 public String language
 
-                public ConvertedText() {
+                ConvertedText() {
                 }
             }
         }

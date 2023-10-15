@@ -23,7 +23,8 @@ class ImplementStubAction extends SelectionAction<String> {
         static class ConvertedText {
             public String code
             public String language
-            public ConvertedText() {}
+
+            ConvertedText() {}
         }
     }
 

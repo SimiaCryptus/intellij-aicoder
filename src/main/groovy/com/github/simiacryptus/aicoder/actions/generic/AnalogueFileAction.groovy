@@ -18,7 +18,8 @@ class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> 
     private static class ProjectFile {
         public String path = ""
         public String code = ""
-        public ProjectFile() {
+
+        ProjectFile() {
         }
     }
 
@@ -36,7 +37,8 @@ class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> 
 
     static class Settings {
         public String directive = ""
-        public Settings() {
+
+        Settings() {
         }
     }
 

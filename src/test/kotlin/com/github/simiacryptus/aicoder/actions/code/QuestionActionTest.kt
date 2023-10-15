@@ -12,7 +12,7 @@ class QuestionActionTest : ActionTestBase() {
     @Test
     fun testProcessing() {
         testScript_SelectionAction(object : QuestionAction() {
-            override fun getConfig(project: Project?): String? {
+            override fun getConfig(project: Project?): String {
                 return "How are you feeling?"
             }
         }, "/QuestionActionTest.md")

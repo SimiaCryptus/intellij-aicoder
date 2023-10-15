@@ -41,11 +41,11 @@ class CommentsAction extends SelectionAction<String> {
                 String humanLanguage
         )
 
-        public class CommentsAction_ConvertedText {
-            public String code;
-            public String language;
+        class CommentsAction_ConvertedText {
+            public String code
+            public String language
 
-            public ConvertedText() {}
+            def ConvertedText() {}
         }
     }
 

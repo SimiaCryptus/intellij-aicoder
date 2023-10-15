@@ -20,11 +20,11 @@ class DocAction extends SelectionAction<String> {
                 String humanLanguage
         )
 
-        public class DocAction_ConvertedText {
-            public String text;
-            public String language;
+        class DocAction_ConvertedText {
+            public String text
+            public String language
 
-            public ConvertedText() {}
+            def ConvertedText() {}
         }
     }
 

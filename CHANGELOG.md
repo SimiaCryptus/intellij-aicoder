@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [1.2.14]
+
+### Improved
+- Logo and Icon graphics
+- Readme
+- Updated dependencies
+
 ## [1.2.11]
 
 ### Improved

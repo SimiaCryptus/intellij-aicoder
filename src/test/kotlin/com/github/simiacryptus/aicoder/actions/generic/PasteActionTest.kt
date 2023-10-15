@@ -14,7 +14,7 @@ class PasteActionTest : ActionTestBase() {
     @Test
     fun testProcessing() {
         testScript_SelectionAction(object : PasteAction() {
-            override fun processSelection(state: SelectionAction.SelectionState, config: String?): String {
+            override fun processSelection(state: SelectionState, config: String?): String {
                 Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(state.selectedText), null)
                 return super.processSelection(state, config)
             }

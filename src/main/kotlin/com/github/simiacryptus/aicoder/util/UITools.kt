@@ -499,7 +499,7 @@ object UITools {
             } catch (e: IllegalAccessException) {
                 throw RuntimeException(e)
             } catch (e: Throwable) {
-                UITools.error(log, "Error processing " + field.name, e)
+                error(log, "Error processing " + field.name, e)
             }
         }
     }
@@ -525,7 +525,7 @@ object UITools {
             } catch (e: IllegalAccessException) {
                 throw RuntimeException(e)
             } catch (e: Throwable) {
-                UITools.error(log, "Error processing " + field.name, e)
+                error(log, "Error processing " + field.name, e)
             }
         }
     }
@@ -843,7 +843,7 @@ object UITools {
 
     class BgTask<T>(
         project : Project, title : String, canBeCancelled : Boolean, val task : (ProgressIndicator) -> T
-    ) : Task.Backgroundable(project, title ?: "", canBeCancelled, DEAF), Supplier<T> {
+    ) : Task.Backgroundable(project, title, canBeCancelled, DEAF), Supplier<T> {
 
         private val result = AtomicReference<T>()
         private val isError = AtomicBoolean(false)
@@ -1068,7 +1068,7 @@ object UITools {
                 |""".trimMargin()
                 formBuilder.addLabeledComponent("Error Report", wrapScrollPane(bugReportTextArea))
 
-                if (!(dynamicActionException?.actionSetting?.isDynamic ?: true)) {
+                if (dynamicActionException?.actionSetting?.isDynamic == false) {
                     val openButton = JXButton("Revert to Default")
                     openButton.addActionListener {
                         dynamicActionException?.actionSetting?.file?.delete()

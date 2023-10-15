@@ -18,10 +18,11 @@ class DescribeAction extends SelectionAction<String> {
                 String humanLanguage
         )
 
-        public class DescribeAction_ConvertedText {
+        class DescribeAction_ConvertedText {
             public String text = null
             public String language = null
-            public DescribeAction_ConvertedText() {
+
+            DescribeAction_ConvertedText() {
             }
         }
     }
