@@ -4,8 +4,8 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version ("0.4.0")
 }
 
-includeBuild("../joe-penai/")
-includeBuild("../SkyeNet/")
+//includeBuild("../joe-penai/")
+//includeBuild("../SkyeNet/")
 //includeBuild("../AwsAgent/")
 
 
