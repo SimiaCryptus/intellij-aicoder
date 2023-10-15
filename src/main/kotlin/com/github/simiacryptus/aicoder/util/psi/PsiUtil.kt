@@ -252,7 +252,7 @@ object PsiUtil {
         psiFile: PsiElement?,
         selectionStart: Int,
         selectionEnd: Int
-    ) = getSmallestIntersecting(psiFile!!, selectionStart?.toInt() ?: 0, selectionEnd?.toInt() ?: 0, *ELEMENTS_CODE)
+    ) = getSmallestIntersecting(psiFile!!, selectionStart.toInt(), selectionEnd.toInt(), *ELEMENTS_CODE)
 
     @JvmStatic
     fun getDeclaration(element: PsiElement): String {

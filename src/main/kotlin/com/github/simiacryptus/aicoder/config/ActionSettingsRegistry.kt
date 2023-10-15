@@ -90,7 +90,7 @@ class ActionSettingsRegistry {
 
         fun buildAction(
             code: String
-        ): AnAction? {
+        ): AnAction {
             val newClassName = this.className + "_" + Integer.toHexString(code.hashCode())
             try {
                 return with(

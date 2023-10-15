@@ -16,14 +16,15 @@ class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
         super(false, true)
     }
 
-    public static class ProjectFile {
+    static class ProjectFile {
         public String path = ""
         public String code = ""
-        public ProjectFile() {
+
+        ProjectFile() {
         }
     }
 
-    public static class SettingsUI {
+    static class SettingsUI {
         @Name("Directive")
         public JTextArea directive = new JTextArea(
             /* text = */ """
@@ -32,13 +33,15 @@ class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
             /* rows = */ 3,
             /* columns = */ 120
         )
-        public SettingsUI() {
+
+        SettingsUI() {
         }
     }
 
-    public static class Settings {
+    static class Settings {
         public String directive = ""
-        public Settings() {
+
+        Settings() {
         }
     }
 

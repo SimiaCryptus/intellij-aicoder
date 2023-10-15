@@ -50,11 +50,11 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
             return "Current active model"
         }
 
-        override fun getSelectedValue(): String? {
+        override fun getSelectedValue(): String {
             return activeModel
         }
 
-        override fun getPopup(): JBPopup? {
+        override fun getPopup(): JBPopup {
             val context = object : ComboBoxPopup.Context<String> {
                 override fun getProject(): Project? {
                     return null

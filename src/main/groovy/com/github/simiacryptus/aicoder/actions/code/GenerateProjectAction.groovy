@@ -21,12 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-public class GenerateProjectAction extends FileContextAction<Settings> {
+class GenerateProjectAction extends FileContextAction<Settings> {
     static Logger logger = LoggerFactory.getLogger(GenerateProjectAction.class)
 
 
-
-    public GenerateProjectAction() {
+    GenerateProjectAction() {
         super(false, true)
     }
 
@@ -50,14 +49,15 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
 
         Project newProject(String description)
 
-        public class Project implements ValidatedObject {
+        class Project implements ValidatedObject {
             public String name = ''
             public String description = ''
             public String language = ''
             public List<String> features = []
             public List<String> libraries = []
             public List<String> buildTools = []
-            public Project() {}
+
+            Project() {}
             boolean validate() {
                 return true
             }
@@ -65,12 +65,13 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
 
         ProjectStatements getProjectStatements(String description, Project project)
 
-        public class ProjectStatements implements ValidatedObject {
+        class ProjectStatements implements ValidatedObject {
             public List<String> assumptions = []
             public List<String> designPatterns = []
             public List<String> requirements = []
             public List<String> risks = []
-            public ProjectStatements() {}
+
+            ProjectStatements() {}
 
             boolean validate() {
                 return true
@@ -79,42 +80,46 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
 
         ProjectDesign buildProjectDesign(Project project, ProjectStatements requirements)
 
-        public class ProjectDesign implements ValidatedObject {
+        class ProjectDesign implements ValidatedObject {
             public List<ComponentDetails> components = []
             public List<DocumentationDetails> documents = []
             public List<TestDetails> tests = []
-            public ProjectDesign() {}
+
+            ProjectDesign() {}
 
             boolean validate() {
                 return true
             }
         }
 
-        public class ComponentDetails implements ValidatedObject {
+        class ComponentDetails implements ValidatedObject {
             public String name = ''
             public String description = ''
             public List<String> features = []
-            public ComponentDetails() {}
+
+            ComponentDetails() {}
             boolean validate() {
                 return true
             }
         }
 
-        public class TestDetails implements ValidatedObject {
+        class TestDetails implements ValidatedObject {
             public String name = ''
             public List<String> steps = []
             public List<String> expectations = []
-            public TestDetails() {}
+
+            TestDetails() {}
             boolean validate() {
                 return true
             }
         }
 
-        public class DocumentationDetails implements ValidatedObject {
+        class DocumentationDetails implements ValidatedObject {
             public String name = ''
             public String description = ''
             public List<String> sections = []
-            public DocumentationDetails() {}
+
+            DocumentationDetails() {}
 
             boolean validate() {
                 return true
@@ -123,9 +128,10 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
 
         CodeSpecificationList buildProjectFileSpecifications(Project project, ProjectStatements requirements, ProjectDesign design, boolean recursive)
 
-        public class CodeSpecificationList implements ValidatedObject {
+        class CodeSpecificationList implements ValidatedObject {
             public List<CodeSpecification> files = []
-            public CodeSpecificationList() {}
+
+            CodeSpecificationList() {}
             boolean validate() {
                 return true
             }
@@ -135,9 +141,10 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
 
         TestSpecificationList buildTestFileSpecifications(Project project, ProjectStatements requirements, TestDetails design, boolean recursive)
 
-        public class TestSpecificationList implements ValidatedObject {
+        class TestSpecificationList implements ValidatedObject {
             public List<TestSpecification> files = []
-            public TestSpecificationList() {}
+
+            TestSpecificationList() {}
             boolean validate() {
                 return true
             }
@@ -145,55 +152,60 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
 
         DocumentSpecificationList buildDocumentationFileSpecifications(Project project, ProjectStatements requirements, DocumentationDetails design, boolean recursive)
 
-        public class DocumentSpecificationList implements ValidatedObject {
+        class DocumentSpecificationList implements ValidatedObject {
             public List<DocumentSpecification> files = []
-            public DocumentSpecificationList() {}
+
+            DocumentSpecificationList() {}
             boolean validate() {
                 return true
             }
         }
 
-        public class CodeSpecification implements ValidatedObject {
+        class CodeSpecification implements ValidatedObject {
             public String description = ''
             public List<FilePath> requires = []
             public List<String> publicProperties = []
             public List<String> publicMethodSignatures = []
             public String language = ''
             public FilePath location = new FilePath()
-            public CodeSpecification() {}
+
+            CodeSpecification() {}
             boolean validate() {
                 return true
             }
         }
 
-        public class DocumentSpecification implements ValidatedObject {
+        class DocumentSpecification implements ValidatedObject {
             public String description = ''
             public List<FilePath> requires = []
             public List<String> sections = []
             public String language = ''
             public FilePath location = new FilePath()
-            public DocumentSpecification() {}
+
+            DocumentSpecification() {}
             boolean validate() {
                 return true
             }
         }
 
-        public class TestSpecification implements ValidatedObject {
+        class TestSpecification implements ValidatedObject {
             public String description = ''
             public List<FilePath> requires = []
             public List<String> steps = []
             public List<String> expectations = []
             public String language = ''
             public FilePath location = new FilePath()
-            public TestSpecification() {}
+
+            TestSpecification() {}
             boolean validate() {
                 return true
             }
         }
 
-        public class FilePath implements ValidatedObject {
+        class FilePath implements ValidatedObject {
             public String file = ''
-            public FilePath() {}
+
+            FilePath() {}
 
             boolean validate() {
                 return file?.isBlank() == false
@@ -206,10 +218,11 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
 
         SourceCode implementDocumentationSpecification(Project project, DocumentSpecification specification, DocumentationDetails documentation, List imports, DocumentSpecification specificationAgain)
 
-        public class SourceCode implements ValidatedObject {
+        class SourceCode implements ValidatedObject {
             public String language = ''
             public String code = ''
-            public SourceCode() {}
+
+            SourceCode() {}
             boolean validate() {
                 return true
             }
@@ -417,7 +430,7 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
     }
 
     @SuppressWarnings("UNUSED")
-    public static class SettingsUI {
+    static class SettingsUI {
         @Name("Project Description")
         public JTextArea description = new JTextArea()
 
@@ -425,18 +438,18 @@ public class GenerateProjectAction extends FileContextAction<Settings> {
         public JTextField drafts = new JTextField("2")
         public JCheckBox saveAlternates = new JCheckBox("Save Alternates")
 
-        public SettingsUI() {
+        SettingsUI() {
             description.setLineWrap(true)
             description.setWrapStyleWord(true)
         }
     }
 
-    public static class Settings {
+    static class Settings {
         public String description = ""
         public int drafts = 2
         public boolean saveAlternates = false
 
-        public Settings() {}
+        Settings() {}
     }
 
     @Override

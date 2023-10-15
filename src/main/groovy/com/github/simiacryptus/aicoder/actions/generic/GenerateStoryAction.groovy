@@ -18,13 +18,13 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
     }
 
     interface AuthorAPI {
-        public class Idea {
+        class Idea {
             public String title = ""
             public String description = ""
 
-            public Idea() {}
+            Idea() {}
 
-            public Idea(String title, String description) {
+            Idea(String title, String description) {
                 this.title = title
                 this.description = description
             }
@@ -32,26 +32,26 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
 
         StoryTemplate generatePlot(Idea idea, int numberOfCharacters, int numberOfSettings)
 
-        public class Character {
+        class Character {
             public String name = ""
             public int age = 0
             public String bio = ""
             public String role = ""
             public String development = ""
 
-            public Character() {}
+            Character() {}
         }
 
-        public class Setting {
+        class Setting {
             public String location = ""
             public String timePeriod = ""
             public String description = ""
             public String significance = ""
 
-            public Setting() {}
+            Setting() {}
         }
 
-        public class StoryTemplate {
+        class StoryTemplate {
             public List<Character> characters = []
             public List<Setting> settings = []
             @Description("Date and time of the start of the story (e.g. \"2021-01-01 12:00:00\")")
@@ -67,16 +67,16 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
             @Description("Theme of the story (e.g. \"love\", \"death\", \"revenge\")")
             public String theme = ""
 
-            public StoryTemplate() {}
+            StoryTemplate() {}
         }
 
-        public class StoryEvents {
+        class StoryEvents {
             public List<StoryEvent> storyEvents = []
 
-            public StoryEvents() {}
+            StoryEvents() {}
         }
 
-        public class StoryEvent {
+        class StoryEvent {
             public String who = ""
             public String what = ""
             public String where = ""
@@ -88,16 +88,16 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
             public String punchline = ""
             public List<StoryObjectOrigin> origins = []
 
-            public StoryEvent() {}
+            StoryEvent() {}
         }
 
-        public class StoryObjectOrigin {
+        class StoryObjectOrigin {
             @Description("Actor or object name")
             public String name = ""
             @Description("Where did this object come from? e.g. \"Jackie was introduced in the previous chapter.\"  or \"the book was found on a bookshelf\"")
             public String origin = ""
 
-            public StoryObjectOrigin() {}
+            StoryObjectOrigin() {}
         }
 
         StoryEvents generatePlotPoints(Idea idea, StoryTemplate story)
@@ -122,20 +122,20 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
                 int segmentItemCount
         )
 
-        public class ScreenplaySegment {
+        class ScreenplaySegment {
             public String settingStart = ""
             public List<ScreenplayItem> items = []
             public String settingEnd = ""
 
-            public ScreenplaySegment() {}
+            ScreenplaySegment() {}
         }
 
-        public class ScreenplayItem {
+        class ScreenplayItem {
             public String actor = ""
             public String type = ""
             public String text = ""
 
-            public ScreenplayItem() {}
+            ScreenplayItem() {}
         }
 
         Page writeStoryPage(
@@ -145,12 +145,12 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
                 int pageWordCount
         )
 
-        public class Page {
+        class Page {
             public int pageNumber
             @Description("Full page text")
             public String text = ""
 
-            public Page() {}
+            Page() {}
         }
     }
 
@@ -178,7 +178,7 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
         public String description = ""
         public String writingStyle = ""
 
-        public Settings() {}
+        Settings() {}
     }
 
     @Override

@@ -60,7 +60,7 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
             return "AI Coding Assistant\nTemp = ${AppSettingsState.instance.temperature}"
         }
 
-        override fun getClickConsumer(): com.intellij.util.Consumer<MouseEvent>? {
+        override fun getClickConsumer(): Consumer<MouseEvent> {
             return Consumer { event: MouseEvent ->
                 val widgetComp = event.component
                 if (widgetComp != null) {
@@ -134,7 +134,7 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
         override fun getIcon(): Icon? =
             IconLoader.findIcon(javaClass.classLoader.getResource("./META-INF/toolbarIcon.svg"))
 
-        override fun getPresentation(): StatusBarWidget.WidgetPresentation? {
+        override fun getPresentation(): StatusBarWidget.WidgetPresentation {
             return this
         }
     }

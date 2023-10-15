@@ -58,7 +58,7 @@ rootMessageTrail =
                 var messageTrail = ChatSession.divInitializer()
                 send("""$messageTrail<div>$userMessage</div><div>$spinner</div>""")
                 messages += ChatMessage(ChatMessage.Role.user, userMessage)
-                val response = api.chat(chatRequest, model).choices?.first()?.message?.content.orEmpty()
+                val response = api.chat(chatRequest, model).choices.first()?.message?.content.orEmpty()
                 messages += ChatMessage(ChatMessage.Role.assistant, response)
                 messageTrail += ChatSessionFlexmark.renderMarkdown(response)
                 send(messageTrail)

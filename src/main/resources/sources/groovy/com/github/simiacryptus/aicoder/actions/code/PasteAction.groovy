@@ -19,10 +19,12 @@ class PasteAction extends SelectionAction<String> {
 
     interface VirtualAPI {
         ConvertedText convert(String text, String from_language, String to_language)
-        public class ConvertedText {
+
+        class ConvertedText {
             public String code
             public String language
-            public ConvertedText() {}
+
+            ConvertedText() {}
         }
     }
     @Override
