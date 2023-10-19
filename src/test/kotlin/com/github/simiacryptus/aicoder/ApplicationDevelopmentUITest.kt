@@ -1,6 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder
 
-import com.github.simiacryptus.aicoder.UITestUtil.Companion.awaitProcessing
+import com.github.simiacryptus.aicoder.UITestUtil.Companion.awaitBackgroundProgress
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.canRunTests
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.click
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.enterLines
@@ -266,7 +266,7 @@ class ApplicationDevelopmentUITest {
                     menuAction("Insert Implementation"), outputDir,
                     name, "${reportPrefix}menu", out
                 )
-                awaitProcessing()
+                awaitBackgroundProgress()
                 //keyboard.hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_UP)
                 //keyboard.hotKey(KeyEvent.VK_DELETE)
                 keyboard.hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_ALT, KeyEvent.VK_DOWN) // Move current line down
@@ -341,7 +341,7 @@ class ApplicationDevelopmentUITest {
                 outputDir,
                 name, "${reportPrefix}Rename_Variables", out
             )
-            awaitProcessing()
+            awaitBackgroundProgress()
             sleep(1000)
             writeImage(
                 screenshot("//div[@class='JDialog']"),
@@ -368,7 +368,7 @@ class ApplicationDevelopmentUITest {
                 outputDir,
                 name, "${reportPrefix}Add_Doc_Comments", out
             )
-            awaitProcessing()
+            awaitBackgroundProgress()
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
             writeImage(
                 screenshot("//div[@class='IdeRootPane']"),
@@ -403,7 +403,7 @@ class ApplicationDevelopmentUITest {
                 name, "${reportPrefix}Ask_Q2", out
             )
             click("//div[@text.key='button.ok']")
-            awaitProcessing()
+            awaitBackgroundProgress()
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
             writeImage(
                 screenshot("//div[@class='IdeRootPane']"),
@@ -427,7 +427,7 @@ class ApplicationDevelopmentUITest {
                 outputDir,
                 name, "${reportPrefix}Add_Code_Comments", out
             )
-            awaitProcessing()
+            awaitBackgroundProgress()
             writeImage(
                 screenshot("//div[@class='IdeRootPane']"),
                 outputDir,

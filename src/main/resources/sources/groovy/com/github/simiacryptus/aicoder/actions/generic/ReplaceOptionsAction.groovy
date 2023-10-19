@@ -40,7 +40,7 @@ class ReplaceOptionsAction extends SelectionAction<String> {
     }
 
     @Override
-    String processSelection(@Nullable AnActionEvent event, @NotNull SelectionState selectionState, @Nullable String config) {
+    String processSelection(@Nullable AnActionEvent event, @NotNull SelectionState state, @Nullable String config) {
         List<String> choices = UITools.run(event==null?null:event.project, templateText, true, true, {
             String selectedText = state.selectedText
             int idealLength = pow(2, 2 + ceil(log(selectedText.length()))).intValue()

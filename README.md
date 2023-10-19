@@ -8,7 +8,7 @@
 
 # **AI Coding Assistant Plugin for IntelliJ**
 
-The only fully open source plugin for IntelliJ that integrates with OpenAI's GPT-4 API.
+**Fully open source plugin for IntelliJ that integrates with OpenAI's GPT-4 API**
 
 * This requires an OpenAI access token, which you can get by signing up for a developer account at https://platform.openai.com/
 * No membership fees! API access is paid but is billed by usage, with no base fee. The plugin is free and open source.
@@ -20,6 +20,9 @@ The only fully open source plugin for IntelliJ that integrates with OpenAI's GPT
 Federation against Ukraine and various other countries, this plugin will not function for users in Russia and allied countries.
 _We are working on a solution to this problem_, but cannot yet promise a date for the victory.
 **_Slava Ukraini!_**
+
+**NOTE**: This project is not affiliated with OpenAI, JetBrains, or any other corporation or organization. 
+It is provided free of charge, as-is, with no warranty or guarantee of any kind.
 
 ## **Installation & Configuration**
 
