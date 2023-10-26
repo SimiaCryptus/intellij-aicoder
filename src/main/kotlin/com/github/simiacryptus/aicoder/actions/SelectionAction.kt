@@ -76,6 +76,7 @@ abstract class SelectionAction<T : Any>(
                         indent = indent,
                         contextRanges = editorState.contextRanges,
                         psiFile = editorState.psiFile,
+                        project = event.project
                     ),
                     config = config
                 )
@@ -171,6 +172,7 @@ abstract class SelectionAction<T : Any>(
         val indent: CharSequence? = null,
         val contextRanges: Array<ContextRange> = arrayOf(),
         val psiFile: PsiFile?,
+        val project: Project?
     )
 
     open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
