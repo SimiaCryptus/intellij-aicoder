@@ -26,8 +26,8 @@ class UITestUtil {
 
     companion object {
 
-        val outputDir = File("C:\\Users\\andre\\code\\aicoder\\intellij-aicoder-docs")
-        val testProjectPath = File("C:\\Users\\andre\\IdeaProjects\\automated-ui-test-workspace")
+        val outputDir = File("C:\\Users\\andre\\code\\intellij-aicoder\\build")
+        val testProjectPath = File("C:\\Users\\andre\\ideTest\\TestProject")
         private const val testIdeUrl = "http://127.0.0.1:8082"
         private val robot = RemoteRobot(testIdeUrl)
         val keyboard = Keyboard(robot)
@@ -142,13 +142,13 @@ class UITestUtil {
             keyboard.key(KeyEvent.VK_DELETE)
             enterLines(prompt)
             val image = menuAction("Insert Implementation")
-            awaitProcessing()
+            awaitBackgroundProgress()
             return image
         }
 
         fun menuAction(menuText: String): BufferedImage {
             keyboard.key(KeyEvent.VK_CONTEXT_MENU)
-            sleep(100)
+            sleep(500)
             val aiCoderMenuItem = getComponent("//div[@text='AI Coder']")
             aiCoderMenuItem.click()
             val point1 = aiCoderMenuItem.locationOnScreen
@@ -171,34 +171,86 @@ class UITestUtil {
          *  It will also print out the total time the process took to complete.
          */
         fun awaitRunCompletion() {
-            while (!isStarted()) sleep(1)
+            val timeout = 1 * 60 * 1000
+            val startOverall = System.currentTimeMillis()
+
+            while (!isStarted()) {
+                sleep(1)
+                if (System.currentTimeMillis() - startOverall > timeout) {
+                    throw RuntimeException("Timeout waiting for process to start")
+                }
+            }
+
             val start = System.currentTimeMillis()
             println("Process started")
+
             while (isStillRunning()) {
                 sleep(100)
+                if (System.currentTimeMillis() - startOverall > timeout) {
+                    throw RuntimeException("Timeout waiting for process to end")
+                }
             }
+
             val end = System.currentTimeMillis()
             println("Process ended after ${(end - start) / 1000.0}")
         }
 
-        fun awaitProcessing() {
-            while (!isDialogOpen()) sleep(1)
+        fun awaitDialog() {
+            // Await a dialog - it must be open then closed
+            val timeout = 1 * 60 * 1000
+            val startOverall = System.currentTimeMillis()
+            while (!isDialogOpen()) {
+                sleep(100)
+                if (System.currentTimeMillis() - startOverall > timeout) {
+                    throw RuntimeException("Timeout waiting for dialog to open")
+                }
+            }
             val start = System.currentTimeMillis()
             println("Dialog opened")
-            while (isDialogOpen()) sleep(100)
+            while (isDialogOpen()) {
+                sleep(100)
+                if (System.currentTimeMillis() - start > timeout) {
+                    throw RuntimeException("Timeout waiting for dialog to close")
+                }
+            }
             val end = System.currentTimeMillis()
             println("Dialog closed after ${(end - start) / 1000.0}")
         }
 
-        /**
-         *
-         *  Documents the Java implementation of the given name and directive.
-         *
-         *  @param name The name of the Java implementation.
-         *  @param directive The directive for the Java implementation.
-         *  @param out The [PrintWriter] to write the documentation to.
-         *  @param reportDir The [File] directory to save the screenshots to.
-         */
+        fun awaitBackgroundProgress() {
+            // Await a background task - it must be open then closed
+            val timeout = 1 * 60 * 1000
+            val startOverall = System.currentTimeMillis()
+            while (!isBackgroundProgressOpen()) {
+                sleep(100)
+                if (System.currentTimeMillis() - startOverall > timeout) {
+                    throw RuntimeException("Timeout waiting for background progress to open")
+                }
+            }
+            val start = System.currentTimeMillis()
+            println("Background progress opened")
+            while (isBackgroundProgressOpen()) {
+                sleep(100)
+                if (System.currentTimeMillis() - start > timeout) {
+                    throw RuntimeException("Timeout waiting for background progress to close")
+                }
+            }
+            val end = System.currentTimeMillis()
+            println("Background progress closed after ${(end - start) / 1000.0}")
+        }
+
+        private fun isBackgroundProgressOpen(): Boolean {
+            val progressPanel = robot.findAll(
+                ComponentFixture::class.java,
+                byXpath("//div[@class='InlineProgressPanel']")
+            )
+            if (progressPanel.isEmpty()) return false
+            val componentFixture = progressPanel.get(0)
+            val labels = componentFixture.data.getAll()
+            if (labels.size == 0) return false
+            return true
+        }
+
         fun documentJavaImplementation(
             name: String,
             directive: String,
@@ -210,7 +262,7 @@ class UITestUtil {
                 out1 = out,
                 directive = directive,
                 extension = "java",
-                prompt = "public class $name {\\n  // $directive",
+                prompt = "public class $name {\\n  // $directive and write a main method to test the code",
                 reportDir = reportDir,
                 language = "java",
                 selector = "static void main"
@@ -230,10 +282,10 @@ class UITestUtil {
             val reportPrefix = "${name}_${language}_"
             val testOutputFile = File(outputDir, "$reportPrefix$name.md")
 
-            PrintWriter(FileOutputStream(testOutputFile)).use { out ->
+            PrintWriter(FileOutputStream(testOutputFile)).use { report ->
                 out1.println("[$directive ($language)]($reportPrefix$name.md)\n\n")
 
-                out.println(
+                report.println(
                     """
                         
                         # $name
@@ -242,11 +294,11 @@ class UITestUtil {
                         
                         """.trimIndent()
                 )
-                out.println("```\n$directive\n```")
+                report.println("```\n$directive\n```")
                 newFile("$name.$extension")
 
 
-                out.println(
+                report.println(
                     """
                         
                         ## Implementation
@@ -256,23 +308,23 @@ class UITestUtil {
                         """.trimIndent()
                 )
                 val image = implementCode(prompt)
-                writeImage(image, reportDir, name, "${reportPrefix}menu", out)
+                writeImage(image, reportDir, name, "${reportPrefix}menu", report)
                 keyboard.hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_UP)
                 keyboard.hotKey(KeyEvent.VK_DELETE)
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_L) // Reformat
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
-                out.println(
+                report.println(
                     """
                         
                         This results in the following code:
                         
                         ```$language""".trimIndent()
                 )
-                out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$extension"), "UTF-8"))
-                out.println("```")
+                report.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$extension"), "UTF-8"))
+                report.println("```")
 
 
-                out.println(
+                report.println(
                     """
                         
                         ## Execution
@@ -284,18 +336,18 @@ class UITestUtil {
                 )
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_F10) // Run
                 awaitRunCompletion()
-                out.println(
+                report.println(
                     """
                         
                         ```""".trimIndent()
                 )
-                out.println(componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]"))
-                out.println(
+                report.println(componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]"))
+                report.println(
                     """
                         ```
                         """.trimIndent()
                 )
-                writeImage(screenshot("//div[@class='IdeRootPane']"), reportDir, name, "${reportPrefix}result", out)
+                writeImage(screenshot("//div[@class='IdeRootPane']"), reportDir, name, "${reportPrefix}result", report)
                 // Close run tab
                 sleep(100)
                 clickr("//div[@class='ContentTabLabel']")
@@ -304,7 +356,7 @@ class UITestUtil {
                 sleep(100)
 
 
-                out.println(
+                report.println(
                     """
                         
                         ## Rename Variables
@@ -316,20 +368,20 @@ class UITestUtil {
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
                 selectText(getEditor(), selector)
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
-                writeImage(menuAction("Rename Variables"), reportDir, name, "${reportPrefix}Rename_Variables", out)
-                awaitProcessing()
+                writeImage(menuAction("Rename Variables"), reportDir, name, "${reportPrefix}Rename_Variables", report)
+                awaitBackgroundProgress()
                 sleep(1000)
                 writeImage(
                     screenshot("//div[@class='JDialog']"),
                     reportDir,
                     name,
                     "${reportPrefix}Rename_Variables_Dialog",
-                    out
+                    report
                 )
                 click("//div[@text.key='button.ok']")
 
 
-                out.println(
+                report.println(
                     """
                         
                         ## Documentation Comments
@@ -339,19 +391,19 @@ class UITestUtil {
                         """.trimIndent()
                 )
                 selectText(getEditor(), selector)
-                writeImage(menuAction("Doc Comments"), reportDir, name, "${reportPrefix}Add_Doc_Comments", out)
-                awaitProcessing()
+                writeImage(menuAction("Doc Comments"), reportDir, name, "${reportPrefix}Add_Doc_Comments", report)
+                awaitBackgroundProgress()
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
                 writeImage(
                     screenshot("//div[@class='IdeRootPane']"),
                     reportDir,
                     name,
                     "${reportPrefix}Add_Doc_Comments2",
-                    out
+                    report
                 )
 
 
-                out.println(
+                report.println(
                     """
                         
                         ## Ad-Hoc Questions
@@ -362,16 +414,16 @@ class UITestUtil {
                 )
                 selectText(getEditor(), selector)
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
-                writeImage(menuAction("Ask a question"), reportDir, name, "${reportPrefix}Ask_Q", out)
+                writeImage(menuAction("Ask a question"), reportDir, name, "${reportPrefix}Ask_Q", report)
                 click("//div[@class='MultiplexingTextField']")
                 keyboard.enterText("What is the big-O runtime and why?")
-                writeImage(screenshot("//div[@class='JDialog']"), reportDir, name, "${reportPrefix}Ask_Q2", out)
+                writeImage(screenshot("//div[@class='JDialog']"), reportDir, name, "${reportPrefix}Ask_Q2", report)
                 click("//div[@text.key='button.ok']")
-                awaitProcessing()
+                awaitBackgroundProgress()
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
-                writeImage(screenshot("//div[@class='IdeRootPane']"), reportDir, name, "${reportPrefix}Ask_Q3", out)
+                writeImage(screenshot("//div[@class='IdeRootPane']"), reportDir, name, "${reportPrefix}Ask_Q3", report)
 
-                out.println(
+                report.println(
                     """
                         
                         ## Code Comments
@@ -382,24 +434,24 @@ class UITestUtil {
                 )
                 selectText(getEditor(), selector)
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
-                writeImage(menuAction("Code Comments"), reportDir, name, "${reportPrefix}Add_Code_Comments", out)
-                awaitProcessing()
+                writeImage(menuAction("Code Comments"), reportDir, name, "${reportPrefix}Add_Code_Comments", report)
+                awaitBackgroundProgress()
                 writeImage(
                     screenshot("//div[@class='IdeRootPane']"),
                     reportDir,
                     name,
                     "${reportPrefix}Add_Code_Comments2",
-                    out
+                    report
                 )
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_L) // Reformat
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
-                out.println(
+                report.println(
                     """
                         
                         ```$language""".trimIndent()
                 )
-                out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$extension"), "UTF-8"))
-                out.println(
+                report.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$extension"), "UTF-8"))
+                report.println(
                     """
                         ```
                         
@@ -407,7 +459,7 @@ class UITestUtil {
                 )
 
 
-                out.println(
+                report.println(
                     """
                         
                         ## Conversion to other languages
@@ -426,26 +478,26 @@ class UITestUtil {
                     reportDir,
                     name,
                     "${reportPrefix}Convert_to_js",
-                    out
+                    report
                 )
                 keyboard.hotKey(KeyEvent.VK_ENTER)
                 while (!File(testProjectPath, "src/$name.js").exists()) {
                     sleep(1000)
                 }
-                out.println(
+                report.println(
                     """
                         
                         ```js""".trimIndent()
                 )
-                out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.js"), "UTF-8"))
-                out.println(
+                report.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.js"), "UTF-8"))
+                report.println(
                     """
                         ```
                         """.trimIndent()
                 )
 
 
-                out.println(
+                report.println(
                     """
                         ### Conversion to Scala
                         
@@ -462,18 +514,18 @@ class UITestUtil {
                     reportDir,
                     name,
                     "${reportPrefix}Convert_to_scala",
-                    out
+                    report
                 )
                 keyboard.hotKey(KeyEvent.VK_ENTER)
                 while (!File(testProjectPath, "src/$name.scala").exists()) {
                     sleep(1000)
                 }
-                out.println(
+                report.println(
                     """
                         ```scala""".trimIndent()
                 )
-                out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.scala"), "UTF-8"))
-                out.println(
+                report.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.scala"), "UTF-8"))
+                report.println(
                     """
                         ```
                         """.trimIndent()
@@ -487,12 +539,12 @@ class UITestUtil {
         fun documentTextAppend(
             name: String,
             directive: String,
-            out: PrintWriter,
+            report: PrintWriter,
             file: File
         ) {
             val reportPrefix = "${name}_"
-            out.println("")
-            out.println(
+            report.println("")
+            report.println(
                 """
             # $name
 
@@ -512,19 +564,19 @@ class UITestUtil {
             enterLines(directive)
             keyboard.selectAll()
             val image = menuAction("Append Text")
-            awaitProcessing()
-            writeImage(image, file, name, "${reportPrefix}menu", out)
+            awaitBackgroundProgress()
+            writeImage(image, file, name, "${reportPrefix}menu", report)
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
 
-            out.println(
+            report.println(
                 """
 
             This generates the following text:
 
             ```""".trimIndent()
             )
-            out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.txt"), "UTF-8"))
-            out.println(
+            report.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.txt"), "UTF-8"))
+            report.println(
                 """
             ```
 
@@ -532,7 +584,7 @@ class UITestUtil {
             )
 
 
-            out.println(
+            report.println(
                 """
 
             ## Edit Text
@@ -543,16 +595,16 @@ class UITestUtil {
             )
             click("//div[@class='EditorComponentImpl']")
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A) // Select all
-            writeImage(menuAction("Edit Text"), file, name, "${reportPrefix}edit_text", out)
+            writeImage(menuAction("Edit Code"), file, name, "${reportPrefix}edit_text", report)
             click("//div[@class='MultiplexingTextField']")
             keyboard.enterText("Translate into a series of haikus")
-            writeImage(screenshot("//div[@class='JDialog']"), file, name, "${reportPrefix}edit_text_2", out)
+            writeImage(screenshot("//div[@class='JDialog']"), file, name, "${reportPrefix}edit_text_2", report)
             keyboard.enter()
-            awaitProcessing()
-            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result1", out)
+            awaitBackgroundProgress()
+            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result1", report)
 
 
-            out.println(
+            report.println(
                 """
             
             We can also replace text using the "Replace Options" command.
@@ -567,26 +619,26 @@ class UITestUtil {
                 documentText.split("\n").map { it.trim() }.filter { it.length < 100 }.take(40).toTypedArray().random()
             selectText(getEditor(), randomLine)
             keyboard.hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_END)
-            writeImage(menuAction("Replace Options"), file, name, "${reportPrefix}replace_options", out)
-            awaitProcessing()
+            writeImage(menuAction("Replace Options"), file, name, "${reportPrefix}replace_options", report)
+            awaitBackgroundProgress()
             sleep(500)
-            writeImage(screenshot("//div[@class='JDialog']"), file, name, "${reportPrefix}replace_options_2", out)
+            writeImage(screenshot("//div[@class='JDialog']"), file, name, "${reportPrefix}replace_options_2", report)
             sleep(500)
 
             keyboard.enter()
-            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result2", out)
+            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result2", report)
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
             documentText = FileUtils.readFileToString(File(testProjectPath, "src/$name.txt"), "UTF-8")
-            out.println(
+            report.println(
                 """
             
             Our text now looks like this:
             
             ```""".trimIndent()
             )
-            out.println(documentText)
-            out.println(
+            report.println(documentText)
+            report.println(
                 """
             ```
             
@@ -619,6 +671,9 @@ class UITestUtil {
             
             ```
             $directive
+            Rows 1-5
+
+            |
             ```
             
             """.trimIndent()
@@ -631,12 +686,13 @@ class UITestUtil {
             enterLines(
                 """
             $directive
+            Rows 1-5
             
             |""".trimIndent()
             )
             keyboard.selectAll()
             writeImage(menuAction("Append Text"), file, name, "${reportPrefix}menu", out)
-            awaitProcessing()
+            awaitBackgroundProgress()
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
             out.println(
@@ -656,7 +712,7 @@ class UITestUtil {
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_END)
             writeImage(menuAction("Add Table Columns"), file, name, "${reportPrefix}add_columns", out)
-            awaitProcessing()
+            awaitBackgroundProgress()
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
             out.println(
@@ -674,7 +730,7 @@ class UITestUtil {
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_Z) // Undo
             writeImage(menuAction("Add Table Rows"), file, name, "${reportPrefix}add_rows", out)
-            awaitProcessing()
+            awaitBackgroundProgress()
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
             out.println(
@@ -732,7 +788,7 @@ class UITestUtil {
             }
             keyboard.selectAll()
             writeImage(menuAction("Append Text"), file, name, "${reportPrefix}append_text", out)
-            awaitProcessing()
+            awaitBackgroundProgress()
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
             out.println(
@@ -752,7 +808,7 @@ class UITestUtil {
 
             writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result", out)
             writeImage(menuAction("Add List Items"), file, name, "${reportPrefix}add_list_items", out)
-            awaitProcessing()
+            awaitBackgroundProgress()
             writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result2", out)
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save

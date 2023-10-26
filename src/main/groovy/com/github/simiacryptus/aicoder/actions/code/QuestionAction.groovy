@@ -57,7 +57,7 @@ class QuestionAction extends SelectionAction<String> {
 
         def blockComment = state.language?.blockComment
         def fromString = blockComment?.fromString(answer)
-        return "${state.indent}${fromString.withIndent(state.indent)}\n${state.indent}" + state.selectedText
+        return "${state.indent}${fromString?.withIndent(state.indent) ?: ""}\n${state.indent}" + state.selectedText
     }
 
     @Override

@@ -3,8 +3,10 @@ package com.github.simiacryptus.aicoder.actions.code
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiClassContext
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.proxy.ChatProxy
 import kotlin.Pair
@@ -85,18 +87,20 @@ class InsertImplementationAction extends SelectionAction<String> {
                 .filter { x -> !x.isEmpty() }
                 .reduce { a, b -> "$a $b" }.get()
         if(null != state.psiFile) {
-            def psiClassContext = PsiClassContext.getContext(
-                    state.psiFile,
-                    psiClassContextActionParams.selectionStart,
-                    psiClassContextActionParams.selectionEnd,
-                    computerLanguage
-            ).toString()
-            def code = proxy.implementCode(
-                    specification,
-                    psiClassContext,
-                    computerLanguage.name(),
-                    humanLanguage,
-            ).code
+            def code = UITools.run(state.project, "Insert Implementation", true, true, {
+                def psiClassContext = PsiClassContext.getContext(
+                            state.psiFile,
+                            psiClassContextActionParams.selectionStart,
+                            psiClassContextActionParams.selectionEnd,
+                            computerLanguage
+                    ).toString()
+                proxy.implementCode(
+                        specification,
+                        psiClassContext,
+                        computerLanguage.name(),
+                        humanLanguage,
+                ).code
+            })
             if(null != code) return selectedText + "\n${state.indent}" + code
         } else {
             def code = proxy.implementCode(

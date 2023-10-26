@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable
 
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
 
 class PasteAction extends SelectionAction<String> {
     PasteAction() {
@@ -62,6 +63,8 @@ class PasteAction extends SelectionAction<String> {
     }
 
     private Object getClipboard() {
-        return Toolkit.getDefaultToolkit().systemClipboard.getContents(null)?.getTransferData(DataFlavor.stringFlavor)
+        def contents = Toolkit.getDefaultToolkit().systemClipboard.getContents(null)
+        if (contents?.isDataFlavorSupported(DataFlavor.stringFlavor) == true) contents?.getTransferData(DataFlavor.stringFlavor)
+        else null
     }
 }

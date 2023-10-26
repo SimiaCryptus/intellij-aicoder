@@ -33,6 +33,14 @@ class AppSettingsComponent {
     val humanLanguage = JBTextField()
 
     @Suppress("unused")
+    @Name("Listening Port")
+    val listeningPort = JBTextField()
+
+    @Suppress("unused")
+    @Name("Listening Endpoint")
+    val listeningEndpoint = JBTextField()
+
+    @Suppress("unused")
     @Name("Suppress Errors")
     val suppressErrors = JBCheckBox()
 

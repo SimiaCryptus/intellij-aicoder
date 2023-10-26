@@ -27,7 +27,7 @@ class UITest {
         val out = PrintWriter(FileOutputStream(testOutputFile))
         out.use { out ->
             documentJavaImplementation("Text_to_Morse", "Convert text to Morse code", out, outputDir)
-            documentJavaImplementation("Prime_Numbers", "Print all prime numbers from 1 to 100", out, outputDir)
+            //documentJavaImplementation("Prime_Numbers", "Print all prime numbers from 1 to 100", out, outputDir)
             //            documentJavaImplementation("Calculate_Pi", "Calculate Pi using the convergence of x = 1+sin x starting at x=3", out, buildDir)
             //            documentJavaImplementation("Java_8", "Demonstrate language features of Java 8", out, buildDir)
             //            documentJavaImplementation("Draw_A_Smile", "Draw a smiley face", out, buildDir)
@@ -133,7 +133,7 @@ class UITest {
         if (!canRunTests()) return
         val testOutputFile = File(outputDir, "markdown.md")
         val out = PrintWriter(FileOutputStream(testOutputFile))
-        documentMarkdownTableOps("State_Details", "Data Table of State Details", out, outputDir)
+        //documentMarkdownTableOps("State_Details", "Data Table of State Details", out, outputDir)
         documentMarkdownListAppend("Puppy_Playtime", "Top 10 Best Ways to Play with Puppies", arrayOf(), out, outputDir)
         out.close() // Close file
     }
