@@ -1,5 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.ui
 
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.SelectionEvent
@@ -124,10 +125,12 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun isAvailable(project: Project): Boolean {
+        if (UITools.isSanctioned()) return false
         return true
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
+        if (UITools.isSanctioned()) return false
         return true
     }
 }

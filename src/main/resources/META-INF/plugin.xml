@@ -13,10 +13,6 @@
                                  displayName="AI Coder"/>
     </extensions>
 
-    <applicationListeners>
-        <listener class="com.github.simiacryptus.aicoder.ApplicationEvents"
-                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    </applicationListeners>
     <extensions defaultExtensionNs="com.intellij">
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
@@ -28,6 +24,7 @@
                                 id="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 order="first"/>
     </extensions>
+
     <actions>
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"
                class="com.github.simiacryptus.aicoder.ui.EditorMenu"

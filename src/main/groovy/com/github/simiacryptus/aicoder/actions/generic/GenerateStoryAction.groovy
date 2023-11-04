@@ -186,16 +186,18 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
         return UITools.showDialog(project, SettingsUI.class, Settings.class, "Generate Story", {})
     }
 
-    def proxy = new ChatProxy<AuthorAPI>(
-            clazz: AuthorAPI.class,
-            api: api,
-            model: AppSettingsState.instance.defaultChatModel(),
-            temperature: AppSettingsState.instance.temperature,
-            deserializerRetries: 2,
-    ).create()
+    AuthorAPI proxy = null
 
     @Override
     File[] processSelection(SelectionState state, Settings config) {
+        proxy = new ChatProxy<AuthorAPI>(
+                clazz: AuthorAPI.class,
+                api: api,
+                model: AppSettingsState.instance.defaultChatModel(),
+                temperature: AppSettingsState.instance.temperature,
+                deserializerRetries: 2,
+        ).create()
+
         List<File> outputFiles = []
 
         if (config) {

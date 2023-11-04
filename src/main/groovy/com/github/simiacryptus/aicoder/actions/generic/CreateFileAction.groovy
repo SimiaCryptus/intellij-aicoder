@@ -81,7 +81,7 @@ class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
         String basePath,
         String directive
     ) {
-        def chatRequest = new com.simiacryptus.openai.OpenAIClient.ChatRequest.ChatRequest()
+        def chatRequest = new ChatRequest()
         def model = AppSettingsState.instance.defaultChatModel()
         chatRequest.model = model.modelName
         chatRequest.max_tokens = model.maxTokens

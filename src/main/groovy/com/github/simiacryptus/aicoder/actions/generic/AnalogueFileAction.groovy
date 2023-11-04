@@ -79,7 +79,7 @@ class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> 
     }
 
     private ProjectFile generateFile(ProjectFile baseFile, String directive) {
-        def chatRequest = new com.simiacryptus.openai.OpenAIClient.ChatRequest.ChatRequest()
+        def chatRequest = new ChatRequest()
         def model = AppSettingsState.instance.defaultChatModel()
         chatRequest.model = model.modelName
         chatRequest.max_tokens = model.maxTokens

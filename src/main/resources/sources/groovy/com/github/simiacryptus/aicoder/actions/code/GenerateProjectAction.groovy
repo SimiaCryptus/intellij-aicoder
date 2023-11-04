@@ -457,16 +457,17 @@ class GenerateProjectAction extends FileContextAction<Settings> {
         return UITools.showDialog(project, SettingsUI.class, Settings.class, "Project Settings", { config -> })
     }
 
-    SoftwareProjectAI projectAI = new ChatProxy<SoftwareProjectAI>(
-            clazz: SoftwareProjectAI.class,
-            api: api,
-            model: AppSettingsState.instance.defaultChatModel(),
-            temperature: AppSettingsState.instance.temperature,
-            deserializerRetries: 2,
-    ).create()
+    SoftwareProjectAI projectAI = null
 
     @Override
     File[] processSelection(SelectionState state, Settings config) {
+        projectAI = new ChatProxy<SoftwareProjectAI>(
+                clazz: SoftwareProjectAI.class,
+                api: api,
+                model: AppSettingsState.instance.defaultChatModel(),
+                temperature: AppSettingsState.instance.temperature,
+                deserializerRetries: 2,
+        ).create()
         if (config == null) return new File[0]
 
 
