@@ -1,16 +1,10 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.OpenAIClient
-import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.body.*
-import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
 import org.eclipse.jetty.util.resource.Resource
-import java.util.HashMap
-import java.util.Map
-import java.util.function.Supplier
 
 class CodeChatServer(
     val project: Project,
@@ -45,7 +39,7 @@ rootMessageTrail =
     ) {
         override fun run(userMessage: String) {
             var messageTrail = ChatSession.divInitializer()
-            send("""$messageTrail<div>$userMessage</div><div>$spinner</div>""")
+            send("""$messageTrail<div>$userMessage</div><div>${SkyenetSessionServerBase.spinner}</div>""")
             messages += OpenAIClient.ChatMessage(OpenAIClient.ChatMessage.Role.user, userMessage)
             val response = api.chat(chatRequest, model).choices.first()?.message?.content.orEmpty()
             messages += OpenAIClient.ChatMessage(OpenAIClient.ChatMessage.Role.assistant, response)
