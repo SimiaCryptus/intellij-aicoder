@@ -45,7 +45,6 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         val chatRequest = ChatRequest()
         chatRequest.model = model.modelName
         chatRequest.temperature = temperature
-        chatRequest.max_tokens = model.maxTokens
         return chatRequest
     }
 

@@ -68,7 +68,6 @@ rootMessageTrail =
                 val chatRequest = OpenAIClient.ChatRequest()
                 val model = AppSettingsState.instance.defaultChatModel()
                 chatRequest.model = model.modelName
-                chatRequest.max_tokens = model.maxTokens
                 chatRequest.temperature = AppSettingsState.instance.temperature
                 chatRequest.messages = messages.toTypedArray()
                 return chatRequest

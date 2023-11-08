@@ -25,10 +25,10 @@ repositories {
 val kotlin_version = "1.7.22"
 val jetty_version = "11.0.15"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.20"
+val skyenet_version = "1.0.21"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.23")
+    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.24")
 
     implementation(group = "com.simiacryptus.skyenet", name = "util", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
