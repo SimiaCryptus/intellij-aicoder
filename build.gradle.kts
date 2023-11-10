@@ -72,7 +72,6 @@ tasks.named("processResources") {
 }
 
 kotlin {
-//    jvmToolchain(11)
     jvmToolchain(17)
 }
 
@@ -80,7 +79,7 @@ tasks {
     compileKotlin {
         kotlinOptions {
             javaParameters = true
-            jvmTarget = "1.8"
+            jvmTarget = "17"
         }
     }
 
