@@ -15,8 +15,8 @@ class CodeChatServer(
     model = AppSettingsState.instance.defaultChatModel()
 ) {
 
-    val rootOperationID = (0..5).map { ('a'..'z').random() }.joinToString("")
-    var rootMessageTrail: String = ""
+    private val rootOperationID = (0..5).map { ('a'..'z').random() }.joinToString("")
+    private var rootMessageTrail: String = ""
 
     override fun newSession(sessionId: String): CodeChatSession {
         val newSession = CodeChatSession(sessionId)
@@ -63,7 +63,7 @@ rootMessageTrail =
             )
         ).toMutableList()
 
-        val chatRequest: OpenAIClient.ChatRequest
+        private val chatRequest: OpenAIClient.ChatRequest
             get() {
                 val chatRequest = OpenAIClient.ChatRequest()
                 val model = AppSettingsState.instance.defaultChatModel()

@@ -248,64 +248,6 @@ object UITools {
     }
 
     @JvmStatic
-    fun <T : Any> readJavaUI(component: Any, settings: T) {
-        val componentClass: Class<*> = component.javaClass
-        val declaredUIFields =
-            Arrays.stream(componentClass.fields).map { obj: Field -> obj.name }.collect(Collectors.toSet())
-        for (settingsField in settings.javaClass.fields) {
-            if (Modifier.isStatic(settingsField.modifiers)) continue
-            settingsField.isAccessible = true
-            val settingsFieldName = settingsField.name
-            try {
-                var newSettingsValue: Any? = null
-                if (!declaredUIFields.contains(settingsFieldName)) continue
-                val uiField = componentClass.getDeclaredField(settingsFieldName)
-                var uiVal = uiField[component]
-                if (uiVal is JScrollPane) {
-                    uiVal = uiVal.viewport.view
-                }
-                when (settingsField.type.name) {
-                    "java.lang.String" -> if (uiVal is JTextComponent) {
-                        newSettingsValue = uiVal.text
-                    } else if (uiVal is ComboBox<*>) {
-                        newSettingsValue = uiVal.item
-                    }
-
-                    "int" -> if (uiVal is JTextComponent) {
-                        newSettingsValue = uiVal.text.toInt()
-                    }
-
-                    "long" -> if (uiVal is JTextComponent) {
-                        newSettingsValue = uiVal.text.toLong()
-                    }
-
-                    "double" -> if (uiVal is JTextComponent) {
-                        newSettingsValue = uiVal.text.toDouble()
-                    }
-
-                    "boolean" -> if (uiVal is JCheckBox) {
-                        newSettingsValue = uiVal.isSelected
-                    } else if (uiVal is JTextComponent) {
-                        newSettingsValue = java.lang.Boolean.parseBoolean(uiVal.text)
-                    }
-
-                    else -> if (Enum::class.java.isAssignableFrom(settingsField.type)) {
-                        if (uiVal is ComboBox<*>) {
-                            val comboBox = uiVal
-                            val item = comboBox.item
-                            newSettingsValue =
-                                findValue(settingsField.type as Class<out Enum<*>?>, item.toString())
-                        }
-                    }
-                }
-                settingsField[settings] = newSettingsValue
-            } catch (e: Throwable) {
-                throw RuntimeException("Error processing $settingsField", e)
-            }
-        }
-    }
-
-    @JvmStatic
     fun <T : Any, R : Any> readKotlinUI(component: R, settings: T) {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields =
@@ -378,56 +320,6 @@ object UITools {
     }
 
     @JvmStatic
-    fun <T : Any> writeJavaUI(component: Any, settings: T) {
-        val componentClass: Class<*> = component.javaClass
-        val declaredUIFields =
-            Arrays.stream(componentClass.fields).map { obj: Field -> obj.name }.collect(Collectors.toSet())
-        for (settingsField in settings.javaClass.fields) {
-            val fieldName = settingsField.name
-            try {
-                if (!declaredUIFields.contains(fieldName)) continue
-                val uiField = componentClass.getDeclaredField(fieldName)
-                val settingsVal = settingsField.get(settings) ?: continue
-                var uiVal = uiField[component]
-                if (uiVal is JScrollPane) {
-                    uiVal = uiVal.viewport.view
-                }
-                when (settingsField.type.name) {
-                    "java.lang.String" -> if (uiVal is JTextComponent) {
-                        uiVal.text = settingsVal.toString()
-                    } else if (uiVal is ComboBox<*>) {
-                        uiVal.item = settingsVal.toString()
-                    }
-
-                    "int", "java.lang.Integer" -> if (uiVal is JTextComponent) {
-                        uiVal.text = (settingsVal as Int).toString()
-                    }
-
-                    "long" -> if (uiVal is JTextComponent) {
-                        uiVal.text = (settingsVal as Int).toLong().toString()
-                    }
-
-                    "boolean" -> if (uiVal is JCheckBox) {
-                        uiVal.isSelected = (settingsVal as Boolean)
-                    } else if (uiVal is JTextComponent) {
-                        uiVal.text = java.lang.Boolean.toString((settingsVal as Boolean))
-                    }
-
-                    "double", "java.lang.Double" -> if (uiVal is JTextComponent) {
-                        uiVal.text = (settingsVal as Double).toString()
-                    }
-
-                    else -> if (uiVal is ComboBox<*>) {
-                        uiVal.item = settingsVal.toString()
-                    }
-                }
-            } catch (e: Throwable) {
-                throw RuntimeException("Error processing $settingsField", e)
-            }
-        }
-    }
-
-    @JvmStatic
     fun <T : Any, R : Any> writeKotlinUI(component: R, settings: T) {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields =
@@ -474,32 +366,6 @@ object UITools {
                 }
             } catch (e: Throwable) {
                 throw RuntimeException("Error processing $settingsField", e)
-            }
-        }
-    }
-
-    @JvmStatic
-    fun <T> addJavaFields(ui: Any, formBuilder: FormBuilder) {
-        var first = true
-        for (field in ui.javaClass.fields) {
-            if (Modifier.isStatic(field.modifiers)) continue
-            try {
-                val nameAnnotation = field.getDeclaredAnnotation(Name::class.java)
-                val component = field[ui] as JComponent
-                if (nameAnnotation != null) {
-                    if (first) {
-                        first = false
-                        formBuilder.addLabeledComponentFillVertically(nameAnnotation.value + ": ", component)
-                    } else {
-                        formBuilder.addLabeledComponent(JBLabel(nameAnnotation.value + ": "), component, 1, false)
-                    }
-                } else {
-                    formBuilder.addComponentToRightColumn(component, 1)
-                }
-            } catch (e: IllegalAccessException) {
-                throw RuntimeException(e)
-            } catch (e: Throwable) {
-                error(log, "Error processing " + field.name, e)
             }
         }
     }
@@ -640,18 +506,6 @@ object UITools {
             counter++
         }
         return JOptionPane.CLOSED_OPTION
-    }
-
-    @JvmStatic
-    fun configureTextArea(textArea: JBTextArea): JBTextArea {
-        val font = textArea.font
-        val fontMetrics = textArea.getFontMetrics(font)
-        textArea.preferredSize = Dimension(
-            (fontMetrics.charWidth(' ') * textArea.columns * 1.2).toInt(),
-            (fontMetrics.height * textArea.rows * 1.2).toInt()
-        )
-        textArea.autoscrolls = true
-        return textArea
     }
 
     @JvmStatic
@@ -965,7 +819,7 @@ object UITools {
         actionLog += message
     }
 
-    val singleThreadPool = Executors.newSingleThreadExecutor()
+    private val singleThreadPool = Executors.newSingleThreadExecutor()
 
     @JvmStatic
     fun error(log: org.slf4j.Logger, msg: String, e: Throwable) {
@@ -1239,36 +1093,6 @@ object UITools {
         val value = pane.inputValue
         return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
     }
-
-@JvmStatic fun showInputDialog(
-    parentComponent: Component?,
-    message: Any?,
-    title: String?,
-    messageType: Int,
-    mru: List<String>,
-    providedOptions: List<String>?
-): Any? {
-    val icon = null
-    val selectionValues = (mru + (providedOptions ?: emptyList())).toTypedArray()
-    val initialSelectionValue = null
-    val pane = JOptionPane(
-        message,
-        messageType,
-        JOptionPane.OK_CANCEL_OPTION,
-        icon,
-        null,
-        null
-    )
-    pane.wantsInput = true
-    pane.selectionValues = selectionValues
-    pane.initialSelectionValue = initialSelectionValue
-    val dialog = pane.createDialog(parentComponent, title)
-    pane.selectInitialValue()
-    dialog.show()
-    dialog.dispose()
-    val value = pane.inputValue
-    return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
-}
 
 }
 

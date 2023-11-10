@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.skyenet.Heart
 import com.simiacryptus.skyenet.OutputInterceptor
 import com.simiacryptus.skyenet.body.ClasspathResource
-import com.simiacryptus.skyenet.body.SessionServerUtil.asJava
+import com.simiacryptus.skyenet.util.SessionServerUtil.asJava
 import com.simiacryptus.skyenet.body.SkyenetCodingSessionServer
 import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
 import org.eclipse.jetty.util.resource.Resource

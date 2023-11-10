@@ -197,7 +197,7 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
                 temperature: AppSettingsState.instance.temperature,
                 deserializerRetries: 2,
         ).create()
-        
+
         List<File> outputFiles = []
 
         if (config) {

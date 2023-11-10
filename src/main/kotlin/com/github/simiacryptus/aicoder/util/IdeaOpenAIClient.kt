@@ -19,7 +19,7 @@ class IdeaOpenAIClient : OpenAIClient(
     key = AppSettingsState.instance.apiKey,
     apiBase = AppSettingsState.instance.apiBase,
 ) {
-    val isInRequest = AtomicBoolean(false)
+    private val isInRequest = AtomicBoolean(false)
 
     override fun incrementTokens(totalTokens: Int) {
         AppSettingsState.instance.tokenCounter += totalTokens
@@ -123,7 +123,7 @@ class IdeaOpenAIClient : OpenAIClient(
 
         val api: OpenAIClient get() = IdeaOpenAIClient()
         var lastEvent: AnActionEvent? = null
-        fun uiEdit(
+        private fun uiEdit(
             project: Project? = null,
             title: String = "Edit Request",
             jsonTxt: String
@@ -164,7 +164,7 @@ class IdeaOpenAIClient : OpenAIClient(
             } ?: jsonTxt
         }
 
-        fun <T : Any> execute(
+        private fun <T : Any> execute(
             fn: () -> T
         ): T? {
             val application = ApplicationManager.getApplication()

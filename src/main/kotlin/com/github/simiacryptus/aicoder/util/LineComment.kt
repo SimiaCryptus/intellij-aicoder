@@ -8,7 +8,7 @@ import java.util.stream.Collectors
 
 class LineComment(private val commentPrefix: CharSequence, indent: CharSequence?, vararg lines: CharSequence) :
     IndentedText(indent!!, *lines) {
-    class Factory(val commentPrefix: String) : TextBlockFactory<LineComment?> {
+    class Factory(private val commentPrefix: String) : TextBlockFactory<LineComment?> {
         override fun fromString(text: String?): LineComment {
             var text = text
             text = text!!.replace(Regex("\t"), TextBlock.TAB_REPLACEMENT.toString())

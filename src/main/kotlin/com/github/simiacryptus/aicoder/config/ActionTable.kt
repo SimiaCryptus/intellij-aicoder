@@ -48,7 +48,7 @@ class ActionTable(
         private val log = Logger.getInstance(ActionTable::class.java)
     }
 
-    val buttonPanel = JPanel()
+    private val buttonPanel = JPanel()
     val columnNames = arrayOf("Enabled", "Display Text", "ID")
 
     val rowData = actionSettings.map {
@@ -85,9 +85,9 @@ class ActionTable(
 
     val jtable = JBTable(dataModel)
 
-    val scrollpane = JBScrollPane(jtable)
+    private val scrollpane = JBScrollPane(jtable)
 
-    val cloneButton = JButton(object : AbstractAction("Clone") {
+    private val cloneButton = JButton(object : AbstractAction("Clone") {
         override fun actionPerformed(e: ActionEvent?) {
 
             if (jtable.selectedRows.size != 1) {
@@ -154,7 +154,7 @@ class ActionTable(
         }
     })
 
-    val editButton = JButton((object : AbstractAction("Edit") {
+    private val editButton = JButton((object : AbstractAction("Edit") {
         override fun actionPerformed(e: ActionEvent?) {
             val id = dataModel.getValueAt(jtable.selectedRow, 2)
             val actionSetting = actionSettings.find { it.id == id }
@@ -174,7 +174,7 @@ class ActionTable(
         }
     }))
 
-    val removeButton = JButton(object : AbstractAction("Remove") {
+    private val removeButton = JButton(object : AbstractAction("Remove") {
         override fun actionPerformed(e: ActionEvent?) {
             if (jtable.selectedRows.size != 1) {
                 JOptionPane.showMessageDialog(null, "Please select a single row to clone")

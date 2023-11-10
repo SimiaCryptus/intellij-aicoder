@@ -52,9 +52,6 @@ class ConvertFileTo : ActionGroup() {
     }
 
     companion object {
-        private val log = Logger.getInstance(
-            ConvertFileTo::class.java
-        )
 
         fun getNewFile(project: Project?, file: VirtualFile, language: ComputerLanguage): VirtualFile {
             val newFileRef = AtomicReference<VirtualFile>()

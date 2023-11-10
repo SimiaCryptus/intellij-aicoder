@@ -11,7 +11,7 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
     val actionSettings: MutableMap<String, ActionSettings> = HashMap()
-    val version = 1.91
+    private val version = 1.91
 
     fun edit(superChildren: Array<out AnAction>): Array<AnAction> {
         val children = superChildren.toList().toMutableList()
@@ -77,7 +77,7 @@ class ActionSettingsRegistry {
         return children.toTypedArray()
     }
 
-    class DynamicActionException(cause: Throwable, val msg: String, val file: File, val actionSetting: ActionSettings) : Exception(msg, cause)
+    class DynamicActionException(cause: Throwable, private val msg: String, val file: File, val actionSetting: ActionSettings) : Exception(msg, cause)
 
     data class ActionSettings(
         val id: String, // Static property
@@ -112,7 +112,7 @@ class ActionSettingsRegistry {
             }
         }
 
-        val packageName: String get() = id.substringBeforeLast('.')
+        private val packageName: String get() = id.substringBeforeLast('.')
         val className: String get() = id.substringAfterLast('.')
 
         val file: File
@@ -146,7 +146,7 @@ class ActionSettingsRegistry {
 
     }
 
-    fun getActionConfig(action: AnAction): ActionSettings {
+    private fun getActionConfig(action: AnAction): ActionSettings {
         return actionSettings.getOrPut(action.javaClass.name) {
             val actionConfig = ActionSettings(action.javaClass.name)
             actionConfig.displayText = action.templatePresentation.text
@@ -176,10 +176,10 @@ class ActionSettingsRegistry {
         val log = org.slf4j.LoggerFactory.getLogger(ActionSettingsRegistry::class.java)
 
         val actionCache = HashMap<String, AnAction>()
-        fun load(actionPackage: String, actionName: String, language: String) =
+        private fun load(actionPackage: String, actionName: String, language: String) =
             load("/sources/${language}/$actionPackage/$actionName.$language")
 
-        fun load(path: String) =
+        private fun load(path: String) =
             EditorMenu::class.java.getResourceAsStream(path)?.readAllBytes()?.toString(Charsets.UTF_8)
 
         fun load(clazz: Class<AnAction>, language: String) =

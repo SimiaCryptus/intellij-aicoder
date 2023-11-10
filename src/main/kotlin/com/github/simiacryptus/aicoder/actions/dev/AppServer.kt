@@ -13,14 +13,14 @@ import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 
 class AppServer(
-    val localName: String,
-    val port: Int,
+    private val localName: String,
+    private val port: Int,
     project: Project?
 ) {
 
     val log by lazy { LoggerFactory.getLogger(javaClass) }
 
-    var domainName: String = "http://$localName:$port"
+    private var domainName: String = "http://$localName:$port"
 
     private val contexts by lazy {
         val contexts = ContextHandlerCollection()
@@ -43,7 +43,7 @@ class AppServer(
         }
     }
 
-    fun newWebAppContext(server: WebSocketServer, path: String): WebAppContext {
+    private fun newWebAppContext(server: WebSocketServer, path: String): WebAppContext {
         val context = WebAppContext()
         JettyWebSocketServletContainerInitializer.configure(context, null)
         context.baseResource = server.baseResource
@@ -86,7 +86,7 @@ class AppServer(
         }
     }
 
-    fun isRunning(it: ProgressIndicator) = synchronized(serverLock) { !it.isCanceled && server.isRunning }
+    private fun isRunning(it: ProgressIndicator) = synchronized(serverLock) { !it.isCanceled && server.isRunning }
     fun start() {
         server.start()
         progressThread.start()

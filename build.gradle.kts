@@ -7,7 +7,7 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 plugins {
     id("java") // Java support
     id("groovy")
-    id("org.jetbrains.kotlin.jvm") version "1.7.22"
+    id("org.jetbrains.kotlin.jvm") version "1.9.20"
     id("org.jetbrains.intellij") version "1.14.1"
     id("org.jetbrains.changelog") version "2.0.0"
     id("org.jetbrains.qodana") version "0.1.13"
@@ -22,15 +22,14 @@ repositories {
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 }
 
-val kotlin_version = "1.7.22"
+val kotlin_version = "1.9.20"
 val jetty_version = "11.0.15"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.21"
+val skyenet_version = "1.0.23"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.24")
+    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.25")
 
-    implementation(group = "com.simiacryptus.skyenet", name = "util", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
 

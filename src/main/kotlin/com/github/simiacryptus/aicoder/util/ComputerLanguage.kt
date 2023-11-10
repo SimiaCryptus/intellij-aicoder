@@ -397,7 +397,7 @@ enum class ComputerLanguage(configuration: Configuration) {
     val docStyle: String
     val lineComment: TextBlockFactory<*>
     val blockComment: TextBlockFactory<*>
-    val docComment: TextBlockFactory<*>
+    private val docComment: TextBlockFactory<*>
 
     init {
         extensions = listOf(*configuration.fileExtensions)
@@ -406,15 +406,6 @@ enum class ComputerLanguage(configuration: Configuration) {
         blockComment = configuration.getBlockComments()!!
         docComment = configuration.getDocComments()!!
     }
-
-    fun psiLanguage(): Language? {
-        return Language.findLanguageByID(name)
-    }
-
-    val multilineCommentSuffix: CharSequence?
-        get() = if (docComment is BlockComment.Factory) {
-            docComment.blockSuffix
-        } else null
 
     fun getCommentModel(text: String?): TextBlockFactory<*> {
         if (Objects.requireNonNull(docComment)!!.looksLike(text)) return docComment

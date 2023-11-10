@@ -125,7 +125,7 @@ class DictationAction : BaseAction() {
     companion object {
         val log = Logger.getInstance(DictationAction::class.java)
 
-        val pool = Executors.newFixedThreadPool(1)
+        private val pool = Executors.newFixedThreadPool(1)
 
         val targetDataLine: Future<TargetDataLine?> by lazy {
             pool.submit<TargetDataLine?> {

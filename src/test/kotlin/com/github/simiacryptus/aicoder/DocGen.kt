@@ -86,19 +86,6 @@ class DocGen {
         writer.close()
     }
 
-    private fun printTable(
-        writer: PrintWriter,
-        actions: Array<Map<String, String>>
-    ) {
-        writer.println("| Text | Description | Shortcut | Full Description |")
-        writer.println("| --- | --- | --- | --- |")
-        actions.forEach { action ->
-            val file = "src/main/kotlin/${action["id"].toString().replace(".", "/")}.kt"
-            val uiText = action["text"].toString().replace("_", "")
-            writer.println("| [$uiText]($file) | ${action["description"]} | ${action["shortcut"]} | ${action["long_description"]} |")
-        }
-    }
-
     private fun printTable2(
         writer: PrintWriter,
         actions: Array<Map<String, String>>

@@ -11,8 +11,8 @@ import com.simiacryptus.openai.APIClientBase
 import java.io.File
 
 abstract class FileContextAction<T : Any>(
-    val supportsFiles: Boolean = true,
-    val supportsFolders: Boolean = true,
+    private val supportsFiles: Boolean = true,
+    private val supportsFolders: Boolean = true,
 ) : BaseAction() {
 
     data class SelectionState(
@@ -68,7 +68,7 @@ abstract class FileContextAction<T : Any>(
 
     open fun getConfig(project: Project?): T? = null
 
-    var isDevAction = false
+    private var isDevAction = false
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
         if (UITools.isSanctioned()) return false

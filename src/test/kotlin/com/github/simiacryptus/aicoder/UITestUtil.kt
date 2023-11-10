@@ -60,9 +60,6 @@ class UITestUtil {
                 byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")
             ).isNotEmpty()
 
-        private fun isDialogOpen(): Boolean =
-            robot.findAll(ComponentFixture::class.java, byXpath("//div[@class='EngravedLabel']")).isNotEmpty()
-
         private fun isStillRunning(): Boolean {
             val resultText =
                 componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]")
@@ -70,7 +67,7 @@ class UITestUtil {
         }
 
 
-        fun componentText(s: String): String {
+        private fun componentText(s: String): String {
             return getLines(getComponent(s))
         }
 
@@ -81,7 +78,7 @@ class UITestUtil {
                 .reduceOrNull { a, b -> a + "\n" + b }.orEmpty()
         }
 
-        fun findText(element: ComponentFixture, text: String): Pair<Point, Point>? {
+        private fun findText(element: ComponentFixture, text: String): Pair<Point, Point>? {
             val lines: Map<Int, Iterable<RemoteText>> = element.data.getAll().groupBy { it.point.y }
             val line =
                 lines.filter { it.value.map { it.text }.reduce { a, b -> a + b }.contains(text) }.firstOrNull()?.value
@@ -126,17 +123,12 @@ class UITestUtil {
             element.runJs("robot.releaseMouseButtons()")
         }
 
-        fun clickText(element: ComponentFixture, text: String) {
+        private fun clickText(element: ComponentFixture, text: String) {
             val (leftPoint, _) = findText(element, text) ?: throw Exception("Could not find text $text")
             element.runJs("robot.click(component, new Point(${leftPoint.x}, ${leftPoint.y}))")
         }
 
-        fun rightClickText(element: ComponentFixture, text: String) {
-            val (leftPoint, _) = findText(element, text) ?: throw Exception("Could not find text $text")
-            element.runJs("robot.rightClick(component, new Point(${leftPoint.x}, ${leftPoint.y}))")
-        }
-
-        fun implementCode(prompt: String): BufferedImage {
+        private fun implementCode(prompt: String): BufferedImage {
             click("//div[@class='EditorComponentImpl']")
             keyboard.selectAll()
             keyboard.key(KeyEvent.VK_DELETE)
@@ -170,7 +162,7 @@ class UITestUtil {
          *  This function will wait until the process is started, then wait until it is finished.
          *  It will also print out the total time the process took to complete.
          */
-        fun awaitRunCompletion() {
+        private fun awaitRunCompletion() {
             val timeout = 1 * 60 * 1000
             val startOverall = System.currentTimeMillis()
 
@@ -193,28 +185,6 @@ class UITestUtil {
 
             val end = System.currentTimeMillis()
             println("Process ended after ${(end - start) / 1000.0}")
-        }
-
-        fun awaitDialog() {
-            // Await a dialog - it must be open then closed
-            val timeout = 1 * 60 * 1000
-            val startOverall = System.currentTimeMillis()
-            while (!isDialogOpen()) {
-                sleep(100)
-                if (System.currentTimeMillis() - startOverall > timeout) {
-                    throw RuntimeException("Timeout waiting for dialog to open")
-                }
-            }
-            val start = System.currentTimeMillis()
-            println("Dialog opened")
-            while (isDialogOpen()) {
-                sleep(100)
-                if (System.currentTimeMillis() - start > timeout) {
-                    throw RuntimeException("Timeout waiting for dialog to close")
-                }
-            }
-            val end = System.currentTimeMillis()
-            println("Dialog closed after ${(end - start) / 1000.0}")
         }
 
         fun awaitBackgroundProgress() {
@@ -269,7 +239,7 @@ class UITestUtil {
             )
         }
 
-        fun documentImplementation(
+        private fun documentImplementation(
             name: String,
             out1: PrintWriter,
             directive: String,
@@ -653,106 +623,6 @@ class UITestUtil {
 
         fun getEditor() = getComponent("//div[@class='EditorComponentImpl']")
 
-        fun documentMarkdownTableOps(
-            name: String,
-            directive: String,
-            out: PrintWriter,
-            file: File
-        ) {
-            val reportPrefix = "${name}_"
-            out.println("")
-            out.println(
-                """
-            # $name
-            
-            In this demo, we add a table to a Markdown document, and then add columns and rows to the table.
-            
-            We start with this seed directive:
-            
-            ```
-            $directive
-            Rows 1-5
-
-            |
-            ```
-            
-            """.trimIndent()
-            )
-            newFile("$name.md")
-
-            click("//div[@class='EditorComponentImpl']")
-            keyboard.selectAll()
-            keyboard.key(KeyEvent.VK_DELETE)
-            enterLines(
-                """
-            $directive
-            Rows 1-5
-            
-            |""".trimIndent()
-            )
-            keyboard.selectAll()
-            writeImage(menuAction("Append Text"), file, name, "${reportPrefix}menu", out)
-            awaitBackgroundProgress()
-
-            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
-            out.println(
-                """
-            This gives us the following Markdown document:
-            
-            ```
-            """.trimIndent()
-            )
-            out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.md"), "UTF-8"))
-            out.println(
-                """
-            ```
-            
-            """.trimIndent()
-            )
-
-            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_END)
-            writeImage(menuAction("Add Table Columns"), file, name, "${reportPrefix}add_columns", out)
-            awaitBackgroundProgress()
-
-            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
-            out.println(
-                """
-            
-            ```""".trimIndent()
-            )
-            out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.md"), "UTF-8"))
-            out.println(
-                """
-            ```
-            
-            """.trimIndent()
-            )
-
-            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_Z) // Undo
-            writeImage(menuAction("Add Table Rows"), file, name, "${reportPrefix}add_rows", out)
-            awaitBackgroundProgress()
-
-            keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
-            out.println(
-                """
-            
-            ```""".trimIndent()
-            )
-            out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.md"), "UTF-8"))
-            out.println(
-                """
-            ```
-            
-            """.trimIndent()
-            )
-
-            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result", out)
-
-            // Close editor
-            sleep(1000)
-            click("//div[@class='InplaceButton']")
-        }
-
         fun documentMarkdownListAppend(
             name: String,
             directive: String,
@@ -855,7 +725,7 @@ class UITestUtil {
             getComponent(*path).click()
         }
 
-        fun clickr(path: String) {
+        private fun clickr(path: String) {
             getComponent(path).rightClick()
         }
 
@@ -869,7 +739,7 @@ class UITestUtil {
             }()
         }
 
-        fun getComponent(vararg paths: String) =
+        private fun getComponent(vararg paths: String) =
             paths.flatMap { path ->
                 try {
                     listOf(robot.find(ComponentFixture::class.java, byXpath(path)))

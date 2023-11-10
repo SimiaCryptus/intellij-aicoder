@@ -16,12 +16,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
 
 abstract class SelectionAction<T : Any>(
-    val requiresSelection: Boolean = true
+    private val requiresSelection: Boolean = true
 ) : BaseAction() {
 
     open fun getConfig(project: Project?): T? = null
 
-    fun retarget(
+    private fun retarget(
         editorState: EditorState,
         selectedText: @NlsSafe String?,
         selectionStart: Int,
@@ -129,7 +129,7 @@ abstract class SelectionAction<T : Any>(
         )
     }
 
-    fun contextRanges(
+    private fun contextRanges(
         psiFile: PsiFile?,
         editor: Editor
     ): Array<ContextRange> {

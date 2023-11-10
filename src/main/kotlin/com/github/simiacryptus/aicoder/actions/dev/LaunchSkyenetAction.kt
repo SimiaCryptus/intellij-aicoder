@@ -48,7 +48,6 @@ class LaunchSkyenetAction : BaseAction() {
     }
 
     companion object {
-        private val log = org.slf4j.LoggerFactory.getLogger(LaunchSkyenetAction::class.java)
     }
 
 }

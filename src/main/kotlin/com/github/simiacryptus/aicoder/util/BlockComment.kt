@@ -7,14 +7,14 @@ import java.util.*
 import java.util.stream.Collectors
 
 class BlockComment(
-    val blockPrefix: CharSequence,
-    val linePrefix: CharSequence,
-    val blockSuffix: CharSequence,
+    private val blockPrefix: CharSequence,
+    private val linePrefix: CharSequence,
+    private val blockSuffix: CharSequence,
     indent: CharSequence,
     vararg textBlock: CharSequence
 ) :
     IndentedText(indent, *textBlock) {
-    class Factory(val blockPrefix: String, val linePrefix: String, val blockSuffix: String) :
+    class Factory(private val blockPrefix: String, private val linePrefix: String, private val blockSuffix: String) :
         TextBlockFactory<BlockComment?> {
         override fun fromString(text: String?): BlockComment {
             var text = text!!

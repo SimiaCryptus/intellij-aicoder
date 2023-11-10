@@ -18,7 +18,7 @@ import java.util.regex.Pattern
 
 class PsiTranslationTree(
     private val stubId: String?,
-    val prefix: String?,
+    private val prefix: String?,
     private val elementText: String?,
     val sourceLanguage: ComputerLanguage,
     val targetLanguage: ComputerLanguage,
@@ -26,7 +26,7 @@ class PsiTranslationTree(
     val suffix = StringBuffer()
     val children = ArrayList<PsiTranslationTree>()
 
-    fun getStubRegex(
+    private fun getStubRegex(
         targetLanguage: ComputerLanguage?,
         translatedOuter: CharSequence?,
     ): Regex {
