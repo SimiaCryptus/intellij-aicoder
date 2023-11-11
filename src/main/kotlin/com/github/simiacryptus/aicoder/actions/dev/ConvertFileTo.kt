@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.IOException
@@ -80,12 +79,12 @@ class ConvertFileTo : ActionGroup() {
     class ConvertFileToLanguage(private val targetLanguage: ComputerLanguage) : BaseAction(
         targetLanguage.name
     ) {
-        override fun handle(event: AnActionEvent) {
-            val sourceLanguage = ComputerLanguage.getComputerLanguage(event)
-            val indent = UITools.getIndent(event.getData(CommonDataKeys.CARET))
-            val virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-            val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
-            val project = event.project!!
+        override fun handle(e: AnActionEvent) {
+            val sourceLanguage = ComputerLanguage.getComputerLanguage(e)
+            val indent = UITools.getIndent(e.getData(CommonDataKeys.CARET))
+            val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+            val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
+            val project = e.project!!
             Thread {
                 UITools.run(project, "Converting to " + targetLanguage.name) {
                     try {

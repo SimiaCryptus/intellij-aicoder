@@ -2,11 +2,9 @@
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import com.simiacryptus.util.StringUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -152,13 +150,13 @@ object PsiUtil {
     }
 
     private fun getName(elementClass: Class<*>): String {
-        var elementClass = elementClass
+        var elementClassVar = elementClass
         val stringBuilder = StringBuilder()
-        val interfaces = getInterfaces(elementClass)
-        while (elementClass != Any::class.java) {
+        val interfaces = getInterfaces(elementClassVar)
+        while (elementClassVar != Any::class.java) {
             if (stringBuilder.isNotEmpty()) stringBuilder.append("/")
-            stringBuilder.append(elementClass.simpleName)
-            elementClass = elementClass.superclass
+            stringBuilder.append(elementClassVar.simpleName)
+            elementClassVar = elementClassVar.superclass
         }
         stringBuilder.append("[ ")
         stringBuilder.append(interfaces.stream().sorted().collect(Collectors.joining(",")))

@@ -103,12 +103,10 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun isAvailable(project: Project): Boolean {
-        if (UITools.isSanctioned()) return false
-        return true
+        return !UITools.isSanctioned()
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-        if (UITools.isSanctioned()) return false
-        return true
+        return !UITools.isSanctioned()
     }
 }

@@ -217,8 +217,7 @@ class UITestUtil {
             if (progressPanel.isEmpty()) return false
             val componentFixture = progressPanel.get(0)
             val labels = componentFixture.data.getAll()
-            if (labels.size == 0) return false
-            return true
+            return labels.size != 0
         }
 
         fun documentJavaImplementation(

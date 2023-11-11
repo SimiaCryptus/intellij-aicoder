@@ -10,7 +10,7 @@ class CodeChatServer(
     val project: Project,
     val language: String,
     val codeSelection: String,
-) : SkyenetBasicChat(
+) : BasicChat(
     applicationName = "Code Chat",
     model = AppSettingsState.instance.defaultChatModel()
 ) {
@@ -38,10 +38,10 @@ rootMessageTrail =
         sessionId = sessionId
     ) {
         override fun run(userMessage: String) {
-            var messageTrail = ChatSession.divInitializer()
-            send("""$messageTrail<div>$userMessage</div><div>${SkyenetSessionServerBase.spinner}</div>""")
+            var messageTrail = divInitializer()
+            send("""$messageTrail<div>$userMessage</div><div>$spinner</div>""")
             messages += OpenAIClient.ChatMessage(OpenAIClient.ChatMessage.Role.user, userMessage)
-            val response = api.chat(chatRequest, model).choices.first()?.message?.content.orEmpty()
+            val response = api.chat(chatRequest, model).choices.first().message?.content.orEmpty()
             messages += OpenAIClient.ChatMessage(OpenAIClient.ChatMessage.Role.assistant, response)
             messageTrail += MarkdownUtil.renderMarkdown(response)
             send(messageTrail)

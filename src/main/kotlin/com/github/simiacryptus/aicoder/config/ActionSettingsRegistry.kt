@@ -52,10 +52,8 @@ class ActionSettingsRegistry {
                         val localCode = actionConfig.file.readText()
                         if (localCode != code) {
                             val element = actionConfig.buildAction(localCode)
-                            if(null != element) {
-                                children.remove(it)
-                                children.add(element)
-                            }
+                            children.remove(it)
+                            children.add(element)
                         }
                     }
                     actionConfig.version = version
@@ -69,7 +67,7 @@ class ActionSettingsRegistry {
                 if (!it.file.exists()) return@forEach
                 if (!it.enabled) return@forEach
                 val element = it.buildAction(it.file.readText())
-                if(null != element) children.add(element)
+                children.add(element)
             } catch (e: Throwable) {
                 UITools.error(log, "Error loading dynamic action", e)
             }

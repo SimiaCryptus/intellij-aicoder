@@ -22,8 +22,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class GenerateProjectAction extends FileContextAction<Settings> {
-    static Logger log = LoggerFactory.getLogger(GenerateProjectAction.class)
-
 
     GenerateProjectAction() {
         super(false, true)

@@ -6,7 +6,6 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
-import com.simiacryptus.openai.APIClientBase
 
 /**
  * The PrintTreeAction class is an IntelliJ action that enables developers to print the tree structure of a PsiFile.
@@ -18,8 +17,8 @@ import com.simiacryptus.openai.APIClientBase
 class PrintTreeAction : BaseAction() {
 
 
-    override fun handle(e1: AnActionEvent) {
-        log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e1)!!))
+    override fun handle(e: AnActionEvent) {
+        log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e)!!))
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {

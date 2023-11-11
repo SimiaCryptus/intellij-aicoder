@@ -189,7 +189,7 @@ class ActionTable(
                 return
             }
             rowData.removeIf {
-                it[2] == selectedSettings?.id
+                it[2] == selectedSettings.id
             }
             this@ActionTable.parent.invalidate()
         }

@@ -109,8 +109,7 @@ class ApplicationDevelopmentUITest {
     ) {
         val reportPrefix = "${name}_${language}_"
         val testOutputFile = File(outputDir, "${name}_${language}.md")
-        val out = PrintWriter(FileOutputStream(testOutputFile))
-        out.use { out ->
+        PrintWriter(FileOutputStream(testOutputFile)).use { out ->
             out.println(
                 """
                                 

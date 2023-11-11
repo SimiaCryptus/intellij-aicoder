@@ -105,12 +105,11 @@ class IdeaOpenAIClient : OpenAIClient(
         } else {
             try {
                 if (!AppSettingsState.instance.editRequests) return super.edit(editRequest)
-                return withJsonDialog(editRequest, {
-                    val editRequest = it
+                return withJsonDialog(editRequest, { request ->
                     UITools.run(
                         lastEvent!!.project, "OpenAI Request", true, suppressProgress = false
                     ) {
-                        super.edit(editRequest)
+                        super.edit(request)
                     }
                 }, "Edit Edit Request")
             } finally {

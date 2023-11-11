@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.openai.APIClientBase
 import java.io.File
 
 abstract class FileContextAction<T : Any>(
@@ -22,15 +21,15 @@ abstract class FileContextAction<T : Any>(
 
     abstract fun processSelection(state: SelectionState, config: T?): Array<File>
 
-    final override fun handle(event: AnActionEvent) {
-        val config = getConfig(event.project)
-        val virtualFile = UITools.getSelectedFile(event) ?: UITools.getSelectedFolder(event) ?: return
-        val project = event.project ?: return
+    final override fun handle(e: AnActionEvent) {
+        val config = getConfig(e.project)
+        val virtualFile = UITools.getSelectedFile(e) ?: UITools.getSelectedFolder(e) ?: return
+        val project = e.project ?: return
         val projectRoot = File(project.basePath!!).toPath()
         Thread {
             try {
-                UITools.redoableTask(event) {
-                    UITools.run(event.project, templateText!!, true) {
+                UITools.redoableTask(e) {
+                    UITools.run(e.project, templateText!!, true) {
                         val newFiles = try {
                             processSelection(
                                 SelectionState(
@@ -41,7 +40,7 @@ abstract class FileContextAction<T : Any>(
                         } finally {
                             if (it.isCanceled) throw InterruptedException()
                         }
-                        UITools.writeableFn(event) {
+                        UITools.writeableFn(e) {
                             val files = newFiles.map { file ->
                                 val localFileSystem = LocalFileSystem.getInstance()
                                 localFileSystem.findFileByIoFile(file.parentFile)?.refresh(false, true)

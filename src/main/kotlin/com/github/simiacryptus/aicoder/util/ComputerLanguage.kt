@@ -427,6 +427,7 @@ enum class ComputerLanguage(configuration: Configuration) {
         }
 
         fun setFileExtensions(vararg fileExtensions: CharSequence): Configuration {
+            @Suppress("UNCHECKED_CAST")
             this.fileExtensions = fileExtensions as Array<CharSequence>
             return this
         }
