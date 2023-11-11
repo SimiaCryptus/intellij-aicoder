@@ -3,7 +3,7 @@ package com.github.simiacryptus.aicoder.actions.dev
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.OpenAIClient
-import com.simiacryptus.skyenet.body.*
+import com.simiacryptus.skyenet.webui.*
 import org.eclipse.jetty.util.resource.Resource
 
 class CodeChatServer(
@@ -43,7 +43,7 @@ rootMessageTrail =
             messages += OpenAIClient.ChatMessage(OpenAIClient.ChatMessage.Role.user, userMessage)
             val response = api.chat(chatRequest, model).choices.first()?.message?.content.orEmpty()
             messages += OpenAIClient.ChatMessage(OpenAIClient.ChatMessage.Role.assistant, response)
-            messageTrail += ChatSessionFlexmark.renderMarkdown(response)
+            messageTrail += MarkdownUtil.renderMarkdown(response)
             send(messageTrail)
         }
 

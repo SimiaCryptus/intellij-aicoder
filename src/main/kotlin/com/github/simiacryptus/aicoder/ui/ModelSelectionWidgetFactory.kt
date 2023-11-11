@@ -19,7 +19,7 @@ import javax.swing.ListModel
 
 class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     companion object {
-        val logger = org.slf4j.LoggerFactory.getLogger(ModelSelectionWidgetFactory::class.java)
+        val log = org.slf4j.LoggerFactory.getLogger(ModelSelectionWidgetFactory::class.java)
     }
 
     class ModelSelectionWidget : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {

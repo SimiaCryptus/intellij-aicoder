@@ -13,14 +13,13 @@ import java.util.*
 
 class SimpleEnvelope(var value: String? = null)
 
-@Suppress("MemberVisibilityCanBePrivate")
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     val listeningPort: Int = 8081
     val listeningEndpoint: String = "localhost"
     val modalTasks: Boolean = false
     var suppressErrors: Boolean = false
-    var apiLog: Boolean = false
+    private var apiLog: Boolean = false
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
@@ -33,7 +32,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     val editorActions = ActionSettingsRegistry()
     val fileActions = ActionSettingsRegistry()
 
-    val recentCommands = mutableMapOf<String,MRUItems>()
+    private val recentCommands = mutableMapOf<String,MRUItems>()
 
     fun createChatRequest(): ChatRequest {
         return createChatRequest(defaultChatModel())
@@ -41,7 +40,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
 
     fun defaultChatModel() = if (useGPT4) OpenAIClient.Models.GPT4 else OpenAIClient.Models.GPT35Turbo
 
-    fun createChatRequest(model: OpenAIClient.Model): ChatRequest {
+    private fun createChatRequest(model: OpenAIClient.Model): ChatRequest {
         val chatRequest = ChatRequest()
         chatRequest.model = model.modelName
         chatRequest.temperature = temperature

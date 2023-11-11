@@ -28,7 +28,7 @@ import javax.swing.event.ChangeListener
 
 class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
     companion object {
-        val logger = org.slf4j.LoggerFactory.getLogger(TemperatureControlWidgetFactory::class.java)
+        val log = org.slf4j.LoggerFactory.getLogger(TemperatureControlWidgetFactory::class.java)
         val pool = Executors.newCachedThreadPool()
     }
 
