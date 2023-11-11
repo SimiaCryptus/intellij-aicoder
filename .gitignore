@@ -1,6 +1,7 @@
 ﻿.gradle
 .idea
 .qodana
+.*
 build
 openai.key
 .run
