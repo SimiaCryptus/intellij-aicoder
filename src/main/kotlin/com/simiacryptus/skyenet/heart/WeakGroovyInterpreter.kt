@@ -5,6 +5,7 @@ package com.simiacryptus.skyenet.heart
 import com.simiacryptus.skyenet.Heart
 import java.lang.reflect.Method
 
+@Suppress("unused")
 open class WeakGroovyInterpreter(defs: java.util.Map<String, Object>) : Heart {
 
     private val shell: Any

@@ -7,7 +7,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class AppSettingsConfigurable : Configurable {
-    var settingsComponent: AppSettingsComponent? = null
+    private var settingsComponent: AppSettingsComponent? = null
 
     @Volatile
     private var mainPanel: JPanel? = null
@@ -24,6 +24,7 @@ class AppSettingsConfigurable : Configurable {
             synchronized(this) {
                 if (null == mainPanel) {
                     settingsComponent = AppSettingsComponent()
+                    reset()
                     mainPanel = UITools.build(settingsComponent!!, false)
                 }
             }

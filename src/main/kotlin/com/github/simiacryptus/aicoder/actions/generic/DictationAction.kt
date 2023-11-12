@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
-import com.simiacryptus.openai.APIClientBase
 import com.simiacryptus.util.audio.AudioRecorder
 import com.simiacryptus.util.audio.LookbackLoudnessWindowBuffer
 import java.util.*
@@ -22,8 +21,8 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 
 class DictationAction : BaseAction() {
-    override fun handle(event: AnActionEvent) {
-        val continueFn = statusDialog(event)::isVisible
+    override fun handle(e: AnActionEvent) {
+        val continueFn = statusDialog(e)::isVisible
 
         val rawBuffer = ConcurrentLinkedDeque<ByteArray>()
         Thread({
@@ -47,12 +46,12 @@ class DictationAction : BaseAction() {
             log.warn("Audio processing thread complete")
         }, "dictation-audio-processor").start()
 
-        val caretModel = (event.getData(CommonDataKeys.EDITOR) ?: return).caretModel
+        val caretModel = (e.getData(CommonDataKeys.EDITOR) ?: return).caretModel
         val primaryCaret = caretModel.primaryCaret
         val dictationPump = if (primaryCaret.hasSelection()) {
-            DictationPump(event, wavBuffer, continueFn, primaryCaret.selectionEnd, primaryCaret.selectedText ?: "")
+            DictationPump(e, wavBuffer, continueFn, primaryCaret.selectionEnd, primaryCaret.selectedText ?: "")
         } else {
-            DictationPump(event, wavBuffer, continueFn, caretModel.offset)
+            DictationPump(e, wavBuffer, continueFn, caretModel.offset)
         }
         Thread({
             log.warn("Speech-To-Text thread started")
@@ -125,7 +124,7 @@ class DictationAction : BaseAction() {
     companion object {
         val log = Logger.getInstance(DictationAction::class.java)
 
-        val pool = Executors.newFixedThreadPool(1)
+        private val pool = Executors.newFixedThreadPool(1)
 
         val targetDataLine: Future<TargetDataLine?> by lazy {
             pool.submit<TargetDataLine?> {

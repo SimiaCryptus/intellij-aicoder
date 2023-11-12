@@ -2,11 +2,9 @@
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import com.simiacryptus.util.StringUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -28,11 +26,6 @@ object PsiUtil {
         "Comment"
     )
 
-    @JvmStatic
-    fun getLargestIntersectingComment(element: PsiElement, selectionStart: Int, selectionEnd: Int): PsiElement? {
-        return getLargestIntersecting(element, selectionStart, selectionEnd, *ELEMENTS_COMMENTS)
-    }
-
     fun getAll(element: PsiElement, vararg types: CharSequence): List<PsiElement> {
         val elements: MutableList<PsiElement> = ArrayList()
         val visitor = AtomicReference<PsiElementVisitor>()
@@ -48,38 +41,6 @@ object PsiUtil {
         })
         element.accept(visitor.get())
         return elements
-    }
-
-    @JvmStatic
-    private fun getLargestIntersecting(
-        element: PsiElement,
-        selectionStart: Int,
-        selectionEnd: Int,
-        vararg types: CharSequence
-    ): PsiElement? {
-        val largest = AtomicReference<PsiElement?>(null)
-        val visitor = AtomicReference<PsiElementVisitor>()
-        visitor.set(object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                val textRange = element.textRange
-                val within =
-                    within(
-                        textRange,
-                        selectionStart
-                    ) && textRange.startOffset <= selectionEnd && textRange.endOffset + 1 >= selectionEnd
-                if (matchesType(element, *types)) {
-                    if (within) {
-                        largest.updateAndGet { s: PsiElement? ->
-                            if ((s?.text?.length ?: 0) > element.text.length) s else element
-                        }
-                    }
-                }
-                super.visitElement(element)
-                element.acceptChildren(visitor.get())
-            }
-        })
-        element.accept(visitor.get())
-        return largest.get()
     }
 
     @JvmStatic
@@ -189,13 +150,13 @@ object PsiUtil {
     }
 
     private fun getName(elementClass: Class<*>): String {
-        var elementClass = elementClass
+        var elementClassVar = elementClass
         val stringBuilder = StringBuilder()
-        val interfaces = getInterfaces(elementClass)
-        while (elementClass != Any::class.java) {
+        val interfaces = getInterfaces(elementClassVar)
+        while (elementClassVar != Any::class.java) {
             if (stringBuilder.isNotEmpty()) stringBuilder.append("/")
-            stringBuilder.append(elementClass.simpleName)
-            elementClass = elementClass.superclass
+            stringBuilder.append(elementClassVar.simpleName)
+            elementClassVar = elementClassVar.superclass
         }
         stringBuilder.append("[ ")
         stringBuilder.append(interfaces.stream().sorted().collect(Collectors.joining(",")))
@@ -242,10 +203,6 @@ object PsiUtil {
         if (largestContainedEntity != null) psiFile = largestContainedEntity
         return psiFile
     }
-
-    @JvmStatic
-    fun getSmallestIntersectingMajorCodeElement(psiFile: PsiFile, caret: Caret) =
-        getCodeElement(psiFile, caret.selectionStart, caret.selectionEnd)
 
     @JvmStatic
     fun getCodeElement(

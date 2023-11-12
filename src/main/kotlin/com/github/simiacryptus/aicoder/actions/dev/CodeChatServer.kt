@@ -1,35 +1,55 @@
 package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.OpenAIClient
-import com.simiacryptus.skyenet.Heart
-import com.simiacryptus.skyenet.body.*
-import com.simiacryptus.skyenet.heart.WeakGroovyInterpreter
+import com.simiacryptus.skyenet.sessions.*
+import com.simiacryptus.skyenet.util.ClasspathResource
 import org.eclipse.jetty.util.resource.Resource
-import java.util.HashMap
-import java.util.Map
-import java.util.function.Supplier
 
 class CodeChatServer(
     val project: Project,
     val language: String,
     val codeSelection: String,
-) : SkyenetBasicChat(
+    val api: OpenAIClient,
+    resourceBase: String = "codeChat",
+) : ChatApplicationBase(
     applicationName = "Code Chat",
-    model = AppSettingsState.instance.defaultChatModel()
+    resourceBase = resourceBase,
 ) {
 
-    val rootOperationID = (0..5).map { ('a'..'z').random() }.joinToString("")
-    var rootMessageTrail: String = ""
+    override fun newSession(sessionId: String) = ChatSession(
+        sessionId = sessionId,
+        parent = this@CodeChatServer,
+        model = AppSettingsState.instance.defaultChatModel(),
+        api = api,
+        visiblePrompt = """
+            |<div><h3>Code:</h3>
+            |    <pre><code class="language-$language">${htmlEscape(codeSelection)}</code></pre>
+            |</div>
+            """.trimMargin().trim(),
+        hiddenPrompt = "",
+        systemPrompt = """
+            |You are a helpful AI that helps people with coding.
+            |
+            |You will be answering questions about the following code:
+            |
+            |```$language
+            |$codeSelection
+            |```
+            |
+            |Responses may use markdown formatting.
+            """.trimMargin(),
+    )
 
-    override fun newSession(sessionId: String): CodeChatSession {
-        val newSession = CodeChatSession(sessionId)
-rootMessageTrail =
-"""$rootOperationID,<div><h3>Code:</h3><pre><code class="language-$language">${htmlEscape(codeSelection)}</code></pre></div>"""
-        newSession.send(rootMessageTrail)
-        return newSession
+    override fun processMessage(
+        sessionId: String,
+        userMessage: String,
+        session: PersistentSessionBase,
+        sessionDiv: SessionDiv,
+        socket: MessageWebSocket
+    ) {
+        TODO("Not yet implemented")
     }
 
     private fun htmlEscape(html: String): String {
@@ -38,50 +58,7 @@ rootMessageTrail =
             .replace("'", "&#039;")
     }
 
-    open inner class CodeChatSession(sessionId: String) : BasicChatSession(
-        parent = this@CodeChatServer,
-        model = model,
-        sessionId = sessionId
-    ) {
-        override fun run(userMessage: String) {
-            var messageTrail = ChatSession.divInitializer()
-            send("""$messageTrail<div>$userMessage</div><div>$spinner</div>""")
-            messages += OpenAIClient.ChatMessage(OpenAIClient.ChatMessage.Role.user, userMessage)
-            val response = api.chat(chatRequest, model).choices.first()?.message?.content.orEmpty()
-            messages += OpenAIClient.ChatMessage(OpenAIClient.ChatMessage.Role.assistant, response)
-            messageTrail += ChatSessionFlexmark.renderMarkdown(response)
-            send(messageTrail)
-        }
-
-        override val messages = listOf(
-            OpenAIClient.ChatMessage(
-                OpenAIClient.ChatMessage.Role.system, """
-                    |You are a helpful AI that helps people with coding.
-                    |
-                    |You will be answering questions about the following code:
-                    |
-                    |```$language
-                    |$codeSelection
-                    |```
-                    |
-                    |Responses may use markdown formatting.
-                    """.trimMargin()
-            )
-        ).toMutableList()
-
-        val chatRequest: OpenAIClient.ChatRequest
-            get() {
-                val chatRequest = OpenAIClient.ChatRequest()
-                val model = AppSettingsState.instance.defaultChatModel()
-                chatRequest.model = model.modelName
-                chatRequest.max_tokens = model.maxTokens
-                chatRequest.temperature = AppSettingsState.instance.temperature
-                chatRequest.messages = messages.toTypedArray()
-                return chatRequest
-            }
-    }
-
     override val baseResource: Resource
-        get() = ClasspathResource(javaClass.classLoader.getResource(resourceBase))
+        get() = ClasspathResource(javaClass.classLoader.getResource(resourceBase)!!)
 
 }

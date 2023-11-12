@@ -48,9 +48,9 @@ class MarkdownListAction : BaseAction() {
             return chatProxy.create()
         }
 
-    override fun handle(event: AnActionEvent) {
-        val caret = event.getData(CommonDataKeys.CARET) ?: return
-        val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
+    override fun handle(e: AnActionEvent) {
+        val caret = e.getData(CommonDataKeys.CARET) ?: return
+        val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
         val list =
             getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl") ?: return
         val items = StringUtil.trim(
@@ -63,17 +63,17 @@ class MarkdownListAction : BaseAction() {
         val indent = getIndent(caret)
         val endOffset = list.textRange.endOffset
         val bulletTypes = listOf("- [ ] ", "- ", "* ")
-        val document = (event.getData(CommonDataKeys.EDITOR) ?: return).document
+        val document = (e.getData(CommonDataKeys.EDITOR) ?: return).document
         val rawItems = items.map(CharSequence::trim).map {
             val bulletType = bulletTypes.find(it::startsWith)
             if (null != bulletType) StringUtil.stripPrefix(it, bulletType).toString()
             else it.toString()
         }
 
-        UITools.redoableTask(event) {
+        UITools.redoableTask(e) {
             var newItems: List<String?>? = null
             UITools.run(
-                event.project, "Generating New Items", true
+                e.project, "Generating New Items", true
             ) {
                 newItems = proxy.newListItems(
                     rawItems,
@@ -88,7 +88,7 @@ class MarkdownListAction : BaseAction() {
                 val bulletString = bulletTypes.find(strippedList::startsWith) ?: "1. "
                 newList = newItems?.joinToString("\n") { indent.toString() + bulletString + it } ?: ""
             }
-            UITools.writeableFn(event) {
+            UITools.writeableFn(e) {
                 insertString(document, endOffset, "\n" + newList)
             }
         }

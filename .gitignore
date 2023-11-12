@@ -1,6 +1,7 @@
 ﻿.gradle
 .idea
 .qodana
+.*
 build
 openai.key
 .run
@@ -10,5 +11,5 @@ api.log.json
 *.log.java
 *.log
 api.*
-.skynet
+.skynet.bak
 

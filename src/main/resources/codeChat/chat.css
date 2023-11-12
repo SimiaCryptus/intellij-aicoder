@@ -1,0 +1,278 @@
+#messages {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 40px;
+    overflow-y: auto;
+    padding: 10px;
+    padding-top: 40px;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.message {
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    overflow: scroll;
+    z-index: 100;
+}
+
+#form {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    margin: 0;
+    padding: 5px;
+    flex-shrink: 0;
+}
+
+.reply-form {
+    width: 100%;
+}
+
+.chat-input {
+    resize: vertical;
+}
+
+.reply-input {
+    resize: vertical;
+}
+
+.href-link {
+    text-decoration: underline;
+    color: blue;
+}
+
+#message {
+    flex-grow: 1;
+    margin-right: 5px;
+}
+
+#disconnected-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+}
+
+#disconnected-overlay p {
+    font-size: 3rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    animation-name: bounce;
+    animation-duration: 0.5s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    left: 10%;
+    position: relative;
+    color: firebrick;
+}
+
+@keyframes bounce {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-10px);
+    }
+}
+
+.spinner-border {
+    display: block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+
+#toolbar {
+    background-color: #f1f1f1;
+    padding: 5px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    horiz-align: left;
+    z-index: 1;
+}
+
+#toolbar a {
+    color: #000;
+    text-decoration: none;
+    padding: 5px;
+}
+
+#toolbar a:hover {
+    background-color: #ddd;
+}
+
+
+#namebar {
+    background-color: #f1f1f1;
+    padding: 5px;
+    position: fixed;
+    top: 0;
+    right: 0;
+    horiz-align: right;
+    z-index: 2;
+}
+
+#namebar a {
+    color: #000;
+    text-decoration: none;
+    padding: 5px;
+}
+
+#namebar a:hover {
+    background-color: #ddd;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    position: relative;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+pre {
+    white-space: pre-wrap; /* Since CSS modules do not automatically apply this */
+}
+
+#container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Adjust this value based on your preferred container height */
+}
+
+.play-button {
+    font-size: 48px;
+    font-weight: bold;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.play-button:focus {
+    outline: none;
+}
+
+.play-button:active {
+    transform: scale(0.9);
+}
+
+
+.regen-button {
+    font-size: 48px;
+    font-weight: bold;
+    color: chartreuse;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.regen-button:focus {
+    outline: none;
+}
+
+.regen-button:active {
+    transform: scale(0.9);
+}
+
+.message-container {
+    position: relative; /* Add this line to set the position property of the parent div */
+}
+
+.cancel-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.cancel-button:focus {
+    outline: none;
+}
+
+.cancel-button:active {
+    transform: scale(0.9);
+}
+
+.collapsible-content {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.2s ease-out;
+}

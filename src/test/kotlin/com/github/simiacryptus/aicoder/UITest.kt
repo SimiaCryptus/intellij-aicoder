@@ -5,7 +5,6 @@ package com.github.simiacryptus.aicoder
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.canRunTests
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.documentJavaImplementation
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.documentMarkdownListAppend
-import com.github.simiacryptus.aicoder.UITestUtil.Companion.documentMarkdownTableOps
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.documentTextAppend
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.outputDir
 import org.junit.Test

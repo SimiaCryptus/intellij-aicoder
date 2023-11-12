@@ -1,6 +1,7 @@
 ﻿package com.github.simiacryptus.aicoder.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.StatusBar
@@ -11,14 +12,13 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.simiacryptus.openai.OpenAIClient
 import kotlinx.coroutines.CoroutineScope
-import java.awt.event.MouseEvent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 
 class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     companion object {
-        val logger = org.slf4j.LoggerFactory.getLogger(ModelSelectionWidgetFactory::class.java)
+        val log = org.slf4j.LoggerFactory.getLogger(ModelSelectionWidgetFactory::class.java)
     }
 
     class ModelSelectionWidget : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
@@ -26,6 +26,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         private var statusBar: StatusBar? = null
         private var activeModel: String = AppSettingsState.instance.defaultChatModel().modelName
         val models = listOf(
+            OpenAIClient.Models.GPT4Turbo,
             OpenAIClient.Models.GPT4,
             OpenAIClient.Models.GPT35Turbo,
         )
@@ -79,7 +80,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
             }
             return ComboBoxPopup(context, activeModel, { str ->
                 activeModel = str
-                AppSettingsState.instance.useGPT4 = (str == OpenAIClient.Models.GPT4.modelName)
+                AppSettingsState.instance.modelName = str
                 statusBar?.updateWidget(ID())
             })
         }
@@ -102,10 +103,10 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun isAvailable(project: Project): Boolean {
-        return true
+        return !UITools.isSanctioned()
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-        return true
+        return !UITools.isSanctioned()
     }
 }

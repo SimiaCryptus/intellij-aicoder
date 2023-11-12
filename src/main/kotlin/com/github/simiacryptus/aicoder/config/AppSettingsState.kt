@@ -13,7 +13,6 @@ import java.util.*
 
 class SimpleEnvelope(var value: String? = null)
 
-@Suppress("MemberVisibilityCanBePrivate")
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     val listeningPort: Int = 8081
@@ -24,7 +23,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
-    var useGPT4 = true
+    var modelName : String = OpenAIClient.Models.GPT35Turbo.modelName
     var tokenCounter = 0
     var humanLanguage = "English"
     var devActions = false
@@ -33,19 +32,18 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     val editorActions = ActionSettingsRegistry()
     val fileActions = ActionSettingsRegistry()
 
-    val recentCommands = mutableMapOf<String,MRUItems>()
+    private val recentCommands = mutableMapOf<String,MRUItems>()
 
     fun createChatRequest(): ChatRequest {
         return createChatRequest(defaultChatModel())
     }
 
-    fun defaultChatModel() = if (useGPT4) OpenAIClient.Models.GPT4 else OpenAIClient.Models.GPT35Turbo
+    fun defaultChatModel() = OpenAIClient.Models.entries.first { it.modelName == modelName }
 
-    fun createChatRequest(model: OpenAIClient.Model): ChatRequest {
+    private fun createChatRequest(model: OpenAIClient.Model): ChatRequest {
         val chatRequest = ChatRequest()
         chatRequest.model = model.modelName
         chatRequest.temperature = temperature
-        chatRequest.max_tokens = model.maxTokens
         return chatRequest
     }
 
@@ -74,7 +72,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         if (humanLanguage != that.humanLanguage) return false
         if (apiBase != that.apiBase) return false
         if (apiKey != that.apiKey) return false
-        if (useGPT4 != that.useGPT4) return false
+        if (modelName != that.modelName) return false
         if (apiLog != that.apiLog) return false
         if (devActions != that.devActions) return false
         if (editRequests != that.editRequests) return false
@@ -87,7 +85,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
             apiBase,
             apiKey,
             temperature,
-            useGPT4,
+            modelName,
             apiLog,
             devActions,
             editRequests,

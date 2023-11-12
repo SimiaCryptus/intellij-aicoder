@@ -3,6 +3,7 @@
 import com.simiacryptus.skyenet.Heart
 import java.lang.reflect.Method
 
+@Suppress("unused")
 open class WeakKotlinInterpreter(
     defs: Map<String, Any> = mapOf(),
 ) : Heart {

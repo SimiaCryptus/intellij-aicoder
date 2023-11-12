@@ -12,10 +12,6 @@ import java.util.*
 open class ActionTestBase {
     companion object {
 
-        data class SelectionActionTestData(
-            val indent: String? = null,
-        )
-
         fun <T:Any>testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
             AppSettingsState.instance.apiKey = OpenAIClient.keyTxt
             AppSettingsState.instance.temperature = 0.0
@@ -60,10 +56,6 @@ open class ActionTestBase {
                 }
             }
         }
-
-        data class FileContextActionTestData(
-            val filename: String? = null,
-        )
 
         inline fun <reified T : Any> testScript_FileContextAction(
             selectionAction: FileContextAction<T>,

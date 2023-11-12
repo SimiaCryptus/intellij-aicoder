@@ -84,7 +84,6 @@ class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
         def chatRequest = new ChatRequest()
         def model = AppSettingsState.instance.defaultChatModel()
         chatRequest.model = model.modelName
-        chatRequest.max_tokens = model.maxTokens
         chatRequest.temperature = AppSettingsState.instance.temperature
         chatRequest.messages = [
             //language=TEXT

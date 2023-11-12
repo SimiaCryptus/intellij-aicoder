@@ -16,12 +16,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
 
 abstract class SelectionAction<T : Any>(
-    val requiresSelection: Boolean = true
+    private val requiresSelection: Boolean = true
 ) : BaseAction() {
 
     open fun getConfig(project: Project?): T? = null
 
-    fun retarget(
+    private fun retarget(
         editorState: EditorState,
         selectedText: @NlsSafe String?,
         selectionStart: Int,
@@ -42,10 +42,10 @@ abstract class SelectionAction<T : Any>(
         }
     }
 
-    final override fun handle(event: AnActionEvent) {
-        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-        val config = getConfig(event.project)
-        val indent = UITools.getIndent(event)
+    final override fun handle(e: AnActionEvent) {
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+        val config = getConfig(e.project)
+        val indent = UITools.getIndent(e)
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         var selectionStart = primaryCaret.selectionStart
@@ -57,36 +57,36 @@ abstract class SelectionAction<T : Any>(
         selectionEnd = end
         selectionStart = start
 
-        UITools.redoableTask(event) {
-            val document = event.getData(CommonDataKeys.EDITOR)?.document
+        UITools.redoableTask(e) {
+            val document = e.getData(CommonDataKeys.EDITOR)?.document
             var rangeMarker: RangeMarker?  = null
-            WriteCommandAction.runWriteCommandAction(event.project) {
+            WriteCommandAction.runWriteCommandAction(e.project) {
                 rangeMarker = document?.createGuardedBlock(selectionStart, selectionEnd)
             }
 
             val newText = try {
                 processSelection(
-                    event = event,
+                    event = e,
                     SelectionState(
                         selectedText = selectedText,
                         selectionOffset = selectionStart,
                         selectionLength = selectionEnd - selectionStart,
                         entireDocument = editor.document.text,
-                        language = ComputerLanguage.getComputerLanguage(event),
+                        language = ComputerLanguage.getComputerLanguage(e),
                         indent = indent,
                         contextRanges = editorState.contextRanges,
                         psiFile = editorState.psiFile,
-                        project = event.project
+                        project = e.project
                     ),
                     config = config
                 )
             } finally {
                 if(null != rangeMarker)
-                    WriteCommandAction.runWriteCommandAction(event.project) {
+                    WriteCommandAction.runWriteCommandAction(e.project) {
                         document?.removeGuardedBlock(rangeMarker!!)
                     }
             }
-            UITools.writeableFn(event) {
+            UITools.writeableFn(e) {
                 UITools.replaceString(editor.document, selectionStart, selectionEnd, newText)
             }
         }
@@ -129,7 +129,7 @@ abstract class SelectionAction<T : Any>(
         )
     }
 
-    fun contextRanges(
+    private fun contextRanges(
         psiFile: PsiFile?,
         editor: Editor
     ): Array<ContextRange> {

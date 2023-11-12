@@ -8,16 +8,16 @@ import java.util.stream.Collectors
 
 class LineComment(private val commentPrefix: CharSequence, indent: CharSequence?, vararg lines: CharSequence) :
     IndentedText(indent!!, *lines) {
-    class Factory(val commentPrefix: String) : TextBlockFactory<LineComment?> {
+    class Factory(private val commentPrefix: String) : TextBlockFactory<LineComment?> {
         override fun fromString(text: String?): LineComment {
-            var text = text
-            text = text!!.replace(Regex("\t"), TextBlock.TAB_REPLACEMENT.toString())
-            val indent = getWhitespacePrefix(*text.split(TextBlock.DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }
+            var textVar = text
+            textVar = textVar!!.replace(Regex("\t"), TextBlock.TAB_REPLACEMENT.toString())
+            val indent = getWhitespacePrefix(*textVar.split(TextBlock.DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }
                 .toTypedArray())
             return LineComment(
                 commentPrefix,
                 indent,
-                *Arrays.stream(text.split(TextBlock.DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }
+                *Arrays.stream(textVar.split(TextBlock.DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }
                     .toTypedArray())
                     .map { s: String? ->
                         stripPrefix(

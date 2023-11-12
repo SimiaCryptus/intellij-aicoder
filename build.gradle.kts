@@ -7,11 +7,11 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 plugins {
     id("java") // Java support
     id("groovy")
-    id("org.jetbrains.kotlin.jvm") version "1.7.22"
-    id("org.jetbrains.intellij") version "1.14.1"
-    id("org.jetbrains.changelog") version "2.0.0"
-    id("org.jetbrains.qodana") version "0.1.13"
-    id("org.jetbrains.kotlinx.kover") version "0.6.1"
+    id("org.jetbrains.kotlin.jvm") version "1.9.20"
+    id("org.jetbrains.intellij") version "1.16.0"
+    id("org.jetbrains.changelog") version "2.2.0"
+    id("org.jetbrains.qodana") version "2023.2.1"
+    id("org.jetbrains.kotlinx.kover") version "0.7.4"
 }
 
 group = "com.github.simiacryptus"
@@ -22,15 +22,14 @@ repositories {
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 }
 
-val kotlin_version = "1.7.22"
+val kotlin_version = "1.9.20"
 val jetty_version = "11.0.15"
-val slf4j_version = "2.0.5"
-val skyenet_version = "1.0.18"
+val slf4j_version = "2.0.9"
+val skyenet_version = "1.0.26"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.20")
+    implementation(group = "com.simiacryptus", name = "joe-penai", version = "1.0.27")
 
-    implementation(group = "com.simiacryptus.skyenet", name = "util", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
 
@@ -73,7 +72,6 @@ tasks.named("processResources") {
 }
 
 kotlin {
-//    jvmToolchain(11)
     jvmToolchain(17)
 }
 
@@ -81,7 +79,7 @@ tasks {
     compileKotlin {
         kotlinOptions {
             javaParameters = true
-            jvmTarget = "1.8"
+            jvmTarget = "17"
         }
     }
 
@@ -167,12 +165,12 @@ changelog {
 
 qodana {
     cachePath.set(file(".qodana").canonicalPath)
-    reportPath.set(file("build/reports/inspections").canonicalPath)
-    saveReport.set(true)
-    showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
+//    reportPath.set(file("build/reports/inspections").canonicalPath)
+//    saveReport.set(true)
+//    showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
 }
 
-kover.xmlReport {
-    onCheck.set(true)
-}
+//kover.xmlReport {
+//    onCheck.set(true)
+//}
 

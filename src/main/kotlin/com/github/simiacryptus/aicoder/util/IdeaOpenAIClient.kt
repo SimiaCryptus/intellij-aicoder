@@ -19,10 +19,10 @@ class IdeaOpenAIClient : OpenAIClient(
     key = AppSettingsState.instance.apiKey,
     apiBase = AppSettingsState.instance.apiBase,
 ) {
-    val isInRequest = AtomicBoolean(false)
+    private val isInRequest = AtomicBoolean(false)
 
-    override fun incrementTokens(totalTokens: Int) {
-        AppSettingsState.instance.tokenCounter += totalTokens
+    override fun incrementTokens(model: Model?, tokens: Int) {
+        AppSettingsState.instance.tokenCounter += tokens
     }
 
     override fun authorize(request: HttpRequestBase) {
@@ -105,12 +105,11 @@ class IdeaOpenAIClient : OpenAIClient(
         } else {
             try {
                 if (!AppSettingsState.instance.editRequests) return super.edit(editRequest)
-                return withJsonDialog(editRequest, {
-                    val editRequest = it
+                return withJsonDialog(editRequest, { request ->
                     UITools.run(
                         lastEvent!!.project, "OpenAI Request", true, suppressProgress = false
                     ) {
-                        super.edit(editRequest)
+                        super.edit(request)
                     }
                 }, "Edit Edit Request")
             } finally {
@@ -123,7 +122,7 @@ class IdeaOpenAIClient : OpenAIClient(
 
         val api: OpenAIClient get() = IdeaOpenAIClient()
         var lastEvent: AnActionEvent? = null
-        fun uiEdit(
+        private fun uiEdit(
             project: Project? = null,
             title: String = "Edit Request",
             jsonTxt: String
@@ -164,7 +163,7 @@ class IdeaOpenAIClient : OpenAIClient(
             } ?: jsonTxt
         }
 
-        fun <T : Any> execute(
+        private fun <T : Any> execute(
             fn: () -> T
         ): T? {
             val application = ApplicationManager.getApplication()

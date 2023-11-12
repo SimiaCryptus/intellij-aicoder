@@ -13,15 +13,15 @@ import java.util.*
 
 class CodeChatAction : BaseAction() {
 
-    override fun handle(event: AnActionEvent) {
-        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+    override fun handle(e: AnActionEvent) {
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val caretModel = editor.caretModel
         val primaryCaret = caretModel.primaryCaret
         val selectedText = primaryCaret.selectedText ?: editor.document.text
-        val language = ComputerLanguage.getComputerLanguage(event)?.name ?: return
-        val server = AppServer.getServer(event.project)
+        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
+        val server = AppServer.getServer(e.project)
         val uuid = UUID.randomUUID().toString()
-        server.addApp("/$uuid", CodeChatServer(event.project!!, language, selectedText))
+        server.addApp("/$uuid", CodeChatServer(e.project!!, language, selectedText, api = api))
         Thread {
             Thread.sleep(500)
             try {

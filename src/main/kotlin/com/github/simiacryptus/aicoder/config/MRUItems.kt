@@ -8,8 +8,8 @@ import java.util.stream.Collectors
 
 class MRUItems {
     val mostUsedHistory: MutableMap<String, Int> = HashMap()
-    val mostRecentHistory: MutableList<String> = ArrayList()
-    var historyLimit = 10
+    private val mostRecentHistory: MutableList<String> = ArrayList()
+    private var historyLimit = 10
     fun addInstructionToHistory(instruction: CharSequence) {
         synchronized(mostRecentHistory) {
             if(mostRecentHistory.contains(instruction.toString())) {

@@ -28,7 +28,7 @@ import javax.swing.event.ChangeListener
 
 class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
     companion object {
-        val logger = org.slf4j.LoggerFactory.getLogger(TemperatureControlWidgetFactory::class.java)
+        val log = org.slf4j.LoggerFactory.getLogger(TemperatureControlWidgetFactory::class.java)
         val pool = Executors.newCachedThreadPool()
     }
 
@@ -79,21 +79,7 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
                     val feedbackPanel = JPanel()
                     feedbackPanel.setLayout(VerticalLayout(5))
                     //feedbackPanel.setBorder(BorderFactory.createTitledBorder("Feedback"))
-                    if (UITools.isSanctioned()) {
-                        feedbackPanel.add(
-                            link(
-                                JBLabel("<html><a href=''>Why is this plugin disabled?</a></html>"),
-                                URI("https://news.google.com/home?q=russian+war+crimes&hl=ru&gl=RU&ceid=RU:ru")
-                            )
-                        )
-                        feedbackPanel.add(
-                            link(
-                                JBLabel("<html><a href=''>How can I help?</a></html>"),
-                                URI("https://www.bing.com/search?q=ukrainian+charities")
-                            )
-                        )
-                        tabbedPane.addTab("Info", feedbackPanel)
-                    } else {
+                    if (!UITools.isSanctioned()) {
                         feedbackPanel.add(
                             link(
                                 JBLabel("<html><a href=''>Problem? Request help...</a></html>"),
@@ -148,18 +134,24 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
+        if (UITools.isSanctioned()) return object : StatusBarWidget {
+            override fun ID(): String = ""
+        }
         return TemperatureControlWidget()
     }
 
     override fun createWidget(project: Project): StatusBarWidget {
+        if (UITools.isSanctioned()) return object : StatusBarWidget {
+            override fun ID(): String = ""
+        }
         return TemperatureControlWidget()
     }
 
     override fun isAvailable(project: Project): Boolean {
-        return true
+        return !UITools.isSanctioned()
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-        return true
+        return !UITools.isSanctioned()
     }
 }

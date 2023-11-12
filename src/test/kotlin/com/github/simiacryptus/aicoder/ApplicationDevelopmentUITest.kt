@@ -98,126 +98,6 @@ class ApplicationDevelopmentUITest {
         )
     }
 
-    private fun test_problem_red_black_tree(): Pair<String, List<String>> {
-        return Pair(
-            "Red_Black_Tree",
-            listOf(
-                "Implement a utility function to insert a new node into the tree.",
-                "Implement a utility function to remove a node from the tree.",
-                "Implement a utility function to find a node in the tree.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-
-    private fun test_problem_morse(): Pair<String, List<String>> {
-        return Pair(
-            "Text_to_Morse",
-            listOf(
-                "Implement a utility function that converts text to Morse code.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-
-    private fun test_problem_permutations(): Pair<String, List<String>> {
-        return Pair(
-            "Permutations",
-            listOf(
-                "Implement class members needed to represent a single permutation.",
-                // Group-theory operations
-                "Implement a member function that returns the inverse permutation.",
-                "Implement a member function that returns the composition of two permutations.",
-                // Testing
-                "Implement a utility function that generates all permutations of a string.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-    private fun test_problem_prime(): Pair<String, List<String>> {
-        return Pair(
-            "Prime",
-            listOf(
-                "Implement a utility function that returns true if the given number is prime.",
-                "Implement a utility function that returns the next prime number after the given number.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-    private fun test_problem_fibonacci(): Pair<String, List<String>> {
-        return Pair(
-            "Fibonacci",
-            listOf(
-                "Implement a utility function that returns the nth number in the Fibonacci sequence.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-    private fun test_problem_sort(): Pair<String, List<String>> {
-        return Pair(
-            "Sort",
-            listOf(
-                "Implement a utility function that returns the given array sorted.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-    private fun test_problem_search(): Pair<String, List<String>> {
-        return Pair(
-            "Search",
-            listOf(
-                "Implement a utility function that returns the index of the given element in the given array.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-    private fun test_problem_reverse(): Pair<String, List<String>> {
-        return Pair(
-            "Reverse",
-            listOf(
-                "Implement a utility function that returns the given array in reverse order.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-    private fun test_problem_merge(): Pair<String, List<String>> {
-        return Pair(
-            "Merge",
-            listOf(
-                "Implement a utility function that merges two sorted arrays into a single sorted array.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-    private fun test_problem_split(): Pair<String, List<String>> {
-        return Pair(
-            "Split",
-            listOf(
-                "Implement a utility function that splits a sorted array into two sorted arrays.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
-    private fun test_problem_factorial(): Pair<String, List<String>> {
-        return Pair(
-            "Factorial",
-            listOf(
-                "Implement a utility function that returns the factorial of the given number.",
-                "Implement a static main method that tests each class member and validates the output."
-            )
-        )
-    }
-
 
     private fun test(
         name: String,
@@ -229,8 +109,7 @@ class ApplicationDevelopmentUITest {
     ) {
         val reportPrefix = "${name}_${language}_"
         val testOutputFile = File(outputDir, "${name}_${language}.md")
-        val out = PrintWriter(FileOutputStream(testOutputFile))
-        out.use { out ->
+        PrintWriter(FileOutputStream(testOutputFile)).use { out ->
             out.println(
                 """
                                 

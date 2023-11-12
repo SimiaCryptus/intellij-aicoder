@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 
-class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boolean, val language: ComputerLanguage) {
+class PsiClassContext(val text: String, private val isPrior: Boolean, private val isOverlap: Boolean, val language: ComputerLanguage) {
     val children = ArrayList<PsiClassContext>()
 
     /**
@@ -142,8 +142,5 @@ class PsiClassContext(val text: String, val isPrior: Boolean, val isOverlap: Boo
             return PsiClassContext("", false, true, language).init(psiFile, selectionStart, selectionEnd)
         }
 
-        fun getContext(language: ComputerLanguage, psiFile: PsiFile): PsiClassContext {
-            return getContext(psiFile, 0, psiFile.textLength, language)
-        }
     }
 }

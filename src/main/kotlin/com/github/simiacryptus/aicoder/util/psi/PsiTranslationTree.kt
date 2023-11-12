@@ -18,7 +18,7 @@ import java.util.regex.Pattern
 
 class PsiTranslationTree(
     private val stubId: String?,
-    val prefix: String?,
+    private val prefix: String?,
     private val elementText: String?,
     val sourceLanguage: ComputerLanguage,
     val targetLanguage: ComputerLanguage,
@@ -26,7 +26,7 @@ class PsiTranslationTree(
     val suffix = StringBuffer()
     val children = ArrayList<PsiTranslationTree>()
 
-    fun getStubRegex(
+    private fun getStubRegex(
         targetLanguage: ComputerLanguage?,
         translatedOuter: CharSequence?,
     ): Regex {
@@ -97,7 +97,7 @@ class PsiTranslationTree(
     fun getTranslatedDocument(): CharSequence = try {
         var translated = translatedResult.toString()
         if (!stubs.isEmpty()) {
-            logger.warn(
+            log.warn(
                 "Translating ${stubs.size} stubs in ${stubId ?: "---"} - Initial Code: \n```\n    ${
                     translationText().replace(
                         "\n",
@@ -112,7 +112,7 @@ class PsiTranslationTree(
                 val regex = child.getStubRegex(targetLanguage, translated)
                 val childDoc = child.getTranslatedDocument().toString()
                 val findAll = regex.findAll(translated).toList()
-                logger.warn(
+                log.warn(
                     "Replacing ${findAll.size} instances of ${child.stubId} with: \n```\n    ${
                         childDoc.replace(
                             "\n",
@@ -123,7 +123,7 @@ class PsiTranslationTree(
                 translated.replace(regex, childDoc.replace("\$", "\\\$"))
             }
         }
-        logger.warn("Translation for ${stubId ?: "---"}: \n```\n    ${translated.replace("\n", "\n    ")}\n```\n")
+        log.warn("Translation for ${stubId ?: "---"}: \n```\n    ${translated.replace("\n", "\n    ")}\n```\n")
         translated
     } catch (e: InterruptedException) {
         throw RuntimeException(e)
@@ -223,7 +223,7 @@ class PsiTranslationTree(
 
     companion object {
 
-        val logger = Logger.getInstance(PsiTranslationTree::class.java)
+        val log = Logger.getInstance(PsiTranslationTree::class.java)
 
         fun parseFile(
             psiFile: PsiFile,

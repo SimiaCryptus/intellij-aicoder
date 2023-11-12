@@ -22,8 +22,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class GenerateProjectAction extends FileContextAction<Settings> {
-    static Logger logger = LoggerFactory.getLogger(GenerateProjectAction.class)
-
 
     GenerateProjectAction() {
         super(false, true)
@@ -326,7 +324,7 @@ class GenerateProjectAction extends FileContextAction<Settings> {
                             )
 //                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
 //                            progress(progressVal)
-//                            logger.info("Progress: $progressVal")
+//                            log.info("Progress: $progressVal")
                             return new Pair(file.location, implement)
                         }
                     })
@@ -371,7 +369,7 @@ class GenerateProjectAction extends FileContextAction<Settings> {
                             )
 //                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
 //                            progress(progressVal)
-//                            logger.info("Progress: $progressVal")
+//                            log.info("Progress: $progressVal")
                             return new Pair(file.location, implement)
                         }
                     })
@@ -418,7 +416,7 @@ class GenerateProjectAction extends FileContextAction<Settings> {
                             )
 //                            def progressVal = currentDraft.incrementAndGet().toDouble() / totalDrafts
 //                            progress(progressVal)
-//                            logger.info("Progress: $progressVal")
+//                            log.info("Progress: $progressVal")
                             return new Pair(file.location, implement)
                         }
                     })
@@ -457,16 +455,17 @@ class GenerateProjectAction extends FileContextAction<Settings> {
         return UITools.showDialog(project, SettingsUI.class, Settings.class, "Project Settings", { config -> })
     }
 
-    SoftwareProjectAI projectAI = new ChatProxy<SoftwareProjectAI>(
-            clazz: SoftwareProjectAI.class,
-            api: api,
-            model: AppSettingsState.instance.defaultChatModel(),
-            temperature: AppSettingsState.instance.temperature,
-            deserializerRetries: 2,
-    ).create()
+    SoftwareProjectAI projectAI = null
 
     @Override
     File[] processSelection(SelectionState state, Settings config) {
+        projectAI = new ChatProxy<SoftwareProjectAI>(
+                clazz: SoftwareProjectAI.class,
+                api: api,
+                model: AppSettingsState.instance.defaultChatModel(),
+                temperature: AppSettingsState.instance.temperature,
+                deserializerRetries: 2,
+        ).create()
         if (config == null) return new File[0]
 
 
@@ -521,20 +520,20 @@ class GenerateProjectAction extends FileContextAction<Settings> {
         entries.each { file, sourceCode ->
             def relative = trimStart(trimEnd(file.file, '/'), ['/', '.']) ?: ""
             if (new File(relative).isAbsolute()) {
-                logger.warn("Invalid path: $relative")
+                log.warn("Invalid path: $relative")
             } else {
                 def outFile = new File(outputDir, relative)
                 outFile.parentFile.mkdirs()
                 def best = sourceCode.max { it.code.length() }
                 outFile.text = best.code
-                logger.debug("Wrote ${outFile.canonicalPath} (Resolved from $relative)")
+                log.debug("Wrote ${outFile.canonicalPath} (Resolved from $relative)")
                 generatedFiles << outFile
                 if (config.saveAlternates)
                     sourceCode.findAll { it != best }.eachWithIndex { alternate, index ->
                         def outFileAlternate = new File(outputDir, relative + ".${index + 1}")
                         outFileAlternate.parentFile.mkdirs()
                         outFileAlternate.text = alternate.code
-                        logger.debug("Wrote ${outFileAlternate.canonicalPath} (Resolved from $relative)")
+                        log.debug("Wrote ${outFileAlternate.canonicalPath} (Resolved from $relative)")
                         generatedFiles << outFileAlternate
                     }
             }

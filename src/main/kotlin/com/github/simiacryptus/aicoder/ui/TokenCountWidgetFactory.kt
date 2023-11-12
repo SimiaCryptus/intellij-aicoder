@@ -1,5 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.ui
 
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.SelectionEvent
@@ -21,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
     companion object {
-        val logger = org.slf4j.LoggerFactory.getLogger(TokenCountWidgetFactory::class.java)
+        val log = org.slf4j.LoggerFactory.getLogger(TokenCountWidgetFactory::class.java)
         val workQueue = LinkedBlockingDeque<Runnable>()
         val pool = ThreadPoolExecutor(
             /* corePoolSize = */ 1, /* maximumPoolSize = */ 1,
@@ -124,10 +125,10 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun isAvailable(project: Project): Boolean {
-        return true
+        return !UITools.isSanctioned()
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-        return true
+        return !UITools.isSanctioned()
     }
 }
