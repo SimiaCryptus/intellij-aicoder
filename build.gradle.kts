@@ -8,10 +8,10 @@ plugins {
     id("java") // Java support
     id("groovy")
     id("org.jetbrains.kotlin.jvm") version "1.9.20"
-    id("org.jetbrains.intellij") version "1.14.1"
-    id("org.jetbrains.changelog") version "2.0.0"
-    id("org.jetbrains.qodana") version "0.1.13"
-    id("org.jetbrains.kotlinx.kover") version "0.6.1"
+    id("org.jetbrains.intellij") version "1.16.0"
+    id("org.jetbrains.changelog") version "2.2.0"
+    id("org.jetbrains.qodana") version "2023.2.1"
+    id("org.jetbrains.kotlinx.kover") version "0.7.4"
 }
 
 group = "com.github.simiacryptus"
@@ -165,12 +165,12 @@ changelog {
 
 qodana {
     cachePath.set(file(".qodana").canonicalPath)
-    reportPath.set(file("build/reports/inspections").canonicalPath)
-    saveReport.set(true)
-    showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
+//    reportPath.set(file("build/reports/inspections").canonicalPath)
+//    saveReport.set(true)
+//    showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
 }
 
-kover.xmlReport {
-    onCheck.set(true)
-}
+//kover.xmlReport {
+//    onCheck.set(true)
+//}
 
