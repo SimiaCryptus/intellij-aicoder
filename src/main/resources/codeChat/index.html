@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Client</title>
+    <link href="chat.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/themes/prism-funky.min.css" rel="stylesheet"/>
+    <script src="main.js"></script>
+    <script src="chat.js"></script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/prism.min.js"></script>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modal-content"></div>
+    </div>
+</div>
+
+<div id="container">
+    <div id="messages"></div>
+    <form id="form">
+        <textarea id="message" placeholder="Type a message" rows="3" class="chat-input"></textarea>
+        <button type="submit">Send</button>
+    </form>
+</div>
+
+<div id="disconnected-overlay">
+    <p>Disconnected. Attempting to reconnect...</p>
+</div>
+
+</body>
+
+</html>

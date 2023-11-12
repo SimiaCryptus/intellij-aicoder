@@ -5,55 +5,42 @@ import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.skyenet.sessions.*
 import com.simiacryptus.skyenet.util.ClasspathResource
-import com.simiacryptus.skyenet.util.MarkdownUtil
 import org.eclipse.jetty.util.resource.Resource
-import org.intellij.lang.annotations.Language
 
 class CodeChatServer(
     val project: Project,
     val language: String,
     val codeSelection: String,
     val api: OpenAIClient,
+    resourceBase: String = "codeChat",
 ) : ChatApplicationBase(
     applicationName = "Code Chat",
+    resourceBase = resourceBase,
 ) {
 
-    private val rootOperationID = (0..5).map { ('a'..'z').random() }.joinToString("")
-    private var rootMessageTrail: String = ""
-
-    override fun newSession(sessionId: String): ChatSession {
-        val newSession = ChatSession(
-            sessionId = sessionId,
-            parent = this@CodeChatServer,
-            model = AppSettingsState.instance.defaultChatModel(),
-            api = api,
-            visiblePrompt = """
-            <div><h3>Code:</h3>
-                <pre><code class="language-$language">${htmlEscape(codeSelection)}</code></pre>
-            </div>
-        """.trimIndent().trim(),
-            hiddenPrompt = "",
-            systemPrompt = """
-                    |You are a helpful AI that helps people with coding.
-                    |
-                    |You will be answering questions about the following code:
-                    |
-                    |```$language
-                    |$codeSelection
-                    |```
-                    |
-                    |Responses may use markdown formatting.
-                    """.trimMargin(),
-        )
-        @Language("HTML") val html = """
-            <div><h3>Code:</h3>
-                <pre><code class="language-$language">${htmlEscape(codeSelection)}</code></pre>
-            </div>
-            """.trimIndent().trim()
-        rootMessageTrail = """$rootOperationID,$html"""
-        newSession.send(rootMessageTrail)
-        return newSession
-    }
+    override fun newSession(sessionId: String) = ChatSession(
+        sessionId = sessionId,
+        parent = this@CodeChatServer,
+        model = AppSettingsState.instance.defaultChatModel(),
+        api = api,
+        visiblePrompt = """
+            |<div><h3>Code:</h3>
+            |    <pre><code class="language-$language">${htmlEscape(codeSelection)}</code></pre>
+            |</div>
+            """.trimMargin().trim(),
+        hiddenPrompt = "",
+        systemPrompt = """
+            |You are a helpful AI that helps people with coding.
+            |
+            |You will be answering questions about the following code:
+            |
+            |```$language
+            |$codeSelection
+            |```
+            |
+            |Responses may use markdown formatting.
+            """.trimMargin(),
+    )
 
     override fun processMessage(
         sessionId: String,
