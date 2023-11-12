@@ -21,7 +21,7 @@ class CodeChatAction : BaseAction() {
         val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
         val server = AppServer.getServer(e.project)
         val uuid = UUID.randomUUID().toString()
-        server.addApp("/$uuid", CodeChatServer(e.project!!, language, selectedText))
+        server.addApp("/$uuid", CodeChatServer(e.project!!, language, selectedText, api = api))
         Thread {
             Thread.sleep(500)
             try {

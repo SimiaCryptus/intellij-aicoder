@@ -21,8 +21,8 @@ class IdeaOpenAIClient : OpenAIClient(
 ) {
     private val isInRequest = AtomicBoolean(false)
 
-    override fun incrementTokens(totalTokens: Int) {
-        AppSettingsState.instance.tokenCounter += totalTokens
+    override fun incrementTokens(model: Model?, tokens: Int) {
+        AppSettingsState.instance.tokenCounter += tokens
     }
 
     override fun authorize(request: HttpRequestBase) {
