@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
@@ -45,8 +46,8 @@ class AppSettingsComponent {
     val suppressErrors = JBCheckBox()
 
     @Suppress("unused")
-    @Name("Use GPT-4")
-    val useGPT4 = JBCheckBox()
+    @Name("Model")
+    val modelName = ComboBox<String>()
 
     @Suppress("unused")
     @Name("Enable API Log")
@@ -101,6 +102,9 @@ class AppSettingsComponent {
 
     init {
         tokenCounter.isEditable = false
+        this.modelName.addItem(OpenAIClient.Models.GPT35Turbo.modelName)
+        this.modelName.addItem(OpenAIClient.Models.GPT4.modelName)
+        this.modelName.addItem(OpenAIClient.Models.GPT4Turbo.modelName)
     }
 
     val preferredFocusedComponent: JComponent

@@ -19,11 +19,11 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     val listeningEndpoint: String = "localhost"
     val modalTasks: Boolean = false
     var suppressErrors: Boolean = false
-    private var apiLog: Boolean = false
+    var apiLog: Boolean = false
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
-    var useGPT4 = true
+    var modelName : String = OpenAIClient.Models.GPT35Turbo.modelName
     var tokenCounter = 0
     var humanLanguage = "English"
     var devActions = false
@@ -38,7 +38,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         return createChatRequest(defaultChatModel())
     }
 
-    fun defaultChatModel() = if (useGPT4) OpenAIClient.Models.GPT4 else OpenAIClient.Models.GPT35Turbo
+    fun defaultChatModel() = OpenAIClient.Models.entries.first { it.modelName == modelName }
 
     private fun createChatRequest(model: OpenAIClient.Model): ChatRequest {
         val chatRequest = ChatRequest()
@@ -72,7 +72,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         if (humanLanguage != that.humanLanguage) return false
         if (apiBase != that.apiBase) return false
         if (apiKey != that.apiKey) return false
-        if (useGPT4 != that.useGPT4) return false
+        if (modelName != that.modelName) return false
         if (apiLog != that.apiLog) return false
         if (devActions != that.devActions) return false
         if (editRequests != that.editRequests) return false
@@ -85,7 +85,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
             apiBase,
             apiKey,
             temperature,
-            useGPT4,
+            modelName,
             apiLog,
             devActions,
             editRequests,

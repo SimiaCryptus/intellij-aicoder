@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [1.2.18]
+
+### Improved
+- Code Chat
+- Various fixes
+- Added GPT4 Turbo support
+
 ## [1.2.14]
 
 ### Improved

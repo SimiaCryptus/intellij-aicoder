@@ -59,6 +59,7 @@ import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty1
+import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaField
@@ -324,7 +325,11 @@ object UITools {
         val componentClass: Class<*> = component.javaClass
         val declaredUIFields =
             componentClass.kotlin.memberProperties.map { it.name }.toSet()
-        for (settingsField in settings.javaClass.kotlin.memberProperties) {
+        val memberProperties = settings.javaClass.kotlin.memberProperties
+        val publicProperties = memberProperties.filter {
+            it.visibility == KVisibility.PUBLIC //&& it is KMutableProperty<*>
+        }
+        for (settingsField in publicProperties) {
             val fieldName = settingsField.name
             try {
                 if (!declaredUIFields.contains(fieldName)) continue

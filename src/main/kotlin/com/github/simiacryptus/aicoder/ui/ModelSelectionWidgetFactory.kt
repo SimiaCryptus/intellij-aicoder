@@ -12,7 +12,6 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.simiacryptus.openai.OpenAIClient
 import kotlinx.coroutines.CoroutineScope
-import java.awt.event.MouseEvent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
@@ -27,6 +26,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         private var statusBar: StatusBar? = null
         private var activeModel: String = AppSettingsState.instance.defaultChatModel().modelName
         val models = listOf(
+            OpenAIClient.Models.GPT4Turbo,
             OpenAIClient.Models.GPT4,
             OpenAIClient.Models.GPT35Turbo,
         )
@@ -80,7 +80,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
             }
             return ComboBoxPopup(context, activeModel, { str ->
                 activeModel = str
-                AppSettingsState.instance.useGPT4 = (str == OpenAIClient.Models.GPT4.modelName)
+                AppSettingsState.instance.modelName = str
                 statusBar?.updateWidget(ID())
             })
         }
