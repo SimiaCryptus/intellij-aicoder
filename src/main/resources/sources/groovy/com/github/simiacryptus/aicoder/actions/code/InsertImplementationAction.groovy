@@ -13,6 +13,8 @@ import kotlin.Pair
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
+import static com.intellij.openapi.application.ActionsKt.runReadAction
+
 class InsertImplementationAction extends SelectionAction<String> {
 
     interface VirtualAPI {
@@ -88,12 +90,14 @@ class InsertImplementationAction extends SelectionAction<String> {
                 .reduce { a, b -> "$a $b" }.get()
         if(null != state.psiFile) {
             def code = UITools.run(state.project, "Insert Implementation", true, true, {
-                def psiClassContext = PsiClassContext.getContext(
+                def psiClassContext = runReadAction {
+                    PsiClassContext.getContext(
                             state.psiFile,
                             psiClassContextActionParams.selectionStart,
                             psiClassContextActionParams.selectionEnd,
                             computerLanguage
                     ).toString()
+                }
                 proxy.implementCode(
                         specification,
                         psiClassContext,
