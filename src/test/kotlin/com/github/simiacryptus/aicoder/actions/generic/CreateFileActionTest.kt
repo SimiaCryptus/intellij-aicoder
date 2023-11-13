@@ -6,6 +6,6 @@ import org.junit.Test
 class CreateFileActionTest : ActionTestBase() {
     @Test
     fun testProcessing() {
-        testScript_FileContextAction(CreateFileAction(), "/CreateFileActionTest.md", false)
+        testScript_FileContextAction(CreateFileAction(), "/CreateFileActionTest.md")
     }
 }

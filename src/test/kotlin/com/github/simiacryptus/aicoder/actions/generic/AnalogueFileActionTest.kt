@@ -6,7 +6,7 @@ import org.junit.Test
 class AnalogueFileActionTest : ActionTestBase() {
     @Test
     fun testProcessing() {
-        testScript_FileContextAction(AnalogueFileAction(), "/AnalogueFileActionTest.md", false)
+        testScript_FileContextAction(AnalogueFileAction(), "/AnalogueFileActionTest.md")
     }
 }
 

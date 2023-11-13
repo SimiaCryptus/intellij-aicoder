@@ -15,7 +15,7 @@ open class ActionTestBase {
         fun <T:Any>testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
             AppSettingsState.instance.apiKey = OpenAIClient.keyTxt
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.useGPT4 = false
+            AppSettingsState.instance.modelName = OpenAIClient.Models.GPT35Turbo.name
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""
@@ -59,12 +59,11 @@ open class ActionTestBase {
 
         inline fun <reified T : Any> testScript_FileContextAction(
             selectionAction: FileContextAction<T>,
-            scriptPath: String,
-            useGPT4: Boolean
+            scriptPath: String
         ) {
             AppSettingsState.instance.apiKey = OpenAIClient.keyTxt
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.useGPT4 = useGPT4
+            AppSettingsState.instance.modelName = OpenAIClient.Models.GPT35Turbo.name
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""
