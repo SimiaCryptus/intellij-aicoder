@@ -3,9 +3,16 @@ package com.github.simiacryptus.aicoder.actions.dev
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.OpenAIClient
-import com.simiacryptus.skyenet.sessions.*
+import com.simiacryptus.skyenet.chat.ChatServer
+import com.simiacryptus.skyenet.chat.ChatSession
 import com.simiacryptus.skyenet.util.ClasspathResource
+import com.simiacryptus.util.JsonUtil
+import jakarta.servlet.http.HttpServlet
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.eclipse.jetty.servlet.ServletHolder
 import org.eclipse.jetty.util.resource.Resource
+import org.eclipse.jetty.webapp.WebAppContext
 
 class CodeChatServer(
     val project: Project,
@@ -13,12 +20,13 @@ class CodeChatServer(
     val codeSelection: String,
     val api: OpenAIClient,
     resourceBase: String = "codeChat",
-) : ChatApplicationBase(
-    applicationName = "Code Chat",
+) : ChatServer(
     resourceBase = resourceBase,
 ) {
+    override val applicationName: String
+        get() = "Code Chat"
 
-    override fun newSession(sessionId: String) = ChatSession(
+    override fun newSession(sessionId: String) = object : ChatSession(
         sessionId = sessionId,
         parent = this@CodeChatServer,
         model = AppSettingsState.instance.defaultChatModel(),
@@ -40,16 +48,8 @@ class CodeChatServer(
             |
             |Responses may use markdown formatting.
             """.trimMargin(),
-    )
-
-    override fun processMessage(
-        sessionId: String,
-        userMessage: String,
-        session: PersistentSessionBase,
-        sessionDiv: SessionDiv,
-        socket: MessageWebSocket
     ) {
-        TODO("Not yet implemented")
+        override fun canWrite(user: String?): Boolean = true
     }
 
     private fun htmlEscape(html: String): String {
@@ -61,4 +61,8 @@ class CodeChatServer(
     override val baseResource: Resource
         get() = ClasspathResource(javaClass.classLoader.getResource(resourceBase)!!)
 
+    override fun configure(webAppContext: WebAppContext, path: String, baseUrl: String) {
+        webAppContext.addServlet(ServletHolder(javaClass.simpleName + "/appInfo", AppInfoServlet()), "/appInfo")
+        super.configure(webAppContext, path, baseUrl)
+    }
 }

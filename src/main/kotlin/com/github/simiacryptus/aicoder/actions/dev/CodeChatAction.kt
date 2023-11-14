@@ -34,7 +34,7 @@ class CodeChatAction : BaseAction() {
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.isSanctioned()) return false
-        return AppSettingsState.instance.devActions
+        return true
     }
 
 }
