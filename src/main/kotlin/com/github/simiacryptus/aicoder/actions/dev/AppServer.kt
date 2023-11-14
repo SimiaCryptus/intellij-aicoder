@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.simiacryptus.skyenet.sessions.WebSocketServer
+import com.simiacryptus.skyenet.chat.ChatServer
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.eclipse.jetty.webapp.WebAppContext
@@ -29,7 +29,7 @@ class AppServer(
     }
 
     @Synchronized
-    fun addApp(path: String, socketServer: WebSocketServer) {
+    fun addApp(path: String, socketServer: ChatServer) {
         try {
             synchronized(serverLock) {
                 if (server.isRunning) server.stop() // Stop the server
@@ -43,15 +43,14 @@ class AppServer(
         }
     }
 
-    private fun newWebAppContext(server: WebSocketServer, path: String): WebAppContext {
+    private fun newWebAppContext(server: ChatServer, path: String): WebAppContext {
         val context = WebAppContext()
         JettyWebSocketServletContainerInitializer.configure(context, null)
         context.baseResource = server.baseResource
         context.contextPath = path
         context.welcomeFiles = arrayOf("index.html")
-        val webAppContext = context
-        server.configure(webAppContext, baseUrl = "$domainName/$path")
-        return webAppContext
+        server.configure(context, baseUrl = "$domainName/$path")
+        return context
     }
 
     private val handlers = arrayOf<WebAppContext>().toMutableList()

@@ -57,6 +57,7 @@ import java.util.function.Supplier
 import java.util.stream.Collectors
 import javax.swing.*
 import javax.swing.text.JTextComponent
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVisibility
@@ -201,7 +202,7 @@ object UITools {
         val lineNumber = document.getLineNumber(caret.selectionStart)
         val lines = documentText.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         if (lines.isEmpty()) return ""
-        return IndentedText.fromString(lines[Math.max(lineNumber, 0).coerceAtMost(lines.size - 1)]).indent
+        return IndentedText.fromString(lines[max(lineNumber, 0).coerceAtMost(lines.size - 1)]).indent
     }
 
     @JvmStatic

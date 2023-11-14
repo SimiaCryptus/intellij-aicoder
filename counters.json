@@ -1,0 +1,12 @@
+{
+  "20231113-5ea3aa8c" : {
+    "tokensPerModel" : {
+      "GPT35Turbo" : 452
+    }
+  },
+  "20231113-83f5627c" : {
+    "tokensPerModel" : {
+      "GPT35Turbo" : 454
+    }
+  }
+}

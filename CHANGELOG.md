@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [1.2.19]
+
+### Fixed
+
+- Code Chat
+
 ## [1.2.18]
 
 ### Improved
