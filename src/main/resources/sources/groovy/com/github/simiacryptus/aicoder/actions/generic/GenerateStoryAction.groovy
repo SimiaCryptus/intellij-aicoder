@@ -11,7 +11,7 @@ import org.apache.commons.io.FileUtils
 
 import javax.swing.*
 
-class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings> {
+class GenerateStoryAction extends FileContextAction<Settings> {
 
     GenerateStoryAction() {
         super(false, true)
@@ -239,7 +239,7 @@ class GenerateStoryAction extends FileContextAction<GenerateStoryAction.Settings
             outputFiles << storyFile
         }
 
-        return outputFiles.toArray()
+        return outputFiles.toArray(new File[0])
     }
 
 }
