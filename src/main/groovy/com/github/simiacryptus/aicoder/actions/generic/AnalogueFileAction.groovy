@@ -13,7 +13,7 @@ import org.apache.commons.io.IOUtils
 import javax.swing.*
 import java.nio.file.Path
 
-class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> {
+class AnalogueFileAction extends FileContextAction<Settings> {
 
     private static class ProjectFile {
         public String path = ""
@@ -91,7 +91,7 @@ class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> 
                             Paths should be relative to the project root and should not exist.
                             Output the file path using the a line with the format "File: <path>".
                             Output the file code directly after the header line with no additional decoration.
-                            """.stripIndent()
+                            """.stripIndent(), null
                 ),
                 new ChatMessage(
                         ChatMessage.Role.user, """
@@ -102,7 +102,7 @@ class AnalogueFileAction extends FileContextAction<AnalogueFileAction.Settings> 
                             ```
                             ${baseFile.code}
                             ```
-                            """.stripIndent()
+                            """.stripIndent(), null
                 )
         ]
         String response = api.chat(

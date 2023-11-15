@@ -6,10 +6,6 @@ import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.skyenet.chat.ChatServer
 import com.simiacryptus.skyenet.chat.ChatSession
 import com.simiacryptus.skyenet.util.ClasspathResource
-import com.simiacryptus.util.JsonUtil
-import jakarta.servlet.http.HttpServlet
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import org.eclipse.jetty.servlet.ServletHolder
 import org.eclipse.jetty.util.resource.Resource
 import org.eclipse.jetty.webapp.WebAppContext
@@ -26,7 +22,7 @@ class CodeChatServer(
     override val applicationName: String
         get() = "Code Chat"
 
-    override fun newSession(sessionId: String) = object : ChatSession(
+    override fun newSession(userId: String?, sessionId: String) = object : ChatSession(
         sessionId = sessionId,
         parent = this@CodeChatServer,
         model = AppSettingsState.instance.defaultChatModel(),
