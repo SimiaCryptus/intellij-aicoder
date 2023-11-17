@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
+import com.simiacryptus.openai.Models
 import com.simiacryptus.openai.OpenAIClient
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.JList
@@ -26,9 +27,9 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         private var statusBar: StatusBar? = null
         private var activeModel: String = AppSettingsState.instance.defaultChatModel().modelName
         val models = listOf(
-            OpenAIClient.Models.GPT4Turbo,
-            OpenAIClient.Models.GPT4,
-            OpenAIClient.Models.GPT35Turbo,
+            Models.GPT4Turbo,
+            Models.GPT4,
+            Models.GPT35Turbo,
         )
 
         override fun ID(): String {

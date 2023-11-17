@@ -6,10 +6,10 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.Model
+import com.simiacryptus.openai.Models
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
 import com.simiacryptus.util.JsonUtil
-import java.util.*
 
 class SimpleEnvelope(var value: String? = null)
 
@@ -23,7 +23,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
-    var modelName : String = OpenAIClient.Models.GPT35Turbo.modelName
+    var modelName : String = Models.GPT35Turbo.modelName
     var tokenCounter = 0
     var humanLanguage = "English"
     var devActions = false
@@ -38,14 +38,12 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         return createChatRequest(defaultChatModel())
     }
 
-    fun defaultChatModel() = OpenAIClient.Models.entries.first { it.modelName == modelName }
+    fun defaultChatModel() = Models.entries.first { it.modelName == modelName }
 
-    private fun createChatRequest(model: OpenAIClient.Model): ChatRequest {
-        val chatRequest = ChatRequest()
-        chatRequest.model = model.modelName
-        chatRequest.temperature = temperature
-        return chatRequest
-    }
+    private fun createChatRequest(model: Model): ChatRequest = ChatRequest(
+        model = model.modelName,
+        temperature = temperature
+    )
 
     @JsonIgnore
     override fun getState(): SimpleEnvelope {

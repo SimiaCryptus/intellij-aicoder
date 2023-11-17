@@ -16,11 +16,6 @@
 * Toolbar UI for quick configuration of temperature/model and display of current token count
 * Ability to intercept, edit, and log API requests
 
-**NOTE**: Due to the war of aggression, widespread war crimes including acts of genocide committed by the Russian
-Federation against Ukraine and various other countries, this plugin will not function for users in Russia and allied countries.
-_We are working on a solution to this problem_, but cannot yet promise a date for the victory.
-**_Slava Ukraini!_**
-
 **NOTE**: This project is not affiliated with OpenAI, JetBrains, or any other corporation or organization. 
 It is provided free of charge, as-is, with no warranty or guarantee of any kind.
 

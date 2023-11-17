@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.FormBuilder
+import com.simiacryptus.openai.Model
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.JsonUtil
 import org.apache.http.client.methods.HttpRequestBase

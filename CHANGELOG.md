@@ -14,6 +14,10 @@
 
 - Fixed settings for service port
 
+### Removed
+
+- Country sanctioning logic
+
 ## [1.2.19]
 
 ### Fixed
