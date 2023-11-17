@@ -38,7 +38,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         return createChatRequest(defaultChatModel())
     }
 
-    fun defaultChatModel() = Models.entries.first { it.modelName == modelName }
+    fun defaultChatModel(): Model = Models.entries.first { it.modelName == modelName }
 
     private fun createChatRequest(model: Model): ChatRequest = ChatRequest(
         model = model.modelName,
