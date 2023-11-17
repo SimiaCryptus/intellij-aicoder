@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+## [1.2.21]
+
+### Improved
+
+- Code Chat UI
+
+### Fixed
+
+- Fixed settings for service port
+
 ## [1.2.19]
 
 ### Fixed

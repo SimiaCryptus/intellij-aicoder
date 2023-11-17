@@ -66,33 +66,45 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that = other as AppSettingsState
-        if (that.temperature.compareTo(temperature) != 0) return false
-        if (humanLanguage != that.humanLanguage) return false
-        if (apiBase != that.apiBase) return false
-        if (apiKey != that.apiKey) return false
-        if (modelName != that.modelName) return false
-        if (apiLog != that.apiLog) return false
-        if (devActions != that.devActions) return false
-        if (editRequests != that.editRequests) return false
-        if (editorActions != that.editorActions) return false
+        if (javaClass != other?.javaClass) return false
+
+        other as AppSettingsState
+
+        if (listeningPort != other.listeningPort) return false
+        if (listeningEndpoint != other.listeningEndpoint) return false
+        if (modalTasks != other.modalTasks) return false
+        if (suppressErrors != other.suppressErrors) return false
+        if (apiLog != other.apiLog) return false
+        if (apiBase != other.apiBase) return false
+        if (apiKey != other.apiKey) return false
+        if (temperature != other.temperature) return false
+        if (modelName != other.modelName) return false
+        if (tokenCounter != other.tokenCounter) return false
+        if (humanLanguage != other.humanLanguage) return false
+        if (devActions != other.devActions) return false
+        if (editRequests != other.editRequests) return false
+        if (apiThreads != other.apiThreads) return false
+
         return true
     }
 
     override fun hashCode(): Int {
-        return Objects.hash(
-            apiBase,
-            apiKey,
-            temperature,
-            modelName,
-            apiLog,
-            devActions,
-            editRequests,
-            editorActions
-        )
+        var result = listeningPort
+        result = 31 * result + listeningEndpoint.hashCode()
+        result = 31 * result + modalTasks.hashCode()
+        result = 31 * result + suppressErrors.hashCode()
+        result = 31 * result + apiLog.hashCode()
+        result = 31 * result + apiBase.hashCode()
+        result = 31 * result + apiKey.hashCode()
+        result = 31 * result + temperature.hashCode()
+        result = 31 * result + modelName.hashCode()
+        result = 31 * result + tokenCounter
+        result = 31 * result + humanLanguage.hashCode()
+        result = 31 * result + devActions.hashCode()
+        result = 31 * result + editRequests.hashCode()
+        result = 31 * result + apiThreads
+        return result
     }
-
 
     companion object {
         @JvmStatic

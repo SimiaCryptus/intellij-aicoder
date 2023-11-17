@@ -1,42 +1,70 @@
+:root {
+    --primary-bg-color: #f7f7f7;
+    --secondary-bg-color: #ffffff;
+    --primary-text-color: #333;
+    --secondary-text-color: #555;
+    --link-color: #0066cc;
+    --link-hover-color: #0044aa;
+    --border-radius: 4px;
+    --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --transition-speed: 0.3s;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--primary-text-color);
+    background-color: var(--primary-bg-color);
+    margin: 0;
+    padding: 0;
+    overflow: clip;
+}
+
 #messages {
-    position: absolute;
+    position: relative;
     top: 0;
     left: 0;
     right: 0;
-    bottom: 40px;
-    overflow-y: auto;
-    padding: 10px;
-    padding-top: 40px;
+    bottom: 0;
+    padding: 10px 10px 10px;
     flex-grow: 1;
     flex-shrink: 1;
+    background-color: var(--secondary-bg-color);
+    box-shadow: var(--box-shadow);
+    overflow-y: auto;
 }
 
-.message {
-    background-color: #f0f0f0;
-    border-radius: 5px;
+.chat-input {
+    background-color: var(--secondary-bg-color);
+    border-radius: var(--border-radius);
     padding: 10px;
     margin-bottom: 10px;
-    overflow: scroll;
-    z-index: 100;
+    overflow: auto;
+    resize: vertical;
+    flex: 1;
+    border: 1px solid #ddd;
+    box-shadow: var(--box-shadow);
 }
 
-#form {
-    position: absolute;
+#main-input {
+    align-items: flex-start;
     left: 0;
     right: 0;
     bottom: 0;
     display: flex;
     margin: 0;
-    padding: 5px;
-    flex-shrink: 0;
+    padding: 0;
+    background-color: var(--primary-bg-color);
+    width: 100%;
+}
+
+#session {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 .reply-form {
     width: 100%;
-}
-
-.chat-input {
-    resize: vertical;
 }
 
 .reply-input {
@@ -44,13 +72,23 @@
 }
 
 .href-link {
+    text-decoration: none;
+    color: var(--link-color);
+    transition: color var(--transition-speed);
+}
+
+.href-link:hover {
+    color: var(--link-hover-color);
     text-decoration: underline;
-    color: blue;
 }
 
 #message {
     flex-grow: 1;
     margin-right: 5px;
+}
+
+.message-container {
+    position: relative;
 }
 
 #disconnected-overlay {
@@ -61,8 +99,7 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    display: flex;
+    z-index: 50;
     justify-content: center;
     align-items: center;
     color: white;
@@ -73,22 +110,10 @@
     font-size: 3rem;
     line-height: 1.5;
     margin-bottom: 20px;
-    animation-name: bounce;
-    animation-duration: 0.5s;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
+    animation: bounce var(--transition-speed) infinite alternate;
     left: 10%;
     position: relative;
     color: firebrick;
-}
-
-@keyframes bounce {
-    0% {
-        transform: translateY(0);
-    }
-    100% {
-        transform: translateY(-10px);
-    }
 }
 
 .spinner-border {
@@ -96,18 +121,9 @@
     width: 40px;
     height: 40px;
     border: 4px solid rgba(0, 0, 0, 0.1);
-    border-left-color: #007bff;
+    border-left-color: var(--link-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
 }
 
 .sr-only {
@@ -122,53 +138,43 @@
     border: 0;
 }
 
-
-#toolbar {
-    background-color: #f1f1f1;
+#toolbar, #namebar {
+    background-color: var(--secondary-bg-color);
     padding: 5px;
     position: fixed;
     top: 0;
+    text-align: left;
+    box-shadow: var(--box-shadow);
+}
+
+
+#toolbar {
     width: 100%;
-    horiz-align: left;
-    z-index: 1;
-}
-
-#toolbar a {
-    color: #000;
-    text-decoration: none;
-    padding: 5px;
-}
-
-#toolbar a:hover {
-    background-color: #ddd;
+    z-index: 2;
 }
 
 
 #namebar {
-    background-color: #f1f1f1;
-    padding: 5px;
-    position: fixed;
-    top: 0;
+    z-index: 3;
     right: 0;
-    horiz-align: right;
-    z-index: 2;
 }
 
-#namebar a {
-    color: #000;
+#toolbar a, #namebar a {
+    color: var(--primary-text-color);
     text-decoration: none;
     padding: 5px;
+    transition: background-color var(--transition-speed);
 }
 
-#namebar a:hover {
-    background-color: #ddd;
+#toolbar a:hover, #namebar a:hover {
+    background-color: var(--secondary-text-color);
+    color: var(--secondary-bg-color);
 }
 
-/* Modal */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 100;
     left: 0;
     top: 0;
     width: 100%;
@@ -178,16 +184,18 @@
 }
 
 .modal-content {
-    background-color: #fefefe;
+    background-color: var(--secondary-bg-color);
     margin: 15% auto;
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
     position: relative;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
 }
 
 .close {
-    color: #aaa;
+    color: var(--secondary-text-color);
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -196,83 +204,88 @@
 
 .close:hover,
 .close:focus {
-    color: #000;
-    text-decoration: none;
-    cursor: pointer;
+    color: var(--primary-text-color);
 }
 
 pre {
-    white-space: pre-wrap; /* Since CSS modules do not automatically apply this */
+    white-space: pre-wrap;
 }
 
-#container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh; /* Adjust this value based on your preferred container height */
-}
-
-.play-button {
+.play-button, .cancel-button {
     font-size: 48px;
     font-weight: bold;
     border: none;
     background: transparent;
     cursor: pointer;
-    transition: transform 0.1s;
-}
-
-.play-button:focus {
-    outline: none;
-}
-
-.play-button:active {
-    transform: scale(0.9);
-}
-
-
-.regen-button {
-    font-size: 48px;
-    font-weight: bold;
-    color: chartreuse;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    transition: transform 0.1s;
-}
-
-.regen-button:focus {
-    outline: none;
-}
-
-.regen-button:active {
-    transform: scale(0.9);
-}
-
-.message-container {
-    position: relative; /* Add this line to set the position property of the parent div */
+    transition: transform var(--transition-speed);
+    text-decoration: none;
 }
 
 .cancel-button {
+    right: 0;
     position: absolute;
-    top: 8px;
-    right: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    transition: transform 0.1s;
 }
 
-.cancel-button:focus {
+.play-button:focus, .cancel-button:focus {
     outline: none;
 }
 
-.cancel-button:active {
+.play-button:active, .cancel-button:active {
     transform: scale(0.9);
 }
 
-.collapsible-content {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.2s ease-out;
+.error {
+    color: red;
+}
+
+.verbose {
+    display: block;
+}
+
+.verbose-hidden {
+    display: none;
+}
+
+
+@keyframes bounce {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-10px);
+    }
+}
+
+
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.initial-prompt {
+    background-color: #f2f2f2;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-message {
+    background-color: #e6f7ff;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #333;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

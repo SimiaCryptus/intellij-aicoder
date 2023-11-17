@@ -10,7 +10,7 @@ import com.simiacryptus.openai.OpenAIClient.ChatRequest
 
 import javax.swing.*
 
-class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
+class CreateFileAction extends FileContextAction<Settings> {
 
     CreateFileAction() {
         super(false, true)
@@ -94,7 +94,7 @@ class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
                     Paths should be relative to the project root and should not exist.
                     Output the file path using the a line with the format "File: <path>".
                     Output the file code directly after the header line with no additional decoration.
-                """.stripIndent()
+                """.stripIndent(), null
             ),
             //language=TEXT
             new ChatMessage(
@@ -102,7 +102,7 @@ class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
                     Create a new file based on the following directive: $directive
                     
                     The file location should be based on the selected path `${basePath}`
-                """.stripIndent()
+                """.stripIndent(), null
             )
         ]
         def response = api.chat(
@@ -119,7 +119,7 @@ class CreateFileAction extends FileContextAction<CreateFileAction.Settings> {
         def pathPattern = ~"""File(?:name)?: ['`"]?([^'`"]+)['`"]?"""
         if (header =~ pathPattern) {
             def match = (header =~ pathPattern)[0]
-            outputPath = match[1].trim()
+            outputPath = match[1].toString()
         }
         return new ProjectFile(
             path: outputPath,

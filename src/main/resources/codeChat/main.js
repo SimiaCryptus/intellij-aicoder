@@ -69,8 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const form = document.getElementById('form');
-    const messageInput = document.getElementById('message');
+    const form = document.getElementById('main-input');
+    const messageInput = document.getElementById('chat-input');
 
     form.addEventListener('submit', (event) => {
         event.preventDefault();
