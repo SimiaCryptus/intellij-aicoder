@@ -13,19 +13,19 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/prism.min.js"></script>
 
+<div id="session">
+    <form id="main-input">
+        <textarea id="chat-input" placeholder="Type a message" rows="1" class="chat-input"></textarea>
+        <button class="ws-control" type="submit">Send</button>
+    </form>
+    <div id="messages"></div>
+</div>
+
 <div id="modal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
         <div id="modal-content"></div>
     </div>
-</div>
-
-<div id="container">
-    <div id="messages"></div>
-    <form id="form">
-        <textarea id="message" placeholder="Type a message" rows="3" class="chat-input"></textarea>
-        <button type="submit">Send</button>
-    </form>
 </div>
 
 <div id="disconnected-overlay">

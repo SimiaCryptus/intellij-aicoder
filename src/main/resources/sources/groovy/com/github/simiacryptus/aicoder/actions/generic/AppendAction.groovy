@@ -20,11 +20,11 @@ class AppendAction extends SelectionAction<String> {
         request.messages = [
                 new OpenAIClient.ChatMessage(
                         OpenAIClient.ChatMessage.Role.system,
-                        "Append text to the end of the user's prompt"
+                        "Append text to the end of the user's prompt", null
                 ),
                 new OpenAIClient.ChatMessage(
                         OpenAIClient.ChatMessage.Role.user,
-                        state.selectedText.toString()
+                        state.selectedText.toString(), null
                 )
         ]
         def chatResponse = api.chat(request, AppSettingsState.instance.defaultChatModel())

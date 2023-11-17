@@ -22,6 +22,9 @@ function getSessionId() {
 
 function send(message) {
     console.log('Sending message:', message);
+    if (socket.readyState !== 1) {
+        throw new Error('WebSocket is not open');
+    }
     socket.send(message);
 }
 
@@ -60,6 +63,8 @@ function connect(sessionId, customReceiveFunction) {
 }
 
 function showDisconnectedOverlay(show) {
-    const overlay = document.getElementById('disconnected-overlay');
-    overlay.style.display = show ? 'block' : 'none';
+    const elements = document.getElementsByClassName('ws-control');
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].disabled = show;
+    }
 }
