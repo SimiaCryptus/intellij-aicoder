@@ -88,7 +88,7 @@ class CreateFileAction extends FileContextAction<Settings> {
         chatRequest.messages = [
             //language=TEXT
             new ChatMessage(
-                ChatMessage.Role.system, """
+                Role.system, """
                     You will interpret natural language requirements to create a new file.
                     Provide a new filename and the code to be written to the file.
                     Paths should be relative to the project root and should not exist.
@@ -98,7 +98,7 @@ class CreateFileAction extends FileContextAction<Settings> {
             ),
             //language=TEXT
             new ChatMessage(
-                ChatMessage.Role.user, """
+                Role.user, """
                     Create a new file based on the following directive: $directive
                     
                     The file location should be based on the selected path `${basePath}`

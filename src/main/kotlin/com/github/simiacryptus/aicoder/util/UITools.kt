@@ -30,8 +30,8 @@ import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.APIClientBase
-import com.simiacryptus.openai.ModerationException
+import com.simiacryptus.openai.OpenAIClientBase
+import com.simiacryptus.openai.exceptions.ModerationException
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.StringUtil
 import groovy.lang.GroovyRuntimeException
@@ -46,15 +46,12 @@ import java.beans.PropertyChangeEvent
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
 import java.net.URI
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
-import java.util.stream.Collectors
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.max
@@ -71,7 +68,7 @@ object UITools {
     val retry = WeakHashMap<Document, Runnable>()
 
     @JvmStatic
-    fun isSanctioned() = APIClientBase.isSanctioned()
+    fun isSanctioned() = OpenAIClientBase.isSanctioned()
 
     @JvmStatic
     fun redoableTask(

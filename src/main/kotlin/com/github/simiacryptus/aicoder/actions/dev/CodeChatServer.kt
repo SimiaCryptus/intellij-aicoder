@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.dev
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
 import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.skyenet.ApplicationBase
 import com.simiacryptus.skyenet.chat.ChatServer
 import com.simiacryptus.skyenet.chat.ChatSession
 import com.simiacryptus.skyenet.util.ClasspathResource
@@ -44,6 +45,7 @@ class CodeChatServer(
             |
             |Responses may use markdown formatting.
             """.trimMargin(),
+        applicationClass = ApplicationBase::class.java,
     ) {
         override fun canWrite(user: String?): Boolean = true
     }

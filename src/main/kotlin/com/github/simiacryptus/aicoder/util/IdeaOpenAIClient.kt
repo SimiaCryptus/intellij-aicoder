@@ -7,10 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.Model
+import com.simiacryptus.openai.models.OpenAIModel
 import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.models.OpenAITextModel
 import com.simiacryptus.util.JsonUtil
-import org.apache.http.client.methods.HttpRequestBase
+import org.apache.hc.core5.http.HttpRequest
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JPanel
@@ -22,22 +23,22 @@ class IdeaOpenAIClient : OpenAIClient(
 ) {
     private val isInRequest = AtomicBoolean(false)
 
-    override fun incrementTokens(model: Model?, tokens: Int) {
-        AppSettingsState.instance.tokenCounter += tokens
+    override fun incrementTokens(model: OpenAIModel?, tokens: Usage) {
+        AppSettingsState.instance.tokenCounter += tokens.total_tokens
     }
 
-    override fun authorize(request: HttpRequestBase) {
+    override fun authorize(request: HttpRequest) {
         key = UITools.checkApiKey(key)
         super.authorize(request)
     }
 
     override fun chat(
-        completionRequest: ChatRequest,
-        model: Model
+        chatRequest: ChatRequest,
+        model: OpenAITextModel
     ): ChatResponse {
-        lastEvent ?: return super.chat(completionRequest, model)
+        lastEvent ?: return super.chat(chatRequest, model)
         if (isInRequest.getAndSet(true)) {
-            val response = super.chat(completionRequest, model)
+            val response = super.chat(chatRequest, model)
             UITools.logAction("""
                 |Chat Response: ${JsonUtil.toJson(response.usage!!)}
             """.trimMargin().trim())
@@ -45,13 +46,13 @@ class IdeaOpenAIClient : OpenAIClient(
         } else {
             try {
                 if (!AppSettingsState.instance.editRequests) {
-                    val response = super.chat(completionRequest, model)
+                    val response = super.chat(chatRequest, model)
                     UITools.logAction("""
                         |Chat Response: ${JsonUtil.toJson(response.usage!!)}
                     """.trimMargin().trim())
                     return response
                 }
-                return withJsonDialog(completionRequest, {
+                return withJsonDialog(chatRequest, {
                     val chatRequest = it
                     UITools.run(
                         lastEvent!!.project, "OpenAI Request", true, suppressProgress = false
@@ -70,7 +71,7 @@ class IdeaOpenAIClient : OpenAIClient(
     }
 
 
-    override fun complete(request: CompletionRequest, model: Model): CompletionResponse {
+    override fun complete(request: CompletionRequest, model: OpenAITextModel): CompletionResponse {
         lastEvent ?: return super.complete(request, model)
         if (isInRequest.getAndSet(true)) {
             val response = super.complete(request, model)

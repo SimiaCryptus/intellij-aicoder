@@ -42,7 +42,7 @@ class ActionSettingsRegistry {
                         } catch (e: Throwable) {
                             false
                         }
-                        if(canLoad) {
+                        if (canLoad) {
                             actionConfig.file.writeText(code)
                             actionConfig.version = version
                         } else {
@@ -75,7 +75,12 @@ class ActionSettingsRegistry {
         return children.toTypedArray()
     }
 
-    class DynamicActionException(cause: Throwable, private val msg: String, val file: File, val actionSetting: ActionSettings) : Exception(msg, cause)
+    class DynamicActionException(
+        cause: Throwable,
+        msg: String,
+        val file: File,
+        val actionSetting: ActionSettings
+    ) : Exception(msg, cause)
 
     data class ActionSettings(
         val id: String, // Static property

@@ -19,11 +19,11 @@ class AppendAction extends SelectionAction<String> {
         request.temperature = AppSettingsState.instance.temperature
         request.messages = [
                 new OpenAIClient.ChatMessage(
-                        OpenAIClient.ChatMessage.Role.system,
+                        OpenAIClient.Role.system,
                         "Append text to the end of the user's prompt", null
                 ),
                 new OpenAIClient.ChatMessage(
-                        OpenAIClient.ChatMessage.Role.user,
+                        OpenAIClient.Role.user,
                         state.selectedText.toString(), null
                 )
         ]

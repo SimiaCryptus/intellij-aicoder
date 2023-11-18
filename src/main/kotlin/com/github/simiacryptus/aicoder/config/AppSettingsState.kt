@@ -6,9 +6,10 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.simiacryptus.openai.Model
-import com.simiacryptus.openai.Models
+import com.simiacryptus.openai.models.OpenAIModel
+import com.simiacryptus.openai.models.ChatModels
 import com.simiacryptus.openai.OpenAIClient.ChatRequest
+import com.simiacryptus.openai.models.OpenAITextModel
 import com.simiacryptus.util.JsonUtil
 
 class SimpleEnvelope(var value: String? = null)
@@ -23,7 +24,7 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
     var apiBase = "https://api.openai.com/v1"
     var apiKey = ""
     var temperature = 0.1
-    var modelName : String = Models.GPT35Turbo.modelName
+    var modelName : String = ChatModels.GPT35Turbo.modelName
     var tokenCounter = 0
     var humanLanguage = "English"
     var devActions = false
@@ -38,9 +39,9 @@ class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
         return createChatRequest(defaultChatModel())
     }
 
-    fun defaultChatModel(): Model = Models.entries.first { it.modelName == modelName }
+    fun defaultChatModel(): OpenAITextModel = ChatModels.entries.first { it.modelName == modelName }
 
-    private fun createChatRequest(model: Model): ChatRequest = ChatRequest(
+    private fun createChatRequest(model: OpenAIModel): ChatRequest = ChatRequest(
         model = model.modelName,
         temperature = temperature
     )

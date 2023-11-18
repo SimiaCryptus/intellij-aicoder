@@ -11,8 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
-import com.simiacryptus.openai.Models
-import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.models.ChatModels
 import com.simiacryptus.openai.OpenAIClientBase
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -58,7 +57,7 @@ class AppSettingsComponent {
     @Suppress("unused")
     val openApiLog = JButton(object : AbstractAction("Open API Log") {
         override fun actionPerformed(e: ActionEvent) {
-            OpenAIClientBase.auxillaryLog?.let {
+            OpenAIClientBase.auxiliaryLog?.let {
                 val project = ApplicationManager.getApplication().runReadAction<Project> {
                     com.intellij.openapi.project.ProjectManager.getInstance().openProjects.firstOrNull()
                 }
@@ -104,9 +103,9 @@ class AppSettingsComponent {
 
     init {
         tokenCounter.isEditable = false
-        this.modelName.addItem(Models.GPT35Turbo.modelName)
-        this.modelName.addItem(Models.GPT4.modelName)
-        this.modelName.addItem(Models.GPT4Turbo.modelName)
+        this.modelName.addItem(ChatModels.GPT35Turbo.modelName)
+        this.modelName.addItem(ChatModels.GPT4.modelName)
+        this.modelName.addItem(ChatModels.GPT4Turbo.modelName)
     }
 
     val preferredFocusedComponent: JComponent
