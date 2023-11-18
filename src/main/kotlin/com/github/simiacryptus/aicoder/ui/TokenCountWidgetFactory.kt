@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
     companion object {
-        val log = org.slf4j.LoggerFactory.getLogger(TokenCountWidgetFactory::class.java)
+        private val log = org.slf4j.LoggerFactory.getLogger(TokenCountWidgetFactory::class.java)
         val workQueue = LinkedBlockingDeque<Runnable>()
         val pool = ThreadPoolExecutor(
             /* corePoolSize = */ 1, /* maximumPoolSize = */ 1,

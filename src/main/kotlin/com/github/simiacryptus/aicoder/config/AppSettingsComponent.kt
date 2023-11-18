@@ -3,7 +3,6 @@
 package com.github.simiacryptus.aicoder.config
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -13,6 +12,7 @@ import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.simiacryptus.openai.models.ChatModels
 import com.simiacryptus.openai.OpenAIClientBase
+import org.slf4j.LoggerFactory
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JButton
@@ -117,9 +117,7 @@ class AppSettingsComponent {
     }
 
     companion object {
-        private val log = Logger.getInstance(
-            AppSettingsComponent::class.java
-        )
+        private val log = LoggerFactory.getLogger(AppSettingsComponent::class.java)
         //val ACTIONS_TOPIC = Topic.create("Actions", ActionChangedListener::class.java)
     }
 }

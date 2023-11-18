@@ -1,5 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
+import com.github.simiacryptus.aicoder.config.ActionTable
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -12,6 +13,7 @@ import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.openai.models.OpenAITextModel
 import com.simiacryptus.util.JsonUtil
 import org.apache.hc.core5.http.HttpRequest
+import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JPanel
@@ -187,5 +189,8 @@ class IdeaOpenAIClient : OpenAIClient(
             val project = lastEvent?.project ?: return function(request)
             return function(JsonUtil.fromJson(uiEdit(project, title, JsonUtil.toJson(request)), request::class.java))
         }
+
+        private val log = LoggerFactory.getLogger(IdeaOpenAIClient::class.java)
     }
+
 }

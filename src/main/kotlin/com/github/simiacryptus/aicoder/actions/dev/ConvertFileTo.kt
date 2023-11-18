@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 
@@ -50,31 +51,6 @@ class ConvertFileTo : ActionGroup() {
         return actions.toArray(arrayOf())
     }
 
-    companion object {
-
-        fun getNewFile(project: Project?, file: VirtualFile, language: ComputerLanguage): VirtualFile {
-            val newFileRef = AtomicReference<VirtualFile>()
-            WriteCommandAction.runWriteCommandAction(project) {
-                try {
-                    val newFileName = file.nameWithoutExtension + "." + language.extensions[0]
-                    newFileRef.set(file.parent.createChildData(file, newFileName))
-                } catch (ex: IOException) {
-                    throw RuntimeException(ex)
-                }
-            }
-            return newFileRef.get()
-        }
-
-        fun write(project: Project?, newFile: VirtualFile, content: String) {
-            WriteCommandAction.runWriteCommandAction(project) {
-                try {
-                    newFile.setBinaryContent(content.toByteArray())
-                } catch (e: IOException) {
-                    throw RuntimeException(e)
-                }
-            }
-        }
-    }
 
     class ConvertFileToLanguage(private val targetLanguage: ComputerLanguage) : BaseAction(
         targetLanguage.name
@@ -102,5 +78,33 @@ class ConvertFileTo : ActionGroup() {
             }.start()
         }
 
+    }
+
+    companion object {
+
+        fun getNewFile(project: Project?, file: VirtualFile, language: ComputerLanguage): VirtualFile {
+            val newFileRef = AtomicReference<VirtualFile>()
+            WriteCommandAction.runWriteCommandAction(project) {
+                try {
+                    val newFileName = file.nameWithoutExtension + "." + language.extensions[0]
+                    newFileRef.set(file.parent.createChildData(file, newFileName))
+                } catch (ex: IOException) {
+                    throw RuntimeException(ex)
+                }
+            }
+            return newFileRef.get()
+        }
+
+        fun write(project: Project?, newFile: VirtualFile, content: String) {
+            WriteCommandAction.runWriteCommandAction(project) {
+                try {
+                    newFile.setBinaryContent(content.toByteArray())
+                } catch (e: IOException) {
+                    throw RuntimeException(e)
+                }
+            }
+        }
+
+        private val log = LoggerFactory.getLogger(ConvertFileTo::class.java)
     }
 }

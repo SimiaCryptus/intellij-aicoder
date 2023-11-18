@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.slf4j.LoggerFactory
 import java.io.File
 
 abstract class FileContextAction<T : Any>(
@@ -74,6 +75,10 @@ abstract class FileContextAction<T : Any>(
         if(isDevAction && !AppSettingsState.instance.devActions) return false
         val virtualFile = UITools.getSelectedFile(event) ?: UITools.getSelectedFolder(event) ?: return false
         return if (virtualFile.isDirectory) supportsFolders else supportsFiles
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(FileContextAction::class.java)
     }
 
 }

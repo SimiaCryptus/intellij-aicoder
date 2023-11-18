@@ -8,6 +8,7 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.util.*
 
@@ -36,4 +37,7 @@ class CodeChatAction : BaseAction() {
         return !UITools.isSanctioned()
     }
 
+    companion object {
+        private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
+    }
 }

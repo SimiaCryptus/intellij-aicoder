@@ -176,7 +176,7 @@ class ActionSettingsRegistry {
 
     companion object {
 
-        val log = org.slf4j.LoggerFactory.getLogger(ActionSettingsRegistry::class.java)
+        private val log = org.slf4j.LoggerFactory.getLogger(ActionSettingsRegistry::class.java)
 
         val actionCache = HashMap<String, AnAction>()
         private fun load(actionPackage: String, actionName: String, language: String) =

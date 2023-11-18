@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.diagnostic.Logger
 import com.simiacryptus.util.audio.AudioRecorder
 import com.simiacryptus.util.audio.LookbackLoudnessWindowBuffer
+import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Executors
@@ -122,7 +122,7 @@ class DictationAction : BaseAction() {
     }
 
     companion object {
-        val log = Logger.getInstance(DictationAction::class.java)
+        private val log = LoggerFactory.getLogger(DictationAction::class.java)
 
         private val pool = Executors.newFixedThreadPool(1)
 
