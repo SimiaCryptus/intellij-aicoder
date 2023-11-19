@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [1.2.22]
+
+### Improved
+
+- Code Chat UI
+- Pruned experimental/deprecated actions
+- Various fixes
+
 ## [1.2.21]
 
 ### Improved
