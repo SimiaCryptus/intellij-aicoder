@@ -150,7 +150,6 @@ abstract class SelectionAction<T : Any>(
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
-        if (UITools.isSanctioned()) return false
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
         if (requiresSelection) {
             if (editor.caretModel.primaryCaret.selectedText.isNullOrEmpty()) {

@@ -1,7 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.StatusBar
@@ -103,10 +102,10 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun isAvailable(project: Project): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 }

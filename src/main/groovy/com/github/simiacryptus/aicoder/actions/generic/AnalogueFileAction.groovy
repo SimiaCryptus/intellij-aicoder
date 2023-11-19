@@ -15,6 +15,11 @@ import java.nio.file.Path
 
 class AnalogueFileAction extends FileContextAction<Settings> {
 
+    AnalogueFileAction() {
+        super(true, false)
+    }
+
+
     private static class ProjectFile {
         public String path = ""
         public String code = ""

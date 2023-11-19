@@ -1,6 +1,5 @@
 ﻿package com.github.simiacryptus.aicoder.ui
 
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.SelectionEvent
@@ -16,9 +15,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.simiacryptus.openai.GPT4Tokenizer
 import kotlinx.coroutines.CoroutineScope
 import java.awt.event.MouseEvent
-import java.util.ArrayDeque
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicBoolean
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
     companion object {
@@ -125,10 +122,10 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun isAvailable(project: Project): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 }

@@ -11,7 +11,7 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
     val actionSettings: MutableMap<String, ActionSettings> = HashMap()
-    private val version = 2.0002
+    private val version = 2.0004
 
     fun edit(superChildren: Array<out AnAction>): Array<AnAction> {
         val children = superChildren.toList().toMutableList()
@@ -35,7 +35,7 @@ class ActionSettingsRegistry {
                     ) {
                         actionConfig.file.writeText(code)
                         actionConfig.version = version
-                    } else if (!actionConfig.isDynamic && (actionConfig.version ?: 0.0) < version) {
+                    } else if (!(actionConfig.isDynamic || (actionConfig.version ?: 0.0) >= version)) {
                         val canLoad = try {
                             ActionSettingsRegistry::class.java.classLoader.loadClass(actionConfig.id)
                             true

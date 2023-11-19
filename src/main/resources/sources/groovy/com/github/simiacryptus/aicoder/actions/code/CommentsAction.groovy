@@ -8,6 +8,7 @@ import com.simiacryptus.openai.proxy.ChatProxy
 import org.jetbrains.annotations.Nullable
 
 class CommentsAction extends SelectionAction<String> {
+
     @Override
     String getConfig(@Nullable Project project) {
         return ""

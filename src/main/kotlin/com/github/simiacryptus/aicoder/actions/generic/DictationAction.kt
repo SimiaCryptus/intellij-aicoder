@@ -113,7 +113,6 @@ class DictationAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
         return try {
             null != targetDataLine.get(50, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {

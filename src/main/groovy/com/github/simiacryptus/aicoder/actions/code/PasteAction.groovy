@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable
 
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.Transferable
 
 class PasteAction extends SelectionAction<String> {
     PasteAction() {
@@ -58,7 +57,6 @@ class PasteAction extends SelectionAction<String> {
     @Override
     boolean isEnabled(AnActionEvent event) {
         if (getClipboard() == null) return false
-        if (UITools.isSanctioned()) return false
         return super.isEnabled(event)
     }
 

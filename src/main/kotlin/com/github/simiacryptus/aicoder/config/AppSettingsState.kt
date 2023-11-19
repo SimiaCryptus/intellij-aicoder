@@ -16,9 +16,9 @@ class SimpleEnvelope(var value: String? = null)
 
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 class AppSettingsState : PersistentStateComponent<SimpleEnvelope> {
-    val listeningPort: Int = 8081
-    val listeningEndpoint: String = "localhost"
-    val modalTasks: Boolean = false
+    var listeningPort: Int = 8081
+    var listeningEndpoint: String = "localhost"
+    var modalTasks: Boolean = false
     var suppressErrors: Boolean = false
     var apiLog: Boolean = false
     var apiBase = "https://api.openai.com/v1"

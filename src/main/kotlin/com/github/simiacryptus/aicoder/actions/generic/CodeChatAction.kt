@@ -1,11 +1,10 @@
-﻿@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
-
-package com.github.simiacryptus.aicoder.actions.dev
+﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.skyenet.chat.CodeChatServer
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import org.slf4j.LoggerFactory
@@ -22,7 +21,7 @@ class CodeChatAction : BaseAction() {
         val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
         val server = AppServer.getServer(e.project)
         val uuid = UUID.randomUUID().toString()
-        server.addApp("/$uuid", CodeChatServer(e.project!!, language, selectedText, api = api))
+        server.addApp("/$uuid", CodeChatServer(language, selectedText, api = api, model = AppSettingsState.instance.defaultChatModel()))
         Thread {
             Thread.sleep(500)
             try {
@@ -34,7 +33,7 @@ class CodeChatAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 
     companion object {

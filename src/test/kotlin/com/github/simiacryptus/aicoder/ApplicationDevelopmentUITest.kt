@@ -132,13 +132,13 @@ class ApplicationDevelopmentUITest {
                                 
                                 """.trimIndent()
             )
-            click("//div[@class='EditorComponentImpl']")
+            click("""//div[@class="EditorComponentImpl"]""")
             keyboard.selectAll()
             keyboard.key(KeyEvent.VK_DELETE)
             enterLines(seedPrompt)
 
             for (line in description) {
-                click("//div[@class='EditorComponentImpl']")
+                click("""//div[@class="EditorComponentImpl"]""")
                 newEndOfLine()
                 enterLines("// $line")
                 writeImage(
@@ -164,43 +164,6 @@ class ApplicationDevelopmentUITest {
             out.println(FileUtils.readFileToString(File(testProjectPath, "src/$name.$language"), "UTF-8"))
             out.println("```")
 
-
-            //                out.println(
-            //                    """
-            //
-            //                    ## Execution
-            //
-            //                    This code can be executed by pressing the "Run" button in the top right corner of the IDE.
-            //                    What could possibly go wrong?
-            //
-            //                    """.trimIndent()
-            //                )
-            //                keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_F10) // Run
-            //                awaitRunCompletion()
-            //                out.println(
-            //                    """
-            //
-            //                    ```""".trimIndent()
-            //                )
-            //                out.println(componentText("//div[contains(@accessiblename.key, 'editor.accessible.name')]"))
-            //                out.println(
-            //                    """
-            //                    ```
-            //                    """.trimIndent()
-            //                )
-            //                writeImage(
-            //                    screenshot("//div[@class='IdeRootPane']"),
-            //                    outputDir,
-            //                    name, "${reportPrefix}result", out
-            //                )
-            //                // Close run tab
-            //                sleep(100)
-            //                clickr("//div[@class='ContentTabLabel']")
-            //                sleep(100)
-            //                click("//div[contains(@text.key, 'action.CloseContent.text')]")
-            //                sleep(100)
-
-
             out.println(
                 """
                                 
@@ -223,7 +186,7 @@ class ApplicationDevelopmentUITest {
             awaitBackgroundProgress()
             sleep(1000)
             writeImage(
-                screenshot("//div[@class='JDialog']"),
+                screenshot("""//div[@class="JDialog"]"""),
                 outputDir,
                 name,
                 "${reportPrefix}Rename_Variables_Dialog",
@@ -250,7 +213,7 @@ class ApplicationDevelopmentUITest {
             awaitBackgroundProgress()
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
             writeImage(
-                screenshot("//div[@class='IdeRootPane']"),
+                screenshot("""//div[@class="IdeRootPane"]"""),
                 outputDir,
                 name,
                 "${reportPrefix}Add_Doc_Comments2",
@@ -274,10 +237,10 @@ class ApplicationDevelopmentUITest {
                 outputDir,
                 name, "${reportPrefix}Ask_Q", out
             )
-            click("//div[@class='MultiplexingTextField']")
+            click("""//div[@class="MultiplexingTextField"]""")
             keyboard.enterText(question)
             writeImage(
-                screenshot("//div[@class='JDialog']"),
+                screenshot("""//div[@class="JDialog"]"""),
                 outputDir,
                 name, "${reportPrefix}Ask_Q2", out
             )
@@ -285,7 +248,7 @@ class ApplicationDevelopmentUITest {
             awaitBackgroundProgress()
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
             writeImage(
-                screenshot("//div[@class='IdeRootPane']"),
+                screenshot("""//div[@class="IdeRootPane"]"""),
                 outputDir,
                 name, "${reportPrefix}Ask_Q3", out
             )
@@ -308,7 +271,7 @@ class ApplicationDevelopmentUITest {
             )
             awaitBackgroundProgress()
             writeImage(
-                screenshot("//div[@class='IdeRootPane']"),
+                screenshot("""//div[@class="IdeRootPane"]"""),
                 outputDir,
                 name,
                 "${reportPrefix}Add_Code_Comments2",
@@ -331,7 +294,7 @@ class ApplicationDevelopmentUITest {
 
 
             // Close editor
-            click("//div[@class='InplaceButton']")
+            click("""//div[@class="InplaceButton"]""")
         }
     }
 
