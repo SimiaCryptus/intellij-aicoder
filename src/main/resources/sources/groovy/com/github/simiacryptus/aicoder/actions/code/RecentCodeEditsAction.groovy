@@ -35,7 +35,6 @@ class RecentCodeEditsAction extends ActionGroup {
     }
 
     static boolean isEnabled(AnActionEvent e) {
-        if (UITools.isSanctioned()) return false
         if (!UITools.hasSelection(e)) return false
         def computerLanguage = ComputerLanguage.getComputerLanguage(e)
         return computerLanguage != ComputerLanguage.Text

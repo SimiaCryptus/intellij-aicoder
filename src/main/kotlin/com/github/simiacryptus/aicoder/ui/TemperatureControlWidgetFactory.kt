@@ -1,7 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
@@ -28,7 +27,7 @@ import javax.swing.event.ChangeListener
 
 class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
     companion object {
-        val log = org.slf4j.LoggerFactory.getLogger(TemperatureControlWidgetFactory::class.java)
+        private val log = org.slf4j.LoggerFactory.getLogger(TemperatureControlWidgetFactory::class.java)
         val pool = Executors.newCachedThreadPool()
     }
 
@@ -72,28 +71,25 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
 
                     val tempPanel = JPanel()
                     tempPanel.setLayout(VerticalLayout(0))
-                    //tempPanel.setBorder(BorderFactory.createTitledBorder("Temperature"))
                     tempPanel.add(temperatureSlider)
                     tabbedPane.addTab("Temperature", tempPanel)
 
                     val feedbackPanel = JPanel()
                     feedbackPanel.setLayout(VerticalLayout(5))
-                    //feedbackPanel.setBorder(BorderFactory.createTitledBorder("Feedback"))
-                    if (!UITools.isSanctioned()) {
-                        feedbackPanel.add(
-                            link(
-                                JBLabel("<html><a href=''>Problem? Request help...</a></html>"),
-                                URI("https://github.com/SimiaCryptus/intellij-aicoder/issues")
-                            )
+
+                    feedbackPanel.add(
+                        link(
+                            JBLabel("<html><a href=''>Problem? Request help...</a></html>"),
+                            URI("https://github.com/SimiaCryptus/intellij-aicoder/issues")
                         )
-                        feedbackPanel.add(
-                            link(
-                                JBLabel("<html><a href=''>Love It? Leave us a review!</a></html>"),
-                                URI("https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant/reviews")
-                            )
+                    )
+                    feedbackPanel.add(
+                        link(
+                            JBLabel("<html><a href=''>Love It? Leave us a review!</a></html>"),
+                            URI("https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant/reviews")
                         )
-                        tabbedPane.addTab("Feedback", feedbackPanel)
-                    }
+                    )
+                    tabbedPane.addTab("Feedback", feedbackPanel)
 
                     modePanel.add(tabbedPane)
 
@@ -118,7 +114,10 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
         }
 
         override fun getIcon(): Icon? =
-            IconLoader.findIcon(javaClass.classLoader.getResource("./META-INF/toolbarIcon.svg"))
+            IconLoader.findIcon(
+                url = javaClass.classLoader.getResource("./META-INF/toolbarIcon.svg"),
+                storeToCache = true
+            )
 
         override fun getPresentation(): StatusBarWidget.WidgetPresentation {
             return this
@@ -134,24 +133,18 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
-        if (UITools.isSanctioned()) return object : StatusBarWidget {
-            override fun ID(): String = ""
-        }
         return TemperatureControlWidget()
     }
 
     override fun createWidget(project: Project): StatusBarWidget {
-        if (UITools.isSanctioned()) return object : StatusBarWidget {
-            override fun ID(): String = ""
-        }
         return TemperatureControlWidget()
     }
 
     override fun isAvailable(project: Project): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 }

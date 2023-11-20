@@ -39,7 +39,7 @@ class UITestUtil {
          *  @param name The name of the file to create.
          */
         fun newFile(name: String) {
-            click("//div[@class='ProjectViewTree']")
+            click("""//div[@class="ProjectViewTree"]""")
             keyboard.key(KeyEvent.VK_RIGHT)
             keyboard.enterText("src")
             keyboard.key(KeyEvent.VK_CONTEXT_MENU)
@@ -48,7 +48,7 @@ class UITestUtil {
                 "//div[contains(@text.key, 'group.WeighingNewGroup.text')]"
             )
             sleep(500)
-            click("//div[@class='HeavyWeightWindow'][.//div[@class='MyMenu']]//div[@class='HeavyWeightWindow']//div[contains(@text.key, 'group.FileMenu.text')]")
+            click("""//div[@class="HeavyWeightWindow"][.//div[@class="MyMenu"]]//div[@class="HeavyWeightWindow"]//div[contains(@text.key, 'group.FileMenu.text')]""")
             keyboard.enterText(name)
             keyboard.enter()
             sleep(500)
@@ -57,7 +57,7 @@ class UITestUtil {
         private fun isStarted(): Boolean =
             robot.findAll(
                 ComponentFixture::class.java,
-                byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")
+                byXpath("""//div[contains(@accessiblename.key, 'editor.accessible.name')]""")
             ).isNotEmpty()
 
         private fun isStillRunning(): Boolean {
@@ -129,7 +129,7 @@ class UITestUtil {
         }
 
         private fun implementCode(prompt: String): BufferedImage {
-            click("//div[@class='EditorComponentImpl']")
+            click("""//div[@class="EditorComponentImpl"]""")
             keyboard.selectAll()
             keyboard.key(KeyEvent.VK_DELETE)
             enterLines(prompt)
@@ -146,11 +146,11 @@ class UITestUtil {
             val point1 = aiCoderMenuItem.locationOnScreen
             sleep(100)
             val submenu =
-                getComponent("//div[@class='HeavyWeightWindow'][.//div[@class='MyMenu']]//div[@class='HeavyWeightWindow']//div[contains(@text, '$menuText')]")
+                getComponent("""//div[@class="HeavyWeightWindow"][.//div[@class="MyMenu"]]//div[@class="HeavyWeightWindow"]//div[contains(@text, '$menuText')]""")
             val point2 = submenu.locationOnScreen
             submenu.runJs("robot.moveMouse(new Point(${point2.x}, ${point1.y}))")
             submenu.runJs("robot.moveMouse(component)")
-            val image = screenshot("//div[@class='IdeRootPane']")
+            val image = screenshot("""//div[@class="IdeRootPane"]""")
             submenu.click()
             return image
         }
@@ -212,7 +212,7 @@ class UITestUtil {
         private fun isBackgroundProgressOpen(): Boolean {
             val progressPanel = robot.findAll(
                 ComponentFixture::class.java,
-                byXpath("//div[@class='InlineProgressPanel']")
+                byXpath("""//div[@class="InlineProgressPanel"]""")
             )
             if (progressPanel.isEmpty()) return false
             val componentFixture = progressPanel.get(0)
@@ -316,10 +316,10 @@ class UITestUtil {
                         ```
                         """.trimIndent()
                 )
-                writeImage(screenshot("//div[@class='IdeRootPane']"), reportDir, name, "${reportPrefix}result", report)
+                writeImage(screenshot("""//div[@class="IdeRootPane"]"""), reportDir, name, "${reportPrefix}result", report)
                 // Close run tab
                 sleep(100)
-                clickr("//div[@class='ContentTabLabel']")
+                clickr("""//div[@class="ContentTabLabel"]""")
                 sleep(100)
                 click("//div[contains(@text.key, 'action.CloseContent.text')]")
                 sleep(100)
@@ -341,7 +341,7 @@ class UITestUtil {
                 awaitBackgroundProgress()
                 sleep(1000)
                 writeImage(
-                    screenshot("//div[@class='JDialog']"),
+                    screenshot("""//div[@class="JDialog"]"""),
                     reportDir,
                     name,
                     "${reportPrefix}Rename_Variables_Dialog",
@@ -364,7 +364,7 @@ class UITestUtil {
                 awaitBackgroundProgress()
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
                 writeImage(
-                    screenshot("//div[@class='IdeRootPane']"),
+                    screenshot("""//div[@class="IdeRootPane"]"""),
                     reportDir,
                     name,
                     "${reportPrefix}Add_Doc_Comments2",
@@ -384,13 +384,13 @@ class UITestUtil {
                 selectText(getEditor(), selector)
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_W) // Select function
                 writeImage(menuAction("Ask a question"), reportDir, name, "${reportPrefix}Ask_Q", report)
-                click("//div[@class='MultiplexingTextField']")
+                click("""//div[@class="MultiplexingTextField"]""")
                 keyboard.enterText("What is the big-O runtime and why?")
-                writeImage(screenshot("//div[@class='JDialog']"), reportDir, name, "${reportPrefix}Ask_Q2", report)
+                writeImage(screenshot("""//div[@class="JDialog"]"""), reportDir, name, "${reportPrefix}Ask_Q2", report)
                 click("//div[@text.key='button.ok']")
                 awaitBackgroundProgress()
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
-                writeImage(screenshot("//div[@class='IdeRootPane']"), reportDir, name, "${reportPrefix}Ask_Q3", report)
+                writeImage(screenshot("""//div[@class="IdeRootPane"]"""), reportDir, name, "${reportPrefix}Ask_Q3", report)
 
                 report.println(
                     """
@@ -406,7 +406,7 @@ class UITestUtil {
                 writeImage(menuAction("Code Comments"), reportDir, name, "${reportPrefix}Add_Code_Comments", report)
                 awaitBackgroundProgress()
                 writeImage(
-                    screenshot("//div[@class='IdeRootPane']"),
+                    screenshot("""//div[@class="IdeRootPane"]"""),
                     reportDir,
                     name,
                     "${reportPrefix}Add_Code_Comments2",
@@ -439,11 +439,11 @@ class UITestUtil {
                         
                         """.trimIndent()
                 )
-                clickText(getComponent("//div[@class='ProjectViewTree']"), name)
+                clickText(getComponent("""//div[@class="ProjectViewTree"]"""), name)
                 menuAction("Convert To")
                 keyboard.hotKey(KeyEvent.VK_DOWN)
                 writeImage(
-                    screenshot("//div[@class='IdeRootPane']"),
+                    screenshot("""//div[@class="IdeRootPane"]"""),
                     reportDir,
                     name,
                     "${reportPrefix}Convert_to_js",
@@ -474,12 +474,12 @@ class UITestUtil {
                         
                         """.trimIndent()
                 )
-                clickText(getComponent("//div[@class='ProjectViewTree']"), name)
+                clickText(getComponent("""//div[@class="ProjectViewTree"]"""), name)
                 menuAction("Convert To")
                 keyboard.hotKey(KeyEvent.VK_DOWN)
                 keyboard.hotKey(KeyEvent.VK_DOWN)
                 writeImage(
-                    screenshot("//div[@class='IdeRootPane']"),
+                    screenshot("""//div[@class="IdeRootPane"]"""),
                     reportDir,
                     name,
                     "${reportPrefix}Convert_to_scala",
@@ -501,7 +501,7 @@ class UITestUtil {
                 )
 
                 // Close editor
-                click("//div[@class='InplaceButton']")
+                click("""//div[@class="InplaceButton"]""")
             }
         }
 
@@ -527,7 +527,7 @@ class UITestUtil {
             )
             newFile("$name.txt")
 
-            click("//div[@class='EditorComponentImpl']")
+            click("""//div[@class="EditorComponentImpl"]""")
             keyboard.selectAll()
             keyboard.key(KeyEvent.VK_DELETE)
             enterLines(directive)
@@ -562,15 +562,15 @@ class UITestUtil {
 
             """.trimIndent()
             )
-            click("//div[@class='EditorComponentImpl']")
+            click("""//div[@class="EditorComponentImpl"]""")
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A) // Select all
             writeImage(menuAction("Edit Code"), file, name, "${reportPrefix}edit_text", report)
-            click("//div[@class='MultiplexingTextField']")
+            click("""//div[@class="MultiplexingTextField"]""")
             keyboard.enterText("Translate into a series of haikus")
-            writeImage(screenshot("//div[@class='JDialog']"), file, name, "${reportPrefix}edit_text_2", report)
+            writeImage(screenshot("""//div[@class="JDialog"]"""), file, name, "${reportPrefix}edit_text_2", report)
             keyboard.enter()
             awaitBackgroundProgress()
-            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result1", report)
+            writeImage(screenshot("""//div[@class="IdeRootPane"]"""), file, name, "${reportPrefix}result1", report)
 
 
             report.println(
@@ -591,11 +591,11 @@ class UITestUtil {
             writeImage(menuAction("Replace Options"), file, name, "${reportPrefix}replace_options", report)
             awaitBackgroundProgress()
             sleep(500)
-            writeImage(screenshot("//div[@class='JDialog']"), file, name, "${reportPrefix}replace_options_2", report)
+            writeImage(screenshot("""//div[@class="JDialog"]"""), file, name, "${reportPrefix}replace_options_2", report)
             sleep(500)
 
             keyboard.enter()
-            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result2", report)
+            writeImage(screenshot("""//div[@class="IdeRootPane"]"""), file, name, "${reportPrefix}result2", report)
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
             documentText = FileUtils.readFileToString(File(testProjectPath, "src/$name.txt"), "UTF-8")
@@ -617,10 +617,10 @@ class UITestUtil {
 
             // Close editor
             sleep(1000)
-            click("//div[@class='InplaceButton']")
+            click("""//div[@class="InplaceButton"]""")
         }
 
-        fun getEditor() = getComponent("//div[@class='EditorComponentImpl']")
+        fun getEditor() = getComponent("""//div[@class="EditorComponentImpl"]""")
 
         fun documentMarkdownListAppend(
             name: String,
@@ -644,7 +644,7 @@ class UITestUtil {
             )
             newFile("$name.md")
 
-            click("//div[@class='EditorComponentImpl']")
+            click("""//div[@class="EditorComponentImpl"]""")
             keyboard.selectAll()
             keyboard.key(KeyEvent.VK_DELETE)
             enterLines(directive)
@@ -675,10 +675,10 @@ class UITestUtil {
             )
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_END) // End of document
 
-            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result", out)
+            writeImage(screenshot("""//div[@class="IdeRootPane"]"""), file, name, "${reportPrefix}result", out)
             writeImage(menuAction("Add List Items"), file, name, "${reportPrefix}add_list_items", out)
             awaitBackgroundProgress()
-            writeImage(screenshot("//div[@class='IdeRootPane']"), file, name, "${reportPrefix}result2", out)
+            writeImage(screenshot("""//div[@class="IdeRootPane"]"""), file, name, "${reportPrefix}result2", out)
 
             keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_S) // Save
             out.println(
@@ -697,7 +697,7 @@ class UITestUtil {
 
             // Close editor
             sleep(1000)
-            click("//div[@class='InplaceButton']")
+            click("""//div[@class="InplaceButton"]""")
         }
 
 

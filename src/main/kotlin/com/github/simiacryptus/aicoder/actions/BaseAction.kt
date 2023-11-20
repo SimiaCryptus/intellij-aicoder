@@ -14,7 +14,7 @@ abstract class BaseAction(
     icon: Icon? = null,
 ) : AnAction(name, description, icon) {
 
-    val log by lazy { LoggerFactory.getLogger(javaClass) }
+    private val log by lazy { LoggerFactory.getLogger(javaClass) }
     //override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     val api: OpenAIClient

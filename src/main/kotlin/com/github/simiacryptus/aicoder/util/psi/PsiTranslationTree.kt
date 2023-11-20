@@ -5,12 +5,12 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools.filterStringResult
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.simiacryptus.openai.proxy.ChatProxy
+import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
@@ -223,7 +223,7 @@ class PsiTranslationTree(
 
     companion object {
 
-        val log = Logger.getInstance(PsiTranslationTree::class.java)
+        private val log = LoggerFactory.getLogger(PsiTranslationTree::class.java)
 
         fun parseFile(
             psiFile: PsiFile,

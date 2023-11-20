@@ -3,8 +3,7 @@
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.MarkdownProcessor
-import com.simiacryptus.openai.Models
-import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.models.ChatModels
 import com.simiacryptus.openai.OpenAIClientBase
 import com.simiacryptus.util.JsonUtil
 import org.junit.jupiter.api.Assertions
@@ -17,7 +16,7 @@ open class ActionTestBase {
         fun <T:Any>testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
             AppSettingsState.instance.apiKey = OpenAIClientBase.keyTxt
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.modelName = Models.GPT35Turbo.name
+            AppSettingsState.instance.modelName = ChatModels.GPT35Turbo.name
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""
@@ -65,7 +64,7 @@ open class ActionTestBase {
         ) {
             AppSettingsState.instance.apiKey = OpenAIClientBase.keyTxt
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.modelName = Models.GPT35Turbo.name
+            AppSettingsState.instance.modelName = ChatModels.GPT35Turbo.name
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""

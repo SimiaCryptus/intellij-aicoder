@@ -18,7 +18,7 @@ class AppServer(
     project: Project?
 ) {
 
-    val log by lazy { LoggerFactory.getLogger(javaClass) }
+    private val log by lazy { LoggerFactory.getLogger(javaClass) }
 
     private var domainName: String = "http://$localName:$port"
 

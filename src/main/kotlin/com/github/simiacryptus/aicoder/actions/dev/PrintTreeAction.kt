@@ -2,10 +2,9 @@
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * The PrintTreeAction class is an IntelliJ action that enables developers to print the tree structure of a PsiFile.
@@ -22,11 +21,10 @@ class PrintTreeAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.isSanctioned()) return false
         return AppSettingsState.instance.devActions
     }
 
     companion object {
-        val log = Logger.getInstance(PrintTreeAction::class.java)
+        private val log = LoggerFactory.getLogger(PrintTreeAction::class.java)
     }
 }

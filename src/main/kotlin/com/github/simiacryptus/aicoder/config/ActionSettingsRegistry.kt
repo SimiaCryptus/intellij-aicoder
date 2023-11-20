@@ -11,7 +11,7 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
     val actionSettings: MutableMap<String, ActionSettings> = HashMap()
-    private val version = 2.0002
+    private val version = 2.0004
 
     fun edit(superChildren: Array<out AnAction>): Array<AnAction> {
         val children = superChildren.toList().toMutableList()
@@ -35,14 +35,14 @@ class ActionSettingsRegistry {
                     ) {
                         actionConfig.file.writeText(code)
                         actionConfig.version = version
-                    } else if (!actionConfig.isDynamic && (actionConfig.version ?: 0.0) < version) {
+                    } else if (!(actionConfig.isDynamic || (actionConfig.version ?: 0.0) >= version)) {
                         val canLoad = try {
                             ActionSettingsRegistry::class.java.classLoader.loadClass(actionConfig.id)
                             true
                         } catch (e: Throwable) {
                             false
                         }
-                        if(canLoad) {
+                        if (canLoad) {
                             actionConfig.file.writeText(code)
                             actionConfig.version = version
                         } else {
@@ -75,7 +75,12 @@ class ActionSettingsRegistry {
         return children.toTypedArray()
     }
 
-    class DynamicActionException(cause: Throwable, private val msg: String, val file: File, val actionSetting: ActionSettings) : Exception(msg, cause)
+    class DynamicActionException(
+        cause: Throwable,
+        msg: String,
+        val file: File,
+        val actionSetting: ActionSettings
+    ) : Exception(msg, cause)
 
     data class ActionSettings(
         val id: String, // Static property
@@ -171,7 +176,7 @@ class ActionSettingsRegistry {
 
     companion object {
 
-        val log = org.slf4j.LoggerFactory.getLogger(ActionSettingsRegistry::class.java)
+        private val log = org.slf4j.LoggerFactory.getLogger(ActionSettingsRegistry::class.java)
 
         val actionCache = HashMap<String, AnAction>()
         private fun load(actionPackage: String, actionName: String, language: String) =

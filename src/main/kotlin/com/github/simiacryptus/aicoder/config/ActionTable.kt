@@ -1,7 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.config
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
@@ -12,6 +11,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.table.JBTable
 import org.jdesktop.swingx.JXTable
+import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.util.*
@@ -44,9 +44,6 @@ class ActionTable(
         }
     }
 
-    companion object {
-        private val log = Logger.getInstance(ActionTable::class.java)
-    }
 
     private val buttonPanel = JPanel()
     val columnNames = arrayOf("Enabled", "Display Text", "ID")
@@ -217,5 +214,8 @@ class ActionTable(
         buttonPanel.add(editButton)
         buttonPanel.add(removeButton)
         add(buttonPanel, BorderLayout.SOUTH)
+    }
+    companion object {
+        private val log = LoggerFactory.getLogger(ActionTable::class.java)
     }
 }

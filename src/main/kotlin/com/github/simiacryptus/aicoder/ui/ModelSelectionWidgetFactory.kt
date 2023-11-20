@@ -1,7 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.StatusBar
@@ -10,8 +9,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
-import com.simiacryptus.openai.Models
-import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.openai.models.ChatModels
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.JList
 import javax.swing.ListCellRenderer
@@ -19,7 +17,7 @@ import javax.swing.ListModel
 
 class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     companion object {
-        val log = org.slf4j.LoggerFactory.getLogger(ModelSelectionWidgetFactory::class.java)
+        private val log = org.slf4j.LoggerFactory.getLogger(ModelSelectionWidgetFactory::class.java)
     }
 
     class ModelSelectionWidget : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
@@ -27,9 +25,9 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         private var statusBar: StatusBar? = null
         private var activeModel: String = AppSettingsState.instance.defaultChatModel().modelName
         val models = listOf(
-            Models.GPT4Turbo,
-            Models.GPT4,
-            Models.GPT35Turbo,
+            ChatModels.GPT4Turbo,
+            ChatModels.GPT4,
+            ChatModels.GPT35Turbo,
         )
 
         override fun ID(): String {
@@ -104,10 +102,10 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun isAvailable(project: Project): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-        return !UITools.isSanctioned()
+        return true
     }
 }

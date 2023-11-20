@@ -15,6 +15,11 @@ import java.nio.file.Path
 
 class AnalogueFileAction extends FileContextAction<Settings> {
 
+    AnalogueFileAction() {
+        super(true, false)
+    }
+
+
     private static class ProjectFile {
         public String path = ""
         public String code = ""
@@ -85,7 +90,7 @@ class AnalogueFileAction extends FileContextAction<Settings> {
         chatRequest.temperature = AppSettingsState.instance.temperature
         chatRequest.messages = [
                 new ChatMessage(
-                        ChatMessage.Role.system, """
+                        Role.system, """
                             You will combine natural language instructions with a user provided code example to create a new file.
                             Provide a new filename and the code to be written to the file.
                             Paths should be relative to the project root and should not exist.
@@ -94,7 +99,7 @@ class AnalogueFileAction extends FileContextAction<Settings> {
                             """.stripIndent(), null
                 ),
                 new ChatMessage(
-                        ChatMessage.Role.user, """
+                        Role.user, """
                             Create a new file based on the following directive: $directive
                             
                             The file should be based on `${baseFile.path}` which contains the following code:

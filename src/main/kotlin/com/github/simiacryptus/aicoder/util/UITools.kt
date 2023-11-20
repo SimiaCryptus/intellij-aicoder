@@ -30,8 +30,7 @@ import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.APIClientBase
-import com.simiacryptus.openai.ModerationException
+import com.simiacryptus.openai.exceptions.ModerationException
 import com.simiacryptus.openai.OpenAIClient
 import com.simiacryptus.util.StringUtil
 import groovy.lang.GroovyRuntimeException
@@ -46,15 +45,12 @@ import java.beans.PropertyChangeEvent
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
 import java.net.URI
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
-import java.util.stream.Collectors
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.max
@@ -69,9 +65,6 @@ import kotlin.reflect.jvm.javaType
 object UITools {
     private val log = LoggerFactory.getLogger(UITools::class.java)
     val retry = WeakHashMap<Document, Runnable>()
-
-    @JvmStatic
-    fun isSanctioned() = APIClientBase.isSanctioned()
 
     @JvmStatic
     fun redoableTask(
@@ -660,7 +653,7 @@ object UITools {
     }
 
     class ModalTask<T>(
-        project : Project, title : String, canBeCancelled : Boolean, val task : (ProgressIndicator) -> T
+        project: Project, title: String, canBeCancelled: Boolean, val task: (ProgressIndicator) -> T
     ) : Task.WithResult<T, Exception>(project, title, canBeCancelled), Supplier<T> {
         private val result = AtomicReference<T>()
         private val isError = AtomicBoolean(false)
@@ -702,7 +695,7 @@ object UITools {
     }
 
     class BgTask<T>(
-        project : Project, title : String, canBeCancelled : Boolean, val task : (ProgressIndicator) -> T
+        project: Project, title: String, canBeCancelled: Boolean, val task: (ProgressIndicator) -> T
     ) : Task.Backgroundable(project, title, canBeCancelled, DEAF), Supplier<T> {
 
         private val result = AtomicReference<T>()
@@ -755,7 +748,7 @@ object UITools {
             task(AbstractProgressIndicatorBase())
         } else {
             checkApiKey()
-            val t = if(AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
+            val t = if (AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
             else BgTask(project, title ?: "", canBeCancelled, task)
             ProgressManager.getInstance().run(t)
             t.get()
@@ -841,7 +834,11 @@ object UITools {
                     "This request was rejected by OpenAI Moderation",
                     JOptionPane.WARNING_MESSAGE
                 )
-            } else if (e.matches { java.lang.InterruptedException::class.java.isAssignableFrom(it.javaClass) && it.message?.contains("sleep interrupted") == true }) {
+            } else if (e.matches {
+                    java.lang.InterruptedException::class.java.isAssignableFrom(it.javaClass) && it.message?.contains(
+                        "sleep interrupted"
+                    ) == true
+                }) {
                 JOptionPane.showMessageDialog(
                     null,
                     "This request was cancelled by the user",
@@ -1071,7 +1068,8 @@ object UITools {
     }
 
     // Wrap JOptionPane.showInputDialog
-    @JvmStatic fun showInputDialog(
+    @JvmStatic
+    fun showInputDialog(
         parentComponent: Component?,
         message: Any?,
         title: String?,

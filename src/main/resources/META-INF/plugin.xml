@@ -32,7 +32,7 @@
                text="_AI Coder"
                icon="AllIcons.Actions.Lightning"
                description="AI coding assistant tools">
-            <add-to-group group-id="EditorPopupMenu" anchor="first" />
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </group>
         <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu"
                class="com.github.simiacryptus.aicoder.ui.ProjectMenu"
@@ -42,17 +42,6 @@
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
         </group>
-
-        <action class="com.github.simiacryptus.aicoder.actions.dev.PrintTreeAction"
-                text="Print PSI Tree"
-                description="Print PSI Tree">
-            <!--DOC
-        The `Print PSI Tree` action allows you to print the PSI tree for the current file.
-        This is useful for debugging and understanding the PSI tree for a file.
-        This is a developer tool and is only visible if the `Developer Mode` setting is enabled.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
-        </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.generic.DictationAction"
                 text="Dictation"
@@ -87,8 +76,55 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.CreateFileAction"
+                text="_Create File"
+                description="Create file">
+            <!--DOC
+        The `Create File` action allows you to quickly create a new file via a user-supplied directive.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+        </action>
+
+        <action class="com.github.simiacryptus.aicoder.actions.generic.AnalogueFileAction"
+                text="_Create Analogue File"
+                description="Create analogue file">
+            <!--DOC
+        The `Create Analogue File` action allows you to quickly create a new analogue file - a file which is
+        automatically generated from the selected file using a user-supplied directive.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.RedoLast"
+                text="Re_do Last"
+                description="Redo last">
+            <!--DOC
+        The `Redo Last` action allows you to quickly redo the last action you performed.
+        This is useful for getting variations from the generative AI.
+        For example, if you generate something and want to see an alternate, you can use the `Redo Last` action to
+        quickly retry without having to start from scratch.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="D"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="D"/>
+        </action>
 
 
+
+
+        <group id="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
+               class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
+               text="Imple_ment As..."
+               description="Implement as..."
+               popup="true"
+        >
+            <!--DOC
+        The `Implement As...` action allows you to quickly implement a markdown prompt in a specific language.
+        This is useful for quickly implementing code in a specific language.
+        For example, if select "find the largest file in the current directory" you can use the `Implement As...` action
+        to quickly implement this idea in Bash.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+        </group>
         <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownListAction"
                 text="Add _List Items"
                 description="Add list items">
@@ -100,6 +136,12 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="L"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
         </action>
+
+
+
+
+
+
 
         <action class="com.github.simiacryptus.aicoder.actions.code.CustomEditAction"
                 text="_Edit Code..."
@@ -124,42 +166,36 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </group>
-
-        <action class="com.github.simiacryptus.aicoder.actions.code.GenerateProjectAction"
-                text="_Generate Project"
-                description="Generate a new software project from a description">
+        <action class="com.github.simiacryptus.aicoder.actions.generic.CodeChatAction"
+                text="Open Code Chat"
+                description="Open code chat">
             <!--DOC
-        The `Generate Project` action allows you to quickly generate a new software project from a description.
+        The `Open Code Chat` action opens a chat window in a browser, allowing the user to discuss the code with ChatGPT.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateStoryAction"
-                text="_Write a Story"
-                description="Write a story">
+        <action class="com.github.simiacryptus.aicoder.actions.code.RenameVariablesAction"
+                text="Rename _Variables"
+                description="Rename variables">
             <!--DOC
-        The `Generate Story` action allows you to quickly generate a new story!
+        The `Rename Variables` action allows you to quickly rename variables in your code.
+        An interactive dialog is provided to select any/all/none of the rename suggestions.
+        This is useful for quickly refactoring your code and making it easier to understand.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="V"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="V"/>
         </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.generic.CreateFileAction"
-                text="_Create File"
-                description="Create file">
+        <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
+                text="_Paste" description="Paste">
             <!--DOC
-        The `Create File` action allows you to quickly create a new file via a user-supplied directive.
+        The `Paste` action allows you to quickly paste code into your project.
+        This text will be translated into the current language.
+        This is useful for quickly pasting code into your project.
             -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
-        </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.generic.AnalogueFileAction"
-                text="_Create Analogue File"
-                description="Create analogue file">
-            <!--DOC
-        The `Create Analogue File` action allows you to quickly create a new analogue file - a file which is
-        automatically generated from the selected file using a user-supplied directive.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
         </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.code.InsertImplementationAction"
@@ -185,26 +221,6 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.dev.CodeChatAction"
-                text="Open Code Chat"
-                description="Open code chat">
-            <!--DOC
-        The `Open Code Chat` action opens a chat window in a browser, allowing the user to discuss the code with ChatGPT.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.QuestionAction"
-                text="Ask a _question about the code"
-                description="Ask a question about the code">
-            <!--DOC
-        The `Ask a question about the code` action allows you to quickly ask a question about the code.
-        This is useful for quickly getting help with understanding the code.
-        The question and response are prepended to the selected code.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="Q"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="Q"/>
-        </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.CommentsAction"
                 text="Add Code _Comments"
                 description="Add code comments">
@@ -216,18 +232,6 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.RenameVariablesAction"
-                text="Rename _Variables"
-                description="Rename variables">
-            <!--DOC
-        The `Rename Variables` action allows you to quickly rename variables in your code.
-        An interactive dialog is provided to select any/all/none of the rename suggestions.
-        This is useful for quickly refactoring your code and making it easier to understand.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="V"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="V"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.DocAction"
                 text="Add D_oc Comments"
@@ -242,32 +246,6 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
-
-        <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
-                text="_Paste" description="Paste">
-            <!--DOC
-        The `Paste` action allows you to quickly paste code into your project.
-        This text will be translated into the current language.
-        This is useful for quickly pasting code into your project.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.RedoLast"
-                text="Re_do Last"
-                description="Redo last">
-            <!--DOC
-        The `Redo Last` action allows you to quickly redo the last action you performed.
-        This is useful for getting variations from the generative AI.
-        For example, if you generate something and want to see an alternate, you can use the `Redo Last` action to
-        quickly retry without having to start from scratch.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="D"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="D"/>
-        </action>
-
         <action class="com.github.simiacryptus.aicoder.actions.code.ImplementStubAction"
                 text="_Implement Stub"
                 description="Implement stub">
@@ -279,35 +257,17 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
         </action>
-        <group id="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
-               class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
-               text="Imple_ment As..."
-               description="Implement as..."
-               popup="true"
-        >
+
+        <action class="com.github.simiacryptus.aicoder.actions.dev.PrintTreeAction"
+                text="Print PSI Tree"
+                description="Print PSI Tree">
             <!--DOC
-        The `Implement As...` action allows you to quickly implement a markdown prompt in a specific language.
-        This is useful for quickly implementing code in a specific language.
-        For example, if select "find the largest file in the current directory" you can use the `Implement As...` action
-        to quickly implement this idea in Bash.
+        The `Print PSI Tree` action allows you to print the PSI tree for the current file.
+        This is useful for debugging and understanding the PSI tree for a file.
+        This is a developer tool and is only visible if the `Developer Mode` setting is enabled.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
-        </group>
-        <group id="com.github.simiacryptus.aicoder.actions.dev.ConvertFileTo"
-               class="com.github.simiacryptus.aicoder.actions.dev.ConvertFileTo"
-               text="Conver_t To..."
-               description="Convert to..."
-               popup="true"
-        >
-            <!--DOC
-        The `Convert To...` action allows you to quickly convert a file to a specific language.
-        This is useful for quickly converting larger amounts of code between languages.
-        For example, if you have a Java file and want to convert it to Kotlin, you can use the `Convert To...` action to
-        quickly convert it.
-            -->
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
-        </group>
-
+        </action>
 
     </actions>
 
