@@ -114,7 +114,10 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
         }
 
         override fun getIcon(): Icon? =
-            IconLoader.findIcon(javaClass.classLoader.getResource("./META-INF/toolbarIcon.svg"))
+            IconLoader.findIcon(
+                url = javaClass.classLoader.getResource("./META-INF/toolbarIcon.svg"),
+                storeToCache = true
+            )
 
         override fun getPresentation(): StatusBarWidget.WidgetPresentation {
             return this
