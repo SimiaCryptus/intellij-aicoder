@@ -34,6 +34,7 @@ class IdeaOpenAIClient : OpenAIClient(
         super.authorize(request)
     }
 
+    @Suppress("NAME_SHADOWING")
     override fun chat(
         chatRequest: ChatRequest,
         model: OpenAITextModel
@@ -54,8 +55,7 @@ class IdeaOpenAIClient : OpenAIClient(
                     """.trimMargin().trim())
                     return response
                 }
-                return withJsonDialog(chatRequest, {
-                    val chatRequest = it
+                return withJsonDialog(chatRequest, { chatRequest ->
                     UITools.run(
                         lastEvent!!.project, "OpenAI Request", true, suppressProgress = false
                     ) {

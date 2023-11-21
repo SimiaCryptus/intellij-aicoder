@@ -84,7 +84,7 @@ class PsiTranslationTree(
         }
     }
 
-    fun translateTree(
+    private fun translateTree(
         project: Project,
         indent: CharSequence,
     ) {
@@ -94,7 +94,7 @@ class PsiTranslationTree(
         }
     }
 
-    fun getTranslatedDocument(): CharSequence = try {
+    private fun getTranslatedDocument(): CharSequence = try {
         var translated = translatedResult.toString()
         if (!stubs.isEmpty()) {
             log.warn(
