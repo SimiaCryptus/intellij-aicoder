@@ -8,7 +8,7 @@ import com.github.simiacryptus.aicoder.util.psi.PsiClassContext
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.jopenai.proxy.ChatProxy
 import kotlin.Pair
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable

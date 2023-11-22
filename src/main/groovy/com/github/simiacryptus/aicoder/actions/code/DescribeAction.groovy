@@ -5,8 +5,8 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.TextBlockFactory
 import com.intellij.openapi.project.Project
-import com.simiacryptus.openai.proxy.ChatProxy
-import com.simiacryptus.util.StringUtil
+import com.simiacryptus.jopenai.proxy.ChatProxy
+import com.simiacryptus.jopenai.util.StringUtil
 import org.jetbrains.annotations.Nullable
 
 class DescribeAction extends SelectionAction<String> {

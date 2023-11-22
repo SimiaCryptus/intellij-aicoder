@@ -1,6 +1,5 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.config.ActionTable
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -8,10 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.models.OpenAIModel
-import com.simiacryptus.openai.OpenAIClient
-import com.simiacryptus.openai.models.OpenAITextModel
-import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.jopenai.ApiModel.*
+import com.simiacryptus.jopenai.OpenAIClient
+import com.simiacryptus.jopenai.models.OpenAIModel
+import com.simiacryptus.jopenai.models.OpenAITextModel
+import com.simiacryptus.jopenai.util.JsonUtil
 import org.apache.hc.core5.http.HttpRequest
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean

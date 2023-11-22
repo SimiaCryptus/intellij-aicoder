@@ -3,9 +3,10 @@
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.MarkdownProcessor
-import com.simiacryptus.openai.models.ChatModels
-import com.simiacryptus.openai.OpenAIClientBase
-import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.jopenai.ClientUtil
+import com.simiacryptus.jopenai.models.ChatModels
+
+import com.simiacryptus.jopenai.util.JsonUtil
 import org.junit.jupiter.api.Assertions
 import java.io.File
 import java.util.*
@@ -14,7 +15,7 @@ open class ActionTestBase {
     companion object {
 
         fun <T:Any>testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
-            AppSettingsState.instance.apiKey = OpenAIClientBase.keyTxt
+            AppSettingsState.instance.apiKey = ClientUtil.keyTxt
             AppSettingsState.instance.temperature = 0.0
             AppSettingsState.instance.modelName = ChatModels.GPT35Turbo.name
             val input =
@@ -62,7 +63,7 @@ open class ActionTestBase {
             selectionAction: FileContextAction<T>,
             scriptPath: String
         ) {
-            AppSettingsState.instance.apiKey = OpenAIClientBase.keyTxt
+            AppSettingsState.instance.apiKey = ClientUtil.keyTxt
             AppSettingsState.instance.temperature = 0.0
             AppSettingsState.instance.modelName = ChatModels.GPT35Turbo.name
             val input =

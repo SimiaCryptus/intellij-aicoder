@@ -1,6 +1,5 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
-import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import java.util.*

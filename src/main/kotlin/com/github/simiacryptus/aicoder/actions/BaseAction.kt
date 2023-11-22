@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.simiacryptus.openai.OpenAIClient
+import com.simiacryptus.jopenai.OpenAIClient
 import org.slf4j.LoggerFactory
 import javax.swing.Icon
 

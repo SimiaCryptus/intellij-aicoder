@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.util;
 
-import com.simiacryptus.util.StringUtil;
+import com.simiacryptus.jopenai.util.StringUtil;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;

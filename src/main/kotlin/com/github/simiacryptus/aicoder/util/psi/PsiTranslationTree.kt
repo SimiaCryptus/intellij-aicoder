@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.jopenai.proxy.ChatProxy
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ExecutionException

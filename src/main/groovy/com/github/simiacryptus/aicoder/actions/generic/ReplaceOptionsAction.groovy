@@ -5,8 +5,8 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.simiacryptus.openai.proxy.ChatProxy
-import com.simiacryptus.util.StringUtil
+import com.simiacryptus.jopenai.proxy.ChatProxy
+import com.simiacryptus.jopenai.util.StringUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 

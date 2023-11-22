@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
-import com.simiacryptus.openai.models.ChatModels
+import com.simiacryptus.jopenai.models.ChatModels
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.JList
 import javax.swing.ListCellRenderer

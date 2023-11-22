@@ -5,8 +5,8 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
-import com.simiacryptus.openai.OpenAIClient.ChatMessage
-import com.simiacryptus.openai.OpenAIClient.ChatRequest
+import com.simiacryptus.jopenai.ApiModel.ChatMessage
+import com.simiacryptus.jopenai.ApiModel.ChatRequest
 
 import javax.swing.*
 
