@@ -15,7 +15,9 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.simiacryptus.jopenai.GPT4Tokenizer
 import kotlinx.coroutines.CoroutineScope
 import java.awt.event.MouseEvent
-import java.util.concurrent.*
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
     companion object {

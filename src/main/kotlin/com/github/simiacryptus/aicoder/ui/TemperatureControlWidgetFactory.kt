@@ -20,7 +20,10 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.net.URI
 import java.util.concurrent.Executors
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JPanel
+import javax.swing.JSlider
+import javax.swing.JTabbedPane
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
