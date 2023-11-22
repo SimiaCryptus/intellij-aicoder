@@ -10,8 +10,9 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
-import com.simiacryptus.openai.models.ChatModels
-import com.simiacryptus.openai.OpenAIClientBase
+import com.simiacryptus.jopenai.ClientUtil
+import com.simiacryptus.jopenai.models.ChatModels
+
 import org.slf4j.LoggerFactory
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -57,7 +58,7 @@ class AppSettingsComponent {
     @Suppress("unused")
     val openApiLog = JButton(object : AbstractAction("Open API Log") {
         override fun actionPerformed(e: ActionEvent) {
-            OpenAIClientBase.auxiliaryLog?.let {
+            ClientUtil.auxiliaryLog?.let {
                 val project = ApplicationManager.getApplication().runReadAction<Project> {
                     com.intellij.openapi.project.ProjectManager.getInstance().openProjects.firstOrNull()
                 }

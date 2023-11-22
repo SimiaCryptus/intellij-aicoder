@@ -11,8 +11,8 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersecting
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.simiacryptus.openai.proxy.ChatProxy
-import com.simiacryptus.util.StringUtil
+import com.simiacryptus.jopenai.proxy.ChatProxy
+import com.simiacryptus.jopenai.util.StringUtil
 
 class MarkdownListAction : BaseAction() {
 

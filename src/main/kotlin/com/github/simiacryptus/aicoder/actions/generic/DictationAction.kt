@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
-import com.simiacryptus.util.audio.AudioRecorder
-import com.simiacryptus.util.audio.LookbackLoudnessWindowBuffer
+import com.simiacryptus.jopenai.audio.AudioRecorder
+import com.simiacryptus.jopenai.audio.LookbackLoudnessWindowBuffer
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque

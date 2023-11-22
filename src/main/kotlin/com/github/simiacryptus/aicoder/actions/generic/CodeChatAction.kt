@@ -3,10 +3,10 @@
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.skyenet.chat.CodeChatServer
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.simiacryptus.skyenet.webui.chat.CodeChatServer
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.util.*

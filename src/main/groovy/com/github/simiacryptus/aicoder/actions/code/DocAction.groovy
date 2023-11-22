@@ -6,7 +6,7 @@ import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.project.Project
-import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.jopenai.proxy.ChatProxy
 import kotlin.Pair
 import org.jetbrains.annotations.Nullable
 

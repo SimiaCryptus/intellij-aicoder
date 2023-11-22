@@ -6,11 +6,11 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.simiacryptus.openai.models.OpenAIModel
-import com.simiacryptus.openai.models.ChatModels
-import com.simiacryptus.openai.OpenAIClient.ChatRequest
-import com.simiacryptus.openai.models.OpenAITextModel
-import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.jopenai.ApiModel.ChatRequest
+import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.OpenAIModel
+import com.simiacryptus.jopenai.models.OpenAITextModel
+import com.simiacryptus.jopenai.util.JsonUtil
 
 class SimpleEnvelope(var value: String? = null)
 

@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.project.Project
-import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.jopenai.proxy.ChatProxy
 import org.jetbrains.annotations.Nullable
 
 class CommentsAction extends SelectionAction<String> {

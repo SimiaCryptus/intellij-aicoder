@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
-import com.simiacryptus.openai.OpenAIClient
 import org.jetbrains.annotations.Nullable
 
 class AppendAction extends SelectionAction<String> {
@@ -18,12 +17,12 @@ class AppendAction extends SelectionAction<String> {
         def request = settings.createChatRequest()
         request.temperature = AppSettingsState.instance.temperature
         request.messages = [
-                new OpenAIClient.ChatMessage(
-                        OpenAIClient.Role.system,
+                new com.simiacryptus.jopenai.ApiModel.ChatMessage(
+                        com.simiacryptus.jopenai.ApiModel.Role.system,
                         "Append text to the end of the user's prompt", null
                 ),
-                new OpenAIClient.ChatMessage(
-                        OpenAIClient.Role.user,
+                new com.simiacryptus.jopenai.ApiModel.ChatMessage(
+                        com.simiacryptus.jopenai.ApiModel.Role.user,
                         state.selectedText.toString(), null
                 )
         ]

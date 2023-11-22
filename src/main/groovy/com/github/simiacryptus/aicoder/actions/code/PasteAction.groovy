@@ -3,13 +3,12 @@ package com.github.simiacryptus.aicoder.actions.code
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.simiacryptus.openai.proxy.ChatProxy
+import com.simiacryptus.jopenai.proxy.ChatProxy
 import org.jetbrains.annotations.Nullable
 
-import java.awt.Toolkit
+import java.awt.*
 import java.awt.datatransfer.DataFlavor
 
 class PasteAction extends SelectionAction<String> {

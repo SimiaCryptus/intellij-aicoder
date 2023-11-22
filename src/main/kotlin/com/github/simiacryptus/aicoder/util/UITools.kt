@@ -30,9 +30,9 @@ import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.openai.exceptions.ModerationException
-import com.simiacryptus.openai.OpenAIClient
-import com.simiacryptus.util.StringUtil
+import com.simiacryptus.jopenai.OpenAIClient
+import com.simiacryptus.jopenai.exceptions.ModerationException
+import com.simiacryptus.jopenai.util.StringUtil
 import groovy.lang.GroovyRuntimeException
 import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory

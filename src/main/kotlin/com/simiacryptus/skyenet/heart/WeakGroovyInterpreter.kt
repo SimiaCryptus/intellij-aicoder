@@ -2,7 +2,7 @@
 
 package com.simiacryptus.skyenet.heart
 
-import com.simiacryptus.skyenet.Heart
+import com.simiacryptus.skyenet.core.Heart
 import java.lang.reflect.Method
 
 @Suppress("unused")
