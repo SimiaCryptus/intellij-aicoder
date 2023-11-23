@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
-import com.simiacryptus.jopenai.OpenAIClient
 import org.jetbrains.annotations.Nullable
 
 class AppendAction extends SelectionAction<String> {

@@ -10,9 +10,7 @@ import com.simiacryptus.jopenai.util.StringUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
-import static java.lang.Math.ceil
-import static java.lang.Math.log
-import static java.lang.Math.pow
+import static java.lang.Math.*
 
 class ReplaceOptionsAction extends SelectionAction<String> {
     interface VirtualAPI {
