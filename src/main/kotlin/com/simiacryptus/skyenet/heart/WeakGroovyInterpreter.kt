@@ -2,11 +2,12 @@
 
 package com.simiacryptus.skyenet.heart
 
-import com.simiacryptus.skyenet.core.Heart
+import com.simiacryptus.skyenet.core.Interpreter
 import java.lang.reflect.Method
 
 @Suppress("unused")
-open class WeakGroovyInterpreter(defs: java.util.Map<String, Object>) : Heart {
+open class WeakGroovyInterpreter(val defs: java.util.Map<String, Object>) : Interpreter {
+    override fun symbols() = defs as Map<String, Any>
 
     private val shell: Any
     private val parseMethod: Method

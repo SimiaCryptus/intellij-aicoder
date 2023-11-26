@@ -1,12 +1,13 @@
 ﻿package com.simiacryptus.skyenet.heart
 
-import com.simiacryptus.skyenet.core.Heart
+import com.simiacryptus.skyenet.core.Interpreter
 import java.lang.reflect.Method
 
 @Suppress("unused")
 open class WeakKotlinInterpreter(
-    defs: Map<String, Any> = mapOf(),
-) : Heart {
+    val defs: Map<String, Any> = mapOf(),
+) : Interpreter {
+    override fun symbols() = defs as Map<String, Any>
 
     private val engine: Any
 

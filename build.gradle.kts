@@ -25,15 +25,15 @@ repositories {
 val kotlin_version = "1.9.20"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.38"
+val skyenet_version = "1.0.39"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.35")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.36")
 
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
 
-    implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
+    implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.1")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-annotations", version = jetty_version)
