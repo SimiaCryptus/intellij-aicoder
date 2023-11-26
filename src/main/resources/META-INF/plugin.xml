@@ -268,6 +268,12 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.dev.InternalCoderAction"
+                text="Code Console"
+                description="Open code console">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+        </action>
 
     </actions>
 
