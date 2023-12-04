@@ -98,7 +98,7 @@ class CreateFileAction extends FileContextAction<Settings> {
             ),
             //language=TEXT
             new ChatMessage(
-                Role.user, """
+                Role.owner, """
                     Create a new file based on the following directive: $directive
                     
                     The file location should be based on the selected path `${basePath}`

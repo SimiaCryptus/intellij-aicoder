@@ -1,4 +1,5 @@
-﻿import org.jetbrains.changelog.Changelog
+﻿
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
 fun properties(key: String) = providers.gradleProperty(key).get()
@@ -7,8 +8,8 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 plugins {
     id("java") // Java support
     id("groovy")
-    id("org.jetbrains.kotlin.jvm") version "1.9.20"
-    id("org.jetbrains.intellij") version "1.16.0"
+    id("org.jetbrains.kotlin.jvm") version "1.9.21"
+    id("org.jetbrains.intellij") version "1.16.1"
     id("org.jetbrains.changelog") version "2.2.0"
     id("org.jetbrains.qodana") version "2023.2.1"
     id("org.jetbrains.kotlinx.kover") version "0.7.4"
@@ -22,17 +23,30 @@ repositories {
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 }
 
-val kotlin_version = "1.9.20"
+val kotlin_version = "1.9.21"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.40"
+val skyenet_version = "1.0.42"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.36")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.40")
+    { exclude(group = "org.jetbrains.kotlin", module = "") }
 
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
-    implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
+    { exclude(group = "org.jetbrains.kotlin", module = "") }
+
+    compileOnly(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
+
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
+    { exclude(group = "org.jetbrains.kotlin", module = "") }
+
+//    implementation(kotlin("compiler"))
+    implementation(files("C:\\Users\\andre\\code\\SkyeNet\\kotlin-hack\\build\\libs\\kotlin-hack-1.0.42.jar"))
+
+//    implementation(group = "com.simiacryptus.skyenet", name = "kotlin-hack", version = "1.0.42")
+//    { isTransitive = false }
+
+    implementation("org.codehaus.groovy:groovy-all:3.0.13")
 
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.1")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
@@ -42,20 +56,8 @@ dependencies {
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-jetty-client", version = jetty_version)
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
-    implementation("org.codehaus.groovy:groovy-all:3.0.13")
-
-
-//    implementation(kotlin("compiler-embeddable"))
-//    implementation(kotlin("scripting-compiler-embeddable"))
-//    implementation(kotlin("script-util"))
-
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
-
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
     testImplementation(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
-
-    testImplementation(kotlin("script-runtime"))
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = "0.11.16")
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = "0.11.16")
@@ -73,15 +75,20 @@ tasks.named("processResources") {
     dependsOn("copyGroovySourcesToResources")
 }
 
+
+
+
+
+
 kotlin {
     jvmToolchain(17)
 }
 
 tasks {
     compileKotlin {
-        kotlinOptions {
+        compilerOptions {
             javaParameters = true
-            jvmTarget = "17"
+            version = "17"
         }
     }
 
@@ -92,7 +99,7 @@ tasks {
     }
 
     compileTestKotlin {
-        kotlinOptions {
+        compilerOptions {
             javaParameters = true
         }
     }
@@ -157,7 +164,10 @@ intellij {
     pluginName.set(properties("pluginName"))
     version.set(properties("platformVersion"))
     type.set(properties("platformType"))
-    plugins.set(properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty))
+    plugins.set(listOf(
+        "com.intellij.java",
+        "org.jetbrains.kotlin:232-1.9.21-release-633-IJ10072.27"
+    ))
 }
 
 changelog {

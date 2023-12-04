@@ -47,6 +47,7 @@ class AppServer(
         val context = WebAppContext()
         JettyWebSocketServletContainerInitializer.configure(context, null)
         context.baseResource = server.baseResource
+        context.classLoader = AppServer::class.java.classLoader
         context.contextPath = path
         context.welcomeFiles = arrayOf("index.html")
         server.configure(context, baseUrl = "$domainName/$path")

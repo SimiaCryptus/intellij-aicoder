@@ -99,7 +99,7 @@ class AnalogueFileAction extends FileContextAction<Settings> {
                             """.stripIndent(), null
                 ),
                 new ChatMessage(
-                        Role.user, """
+                        Role.owner, """
                             Create a new file based on the following directive: $directive
                             
                             The file should be based on `${baseFile.path}` which contains the following code:
