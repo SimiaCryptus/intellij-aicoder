@@ -50,7 +50,7 @@ class ActionSettingsRegistry {
                         }
                     } else {
                         val localCode = actionConfig.file.readText().drop(1)
-                        if (!localCode.equals(code)) {
+                        if (true || !localCode.equals(code)) { // HACK to test compile
                             val element = actionConfig.buildAction(localCode)
                             children.remove(it)
                             children.add(element)
@@ -118,7 +118,7 @@ class ActionSettingsRegistry {
                 val kotlinInterpreter = IdeaKotlinInterpreter(mapOf())
                 val scriptEngine = kotlinInterpreter.scriptEngine
                 val eval = scriptEngine.eval(code)
-                return eval as Class<*>
+                throw Exception("Not implemented")
             } catch (e: Throwable) {
                 throw DynamicActionException(e, "Error in Action " + displayText, file, this)
             }

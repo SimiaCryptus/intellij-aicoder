@@ -7,7 +7,6 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 
 plugins {
     id("java") // Java support
-    id("groovy")
     id("org.jetbrains.kotlin.jvm") version "1.9.21"
     id("org.jetbrains.intellij") version "1.16.1"
     id("org.jetbrains.changelog") version "2.2.0"
@@ -46,8 +45,6 @@ dependencies {
 //    implementation(group = "com.simiacryptus.skyenet", name = "kotlin-hack", version = "1.0.42")
 //    { isTransitive = false }
 
-    implementation("org.codehaus.groovy:groovy-all:3.0.13")
-
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.1")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
@@ -67,17 +64,13 @@ dependencies {
 }
 
 
-tasks.register<Copy>("copyGroovySourcesToResources") {
-    from("src/main/groovy")
-    into("src/main/resources/sources/groovy")
+tasks.register<Copy>("copySourcesToResources") {
+    from("src/main/kotlin")
+    into("src/main/resources/sources/kt")
 }
 tasks.named("processResources") {
-    dependsOn("copyGroovySourcesToResources")
+    dependsOn("copySourcesToResources")
 }
-
-
-
-
 
 
 kotlin {
@@ -88,14 +81,7 @@ tasks {
     compileKotlin {
         compilerOptions {
             javaParameters = true
-            version = "17"
         }
-    }
-
-    compileGroovy {
-        dependsOn += compileKotlin
-        classpath += files(compileKotlin.get().destinationDirectory)
-        groovyOptions.isParameters = true
     }
 
     compileTestKotlin {
