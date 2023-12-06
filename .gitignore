@@ -12,4 +12,5 @@ api.log.json
 *.log
 api.*
 .skynet.bak
+settings.gradle.kts
 
