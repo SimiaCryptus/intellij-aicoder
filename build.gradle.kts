@@ -25,7 +25,7 @@ repositories {
 val kotlin_version = "1.9.21"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.42"
+val skyenet_version = "1.0.43"
 dependencies {
 
     implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.40")
@@ -34,11 +34,10 @@ dependencies {
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     { exclude(group = "org.jetbrains.kotlin", module = "") }
 
-    compileOnly(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
-
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
     { exclude(group = "org.jetbrains.kotlin", module = "") }
 
+    compileOnly(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
 //    implementation(files("C:\\Users\\andre\\code\\SkyeNet\\kotlin-hack\\build\\libs\\kotlin-hack-1.0.42.jar"))
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin-hack", version = "1.0.42") { isTransitive = false }
 
