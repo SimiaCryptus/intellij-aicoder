@@ -39,11 +39,8 @@ dependencies {
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
     { exclude(group = "org.jetbrains.kotlin", module = "") }
 
-//    implementation(kotlin("compiler"))
-    implementation(files("C:\\Users\\andre\\code\\SkyeNet\\kotlin-hack\\build\\libs\\kotlin-hack-1.0.42.jar"))
-
-//    implementation(group = "com.simiacryptus.skyenet", name = "kotlin-hack", version = "1.0.42")
-//    { isTransitive = false }
+//    implementation(files("C:\\Users\\andre\\code\\SkyeNet\\kotlin-hack\\build\\libs\\kotlin-hack-1.0.42.jar"))
+    implementation(group = "com.simiacryptus.skyenet", name = "kotlin-hack", version = "1.0.42") { isTransitive = false }
 
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.1")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
