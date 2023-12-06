@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+## [1.2.23]
+
+### Improved
+
+- Fixed Kotlin dynamic evaluation
+- Replaced all Groovy with Kotlin
+- Revised configuration UI
+- Various fixes
+
 ## [1.2.22]
 
 ### Improved

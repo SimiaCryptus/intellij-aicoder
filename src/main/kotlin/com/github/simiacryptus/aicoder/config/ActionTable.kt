@@ -3,6 +3,7 @@
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.BooleanTableCellEditor
@@ -155,14 +156,17 @@ class ActionTable(
         override fun actionPerformed(e: ActionEvent?) {
             val id = dataModel.getValueAt(jtable.selectedRow, 2)
             val actionSetting = actionSettings.find { it.id == id }
+            val projectManager = ProjectManager.getInstance()
             actionSetting?.file?.let {
                 val project = ApplicationManager.getApplication().runReadAction<Project> {
-                    com.intellij.openapi.project.ProjectManager.getInstance().openProjects.firstOrNull()
+                    projectManager.openProjects.firstOrNull() ?: projectManager.defaultProject
                 }
+
                 if (it.exists()) {
                     ApplicationManager.getApplication().invokeLater {
                         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(it)
-                        FileEditorManager.getInstance(project!!).openFile(virtualFile!!, true)
+                        val fileEditorManager = FileEditorManager.getInstance(project!!)
+                        val editor = fileEditorManager.openFile(virtualFile!!, true).firstOrNull()
                     }
                 } else {
                     log.warn("File not found: ${it.absolutePath}")
@@ -206,6 +210,17 @@ class ActionTable(
         jtable.columnModel.getColumn(0).headerRenderer = DefaultTableCellRenderer()
         jtable.columnModel.getColumn(1).headerRenderer = DefaultTableCellRenderer()
         jtable.columnModel.getColumn(2).headerRenderer = DefaultTableCellRenderer()
+
+        // Set the preferred width for the first column (checkboxes) to the header label width
+        val headerRenderer = jtable.tableHeader.defaultRenderer
+        val headerValue = jtable.columnModel.getColumn(0).headerValue
+        val headerComp = headerRenderer.getTableCellRendererComponent(jtable, headerValue, false, false, 0, 0)
+        jtable.columnModel.getColumn(0).preferredWidth = headerComp.preferredSize.width
+
+        // Set the minimum width for the second column (display text) to accommodate 100 characters
+        val metrics = jtable.getFontMetrics(jtable.font)
+        val minWidth = metrics.charWidth('m') * 32
+        jtable.columnModel.getColumn(1).minWidth = minWidth
 
         jtable.tableHeader.defaultRenderer = DefaultTableCellRenderer()
 

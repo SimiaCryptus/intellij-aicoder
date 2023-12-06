@@ -144,7 +144,7 @@ class UITestUtil {
             val aiCoderMenuItem = getComponent("//div[@text='AI Coder']")
             aiCoderMenuItem.click()
             val point1 = aiCoderMenuItem.locationOnScreen
-            sleep(100)
+            sleep(500)
             val submenu =
                 getComponent("""//div[@class="HeavyWeightWindow"][.//div[@class="MyMenu"]]//div[@class="HeavyWeightWindow"]//div[contains(@text, '$menuText')]""")
             val point2 = submenu.locationOnScreen

@@ -11,7 +11,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.simiacryptus.aicoder.config.AppSettingsState"/>
         <applicationConfigurable parentId="tools"
-                                 instance="com.github.simiacryptus.aicoder.config.AppSettingsConfigurable"
+                                 instance="com.github.simiacryptus.aicoder.config.NonReflectionAppSettingsConfigurable"
                                  id="org.intellij.sdk.settings.AppSettingsConfigurable"
                                  displayName="AI Coder"/>
     </extensions>

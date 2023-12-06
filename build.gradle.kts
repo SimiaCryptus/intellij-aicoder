@@ -54,11 +54,14 @@ dependencies {
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
-    testImplementation(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
 
+    testImplementation(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = "0.11.16")
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = "0.11.16")
     testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "3.14.9")
+
+    testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = "5.10.1")
+    testRuntimeOnly(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = "5.10.1")
 
 
 }

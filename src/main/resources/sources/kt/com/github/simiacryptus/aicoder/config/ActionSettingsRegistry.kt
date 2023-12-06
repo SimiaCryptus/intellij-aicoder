@@ -11,31 +11,44 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
     val actionSettings: MutableMap<String, ActionSettings> = HashMap()
-    private val version = 2.0005
+    private val version = 2.0006
 
     fun edit(superChildren: Array<out AnAction>): Array<AnAction> {
         val children = superChildren.toList().toMutableList()
-        children.toTypedArray().forEach {
+        children.toTypedArray().forEach { action ->
             val language = "kt"
-            val code: String? = load(it.javaClass, language)
+            val code: String? = load(action.javaClass, language)
             if (null != code) {
                 try {
-                    val actionConfig = this.getActionConfig(it)
+                    val actionConfig = this.getActionConfig(action)
                     actionConfig.language = language
                     actionConfig.isDynamic = false
-                    with(it) {
+                    with(action) {
                         templatePresentation.text = actionConfig.displayText
                         templatePresentation.description = actionConfig.displayText
                     }
                     if (!actionConfig.enabled) {
-                        children.remove(it)
+                        children.remove(action)
                     } else if (!actionConfig.file.exists()
                         || actionConfig.file.readText().isBlank()
                         || (actionConfig.version ?: 0.0) < version
                     ) {
                         actionConfig.file.writeText(code)
                         actionConfig.version = version
-                    } else if (!(actionConfig.isDynamic || (actionConfig.version ?: 0.0) >= version)) {
+                    } else {
+                        if (actionConfig.isDynamic || (actionConfig.version ?: 0.0) >= version) {
+                            val localCode = actionConfig.file.readText().dropWhile { !it.isLetter() }
+                            if (!localCode.equals(code)) {
+                                try {
+                                    val element = actionConfig.buildAction(localCode)
+                                    children.remove(action)
+                                    children.add(element)
+                                    return@forEach
+                                } catch (e: Throwable) {
+                                    log.info("Error loading dynamic ${action.javaClass}", e)
+                                }
+                            }
+                        }
                         val canLoad = try {
                             ActionSettingsRegistry::class.java.classLoader.loadClass(actionConfig.id)
                             true
@@ -46,19 +59,12 @@ class ActionSettingsRegistry {
                             actionConfig.file.writeText(code)
                             actionConfig.version = version
                         } else {
-                            children.remove(it)
-                        }
-                    } else {
-                        val localCode = actionConfig.file.readText().drop(1)
-                        if (true || !localCode.equals(code)) { // HACK to test compile
-                            val element = actionConfig.buildAction(localCode)
-                            children.remove(it)
-                            children.add(element)
+                            children.remove(action)
                         }
                     }
                     actionConfig.version = version
                 } catch (e: Throwable) {
-                    UITools.error(log, "Error loading ${it.javaClass}", e)
+                    UITools.error(log, "Error loading ${action.javaClass}", e)
                 }
             }
         }
@@ -118,7 +124,7 @@ class ActionSettingsRegistry {
                 val kotlinInterpreter = IdeaKotlinInterpreter(mapOf())
                 val scriptEngine = kotlinInterpreter.scriptEngine
                 val eval = scriptEngine.eval(code)
-                throw Exception("Not implemented")
+                return eval as Class<*>
             } catch (e: Throwable) {
                 throw DynamicActionException(e, "Error in Action " + displayText, file, this)
             }
@@ -193,7 +199,7 @@ class ActionSettingsRegistry {
 
         private fun load(path: String): String? {
             val bytes = EditorMenu::class.java.getResourceAsStream(path)?.readAllBytes()
-            return bytes?.toString(Charsets.UTF_8)?.drop(1) // XXX Why? '\uFEFF' is first byte
+            return bytes?.toString(Charsets.UTF_8)?.dropWhile { !it.isLetter() }
         }
 
         fun load(clazz: Class<AnAction>, language: String) =

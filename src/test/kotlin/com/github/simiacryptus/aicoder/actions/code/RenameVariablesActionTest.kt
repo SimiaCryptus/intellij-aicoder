@@ -11,8 +11,8 @@ class RenameVariablesActionTest : ActionTestBase() {
     @Test
     fun testProcessing() {
         testScript_SelectionAction(object : RenameVariablesAction() {
-            override fun choose(renameSuggestions: Map<String, String>): Array<String> {
-                return renameSuggestions.keys.toTypedArray()
+            override fun choose(renameSuggestions: Map<String, String>): Set<String> {
+                return renameSuggestions.keys.toSet()
             }
         }, "/RenameVariablesActionTest.md")
     }

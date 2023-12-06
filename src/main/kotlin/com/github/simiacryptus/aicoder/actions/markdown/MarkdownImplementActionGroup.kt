@@ -37,7 +37,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
         return actions.toTypedArray()
     }
 
-    class MarkdownImplementAction(private val language: String) : SelectionAction<String>(true) {
+    open class MarkdownImplementAction(private val language: String) : SelectionAction<String>(true) {
         init {
             templatePresentation.text = language
             templatePresentation.description = language

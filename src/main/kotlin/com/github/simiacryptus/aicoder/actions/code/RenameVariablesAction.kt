@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
 
-class RenameVariablesAction : SelectionAction<String>() {
+open class RenameVariablesAction : SelectionAction<String>() {
 
     interface RenameAPI {
         fun suggestRenames(
@@ -64,7 +64,7 @@ class RenameVariablesAction : SelectionAction<String>() {
         }
     }
 
-    private fun choose(renameSuggestions: Map<String, String>): Set<String> {
+    open fun choose(renameSuggestions: Map<String, String>): Set<String> {
         return UITools.showCheckboxDialog(
             "Select which items to rename",
             renameSuggestions.keys.toTypedArray(),

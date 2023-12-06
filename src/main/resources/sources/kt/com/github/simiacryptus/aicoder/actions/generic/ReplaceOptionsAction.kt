@@ -11,7 +11,7 @@ import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.pow
 
-class ReplaceOptionsAction : SelectionAction<String>() {
+open class ReplaceOptionsAction : SelectionAction<String>() {
     interface VirtualAPI {
         fun suggestText(template: String, examples: List<String>): Suggestions
 
@@ -52,7 +52,7 @@ class ReplaceOptionsAction : SelectionAction<String>() {
         return choose(choices ?: listOf())
     }
 
-    private fun choose(choices: List<String>): String {
+    open fun choose(choices: List<String>): String {
         return UITools.showRadioButtonDialog("Select an option to fill in the blank:", *choices.toTypedArray())?.toString() ?: ""
     }
 }

@@ -9,7 +9,7 @@ import com.simiacryptus.jopenai.proxy.ChatProxy
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 
-class PasteAction : SelectionAction<String>(false) {
+open class PasteAction : SelectionAction<String>(false) {
 
     interface VirtualAPI {
         fun convert(text: String, from_language: String, to_language: String): ConvertedText
