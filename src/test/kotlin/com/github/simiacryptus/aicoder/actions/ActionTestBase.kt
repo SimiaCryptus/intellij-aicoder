@@ -3,9 +3,8 @@
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.MarkdownProcessor
-import com.simiacryptus.jopenai.ClientUtil
 import com.simiacryptus.jopenai.models.ChatModels
-
+import com.simiacryptus.jopenai.util.ClientUtil
 import com.simiacryptus.jopenai.util.JsonUtil
 import org.junit.jupiter.api.Assertions
 import java.io.File

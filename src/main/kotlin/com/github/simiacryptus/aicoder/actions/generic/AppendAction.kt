@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.ApiModel.*
-import com.simiacryptus.jopenai.ClientUtil.toContentList
+import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 
  class AppendAction : SelectionAction<String>() {
     override fun getConfig(project: Project?): String {

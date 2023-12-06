@@ -62,7 +62,7 @@ class CodeChatAction : BaseAction() {
     val root: File get() = File(ApplicationEvents.pluginHome, "code_chat")
     private fun initApp(server: AppServer, path: String): ChatServer {
       server.appRegistry[path]?.let { return it }
-      val socketServer = object : ApplicationServer("Code Chat") {
+      val socketServer = object : ApplicationServer(applicationName = "Code Chat", path = path) {
         override val singleInput = false
         override val stickyInput = true
         override fun newSession(user: User?, session: Session) = agents[session]!!

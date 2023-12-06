@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.ChatMessage
 import com.simiacryptus.jopenai.ApiModel.Role
-import com.simiacryptus.jopenai.ClientUtil.toContentList
+import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import java.io.File
