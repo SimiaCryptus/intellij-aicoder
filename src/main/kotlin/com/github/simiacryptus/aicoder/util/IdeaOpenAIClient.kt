@@ -1,5 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
+import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -12,8 +13,11 @@ import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.OpenAIModel
 import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
+import com.simiacryptus.skyenet.core.platform.StorageInterface
 import org.apache.hc.core5.http.HttpRequest
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JPanel
@@ -24,9 +28,11 @@ class IdeaOpenAIClient : OpenAIClient(
     apiBase = AppSettingsState.instance.apiBase,
 ) {
     private val isInRequest = AtomicBoolean(false)
+    val session = StorageInterface.newGlobalID()
 
     override fun incrementTokens(model: OpenAIModel?, tokens: Usage) {
         AppSettingsState.instance.tokenCounter += tokens.total_tokens
+        ApplicationServices.usageManager.incrementUsage(session, null, model!!, tokens)
     }
 
     override fun authorize(request: HttpRequest) {
@@ -124,7 +130,16 @@ class IdeaOpenAIClient : OpenAIClient(
 
     companion object {
 
-        val api: OpenAIClient get() = IdeaOpenAIClient()
+        val instance by lazy {
+            val client = IdeaOpenAIClient()
+            if (AppSettingsState.instance.apiLog) {
+                val file = File(ApplicationEvents.pluginHome, "openai.log")
+                AppSettingsState.auxiliaryLog = file
+                client.logStreams.add(java.io.FileOutputStream(file, true).buffered())
+            }
+            client
+        }
+
         var lastEvent: AnActionEvent? = null
         private fun uiEdit(
             project: Project? = null,

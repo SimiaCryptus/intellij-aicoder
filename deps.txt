@@ -1,0 +1,1518 @@
+Starting Gradle Daemon...
+Gradle Daemon started in 2 s 731 ms
+
+> Task :dependencies
+
+------------------------------------------------------------
+Root project 'intellij-aicoder'
+------------------------------------------------------------
+
+annotationProcessor - Annotation processors and their dependencies for source set 'main'.
+No dependencies
+
+api - API dependencies for null/main (n)
+No dependencies
+
+apiDependenciesMetadata
+No dependencies
+
+apiElements - API elements for the 'main' feature. (n)
+No dependencies
+
+apiElements-published (n)
+No dependencies
+
+compileClasspath - Compile classpath for null/main.
++--- org.jetbrains.kotlin:kotlin-scripting-jsr223:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21
++--- com.simiacryptus.skyenet:kotlin:1.0.43 -> project :SkyeNet:kotlin
++--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai
++--- com.simiacryptus.skyenet:core:1.0.43 -> project :SkyeNet:core
++--- com.simiacryptus.skyenet:webui:1.0.43 -> project :SkyeNet:webui
++--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3
+|    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3
+|         +--- org.jetbrains:annotations:23.0.0 -> 24.0.1
+|         \--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.7.3
+|              +--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3 (c)
+|              \--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 (c)
++--- org.apache.httpcomponents.client5:httpclient5:5.2.3
+|    +--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    +--- org.apache.httpcomponents.core5:httpcore5-h2:5.2.4
+|    |    \--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    \--- org.slf4j:slf4j-api:1.7.36 -> 2.0.9
++--- org.eclipse.jetty:jetty-server:11.0.18
+|    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty:jetty-http:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-util:11.0.18
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-io:11.0.18
+|    |    |    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty:jetty-servlet:11.0.18
+|    +--- org.eclipse.jetty:jetty-security:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty:jetty-annotations:11.0.18
+|    +--- org.eclipse.jetty:jetty-plus:11.0.18
+|    |    +--- jakarta.transaction:jakarta.transaction-api:2.0.0
+|    |    +--- org.eclipse.jetty:jetty-jndi:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    |    +--- org.eclipse.jetty:jetty-xml:11.0.18
+|    |    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    +--- jakarta.annotation:jakarta.annotation-api:2.1.1
+|    +--- org.ow2.asm:asm:9.6
+|    +--- org.ow2.asm:asm-commons:9.6
+|    |    +--- org.ow2.asm:asm:9.6
+|    |    \--- org.ow2.asm:asm-tree:9.6
+|    |         \--- org.ow2.asm:asm:9.6
+|    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    \--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
++--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    \--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18
+|    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-server:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    |    \--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18 (*)
+|    +--- org.eclipse.jetty.websocket:websocket-core-client:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    \--- org.eclipse.jetty:jetty-client:11.0.18
+|    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-alpn-client:11.0.18
+|    |         |    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-client:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (*)
++--- org.slf4j:slf4j-api:2.0.9
++--- org.jetbrains:annotations:24.0.1
++--- unzipped.com.jetbrains.plugins:java:ideaIC-IC-232.10227.8-withSources
+\--- com.jetbrains:ideaIC:2023.2.5
+
+compileOnly - Compile only dependencies for null/main. (n)
+No dependencies
+
+compileOnlyDependenciesMetadata
++--- org.jetbrains:annotations:24.0.1
++--- unzipped.com.jetbrains.plugins:java:ideaIC-IC-232.10227.8-withSources
+\--- com.jetbrains:ideaIC:2023.2.5
+
+default - Configuration for default artifacts. (n)
+No dependencies
+
+implementation - Implementation only dependencies for null/main. (n)
++--- org.jetbrains.kotlin:kotlin-scripting-jsr223:1.9.21 (n)
++--- org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.9.21 (n)
++--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21 (n)
++--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21 (n)
++--- com.simiacryptus.skyenet:kotlin:1.0.43 (n)
++--- com.simiacryptus:jo-penai:1.0.41 (n)
++--- com.simiacryptus.skyenet:core:1.0.43 (n)
++--- com.simiacryptus.skyenet:webui:1.0.43 (n)
++--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 (n)
++--- org.apache.httpcomponents.client5:httpclient5:5.2.3 (n)
++--- org.eclipse.jetty:jetty-server:11.0.18 (n)
++--- org.eclipse.jetty:jetty-servlet:11.0.18 (n)
++--- org.eclipse.jetty:jetty-annotations:11.0.18 (n)
++--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18 (n)
++--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18 (n)
++--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (n)
+\--- org.slf4j:slf4j-api:2.0.9 (n)
+
+implementationDependenciesMetadata
++--- org.jetbrains.kotlin:kotlin-scripting-jsr223:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21
++--- com.simiacryptus.skyenet:kotlin:1.0.43 -> project :SkyeNet:kotlin
++--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai
++--- com.simiacryptus.skyenet:core:1.0.43 -> project :SkyeNet:core
++--- com.simiacryptus.skyenet:webui:1.0.43 -> project :SkyeNet:webui
++--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3
+|    \--- org.jetbrains.kotlinx:atomicfu:0.21.0
++--- org.apache.httpcomponents.client5:httpclient5:5.2.3
+|    +--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    +--- org.apache.httpcomponents.core5:httpcore5-h2:5.2.4
+|    |    \--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    \--- org.slf4j:slf4j-api:1.7.36 -> 2.0.9
++--- org.eclipse.jetty:jetty-server:11.0.18
+|    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty:jetty-http:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-util:11.0.18
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-io:11.0.18
+|    |    |    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty:jetty-servlet:11.0.18
+|    +--- org.eclipse.jetty:jetty-security:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty:jetty-annotations:11.0.18
+|    +--- org.eclipse.jetty:jetty-plus:11.0.18
+|    |    +--- jakarta.transaction:jakarta.transaction-api:2.0.0
+|    |    +--- org.eclipse.jetty:jetty-jndi:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    |    +--- org.eclipse.jetty:jetty-xml:11.0.18
+|    |    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    +--- jakarta.annotation:jakarta.annotation-api:2.1.1
+|    +--- org.ow2.asm:asm:9.6
+|    +--- org.ow2.asm:asm-commons:9.6
+|    |    +--- org.ow2.asm:asm:9.6
+|    |    \--- org.ow2.asm:asm-tree:9.6
+|    |         \--- org.ow2.asm:asm:9.6
+|    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    \--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
++--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    \--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18
+|    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-server:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    |    \--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18 (*)
+|    +--- org.eclipse.jetty.websocket:websocket-core-client:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    \--- org.eclipse.jetty:jetty-client:11.0.18
+|    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-alpn-client:11.0.18
+|    |         |    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-client:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (*)
+\--- org.slf4j:slf4j-api:2.0.9
+
+instrumentedJar (n)
+No dependencies
+
+intransitiveDependenciesMetadata
+No dependencies
+
+kotlinBuildToolsApiClasspath
+\--- org.jetbrains.kotlin:kotlin-build-tools-impl:1.9.21
+     +--- org.jetbrains.kotlin:kotlin-build-tools-api:1.9.21
+     +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21
+     |    \--- org.jetbrains:annotations:13.0
+     +--- org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.21
+     |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21 (*)
+     |    +--- org.jetbrains.kotlin:kotlin-script-runtime:1.9.21
+     |    +--- org.jetbrains.kotlin:kotlin-reflect:1.6.10
+     |    +--- org.jetbrains.kotlin:kotlin-daemon-embeddable:1.9.21
+     |    \--- org.jetbrains.intellij.deps:trove4j:1.0.20200330
+     \--- org.jetbrains.kotlin:kotlin-compiler-runner:1.9.21
+          +--- org.jetbrains.kotlin:kotlin-build-common:1.9.21
+          +--- org.jetbrains.kotlin:kotlin-daemon-client:1.9.21
+          +--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0
+          \--- org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.21 (*)
+
+kotlinCompilerClasspath
+\--- org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.21
+     +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21
+     |    \--- org.jetbrains:annotations:13.0
+     +--- org.jetbrains.kotlin:kotlin-script-runtime:1.9.21
+     +--- org.jetbrains.kotlin:kotlin-reflect:1.6.10
+     +--- org.jetbrains.kotlin:kotlin-daemon-embeddable:1.9.21
+     \--- org.jetbrains.intellij.deps:trove4j:1.0.20200330
+
+kotlinCompilerPluginClasspath
+No dependencies
+
+kotlinCompilerPluginClasspathMain - Kotlin compiler plugins for compilation
+\--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21
+     +--- org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:1.9.21
+     |    +--- org.jetbrains.kotlin:kotlin-scripting-common:1.9.21
+     |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21
+     |    |         \--- org.jetbrains:annotations:13.0
+     |    +--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21
+     |    |    +--- org.jetbrains.kotlin:kotlin-script-runtime:1.9.21
+     |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21 (*)
+     |    |    \--- org.jetbrains.kotlin:kotlin-scripting-common:1.9.21 (*)
+     |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21 (*)
+     \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21 (*)
+
+kotlinCompilerPluginClasspathTest - Kotlin compiler plugins for compilation
+\--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21
+     +--- org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:1.9.21
+     |    +--- org.jetbrains.kotlin:kotlin-scripting-common:1.9.21
+     |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21
+     |    |         \--- org.jetbrains:annotations:13.0
+     |    +--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21
+     |    |    +--- org.jetbrains.kotlin:kotlin-script-runtime:1.9.21
+     |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21 (*)
+     |    |    \--- org.jetbrains.kotlin:kotlin-scripting-common:1.9.21 (*)
+     |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21 (*)
+     \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21 (*)
+
+kotlinKlibCommonizerClasspath
+\--- org.jetbrains.kotlin:kotlin-klib-commonizer-embeddable:1.9.21
+     +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21
+     |    \--- org.jetbrains:annotations:13.0
+     \--- org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.21
+          +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.21 (*)
+          +--- org.jetbrains.kotlin:kotlin-script-runtime:1.9.21
+          +--- org.jetbrains.kotlin:kotlin-reflect:1.6.10
+          +--- org.jetbrains.kotlin:kotlin-daemon-embeddable:1.9.21
+          \--- org.jetbrains.intellij.deps:trove4j:1.0.20200330
+
+kotlinNativeCompilerPluginClasspath
+No dependencies
+
+kotlinScriptDef - Script filename extensions discovery classpath configuration
+No dependencies
+
+kotlinScriptDefExtensions
+No dependencies
+
+kover (n)
+No dependencies
+
+koverArtifact (n)
+No dependencies
+
+koverExternalArtifacts
+No dependencies
+
+koverJvmAgent
+\--- org.jetbrains.intellij.deps:intellij-coverage-agent:1.0.738
+
+koverJvmReporter
+\--- org.jetbrains.intellij.deps:intellij-coverage-reporter:1.0.738
+     +--- org.jetbrains.intellij.deps:coverage-report:1.0.22
+     |    +--- org.freemarker:freemarker:2.3.32
+     |    \--- org.jetbrains:annotations:16.0.2
+     \--- org.jetbrains.intellij.deps:intellij-coverage-agent:1.0.738
+
+mainSourceElements - List of source directories contained in the Main SourceSet. (n)
+No dependencies
+
+runtimeClasspath - Runtime classpath of null/main.
++--- org.jetbrains.kotlin:kotlin-scripting-jsr223:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21
++--- com.simiacryptus.skyenet:kotlin:1.0.43 -> project :SkyeNet:kotlin
+|    +--- project :SkyeNet:core
+|    |    +--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai
+|    |    |    +--- org.slf4j:slf4j-api:2.0.9
+|    |    |    +--- org.apache.httpcomponents.client5:httpclient5:5.2.3
+|    |    |    |    +--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    |    |    |    +--- org.apache.httpcomponents.core5:httpcore5-h2:5.2.4
+|    |    |    |    |    \--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    |    |    |    \--- org.slf4j:slf4j-api:1.7.36 -> 2.0.9
+|    |    |    +--- com.fasterxml.jackson.core:jackson-databind:2.15.3
+|    |    |    |    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3
+|    |    |    |    |    \--- com.fasterxml.jackson:jackson-bom:2.15.3
+|    |    |    |    |         +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (c)
+|    |    |    |    |         +--- com.fasterxml.jackson.core:jackson-core:2.15.3 (c)
+|    |    |    |    |         +--- com.fasterxml.jackson.core:jackson-databind:2.15.3 (c)
+|    |    |    |    |         \--- com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3 (c)
+|    |    |    |    +--- com.fasterxml.jackson.core:jackson-core:2.15.3
+|    |    |    |    |    \--- com.fasterxml.jackson:jackson-bom:2.15.3 (*)
+|    |    |    |    \--- com.fasterxml.jackson:jackson-bom:2.15.3 (*)
+|    |    |    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (*)
+|    |    |    +--- com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3
+|    |    |    |    +--- com.fasterxml.jackson.core:jackson-databind:2.15.3 (*)
+|    |    |    |    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (*)
+|    |    |    |    \--- com.fasterxml.jackson:jackson-bom:2.15.3 (*)
+|    |    |    +--- com.google.guava:guava:32.1.3-jre
+|    |    |    |    +--- com.google.guava:failureaccess:1.0.1
+|    |    |    |    +--- com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
+|    |    |    |    +--- com.google.code.findbugs:jsr305:3.0.2
+|    |    |    |    +--- org.checkerframework:checker-qual:3.37.0
+|    |    |    |    \--- com.google.errorprone:error_prone_annotations:2.21.1
+|    |    |    +--- com.google.code.gson:gson:2.10.1
+|    |    |    +--- org.openimaj:JTransforms:1.3.10
+|    |    |    \--- commons-io:commons-io:2.15.0
+|    |    +--- org.slf4j:slf4j-api:2.0.9
+|    |    +--- commons-io:commons-io:2.15.0
+|    |    +--- com.google.guava:guava:32.1.3-jre (*)
+|    |    +--- com.google.code.gson:gson:2.10.1
+|    |    +--- org.apache.httpcomponents.client5:httpclient5:5.2.3 (*)
+|    |    +--- com.fasterxml.jackson.core:jackson-databind:2.15.3 (*)
+|    |    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (*)
+|    |    \--- com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3 (*)
+|    +--- commons-io:commons-io:2.15.0
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai (*)
++--- com.simiacryptus.skyenet:core:1.0.43 -> project :SkyeNet:core (*)
++--- com.simiacryptus.skyenet:webui:1.0.43 -> project :SkyeNet:webui
+|    +--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai (*)
+|    +--- project :SkyeNet:core (*)
+|    +--- org.eclipse.jetty:jetty-server:11.0.18
+|    |    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    |    +--- org.eclipse.jetty:jetty-http:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    +--- org.eclipse.jetty:jetty-io:11.0.18
+|    |    |    |    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    |    \--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-servlet:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-security:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-annotations:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-plus:11.0.18
+|    |    |    +--- jakarta.transaction:jakarta.transaction-api:2.0.0
+|    |    |    +--- org.eclipse.jetty:jetty-jndi:11.0.18
+|    |    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18
+|    |    |    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    |    |    +--- org.eclipse.jetty:jetty-xml:11.0.18
+|    |    |    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    |    +--- jakarta.annotation:jakarta.annotation-api:2.1.1
+|    |    +--- org.ow2.asm:asm:9.6
+|    |    +--- org.ow2.asm:asm-commons:9.6
+|    |    |    +--- org.ow2.asm:asm:9.6
+|    |    |    \--- org.ow2.asm:asm-tree:9.6
+|    |    |         \--- org.ow2.asm:asm:9.6
+|    |    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    \--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    |    \--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18
+|    |    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-core-server:11.0.18
+|    |    |    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    |    |    \--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18 (*)
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-client:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    |    \--- org.eclipse.jetty:jetty-client:11.0.18
+|    |    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |    |         +--- org.eclipse.jetty:jetty-alpn-client:11.0.18
+|    |    |         |    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |    |         |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-client:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (*)
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    +--- com.vladsch.flexmark:flexmark-all:0.64.8
+|    |    +--- com.vladsch.flexmark:flexmark:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8
+|    |    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-visitor:0.64.8
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-builder:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-dependency:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-format:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-html:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-html:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-util-visitor:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-abbreviation:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-builder:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-dependency:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-format:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-html:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-options:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-visitor:0.64.8 (*)
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-autolink:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    |    \--- org.nibor.autolink:autolink:0.6.0
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-admonition:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-anchorlink:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-aside:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-jira-converter:0.64.8
+|    |    |         +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-tables:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-wikilink:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-ins:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-superscript:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-attributes:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-autolink:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-definition:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-emoji:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-jira-converter:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-enumerated-reference:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-ext-attributes:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-escaped-character:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-footnotes:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-issues:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-tasklist:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-users:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gitlab:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-jekyll-front-matter:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-ext-yaml-front-matter:0.64.8
+|    |    |         +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-jekyll-tag:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-media-tags:0.64.8
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-resizable-image:0.64.8
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-macros:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-ext-gitlab:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-ins:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-xwiki-macros:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-superscript:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-tables:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-toc:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-typographic:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-wikilink:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-yaml-front-matter:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-youtube-embedded:0.64.8
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-html2md-converter:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-emoji:0.64.8 (*)
+|    |    |    \--- org.jsoup:jsoup:1.15.4
+|    |    +--- com.vladsch.flexmark:flexmark-jira-converter:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-pdf-converter:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    +--- org.jsoup:jsoup:1.15.4
+|    |    |    +--- com.ibm.icu:icu4j:72.1
+|    |    |    +--- com.openhtmltopdf:openhtmltopdf-core:1.0.10
+|    |    |    +--- com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10
+|    |    |    |    +--- org.apache.pdfbox:pdfbox:2.0.24
+|    |    |    |    |    +--- org.apache.pdfbox:fontbox:2.0.24
+|    |    |    |    |    |    \--- commons-logging:commons-logging:1.2
+|    |    |    |    |    \--- commons-logging:commons-logging:1.2
+|    |    |    |    +--- org.apache.pdfbox:xmpbox:2.0.24
+|    |    |    |    |    \--- commons-logging:commons-logging:1.2
+|    |    |    |    +--- com.openhtmltopdf:openhtmltopdf-core:1.0.10
+|    |    |    |    \--- de.rototor.pdfbox:graphics2d:0.32
+|    |    |    |         \--- org.apache.pdfbox:pdfbox:2.0.24 (*)
+|    |    |    \--- com.openhtmltopdf:openhtmltopdf-rtl-support:1.0.10
+|    |    |         \--- com.openhtmltopdf:openhtmltopdf-core:1.0.10
+|    |    +--- com.vladsch.flexmark:flexmark-profile-pegdown:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-abbreviation:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-anchorlink:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-aside:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-autolink:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-definition:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-emoji:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-escaped-character:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-footnotes:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-tasklist:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-ins:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-jekyll-front-matter:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-superscript:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-tables:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-toc:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-typographic:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-wikilink:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-builder:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-dependency:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-format:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-html:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-options:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-visitor:0.64.8 (*)
+|    |    \--- com.vladsch.flexmark:flexmark-youtrack-converter:0.64.8
+|    |         +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |         +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |         +--- com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.64.8 (*)
+|    |         \--- com.vladsch.flexmark:flexmark-ext-tables:0.64.8 (*)
+|    +--- com.fasterxml.jackson.core:jackson-core:2.15.3 (*)
+|    +--- com.fasterxml.jackson.core:jackson-databind:2.15.3 (*)
+|    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (*)
+|    +--- com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3 (*)
+|    +--- com.google.api-client:google-api-client:1.35.2
+|    |    +--- com.google.oauth-client:google-oauth-client:1.34.1
+|    |    |    +--- com.google.http-client:google-http-client:1.42.0
+|    |    |    |    +--- org.apache.httpcomponents:httpclient:4.5.13
+|    |    |    |    |    +--- org.apache.httpcomponents:httpcore:4.4.13 -> 4.4.15
+|    |    |    |    |    +--- commons-logging:commons-logging:1.2
+|    |    |    |    |    \--- commons-codec:commons-codec:1.11 -> 1.16.0
+|    |    |    |    +--- org.apache.httpcomponents:httpcore:4.4.15
+|    |    |    |    +--- com.google.code.findbugs:jsr305:3.0.2
+|    |    |    |    +--- com.google.guava:guava:30.1.1-android -> 32.1.3-jre (*)
+|    |    |    |    +--- com.google.j2objc:j2objc-annotations:1.3
+|    |    |    |    +--- io.opencensus:opencensus-api:0.31.1
+|    |    |    |    |    \--- io.grpc:grpc-context:1.27.2
+|    |    |    |    \--- io.opencensus:opencensus-contrib-http-util:0.31.1
+|    |    |    |         +--- io.opencensus:opencensus-api:0.31.1 (*)
+|    |    |    |         \--- com.google.guava:guava:29.0-android -> 32.1.3-jre (*)
+|    |    |    +--- com.google.http-client:google-http-client-gson:1.42.0
+|    |    |    |    +--- com.google.http-client:google-http-client:1.42.0 (*)
+|    |    |    |    \--- com.google.code.gson:gson:2.9.0 -> 2.10.1
+|    |    |    \--- com.google.guava:guava:31.1-android -> 32.1.3-jre (*)
+|    |    +--- com.google.http-client:google-http-client-gson:1.42.0 (*)
+|    |    +--- com.google.guava:guava:31.1-jre -> 32.1.3-jre (*)
+|    |    +--- com.google.http-client:google-http-client-apache-v2:1.42.0
+|    |    |    +--- com.google.http-client:google-http-client:1.42.0 (*)
+|    |    |    +--- org.apache.httpcomponents:httpclient:4.5.13 (*)
+|    |    |    \--- org.apache.httpcomponents:httpcore:4.4.15
+|    |    +--- org.apache.httpcomponents:httpcore:4.4.15
+|    |    +--- org.apache.httpcomponents:httpclient:4.5.13 (*)
+|    |    \--- com.google.http-client:google-http-client:1.42.0 (*)
+|    +--- com.google.oauth-client:google-oauth-client-jetty:1.34.1
+|    |    +--- com.google.oauth-client:google-oauth-client-java6:1.34.1
+|    |    |    +--- com.google.oauth-client:google-oauth-client:1.34.1 (*)
+|    |    |    \--- com.google.http-client:google-http-client:1.42.0 (*)
+|    |    \--- com.google.http-client:google-http-client:1.42.0 (*)
+|    +--- com.google.apis:google-api-services-oauth2:v2-rev157-1.25.0
+|    |    \--- com.google.api-client:google-api-client:1.25.0 -> 1.35.2 (*)
+|    +--- commons-io:commons-io:2.15.0
+|    +--- commons-codec:commons-codec:1.16.0
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3
+|    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3
+|         +--- org.jetbrains:annotations:23.0.0 -> 24.0.1
+|         \--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.7.3
+|              +--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3 (c)
+|              \--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 (c)
++--- org.apache.httpcomponents.client5:httpclient5:5.2.3 (*)
++--- org.eclipse.jetty:jetty-server:11.0.18 (*)
++--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
++--- org.eclipse.jetty:jetty-annotations:11.0.18 (*)
++--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18 (*)
++--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18 (*)
++--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (*)
+\--- org.slf4j:slf4j-api:2.0.9
+
+runtimeElements - Runtime elements for the 'main' feature. (n)
+No dependencies
+
+runtimeElements-published (n)
+No dependencies
+
+runtimeOnly - Runtime only dependencies for null/main. (n)
+No dependencies
+
+testAnnotationProcessor - Annotation processors and their dependencies for source set 'test'.
+No dependencies
+
+testApi - API dependencies for null/test (n)
+No dependencies
+
+testApiDependenciesMetadata
+No dependencies
+
+testCompileClasspath - Compile classpath for null/test.
++--- org.jetbrains.kotlin:kotlin-scripting-jsr223:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21
++--- com.simiacryptus.skyenet:kotlin:1.0.43 -> project :SkyeNet:kotlin
++--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai
++--- com.simiacryptus.skyenet:core:1.0.43 -> project :SkyeNet:core
++--- com.simiacryptus.skyenet:webui:1.0.43 -> project :SkyeNet:webui
++--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3
+|    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3
+|         +--- org.jetbrains:annotations:23.0.0 -> 24.0.1
+|         \--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.7.3
+|              +--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3 (c)
+|              \--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 (c)
++--- org.apache.httpcomponents.client5:httpclient5:5.2.3
+|    +--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    +--- org.apache.httpcomponents.core5:httpcore5-h2:5.2.4
+|    |    \--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    \--- org.slf4j:slf4j-api:1.7.36 -> 2.0.9
++--- org.eclipse.jetty:jetty-server:11.0.18
+|    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty:jetty-http:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-util:11.0.18
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-io:11.0.18
+|    |    |    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty:jetty-servlet:11.0.18
+|    +--- org.eclipse.jetty:jetty-security:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty:jetty-annotations:11.0.18
+|    +--- org.eclipse.jetty:jetty-plus:11.0.18
+|    |    +--- jakarta.transaction:jakarta.transaction-api:2.0.0
+|    |    +--- org.eclipse.jetty:jetty-jndi:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    |    +--- org.eclipse.jetty:jetty-xml:11.0.18
+|    |    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    +--- jakarta.annotation:jakarta.annotation-api:2.1.1
+|    +--- org.ow2.asm:asm:9.6
+|    +--- org.ow2.asm:asm-commons:9.6
+|    |    +--- org.ow2.asm:asm:9.6
+|    |    \--- org.ow2.asm:asm-tree:9.6
+|    |         \--- org.ow2.asm:asm:9.6
+|    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    \--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
++--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    \--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18
+|    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-server:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    |    \--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18 (*)
+|    +--- org.eclipse.jetty.websocket:websocket-core-client:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    \--- org.eclipse.jetty:jetty-client:11.0.18
+|    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-alpn-client:11.0.18
+|    |         |    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-client:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (*)
++--- org.slf4j:slf4j-api:2.0.9
++--- org.slf4j:slf4j-simple:2.0.9
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- com.intellij.remoterobot:remote-robot:0.11.21
+|    +--- org.assertj:assertj-swing:3.17.1
+|    |    \--- org.assertj:assertj-core:3.17.2
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- com.intellij.remoterobot:remote-fixtures:0.11.21
++--- com.intellij.remoterobot:robot-server-plugin:0.11.21
++--- com.squareup.okhttp3:okhttp:4.12.0
+|    +--- com.squareup.okio:okio:3.6.0
+|    |    \--- com.squareup.okio:okio-jvm:3.6.0
+|    |         +--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10
+|    |         |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.10
+|    |         |    |    +--- org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10
+|    |         |    |    \--- org.jetbrains:annotations:13.0 -> 24.0.1
+|    |         |    \--- org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10
+|    |         |         \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.10 (*)
+|    |         \--- org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10
+|    \--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.21 -> 1.9.10 (*)
++--- org.junit.jupiter:junit-jupiter-api:5.10.1
+|    +--- org.junit:junit-bom:5.10.1
+|    |    +--- org.junit.jupiter:junit-jupiter-api:5.10.1 (c)
+|    |    \--- org.junit.platform:junit-platform-commons:1.10.1 (c)
+|    +--- org.opentest4j:opentest4j:1.3.0
+|    +--- org.junit.platform:junit-platform-commons:1.10.1
+|    |    +--- org.junit:junit-bom:5.10.1 (*)
+|    |    \--- org.apiguardian:apiguardian-api:1.1.2
+|    \--- org.apiguardian:apiguardian-api:1.1.2
++--- org.jetbrains:annotations:24.0.1
++--- unzipped.com.jetbrains.plugins:java:ideaIC-IC-232.10227.8-withSources
+\--- com.jetbrains:ideaIC:2023.2.5
+
+testCompileOnly - Compile only dependencies for null/test. (n)
+No dependencies
+
+testCompileOnlyDependenciesMetadata
+No dependencies
+
+testImplementation - Implementation only dependencies for null/test. (n)
++--- org.slf4j:slf4j-simple:2.0.9 (n)
++--- com.intellij.remoterobot:remote-robot:0.11.21 (n)
++--- com.intellij.remoterobot:remote-fixtures:0.11.21 (n)
++--- com.intellij.remoterobot:robot-server-plugin:0.11.21 (n)
++--- com.squareup.okhttp3:okhttp:4.12.0 (n)
+\--- org.junit.jupiter:junit-jupiter-api:5.10.1 (n)
+
+testImplementationDependenciesMetadata
++--- org.jetbrains.kotlin:kotlin-scripting-jsr223:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21
++--- com.simiacryptus.skyenet:kotlin:1.0.43 -> project :SkyeNet:kotlin
++--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai
++--- com.simiacryptus.skyenet:core:1.0.43 -> project :SkyeNet:core
++--- com.simiacryptus.skyenet:webui:1.0.43 -> project :SkyeNet:webui
++--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3
+|    \--- org.jetbrains.kotlinx:atomicfu:0.21.0
++--- org.apache.httpcomponents.client5:httpclient5:5.2.3
+|    +--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    +--- org.apache.httpcomponents.core5:httpcore5-h2:5.2.4
+|    |    \--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    \--- org.slf4j:slf4j-api:1.7.36 -> 2.0.9
++--- org.eclipse.jetty:jetty-server:11.0.18
+|    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty:jetty-http:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-util:11.0.18
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-io:11.0.18
+|    |    |    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty:jetty-servlet:11.0.18
+|    +--- org.eclipse.jetty:jetty-security:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty:jetty-annotations:11.0.18
+|    +--- org.eclipse.jetty:jetty-plus:11.0.18
+|    |    +--- jakarta.transaction:jakarta.transaction-api:2.0.0
+|    |    +--- org.eclipse.jetty:jetty-jndi:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    |    +--- org.eclipse.jetty:jetty-xml:11.0.18
+|    |    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    +--- jakarta.annotation:jakarta.annotation-api:2.1.1
+|    +--- org.ow2.asm:asm:9.6
+|    +--- org.ow2.asm:asm-commons:9.6
+|    |    +--- org.ow2.asm:asm:9.6
+|    |    \--- org.ow2.asm:asm-tree:9.6
+|    |         \--- org.ow2.asm:asm:9.6
+|    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    \--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
++--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    \--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18
+|    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-server:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    |    \--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18 (*)
+|    +--- org.eclipse.jetty.websocket:websocket-core-client:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    \--- org.eclipse.jetty:jetty-client:11.0.18
+|    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         +--- org.eclipse.jetty:jetty-alpn-client:11.0.18
+|    |         |    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |         |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-client:11.0.18 (*)
+|    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
++--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (*)
++--- org.slf4j:slf4j-api:2.0.9
++--- org.slf4j:slf4j-simple:2.0.9
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- com.intellij.remoterobot:remote-robot:0.11.21
+|    +--- org.assertj:assertj-swing:3.17.1
+|    |    \--- org.assertj:assertj-core:3.17.2
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- com.intellij.remoterobot:remote-fixtures:0.11.21
++--- com.intellij.remoterobot:robot-server-plugin:0.11.21
++--- com.squareup.okhttp3:okhttp:4.12.0
+|    +--- com.squareup.okio:okio:3.6.0
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10
+|    \--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.21
+|         +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.21
+|         |    +--- org.jetbrains.kotlin:kotlin-stdlib-common:1.8.21 -> 1.9.10
+|         |    \--- org.jetbrains:annotations:13.0 -> 24.0.1
+|         \--- org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.21
+|              \--- org.jetbrains.kotlin:kotlin-stdlib:1.8.21 (*)
++--- org.junit.jupiter:junit-jupiter-api:5.10.1
+|    +--- org.junit:junit-bom:5.10.1
+|    |    +--- org.junit.jupiter:junit-jupiter-api:5.10.1 (c)
+|    |    \--- org.junit.platform:junit-platform-commons:1.10.1 (c)
+|    +--- org.opentest4j:opentest4j:1.3.0
+|    +--- org.junit.platform:junit-platform-commons:1.10.1
+|    |    +--- org.junit:junit-bom:5.10.1 (*)
+|    |    \--- org.apiguardian:apiguardian-api:1.1.2
+|    \--- org.apiguardian:apiguardian-api:1.1.2
++--- org.jetbrains:annotations:24.0.1
++--- unzipped.com.jetbrains.plugins:java:ideaIC-IC-232.10227.8-withSources
+\--- com.jetbrains:ideaIC:2023.2.5
+
+testIntransitiveDependenciesMetadata
+No dependencies
+
+testKotlinScriptDef - Script filename extensions discovery classpath configuration
+No dependencies
+
+testKotlinScriptDefExtensions
+No dependencies
+
+testRuntimeClasspath - Runtime classpath of null/test.
++--- org.jetbrains.kotlin:kotlin-scripting-jsr223:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.21
++--- org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.21
++--- com.simiacryptus.skyenet:kotlin:1.0.43 -> project :SkyeNet:kotlin
+|    +--- project :SkyeNet:core
+|    |    +--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai
+|    |    |    +--- org.slf4j:slf4j-api:2.0.9
+|    |    |    +--- org.apache.httpcomponents.client5:httpclient5:5.2.3
+|    |    |    |    +--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    |    |    |    +--- org.apache.httpcomponents.core5:httpcore5-h2:5.2.4
+|    |    |    |    |    \--- org.apache.httpcomponents.core5:httpcore5:5.2.4
+|    |    |    |    \--- org.slf4j:slf4j-api:1.7.36 -> 2.0.9
+|    |    |    +--- com.fasterxml.jackson.core:jackson-databind:2.15.3
+|    |    |    |    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3
+|    |    |    |    |    \--- com.fasterxml.jackson:jackson-bom:2.15.3
+|    |    |    |    |         +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (c)
+|    |    |    |    |         +--- com.fasterxml.jackson.core:jackson-core:2.15.3 (c)
+|    |    |    |    |         +--- com.fasterxml.jackson.core:jackson-databind:2.15.3 (c)
+|    |    |    |    |         \--- com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3 (c)
+|    |    |    |    +--- com.fasterxml.jackson.core:jackson-core:2.15.3
+|    |    |    |    |    \--- com.fasterxml.jackson:jackson-bom:2.15.3 (*)
+|    |    |    |    \--- com.fasterxml.jackson:jackson-bom:2.15.3 (*)
+|    |    |    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (*)
+|    |    |    +--- com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3
+|    |    |    |    +--- com.fasterxml.jackson.core:jackson-databind:2.15.3 (*)
+|    |    |    |    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (*)
+|    |    |    |    \--- com.fasterxml.jackson:jackson-bom:2.15.3 (*)
+|    |    |    +--- com.google.guava:guava:32.1.3-jre
+|    |    |    |    +--- com.google.guava:failureaccess:1.0.1
+|    |    |    |    +--- com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
+|    |    |    |    +--- com.google.code.findbugs:jsr305:3.0.2
+|    |    |    |    +--- org.checkerframework:checker-qual:3.37.0
+|    |    |    |    \--- com.google.errorprone:error_prone_annotations:2.21.1
+|    |    |    +--- com.google.code.gson:gson:2.10.1
+|    |    |    +--- org.openimaj:JTransforms:1.3.10
+|    |    |    \--- commons-io:commons-io:2.15.0
+|    |    +--- org.slf4j:slf4j-api:2.0.9
+|    |    +--- commons-io:commons-io:2.15.0
+|    |    +--- com.google.guava:guava:32.1.3-jre (*)
+|    |    +--- com.google.code.gson:gson:2.10.1
+|    |    +--- org.apache.httpcomponents.client5:httpclient5:5.2.3 (*)
+|    |    +--- com.fasterxml.jackson.core:jackson-databind:2.15.3 (*)
+|    |    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (*)
+|    |    \--- com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3 (*)
+|    +--- commons-io:commons-io:2.15.0
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai (*)
++--- com.simiacryptus.skyenet:core:1.0.43 -> project :SkyeNet:core (*)
++--- com.simiacryptus.skyenet:webui:1.0.43 -> project :SkyeNet:webui
+|    +--- com.simiacryptus:jo-penai:1.0.41 -> project :jo-penai (*)
+|    +--- project :SkyeNet:core (*)
+|    +--- org.eclipse.jetty:jetty-server:11.0.18
+|    |    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    |    +--- org.eclipse.jetty:jetty-http:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    +--- org.eclipse.jetty:jetty-io:11.0.18
+|    |    |    |    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    |    \--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-servlet:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-security:11.0.18
+|    |    |    +--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty:jetty-annotations:11.0.18
+|    |    +--- org.eclipse.jetty:jetty-plus:11.0.18
+|    |    |    +--- jakarta.transaction:jakarta.transaction-api:2.0.0
+|    |    |    +--- org.eclipse.jetty:jetty-jndi:11.0.18
+|    |    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18
+|    |    |    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    |    |    +--- org.eclipse.jetty:jetty-xml:11.0.18
+|    |    |    |    |    +--- org.eclipse.jetty:jetty-util:11.0.18 (*)
+|    |    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    |    +--- jakarta.annotation:jakarta.annotation-api:2.1.1
+|    |    +--- org.ow2.asm:asm:9.6
+|    |    +--- org.ow2.asm:asm-commons:9.6
+|    |    |    +--- org.ow2.asm:asm:9.6
+|    |    |    \--- org.ow2.asm:asm-tree:9.6
+|    |    |         \--- org.ow2.asm:asm:9.6
+|    |    +--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    \--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    |    \--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18
+|    |    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-core-server:11.0.18
+|    |    |    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    |    |    \--- org.eclipse.jetty:jetty-server:11.0.18 (*)
+|    |    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:5.0.2
+|    |    +--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
+|    |    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-api:11.0.18
+|    |    +--- org.eclipse.jetty.websocket:websocket-jetty-common:11.0.18 (*)
+|    |    +--- org.eclipse.jetty.websocket:websocket-core-client:11.0.18
+|    |    |    +--- org.eclipse.jetty.websocket:websocket-core-common:11.0.18 (*)
+|    |    |    \--- org.eclipse.jetty:jetty-client:11.0.18
+|    |    |         +--- org.eclipse.jetty:jetty-http:11.0.18 (*)
+|    |    |         +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |    |         +--- org.eclipse.jetty:jetty-alpn-client:11.0.18
+|    |    |         |    +--- org.eclipse.jetty:jetty-io:11.0.18 (*)
+|    |    |         |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    |         \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    |    +--- org.eclipse.jetty:jetty-client:11.0.18 (*)
+|    |    \--- org.slf4j:slf4j-api:2.0.5 -> 2.0.9
+|    +--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (*)
+|    +--- org.eclipse.jetty:jetty-webapp:11.0.18 (*)
+|    +--- com.vladsch.flexmark:flexmark-all:0.64.8
+|    |    +--- com.vladsch.flexmark:flexmark:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8
+|    |    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-visitor:0.64.8
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-builder:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-dependency:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-format:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-html:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-html:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-util-visitor:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-abbreviation:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-builder:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-dependency:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-format:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-html:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-options:0.64.8
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util-visitor:0.64.8 (*)
+|    |    |    |    \--- org.jetbrains:annotations:24.0.1
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-autolink:0.64.8
+|    |    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    |    \--- org.nibor.autolink:autolink:0.6.0
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-admonition:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-anchorlink:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-aside:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-jira-converter:0.64.8
+|    |    |         +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-tables:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-wikilink:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-ins:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         +--- com.vladsch.flexmark:flexmark-ext-superscript:0.64.8
+|    |    |         |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |         \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-attributes:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-autolink:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-definition:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-emoji:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-jira-converter:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-enumerated-reference:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-ext-attributes:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-escaped-character:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-footnotes:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-issues:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-tasklist:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-users:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-gitlab:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-jekyll-front-matter:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-ext-yaml-front-matter:0.64.8
+|    |    |         +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |         \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-jekyll-tag:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-media-tags:0.64.8
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-resizable-image:0.64.8
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-macros:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-ext-gitlab:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-ins:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-xwiki-macros:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-superscript:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-tables:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-toc:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-typographic:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-wikilink:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-yaml-front-matter:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-ext-youtube-embedded:0.64.8
+|    |    |    \--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-html2md-converter:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-emoji:0.64.8 (*)
+|    |    |    \--- org.jsoup:jsoup:1.15.4
+|    |    +--- com.vladsch.flexmark:flexmark-jira-converter:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-pdf-converter:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    +--- org.jsoup:jsoup:1.15.4
+|    |    |    +--- com.ibm.icu:icu4j:72.1
+|    |    |    +--- com.openhtmltopdf:openhtmltopdf-core:1.0.10
+|    |    |    +--- com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10
+|    |    |    |    +--- org.apache.pdfbox:pdfbox:2.0.24
+|    |    |    |    |    +--- org.apache.pdfbox:fontbox:2.0.24
+|    |    |    |    |    |    \--- commons-logging:commons-logging:1.2
+|    |    |    |    |    \--- commons-logging:commons-logging:1.2
+|    |    |    |    +--- org.apache.pdfbox:xmpbox:2.0.24
+|    |    |    |    |    \--- commons-logging:commons-logging:1.2
+|    |    |    |    +--- com.openhtmltopdf:openhtmltopdf-core:1.0.10
+|    |    |    |    \--- de.rototor.pdfbox:graphics2d:0.32
+|    |    |    |         \--- org.apache.pdfbox:pdfbox:2.0.24 (*)
+|    |    |    \--- com.openhtmltopdf:openhtmltopdf-rtl-support:1.0.10
+|    |    |         \--- com.openhtmltopdf:openhtmltopdf-core:1.0.10
+|    |    +--- com.vladsch.flexmark:flexmark-profile-pegdown:0.64.8
+|    |    |    +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-abbreviation:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-anchorlink:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-aside:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-autolink:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-definition:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-emoji:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-escaped-character:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-footnotes:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-gfm-tasklist:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-ins:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-jekyll-front-matter:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-superscript:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-tables:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-toc:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-typographic:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-ext-wikilink:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    |    \--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-ast:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-builder:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-collection:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-data:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-dependency:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-format:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-html:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-misc:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-options:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-sequence:0.64.8 (*)
+|    |    +--- com.vladsch.flexmark:flexmark-util-visitor:0.64.8 (*)
+|    |    \--- com.vladsch.flexmark:flexmark-youtrack-converter:0.64.8
+|    |         +--- com.vladsch.flexmark:flexmark-util:0.64.8 (*)
+|    |         +--- com.vladsch.flexmark:flexmark:0.64.8 (*)
+|    |         +--- com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.64.8 (*)
+|    |         \--- com.vladsch.flexmark:flexmark-ext-tables:0.64.8 (*)
+|    +--- com.fasterxml.jackson.core:jackson-core:2.15.3 (*)
+|    +--- com.fasterxml.jackson.core:jackson-databind:2.15.3 (*)
+|    +--- com.fasterxml.jackson.core:jackson-annotations:2.15.3 (*)
+|    +--- com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3 (*)
+|    +--- com.google.api-client:google-api-client:1.35.2
+|    |    +--- com.google.oauth-client:google-oauth-client:1.34.1
+|    |    |    +--- com.google.http-client:google-http-client:1.42.0
+|    |    |    |    +--- org.apache.httpcomponents:httpclient:4.5.13
+|    |    |    |    |    +--- org.apache.httpcomponents:httpcore:4.4.13 -> 4.4.15
+|    |    |    |    |    +--- commons-logging:commons-logging:1.2
+|    |    |    |    |    \--- commons-codec:commons-codec:1.11 -> 1.16.0
+|    |    |    |    +--- org.apache.httpcomponents:httpcore:4.4.15
+|    |    |    |    +--- com.google.code.findbugs:jsr305:3.0.2
+|    |    |    |    +--- com.google.guava:guava:30.1.1-android -> 32.1.3-jre (*)
+|    |    |    |    +--- com.google.j2objc:j2objc-annotations:1.3
+|    |    |    |    +--- io.opencensus:opencensus-api:0.31.1
+|    |    |    |    |    \--- io.grpc:grpc-context:1.27.2
+|    |    |    |    \--- io.opencensus:opencensus-contrib-http-util:0.31.1
+|    |    |    |         +--- io.opencensus:opencensus-api:0.31.1 (*)
+|    |    |    |         \--- com.google.guava:guava:29.0-android -> 32.1.3-jre (*)
+|    |    |    +--- com.google.http-client:google-http-client-gson:1.42.0
+|    |    |    |    +--- com.google.http-client:google-http-client:1.42.0 (*)
+|    |    |    |    \--- com.google.code.gson:gson:2.9.0 -> 2.10.1
+|    |    |    \--- com.google.guava:guava:31.1-android -> 32.1.3-jre (*)
+|    |    +--- com.google.http-client:google-http-client-gson:1.42.0 (*)
+|    |    +--- com.google.guava:guava:31.1-jre -> 32.1.3-jre (*)
+|    |    +--- com.google.http-client:google-http-client-apache-v2:1.42.0
+|    |    |    +--- com.google.http-client:google-http-client:1.42.0 (*)
+|    |    |    +--- org.apache.httpcomponents:httpclient:4.5.13 (*)
+|    |    |    \--- org.apache.httpcomponents:httpcore:4.4.15
+|    |    +--- org.apache.httpcomponents:httpcore:4.4.15
+|    |    +--- org.apache.httpcomponents:httpclient:4.5.13 (*)
+|    |    \--- com.google.http-client:google-http-client:1.42.0 (*)
+|    +--- com.google.oauth-client:google-oauth-client-jetty:1.34.1
+|    |    +--- com.google.oauth-client:google-oauth-client-java6:1.34.1
+|    |    |    +--- com.google.oauth-client:google-oauth-client:1.34.1 (*)
+|    |    |    \--- com.google.http-client:google-http-client:1.42.0 (*)
+|    |    \--- com.google.http-client:google-http-client:1.42.0 (*)
+|    +--- com.google.apis:google-api-services-oauth2:v2-rev157-1.25.0
+|    |    \--- com.google.api-client:google-api-client:1.25.0 -> 1.35.2 (*)
+|    +--- commons-io:commons-io:2.15.0
+|    +--- commons-codec:commons-codec:1.16.0
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3
+|    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3
+|         +--- org.jetbrains:annotations:23.0.0 -> 24.0.1
+|         \--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.7.3
+|              +--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3 (c)
+|              \--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 (c)
++--- org.apache.httpcomponents.client5:httpclient5:5.2.3 (*)
++--- org.eclipse.jetty:jetty-server:11.0.18 (*)
++--- org.eclipse.jetty:jetty-servlet:11.0.18 (*)
++--- org.eclipse.jetty:jetty-annotations:11.0.18 (*)
++--- org.eclipse.jetty.websocket:websocket-jetty-server:11.0.18 (*)
++--- org.eclipse.jetty.websocket:websocket-jetty-client:11.0.18 (*)
++--- org.eclipse.jetty.websocket:websocket-servlet:11.0.18 (*)
++--- org.slf4j:slf4j-api:2.0.9
++--- org.slf4j:slf4j-simple:2.0.9
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- com.intellij.remoterobot:remote-robot:0.11.21
+|    +--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10 -> 1.9.10
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.10
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10
+|    |    |    \--- org.jetbrains:annotations:13.0 -> 24.0.1
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10
+|    |         \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.10 (*)
+|    +--- org.jetbrains.kotlin:kotlin-reflect:1.8.10
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.8.10 -> 1.9.10 (*)
+|    +--- com.squareup.retrofit2:retrofit:2.9.0
+|    |    \--- com.squareup.okhttp3:okhttp:3.14.9 -> 4.12.0
+|    |         +--- com.squareup.okio:okio:3.6.0
+|    |         |    \--- com.squareup.okio:okio-jvm:3.6.0
+|    |         |         +--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10 (*)
+|    |         |         \--- org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10
+|    |         \--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.21 -> 1.9.10 (*)
+|    +--- com.squareup.retrofit2:converter-gson:2.9.0
+|    |    +--- com.squareup.retrofit2:retrofit:2.9.0 (*)
+|    |    \--- com.google.code.gson:gson:2.8.5 -> 2.10.1
+|    +--- org.assertj:assertj-swing:3.17.1
+|    |    +--- org.assertj:assertj-core:3.17.2
+|    |    \--- org.easytesting:fest-util:1.2.5
+|    \--- org.slf4j:slf4j-api:2.0.9
++--- com.intellij.remoterobot:remote-fixtures:0.11.21
+|    +--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10 -> 1.9.10 (*)
+|    \--- com.intellij.remoterobot:remote-robot:0.11.21 (*)
++--- com.intellij.remoterobot:robot-server-plugin:0.11.21
++--- com.squareup.okhttp3:okhttp:4.12.0 (*)
++--- org.junit.jupiter:junit-jupiter-api:5.10.1
+|    +--- org.junit:junit-bom:5.10.1
+|    |    +--- org.junit.jupiter:junit-jupiter-api:5.10.1 (c)
+|    |    +--- org.junit.jupiter:junit-jupiter-engine:5.10.1 (c)
+|    |    +--- org.junit.platform:junit-platform-commons:1.10.1 (c)
+|    |    \--- org.junit.platform:junit-platform-engine:1.10.1 (c)
+|    +--- org.opentest4j:opentest4j:1.3.0
+|    \--- org.junit.platform:junit-platform-commons:1.10.1
+|         \--- org.junit:junit-bom:5.10.1 (*)
++--- org.junit.jupiter:junit-jupiter-engine:5.10.1
+|    +--- org.junit:junit-bom:5.10.1 (*)
+|    +--- org.junit.platform:junit-platform-engine:1.10.1
+|    |    +--- org.junit:junit-bom:5.10.1 (*)
+|    |    +--- org.opentest4j:opentest4j:1.3.0
+|    |    \--- org.junit.platform:junit-platform-commons:1.10.1 (*)
+|    \--- org.junit.jupiter:junit-jupiter-api:5.10.1 (*)
++--- org.jetbrains:annotations:24.0.1
++--- unzipped.com.jetbrains.plugins:java:ideaIC-IC-232.10227.8-withSources
+\--- com.jetbrains:ideaIC:2023.2.5
+
+testRuntimeOnly - Runtime only dependencies for null/test. (n)
+\--- org.junit.jupiter:junit-jupiter-engine:5.10.1 (n)
+
+z10_intellijDefaultDependencies
+\--- org.jetbrains:annotations:24.0.1
+
+z20_performanceTest
+No dependencies
+
+z50_ideaPlugins
+\--- unzipped.com.jetbrains.plugins:java:ideaIC-IC-232.10227.8-withSources
+
+z90_intellij
+\--- com.jetbrains:ideaIC:2023.2.5
+
+(c) - A dependency constraint, not a dependency. The dependency affected by the constraint occurs elsewhere in the tree.
+(*) - Indicates repeated occurrences of a transitive dependency subtree. Gradle expands transitive dependency subtrees only once per project; repeat occurrences only display the root of the subtree, followed by this annotation.
+
+(n) - A dependency or dependency configuration that cannot be resolved.
+
+A web-based, searchable dependency report is available by adding the --scan option.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.4/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 46s
+1 actionable task: 1 executed

@@ -1,13 +1,31 @@
 package com.github.simiacryptus.aicoder.config
 
+import com.github.simiacryptus.aicoder.ApplicationEvents
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import java.awt.BorderLayout
 import java.awt.FlowLayout
+import java.io.File
+import java.io.FileOutputStream
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
 class NonReflectionAppSettingsConfigurable : AppSettingsConfigurable() {
+  override fun apply() {
+    super.apply()
+    if (settingsInstance.apiLog) {
+      val file = File(ApplicationEvents.pluginHome, "openai.log")
+      if(AppSettingsState.auxiliaryLog != file) {
+        file.deleteOnExit()
+        AppSettingsState.auxiliaryLog = file
+        IdeaOpenAIClient.instance.logStreams.add(FileOutputStream(file, true).buffered())
+      }
+    } else {
+      AppSettingsState.auxiliaryLog = null
+      IdeaOpenAIClient.instance.logStreams.retainAll { it.close(); false }
+    }
+  }
 
   override fun build(component: AppSettingsComponent): JComponent {
     val tabbedPane = com.intellij.ui.components.JBTabbedPane()
@@ -64,6 +82,7 @@ class NonReflectionAppSettingsConfigurable : AppSettingsConfigurable() {
           add(JLabel("Enable API Log:"))
           add(component.apiLog)
           add(component.openApiLog)
+          add(component.clearApiLog)
         })
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
           add(JLabel("API Base:"))

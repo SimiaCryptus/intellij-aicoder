@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.jopenai.util.JsonUtil
+import java.io.File
 
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
@@ -32,7 +33,7 @@ data class AppSettingsState(
     val fileActions = ActionSettingsRegistry()
     private val recentCommands = mutableMapOf<String,MRUItems>()
 
-    fun defaultChatModel(): OpenAITextModel = ChatModels.entries.first { it.modelName == modelName }
+    fun defaultChatModel(): OpenAITextModel = ChatModels.values().first { it.modelName.equals(modelName) }
 
     @JsonIgnore
     override fun getState() = SimpleEnvelope(JsonUtil.toJson(this))
@@ -52,10 +53,11 @@ data class AppSettingsState(
     }
 
     companion object {
+        var auxiliaryLog: File? = null
+
         @JvmStatic
         val instance: AppSettingsState by lazy {
-            val application = ApplicationManager.getApplication()
-            if (null == application) AppSettingsState() else application.getService(AppSettingsState::class.java)
+            ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
         }
     }
 }

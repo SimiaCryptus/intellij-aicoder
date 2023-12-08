@@ -728,7 +728,7 @@ object UITools {
 
   fun checkApiKey(k: String = AppSettingsState.instance.apiKey): String {
     var key = k
-    if (key.isEmpty()) {
+    if (key.isEmpty() || key != AppSettingsState.instance.apiKey) {
       synchronized(OpenAIClient::class.java) {
         key = AppSettingsState.instance.apiKey
         if (key.isEmpty()) {

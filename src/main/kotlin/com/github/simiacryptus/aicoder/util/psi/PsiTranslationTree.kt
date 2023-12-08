@@ -248,7 +248,7 @@ class PsiTranslationTree(
         val proxy: VirtualAPI
             get() = ChatProxy(
                 clazz = VirtualAPI::class.java,
-                api = IdeaOpenAIClient.api,
+                api = IdeaOpenAIClient.instance,
                 model = AppSettingsState.instance.defaultChatModel(),
                 deserializerRetries = 5,
             ).create()

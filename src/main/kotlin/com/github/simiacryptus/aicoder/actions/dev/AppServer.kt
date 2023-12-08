@@ -28,10 +28,13 @@ class AppServer(
         contexts
     }
 
+    val appRegistry = mutableMapOf<String, ChatServer>()
+
     @Synchronized
     fun addApp(path: String, socketServer: ChatServer) {
         try {
             synchronized(serverLock) {
+                appRegistry[path] = socketServer
                 if (server.isRunning) server.stop() // Stop the server
                 handlers += newWebAppContext(socketServer, path)
                 contexts.handlers = handlers.toTypedArray()
@@ -50,7 +53,7 @@ class AppServer(
         context.classLoader = AppServer::class.java.classLoader
         context.contextPath = path
         context.welcomeFiles = arrayOf("index.html")
-        server.configure(context, baseUrl = "$domainName/$path")
+        server.configure(context, path = path, baseUrl = "$domainName/$path")
         return context
     }
 

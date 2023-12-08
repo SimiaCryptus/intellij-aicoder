@@ -2,7 +2,6 @@
     <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
     <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
-
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.java</depends>
@@ -27,6 +26,11 @@
                                 id="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 order="first"/>
     </extensions>
+
+    <applicationListeners>
+        <listener class="com.github.simiacryptus.aicoder.ApplicationEvents"
+                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    </applicationListeners>
 
     <actions>
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"

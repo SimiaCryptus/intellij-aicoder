@@ -29,19 +29,55 @@ val slf4j_version = "2.0.9"
 val skyenet_version = "1.0.43"
 val remoterobot_version = "0.11.21"
 dependencies {
+//
+//    implementation(group = "org.jetbrains.kotlin", name = "kotlin-scripting-jsr223", version = kotlin_version)
+//    {
+//        exclude(group = "org.jetbrains.kotlin", module = "")
+//    }
+//
+//    implementation(group = "org.jetbrains.kotlin", name = "kotlin-scripting-jvm-host", version = kotlin_version)
+//    {
+//        exclude(group = "org.jetbrains.kotlin", module = "")
+//    }
+//
+//    implementation(group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-embeddable", version = kotlin_version)
+//    {
+//        exclude(group = "org.jetbrains.kotlin", module = "")
+//    }
+//
+//    implementation(group = "org.jetbrains.kotlin", name = "kotlin-scripting-jvm", version = kotlin_version)
+//    {
+//        exclude(group = "org.jetbrains.kotlin", module = "")
+//    }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.40")
-    { exclude(group = "org.jetbrains.kotlin", module = "") }
+    implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
 
-    implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
-    { exclude(group = "org.jetbrains.kotlin", module = "") }
-
-    implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
-    { exclude(group = "org.jetbrains.kotlin", module = "") }
-
-    compileOnly(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
+    //language=TEXT
     implementation(files("C:\\Users\\andre\\code\\SkyeNet\\kotlin-hack\\build\\libs\\kotlin-hack-1.0.43.jar"))
 //    implementation(group = "com.simiacryptus.skyenet", name = "kotlin-hack", version = "1.0.42") { isTransitive = false }
+
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.41")
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
+
+    implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
+
+    implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
+
+    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = "1.7.3")
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
 
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
