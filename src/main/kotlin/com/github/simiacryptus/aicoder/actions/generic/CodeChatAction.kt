@@ -4,16 +4,17 @@ import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
-import com.simiacryptus.skyenet.webui.chat.CodeChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
@@ -27,10 +28,13 @@ class CodeChatAction : BaseAction() {
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
     val session = StorageInterface.newGlobalID()
+    val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
+    val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
     agents[session] = CodeChatSocketManager(
       session = session,
-      language = ComputerLanguage.getComputerLanguage(e)?.name ?: return,
+      language = language,
       codeSelection = editor.caretModel.primaryCaret.selectedText ?: editor.document.text,
+      filename = filename,
       api = api,
       model = AppSettingsState.instance.defaultChatModel(),
       storage = ApplicationServices.dataStorageFactory(root)

@@ -29,9 +29,6 @@ class InternalCoderAction : BaseAction() {
     val codingApp = initApp(server, path)
     val socketManager = codingApp.newSession(null, session)
     codingApp.sessions[session] = socketManager
-
-    IdeaKotlinInterpreter.project = e.project ?: IdeaKotlinInterpreter.project
-
     val symbols: MutableMap<String, Any> = mapOf(
       "event" to e,
     ).toMutableMap()
@@ -39,7 +36,7 @@ class InternalCoderAction : BaseAction() {
     e.getData(CommonDataKeys.PSI_FILE)?.apply { symbols["file"] = this }
     e.getData(CommonDataKeys.PSI_ELEMENT)?.apply { symbols["element"] = this }
     e.getData(CommonDataKeys.VIRTUAL_FILE)?.apply { symbols["virtualFile"] = this }
-    IdeaKotlinInterpreter.project?.apply { symbols["project"] = this }
+    e.project?.apply { symbols["project"] = this }
     e.getData(CommonDataKeys.SYMBOLS)?.apply { symbols["symbols"] = this }
     e.getData(CommonDataKeys.CARET)?.apply { symbols["psiElement"] = this }
     e.getData(CommonDataKeys.CARET)?.apply { symbols["psiElement"] = this }

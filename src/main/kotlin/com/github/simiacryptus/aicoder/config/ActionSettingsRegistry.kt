@@ -38,7 +38,8 @@ class ActionSettingsRegistry {
                     } else {
                         if (actionConfig.isDynamic || (actionConfig.version ?: 0.0) >= version) {
                             val localCode = actionConfig.file.readText().dropWhile { !it.isLetter() }
-                            if (!localCode.equals(code)) {
+                                // HACK BELOW FOR Kotlin Scripting Debug
+                            if (false && !localCode.equals(code)) {
                                 try {
                                     val element = actionConfig.buildAction(localCode)
                                     children.remove(action)
