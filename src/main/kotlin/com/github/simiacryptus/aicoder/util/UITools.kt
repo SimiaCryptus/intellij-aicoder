@@ -916,7 +916,6 @@ object UITools {
           |Error Message: ${e.message}
           |Error Type: ${e.javaClass.name}
           |API Base: ${AppSettingsState.instance.apiBase}
-          |Token Counter: ${AppSettingsState.instance.tokenCounter}
           |
           |OS: ${System.getProperty("os.name")} / ${System.getProperty("os.version")} / ${System.getProperty("os.arch")}
           |Locale: ${Locale.getDefault().country} / ${Locale.getDefault().language}

@@ -117,7 +117,7 @@ class ActionTable(
             if (JOptionPane.showOptionDialog(
                     null,
                     panel,
-                    "API Key",
+                    "Create Action",
                     JOptionPane.NO_OPTION,
                     JOptionPane.PLAIN_MESSAGE,
                     null,

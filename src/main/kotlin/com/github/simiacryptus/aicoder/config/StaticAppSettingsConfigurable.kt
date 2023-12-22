@@ -11,12 +11,12 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class NonReflectionAppSettingsConfigurable : AppSettingsConfigurable() {
+class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
   override fun apply() {
     super.apply()
     if (settingsInstance.apiLog) {
       val file = File(ApplicationEvents.pluginHome, "openai.log")
-      if(AppSettingsState.auxiliaryLog != file) {
+      if(AppSettingsState.auxiliaryLog?.absolutePath?.lowercase() != file.absolutePath.lowercase()) {
         file.deleteOnExit()
         AppSettingsState.auxiliaryLog = file
         IdeaOpenAIClient.instance.logStreams.add(FileOutputStream(file, true).buffered())
@@ -46,11 +46,11 @@ class NonReflectionAppSettingsConfigurable : AppSettingsConfigurable() {
           add(JLabel("Human Language:"))
           add(component.humanLanguage)
         })
-        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          add(JLabel("Token Counter:"))
-          add(component.tokenCounter)
-          add(component.clearCounter)
-        })
+//        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+//          add(JLabel("Token Counter:"))
+//          add(component.tokenCounter)
+//          add(component.clearCounter)
+//        })
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
           add(JLabel("API Key:"))
           add(component.apiKey)
@@ -95,6 +95,10 @@ class NonReflectionAppSettingsConfigurable : AppSettingsConfigurable() {
       }, BorderLayout.NORTH)
     })
 
+    tabbedPane.addTab("Usage", JPanel(BorderLayout()).apply {
+      add(component.usage, BorderLayout.CENTER)
+    })
+
     tabbedPane.addTab("File Actions", JPanel(BorderLayout()).apply {
       add(component.fileActions, BorderLayout.CENTER)
     })
@@ -108,7 +112,7 @@ class NonReflectionAppSettingsConfigurable : AppSettingsConfigurable() {
 
   override fun write(settings: AppSettingsState, component: AppSettingsComponent) {
     try {
-      component.tokenCounter.text = settings.tokenCounter.toString()
+//      component.tokenCounter.text = settings.tokenCounter.toString()
       component.humanLanguage.text = settings.humanLanguage
       component.listeningPort.text = settings.listeningPort.toString()
       component.listeningEndpoint.text = settings.listeningEndpoint
@@ -129,7 +133,7 @@ class NonReflectionAppSettingsConfigurable : AppSettingsConfigurable() {
 
   override fun read(component: AppSettingsComponent, settings: AppSettingsState) {
     try {
-      settings.tokenCounter = component.tokenCounter.text.safeInt()
+//      settings.tokenCounter = component.tokenCounter.text.safeInt()
       settings.humanLanguage = component.humanLanguage.text
       settings.listeningPort = component.listeningPort.text.safeInt()
       settings.listeningEndpoint = component.listeningEndpoint.text
@@ -149,7 +153,7 @@ class NonReflectionAppSettingsConfigurable : AppSettingsConfigurable() {
   }
 
   companion object {
-    val log = com.intellij.openapi.diagnostic.Logger.getInstance(NonReflectionAppSettingsConfigurable::class.java)
+    val log = com.intellij.openapi.diagnostic.Logger.getInstance(StaticAppSettingsConfigurable::class.java)
   }
 }
 

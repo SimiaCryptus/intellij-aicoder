@@ -11,7 +11,7 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
     val actionSettings: MutableMap<String, ActionSettings> = HashMap()
-    private val version = 2.0012
+    private val version = 2.0014
 
     fun edit(superChildren: Array<out AnAction>): Array<AnAction> {
         val children = superChildren.toList().toMutableList()
@@ -39,7 +39,7 @@ class ActionSettingsRegistry {
                         if (actionConfig.isDynamic || (actionConfig.version ?: 0.0) >= version) {
                             val localCode = actionConfig.file.readText().dropWhile { !it.isLetter() }
                                 // HACK BELOW FOR Kotlin Scripting Debug
-                            if (false && !localCode.equals(code)) {
+                            if (!localCode.equals(code)) {
                                 try {
                                     val element = actionConfig.buildAction(localCode)
                                     children.remove(action)

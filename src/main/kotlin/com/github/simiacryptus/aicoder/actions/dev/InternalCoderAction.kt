@@ -29,6 +29,7 @@ class InternalCoderAction : BaseAction() {
     val codingApp = initApp(server, path)
     val socketManager = codingApp.newSession(null, session)
     codingApp.sessions[session] = socketManager
+
     val symbols: MutableMap<String, Any> = mapOf(
       "event" to e,
     ).toMutableMap()
@@ -40,6 +41,7 @@ class InternalCoderAction : BaseAction() {
     e.getData(CommonDataKeys.SYMBOLS)?.apply { symbols["symbols"] = this }
     e.getData(CommonDataKeys.CARET)?.apply { symbols["psiElement"] = this }
     e.getData(CommonDataKeys.CARET)?.apply { symbols["psiElement"] = this }
+
     agents[session] = CodingAgent(
       api = api,
       dataStorage = ApplicationServices.dataStorageFactory(codingApp.root),
@@ -49,6 +51,7 @@ class InternalCoderAction : BaseAction() {
       interpreter = IdeaKotlinInterpreter::class,
       symbols = symbols,
       temperature = 0.1,
+      details = "Ensure that responses are printed; this is not a REPL."
     )
 
     Thread {

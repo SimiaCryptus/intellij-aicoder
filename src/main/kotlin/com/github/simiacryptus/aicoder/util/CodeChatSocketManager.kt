@@ -9,7 +9,7 @@ import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 
-class CodeChatSocketManager(
+open class CodeChatSocketManager(
   session: Session,
   val language: String,
   val filename: String,
@@ -34,16 +34,11 @@ class CodeChatSocketManager(
         |
         |```$language
         |${
-          codeSelection.split("\n").mapIndexed { lineNumber: Int, lineText: String ->
-            String.format("%4d: %s", lineNumber + 1, lineText)
-          }.joinToString("\n")
+          codeSelection
         }}
         |```
         |
         |Responses may use markdown formatting, including code blocks.
-        |Express code changes in diff format within ```diff code blocks.
-        |Diffs should not contain surrounding context to optimize the response.
-        |Non-diff code blocks should not contain line numbers.
         """.trimMargin(),
   api = api,
   applicationClass = ApplicationServer::class.java,

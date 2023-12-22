@@ -3,6 +3,7 @@
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.wm.IdeFrame
+import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.UsageManager
 import java.io.File
@@ -25,6 +26,7 @@ class ApplicationEvents : ApplicationActivationListener {
 
     private fun init(ideFrame: IdeFrame) {
         if (isInitialized.getAndSet(true)) return
+        OutputInterceptor.setupInterceptor()
         ApplicationServices.clientManager = object : ClientManager() {
             override fun createClient(session: Session, user: User?, dataStorage: StorageInterface?) =
                 IdeaOpenAIClient.instance
@@ -47,14 +49,14 @@ class ApplicationEvents : ApplicationActivationListener {
 
     companion object {
         val pluginHome by lazy {
-                var logPath = System.getProperty("idea.log.path")
+                var logPath = System.getProperty("idea.plugins.path")
                 if (logPath == null) {
                     logPath = System.getProperty("java.io.tmpdir")
                 }
                 if (logPath == null) {
                     logPath = System.getProperty("user.home")
                 }
-                File(logPath, ".aicoder")
+                File(logPath, "AICodingAsst")
             }
 
     }

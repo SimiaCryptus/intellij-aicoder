@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
 
-class CodeChatAction : BaseAction() {
+class DiffChatAction : BaseAction() {
 
   val path = "/codeChat"
 
@@ -30,15 +30,25 @@ class CodeChatAction : BaseAction() {
     val session = StorageInterface.newGlobalID()
     val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
     val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
-    agents[session] = CodeChatSocketManager(
+    agents[session] = object : CodeChatSocketManager(
       session = session,
       language = language,
-      codeSelection = editor.caretModel.primaryCaret.selectedText ?: editor.document.text,
+      codeSelection = (editor.caretModel.primaryCaret.selectedText ?: editor.document.text).split("\n")
+        .mapIndexed { lineNumber: Int, lineText: String ->
+          String.format("%4d: %s", lineNumber + 1, lineText)
+        }.joinToString("\n"),
       filename = filename,
       api = api,
       model = AppSettingsState.instance.defaultChatModel(),
       storage = ApplicationServices.dataStorageFactory(root)
-    )
+    ) {
+      override val systemPrompt: String
+        get() = super.systemPrompt + """
+          Express code changes in diff format within ```diff code blocks.
+          Diffs should not contain surrounding context to optimize the response.
+          Non-diff code blocks should not contain line numbers.
+        """.trimIndent()
+    }
 
     val server = AppServer.getServer(e.project)
     val app = initApp(server, path)
@@ -57,7 +67,7 @@ class CodeChatAction : BaseAction() {
   override fun isEnabled(event: AnActionEvent) = true
 
   companion object {
-    private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
+    private val log = LoggerFactory.getLogger(DiffChatAction::class.java)
     private val agents = mutableMapOf<Session, SocketManager>()
     val root: File get() = File(ApplicationEvents.pluginHome, "code_chat")
     private fun initApp(server: AppServer, path: String): ChatServer {

@@ -6,13 +6,15 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.java</depends>
     <depends>org.jetbrains.kotlin</depends>
+    <depends optional="true">org.jetbrains.plugins.textmate</depends>
+
 <!--
 -->
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.simiacryptus.aicoder.config.AppSettingsState"/>
         <applicationConfigurable parentId="tools"
-                                 instance="com.github.simiacryptus.aicoder.config.NonReflectionAppSettingsConfigurable"
+                                 instance="com.github.simiacryptus.aicoder.config.StaticAppSettingsConfigurable"
                                  id="org.intellij.sdk.settings.AppSettingsConfigurable"
                                  displayName="AI Coder"/>
     </extensions>
@@ -180,6 +182,15 @@
                 description="Open code chat">
             <!--DOC
         The `Open Code Chat` action opens a chat window in a browser, allowing the user to discuss the code with ChatGPT.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.DiffChatAction"
+                text="Open Diff Chat"
+                description="Open diff chat">
+            <!--DOC
+        The `Open Diff Chat` action opens a chat window in a browser, allowing the user to discuss the code with ChatGPT.
+        This includes line numbers and elicits diffs from the AI.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>

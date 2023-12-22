@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import org.slf4j.LoggerFactory
 import java.awt.event.ActionEvent
 import java.io.FileOutputStream
@@ -20,15 +21,15 @@ import javax.swing.JButton
 
 class AppSettingsComponent : com.intellij.openapi.Disposable {
 
-  @Name("Token Counter")
-  val tokenCounter = JBTextField()
+//  @Name("Token Counter")
+//  val tokenCounter = JBTextField()
 
-  @Suppress("unused")
-  val clearCounter = JButton(object : AbstractAction("Clear Token Counter") {
-    override fun actionPerformed(e: ActionEvent) {
-      tokenCounter.text = "0"
-    }
-  })
+//  @Suppress("unused")
+//  val clearCounter = JButton(object : AbstractAction("Clear Token Counter") {
+//    override fun actionPerformed(e: ActionEvent) {
+//      tokenCounter.text = "0"
+//    }
+//  })
 
   @Suppress("unused")
   @Name("Human Language")
@@ -117,8 +118,11 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
   var editorActions = ActionTable(AppSettingsState.instance.editorActions.actionSettings.values.map { it.copy() }
     .toTypedArray().toMutableList())
 
+  @Name("Editor Actions")
+  var usage = UsageTable(ApplicationServices.usageManager)
+
   init {
-    tokenCounter.isEditable = false
+//    tokenCounter.isEditable = false
     this.modelName.addItem(ChatModels.GPT35Turbo.modelName)
     this.modelName.addItem(ChatModels.GPT4.modelName)
     this.modelName.addItem(ChatModels.GPT4Turbo.modelName)

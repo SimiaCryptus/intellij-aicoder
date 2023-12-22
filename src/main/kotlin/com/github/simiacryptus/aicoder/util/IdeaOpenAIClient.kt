@@ -15,6 +15,7 @@ import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.User
 import org.apache.hc.core5.http.HttpRequest
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -28,11 +29,10 @@ class IdeaOpenAIClient : OpenAIClient(
     apiBase = AppSettingsState.instance.apiBase,
 ) {
     private val isInRequest = AtomicBoolean(false)
-    val session = StorageInterface.newGlobalID()
 
     override fun incrementTokens(model: OpenAIModel?, tokens: Usage) {
-        AppSettingsState.instance.tokenCounter += tokens.total_tokens
-        ApplicationServices.usageManager.incrementUsage(session, null, model!!, tokens)
+//        AppSettingsState.instance.tokenCounter += tokens.total_tokens
+        ApplicationServices.usageManager.incrementUsage(currentSession, localUser, model!!, tokens)
     }
 
     override fun authorize(request: HttpRequest) {
@@ -206,6 +206,8 @@ class IdeaOpenAIClient : OpenAIClient(
         }
 
         private val log = LoggerFactory.getLogger(IdeaOpenAIClient::class.java)
+        val currentSession = StorageInterface.newGlobalID()
+        val localUser = User(id = "1", email = "user@localhost")
     }
 
 }

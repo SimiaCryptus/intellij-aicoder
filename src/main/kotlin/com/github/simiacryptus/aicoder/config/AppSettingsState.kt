@@ -21,7 +21,7 @@ data class AppSettingsState(
     var apiThreads: Int = 4,
     var apiBase: String = "https://api.openai.com/v1",
     var apiKey: String = "",
-    var tokenCounter: Int = 0,
+//    var tokenCounter: Int = 0,
     var modalTasks: Boolean = false,
     var suppressErrors: Boolean = false,
     var apiLog: Boolean = false,
