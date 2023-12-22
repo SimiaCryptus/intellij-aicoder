@@ -293,6 +293,8 @@
                 description="Open code console">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
+            <add-to-group group-id="PopupMenuActions" anchor="last"/>
         </action>
 
     </actions>
