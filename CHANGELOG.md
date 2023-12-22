@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [1.2.24]
+
+### Improved
+
+- Code console
+- Usage tracking per model with cost
+- Various fixes
+
 ## [1.2.23]
 
 ### Improved

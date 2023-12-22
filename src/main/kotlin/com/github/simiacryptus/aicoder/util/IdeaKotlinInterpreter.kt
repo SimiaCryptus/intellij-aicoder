@@ -1,74 +1,53 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.intellij.lang.Language
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFileFactory
 import com.simiacryptus.skyenet.kotlin.KotlinInterpreter
-import org.jetbrains.kotlin.cli.common.repl.KotlinJsr223JvmScriptEngineFactoryBase
-import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
 import org.jetbrains.kotlin.jsr223.KotlinJsr223JvmScriptEngine4Idea
-import org.jetbrains.kotlin.resolve.AnalyzingUtils
-import org.slf4j.LoggerFactory
-import javax.script.ScriptEngine
-import kotlin.script.experimental.jvm.util.KotlinJars.kotlinScriptStandardJars
-import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
+import org.jetbrains.kotlin.jsr223.KotlinJsr223StandardScriptEngineFactory4Idea
+import java.lang.ref.WeakReference
+import java.lang.reflect.Proxy
+import java.util.*
+import javax.script.ScriptContext
 
-class IdeaKotlinInterpreter(defs: Map<String, Any>) : KotlinInterpreter(defs) {
+class IdeaKotlinInterpreter(
+  symbols: Map<String, Any>
+) : KotlinInterpreter(symbols) {
   companion object {
-    private val log = LoggerFactory.getLogger(IdeaKotlinInterpreter::class.java)
-
     var project: Project? = null
+    val storageMap = WeakHashMap<Any, UUID>()
+    val retrievalIndex = HashMap<UUID, WeakReference<Any>>()
   }
-
-  override val scriptEngine: ScriptEngine
-    get() {
-      val factory = object : KotlinJsr223JvmScriptEngineFactoryBase() {
-        override fun getScriptEngine(): ScriptEngine = KotlinJsr223JvmScriptEngine4Idea(
-          factory = this,
-          templateClasspath = scriptCompilationClasspathFromContextOrStdlib(
-            keyNames = arrayOf(),
-            classLoader = KotlinInterpreter::class.java.classLoader!!,
-            wholeClasspath = true,
-          ) + kotlinScriptStandardJars,
-          templateClassName = "kotlin.script.templates.standard.SimpleScriptTemplate",
-          getScriptArgs = { context, kClasses ->
-            ScriptArgsWithTypes(
-            scriptArgs = arrayOf(
-//              context.getBindings(ScriptContext.ENGINE_SCOPE)
-            ),
-            scriptArgsTypes = arrayOf(
-//              Bindings::class
-            )) },
-          scriptArgsTypes = arrayOf(
-            //Reflection.getOrCreateKotlinClass(MutableMap::class.java)
-          )
-        )
+  override val scriptEngine get() =
+      (KotlinJsr223StandardScriptEngineFactory4Idea().scriptEngine as KotlinJsr223JvmScriptEngine4Idea).apply {
+        val engineBindings = this.context.getBindings(ScriptContext.ENGINE_SCOPE)
+        val symbols = getSymbols()
+        val globalBindings = this.context.getBindings(ScriptContext.GLOBAL_SCOPE)
+        engineBindings?.putAll(symbols)
+        globalBindings?.putAll(symbols)
       }
-      return factory.scriptEngine
-    }
 
-  override fun validate(code: String) = try {
-    val messageCollector = MessageCollectorImpl(code)
-    val psiFileFactory = PsiFileFactory.getInstance(project!!)
-    runReadAction {
-      AnalyzingUtils.checkForSyntacticErrors(
-        psiFileFactory.createFileFromText(
-          "Dummy.kt",
-          Language.findLanguageByID("kotlin")!!,
-          code
-        )
-      )
+  override fun wrapCode(code: String): String {
+    val out = ArrayList<String>()
+    val (imports, otherCode) = code.split("\n").partition { it.trim().startsWith("import ") }
+    out.addAll(imports)
+    defs.forEach { (key, value) ->
+      val uuid = storageMap.getOrPut(value) { UUID.randomUUID() }
+      retrievalIndex.put(uuid, WeakReference(value))
+      val fqClassName = IdeaKotlinInterpreter::class.java.name.replace("$", ".")
+      val typeStr = typeOf(value)
+      out.add("val $key : $typeStr = $fqClassName.retrievalIndex.get(java.util.UUID.fromString(\"$uuid\"))?.get()!! as $typeStr\n")
     }
-    if (messageCollector.errors.isEmpty()) {
-      null
-    } else RuntimeException(
-      """
-      |${messageCollector.errors.joinToString("\n") { "Error: $it" }}
-      |${messageCollector.warnings.joinToString("\n") { "Warning: $it" }}
-      """.trimMargin()
-    )
-  } catch (e: Throwable) {
-    e
+    out.addAll(otherCode)
+    val txt = out.joinToString("\n")
+    return txt
   }
+
+  fun typeOf(value: Any?): String {
+    if (value is Proxy) {
+      return value.javaClass.interfaces[0].name.replace("$", ".") + "?"
+    }
+    val replace = value?.javaClass?.name?.replace("$", ".")
+    return if (replace != null) ("$replace") else "null"
+  }
+
 }

@@ -2,16 +2,19 @@
     <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
     <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
-
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.java</depends>
     <depends>org.jetbrains.kotlin</depends>
+    <depends optional="true">org.jetbrains.plugins.textmate</depends>
+
+<!--
+-->
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.simiacryptus.aicoder.config.AppSettingsState"/>
         <applicationConfigurable parentId="tools"
-                                 instance="com.github.simiacryptus.aicoder.config.NonReflectionAppSettingsConfigurable"
+                                 instance="com.github.simiacryptus.aicoder.config.StaticAppSettingsConfigurable"
                                  id="org.intellij.sdk.settings.AppSettingsConfigurable"
                                  displayName="AI Coder"/>
     </extensions>
@@ -27,6 +30,11 @@
                                 id="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 order="first"/>
     </extensions>
+
+    <applicationListeners>
+        <listener class="com.github.simiacryptus.aicoder.ApplicationEvents"
+                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    </applicationListeners>
 
     <actions>
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"
@@ -177,6 +185,15 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.DiffChatAction"
+                text="Open Diff Chat"
+                description="Open diff chat">
+            <!--DOC
+        The `Open Diff Chat` action opens a chat window in a browser, allowing the user to discuss the code with ChatGPT.
+        This includes line numbers and elicits diffs from the AI.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.RenameVariablesAction"
                 text="Rename _Variables"
                 description="Rename variables">
@@ -276,6 +293,8 @@
                 description="Open code console">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+            <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
+            <add-to-group group-id="PopupMenuActions" anchor="last"/>
         </action>
 
     </actions>

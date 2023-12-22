@@ -728,7 +728,7 @@ object UITools {
 
   fun checkApiKey(k: String = AppSettingsState.instance.apiKey): String {
     var key = k
-    if (key.isEmpty()) {
+    if (key.isEmpty() || key != AppSettingsState.instance.apiKey) {
       synchronized(OpenAIClient::class.java) {
         key = AppSettingsState.instance.apiKey
         if (key.isEmpty()) {
@@ -916,7 +916,6 @@ object UITools {
           |Error Message: ${e.message}
           |Error Type: ${e.javaClass.name}
           |API Base: ${AppSettingsState.instance.apiBase}
-          |Token Counter: ${AppSettingsState.instance.tokenCounter}
           |
           |OS: ${System.getProperty("os.name")} / ${System.getProperty("os.version")} / ${System.getProperty("os.arch")}
           |Locale: ${Locale.getDefault().country} / ${Locale.getDefault().language}

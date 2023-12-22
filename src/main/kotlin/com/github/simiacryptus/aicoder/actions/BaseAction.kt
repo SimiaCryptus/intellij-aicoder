@@ -18,7 +18,7 @@ abstract class BaseAction(
     //override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     val api: OpenAIClient
-        get() = IdeaOpenAIClient.api
+        get() = IdeaOpenAIClient.instance
 
     final override fun update(event: AnActionEvent) {
         event.presentation.isEnabledAndVisible = isEnabled(event)

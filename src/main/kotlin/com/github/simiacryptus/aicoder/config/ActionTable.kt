@@ -101,14 +101,14 @@ class ActionTable(
             val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP))
             val classnameField = JTextField(100)
             classnameField.text = dataModel.getValueAt(selectedRowIndex, 2).toString()
-            panel.add(with(JPanel(HorizontalLayout(2))) {
+            panel.add(with(JPanel(HorizontalLayout(2, 0))) {
                 add(JLabel("New class name:"))
                 add(classnameField)
                 this
             })
             val displayField = JTextField(100)
             displayField.text = dataModel.getValueAt(selectedRowIndex, 1).toString()
-            panel.add(with(JPanel(HorizontalLayout(2))) {
+            panel.add(with(JPanel(HorizontalLayout(2,0))) {
                 add(JLabel("New description:"))
                 add(displayField)
                 this
@@ -117,7 +117,7 @@ class ActionTable(
             if (JOptionPane.showOptionDialog(
                     null,
                     panel,
-                    "API Key",
+                    "Create Action",
                     JOptionPane.NO_OPTION,
                     JOptionPane.PLAIN_MESSAGE,
                     null,

@@ -20,28 +20,42 @@ version = properties("pluginVersion")
 repositories {
     mavenCentral()
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
 
 val kotlin_version = "1.9.21"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.42"
+val skyenet_version = "1.0.44"
+val remoterobot_version = "0.11.21"
 dependencies {
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.40")
-    { exclude(group = "org.jetbrains.kotlin", module = "") }
+    implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
+
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.42")
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
 
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
-    { exclude(group = "org.jetbrains.kotlin", module = "") }
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
 
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
-    { exclude(group = "org.jetbrains.kotlin", module = "") }
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
 
-    compileOnly(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
-//    implementation(files("C:\\Users\\andre\\code\\SkyeNet\\kotlin-hack\\build\\libs\\kotlin-hack-1.0.42.jar"))
-    implementation(group = "com.simiacryptus.skyenet", name = "kotlin-hack", version = "1.0.42") { isTransitive = false }
+    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = "1.8.0-RC")
+    {
+        exclude(group = "org.jetbrains.kotlin", module = "")
+    }
 
-    implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.1")
+    implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-annotations", version = jetty_version)
@@ -50,11 +64,13 @@ dependencies {
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
-
     testImplementation(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
-    testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = "0.11.16")
-    testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = "0.11.16")
-    testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "3.14.9")
+
+    testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = remoterobot_version)
+    testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = remoterobot_version)
+    testImplementation(group = "com.intellij.remoterobot", name = "robot-server-plugin", version = remoterobot_version, ext = "zip")
+
+    testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
 
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = "5.10.1")
     testRuntimeOnly(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = "5.10.1")
@@ -151,7 +167,7 @@ intellij {
     type.set(properties("platformType"))
     plugins.set(listOf(
         "com.intellij.java",
-        "org.jetbrains.kotlin:232-1.9.21-release-633-IJ10072.27"
+        "org.jetbrains.kotlin",
     ))
 }
 
