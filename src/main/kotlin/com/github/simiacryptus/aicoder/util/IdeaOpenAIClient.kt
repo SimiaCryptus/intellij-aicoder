@@ -30,7 +30,7 @@ class IdeaOpenAIClient : OpenAIClient(
 ) {
     private val isInRequest = AtomicBoolean(false)
 
-    override fun incrementTokens(model: OpenAIModel?, tokens: Usage) {
+    override fun onUsage(model: OpenAIModel?, tokens: Usage) {
 //        AppSettingsState.instance.tokenCounter += tokens.total_tokens
         ApplicationServices.usageManager.incrementUsage(currentSession, localUser, model!!, tokens)
     }
@@ -133,9 +133,14 @@ class IdeaOpenAIClient : OpenAIClient(
         val instance by lazy {
             val client = IdeaOpenAIClient()
             if (AppSettingsState.instance.apiLog) {
-                val file = File(ApplicationEvents.pluginHome, "openai.log")
-                AppSettingsState.auxiliaryLog = file
-                client.logStreams.add(java.io.FileOutputStream(file, true).buffered())
+                try {
+                    val file = File(ApplicationEvents.pluginHome, "openai.log")
+                    file.parentFile.mkdirs()
+                    AppSettingsState.auxiliaryLog = file
+                    client.logStreams.add(java.io.FileOutputStream(file, file.exists()).buffered())
+                } catch (e: Exception) {
+                    log.warn("Error initializing log file", e)
+                }
             }
             client
         }

@@ -33,7 +33,7 @@ data class AppSettingsState(
     val fileActions = ActionSettingsRegistry()
     private val recentCommands = mutableMapOf<String,MRUItems>()
 
-    fun defaultChatModel(): OpenAITextModel = ChatModels.values().first { it.modelName.equals(modelName) }
+    fun defaultChatModel(): OpenAITextModel = ChatModels.values().firstOrNull() { it.modelName.equals(modelName) } ?: ChatModels.GPT35Turbo
 
     @JsonIgnore
     override fun getState() = SimpleEnvelope(JsonUtil.toJson(this))
@@ -61,5 +61,3 @@ data class AppSettingsState(
         }
     }
 }
-
-

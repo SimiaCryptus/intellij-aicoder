@@ -26,7 +26,7 @@ repositories {
 val kotlin_version = "1.9.21"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.44"
+val skyenet_version = "1.0.46"
 val remoterobot_version = "0.11.21"
 dependencies {
 
@@ -35,7 +35,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.42")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.44")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
@@ -55,6 +55,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
+    implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
