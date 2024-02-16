@@ -3,17 +3,17 @@
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.popup.list.ComboBoxPopup
+import com.intellij.ui.components.JBList
 import com.simiacryptus.jopenai.models.ChatModels
 import kotlinx.coroutines.CoroutineScope
-import javax.swing.JList
-import javax.swing.ListCellRenderer
-import javax.swing.ListModel
+import java.awt.BorderLayout
+import javax.swing.*
 
 class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     companion object {
@@ -54,34 +54,45 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
             return activeModel
         }
 
+        private fun getRenderer(): ListCellRenderer<in String> = object : SimpleListCellRenderer<String>() {
+            override fun customize(list: JList<out String>, value: String?, index: Int, selected: Boolean, hasFocus: Boolean) {
+                text = value // Here you can add more customization if needed
+            }
+        }
         override fun getPopup(): JBPopup {
-            val context = object : ComboBoxPopup.Context<String> {
-                override fun getProject(): Project? {
-                    return null
-                }
+            val inputField = JTextField()
+            val listModel = CollectionListModel(models.map { it.modelName })
+            val list = JBList(listModel)
+            list.cellRenderer = getRenderer()
 
-                override fun getModel(): ListModel<String> = CollectionListModel(models.map { it.modelName })
+            val panel = JPanel(BorderLayout())
+            panel.add(inputField, BorderLayout.NORTH)
+            panel.add(JScrollPane(list), BorderLayout.CENTER)
 
-                override fun getRenderer(): ListCellRenderer<in String> {
-                    return object : SimpleListCellRenderer<String>() {
-                        override fun customize(
-                            list: JList<out String>,
-                            value: String?,
-                            index: Int,
-                            selected: Boolean,
-                            hasFocus: Boolean
-                        ) {
-                            text = value
-                        }
+            val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, inputField)
+                .setRequestFocus(true)
+                .setCancelOnClickOutside(true)
+                .createPopup()
 
-                    }
+            list.addListSelectionListener {
+                val selectedValue = list.selectedValue
+                activeModel = selectedValue
+                AppSettingsState.instance.modelName = selectedValue
+                statusBar?.updateWidget(ID())
+                popup.closeOk(null)
+            }
+
+            inputField.addActionListener {
+                val inputValue = inputField.text
+                if (inputValue.isNotEmpty()) {
+                    activeModel = inputValue
+                    AppSettingsState.instance.modelName = inputValue
+                    statusBar?.updateWidget(ID())
+                    popup.closeOk(null)
                 }
             }
-            return ComboBoxPopup(context, activeModel, { str ->
-                activeModel = str
-                AppSettingsState.instance.modelName = str
-                statusBar?.updateWidget(ID())
-            })
+
+            return popup
         }
     }
 

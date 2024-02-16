@@ -76,6 +76,7 @@ class InternalCoderAction : BaseAction() {
       server.appRegistry[path]?.let { return it as ApplicationServer }
       val codingApp = object : ApplicationServer(
         applicationName = "IntelliJ Internal Coding Agent",
+        path = path,
       ) {
         override fun userMessage(session: Session, user: User?, userMessage: String, ui: ApplicationInterface, api: API) {
           agents[session]?.start(userMessage)

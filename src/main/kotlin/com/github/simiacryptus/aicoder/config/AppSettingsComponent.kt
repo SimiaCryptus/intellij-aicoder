@@ -126,6 +126,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     this.modelName.addItem(ChatModels.GPT35Turbo.modelName)
     this.modelName.addItem(ChatModels.GPT4.modelName)
     this.modelName.addItem(ChatModels.GPT4Turbo.modelName)
+   this.modelName.isEditable = true
   }
 
   companion object {
