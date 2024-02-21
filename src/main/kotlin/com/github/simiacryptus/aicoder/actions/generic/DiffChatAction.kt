@@ -69,7 +69,7 @@ class DiffChatAction : BaseAction() {
           The diff should include 2 lines of context before and after every change.
         """.trimIndent()
 
-      val diffPattern = """(?s)```diff(.*?)```""".toRegex()
+      val diffPattern = """(?s)(?<![^\n])```diff(.*?)\n```""".toRegex()
       var fullPatch = mutableListOf<String>()
       override fun renderResponse(response: String): String {
         val matches = diffPattern.findAll(response).distinct()

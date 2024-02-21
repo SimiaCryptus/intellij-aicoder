@@ -26,7 +26,7 @@ repositories {
 val kotlin_version = "1.9.21"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.46"
+val skyenet_version = "1.0.47"
 val remoterobot_version = "0.11.21"
 dependencies {
 

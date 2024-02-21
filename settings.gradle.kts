@@ -5,4 +5,4 @@ plugins {
 }
 
 //includeBuild("../jo-penai/")
-//includeBuild("../SkyeNet/")
+includeBuild("../SkyeNet/")
