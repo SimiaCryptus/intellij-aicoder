@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.ChatMessage
@@ -16,6 +17,10 @@ import java.io.FileInputStream
 import javax.swing.JTextArea
 
 class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if (UITools.getSelectedFile(event)?.isDirectory == true) return false
+    return super.isEnabled(event)
+  }
 
   data class ProjectFile(
     val path: String = "",
