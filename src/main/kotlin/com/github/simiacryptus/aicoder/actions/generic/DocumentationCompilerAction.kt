@@ -79,7 +79,7 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
             val fileContent = IOUtils.toString(FileInputStream(path.toFile()), "UTF-8") ?: return@submit null
             val transformContent = transformContent(fileContent, transformationMessage)
             markdownContent.append("# ${root.relativize(path)}\n\n")
-            markdownContent.append(transformContent.replace("(?s)\n#".toRegex(), "\n##"))
+            markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
             markdownContent.append("\n\n")
             path
           }
