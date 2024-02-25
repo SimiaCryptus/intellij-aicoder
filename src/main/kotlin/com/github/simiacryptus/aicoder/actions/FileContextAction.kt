@@ -3,12 +3,15 @@ package com.github.simiacryptus.aicoder.actions
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
 abstract class FileContextAction<T : Any>(
     private val supportsFiles: Boolean = true,
@@ -42,18 +45,16 @@ abstract class FileContextAction<T : Any>(
                             if (it.isCanceled) throw InterruptedException()
                         }
                         UITools.writeableFn(e) {
-                            val files = newFiles.map { file ->
+                            val files = newFiles.mapNotNull { file ->
                                 val localFileSystem = LocalFileSystem.getInstance()
-                                localFileSystem.findFileByIoFile(file.parentFile)?.refresh(false, true)
                                 val generatedFile = localFileSystem.findFileByIoFile(file)
                                 if (generatedFile == null) {
                                     log.warn("Generated file not found: ${file.path}")
                                 } else {
-                                    generatedFile.refresh(false, false)
-                                    FileEditorManager.getInstance(project).openFile(generatedFile, true)
+                                    open(project, file.toPath())
                                 }
                                 generatedFile
-                            }.filter { it != null }.toTypedArray<VirtualFile?>()
+                            }.toTypedArray<VirtualFile?>()
                             Runnable {
                                 files.forEach { it?.delete(this@FileContextAction) }
                             }
@@ -78,6 +79,33 @@ abstract class FileContextAction<T : Any>(
 
     companion object {
         private val log = LoggerFactory.getLogger(FileContextAction::class.java)
+
+        fun open(project: Project, outputPath: Path) {
+            lateinit var function: () -> Unit
+            function = {
+                val file = outputPath.toFile()
+                if (file.exists()) {
+                    // Ensure the IDE is ready for file operations
+                    ApplicationManager.getApplication().invokeLater {
+                        val ioFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+                        if (false == (ioFile?.let { FileEditorManager.getInstance(project).isFileOpen(it) })) {
+                            val localFileSystem = LocalFileSystem.getInstance()
+                            // Refresh the file system to ensure the file is visible
+                            val virtualFile = localFileSystem.refreshAndFindFileByIoFile(file)
+                            virtualFile?.let {
+                                FileEditorManager.getInstance(project).openFile(it, true)
+                            } ?: scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+                        } else {
+                            scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+                        }
+                    }
+                } else {
+                    scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+                }
+            }
+            scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+        }
+
     }
 
 }
