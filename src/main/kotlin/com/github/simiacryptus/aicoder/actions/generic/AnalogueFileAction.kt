@@ -4,7 +4,10 @@ import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.ChatMessage
 import com.simiacryptus.jopenai.ApiModel.Role
@@ -13,6 +16,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import java.io.File
 import java.io.FileInputStream
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import javax.swing.JTextArea
 
 class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
@@ -33,39 +38,48 @@ class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
     )
   }
 
-  class Settings (
-    var directive: String = ""
+  class UserSettings(
+    var directive: String = "",
   )
 
-  override fun getConfig(project: Project?): Settings? {
-    return UITools.showDialog(
-      project,
-      SettingsUI::class.java,
-      Settings::class.java,
-      "Create Analogue File"
+  class Settings(
+    val settings: UserSettings? = null,
+    val project: Project? = null
+  )
+
+  override fun getConfig(project: Project?): Settings {
+    return Settings(
+      UITools.showDialog(
+        project,
+        SettingsUI::class.java,
+        UserSettings::class.java,
+        "Create Analogue File"
+      ), project
     )
   }
 
   override fun processSelection(state: SelectionState, config: Settings?): Array<File> {
+    val root = getModuleRootForFile(state.selectedFile).toPath()
+    val selectedFile = state.selectedFile
     val analogue = generateFile(
       ProjectFile(
-        path = state.projectRoot.toPath().relativize(state.selectedFile.toPath()).toString(),
-        code = IOUtils.toString(FileInputStream(state.selectedFile), "UTF-8")
+        path = root.relativize(selectedFile.toPath()).toString(),
+        code = IOUtils.toString(FileInputStream(selectedFile), "UTF-8")
       ),
-      config?.directive ?: ""
+      config?.settings?.directive ?: ""
     )
-    var outputPath = state.projectRoot.toPath().resolve(analogue.path)
+    var outputPath = root.resolve(analogue.path)
     if (outputPath.toFile().exists()) {
       val extension = outputPath.toString().split(".").last()
       val name = outputPath.toString().split(".").dropLast(1).joinToString(".")
       val fileIndex = (1..Int.MAX_VALUE).find {
-        !File(state.projectRoot, "$name.$it.$extension").exists()
+        !root.resolve("$name.$it.$extension").toFile().exists()
       }
-      outputPath = state.projectRoot.toPath().resolve("$name.$fileIndex.$extension")
+      outputPath = root.resolve("$name.$fileIndex.$extension")
     }
     outputPath.parent.toFile().mkdirs()
     FileUtils.write(outputPath.toFile(), analogue.code, "UTF-8")
-    Thread.sleep(100)
+    open(config?.project!!, outputPath)
     return arrayOf(outputPath.toFile())
   }
 
@@ -95,13 +109,9 @@ class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
             ```
             """.trimIndent().toContentList(), null
         )
-
       )
     )
-    val response = api.chat(
-      chatRequest,
-      AppSettingsState.instance.defaultChatModel()
-    ).choices.first().message?.content?.trim()
+    val response = api.chat(chatRequest, model).choices.first().message?.content?.trim()
     var outputPath = baseFile.path
     val header = response?.split("\n")?.first()
     var body = response?.split("\n")?.drop(1)?.joinToString("\n")?.trim()
@@ -117,5 +127,44 @@ class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
       path = outputPath,
       code = body ?: ""
     )
+  }
+
+  companion object {
+    fun open(project: Project, outputPath: Path) {
+      lateinit var function: () -> Unit
+      function = {
+        val file = outputPath.toFile()
+        if (file.exists()) {
+          // Ensure the IDE is ready for file operations
+          ApplicationManager.getApplication().invokeLater {
+            val ioFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+            if (false == (ioFile?.let { FileEditorManager.getInstance(project).isFileOpen(it) })) {
+              val localFileSystem = LocalFileSystem.getInstance()
+              // Refresh the file system to ensure the file is visible
+              val virtualFile = localFileSystem.refreshAndFindFileByIoFile(file)
+              virtualFile?.let {
+                FileEditorManager.getInstance(project).openFile(it, true)
+              } ?: scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+            } else {
+              scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+            }
+          }
+        } else {
+          scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+        }
+      }
+      scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+    }
+
+    fun getModuleRootForFile(file: File): File {
+      var current = file
+      while (current.parentFile != null) {
+        if (current.resolve(".git").exists()) {
+          return current
+        }
+        current = current.parentFile
+      }
+      return file
+    }
   }
 }
