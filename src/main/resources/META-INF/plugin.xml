@@ -81,7 +81,7 @@
                 text="_Chat Append Text"
                 description="Append text using the Chat API">
             <!--DOC
-        The `Chat Append Text` action allows you to quickly append text to the end of the current selection.
+            The `Chat Append Text` action allows you to quickly append text to the end of the current selection.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
@@ -91,7 +91,7 @@
                 text="_Create File"
                 description="Create file">
             <!--DOC
-        The `Create File` action allows you to quickly create a new file via a user-supplied directive.
+            The `Create File` action allows you to quickly create a new file via a user-supplied directive.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
@@ -102,6 +102,15 @@
             <!--DOC
         The `Create Analogue File` action allows you to quickly create a new analogue file - a file which is
         automatically generated from the selected file using a user-supplied directive.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.DocumentationCompilerAction"
+                text="Compile Documentation"
+                description="Compile documentation">
+            <!--DOC
+        The `Compile Documentation` action allows you to quickly compile the documentation for the current project.
+        This is useful for quickly generating documentation for your project.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>

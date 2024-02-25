@@ -30,6 +30,8 @@ val skyenet_version = "1.0.47"
 val remoterobot_version = "0.11.21"
 dependencies {
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
