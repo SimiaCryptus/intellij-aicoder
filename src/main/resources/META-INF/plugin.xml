@@ -110,6 +110,25 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.WebDevAction"
+                text="Web Dev"
+                description="Web Dev">
+            <!--DOC
+                The `Web Dev` action allows you to quickly generate web development code.
+                This is useful for quickly generating web development code.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.LineFilterChatAction"
+                text="Filter Lines"
+                description="Filter lines">
+            <!--DOC
+        The `Filter Lines` action allows you to quickly filter lines in the current file.
+
+        This is useful for quickly summarizing code / text.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.RedoLast"
                 text="Re_do Last"
                 description="Redo last">
