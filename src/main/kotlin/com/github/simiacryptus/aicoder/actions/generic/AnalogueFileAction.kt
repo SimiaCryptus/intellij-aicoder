@@ -52,7 +52,7 @@ class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
     val project: Project? = null
   )
 
-  override fun getConfig(project: Project?): Settings {
+  override fun getConfig(project: Project?, e: AnActionEvent): Settings {
     return Settings(
       UITools.showDialog(
         project,

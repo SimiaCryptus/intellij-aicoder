@@ -1,6 +1,4 @@
-﻿@file:Suppress("UNNECESSARY_SAFE_CALL", "UNCHECKED_CAST")
-
-package com.github.simiacryptus.aicoder.util
+﻿package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.config.ActionSettingsRegistry
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -61,6 +59,8 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaType
+
+private val <E> ListModel<E>.elements get() = (0 until this.size).forEach { this.getElementAt(it) }
 
 object UITools {
   val retry = WeakHashMap<Document, Runnable>()
@@ -258,6 +258,32 @@ object UITools {
           if (uiVal is JScrollPane) {
             uiVal = uiVal.viewport.view
           }
+//          // Handle JBList bound to ArrayList<Path>
+//          if (uiVal is JBList<*> && ArrayList::class.java.isAssignableFrom(settingsField.returnType.javaType as Class<*>) && settingsField.returnType.arguments[0].type?.javaType?.typeName == "java.nio.file.Path") {
+//            val model = uiVal.model
+//            newSettingsValue = ArrayList<Path>().apply {
+//              for (i in 0 until model.size) {
+//                val element = model.getElementAt(i)
+//                if (element is String) {
+//                  add(Paths.get(element))
+//                }
+//              }
+//            }
+//          }
+//          // Handle JBList bound to List
+//          if (uiVal is JBList<*> && List::class.java.isAssignableFrom(settingsField.returnType.javaClass)) {
+//            newSettingsValue = uiVal.model.elements
+//          }
+//          // Handle CheckBoxList bound to List
+//          if (uiVal is CheckBoxList<*> && List::class.java.isAssignableFrom(settingsField.returnType.javaClass)) {
+//            val model = uiVal.model
+//            val checkBoxListValues = ArrayList<Any?>()
+//            for (i in 0 until model.size) {
+//              checkBoxListValues.add(
+//                model.getElementAt(i)?.let { item -> item to uiVal.isItemSelected(item as Nothing?) })
+//            }
+//            newSettingsValue = checkBoxListValues
+//          }
           when (settingsField.returnType.javaType.typeName) {
             "java.lang.String" -> if (uiVal is JTextComponent) {
               newSettingsValue = uiVal.text
@@ -318,14 +344,47 @@ object UITools {
     for (settingsField in publicProperties) {
       val fieldName = settingsField.name
       try {
-        if (!declaredUIFields.contains(fieldName)) continue
-        val uiField: KProperty1<R, *> =
-          (componentClass.kotlin.memberProperties.find { it.name == fieldName } as KProperty1<R, *>?)!!
+        if (!declaredUIFields.contains(fieldName)) {
+          log.warn("Field not found: $fieldName")
+          continue
+        }
+        val uiField: KProperty1<R, Any> =
+          (componentClass.kotlin.memberProperties.find { it.name == fieldName } as KProperty1<R, Any>?)!!
         val settingsVal = settingsField.get(settings) ?: continue
         var uiVal = uiField.get(component)
         if (uiVal is JScrollPane) {
           uiVal = uiVal.viewport.view
         }
+//        // Handle JBList bound to ArrayList<Path>
+//        if (uiVal is JBList<*> && settingsVal is List<*> && settingsVal.all { it is Path }) {
+//          val listModel = DefaultListModel<String>()
+//          settingsVal.forEach { path ->
+//            if (path is Path) {
+//              listModel.addElement(path.toString())
+//            }
+//          }
+//          uiVal.model = listModel
+//        }
+//        // Handle JBList bound to List
+//        if (uiVal is JBList<*> && settingsVal is List<*>) {
+//          val listModel = DefaultListModel<Any?>()
+//          settingsVal.forEach { listModel.addElement(it) }
+//          uiVal.model = listModel
+//        }
+//        // Handle CheckBoxList bound to List<Pair<Any?, Boolean>>
+//        val checkBoxListValues = ArrayList<Pair<Any?, Boolean>>()
+//        if (uiVal is CheckBoxList<*> && settingsVal is List<*>) {
+//          val listModel = DefaultListModel<Any?>()
+//          settingsVal.forEach { item ->
+//            if (item is Pair<*, *>) {
+//              listModel.addElement(item.first)
+//              uiVal.setItemSelected(item.first as Nothing?, item.second as Boolean)
+//            }
+//          }
+//          settingsVal.forEach { listModel.addElement(it) }
+//          @Suppress("UNCHECKED_CAST")
+//          uiVal.model = listModel as ListModel<JCheckBox>
+//        }
         when (settingsField.returnType.javaType.typeName) {
           "java.lang.String" -> if (uiVal is JTextComponent) {
             uiVal.text = settingsVal.toString()
@@ -557,9 +616,31 @@ object UITools {
     configClass: Class<C>,
     title: String = "Generate Project",
     onComplete: (C) -> Unit = { _ -> },
-  ): C? {
-    val component = uiClass.getConstructor().newInstance()
-    val config = configClass.getConstructor().newInstance()
+  ) = showDialog<T, C>(project, uiClass, configClass.getConstructor().newInstance(), title, onComplete)
+
+  fun <T : Any, C : Any> showDialog2(
+    project: Project?,
+    component: T,
+    configClass: Class<C>,
+    title: String = "Generate Project",
+    onComplete: (C) -> Unit = { _ -> },
+  ) = showDialog(project, component, configClass.getConstructor().newInstance(), title, onComplete)
+
+  fun <T : Any, C : Any> showDialog(
+    project: Project?,
+    uiClass: Class<T>,
+    config: C,
+    title: String,
+    onComplete: (C) -> Unit
+  ) = showDialog(project, uiClass.getConstructor().newInstance(), config, title, onComplete)
+
+  fun <C : Any, T : Any> showDialog(
+    project: Project?,
+    component: T,
+    config: C,
+    title: String,
+    onComplete: (C) -> Unit
+  ): C {
     val dialog = object : DialogWrapper(project) {
       init {
         this.init()

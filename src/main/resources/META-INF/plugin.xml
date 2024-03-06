@@ -119,6 +119,15 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.AutoDevAction"
+                text="Auto Dev"
+                description="Auto Dev">
+            <!--DOC
+                The `Auto Dev` action allows you to quickly generate code for a specific language.
+                This is useful for quickly generating code for a specific language.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.LineFilterChatAction"
                 text="Filter Lines"
                 description="Filter lines">
@@ -128,6 +137,15 @@
         This is useful for quickly summarizing code / text.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.MultiDiffChatAction"
+                text="Multi-Diff Chat"
+                description="Multi-diff chat">
+            <!--DOC
+        The `Multi-Diff Chat` action opens a chat window in a browser, allowing the user to discuss the code with ChatGPT.
+        This includes line numbers and elicits diffs from the AI.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.RedoLast"
                 text="Re_do Last"

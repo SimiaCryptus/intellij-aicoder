@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.ui.CheckBoxList
+import com.intellij.ui.components.JBScrollPane
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import org.apache.commons.io.IOUtils
@@ -35,10 +37,22 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
       3,
       120
     )
+
+    @Name("Output Filename")
+    var outputFilename: JTextArea = JTextArea(
+      "compiled_documentation.md",
+      1,
+      120
+    )
+
+    @Name("Files to Process")
+    var filesToProcessScrollPane: JBScrollPane = JBScrollPane()
   }
 
   class UserSettings(
     var transformationMessage: String = "Create user documentation",
+    var outputFilename: String = "compiled_documentation.md",
+    var filesToProcess: List<Path> = listOf(),
   )
 
   class Settings(
@@ -46,18 +60,35 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
     val project: Project? = null
   )
 
-  override fun getConfig(project: Project?) = Settings(
-    UITools.showDialog(
+  override fun getConfig(project: Project?, e: AnActionEvent): Settings {
+    val root = UITools.getSelectedFolder(e)?.toNioPath()
+    val filesToProcess: CheckBoxList<Path> = CheckBoxList()
+    val files = Files.walk(root)
+      .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
+      .toList().filterNotNull().toTypedArray()
+    filesToProcess.setItems(files.toMutableList()) { path ->
+      root?.relativize(path)?.toString() ?: path.toString()
+    }
+    files.forEach { path ->
+      filesToProcess.setItemSelected(path, true)
+    }
+    val settingsUI = SettingsUI().apply {
+      filesToProcessScrollPane.setViewportView(filesToProcess)
+    }
+    val settings: UserSettings = UITools.showDialog2(
       project,
-      SettingsUI::class.java,
+      settingsUI,
       UserSettings::class.java,
       "Compile Documentation"
-    ), project
-  )
+    ) { }
+    settings.filesToProcess = files.filter { path -> filesToProcess.isItemSelected(path) }.toList()
+      //.map { path -> return@map root?.resolve(path) }.filterNotNull()
+    return Settings(settings, project)
+  }
 
   override fun processSelection(state: SelectionState, config: Settings?): Array<File> {
     val root = state.selectedFile.toPath()
-    var outputPath = root.resolve("compiled_documentation.md")
+    var outputPath = root.resolve(config?.settings?.outputFilename ?: "compiled_documentation.md")
     if (outputPath.toFile().exists()) {
       val extension = outputPath.toString().split(".").last()
       val name = outputPath.toString().split(".").dropLast(1).joinToString(".")
@@ -71,8 +102,11 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
     val transformationMessage = config?.settings?.transformationMessage ?: "Create user documentation"
     val markdownContent = StringBuilder()
     try {
-      val pathList = Files.walk(root)
+      val selectedPaths = config?.settings?.filesToProcess ?: listOf()
+      val partitionedPaths = Files.walk(root)
         .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
+        .toList().groupBy { selectedPaths.contains(it) }
+      val pathList = partitionedPaths[true]!!
         .toList().filterNotNull()
         .map<Path, Future<Path>> { path ->
           executorService.submit<Path?> {
