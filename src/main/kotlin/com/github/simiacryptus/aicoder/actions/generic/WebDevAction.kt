@@ -32,7 +32,7 @@ import java.awt.Desktop
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
-private val VirtualFile.toFile: File get() = File(this.path)
+val VirtualFile.toFile: File get() = File(this.path)
 
 class WebDevAction : BaseAction() {
 
@@ -191,8 +191,9 @@ class WebDevAction : BaseAction() {
     val javascriptActor by lazy { getActor(ActorTypes.JavascriptCodingActor) as SimpleActor }
     val cssActor by lazy { getActor(ActorTypes.CssCodingActor) as SimpleActor }
     val codeReviewer by lazy { getActor(ActorTypes.CodeReviewer) as SimpleActor }
-    val codeFiles = mutableMapOf<String, String>()
     val etcActor by lazy { getActor(ActorTypes.EtcCodingActor) as SimpleActor }
+
+    val codeFiles = mutableMapOf<String, String>()
 
     fun start(
       userMessage: String,

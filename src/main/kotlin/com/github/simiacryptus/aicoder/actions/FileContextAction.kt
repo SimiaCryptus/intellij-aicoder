@@ -26,7 +26,7 @@ abstract class FileContextAction<T : Any>(
     abstract fun processSelection(state: SelectionState, config: T?): Array<File>
 
     final override fun handle(e: AnActionEvent) {
-        val config = getConfig(e.project)
+        val config = getConfig(e.project, e)
         val virtualFile = UITools.getSelectedFile(e) ?: UITools.getSelectedFolder(e) ?: return
         val project = e.project ?: return
         val projectRoot = File(project.basePath!!).toPath()
@@ -67,7 +67,7 @@ abstract class FileContextAction<T : Any>(
         }.start()
     }
 
-    open fun getConfig(project: Project?): T? = null
+    open fun getConfig(project: Project?, e: AnActionEvent): T? = null
 
     private var isDevAction = false
     override fun isEnabled(event: AnActionEvent): Boolean {
