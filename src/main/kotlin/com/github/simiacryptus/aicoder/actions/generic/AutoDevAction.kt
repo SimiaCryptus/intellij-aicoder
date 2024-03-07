@@ -23,7 +23,7 @@ import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
-import com.simiacryptus.skyenet.webui.util.MarkdownUtil
+import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
@@ -186,7 +186,7 @@ class AutoDevAction : BaseAction() {
         api = api,
         ui = ui,
         outputFn = { task, design ->
-          task.add(MarkdownUtil.renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```"))
+          task.add(renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```"))
         }
       )
 
@@ -194,11 +194,11 @@ class AutoDevAction : BaseAction() {
       val task = ui.newTask()
       try {
         architectureResponse.obj.tasks.forEach { (paths, description) ->
-          task.complete(ui.hrefLink("Task: $description") {
+          task.complete(ui.hrefLink(renderMarkdown("Task: $description")) {
             val task = ui.newTask()
             task.header("Task: $description")
             task.complete(
-              MarkdownUtil.renderMarkdown(
+              renderMarkdown(
                 ui.socketManager.addApplyDiffLinks(
                   codeFiles.filter { (path, _) -> paths?.contains(path) == true },
                   taskActor.answer(listOf(
@@ -270,7 +270,9 @@ class AutoDevAction : BaseAction() {
     }
 
     data class Task(
+      @Description("List of paths involved in the task. This should include all files to be modified, and can include other files whose content will be informative in writing the changes.")
       val paths: List<String>? = null,
+      @Description("Detailed description of the changes to be made. Markdown format is supported.")
       val description: String? = null
     ) : ValidatedObject {
       override fun validate(): String? = when {

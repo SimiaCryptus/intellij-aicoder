@@ -2,6 +2,7 @@
     <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
     <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
+    <category>AI-Powered</category>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.java</depends>
