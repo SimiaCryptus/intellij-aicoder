@@ -1,3 +1,63 @@
+# Project User Documentation
+
+Welcome to the user documentation for our IntelliJ IDEA plugin suite, designed to enhance your development experience
+with a variety of actions. This document provides an overview of the available actions, categorized for easy reference,
+and instructions on how to use them to improve your coding efficiency.
+
+## Table of Categorized Actions
+
+- `DiffChatAction`: Engages in a chat session to generate and apply code diffs directly within the IDE.
+- **Collaboration and Review**
+    - `DiffChatAction`: Initiates a chat session for collaborative code review and diff generation.
+    - `MultiDiffChatAction`: Allows for collaborative code review and diff generation across multiple files.
+    - `LineFilterChatAction`: Provides an interactive chat interface for discussing specific lines of code.
+    - `CodeChatAction`: Offers a real-time chat interface for discussing code snippets and receiving AI-powered coding assistance.
+
+## How to Use Actions
+
+- **Code Editing Actions**
+    - `CustomEditAction`: Trigger this action to open a dialog where you can input a natural language instruction for
+      editing your selected code.
+    - `ImplementStubAction`: Automatically selects code elements that match stub patterns and implements them based on
+      AI suggestions.
+    - `PasteAction`: Simply copy text to your clipboard and use this action to paste it as converted code in your
+      editor.
+    - `RenameVariablesAction`: Select a block of code and trigger this action to receive suggestions for renaming
+      variables.
+- **Documentation Actions**
+    - `DocAction`: Select a code block and activate this action to generate and insert documentation above the selected
+      block.
+    - `DocumentationCompilerAction`: Select files or folders in your project, trigger this action, and specify output
+      settings to compile documentation.
+- **Code Comments Actions**
+    - `CommentsAction`: Highlight a code block and activate this action to automatically add comments explaining the
+      code.
+    - `DescribeAction`: Use this action to generate a detailed description of the selected code, enhancing its
+      documentation.
+- **Code Generation Actions**
+    - `InternalCoderAction`: Start a coding session with this action to receive coding assistance directly in the IDE.
+    - `WebDevAction`: Trigger this action for AI-powered assistance with web development tasks, including code
+      generation and architecture suggestions.
+    - `AutoDevAction`: Automates development tasks by translating user directives into actionable development tasks and code modifications.
+- **Markdown Enhancement Actions**
+    - `MarkdownImplementActionGroup`: In a Markdown file, select text and use this action to generate code snippets in
+      various languages.
+    - `MarkdownListAction`: Highlight a list in your Markdown file and activate this action to automatically generate
+      and insert new list items.
+- **Development Workflow Actions**
+    - `RecentCodeEditsAction`: Access this action to see a list of your most recent code edits and quickly reapply any
+      of them.
+    - `RedoLast`: Use this action to redo the last AI Coder action you executed, enhancing your workflow efficiency.
+- **Text Transformation Actions**
+    - `AppendAction`: Select text and trigger this action to append AI-generated text, expanding on your initial
+      selection.
+    - `ReplaceOptionsAction`: Highlight text and activate this action to receive and choose from AI-generated text
+      options for replacement.
+
+Each action is designed to seamlessly integrate into your development workflow, offering a range of enhancements from
+code editing to documentation and AI integration. Explore these actions to discover how they can improve your
+productivity and coding experience in IntelliJ IDEA.
+
 # code\CustomEditAction.kt
 
 ## CustomEditAction Documentation
@@ -705,15 +765,15 @@ example:
 
 ```kotlin
 class MyFileAction : FileContextAction<MyConfig>() {
-    override fun processSelection(state: SelectionState, config: MyConfig?): Array<File> {
-        // Implement your file processing logic here
-        return arrayOf() // Return an array of files that were processed or generated
-    }
+  override fun processSelection(state: SelectionState, config: MyConfig?): Array<File> {
+    // Implement your file processing logic here
+    return arrayOf() // Return an array of files that were processed or generated
+  }
 
-    override fun getConfig(project: Project?, e: AnActionEvent): MyConfig? {
-        // Optionally, provide configuration for the action based on the project or event context
-        return MyConfig()
-    }
+  override fun getConfig(project: Project?, e: AnActionEvent): MyConfig? {
+    // Optionally, provide configuration for the action based on the project or event context
+    return MyConfig()
+  }
 }
 ```
 
