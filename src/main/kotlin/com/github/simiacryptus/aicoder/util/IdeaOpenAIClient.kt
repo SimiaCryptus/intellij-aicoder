@@ -26,9 +26,8 @@ import javax.swing.JPanel
 import javax.swing.JTextArea
 
 class IdeaOpenAIClient : OpenAIClient(
-    key = AppSettingsState.instance.apiKey,
-    apiBase = AppSettingsState.instance.apiBase,
-    apiProvider = APIProvider.valueOf(AppSettingsState.instance.apiProvider),
+    key = mapOf(APIProvider.valueOf(AppSettingsState.instance.apiProvider) to AppSettingsState.instance.apiKey),
+    apiBase = mapOf(APIProvider.valueOf(AppSettingsState.instance.apiProvider) to AppSettingsState.instance.apiBase),
 ) {
     private val isInRequest = AtomicBoolean(false)
 
@@ -37,9 +36,13 @@ class IdeaOpenAIClient : OpenAIClient(
         ApplicationServices.usageManager.incrementUsage(currentSession, localUser, model!!, tokens)
     }
 
-    override fun authorize(request: HttpRequest) {
-        key = UITools.checkApiKey(key)
-        super.authorize(request)
+    override fun authorize(request: HttpRequest, apiProvider: APIProvider) {
+        val a = APIProvider.valueOf(AppSettingsState.instance.apiProvider)
+        val checkApiKey = UITools.checkApiKey(key.get(a)!!)
+        key = mapOf(
+            APIProvider.valueOf(AppSettingsState.instance.apiProvider) to checkApiKey
+        )
+        super.authorize(request, APIProvider.valueOf(AppSettingsState.instance.apiProvider))
     }
 
     @Suppress("NAME_SHADOWING")

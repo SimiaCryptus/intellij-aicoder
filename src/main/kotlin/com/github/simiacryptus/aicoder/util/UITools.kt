@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.exceptions.ModerationException
+import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.util.StringUtil
 import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory
@@ -890,7 +891,9 @@ object UITools {
         testButton.addActionListener {
           val apiKey = apiKeyInput.password.joinToString("")
           try {
-            OpenAIClient(key = apiKey).listModels()
+            OpenAIClient(key = mapOf(
+              APIProvider.OpenAI to apiKey
+            )).listModels()
             JOptionPane.showMessageDialog(
               null,
               "The API key was accepted by the server. The new value will be saved.",
