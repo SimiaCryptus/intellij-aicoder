@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
+import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import org.slf4j.LoggerFactory
@@ -50,6 +51,10 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
   @Suppress("unused")
   @Name("Model")
   val modelName = ComboBox<String>()
+
+  @Suppress("unused")
+  @Name("API Provider")
+  val apiProvider = ComboBox<String>()
 
   @Suppress("unused")
   @Name("Enable API Log")
@@ -123,10 +128,14 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
 
   init {
 //    tokenCounter.isEditable = false
-    this.modelName.addItem(ChatModels.GPT35Turbo.modelName)
-    this.modelName.addItem(ChatModels.GPT4.modelName)
-    this.modelName.addItem(ChatModels.GPT4Turbo.modelName)
-   this.modelName.isEditable = true
+//    this.modelName.addItem(ChatModels.GPT35Turbo.modelName)
+//    this.modelName.addItem(ChatModels.GPT4.modelName)
+//    this.modelName.addItem(ChatModels.GPT4Turbo.modelName)
+    ChatModels.values().forEach { this.modelName.addItem(it.key) }
+    this.modelName.isEditable = true
+    this.apiProvider.addItem(APIProvider.OpenAI.name)
+    this.apiProvider.addItem(APIProvider.Perplexity.name)
+    this.apiProvider.addItem(APIProvider.Groq.name)
   }
 
   companion object {

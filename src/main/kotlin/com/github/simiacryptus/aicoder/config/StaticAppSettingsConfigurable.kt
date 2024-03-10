@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.config
 
 import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.simiacryptus.jopenai.models.APIProvider
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.io.File
@@ -56,8 +57,12 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
           add(component.apiKey)
         })
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          add(JLabel("Server Port:"))
-          add(component.listeningPort)
+          add(JLabel("API Base:"))
+          add(component.apiBase)
+        })
+        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+          add(JLabel("API Type:"))
+          add(component.apiProvider)
         })
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
           add(JLabel("Ignore Errors:"))
@@ -85,8 +90,8 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
           add(component.clearApiLog)
         })
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          add(JLabel("API Base:"))
-          add(component.apiBase)
+          add(JLabel("Server Port:"))
+          add(component.listeningPort)
         })
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
           add(JLabel("Server Endpoint:"))
@@ -126,6 +131,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       component.apiBase.text = settings.apiBase
       component.editorActions.read(settings.editorActions)
       component.fileActions.read(settings.fileActions)
+      component.apiProvider.selectedItem = settings.apiProvider
     } catch (e: Exception) {
       log.warn("Error setting UI", e)
     }
@@ -139,6 +145,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       settings.listeningEndpoint = component.listeningEndpoint.text
       settings.suppressErrors = component.suppressErrors.isSelected
       settings.modelName = component.modelName.selectedItem as String
+      settings.apiProvider = APIProvider.valueOf(component.apiProvider.selectedItem as String).name
       settings.apiLog = component.apiLog.isSelected
       settings.devActions = component.devActions.isSelected
       settings.editRequests = component.editRequests.isSelected

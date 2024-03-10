@@ -143,7 +143,8 @@ class WebDevAction : BaseAction() {
           Identify coding styles and patterns to be used.
           List all files to be created, and for each file, describe the public interface / purpose / content summary.
         """.trimIndent(),
-        model = model
+        model = model,
+        parsingModel = model,
       ),
       ActorTypes.CodeReviewer to SimpleActor(
         prompt = """

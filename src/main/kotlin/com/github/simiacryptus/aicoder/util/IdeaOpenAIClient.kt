@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.jopenai.ApiModel.*
 import com.simiacryptus.jopenai.OpenAIClient
+import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.OpenAIModel
 import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -27,6 +28,7 @@ import javax.swing.JTextArea
 class IdeaOpenAIClient : OpenAIClient(
     key = AppSettingsState.instance.apiKey,
     apiBase = AppSettingsState.instance.apiBase,
+    apiProvider = APIProvider.valueOf(AppSettingsState.instance.apiProvider),
 ) {
     private val isInRequest = AtomicBoolean(false)
 

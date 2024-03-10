@@ -13,51 +13,54 @@ import java.io.File
 
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
-    var temperature: Double = 0.1,
-    var modelName: String = ChatModels.GPT35Turbo.modelName,
-    var listeningPort: Int = 8081,
-    var listeningEndpoint: String = "localhost",
-    var humanLanguage: String = "English",
-    var apiThreads: Int = 4,
-    var apiBase: String = "https://api.openai.com/v1",
-    var apiKey: String = "",
+  var temperature: Double = 0.1,
+  var modelName: String = ChatModels.GPT35Turbo.modelName,
+  var listeningPort: Int = 8081,
+  var listeningEndpoint: String = "localhost",
+  var humanLanguage: String = "English",
+  var apiThreads: Int = 4,
+  var apiBase: String = "https://api.openai.com/v1",
+  var apiProvider: String = "OpenAI",
+  var apiKey: String = "",
 //    var tokenCounter: Int = 0,
-    var modalTasks: Boolean = false,
-    var suppressErrors: Boolean = false,
-    var apiLog: Boolean = false,
-    var devActions: Boolean = false,
-    var editRequests: Boolean = false,
+  var modalTasks: Boolean = false,
+  var suppressErrors: Boolean = false,
+  var apiLog: Boolean = false,
+  var devActions: Boolean = false,
+  var editRequests: Boolean = false,
 ) : PersistentStateComponent<SimpleEnvelope> {
 
-    val editorActions = ActionSettingsRegistry()
-    val fileActions = ActionSettingsRegistry()
-    private val recentCommands = mutableMapOf<String,MRUItems>()
+  val editorActions = ActionSettingsRegistry()
+  val fileActions = ActionSettingsRegistry()
+  private val recentCommands = mutableMapOf<String, MRUItems>()
 
-    fun defaultChatModel(): OpenAITextModel = ChatModels.values().values.firstOrNull() { it.modelName.equals(modelName) }!!
+  fun defaultChatModel(): OpenAITextModel = ChatModels.values().entries.firstOrNull {
+    it.value.modelName == modelName || it.key == modelName
+  }?.value ?: throw IllegalArgumentException("Unknown model: $modelName")
 
-    @JsonIgnore
-    override fun getState() = SimpleEnvelope(JsonUtil.toJson(this))
+  @JsonIgnore
+  override fun getState() = SimpleEnvelope(JsonUtil.toJson(this))
 
-    fun getRecentCommands(id:String) = recentCommands.computeIfAbsent(id) { MRUItems() }
+  fun getRecentCommands(id: String) = recentCommands.computeIfAbsent(id) { MRUItems() }
 
-    override fun loadState(state: SimpleEnvelope) {
-        state.value ?: return
-        val fromJson = JsonUtil.fromJson<AppSettingsState>(state.value!!, AppSettingsState::class.java)
-        XmlSerializerUtil.copyBean(fromJson, this)
-        recentCommands.clear();
-        recentCommands.putAll(fromJson.recentCommands)
-        editorActions.actionSettings.clear();
-        editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
-        fileActions.actionSettings.clear();
-        fileActions.actionSettings.putAll(fromJson.fileActions.actionSettings)
+  override fun loadState(state: SimpleEnvelope) {
+    state.value ?: return
+    val fromJson = JsonUtil.fromJson<AppSettingsState>(state.value!!, AppSettingsState::class.java)
+    XmlSerializerUtil.copyBean(fromJson, this)
+    recentCommands.clear();
+    recentCommands.putAll(fromJson.recentCommands)
+    editorActions.actionSettings.clear();
+    editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
+    fileActions.actionSettings.clear();
+    fileActions.actionSettings.putAll(fromJson.fileActions.actionSettings)
+  }
+
+  companion object {
+    var auxiliaryLog: File? = null
+
+    @JvmStatic
+    val instance: AppSettingsState by lazy {
+      ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
     }
-
-    companion object {
-        var auxiliaryLog: File? = null
-
-        @JvmStatic
-        val instance: AppSettingsState by lazy {
-            ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
-        }
-    }
+  }
 }

@@ -24,12 +24,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
 
         private var statusBar: StatusBar? = null
         private var activeModel: String = AppSettingsState.instance.defaultChatModel().modelName
-        val models = listOf(
-            ChatModels.GPT4Turbo,
-            ChatModels.GPT4,
-            ChatModels.GPT35Turbo,
-        )
-
+        val models = ChatModels.values().filter { it.value.providers.map { it.name }.contains(AppSettingsState.instance.apiProvider) }.map { it.value }.toList()
         override fun ID(): String {
             return "ModelSelectionComponent"
         }

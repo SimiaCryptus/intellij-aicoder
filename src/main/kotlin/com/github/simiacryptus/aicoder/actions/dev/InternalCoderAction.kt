@@ -51,7 +51,8 @@ class InternalCoderAction : BaseAction() {
       interpreter = IdeaKotlinInterpreter::class,
       symbols = symbols,
       temperature = 0.1,
-      details = "Ensure that responses are printed; this is not a REPL."
+      details = "Ensure that responses are printed; this is not a REPL.",
+      model = AppSettingsState.instance.defaultChatModel(),
     )
 
     Thread {
