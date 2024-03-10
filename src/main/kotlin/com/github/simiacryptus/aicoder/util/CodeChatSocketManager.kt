@@ -15,7 +15,7 @@ open class CodeChatSocketManager(
   val filename: String,
   val codeSelection: String,
   api: OpenAIClient,
-  model: OpenAITextModel = ChatModels.GPT35Turbo,
+  model: OpenAITextModel,
   storage: StorageInterface?,
 ) : ChatSocketManager(
   session = session,

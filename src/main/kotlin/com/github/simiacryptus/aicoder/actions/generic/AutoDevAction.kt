@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.AgentPatterns
@@ -88,7 +89,7 @@ class AutoDevAction : BaseAction() {
     data class Settings(
       val budget: Double? = 2.00,
       val tools: List<String> = emptyList(),
-      val model: ChatModels = ChatModels.GPT4Turbo,
+      val model: OpenAITextModel = ChatModels.GPT4Turbo,
     )
 
     override val settingsClass: Class<*> get() = Settings::class.java
@@ -103,7 +104,7 @@ class AutoDevAction : BaseAction() {
     session: Session,
     user: User?,
     val ui: ApplicationInterface,
-    val model: ChatModels = ChatModels.GPT35Turbo,
+    val model: OpenAITextModel,
     val tools: List<String> = emptyList(),
     val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
       ActorTypes.DesignActor to ParsedActor(
