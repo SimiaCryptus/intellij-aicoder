@@ -7,7 +7,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.jopenai.models.ChatModels
-import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.jopenai.util.JsonUtil
 import java.io.File
 
@@ -34,7 +33,7 @@ data class AppSettingsState(
   val fileActions = ActionSettingsRegistry()
   private val recentCommands = mutableMapOf<String, MRUItems>()
 
-  fun defaultChatModel(): OpenAITextModel = ChatModels.values().entries.firstOrNull {
+  fun defaultChatModel(): ChatModels   = ChatModels.values().entries.firstOrNull {
     it.value.modelName == modelName || it.key == modelName
   }?.value ?: throw IllegalArgumentException("Unknown model: $modelName")
 

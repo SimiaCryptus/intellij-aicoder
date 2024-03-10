@@ -11,7 +11,6 @@ import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
-import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -98,7 +97,7 @@ class WebDevAction : BaseAction() {
     data class Settings(
       val budget: Double? = 2.00,
       val tools: List<String> = emptyList(),
-      val model: OpenAITextModel = ChatModels.GPT4Turbo,
+      val model: ChatModels = ChatModels.GPT4Turbo,
     )
 
     override val settingsClass: Class<*> get() = Settings::class.java
@@ -113,7 +112,7 @@ class WebDevAction : BaseAction() {
     session: Session,
     user: User?,
     val ui: ApplicationInterface,
-    val model: OpenAITextModel,
+    val model: ChatModels,
     val tools: List<String> = emptyList(),
     val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
       ActorTypes.HtmlCodingActor to SimpleActor(

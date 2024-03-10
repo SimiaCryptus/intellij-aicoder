@@ -11,6 +11,7 @@ import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.jopenai.ApiModel.*
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.APIProvider
+import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.OpenAIModel
 import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -37,18 +38,18 @@ class IdeaOpenAIClient : OpenAIClient(
     }
 
     override fun authorize(request: HttpRequest, apiProvider: APIProvider) {
-        val a = APIProvider.valueOf(AppSettingsState.instance.apiProvider)
-        val checkApiKey = UITools.checkApiKey(key.get(a)!!)
+        val prov = APIProvider.valueOf(AppSettingsState.instance.apiProvider)
+        val checkApiKey = UITools.checkApiKey(key.get(prov)!!)
         key = mapOf(
-            APIProvider.valueOf(AppSettingsState.instance.apiProvider) to checkApiKey
+            prov to checkApiKey
         )
-        super.authorize(request, APIProvider.valueOf(AppSettingsState.instance.apiProvider))
+        super.authorize(request, prov)
     }
 
     @Suppress("NAME_SHADOWING")
     override fun chat(
         chatRequest: ChatRequest,
-        model: OpenAITextModel
+        model: ChatModels
     ): ChatResponse {
         lastEvent ?: return super.chat(chatRequest, model)
         if (isInRequest.getAndSet(true)) {

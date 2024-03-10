@@ -136,6 +136,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     this.apiProvider.addItem(APIProvider.OpenAI.name)
     this.apiProvider.addItem(APIProvider.Perplexity.name)
     this.apiProvider.addItem(APIProvider.Groq.name)
+    this.apiProvider.addItem(APIProvider.ModelsLab.name)
   }
 
   companion object {
