@@ -15,7 +15,7 @@ open class AppSettingsConfigurable : UIAdapter<AppSettingsComponent, AppSettings
     component.fileActions.write(settings.fileActions)
   }
 
-  override fun getPreferredFocusedComponent() = component?.apiKey
+  override fun getPreferredFocusedComponent() = component?.temperature
 
   override fun newComponent() = AppSettingsComponent()
 

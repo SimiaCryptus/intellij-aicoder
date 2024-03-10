@@ -65,7 +65,7 @@ class CodeChatAction : BaseAction() {
       val socketServer = object : ApplicationServer(applicationName = "Code Chat", path = path) {
         override val singleInput = false
         override val stickyInput = true
-        override fun newSession(user: User?, session: Session) = agents[session]!!
+        override fun newSession(user: User?, session: Session) = agents[session] ?: throw IllegalArgumentException("Unknown session: $session")
       }
       server.addApp(path, socketServer)
       return socketServer

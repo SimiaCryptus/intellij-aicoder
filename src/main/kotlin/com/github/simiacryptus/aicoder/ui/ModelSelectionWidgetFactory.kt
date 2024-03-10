@@ -24,7 +24,18 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
 
         private var statusBar: StatusBar? = null
         private var activeModel: String = AppSettingsState.instance.defaultChatModel().modelName
-        val models = ChatModels.values().filter { it.value.provider.name.contains(AppSettingsState.instance.apiProvider) }.map { it.value }.toList()
+        var models: List<ChatModels> = models()
+
+   init {
+     AppSettingsState.instance.addOnSettingsLoadedListener {
+       models = models()
+       statusBar?.updateWidget(ID())
+     }
+   }
+        fun models() = ChatModels.values().filter {
+            AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name) ?: false
+        }.map { it.value }.toList()
+
         override fun ID(): String {
             return "ModelSelectionComponent"
         }

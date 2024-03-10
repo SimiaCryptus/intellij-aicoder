@@ -9,9 +9,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
-import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import org.slf4j.LoggerFactory
@@ -19,6 +17,8 @@ import java.awt.event.ActionEvent
 import java.io.FileOutputStream
 import javax.swing.AbstractAction
 import javax.swing.JButton
+import javax.swing.JTable
+import javax.swing.table.DefaultTableModel
 
 class AppSettingsComponent : com.intellij.openapi.Disposable {
 
@@ -51,10 +51,6 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
   @Suppress("unused")
   @Name("Model")
   val modelName = ComboBox<String>()
-
-  @Suppress("unused")
-  @Name("API Provider")
-  val apiProvider = ComboBox<String>()
 
   @Suppress("unused")
   @Name("Enable API Log")
@@ -108,12 +104,13 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
   @Name("Temperature")
   val temperature = JBTextField()
 
-  @Name("API Key")
-  val apiKey = JBPasswordField()
 
-  @Suppress("unused")
-  @Name("API Base")
-  val apiBase = JBTextField()
+    @Name("API Configurations")
+    val apiConfigurations = JTable(DefaultTableModel(arrayOf("Provider", "API Key", "API Base"), 0)).apply {
+        columnModel.getColumn(0).preferredWidth = 100
+        columnModel.getColumn(1).preferredWidth = 200
+        columnModel.getColumn(2).preferredWidth = 200
+    }
 
   @Name("File Actions")
   var fileActions = ActionTable(AppSettingsState.instance.fileActions.actionSettings.values.map { it.copy() }
@@ -133,10 +130,6 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
 //    this.modelName.addItem(ChatModels.GPT4Turbo.modelName)
     ChatModels.values().forEach { this.modelName.addItem(it.key) }
     this.modelName.isEditable = true
-    this.apiProvider.addItem(APIProvider.OpenAI.name)
-    this.apiProvider.addItem(APIProvider.Perplexity.name)
-    this.apiProvider.addItem(APIProvider.Groq.name)
-    this.apiProvider.addItem(APIProvider.ModelsLab.name)
   }
 
   companion object {

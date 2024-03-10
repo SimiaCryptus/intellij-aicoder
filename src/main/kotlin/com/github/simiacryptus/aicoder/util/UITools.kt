@@ -808,18 +808,18 @@ object UITools {
     }
   }
 
-  fun checkApiKey(k: String = AppSettingsState.instance.apiKey): String {
-    var key = k
-    if (key.isEmpty() || key != AppSettingsState.instance.apiKey) {
-      synchronized(OpenAIClient::class.java) {
-        key = AppSettingsState.instance.apiKey
-        if (key.isEmpty()) {
-          key = queryAPIKey()?.toString() ?: ""
-          if (key.isNotEmpty()) AppSettingsState.instance.apiKey = key
-        }
-      }
-    }
-    return key
+  fun checkApiKey(k: String = AppSettingsState.instance.apiKey?.values?.first() ?: ""): String {
+//    var key = k
+//    if (key.isEmpty() || key != AppSettingsState.instance.apiKey) {
+//      synchronized(OpenAIClient::class.java) {
+//        key = AppSettingsState.instance.apiKey
+//        if (key.isEmpty()) {
+//          key = queryAPIKey()?.toString() ?: ""
+//          if (key.isNotEmpty()) AppSettingsState.instance.apiKey = key
+//        }
+//      }
+//    }
+    return k
   }
 
 
@@ -900,7 +900,7 @@ object UITools {
               "Success",
               JOptionPane.INFORMATION_MESSAGE
             )
-            AppSettingsState.instance.apiKey = apiKey
+            AppSettingsState.instance.apiKey = mapOf(APIProvider.OpenAI.name to apiKey).toMutableMap()
           } catch (e: Exception) {
             JOptionPane.showMessageDialog(
               null, "The API key was rejected by the server.", "Failure", JOptionPane.WARNING_MESSAGE

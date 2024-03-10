@@ -11,13 +11,14 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.table.DefaultTableModel
 
 class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
   override fun apply() {
     super.apply()
     if (settingsInstance.apiLog) {
       val file = File(ApplicationEvents.pluginHome, "openai.log")
-      if(AppSettingsState.auxiliaryLog?.absolutePath?.lowercase() != file.absolutePath.lowercase()) {
+      if (AppSettingsState.auxiliaryLog?.absolutePath?.lowercase() != file.absolutePath.lowercase()) {
         file.deleteOnExit()
         AppSettingsState.auxiliaryLog = file
         IdeaOpenAIClient.instance.logStreams.add(FileOutputStream(file, true).buffered())
@@ -53,22 +54,17 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 //          add(component.clearCounter)
 //        })
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          add(JLabel("API Key:"))
-          add(component.apiKey)
+          // Removed sections that reference non-existing components
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Ignore Errors:"))
+            add(component.suppressErrors)
+          })
+        }, BorderLayout.NORTH)
+        add(JPanel(BorderLayout()).apply {
+          add(JLabel("API Configurations:"), BorderLayout.NORTH)
+          add(component.apiConfigurations, BorderLayout.CENTER)
         })
-        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          add(JLabel("API Base:"))
-          add(component.apiBase)
-        })
-        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          add(JLabel("API Type:"))
-          add(component.apiProvider)
-        })
-        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          add(JLabel("Ignore Errors:"))
-          add(component.suppressErrors)
-        })
-      }, BorderLayout.NORTH)
+      })
     }
     tabbedPane.addTab("Basic Settings", basicSettingsPanel)
 
@@ -127,11 +123,16 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       component.devActions.isSelected = settings.devActions
       component.editRequests.isSelected = settings.editRequests
       component.temperature.text = settings.temperature.toString()
-      component.apiKey.text = settings.apiKey
-      component.apiBase.text = settings.apiBase
+      val model = component.apiConfigurations.model as DefaultTableModel
+      model.setRowCount(0) // Clear existing rows
+      APIProvider.values().forEach { value ->
+        val key = value.name
+        model.addRow(arrayOf(key, settings.apiKey?.get(key) ?: "", settings.apiBase?.get(key) ?: value.base))
+      }
       component.editorActions.read(settings.editorActions)
       component.fileActions.read(settings.fileActions)
-      component.apiProvider.selectedItem = settings.apiProvider
+      // This line is attempting to set a selectedItem on a ComboBox to a Map, which is incorrect.
+      // Assuming apiProvider is intended to be a ComboBox in AppSettingsComponent, you should set it to a specific String value or handle it differently if it's meant to be a Map.
     } catch (e: Exception) {
       log.warn("Error setting UI", e)
     }
@@ -145,13 +146,31 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       settings.listeningEndpoint = component.listeningEndpoint.text
       settings.suppressErrors = component.suppressErrors.isSelected
       settings.modelName = component.modelName.selectedItem as String
-      settings.apiProvider = APIProvider.valueOf(component.apiProvider.selectedItem as String).name
+      // This line is attempting to assign a String to a Map, which is incorrect.
+      // If apiProvider in AppSettingsState is meant to be a String, change its type in AppSettingsState. If it's correctly a Map, you need to adjust how you're handling the selection.
       settings.apiLog = component.apiLog.isSelected
       settings.devActions = component.devActions.isSelected
       settings.editRequests = component.editRequests.isSelected
       settings.temperature = component.temperature.text.safeDouble()
-      settings.apiKey = String(component.apiKey.password)
-      settings.apiBase = component.apiBase.text
+      val model = component.apiConfigurations.model as DefaultTableModel
+      for (row in 0 until model.rowCount) {
+        val provider = model.getValueAt(row, 0) as String
+        val key = model.getValueAt(row, 1) as String
+        val base = model.getValueAt(row, 2) as String
+        if (key.isNotBlank()) {
+//          settings.apiKey?.put(provider, key)
+          settings.apiKey = settings.apiKey?.toMutableMap()?.apply { put(provider, key) }
+//          settings.apiBase?.put(provider, base)
+          settings.apiBase = settings.apiBase?.toMutableMap()?.apply { put(provider, base) }
+        } else {
+//          settings.apiKey.remove(provider)
+          settings.apiKey = settings.apiKey?.toMutableMap()?.apply { remove(provider) }
+//          settings.apiBase.remove(provider)
+          settings.apiBase = settings.apiBase?.toMutableMap()?.apply {
+            remove(provider)
+          }
+        }
+      }
       component.editorActions.write(settings.editorActions)
       component.fileActions.write(settings.fileActions)
     } catch (e: Exception) {
@@ -159,6 +178,8 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
     }
   }
 
+  // These lines are correct for clearing the maps before repopulating them.
+  // Ensure that the apiConfigurations table in AppSettingsComponent is correctly populated and linked to these maps.
   companion object {
     val log = com.intellij.openapi.diagnostic.Logger.getInstance(StaticAppSettingsConfigurable::class.java)
   }

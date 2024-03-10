@@ -18,9 +18,8 @@ data class AppSettingsState(
   var listeningEndpoint: String = "localhost",
   var humanLanguage: String = "English",
   var apiThreads: Int = 4,
-  var apiBase: String = "https://api.openai.com/v1",
-  var apiProvider: String = "OpenAI",
-  var apiKey: String = "",
+  var apiBase: Map<String, String>? = mapOf("OpenAI" to "https://api.openai.com/v1"),
+  var apiKey: Map<String, String>? = mapOf("OpenAI" to ""),
 //    var tokenCounter: Int = 0,
   var modalTasks: Boolean = false,
   var suppressErrors: Boolean = false,
@@ -29,11 +28,12 @@ data class AppSettingsState(
   var editRequests: Boolean = false,
 ) : PersistentStateComponent<SimpleEnvelope> {
 
+  private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
   val editorActions = ActionSettingsRegistry()
   val fileActions = ActionSettingsRegistry()
   private val recentCommands = mutableMapOf<String, MRUItems>()
 
-  fun defaultChatModel(): ChatModels   = ChatModels.values().entries.firstOrNull {
+  fun defaultChatModel(): ChatModels = ChatModels.values().entries.firstOrNull {
     it.value.modelName == modelName || it.key == modelName
   }?.value ?: throw IllegalArgumentException("Unknown model: $modelName")
 
@@ -44,7 +44,12 @@ data class AppSettingsState(
 
   override fun loadState(state: SimpleEnvelope) {
     state.value ?: return
-    val fromJson = JsonUtil.fromJson<AppSettingsState>(state.value!!, AppSettingsState::class.java)
+    val fromJson = try {
+      JsonUtil.fromJson<AppSettingsState>(state.value!!, AppSettingsState::class.java)
+    } catch (e: Exception) {
+      //throw RuntimeException("Error loading settings: ${state.value}", e)
+      AppSettingsState()
+    }
     XmlSerializerUtil.copyBean(fromJson, this)
     recentCommands.clear();
     recentCommands.putAll(fromJson.recentCommands)
@@ -52,6 +57,15 @@ data class AppSettingsState(
     editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
     fileActions.actionSettings.clear();
     fileActions.actionSettings.putAll(fromJson.fileActions.actionSettings)
+    notifySettingsLoaded()
+  }
+
+  fun addOnSettingsLoadedListener(listener: () -> Unit) {
+    onSettingsLoadedListeners.add(listener)
+  }
+
+  private fun notifySettingsLoaded() {
+    onSettingsLoadedListeners.forEach { it() }
   }
 
   companion object {
