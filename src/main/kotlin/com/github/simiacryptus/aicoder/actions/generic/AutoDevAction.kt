@@ -3,11 +3,9 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
-import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
@@ -153,30 +151,12 @@ class AutoDevAction : BaseAction() {
     fun start(
       userMessage: String,
     ) {
-      val dataContext = event.dataContext
-      val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-      val languages =
-        virtualFiles?.associate { it to ComputerLanguage.findByExtension(it.extension ?: "")?.name } ?: mapOf()
-      val virtualFileMap = virtualFiles?.associate { it.toNioPath() to it } ?: mapOf()
       val codeFiles = mutableMapOf<String, String>()
-      val root = virtualFiles?.map { file ->
-        file.toNioPath()
-      }?.toTypedArray()?.commonRoot()!!
-      val paths = virtualFiles.associate { file ->
-        val relative = root.relativize(file.toNioPath())
-        val path = relative.toString()
-        val language = languages[file] ?: "plaintext"
-        val code = file.contentsToByteArray().toString(Charsets.UTF_8)
-        codeFiles[path] = code
-        path to language
-      }
-
       fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
         "# $path\n```${
           path.split('.').last()
         }\n$code\n```"
       }
-
 
       val architectureResponse = AgentPatterns.iterate(
         input = userMessage,
@@ -190,14 +170,13 @@ class AutoDevAction : BaseAction() {
         }
       )
 
-
       val task = ui.newTask()
       try {
         architectureResponse.obj.tasks.forEach { (paths, description) ->
           task.complete(ui.hrefLink(renderMarkdown("Task: $description")) {
             val task = ui.newTask()
             task.header("Task: $description")
-            task.complete(
+            AgentPatterns.retryable(ui,task) {
               renderMarkdown(
                 ui.socketManager.addApplyDiffLinks(
                   codeFiles.filter { (path, _) -> paths?.contains(path) == true },
@@ -225,17 +204,14 @@ class AutoDevAction : BaseAction() {
                     }
                   }
                 })
-            )
+            }
           })
-
         }
       } catch (e: Throwable) {
         log.warn("Error", e)
         task.error(ui, e)
       }
     }
-
-
   }
 
   companion object {
