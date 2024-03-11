@@ -26,7 +26,7 @@ import java.nio.file.Path
 
 class MultiDiffChatAction : BaseAction() {
 
-  val path = "/diffChat"
+  val path = "/multiDiffChat"
 
   override fun handle(e: AnActionEvent) {
 

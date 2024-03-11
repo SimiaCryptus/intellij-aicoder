@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.exceptions.ModerationException
+import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.util.StringUtil
 import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory
@@ -807,18 +808,18 @@ object UITools {
     }
   }
 
-  fun checkApiKey(k: String = AppSettingsState.instance.apiKey): String {
-    var key = k
-    if (key.isEmpty() || key != AppSettingsState.instance.apiKey) {
-      synchronized(OpenAIClient::class.java) {
-        key = AppSettingsState.instance.apiKey
-        if (key.isEmpty()) {
-          key = queryAPIKey()?.toString() ?: ""
-          if (key.isNotEmpty()) AppSettingsState.instance.apiKey = key
-        }
-      }
-    }
-    return key
+  fun checkApiKey(k: String = AppSettingsState.instance.apiKey?.values?.first() ?: ""): String {
+//    var key = k
+//    if (key.isEmpty() || key != AppSettingsState.instance.apiKey) {
+//      synchronized(OpenAIClient::class.java) {
+//        key = AppSettingsState.instance.apiKey
+//        if (key.isEmpty()) {
+//          key = queryAPIKey()?.toString() ?: ""
+//          if (key.isNotEmpty()) AppSettingsState.instance.apiKey = key
+//        }
+//      }
+//    }
+    return k
   }
 
 
@@ -890,14 +891,16 @@ object UITools {
         testButton.addActionListener {
           val apiKey = apiKeyInput.password.joinToString("")
           try {
-            OpenAIClient(key = apiKey).listModels()
+            OpenAIClient(key = mapOf(
+              APIProvider.OpenAI to apiKey
+            )).listModels()
             JOptionPane.showMessageDialog(
               null,
               "The API key was accepted by the server. The new value will be saved.",
               "Success",
               JOptionPane.INFORMATION_MESSAGE
             )
-            AppSettingsState.instance.apiKey = apiKey
+            AppSettingsState.instance.apiKey = mapOf(APIProvider.OpenAI.name to apiKey).toMutableMap()
           } catch (e: Exception) {
             JOptionPane.showMessageDialog(
               null, "The API key was rejected by the server.", "Failure", JOptionPane.WARNING_MESSAGE

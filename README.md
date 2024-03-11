@@ -15,6 +15,7 @@
 * Fully customizable actions in Groovy, including the ability to create your own actions.
 * Toolbar UI for quick configuration of temperature/model and display of current token count
 * Ability to intercept, edit, and log API requests
+* Now with added support for models from https://www.perplexity.ai/, https://console.groq.com/, and https://modelslab.com/dashboard/, expanding the plugin's capabilities in code generation and analysis.
 
 **NOTE**: This project is not affiliated with OpenAI, JetBrains, or any other corporation or organization. 
 It is provided free of charge, as-is, with no warranty or guarantee of any kind.
@@ -23,12 +24,19 @@ It is provided free of charge, as-is, with no warranty or guarantee of any kind.
 
 To begin with AI Coding Assistant, you will need an [OpenAI access token](https://platform.openai.com/account/api-keys). 
 After obtaining your OpenAI token, input it into the appropriate field in the plugin's settings panel.
+ Now, you can also configure the plugin to use models from Perplexity AI, Groq Console, and Models Lab for enhanced coding assistance.
 
 ## **Usage Overview**
 
 AI Coding Assistant offers a variety of actions, which are tools specifically designed to simplify and speed up your
 coding process. These are not passively triggered by your typing but are invoked on command, giving you full control
 over when and how to use them. You can access these actions via the context menu within an editor or in the project view.
+
+### **New in Version 1.3.0**
+
+* **DiffChatAction**: Engage in a chat session to generate and apply code diffs directly within the IDE, streamlining the code review and modification process.
+* **MultiDiffChatAction**: Facilitates collaborative code review and diff generation across multiple files, enhancing team productivity.
+* **AutoDevAction**: Translates user directives into actionable development tasks and code modifications, automating parts of the development workflow.
 
 ## **Action Customization**
 

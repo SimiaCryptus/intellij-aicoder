@@ -2,7 +2,6 @@ package com.github.simiacryptus.aicoder.util
 
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.ChatModels
-import com.simiacryptus.jopenai.models.OpenAITextModel
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
@@ -15,7 +14,7 @@ open class CodeChatSocketManager(
   val filename: String,
   val codeSelection: String,
   api: OpenAIClient,
-  model: OpenAITextModel = ChatModels.GPT35Turbo,
+  model: ChatModels,
   storage: StorageInterface?,
 ) : ChatSocketManager(
   session = session,

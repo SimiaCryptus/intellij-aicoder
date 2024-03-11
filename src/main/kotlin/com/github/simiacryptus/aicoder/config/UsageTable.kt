@@ -28,7 +28,7 @@ class UsageTable(
                 it.key.modelName,
                 it.value.prompt_tokens.toString(),
                 it.value.completion_tokens.toString(),
-                it.value.cost.toString()
+               String.format("%.2f", it.value.cost)
             ).toMutableList()
         }.toMutableList()
     }
