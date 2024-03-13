@@ -62,7 +62,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
         }, BorderLayout.NORTH)
         add(JPanel(BorderLayout()).apply {
           add(JLabel("API Configurations:"), BorderLayout.NORTH)
-          add(component.apiConfigurations, BorderLayout.CENTER)
+          add(component.apis, BorderLayout.CENTER)
         })
       })
     }
@@ -123,7 +123,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       component.devActions.isSelected = settings.devActions
       component.editRequests.isSelected = settings.editRequests
       component.temperature.text = settings.temperature.toString()
-      val model = component.apiConfigurations.model as DefaultTableModel
+      val model = component.apis.model as DefaultTableModel
       model.setRowCount(0) // Clear existing rows
       APIProvider.values().forEach { value ->
         val key = value.name
@@ -152,7 +152,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       settings.devActions = component.devActions.isSelected
       settings.editRequests = component.editRequests.isSelected
       settings.temperature = component.temperature.text.safeDouble()
-      val model = component.apiConfigurations.model as DefaultTableModel
+      val model = component.apis.model as DefaultTableModel
       for (row in 0 until model.rowCount) {
         val provider = model.getValueAt(row, 0) as String
         val key = model.getValueAt(row, 1) as String

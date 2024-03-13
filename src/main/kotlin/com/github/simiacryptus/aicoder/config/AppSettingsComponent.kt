@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.table.JBTable
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import org.slf4j.LoggerFactory
@@ -17,7 +18,7 @@ import java.awt.event.ActionEvent
 import java.io.FileOutputStream
 import javax.swing.AbstractAction
 import javax.swing.JButton
-import javax.swing.JTable
+import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 
 class AppSettingsComponent : com.intellij.openapi.Disposable {
@@ -104,13 +105,19 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
   @Name("Temperature")
   val temperature = JBTextField()
 
-
-    @Name("API Configurations")
-    val apiConfigurations = JTable(DefaultTableModel(arrayOf("Provider", "API Key", "API Base"), 0)).apply {
-        columnModel.getColumn(0).preferredWidth = 100
-        columnModel.getColumn(1).preferredWidth = 200
-        columnModel.getColumn(2).preferredWidth = 200
+  @Name("APIs")
+  val apis = JBTable(DefaultTableModel(arrayOf("Provider", "Key", "Base URL"), 0)).apply {
+    columnModel.getColumn(0).preferredWidth = 100
+    columnModel.getColumn(1).preferredWidth = 200
+    columnModel.getColumn(2).preferredWidth = 200
+    val keyColumnIndex = 1
+    getColumnModel().getColumn(keyColumnIndex).cellRenderer = object : DefaultTableCellRenderer() {
+      override fun setValue(value: Any?) {
+        text =
+          if (value is String && value.isNotEmpty()) value.map { '*' }.joinToString("") else value?.toString() ?: ""
+      }
     }
+  }
 
   @Name("File Actions")
   var fileActions = ActionTable(AppSettingsState.instance.fileActions.actionSettings.values.map { it.copy() }

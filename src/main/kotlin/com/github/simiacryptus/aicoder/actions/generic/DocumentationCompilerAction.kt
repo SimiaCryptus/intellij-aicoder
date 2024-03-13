@@ -82,7 +82,7 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
       "Compile Documentation"
     ) { }
     settings.filesToProcess = files.filter { path -> filesToProcess.isItemSelected(path) }.toList()
-      //.map { path -> return@map root?.resolve(path) }.filterNotNull()
+    //.map { path -> return@map root?.resolve(path) }.filterNotNull()
     return Settings(settings, project)
   }
 
@@ -117,7 +117,14 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
             markdownContent.append("\n\n")
             path
           }
-        }.toTypedArray().map { future -> future.get() ?: return@map null }.filterNotNull()
+        }.toTypedArray().map { future ->
+          try {
+            future.get() ?: return@map null
+          } catch (e: Exception) {
+            log.warn("Error processing file", e)
+            return@map null
+          }
+        }.filterNotNull()
       Files.write(outputPath, markdownContent.toString().toByteArray())
       open(config?.project!!, outputPath)
       return arrayOf(outputPath.toFile())

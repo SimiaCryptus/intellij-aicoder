@@ -6,6 +6,7 @@ import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
@@ -152,6 +153,11 @@ class AutoDevAction : BaseAction() {
       userMessage: String,
     ) {
       val codeFiles = mutableMapOf<String, String>()
+      PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
+        val code = file.inputStream.bufferedReader().use { it.readText() }
+        codeFiles[file.path] = code
+      }
+      require(codeFiles.isNotEmpty()) { "No files selected" }
       fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
         "# $path\n```${
           path.split('.').last()
@@ -177,15 +183,18 @@ class AutoDevAction : BaseAction() {
             val task = ui.newTask()
             task.header("Task: $description")
             AgentPatterns.retryable(ui,task) {
+              val filter = codeFiles.filter { (path, _) -> paths?.find { path.contains(it) }?.isNotEmpty() == true }
+              require(filter.isNotEmpty()) { "No files found for $paths" }
               renderMarkdown(
                 ui.socketManager.addApplyDiffLinks(
-                  codeFiles.filter { (path, _) -> paths?.contains(path) == true },
-                  taskActor.answer(listOf(
+                  code = codeFiles,
+                  response = taskActor.answer(listOf(
+                    codeSummary(),
                     userMessage,
-                    architectureResponse.text,
-                    codeFiles.filter { (path, _) -> paths?.contains(path) == true }.entries.joinToString("\n\n") {
+                    filter.entries.joinToString("\n\n") {
                       "# ${it.key}\n```${it.key.split('.').last()}\n${it.value}\n```"
                     },
+                    architectureResponse.text,
                     "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
                   ), api)
                 ) { newCodeMap ->
