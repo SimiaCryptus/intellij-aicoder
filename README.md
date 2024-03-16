@@ -8,23 +8,28 @@
 
 # **AI Coding Assistant Plugin for IntelliJ**
 
-**Fully open source plugin for IntelliJ that integrates with OpenAI's GPT-4 API**
+**Fully open source plugin for IntelliJ that integrates with a variety of LLM APIs**
 
-* This requires an OpenAI access token, which you can get by signing up for a developer account at https://platform.openai.com/
-* No membership fees! API access is paid but is billed by usage, with no base fee. The plugin is free and open source.
-* Fully customizable actions in Groovy, including the ability to create your own actions.
+* No membership fees! API access is typically paid but is billed by usage, with no base fee. 
+* The plugin is free and open source, with a focus on utility. No hype here! I'm sharing a tool I use, and I hope you find it useful too.
+* A variety of APIs are supported! Get your api keys at: 
+  * https://platform.openai.com/
+  * https://www.perplexity.ai/
+  * https://console.groq.com/
+  * https://modelslab.com/dashboard/
+  * https://console.aws.amazon.com/bedrock/
+* Fully customizable actions, including the ability to create your own actions using AI
 * Toolbar UI for quick configuration of temperature/model and display of current token count
 * Ability to intercept, edit, and log API requests
-* Now with added support for models from https://www.perplexity.ai/, https://console.groq.com/, and https://modelslab.com/dashboard/, expanding the plugin's capabilities in code generation and analysis.
 
 **NOTE**: This project is not affiliated with OpenAI, JetBrains, or any other corporation or organization. 
-It is provided free of charge, as-is, with no warranty or guarantee of any kind.
+It is provided free of charge, as-is, with no warranty or guarantee of any kind. 
+It is the work of a sole developer working as a hobby project.
 
 ## **Installation & Configuration**
 
-To begin with AI Coding Assistant, you will need an [OpenAI access token](https://platform.openai.com/account/api-keys). 
-After obtaining your OpenAI token, input it into the appropriate field in the plugin's settings panel.
- Now, you can also configure the plugin to use models from Perplexity AI, Groq Console, and Models Lab for enhanced coding assistance.
+To begin with AI Coding Assistant, you will need one or more api tokens, 
+which needs to be input it into the appropriate field in the plugin's settings panel.
 
 ## **Usage Overview**
 
@@ -37,14 +42,15 @@ over when and how to use them. You can access these actions via the context menu
 * **DiffChatAction**: Engage in a chat session to generate and apply code diffs directly within the IDE, streamlining the code review and modification process.
 * **MultiDiffChatAction**: Facilitates collaborative code review and diff generation across multiple files, enhancing team productivity.
 * **AutoDevAction**: Translates user directives into actionable development tasks and code modifications, automating parts of the development workflow.
+* **mermaid.js**: Generate diagrams using the mermaid.js library, providing a visual representation of your code and ideas.
 
 ## **Action Customization**
 
-In our latest version, we provide the capability to tailor actions to your coding habits and project requirements.
-Within the settings UI, you can view, edit, clone, or delete actions, enabling you to fine-tune existing tools or create
-new ones from scratch.
+Tailor actions to your coding habits and project requirements!
+Within the settings UI, you can view, edit, clone, or delete actions, 
+enabling you to fine-tune existing tools or create new ones from scratch.
 
-These custom actions leverage Groovy scripting, and can be as complex or simple as required, even having access to the
+These custom actions use dynamically compiled Kotlin, and can be as complex or simple as required, even having access to the
 entire IntelliJ API. This powerful feature allows for numerous possibilities, from refining prompts to adding intricate
 logic to better support your preferred coding language.
 

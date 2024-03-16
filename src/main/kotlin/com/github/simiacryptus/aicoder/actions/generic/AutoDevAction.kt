@@ -153,9 +153,10 @@ class AutoDevAction : BaseAction() {
       userMessage: String,
     ) {
       val codeFiles = mutableMapOf<String, String>()
+      val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
       PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
         val code = file.inputStream.bufferedReader().use { it.readText() }
-        codeFiles[file.path] = code
+        codeFiles[root.relativize(file.toNioPath()).toString()] = code
       }
       require(codeFiles.isNotEmpty()) { "No files selected" }
       fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
