@@ -61,8 +61,6 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaType
 
-private val <E> ListModel<E>.elements get() = (0 until this.size).forEach { this.getElementAt(it) }
-
 object UITools {
   val retry = WeakHashMap<Document, Runnable>()
 
@@ -224,23 +222,6 @@ object UITools {
       getIndent(caret)
     }
     return indent
-  }
-
-  private fun queryAPIKey(): CharSequence? {
-    val panel = JPanel()
-    val label = JLabel("Enter OpenAI API Key:")
-    val pass = JPasswordField(100)
-    panel.add(label)
-    panel.add(pass)
-    val options = arrayOf<Any>("OK", "Cancel")
-    return if (JOptionPane.showOptionDialog(
-        null, panel, "API Key", JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[1]
-      ) == JOptionPane.OK_OPTION
-    ) {
-      String(pass.password)
-    } else {
-      null
-    }
   }
 
   fun <T : Any, R : Any> readKotlinUIViaReflection(component: R, settings: T) {
@@ -627,7 +608,7 @@ object UITools {
     onComplete: (C) -> Unit = { _ -> },
   ) = showDialog(project, component, configClass.getConstructor().newInstance(), title, onComplete)
 
-  fun <T : Any, C : Any> showDialog(
+  private fun <T : Any, C : Any> showDialog(
     project: Project?,
     uiClass: Class<T>,
     config: C,
@@ -635,7 +616,7 @@ object UITools {
     onComplete: (C) -> Unit
   ) = showDialog(project, uiClass.getConstructor().newInstance(), config, title, onComplete)
 
-  fun <C : Any, T : Any> showDialog(
+  private fun <C : Any, T : Any> showDialog(
     project: Project?,
     component: T,
     config: C,
@@ -827,20 +808,6 @@ object UITools {
     moderateAsync: ListenableFuture<I>,
     o: com.google.common.base.Function<in I, out O>,
   ): ListenableFuture<O> = Futures.transform(moderateAsync, o::apply, pool)
-
-  fun filterStringResult(
-    indent: CharSequence = "",
-    stripUnbalancedTerminators: Boolean = true,
-  ): (CharSequence) -> CharSequence {
-    return { text ->
-      var result: CharSequence = text.toString().trim { it <= ' ' }
-      if (stripUnbalancedTerminators) {
-        result = StringUtil.stripUnbalancedTerminators(result)
-      }
-      result = IndentedText.fromString(result.toString()).withIndent(indent).toString()
-      indent.toString() + result
-    }
-  }
 
 
   fun logAction(message: String) {

@@ -140,7 +140,6 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
   }
 
   companion object {
-    private val log = LoggerFactory.getLogger(AppSettingsComponent::class.java)
   }
 
   override fun dispose() {

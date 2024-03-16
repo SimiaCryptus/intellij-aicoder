@@ -4,7 +4,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SimpleDiffUtilTest {
-  val patch = """
+  private val patch = """
     --- IntArrayAppendFile.kt
     +++ IntArrayAppendFileUpdated.kt
     @@ -8,7 +8,7 @@
@@ -33,7 +33,7 @@ class SimpleDiffUtilTest {
     +     }
         }
   """.trimIndent()
-  val source = """
+  private val source = """
     package com.simiacryptus.util.files
 
     import java.io.File

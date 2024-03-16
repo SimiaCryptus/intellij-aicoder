@@ -42,7 +42,7 @@ class IdeaKotlinInterpreter(
     return txt
   }
 
-  fun typeOf(value: Any?): String {
+  private fun typeOf(value: Any?): String {
     if (value is Proxy) {
       return value.javaClass.interfaces[0].name.replace("$", ".") + "?"
     }

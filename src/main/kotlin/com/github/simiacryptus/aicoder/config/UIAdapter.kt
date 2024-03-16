@@ -34,7 +34,7 @@ abstract class UIAdapter<C : Any, S : Any>(
 
   abstract fun newComponent(): C
   abstract fun newSettings(): S
-  fun getSettings(component : C? = this.component) = when (component) {
+  private fun getSettings(component : C? = this.component) = when (component) {
     null -> settingsInstance
     else -> {
       val buffer = newSettings()

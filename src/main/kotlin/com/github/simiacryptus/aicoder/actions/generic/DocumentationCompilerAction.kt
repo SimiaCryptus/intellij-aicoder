@@ -31,19 +31,6 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
   }
 
   class SettingsUI {
-    @Name("Transformation Message")
-    var transformationMessage: JTextArea = JTextArea(
-      "Create user documentation",
-      3,
-      120
-    )
-
-    @Name("Output Filename")
-    var outputFilename: JTextArea = JTextArea(
-      "compiled_documentation.md",
-      1,
-      120
-    )
 
     @Name("Files to Process")
     var filesToProcessScrollPane: JBScrollPane = JBScrollPane()

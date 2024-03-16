@@ -33,7 +33,7 @@ class UsageTable(
         }.toMutableList()
     }
 
-    val dataModel by lazy {
+    private val dataModel by lazy {
         object : AbstractTableModel() {
             override fun getColumnName(column: Int): String {
                 return columnNames.get(column).toString()
@@ -63,7 +63,7 @@ class UsageTable(
         }
     }
 
-    val jtable by lazy { JBTable(dataModel) }
+    private val jtable by lazy { JBTable(dataModel) }
 
     private val scrollpane by lazy { JBScrollPane(jtable) }
 
@@ -118,6 +118,5 @@ class UsageTable(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(UsageTable::class.java)
     }
 }

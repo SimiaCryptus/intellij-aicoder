@@ -104,9 +104,9 @@ class AutoDevAction : BaseAction() {
     val ui: ApplicationInterface,
     val model: ChatModels,
     val tools: List<String> = emptyList(),
-    val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+    private val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
       ActorTypes.DesignActor to ParsedActor(
-        parserClass = TaskListParser::class.java,
+        resultClass = TaskList::class.java,
         prompt = """
             Translate the user directive into an action plan for the project.
             Break the user's request into a list of simple tasks to be performed.
@@ -146,8 +146,8 @@ class AutoDevAction : BaseAction() {
       TaskCodingActor,
     }
 
-    val designActor by lazy { getActor(ActorTypes.DesignActor) as ParsedActor<TaskList> }
-    val taskActor by lazy { getActor(ActorTypes.TaskCodingActor) as SimpleActor }
+    private val designActor by lazy { getActor(ActorTypes.DesignActor) as ParsedActor<TaskList> }
+    private val taskActor by lazy { getActor(ActorTypes.TaskCodingActor) as SimpleActor }
 
     fun start(
       userMessage: String,
@@ -237,11 +237,6 @@ class AutoDevAction : BaseAction() {
       }
       server.addApp(path, socketServer)
       return socketServer
-    }
-
-    interface TaskListParser : java.util.function.Function<String, TaskList> {
-      @Description("Parse out a list of tasks to be performed in this project")
-      override fun apply(text: String): TaskList
     }
 
     data class TaskList(

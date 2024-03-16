@@ -42,7 +42,7 @@ class ActionSettingsRegistry {
           val element = actionConfig.buildAction(localCode)
           actionConfig.version = version
           actionConfig.file.writeText(code)
-          throw ReplaceActionException(element)
+          throw ReplaceActionException()
         } catch (e: Throwable) {
           log.info("Error loading dynamic ${action.javaClass}", e)
         }
@@ -91,7 +91,7 @@ class ActionSettingsRegistry {
     return children.toTypedArray()
   }
 
-  class ReplaceActionException(val newAction: AnAction? = null) : Exception()
+  class ReplaceActionException : Exception()
   class RemoveActionException(val newAction: AnAction? = null) : Exception()
 
   class DynamicActionException(

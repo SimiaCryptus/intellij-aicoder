@@ -12,15 +12,6 @@ class CreateFileAction : FileContextAction<CreateFileAction.Settings>(false, tru
 
   class ProjectFile(var path: String = "", var code: String = "")
 
-  class SettingsUI {
-    @Name("Directive")
-    var directive: JTextArea = JTextArea(
-      """
-                Create a default log4j configuration file
-            """.trimIndent(), 3, 120
-    )
-  }
-
   class Settings(var directive: String = "")
 
   override fun processSelection(
