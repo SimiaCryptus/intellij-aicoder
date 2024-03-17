@@ -140,7 +140,7 @@ class AutoDevAction : BaseAction() {
       ),
     ),
     val event: AnActionEvent,
-  ) : ActorSystem<AutoDevAgent.ActorTypes>(actorMap, dataStorage, user, session) {
+  ) : ActorSystem<AutoDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value.javaClass }.toMap(), dataStorage, user, session) {
     enum class ActorTypes {
       DesignActor,
       TaskCodingActor,
