@@ -114,7 +114,7 @@ class WebDevAction : BaseAction() {
     val ui: ApplicationInterface,
     val model: ChatModels,
     val tools: List<String> = emptyList(),
-    val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+    private val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
       ActorTypes.HtmlCodingActor to SimpleActor(
         prompt = """
       You will translate the user request into a skeleton HTML file for a rich javascript application.
@@ -133,7 +133,7 @@ class WebDevAction : BaseAction() {
     """.trimIndent(), model = model
       ),
       ActorTypes.ArchitectureDiscussionActor to ParsedActor(
-        parserClass = PageResourceListParser::class.java,
+        resultClass = PageResourceList::class.java,
         prompt = """
           Translate the user's idea into a detailed architecture for a simple web application. 
           Suggest specific frameworks/libraries to import and provide CDN links for them.
@@ -177,7 +177,7 @@ class WebDevAction : BaseAction() {
         model = model
       ),
     ),
-  ) : ActorSystem<WebDevAgent.ActorTypes>(actorMap, dataStorage, user, session) {
+  ) : ActorSystem<WebDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value.javaClass }.toMap(), dataStorage, user, session) {
     enum class ActorTypes {
       HtmlCodingActor,
       JavascriptCodingActor,
@@ -187,14 +187,14 @@ class WebDevAction : BaseAction() {
       EtcCodingActor,
     }
 
-    val architectureDiscussionActor by lazy { getActor(ActorTypes.ArchitectureDiscussionActor) as ParsedActor<PageResourceList> }
-    val htmlActor by lazy { getActor(ActorTypes.HtmlCodingActor) as SimpleActor }
-    val javascriptActor by lazy { getActor(ActorTypes.JavascriptCodingActor) as SimpleActor }
-    val cssActor by lazy { getActor(ActorTypes.CssCodingActor) as SimpleActor }
-    val codeReviewer by lazy { getActor(ActorTypes.CodeReviewer) as SimpleActor }
-    val etcActor by lazy { getActor(ActorTypes.EtcCodingActor) as SimpleActor }
+    private val architectureDiscussionActor by lazy { getActor(ActorTypes.ArchitectureDiscussionActor) as ParsedActor<PageResourceList> }
+    private val htmlActor by lazy { getActor(ActorTypes.HtmlCodingActor) as SimpleActor }
+    private val javascriptActor by lazy { getActor(ActorTypes.JavascriptCodingActor) as SimpleActor }
+    private val cssActor by lazy { getActor(ActorTypes.CssCodingActor) as SimpleActor }
+    private val codeReviewer by lazy { getActor(ActorTypes.CodeReviewer) as SimpleActor }
+    private val etcActor by lazy { getActor(ActorTypes.EtcCodingActor) as SimpleActor }
 
-    val codeFiles = mutableMapOf<String, String>()
+    private val codeFiles = mutableMapOf<String, String>()
 
     fun start(
       userMessage: String,
@@ -475,11 +475,6 @@ class WebDevAction : BaseAction() {
       }
       server.addApp(path, socketServer)
       return socketServer
-    }
-
-    interface PageResourceListParser : java.util.function.Function<String, PageResourceList> {
-      @Description("Parse out a list of files and descriptions in this project")
-      override fun apply(html: String): PageResourceList
     }
 
     data class PageResourceList(

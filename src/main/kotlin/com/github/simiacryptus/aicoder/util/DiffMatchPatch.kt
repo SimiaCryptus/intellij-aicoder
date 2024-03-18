@@ -36,19 +36,19 @@ open class DiffMatchPatch {
   /**
    * Cost of an empty edit operation in terms of edit characters.
    */
-  var Diff_EditCost: Short = 4
+  private var Diff_EditCost: Short = 4
 
   /**
    * At what point is no match declared (0.0 = perfection, 1.0 = very loose).
    */
-  var Match_Threshold: Float = 0.5f
+  private var Match_Threshold: Float = 0.5f
 
   /**
    * How far to search for a match (0 = exact location, 1000+ = broad match).
    * A match this many characters away from the expected location will add
    * 1.0 to the score (0.0 is a perfect match).
    */
-  var Match_Distance: Int = 1000
+  private var Match_Distance: Int = 1000
 
   /**
    * When deleting a large block of text (over ~64 characters), how close do
@@ -56,12 +56,12 @@ open class DiffMatchPatch {
    * 1.0 = very loose).  Note that Match_Threshold controls how closely the
    * end points of a delete need to match.
    */
-  var Patch_DeleteThreshold: Float = 0.5f
+  private var Patch_DeleteThreshold: Float = 0.5f
 
   /**
    * Chunk size for context length.
    */
-  var Patch_Margin: Short = 4
+  private var Patch_Margin: Short = 4
 
   /**
    * The number of bits in an int.
@@ -345,7 +345,7 @@ open class DiffMatchPatch {
    * @param deadline Time at which to bail if not yet complete.
    * @return LinkedList of Diff objects.
    */
-  protected fun diff_bisect(
+  private fun diff_bisect(
     text1: String, text2: String,
     deadline: Long
   ): LinkedList<Diff> {
@@ -499,7 +499,7 @@ open class DiffMatchPatch {
    * the List of unique strings.  The zeroth element of the List of
    * unique strings is intentionally blank.
    */
-  protected fun diff_linesToChars(text1: String, text2: String): LinesToCharsResult {
+  private fun diff_linesToChars(text1: String, text2: String): LinesToCharsResult {
     val lineArray: MutableList<String> = ArrayList()
     val lineHash: MutableMap<String, Int> = HashMap()
 
@@ -567,7 +567,7 @@ open class DiffMatchPatch {
    * @param diffs List of Diff objects.
    * @param lineArray List of unique strings.
    */
-  protected fun diff_charsToLines(
+  private fun diff_charsToLines(
     diffs: List<Diff>,
     lineArray: List<String>
   ) {
@@ -624,7 +624,7 @@ open class DiffMatchPatch {
    * @return The number of characters common to the end of the first
    * string and the start of the second string.
    */
-  protected fun diff_commonOverlap(text1: String?, text2: String?): Int {
+  private fun diff_commonOverlap(text1: String?, text2: String?): Int {
     // Cache the text lengths to prevent multiple calls.
     var text1 = text1
     var text2 = text2
@@ -675,7 +675,7 @@ open class DiffMatchPatch {
    * suffix of text1, the prefix of text2, the suffix of text2 and the
    * common middle.  Or null if there was no match.
    */
-  protected fun diff_halfMatch(text1: String, text2: String): Array<String>? {
+  private fun diff_halfMatch(text1: String, text2: String): Array<String>? {
     if (Diff_Timeout <= 0) {
       // Don't risk returning a non-optimal diff if we have unlimited time.
       return null
@@ -929,7 +929,7 @@ open class DiffMatchPatch {
    * e.g: The c<ins>at c</ins>ame. -> The <ins>cat </ins>came.
    * @param diffs LinkedList of Diff objects.
    */
-  fun diff_cleanupSemanticLossless(diffs: LinkedList<Diff>) {
+  private fun diff_cleanupSemanticLossless(diffs: LinkedList<Diff>) {
     var equality1: String
     var edit: String
     var equality2: String
@@ -1188,7 +1188,7 @@ open class DiffMatchPatch {
    * Any edit section can move as long as it doesn't cross an equality.
    * @param diffs LinkedList of Diff objects.
    */
-  fun diff_cleanupMerge(diffs: LinkedList<Diff>) {
+  private fun diff_cleanupMerge(diffs: LinkedList<Diff>) {
     diffs.add(Diff(Operation.EQUAL, "")) // Add a dummy entry at the end.
     var pointer = diffs.listIterator()
     var count_delete = 0
@@ -1359,7 +1359,7 @@ open class DiffMatchPatch {
    * @param loc Location within text1.
    * @return Location within text2.
    */
-  fun diff_xIndex(diffs: List<Diff>, loc: Int): Int {
+  private fun diff_xIndex(diffs: List<Diff>, loc: Int): Int {
     var chars1 = 0
     var chars2 = 0
     var last_chars1 = 0
@@ -1391,35 +1391,11 @@ open class DiffMatchPatch {
   }
 
   /**
-   * Convert a Diff list into a pretty HTML report.
-   * @param diffs List of Diff objects.
-   * @return HTML representation.
-   */
-  fun diff_prettyHtml(diffs: List<Diff>): String {
-    val html = StringBuilder()
-    for (aDiff: Diff in diffs) {
-      val text = aDiff.text!!.replace("&", "&amp;").replace("<", "&lt;")
-        .replace(">", "&gt;").replace("\n", "&para;<br>")
-      when (aDiff.operation) {
-        Operation.INSERT -> html.append("<ins style=\"background:#e6ffe6;\">").append(text)
-          .append("</ins>")
-
-        Operation.DELETE -> html.append("<del style=\"background:#ffe6e6;\">").append(text)
-          .append("</del>")
-
-        Operation.EQUAL -> html.append("<span>").append(text).append("</span>")
-        null -> TODO()
-      }
-    }
-    return html.toString()
-  }
-
-  /**
    * Compute and return the source text (all equalities and deletions).
    * @param diffs List of Diff objects.
    * @return Source text.
    */
-  fun diff_text1(diffs: List<Diff>): String {
+  private fun diff_text1(diffs: List<Diff>): String {
     val text = StringBuilder()
     for (aDiff: Diff in diffs) {
       if (aDiff.operation != Operation.INSERT) {
@@ -1434,7 +1410,7 @@ open class DiffMatchPatch {
    * @param diffs List of Diff objects.
    * @return Destination text.
    */
-  fun diff_text2(diffs: List<Diff>): String {
+  private fun diff_text2(diffs: List<Diff>): String {
     val text = StringBuilder()
     for (aDiff: Diff in diffs) {
       if (aDiff.operation != Operation.DELETE) {
@@ -1450,7 +1426,7 @@ open class DiffMatchPatch {
    * @param diffs List of Diff objects.
    * @return Number of changes.
    */
-  fun diff_levenshtein(diffs: List<Diff>): Int {
+  private fun diff_levenshtein(diffs: List<Diff>): Int {
     var levenshtein = 0
     var insertions = 0
     var deletions = 0
@@ -1472,127 +1448,6 @@ open class DiffMatchPatch {
     return levenshtein
   }
 
-  /**
-   * Crush the diff into an encoded string which describes the operations
-   * required to transform text1 into text2.
-   * E.g. =3\t-2\t+ing  -> Keep 3 chars, delete 2 chars, insert 'ing'.
-   * Operations are tab-separated.  Inserted text is escaped using %xx notation.
-   * @param diffs List of Diff objects.
-   * @return Delta text.
-   */
-  fun diff_toDelta(diffs: List<Diff>): String {
-    val text = StringBuilder()
-    for (aDiff: Diff in diffs) {
-      when (aDiff.operation) {
-        Operation.INSERT -> try {
-          text.append("+").append(
-            URLEncoder.encode(aDiff.text, "UTF-8")
-              .replace('+', ' ')
-          ).append("\t")
-        } catch (e: UnsupportedEncodingException) {
-          // Not likely on modern system.
-          throw Error("This system does not support UTF-8.", e)
-        }
-
-        Operation.DELETE -> text.append("-").append(aDiff.text!!.length).append("\t")
-        Operation.EQUAL -> text.append("=").append(aDiff.text!!.length).append("\t")
-        null -> TODO()
-      }
-    }
-    var delta = text.toString()
-    if (delta.length != 0) {
-      // Strip off trailing tab character.
-      delta = delta.substring(0, delta.length - 1)
-      delta = unescapeForEncodeUriCompatability(delta)
-    }
-    return delta
-  }
-
-  /**
-   * Given the original text1, and an encoded string which describes the
-   * operations required to transform text1 into text2, compute the full diff.
-   * @param text1 Source string for the diff.
-   * @param delta Delta text.
-   * @return Array of Diff objects or null if invalid.
-   * @throws IllegalArgumentException If invalid input.
-   */
-  @Throws(IllegalArgumentException::class)
-  fun diff_fromDelta(text1: String, delta: String): LinkedList<Diff> {
-    val diffs = LinkedList<Diff>()
-    var pointer = 0 // Cursor in text1
-    val tokens = delta.split("\t".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-    for (token: String in tokens) {
-      if (token.length == 0) {
-        // Blank tokens are ok (from a trailing \t).
-        continue
-      }
-      // Each token begins with a one character parameter which specifies the
-      // operation of this token (delete, insert, equality).
-      var param = token.substring(1)
-      when (token[0]) {
-        '+' -> {
-          // decode would change all "+" to " "
-          param = param.replace("+", "%2B")
-          try {
-            param = URLDecoder.decode(param, "UTF-8")
-          } catch (e: UnsupportedEncodingException) {
-            // Not likely on modern system.
-            throw Error("This system does not support UTF-8.", e)
-          } catch (e: IllegalArgumentException) {
-            // Malformed URI sequence.
-            throw IllegalArgumentException(
-              "Illegal escape in diff_fromDelta: $param", e
-            )
-          }
-          diffs.add(Diff(Operation.INSERT, param))
-        }
-
-        '-', '=' -> {
-          var n: Int
-          try {
-            n = param.toInt()
-          } catch (e: NumberFormatException) {
-            throw IllegalArgumentException(
-              "Invalid number in diff_fromDelta: $param", e
-            )
-          }
-          if (n < 0) {
-            throw IllegalArgumentException(
-              "Negative number in diff_fromDelta: $param"
-            )
-          }
-          var text: String
-          try {
-            text = text1.substring(pointer, n.let { pointer += it; pointer })
-          } catch (e: StringIndexOutOfBoundsException) {
-            throw IllegalArgumentException(
-              "Delta length (" + pointer
-                  + ") larger than source text length (" + text1.length
-                  + ").", e
-            )
-          }
-          if (token[0] == '=') {
-            diffs.add(Diff(Operation.EQUAL, text))
-          } else {
-            diffs.add(Diff(Operation.DELETE, text))
-          }
-        }
-
-        else ->                     // Anything else is an error.
-          throw IllegalArgumentException(
-            "Invalid diff operation in diff_fromDelta: " + token[0]
-          )
-      }
-    }
-    if (pointer != text1.length) {
-      throw IllegalArgumentException(
-        ("Delta length (" + pointer
-            + ") smaller than source text length (" + text1.length + ").")
-      )
-    }
-    return diffs
-  }
-
 
   //  MATCH FUNCTIONS
   /**
@@ -1603,7 +1458,7 @@ open class DiffMatchPatch {
    * @param loc The location to search around.
    * @return Best match index or -1.
    */
-  fun match_main(text: String?, pattern: String?, loc: Int): Int {
+  private fun match_main(text: String?, pattern: String?, loc: Int): Int {
     // Check for null inputs.
     var loc = loc
     if (text == null || pattern == null) {
@@ -1636,7 +1491,7 @@ open class DiffMatchPatch {
    * @param loc The location to search around.
    * @return Best match index or -1.
    */
-  protected fun match_bitap(text: String, pattern: String, loc: Int): Int {
+  private fun match_bitap(text: String, pattern: String, loc: Int): Int {
     assert(Match_MaxBits.toInt() == 0 || pattern.length <= Match_MaxBits) { "Pattern too long for this application." }
     // Initialise the alphabet.
     val s = match_alphabet(pattern)
@@ -1760,7 +1615,7 @@ open class DiffMatchPatch {
    * @param pattern The text to encode.
    * @return Hash of character locations.
    */
-  protected fun match_alphabet(pattern: String): Map<Char, Int> {
+  private fun match_alphabet(pattern: String): Map<Char, Int> {
     val s: MutableMap<Char, Int> = HashMap()
     val char_pattern = pattern.toCharArray()
     for (c: Char in char_pattern) {
@@ -1782,7 +1637,7 @@ open class DiffMatchPatch {
    * @param patch The patch to grow.
    * @param text Source text.
    */
-  protected fun patch_addContext(patch: Patch, text: String) {
+  private fun patch_addContext(patch: Patch, text: String) {
     if (text.length == 0) {
       return
     }
@@ -1975,7 +1830,7 @@ open class DiffMatchPatch {
    * @param patches Array of Patch objects.
    * @return Array of Patch objects.
    */
-  fun patch_deepCopy(patches: LinkedList<Patch>): LinkedList<Patch> {
+  private fun patch_deepCopy(patches: LinkedList<Patch>): LinkedList<Patch> {
     val patchesCopy = LinkedList<Patch>()
     for (aPatch: Patch in patches) {
       val patchCopy = Patch()
@@ -2126,7 +1981,7 @@ open class DiffMatchPatch {
    * @param patches Array of Patch objects.
    * @return The padding string added to each side.
    */
-  fun patch_addPadding(patches: LinkedList<Patch>): String {
+  private fun patch_addPadding(patches: LinkedList<Patch>): String {
     val paddingLength = this.Patch_Margin
     var nullPadding = ""
     for (x in 1..paddingLength) {
@@ -2187,7 +2042,7 @@ open class DiffMatchPatch {
    * Intended to be called only from within patch_apply.
    * @param patches LinkedList of Patch objects.
    */
-  fun patch_splitMax(patches: LinkedList<Patch>) {
+  private fun patch_splitMax(patches: LinkedList<Patch>) {
     val patch_size = Match_MaxBits
     var precontext: String
     var postcontext: String

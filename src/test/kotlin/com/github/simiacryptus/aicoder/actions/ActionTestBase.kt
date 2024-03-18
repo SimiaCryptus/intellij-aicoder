@@ -3,7 +3,6 @@
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.MarkdownProcessor
-import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.ClientUtil
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -15,7 +14,7 @@ open class ActionTestBase {
     companion object {
 
         fun <T:Any>testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
-            AppSettingsState.instance.apiKey = mapOf(APIProvider.OpenAI.name to ClientUtil.keyTxt).toMutableMap()
+            AppSettingsState.instance.apiKey = ClientUtil.keyMap.mapKeys { it.key }.toMutableMap()
             AppSettingsState.instance.temperature = 0.0
             AppSettingsState.instance.modelName = ChatModels.GPT35Turbo.name
             val input =
@@ -63,7 +62,7 @@ open class ActionTestBase {
             selectionAction: FileContextAction<T>,
             scriptPath: String
         ) {
-            AppSettingsState.instance.apiKey = mapOf(APIProvider.OpenAI.name to ClientUtil.keyTxt).toMutableMap()
+            AppSettingsState.instance.apiKey = ClientUtil.keyMap.mapKeys { it.key }.toMutableMap()
             AppSettingsState.instance.temperature = 0.0
             AppSettingsState.instance.modelName = ChatModels.GPT35Turbo.name
             val input =

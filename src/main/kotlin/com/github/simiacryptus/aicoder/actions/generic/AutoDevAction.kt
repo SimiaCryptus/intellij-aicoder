@@ -6,6 +6,7 @@ import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
@@ -103,9 +104,9 @@ class AutoDevAction : BaseAction() {
     val ui: ApplicationInterface,
     val model: ChatModels,
     val tools: List<String> = emptyList(),
-    val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+    private val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
       ActorTypes.DesignActor to ParsedActor(
-        parserClass = TaskListParser::class.java,
+        resultClass = TaskList::class.java,
         prompt = """
             Translate the user directive into an action plan for the project.
             Break the user's request into a list of simple tasks to be performed.
@@ -139,19 +140,25 @@ class AutoDevAction : BaseAction() {
       ),
     ),
     val event: AnActionEvent,
-  ) : ActorSystem<AutoDevAgent.ActorTypes>(actorMap, dataStorage, user, session) {
+  ) : ActorSystem<AutoDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value.javaClass }.toMap(), dataStorage, user, session) {
     enum class ActorTypes {
       DesignActor,
       TaskCodingActor,
     }
 
-    val designActor by lazy { getActor(ActorTypes.DesignActor) as ParsedActor<TaskList> }
-    val taskActor by lazy { getActor(ActorTypes.TaskCodingActor) as SimpleActor }
+    private val designActor by lazy { getActor(ActorTypes.DesignActor) as ParsedActor<TaskList> }
+    private val taskActor by lazy { getActor(ActorTypes.TaskCodingActor) as SimpleActor }
 
     fun start(
       userMessage: String,
     ) {
       val codeFiles = mutableMapOf<String, String>()
+      val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
+      PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
+        val code = file.inputStream.bufferedReader().use { it.readText() }
+        codeFiles[root.relativize(file.toNioPath()).toString()] = code
+      }
+      require(codeFiles.isNotEmpty()) { "No files selected" }
       fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
         "# $path\n```${
           path.split('.').last()
@@ -177,15 +184,18 @@ class AutoDevAction : BaseAction() {
             val task = ui.newTask()
             task.header("Task: $description")
             AgentPatterns.retryable(ui,task) {
+              val filter = codeFiles.filter { (path, _) -> paths?.find { path.contains(it) }?.isNotEmpty() == true }
+              require(filter.isNotEmpty()) { "No files found for $paths" }
               renderMarkdown(
                 ui.socketManager.addApplyDiffLinks(
-                  codeFiles.filter { (path, _) -> paths?.contains(path) == true },
-                  taskActor.answer(listOf(
+                  code = codeFiles,
+                  response = taskActor.answer(listOf(
+                    codeSummary(),
                     userMessage,
-                    architectureResponse.text,
-                    codeFiles.filter { (path, _) -> paths?.contains(path) == true }.entries.joinToString("\n\n") {
+                    filter.entries.joinToString("\n\n") {
                       "# ${it.key}\n```${it.key.split('.').last()}\n${it.value}\n```"
                     },
+                    architectureResponse.text,
                     "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
                   ), api)
                 ) { newCodeMap ->
@@ -227,11 +237,6 @@ class AutoDevAction : BaseAction() {
       }
       server.addApp(path, socketServer)
       return socketServer
-    }
-
-    interface TaskListParser : java.util.function.Function<String, TaskList> {
-      @Description("Parse out a list of tasks to be performed in this project")
-      override fun apply(text: String): TaskList
     }
 
     data class TaskList(

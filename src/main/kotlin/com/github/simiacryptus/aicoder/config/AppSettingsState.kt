@@ -45,7 +45,7 @@ data class AppSettingsState(
   override fun loadState(state: SimpleEnvelope) {
     state.value ?: return
     val fromJson = try {
-      JsonUtil.fromJson<AppSettingsState>(state.value!!, AppSettingsState::class.java)
+      JsonUtil.fromJson(state.value!!, AppSettingsState::class.java)
     } catch (e: Exception) {
       //throw RuntimeException("Error loading settings: ${state.value}", e)
       AppSettingsState()

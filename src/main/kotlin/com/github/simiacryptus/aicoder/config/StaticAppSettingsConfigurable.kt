@@ -48,21 +48,9 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
           add(JLabel("Human Language:"))
           add(component.humanLanguage)
         })
-//        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-//          add(JLabel("Token Counter:"))
-//          add(component.tokenCounter)
-//          add(component.clearCounter)
-//        })
-        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          // Removed sections that reference non-existing components
-          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Ignore Errors:"))
-            add(component.suppressErrors)
-          })
-        }, BorderLayout.NORTH)
         add(JPanel(BorderLayout()).apply {
           add(JLabel("API Configurations:"), BorderLayout.NORTH)
-          add(component.apiConfigurations, BorderLayout.CENTER)
+          add(component.apis, BorderLayout.CENTER)
         })
       })
     }
@@ -75,6 +63,13 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
           add(JLabel("Developer Tools:"))
           add(component.devActions)
         })
+        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+          // Removed sections that reference non-existing components
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Ignore Errors:"))
+            add(component.suppressErrors)
+          })
+        }, BorderLayout.NORTH)
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
           add(JLabel("Edit API Requests:"))
           add(component.editRequests)
@@ -113,7 +108,6 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
   override fun write(settings: AppSettingsState, component: AppSettingsComponent) {
     try {
-//      component.tokenCounter.text = settings.tokenCounter.toString()
       component.humanLanguage.text = settings.humanLanguage
       component.listeningPort.text = settings.listeningPort.toString()
       component.listeningEndpoint.text = settings.listeningEndpoint
@@ -123,7 +117,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       component.devActions.isSelected = settings.devActions
       component.editRequests.isSelected = settings.editRequests
       component.temperature.text = settings.temperature.toString()
-      val model = component.apiConfigurations.model as DefaultTableModel
+      val model = component.apis.model as DefaultTableModel
       model.setRowCount(0) // Clear existing rows
       APIProvider.values().forEach { value ->
         val key = value.name
@@ -131,8 +125,6 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       }
       component.editorActions.read(settings.editorActions)
       component.fileActions.read(settings.fileActions)
-      // This line is attempting to set a selectedItem on a ComboBox to a Map, which is incorrect.
-      // Assuming apiProvider is intended to be a ComboBox in AppSettingsComponent, you should set it to a specific String value or handle it differently if it's meant to be a Map.
     } catch (e: Exception) {
       log.warn("Error setting UI", e)
     }
@@ -140,19 +132,16 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
   override fun read(component: AppSettingsComponent, settings: AppSettingsState) {
     try {
-//      settings.tokenCounter = component.tokenCounter.text.safeInt()
       settings.humanLanguage = component.humanLanguage.text
       settings.listeningPort = component.listeningPort.text.safeInt()
       settings.listeningEndpoint = component.listeningEndpoint.text
       settings.suppressErrors = component.suppressErrors.isSelected
       settings.modelName = component.modelName.selectedItem as String
-      // This line is attempting to assign a String to a Map, which is incorrect.
-      // If apiProvider in AppSettingsState is meant to be a String, change its type in AppSettingsState. If it's correctly a Map, you need to adjust how you're handling the selection.
       settings.apiLog = component.apiLog.isSelected
       settings.devActions = component.devActions.isSelected
       settings.editRequests = component.editRequests.isSelected
       settings.temperature = component.temperature.text.safeDouble()
-      val model = component.apiConfigurations.model as DefaultTableModel
+      val model = component.apis.model as DefaultTableModel
       for (row in 0 until model.rowCount) {
         val provider = model.getValueAt(row, 0) as String
         val key = model.getValueAt(row, 1) as String
@@ -178,8 +167,6 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
     }
   }
 
-  // These lines are correct for clearing the maps before repopulating them.
-  // Ensure that the apiConfigurations table in AppSettingsComponent is correctly populated and linked to these maps.
   companion object {
     val log = com.intellij.openapi.diagnostic.Logger.getInstance(StaticAppSettingsConfigurable::class.java)
   }
