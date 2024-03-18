@@ -129,6 +129,16 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
+        <!--IncrementalCodeGenAction-->
+        <action class="com.github.simiacryptus.aicoder.actions.generic.TaskRunner"
+                text="Task Runner"
+                description="Task Runner">
+            <!--DOC
+        The `Incremental Code Generation` action allows you to quickly generate code for the current file.
+        This is useful for quickly generating code for the current file.
+            -->
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.LineFilterChatAction"
                 text="Filter Lines"
                 description="Filter lines">
