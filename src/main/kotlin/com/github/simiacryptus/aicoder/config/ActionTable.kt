@@ -163,7 +163,7 @@ class ActionTable(
                 }
 
                 if (it.exists()) {
-                    ApplicationManager.getApplication().invokeLater {
+                    ApplicationManager.getApplication().runReadAction {
                         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(it)
                         val fileEditorManager = FileEditorManager.getInstance(project!!)
                         val editor = fileEditorManager.openFile(virtualFile!!, true).firstOrNull()

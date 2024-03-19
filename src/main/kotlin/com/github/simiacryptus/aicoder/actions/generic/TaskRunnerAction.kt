@@ -20,6 +20,7 @@ import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
@@ -78,7 +79,7 @@ import java.util.concurrent.ThreadPoolExecutor
  * This diagram and description provide a simplified overview of the application's architecture and logic flow. The actual implementation may involve more detailed interactions and components not fully captured here.
  *
  * */
-class TaskRunner : BaseAction() {
+class TaskRunnerAction : BaseAction() {
 
   val path = "/taskDev"
   override fun handle(e: AnActionEvent) {
@@ -180,9 +181,24 @@ class TaskRunnerAgent(
       resultClass = TaskBreakdownResult::class.java,
       prompt = """
         Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
-        For each task, clearly define the files used and created, specific requirements, constraints, goals, and expectations.
         Detail task dependencies and relationships, and ensure the tasks are well-organized and logically ordered.
         Briefly explain your rationale for the task breakdown and ordering.
+        
+        Tasks can be of the following types: 
+        * TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
+          ** Specify the prior tasks and the goal of the task
+        * Inquiry - Answer questions by reading in files and providing a summary that can be discussed with and approved by the user
+          ** Specify the questions and the goal of the inquiry
+          ** List input files to be examined
+        * NewFile - Create one or more new files
+          ** For each file, specify the relative file path and the purpose of the file
+          ** List input files/tasks to be examined
+        * EditFile - Modify existing files
+          ** For each file, specify the relative file path and the goal of the modification
+          ** List input files/tasks to be examined
+        * Documentation - Generate documentation
+          ** List input files/tasks to be examined
+        
       """.trimIndent(),
       model = model,
       parsingModel = parsingModel,
@@ -296,7 +312,7 @@ class TaskRunnerAgent(
 
   enum class TaskType {
     TaskPlanning,
-    Requirements,
+    Inquiry,
     NewFile,
     EditFile,
     Documentation,
@@ -318,11 +334,11 @@ class TaskRunnerAgent(
 
   fun startProcess(userMessage: String) {
     val eventStatus = """
-          |Root: ${root.toFile().absolutePath}
-          |
-          |Files:
-          |${expandPaths(virtualFiles).joinToString("\n") { "* ${root.relativize(it)}" }}  
-        """.trimMargin()
+      |Root: ${root.toFile().absolutePath}
+      |
+      |Files:
+      |${expandPaths(virtualFiles).joinToString("\n") { "* ${root.relativize(it)}" }}  
+    """.trimMargin()
     val highLevelPlan = AgentPatterns.iterate(
       input = userMessage,
       heading = userMessage,
@@ -335,8 +351,11 @@ class TaskRunnerAgent(
       },
       api = api,
       ui = ui,
-      outputFn = { task, design ->
-        task.add(renderMarkdown("${design.text}\n\n```json\n${toJson(design.obj)}\n```"))
+      outputFn = { design ->
+        AgentPatterns.displayMapInTabs(mapOf(
+          "Text" to renderMarkdown(design.text),
+          "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
+        ))
       }
     )
 
@@ -441,154 +460,15 @@ class TaskRunnerAgent(
       val semaphore = Semaphore(0)
       when (subTask.taskType) {
 
-        TaskType.NewFile -> {
-          AgentPatterns.retryable(ui, task) {
-            val codeResult = newFileCreatorActor.answer(
-              listOf(
-                userMessage,
-                highLevelPlan.text,
-                priorCode,
-                inputFileCode,
-                subTask.description ?: "",
-              ), api
-            )
-            genState.replyText[taskId] = codeResult
-            renderMarkdown(ui.socketManager.addSaveLinks(codeResult) { path, newCode ->
-              val prev = codeFiles[path]
-              if (prev != newCode) {
-                codeFiles[path] = newCode
-                val bytes = newCode.toByteArray(Charsets.UTF_8)
-                task.complete("<a href='${task.saveFile(path, bytes)}'>$path</a> Updated")
-              }
-            }) + ui.hrefLink("Accept") {
-              semaphore.release()
-            }
-          }
-          try { semaphore.acquire() } catch (e: Throwable) { log.warn("Error", e) }
-        }
+        TaskType.NewFile -> createFiles(task, userMessage, highLevelPlan, priorCode, inputFileCode, subTask, genState, taskId, semaphore)
 
-        TaskType.EditFile -> {
-          AgentPatterns.retryable(ui, task) {
-            val codeResult = filePatcherActor.answer(
-              listOf(
-                userMessage,
-                highLevelPlan.text,
-                priorCode,
-                inputFileCode,
-                subTask.description ?: "",
-              ), api
-            )
-            genState.replyText[taskId] = codeResult
-            renderMarkdown(ui.socketManager.addApplyDiffLinks(codeFiles, codeResult) { newCodeMap ->
-              newCodeMap.forEach { (path, newCode) ->
-                val prev = codeFiles[path]
-                if (prev != newCode) {
-                  codeFiles[path] = newCode
-                  task.complete(
-                    "<a href='${
-                      task.saveFile(
-                        path,
-                        newCode.toByteArray(Charsets.UTF_8)
-                      )
-                    }'>$path</a> Updated"
-                  )
-                }
-              }
-            }) + ui.hrefLink("Accept") {
-              semaphore.release()
-            }
-          }
-          try { semaphore.acquire() } catch (e: Throwable) { log.warn("Error", e) }
-        }
+        TaskType.EditFile -> editFiles(task, userMessage, highLevelPlan, priorCode, inputFileCode, subTask, genState, taskId, semaphore)
 
-        TaskType.Documentation -> {
-          AgentPatterns.retryable(ui, task) {
-            val docResult = documentationGeneratorActor.answer(
-              listOf(
-                userMessage,
-                highLevelPlan.text,
-                priorCode,
-                inputFileCode,
-              ), api
-            )
-            genState.replyText[taskId] = docResult
-            renderMarkdown("## Generated Documentation\n$docResult") + ui.hrefLink("Accept") {
-              semaphore.release()
-            }
-          }
-          try { semaphore.acquire() } catch (e: Throwable) { log.warn("Error", e) }
-        }
+        TaskType.Documentation -> document(task, userMessage, highLevelPlan, priorCode, inputFileCode, genState, taskId, semaphore)
 
-        TaskType.Requirements -> {
-          val inquiryResult = AgentPatterns.iterate(
-            input = "Expand ${subTask.description ?: ""}",
-            heading = "Expand ${subTask.description ?: ""}",
-            actor = inquiryActor,
-            toInput = {
-              listOf(
-                userMessage,
-                highLevelPlan.text,
-                priorCode,
-                inputFileCode,
-                it,
-              )
-            },
-            api = api,
-            ui = ui,
-            outputFn = { task, design ->
-              task.add(renderMarkdown(design))
-            }
-          )
-          genState.replyText[taskId] = inquiryResult
-          task.complete(renderMarkdown("## Generated Inquiry Response\n$inquiryResult"))
-        }
+        TaskType.Inquiry -> inquiry(subTask, userMessage, highLevelPlan, priorCode, inputFileCode, genState, taskId, task)
 
-        TaskType.TaskPlanning -> {
-          val subPlan = AgentPatterns.iterate(
-            input = "Expand ${subTask.description ?: ""}",
-            heading = "Expand ${subTask.description ?: ""}",
-            actor = taskBreakdownActor,
-            toInput = {
-              listOf(
-                userMessage,
-                highLevelPlan.text,
-                priorCode,
-                inputFileCode,
-                it
-              )
-            },
-            api = api,
-            ui = ui,
-            outputFn = { task, design ->
-              task.add(renderMarkdown("${design.text}\n\n```json\n${toJson(design.obj)}\n```"))
-            }
-          )
-          genState.replyText[taskId] = subPlan.text
-          var newTasks = subPlan.obj.tasksByID
-          val conflictingKeys = newTasks?.keys?.intersect(genState.subTasks.keys)
-          newTasks = newTasks?.entries?.associate { (key, value) ->
-            (when {
-              conflictingKeys?.contains(key) == true -> "${taskId}_${key}"
-              else -> key
-            }) to value.copy(task_dependencies = value.task_dependencies?.map { key ->
-              when {
-                conflictingKeys?.contains(key) == true -> "${taskId}_${key}"
-                else -> key
-              }
-            })
-          }
-          genState.subTasks.putAll(newTasks ?: emptyMap())
-          executionOrder(newTasks ?: emptyMap()).reversed().forEach { genState.taskIds.add(0, it) }
-          genState.subTasks.values.forEach {
-            it.task_dependencies = it.task_dependencies?.map { dep ->
-              when {
-                dep == taskId -> subPlan.obj.finalTaskID ?: dep
-                else -> dep
-              }
-            }
-          }
-          task.complete(renderMarkdown("## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
-        }
+        TaskType.TaskPlanning -> taskPlanning(subTask, userMessage, highLevelPlan, priorCode, inputFileCode, genState, taskId, task)
 
         else -> null
       }
@@ -598,6 +478,232 @@ class TaskRunnerAgent(
     } finally {
       genState.completedTasks.add(taskId)
     }
+  }
+
+  private fun createFiles(
+    task: SessionTask,
+    userMessage: String,
+    highLevelPlan: ParsedResponse<TaskBreakdownResult>,
+    priorCode: String,
+    inputFileCode: String,
+    subTask: Task,
+    genState: GenState,
+    taskId: String,
+    semaphore: Semaphore
+  ) {
+    AgentPatterns.retryable(ui, task) {
+      val codeResult = newFileCreatorActor.answer(
+        listOf(
+          userMessage,
+          highLevelPlan.text,
+          priorCode,
+          inputFileCode,
+          subTask.description ?: "",
+        ), api
+      )
+      genState.replyText[taskId] = codeResult
+      renderMarkdown(ui.socketManager.addSaveLinks(codeResult) { path, newCode ->
+        val prev = codeFiles[path]
+        if (prev != newCode) {
+          codeFiles[path] = newCode
+          val bytes = newCode.toByteArray(Charsets.UTF_8)
+          task.complete("<a href='${task.saveFile(path, bytes)}'>$path</a> Updated")
+        }
+      }) + accept(semaphore)
+    }
+    try {
+      semaphore.acquire()
+    } catch (e: Throwable) {
+      log.warn("Error", e)
+    }
+  }
+
+  private fun editFiles(
+    task: SessionTask,
+    userMessage: String,
+    highLevelPlan: ParsedResponse<TaskBreakdownResult>,
+    priorCode: String,
+    inputFileCode: String,
+    subTask: Task,
+    genState: GenState,
+    taskId: String,
+    semaphore: Semaphore
+  ) {
+    AgentPatterns.retryable(ui, task) {
+      val codeResult = filePatcherActor.answer(
+        listOf(
+          userMessage,
+          highLevelPlan.text,
+          priorCode,
+          inputFileCode,
+          subTask.description ?: "",
+        ), api
+      )
+      genState.replyText[taskId] = codeResult
+      renderMarkdown(ui.socketManager.addApplyDiffLinks(codeFiles, codeResult) { newCodeMap ->
+        newCodeMap.forEach { (path, newCode) ->
+          val prev = codeFiles[path]
+          if (prev != newCode) {
+            codeFiles[path] = newCode
+            task.complete(
+              "<a href='${
+                task.saveFile(
+                  path,
+                  newCode.toByteArray(Charsets.UTF_8)
+                )
+              }'>$path</a> Updated"
+            )
+          }
+        }
+      }) + accept(semaphore)
+    }
+    try {
+      semaphore.acquire()
+    } catch (e: Throwable) {
+      log.warn("Error", e)
+    }
+  }
+
+  private fun document(
+    task: SessionTask,
+    userMessage: String,
+    highLevelPlan: ParsedResponse<TaskBreakdownResult>,
+    priorCode: String,
+    inputFileCode: String,
+    genState: GenState,
+    taskId: String,
+    semaphore: Semaphore
+  ) {
+    AgentPatterns.retryable(ui, task) {
+      val docResult = documentationGeneratorActor.answer(
+        listOf(
+          userMessage,
+          highLevelPlan.text,
+          priorCode,
+          inputFileCode,
+        ), api
+      )
+      genState.replyText[taskId] = docResult
+      renderMarkdown("## Generated Documentation\n$docResult") + accept(semaphore)
+    }
+    try {
+      semaphore.acquire()
+    } catch (e: Throwable) {
+      log.warn("Error", e)
+    }
+  }
+
+  private fun accept(semaphore: Semaphore): String {
+    // Generate a unique ID for the link to target it with JavaScript.
+    val uniqueId = "acceptLink-${System.nanoTime()}"
+    val hrefLink = ui.hrefLink("Accept", id = uniqueId) {
+      semaphore.release()
+      // This part is server-side Kotlin and cannot directly change the link text.
+      // The text change is handled by the client-side JavaScript injected below.
+    }
+    // Inject JavaScript to change the link text upon clicking.
+    // Note: Ensure your system supports executing JavaScript from Kotlin-generated HTML.
+    val script = """
+        <script>
+            document.getElementById('$uniqueId').onclick = function() {
+                this.innerText = 'Accepted';
+            };
+        </script>
+    """.trimIndent()
+    return hrefLink + script
+  }
+
+  private fun inquiry(
+    subTask: Task,
+    userMessage: String,
+    highLevelPlan: ParsedResponse<TaskBreakdownResult>,
+    priorCode: String,
+    inputFileCode: String,
+    genState: GenState,
+    taskId: String,
+    task: SessionTask
+  ) {
+    val inquiryResult = AgentPatterns.iterate(
+      input = "Expand ${subTask.description ?: ""}",
+      heading = "Expand ${subTask.description ?: ""}",
+      actor = inquiryActor,
+      toInput = {
+        listOf(
+          userMessage,
+          highLevelPlan.text,
+          priorCode,
+          inputFileCode,
+          it,
+        )
+      },
+      api = api,
+      ui = ui,
+      outputFn = { design ->
+        renderMarkdown(design)
+      }
+    )
+    genState.replyText[taskId] = inquiryResult
+    task.complete(renderMarkdown("## Generated Inquiry Response\n$inquiryResult"))
+  }
+
+  private fun taskPlanning(
+    subTask: Task,
+    userMessage: String,
+    highLevelPlan: ParsedResponse<TaskBreakdownResult>,
+    priorCode: String,
+    inputFileCode: String,
+    genState: GenState,
+    taskId: String,
+    task: SessionTask
+  ) {
+    val subPlan = AgentPatterns.iterate(
+      input = "Expand ${subTask.description ?: ""}",
+      heading = "Expand ${subTask.description ?: ""}",
+      actor = taskBreakdownActor,
+      toInput = {
+        listOf(
+          userMessage,
+          highLevelPlan.text,
+          priorCode,
+          inputFileCode,
+          it
+        )
+      },
+      api = api,
+      ui = ui,
+      outputFn = { design ->
+        AgentPatterns.displayMapInTabs(mapOf(
+          "Text" to renderMarkdown(design.text),
+          "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
+        ))
+      },
+      task = task
+    )
+    genState.replyText[taskId] = subPlan.text
+    var newTasks = subPlan.obj.tasksByID
+    val conflictingKeys = newTasks?.keys?.intersect(genState.subTasks.keys)
+    newTasks = newTasks?.entries?.associate { (key, value) ->
+      (when {
+        conflictingKeys?.contains(key) == true -> "${taskId}_${key}"
+        else -> key
+      }) to value.copy(task_dependencies = value.task_dependencies?.map { key ->
+        when {
+          conflictingKeys?.contains(key) == true -> "${taskId}_${key}"
+          else -> key
+        }
+      })
+    }
+    genState.subTasks.putAll(newTasks ?: emptyMap())
+    executionOrder(newTasks ?: emptyMap()).reversed().forEach { genState.taskIds.add(0, it) }
+    genState.subTasks.values.forEach {
+      it.task_dependencies = it.task_dependencies?.map { dep ->
+        when {
+          dep == taskId -> subPlan.obj.finalTaskID ?: dep
+          else -> dep
+        }
+      }
+    }
+    task.complete(renderMarkdown("## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
   }
 
   private fun getAllDependencies(subTask: Task, subTasks: MutableMap<String, Task>): List<String> {
