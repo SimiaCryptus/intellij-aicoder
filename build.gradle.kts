@@ -8,7 +8,7 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 plugins {
     id("java") // Java support
     id("org.jetbrains.kotlin.jvm") version "1.9.21"
-    id("org.jetbrains.intellij") version "1.16.1"
+    id("org.jetbrains.intellij") version "1.17.2"
     id("org.jetbrains.changelog") version "2.2.0"
     id("org.jetbrains.qodana") version "2023.2.1"
     id("org.jetbrains.kotlinx.kover") version "0.7.4"
@@ -26,7 +26,7 @@ repositories {
 val kotlin_version = "1.9.21"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.52"
+val skyenet_version = "1.0.53"
 val remoterobot_version = "0.11.21"
 dependencies {
 
@@ -37,7 +37,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.48")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.49")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }

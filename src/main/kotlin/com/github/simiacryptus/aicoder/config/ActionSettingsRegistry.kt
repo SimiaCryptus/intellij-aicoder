@@ -11,7 +11,7 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
   val actionSettings: MutableMap<String, ActionSettings> = HashMap()
-  private val version = 2.0074
+  private val version = 2.0075
 
   private fun updateActionConfig(action: AnAction, code: String, language: String) {
     val actionConfig = this.getActionConfig(action)

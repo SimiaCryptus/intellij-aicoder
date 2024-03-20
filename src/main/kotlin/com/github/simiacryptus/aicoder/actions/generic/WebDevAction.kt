@@ -26,7 +26,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.servlet.ToolServlet
 import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.webui.util.MarkdownUtil
+import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
@@ -206,8 +206,8 @@ class WebDevAction : BaseAction() {
         toInput = { listOf(it) },
         api = api,
         ui = ui,
-        outputFn = { task, design ->
-          task.add(MarkdownUtil.renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```"))
+        outputFn = { design ->
+          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
         }
       )
 
@@ -217,7 +217,7 @@ class WebDevAction : BaseAction() {
           .joinToString("\n\n") { it?.let { JsonUtil.toJson(it.openApiDescription) } ?: "" }
         var messageWithTools = userMessage
         if (toolSpecs.isNotBlank()) messageWithTools += "\n\nThese services are available:\n$toolSpecs"
-        task.echo(MarkdownUtil.renderMarkdown("```json\n${JsonUtil.toJson(architectureResponse.obj)}\n```"))
+        task.echo(renderMarkdown("```json\n${JsonUtil.toJson(architectureResponse.obj)}\n```"))
         architectureResponse.obj.resources.filter {
           !it.path!!.startsWith("http")
         }.forEach { (path, description) ->
@@ -288,7 +288,7 @@ class WebDevAction : BaseAction() {
         fun outputFn(task: SessionTask, design: String): StringBuilder? {
           //val task = ui.newTask()
           return task.complete(
-            MarkdownUtil.renderMarkdown(
+            renderMarkdown(
               ui.socketManager.addApplyDiffLinks(
                 codeFiles,
                 design
@@ -312,7 +312,7 @@ class WebDevAction : BaseAction() {
         }
         try {
           var task = ui.newTask()
-          task.add(message = MarkdownUtil.renderMarkdown(codeSummary()))
+          task.add(message = renderMarkdown(codeSummary()))
           var design = codeReviewer.answer(listOf(element = codeSummary()), api = api)
           outputFn(task, design)
           var textInputHandle: StringBuilder? = null
@@ -323,9 +323,9 @@ class WebDevAction : BaseAction() {
             textInputHandle?.clear()
             task.complete()
             task = ui.newTask()
-            task.echo(MarkdownUtil.renderMarkdown(userResponse))
+            task.echo(renderMarkdown(userResponse))
             val codeSummary = codeSummary()
-            task.add(MarkdownUtil.renderMarkdown(codeSummary))
+            task.add(renderMarkdown(codeSummary))
             design = codeReviewer.respond(
               messages = codeReviewer.chatMessages(
                 listOf(
@@ -365,7 +365,7 @@ class WebDevAction : BaseAction() {
           if (code.contains("```$language")) code = code.substringAfter("```$language").substringBefore("```")
         }
         try {
-          task.add(MarkdownUtil.renderMarkdown("```${languages.first()}\n$code\n```"))
+          task.add(renderMarkdown("```${languages.first()}\n$code\n```"))
           task.add("<a href='${task.saveFile(path, code.toByteArray(Charsets.UTF_8))}'>$path</a> Updated")
           codeFiles[path] = code
           val request1 = (request.toList() +
@@ -378,7 +378,7 @@ class WebDevAction : BaseAction() {
             """
             |<div style="display: flex;flex-direction: column;">
             |${
-              ui.hrefLink("♻", "href-link regen-button") {
+              ui.hrefLink("♻", "href-link regen-button"){
                 val task = ui.newTask()
                 responseAction(task, "Regenerating...", formHandle!!, formText) {
                   draftResourceCode(
@@ -395,7 +395,7 @@ class WebDevAction : BaseAction() {
                 responseAction(task, "Revising...", formHandle!!, formText) {
                   //val task = ui.newTask()
                   try {
-                    task.echo(MarkdownUtil.renderMarkdown(feedback))
+                    task.echo(renderMarkdown(feedback))
                     draftResourceCode(
                       task, (request1.toList() + listOf(
                         code to ApiModel.Role.assistant,
@@ -428,7 +428,7 @@ class WebDevAction : BaseAction() {
         log.warn("Error", e)
         val error = task.error(ui, e)
         var regenButton: StringBuilder? = null
-        regenButton = task.complete(ui.hrefLink("♻", "href-link regen-button") {
+        regenButton = task.complete(ui.hrefLink("♻", "href-link regen-button"){
           regenButton?.clear()
           val header = task.header("Regenerating...")
           draftResourceCode(task, request, actor, path, *languages)
@@ -453,7 +453,7 @@ class WebDevAction : BaseAction() {
       } finally {
         header?.clear()
         var revertButton: StringBuilder? = null
-        revertButton = task.complete(ui.hrefLink("↩", "href-link regen-button") {
+        revertButton = task.complete(ui.hrefLink("↩", "href-link regen-button"){
           revertButton?.clear()
           formHandle?.append(formText)
           task.complete()

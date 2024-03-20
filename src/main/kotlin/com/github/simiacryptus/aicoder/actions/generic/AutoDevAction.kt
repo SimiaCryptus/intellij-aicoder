@@ -172,15 +172,15 @@ class AutoDevAction : BaseAction() {
         toInput = { listOf(codeSummary(), it) },
         api = api,
         ui = ui,
-        outputFn = { task, design ->
-          task.add(renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```"))
+        outputFn = { design ->
+          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
         }
       )
 
       val task = ui.newTask()
       try {
         architectureResponse.obj.tasks.forEach { (paths, description) ->
-          task.complete(ui.hrefLink(renderMarkdown("Task: $description")) {
+          task.complete(ui.hrefLink(renderMarkdown("Task: $description")){
             val task = ui.newTask()
             task.header("Task: $description")
             AgentPatterns.retryable(ui,task) {
