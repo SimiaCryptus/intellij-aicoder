@@ -13,6 +13,7 @@ import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
 import com.simiacryptus.skyenet.AgentPatterns
+import com.simiacryptus.skyenet.AgentPatterns.Retryable
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.ApplicationServices.clientManager
@@ -352,10 +353,12 @@ class TaskRunnerAgent(
       api = api,
       ui = ui,
       outputFn = { design ->
-        AgentPatterns.displayMapInTabs(mapOf(
-          "Text" to renderMarkdown(design.text),
-          "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
-        ))
+        AgentPatterns.displayMapInTabs(
+          mapOf(
+            "Text" to renderMarkdown(design.text),
+            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
+          )
+        )
       }
     )
 
@@ -418,8 +421,8 @@ class TaskRunnerAgent(
     userMessage: String,
     highLevelPlan: ParsedResponse<TaskBreakdownResult>,
     genState: GenState,
+    task: SessionTask = ui.newTask(),
   ) {
-    val task = ui.newTask()
     try {
       val dependencies = subTask.task_dependencies?.toMutableSet() ?: mutableSetOf()
       dependencies += getAllDependencies(subTask, genState.subTasks)
@@ -457,18 +460,92 @@ class TaskRunnerAgent(
         )
       )
 
-      val semaphore = Semaphore(0)
       when (subTask.taskType) {
 
-        TaskType.NewFile -> createFiles(task, userMessage, highLevelPlan, priorCode, inputFileCode, subTask, genState, taskId, semaphore)
+        TaskType.NewFile -> {
+          val semaphore = Semaphore(0)
+          createFiles(
+            task,
+            userMessage,
+            highLevelPlan,
+            priorCode,
+            inputFileCode,
+            subTask,
+            genState,
+            taskId
+          ) { semaphore.release() }
+          try {
+            semaphore.acquire()
+          } catch (e: Throwable) {
+            log.warn("Error", e)
+          }
 
-        TaskType.EditFile -> editFiles(task, userMessage, highLevelPlan, priorCode, inputFileCode, subTask, genState, taskId, semaphore)
+        }
 
-        TaskType.Documentation -> document(task, userMessage, highLevelPlan, priorCode, inputFileCode, genState, taskId, semaphore)
+        TaskType.EditFile -> {
+          val semaphore = Semaphore(0)
+          editFiles(
+            task,
+            userMessage,
+            highLevelPlan,
+            priorCode,
+            inputFileCode,
+            subTask,
+            genState,
+            taskId
+          ) { semaphore.release() }
+          try {
+            semaphore.acquire()
+          } catch (e: Throwable) {
+            log.warn("Error", e)
+          }
+        }
 
-        TaskType.Inquiry -> inquiry(subTask, userMessage, highLevelPlan, priorCode, inputFileCode, genState, taskId, task)
+        TaskType.Documentation -> {
+          val semaphore = Semaphore(0)
+          document(
+            task,
+            userMessage,
+            highLevelPlan,
+            priorCode,
+            inputFileCode,
+            genState,
+            taskId
+          ) {
+            semaphore.release()
+          }
+          try {
+            semaphore.acquire()
+          } catch (e: Throwable) {
+            log.warn("Error", e)
+          }
+        }
 
-        TaskType.TaskPlanning -> taskPlanning(subTask, userMessage, highLevelPlan, priorCode, inputFileCode, genState, taskId, task)
+        TaskType.Inquiry -> {
+          inquiry(
+            subTask,
+            userMessage,
+            highLevelPlan,
+            priorCode,
+            inputFileCode,
+            genState,
+            taskId,
+            task
+          )
+        }
+
+        TaskType.TaskPlanning -> {
+          taskPlanning(
+            subTask,
+            userMessage,
+            highLevelPlan,
+            priorCode,
+            inputFileCode,
+            genState,
+            taskId,
+            task
+          )
+        }
 
         else -> null
       }
@@ -489,9 +566,9 @@ class TaskRunnerAgent(
     subTask: Task,
     genState: GenState,
     taskId: String,
-    semaphore: Semaphore
+    onComplete: () -> Unit
   ) {
-    AgentPatterns.retryable(ui, task) {
+    val process = { sb : StringBuilder ->
       val codeResult = newFileCreatorActor.answer(
         listOf(
           userMessage,
@@ -502,19 +579,22 @@ class TaskRunnerAgent(
         ), api
       )
       genState.replyText[taskId] = codeResult
-      renderMarkdown(ui.socketManager.addSaveLinks(codeResult) { path, newCode ->
+      renderMarkdown(ui.socketManager.addSaveLinks(codeResult) {  path, newCode ->
         val prev = codeFiles[path]
         if (prev != newCode) {
           codeFiles[path] = newCode
           val bytes = newCode.toByteArray(Charsets.UTF_8)
           task.complete("<a href='${task.saveFile(path, bytes)}'>$path</a> Updated")
         }
-      }) + accept(semaphore)
+      }) + accept(sb) {
+        task.complete()
+        onComplete()
+      }
     }
-    try {
-      semaphore.acquire()
-    } catch (e: Throwable) {
-      log.warn("Error", e)
+    object : Retryable(ui, task, process) {
+      init {
+        addTab(ui, process(container!!))
+      }
     }
   }
 
@@ -527,9 +607,9 @@ class TaskRunnerAgent(
     subTask: Task,
     genState: GenState,
     taskId: String,
-    semaphore: Semaphore
+    onComplete: () -> Unit
   ) {
-    AgentPatterns.retryable(ui, task) {
+    val process = { sb : StringBuilder ->
       val codeResult = filePatcherActor.answer(
         listOf(
           userMessage,
@@ -555,12 +635,15 @@ class TaskRunnerAgent(
             )
           }
         }
-      }) + accept(semaphore)
+      }) + accept(sb) {
+        task.complete()
+        onComplete()
+      }
     }
-    try {
-      semaphore.acquire()
-    } catch (e: Throwable) {
-      log.warn("Error", e)
+    object : Retryable(ui, task, process){
+      init {
+        addTab(ui, process(container!!))
+      }
     }
   }
 
@@ -572,9 +655,9 @@ class TaskRunnerAgent(
     inputFileCode: String,
     genState: GenState,
     taskId: String,
-    semaphore: Semaphore
+    onComplete: () -> Unit
   ) {
-    AgentPatterns.retryable(ui, task) {
+    val process = { sb : StringBuilder ->
       val docResult = documentationGeneratorActor.answer(
         listOf(
           userMessage,
@@ -584,33 +667,35 @@ class TaskRunnerAgent(
         ), api
       )
       genState.replyText[taskId] = docResult
-      renderMarkdown("## Generated Documentation\n$docResult") + accept(semaphore)
+      renderMarkdown("## Generated Documentation\n$docResult") + accept(sb) {
+        task.complete()
+        onComplete()
+      }
     }
-    try {
-      semaphore.acquire()
-    } catch (e: Throwable) {
-      log.warn("Error", e)
+    object : Retryable(ui, task, process){
+      init {
+        addTab(ui, process(container!!))
+      }
     }
   }
 
-  private fun accept(semaphore: Semaphore): String {
-    // Generate a unique ID for the link to target it with JavaScript.
-    val uniqueId = "acceptLink-${System.nanoTime()}"
-    val hrefLink = ui.hrefLink("Accept", id = uniqueId) {
-      semaphore.release()
-      // This part is server-side Kotlin and cannot directly change the link text.
-      // The text change is handled by the client-side JavaScript injected below.
-    }
-    // Inject JavaScript to change the link text upon clicking.
-    // Note: Ensure your system supports executing JavaScript from Kotlin-generated HTML.
-    val script = """
-        <script>
-            document.getElementById('$uniqueId').onclick = function() {
-                this.innerText = 'Accepted';
-            };
-        </script>
-    """.trimIndent()
-    return hrefLink + script
+  private fun accept(stringBuilder: StringBuilder, fn: () -> Unit): String {
+    val startTag = """<!-- BEGIN ACCEPT LINK -->"""
+    val endTag = """<!-- END ACCEPT LINK -->"""
+    return startTag + ui.hrefLink("Accept") {
+      try {
+        val prev = stringBuilder.toString()
+        require(prev.contains(startTag) && prev.contains(endTag)) {
+          "Accept link not found"
+        }
+        val newValue = prev.substringBefore(startTag) + "Accepted" + prev.substringAfter(endTag)
+        stringBuilder.clear()
+        stringBuilder.append(newValue)
+      } catch (e: Throwable) {
+        log.warn("Error", e)
+      }
+      fn()
+    } + endTag
   }
 
   private fun inquiry(
@@ -672,10 +757,12 @@ class TaskRunnerAgent(
       api = api,
       ui = ui,
       outputFn = { design ->
-        AgentPatterns.displayMapInTabs(mapOf(
-          "Text" to renderMarkdown(design.text),
-          "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
-        ))
+        AgentPatterns.displayMapInTabs(
+          mapOf(
+            "Text" to renderMarkdown(design.text),
+            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
+          )
+        )
       },
       task = task
     )
