@@ -31,7 +31,6 @@ import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.exceptions.ModerationException
 import com.simiacryptus.jopenai.models.APIProvider
-import com.simiacryptus.jopenai.util.StringUtil
 import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory
 import java.awt.*
@@ -90,9 +89,11 @@ object UITools {
     event: AnActionEvent,
     request: Supplier<Runnable>,
   ) {
+    log.debug("Starting redoableTask with event: ${event}, request: ${request}")
     Futures.addCallback(pool.submit<Runnable> {
       request.get()
     }, futureCallback(event, request), pool)
+    log.debug("Submitted redoableTask for execution")
   }
 
   private fun futureCallback(
@@ -114,18 +115,17 @@ object UITools {
     event: AnActionEvent,
     request: Supplier<Runnable>,
     undo: Runnable,
-  ): Runnable {
-    return Runnable {
-      Futures.addCallback(
-        pool.submit<Runnable> {
-          WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
-          request.get()
-        }, futureCallback(event, request), pool
-      )
-    }
+  ): Runnable = Runnable {
+    Futures.addCallback(
+      pool.submit<Runnable> {
+        WriteCommandAction.runWriteCommandAction(event.project) { undo?.run() }
+        request.get()
+      }, futureCallback(event, request), pool
+    )
   }
 
   fun replaceString(document: Document, startOffset: Int, endOffset: Int, newText: CharSequence): Runnable {
+    log.debug("Invoking replaceString with startOffset: $startOffset, endOffset: $endOffset, newText: $newText")
     val oldText: CharSequence = document.getText(TextRange(startOffset, endOffset))
     document.replaceString(startOffset, endOffset, newText)
     logEdit(
@@ -140,6 +140,7 @@ object UITools {
     )
     return Runnable {
       val verifyTxt = document.getText(TextRange(startOffset, startOffset + newText.length))
+      log.debug("Verifying text after replaceString: expected: $newText, actual: $verifyTxt")
       if (verifyTxt != newText) {
         val msg = String.format(
           "The text range from %d to %d does not match the expected text \"%s\" and is instead \"%s\"",
@@ -148,6 +149,7 @@ object UITools {
           newText,
           verifyTxt
         )
+        log.error("Verification failed after replaceString: $msg")
         throw IllegalStateException(msg)
       }
       document.replaceString(startOffset, startOffset + newText.length, oldText)
@@ -240,32 +242,6 @@ object UITools {
           if (uiVal is JScrollPane) {
             uiVal = uiVal.viewport.view
           }
-//          // Handle JBList bound to ArrayList<Path>
-//          if (uiVal is JBList<*> && ArrayList::class.java.isAssignableFrom(settingsField.returnType.javaType as Class<*>) && settingsField.returnType.arguments[0].type?.javaType?.typeName == "java.nio.file.Path") {
-//            val model = uiVal.model
-//            newSettingsValue = ArrayList<Path>().apply {
-//              for (i in 0 until model.size) {
-//                val element = model.getElementAt(i)
-//                if (element is String) {
-//                  add(Paths.get(element))
-//                }
-//              }
-//            }
-//          }
-//          // Handle JBList bound to List
-//          if (uiVal is JBList<*> && List::class.java.isAssignableFrom(settingsField.returnType.javaClass)) {
-//            newSettingsValue = uiVal.model.elements
-//          }
-//          // Handle CheckBoxList bound to List
-//          if (uiVal is CheckBoxList<*> && List::class.java.isAssignableFrom(settingsField.returnType.javaClass)) {
-//            val model = uiVal.model
-//            val checkBoxListValues = ArrayList<Any?>()
-//            for (i in 0 until model.size) {
-//              checkBoxListValues.add(
-//                model.getElementAt(i)?.let { item -> item to uiVal.isItemSelected(item as Nothing?) })
-//            }
-//            newSettingsValue = checkBoxListValues
-//          }
           when (settingsField.returnType.javaType.typeName) {
             "java.lang.String" -> if (uiVal is JTextComponent) {
               newSettingsValue = uiVal.text
@@ -337,36 +313,6 @@ object UITools {
         if (uiVal is JScrollPane) {
           uiVal = uiVal.viewport.view
         }
-//        // Handle JBList bound to ArrayList<Path>
-//        if (uiVal is JBList<*> && settingsVal is List<*> && settingsVal.all { it is Path }) {
-//          val listModel = DefaultListModel<String>()
-//          settingsVal.forEach { path ->
-//            if (path is Path) {
-//              listModel.addElement(path.toString())
-//            }
-//          }
-//          uiVal.model = listModel
-//        }
-//        // Handle JBList bound to List
-//        if (uiVal is JBList<*> && settingsVal is List<*>) {
-//          val listModel = DefaultListModel<Any?>()
-//          settingsVal.forEach { listModel.addElement(it) }
-//          uiVal.model = listModel
-//        }
-//        // Handle CheckBoxList bound to List<Pair<Any?, Boolean>>
-//        val checkBoxListValues = ArrayList<Pair<Any?, Boolean>>()
-//        if (uiVal is CheckBoxList<*> && settingsVal is List<*>) {
-//          val listModel = DefaultListModel<Any?>()
-//          settingsVal.forEach { item ->
-//            if (item is Pair<*, *>) {
-//              listModel.addElement(item.first)
-//              uiVal.setItemSelected(item.first as Nothing?, item.second as Boolean)
-//            }
-//          }
-//          settingsVal.forEach { listModel.addElement(it) }
-//          @Suppress("UNCHECKED_CAST")
-//          uiVal.model = listModel as ListModel<JCheckBox>
-//        }
         when (settingsField.returnType.javaType.typeName) {
           "java.lang.String" -> if (uiVal is JTextComponent) {
             uiVal.text = settingsVal.toString()
@@ -598,31 +544,22 @@ object UITools {
     configClass: Class<C>,
     title: String = "Generate Project",
     onComplete: (C) -> Unit = { _ -> },
-  ) = showDialog<T, C>(project, uiClass, configClass.getConstructor().newInstance(), title, onComplete)
+  ): C = showDialog(
+    project,
+    uiClass.getConstructor().newInstance(),
+    configClass.getConstructor().newInstance(),
+    title,
+    onComplete
+  )
 
-  fun <T : Any, C : Any> showDialog2(
-    project: Project?,
-    component: T,
-    configClass: Class<C>,
-    title: String = "Generate Project",
-    onComplete: (C) -> Unit = { _ -> },
-  ) = showDialog(project, component, configClass.getConstructor().newInstance(), title, onComplete)
-
-  private fun <T : Any, C : Any> showDialog(
-    project: Project?,
-    uiClass: Class<T>,
-    config: C,
-    title: String,
-    onComplete: (C) -> Unit
-  ) = showDialog(project, uiClass.getConstructor().newInstance(), config, title, onComplete)
-
-  private fun <C : Any, T : Any> showDialog(
+  fun <C : Any, T : Any> showDialog(
     project: Project?,
     component: T,
     config: C,
     title: String,
     onComplete: (C) -> Unit
   ): C {
+    log.debug("Showing dialog with title: $title")
     val dialog = object : DialogWrapper(project) {
       init {
         this.init()
@@ -635,13 +572,17 @@ object UITools {
       }
 
       override fun createCenterPanel(): JComponent? {
+        log.debug("Creating center panel for dialog")
         return buildFormViaReflection(component)
       }
     }
     dialog.show()
+    log.debug("Dialog shown with result: ${dialog.isOK}")
     if (dialog.isOK) {
       readKotlinUIViaReflection(component, config)
+      log.debug("Reading UI via reflection completed")
       onComplete(config)
+      log.debug("onComplete callback executed")
     }
     return config
   }
@@ -858,9 +799,11 @@ object UITools {
         testButton.addActionListener {
           val apiKey = apiKeyInput.password.joinToString("")
           try {
-            OpenAIClient(key = mapOf(
-              APIProvider.OpenAI to apiKey
-            )).listModels()
+            OpenAIClient(
+              key = mapOf(
+                APIProvider.OpenAI to apiKey
+              )
+            ).listModels()
             JOptionPane.showMessageDialog(
               null,
               "The API key was accepted by the server. The new value will be saved.",

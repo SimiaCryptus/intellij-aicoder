@@ -6,7 +6,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
 import com.github.simiacryptus.aicoder.util.addSaveLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.simiacryptus.jopenai.API
@@ -25,6 +25,7 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
+import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
 import java.util.concurrent.ThreadPoolExecutor
@@ -320,10 +321,27 @@ class TaskRunnerAgent(
   }
 
   val root by lazy {
-    PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile.toPath() }?.toTypedArray()
+    VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+      ?.map { it.toFile.toPath() }?.toTypedArray()
       ?.commonRoot()!!
   }
-  val virtualFiles by lazy { PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext) }
+
+  val virtualFiles by lazy { expandFileList(
+    VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf()) }
+
+  private fun expandFileList(data: Array<VirtualFile>): Array<VirtualFile> {
+    return data.flatMap {
+      (when {
+        it.name.startsWith(".") -> arrayOf()
+        it.length > 1e6 -> arrayOf()
+        it.extension?.lowercase(Locale.getDefault()) in
+            setOf("jar", "zip", "class", "png", "jpg", "jpeg", "gif", "ico") -> arrayOf()
+        it.isDirectory -> expandFileList(it.children)
+        else -> arrayOf(it)
+      }).toList()
+    }.toTypedArray()
+  }
+
   val codeFiles by lazy {
     mutableMapOf<String, String>().apply {
       virtualFiles?.filter { it.isFile }?.forEach { file ->
@@ -568,6 +586,7 @@ class TaskRunnerAgent(
     taskId: String,
     onComplete: () -> Unit
   ) {
+
     val process = { sb : StringBuilder ->
       val codeResult = newFileCreatorActor.answer(
         listOf(
@@ -584,7 +603,9 @@ class TaskRunnerAgent(
         if (prev != newCode) {
           codeFiles[path] = newCode
           val bytes = newCode.toByteArray(Charsets.UTF_8)
-          task.complete("<a href='${task.saveFile(path, bytes)}'>$path</a> Updated")
+          task.complete("<a href='${task.saveFile(path, bytes)}'>$path</a> Created")
+        } else {
+          task.complete("No changes to $path")
         }
       }) + accept(sb) {
         task.complete()
