@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
@@ -26,11 +27,11 @@ class DocAction : SelectionAction<String>() {
 
     private val proxy: DocAction_VirtualAPI by lazy {
         val chatProxy = ChatProxy(
-            clazz = DocAction_VirtualAPI::class.java,
-            api = api,
-            model = AppSettingsState.instance.defaultChatModel(),
-            temperature = AppSettingsState.instance.temperature,
-            deserializerRetries = 5
+          clazz = DocAction_VirtualAPI::class.java,
+          api = api,
+          model = AppSettingsState.instance.smartModel.chatModel(),
+          temperature = AppSettingsState.instance.temperature,
+          deserializerRetries = 5
         )
         chatProxy.addExample(
             DocAction_VirtualAPI.DocAction_ConvertedText().apply {

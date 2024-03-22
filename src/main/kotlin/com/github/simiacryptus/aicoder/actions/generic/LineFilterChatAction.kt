@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -37,7 +38,7 @@ class LineFilterChatAction : BaseAction() {
     }
     agents[session] = object : ChatSocketManager(
       session = session,
-      model = AppSettingsState.instance.defaultChatModel(),
+      model = AppSettingsState.instance.smartModel.chatModel(),
       userInterfacePrompt = """
         |# `$filename`
         |

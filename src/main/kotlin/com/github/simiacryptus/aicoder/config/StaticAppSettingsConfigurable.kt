@@ -37,8 +37,12 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       add(JPanel(BorderLayout()).apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-          add(JLabel("Model:"))
-          add(component.modelName)
+          add(JLabel("Smart Model:"))
+          add(component.smartModel)
+        })
+        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+          add(JLabel("Fast Model:"))
+          add(component.fastModel)
         })
         add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
           add(JLabel("Temperature:"))
@@ -112,7 +116,9 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       component.listeningPort.text = settings.listeningPort.toString()
       component.listeningEndpoint.text = settings.listeningEndpoint
       component.suppressErrors.isSelected = settings.suppressErrors
-      component.modelName.selectedItem = settings.modelName
+//      component.modelName.selectedItem = settings.modelName
+      component.fastModel.selectedItem = settings.fastModel
+      component.smartModel.selectedItem = settings.smartModel
       component.apiLog.isSelected = settings.apiLog
       component.devActions.isSelected = settings.devActions
       component.editRequests.isSelected = settings.editRequests
@@ -136,7 +142,9 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       settings.listeningPort = component.listeningPort.text.safeInt()
       settings.listeningEndpoint = component.listeningEndpoint.text
       settings.suppressErrors = component.suppressErrors.isSelected
-      settings.modelName = component.modelName.selectedItem as String
+//      settings.modelName = component.modelName.selectedItem as String
+      settings.fastModel = component.fastModel.selectedItem as String
+      settings.smartModel = component.smartModel.selectedItem as String
       settings.apiLog = component.apiLog.isSelected
       settings.devActions = component.devActions.isSelected
       settings.editRequests = component.editRequests.isSelected

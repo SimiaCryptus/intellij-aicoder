@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -77,8 +78,9 @@ class AutoDevAction : BaseAction() {
         user = user,
         ui = ui,
         tools = settings.tools,
-        model = settings.model,
+        model = settings.model!!,
         event = event,
+        parsingModel = AppSettingsState.instance.defaultFastModel(),
       ).start(
         userMessage = userMessage,
       )
@@ -87,7 +89,7 @@ class AutoDevAction : BaseAction() {
     data class Settings(
       val budget: Double? = 2.00,
       val tools: List<String> = emptyList(),
-      val model: ChatModels = ChatModels.GPT4Turbo,
+      val model: ChatModels? = AppSettingsState.instance.defaultSmartModel(),
     )
 
     override val settingsClass: Class<*> get() = Settings::class.java
@@ -103,8 +105,9 @@ class AutoDevAction : BaseAction() {
     user: User?,
     val ui: ApplicationInterface,
     val model: ChatModels,
+    val parsingModel: ChatModels,
     val tools: List<String> = emptyList(),
-    private val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+    actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
       ActorTypes.DesignActor to ParsedActor(
         resultClass = TaskList::class.java,
         prompt = """
@@ -113,7 +116,7 @@ class AutoDevAction : BaseAction() {
             For each task, provide a list of files to be modified and a description of the changes to be made.
           """.trimIndent(),
         model = model,
-        parsingModel = model,
+        parsingModel = parsingModel,
       ),
       ActorTypes.TaskCodingActor to SimpleActor(
         prompt = """
@@ -140,7 +143,8 @@ class AutoDevAction : BaseAction() {
       ),
     ),
     val event: AnActionEvent,
-  ) : ActorSystem<AutoDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value.javaClass }.toMap(), dataStorage, user, session) {
+  ) : ActorSystem<AutoDevAgent.ActorTypes>(
+    actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session) {
     enum class ActorTypes {
       DesignActor,
       TaskCodingActor,
@@ -153,7 +157,8 @@ class AutoDevAction : BaseAction() {
       userMessage: String,
     ) {
       val codeFiles = mutableMapOf<String, String>()
-      val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
+      val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+        ?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
       PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
         val code = file.inputStream.bufferedReader().use { it.readText() }
         codeFiles[root.relativize(file.toNioPath()).toString()] = code

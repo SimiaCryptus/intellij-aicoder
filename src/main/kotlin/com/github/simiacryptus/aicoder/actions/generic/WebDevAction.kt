@@ -177,7 +177,7 @@ class WebDevAction : BaseAction() {
         model = model
       ),
     ),
-  ) : ActorSystem<WebDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value.javaClass }.toMap(), dataStorage, user, session) {
+  ) : ActorSystem<WebDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session) {
     enum class ActorTypes {
       HtmlCodingActor,
       JavascriptCodingActor,

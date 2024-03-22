@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
@@ -58,7 +59,7 @@ class DiffChatAction : BaseAction() {
       codeSelection = numberedText,
       filename = filename,
       api = api,
-      model = AppSettingsState.instance.defaultChatModel(),
+      model = AppSettingsState.instance.smartModel.chatModel(),
       storage = ApplicationServices.dataStorageFactory(root)
     ) {
       override val systemPrompt: String

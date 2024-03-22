@@ -2,6 +2,8 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
 import com.github.simiacryptus.aicoder.util.addSaveLinks
@@ -115,8 +117,8 @@ class TaskRunnerApp(
   path = path,
 ) {
   data class Settings(
-    val model: ChatModels = ChatModels.GPT4Turbo,
-    val parsingModel: ChatModels = ChatModels.GPT35Turbo,
+    val model: ChatModels = AppSettingsState.instance.smartModel.chatModel(),
+    val parsingModel: ChatModels = AppSettingsState.instance.fastModel.chatModel(),
     val temperature: Double = 0.2,
     val budget: Double = 2.0,
   )
@@ -142,8 +144,8 @@ class TaskRunnerApp(
         dataStorage = dataStorage,
         api = api,
         ui = ui,
-        model = settings?.model ?: ChatModels.GPT4Turbo,
-        parsingModel = settings?.parsingModel ?: ChatModels.GPT35Turbo,
+        model = settings?.model ?: AppSettingsState.instance.smartModel.chatModel(),
+        parsingModel = settings?.parsingModel ?: AppSettingsState.instance.fastModel.chatModel(),
         temperature = settings?.temperature ?: 0.3,
         event = event,
       ).startProcess(userMessage = userMessage)
@@ -288,7 +290,7 @@ class TaskRunnerAgent(
 
   val event: AnActionEvent
 ) : ActorSystem<TaskRunnerAgent.ActorTypes>(
-  actorMap.map { it.key.name to it.value.javaClass }.toMap(),
+  actorMap.map { it.key.name to it.value }.toMap(),
   dataStorage,
   user,
   session

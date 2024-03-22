@@ -2,11 +2,10 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.Name
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.simiacryptus.jopenai.ApiModel.*
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import java.io.File
-import javax.swing.JTextArea
 
 class CreateFileAction : FileContextAction<CreateFileAction.Settings>(false, true) {
 
@@ -49,7 +48,7 @@ class CreateFileAction : FileContextAction<CreateFileAction.Settings>(false, tru
     basePath: String,
     directive: String
   ): ProjectFile {
-    val model = AppSettingsState.instance.defaultChatModel()
+    val model = AppSettingsState.instance.smartModel.chatModel()
     val chatRequest = ChatRequest(
       model = model.modelName,
       temperature = AppSettingsState.instance.temperature,
@@ -74,7 +73,7 @@ class CreateFileAction : FileContextAction<CreateFileAction.Settings>(false, tru
     )
     val response = api.chat(
       chatRequest,
-      AppSettingsState.instance.defaultChatModel()
+      AppSettingsState.instance.smartModel.chatModel()
     ).choices?.first()?.message?.content?.trim() ?: ""
     var outputPath = basePath
     val header = response.lines().first()

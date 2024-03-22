@@ -13,7 +13,6 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.table.JBTable
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import org.slf4j.LoggerFactory
 import java.awt.event.ActionEvent
 import java.io.FileOutputStream
 import javax.swing.AbstractAction
@@ -51,7 +50,11 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
 
   @Suppress("unused")
   @Name("Model")
-  val modelName = ComboBox<String>()
+  val smartModel = ComboBox<String>()
+
+  @Suppress("unused")
+  @Name("Model")
+  val fastModel = ComboBox<String>()
 
   @Suppress("unused")
   @Name("Enable API Log")
@@ -135,8 +138,14 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
 //    this.modelName.addItem(ChatModels.GPT35Turbo.modelName)
 //    this.modelName.addItem(ChatModels.GPT4.modelName)
 //    this.modelName.addItem(ChatModels.GPT4Turbo.modelName)
-    ChatModels.values().forEach { this.modelName.addItem(it.key) }
-    this.modelName.isEditable = true
+    ChatModels.values().forEach {
+//      this.modelName.addItem(it.key)
+      this.smartModel.addItem(it.value.modelName)
+      this.fastModel.addItem(it.value.modelName)
+    }
+//    this.modelName.isEditable = true
+    this.smartModel.isEditable = true
+    this.fastModel.isEditable = true
   }
 
   companion object {

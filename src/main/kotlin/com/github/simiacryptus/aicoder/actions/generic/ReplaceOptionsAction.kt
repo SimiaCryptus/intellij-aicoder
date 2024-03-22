@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -22,11 +23,11 @@ open class ReplaceOptionsAction : SelectionAction<String>() {
 
     val proxy: VirtualAPI get() {
         return ChatProxy(
-            clazz = VirtualAPI::class.java,
-            api = api,
-            model = AppSettingsState.instance.defaultChatModel(),
-            temperature = AppSettingsState.instance.temperature,
-            deserializerRetries = 5
+          clazz = VirtualAPI::class.java,
+          api = api,
+          model = AppSettingsState.instance.smartModel.chatModel(),
+          temperature = AppSettingsState.instance.temperature,
+          deserializerRetries = 5
         ).create()
     }
 

@@ -16,7 +16,7 @@ open class ActionTestBase {
         fun <T:Any>testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
             AppSettingsState.instance.apiKey = ClientUtil.keyMap.mapKeys { it.key }.toMutableMap()
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.modelName = ChatModels.GPT35Turbo.name
+            AppSettingsState.instance.smartModel = ChatModels.GPT35Turbo.name
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""
@@ -64,7 +64,7 @@ open class ActionTestBase {
         ) {
             AppSettingsState.instance.apiKey = ClientUtil.keyMap.mapKeys { it.key }.toMutableMap()
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.modelName = ChatModels.GPT35Turbo.name
+            AppSettingsState.instance.smartModel = ChatModels.GPT35Turbo.name
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""

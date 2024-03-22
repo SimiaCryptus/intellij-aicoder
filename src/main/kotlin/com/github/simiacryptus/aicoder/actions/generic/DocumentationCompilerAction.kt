@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -134,7 +135,7 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
 
   private fun transformContent(fileContent: String, transformationMessage: String) = api.chat(
     ApiModel.ChatRequest(
-      model = AppSettingsState.instance.defaultChatModel().modelName,
+      model = AppSettingsState.instance.smartModel.chatModel().modelName,
       temperature = AppSettingsState.instance.temperature,
       messages = listOf(
         ApiModel.ChatMessage(
@@ -146,7 +147,7 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
         ApiModel.ChatMessage(ApiModel.Role.user, transformationMessage.toContentList()),
       ),
     ),
-    AppSettingsState.instance.defaultChatModel()
+    AppSettingsState.instance.smartModel.chatModel()
   ).choices.first().message?.content?.trim() ?: fileContent
 
   companion object {

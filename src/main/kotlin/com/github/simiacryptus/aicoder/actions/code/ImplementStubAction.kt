@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.project.Project
@@ -27,11 +28,11 @@ class ImplementStubAction : SelectionAction<String>() {
 
     private fun getProxy(): VirtualAPI {
         return ChatProxy(
-            clazz = VirtualAPI::class.java,
-            api = api,
-            model = AppSettingsState.instance.defaultChatModel(),
-            temperature = AppSettingsState.instance.temperature,
-            deserializerRetries = 5
+          clazz = VirtualAPI::class.java,
+          api = api,
+          model = AppSettingsState.instance.smartModel.chatModel(),
+          temperature = AppSettingsState.instance.temperature,
+          deserializerRetries = 5
         ).create()
     }
 
