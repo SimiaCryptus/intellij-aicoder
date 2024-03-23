@@ -6,7 +6,7 @@ import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
+import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -18,6 +18,7 @@ import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -93,8 +94,8 @@ class MultiDiffChatAction : BaseAction() {
       applicationClass = ApplicationServer::class.java,
       storage = ApplicationServices.dataStorageFactory(DiffChatAction.root),
     ) {
-      override fun renderResponse(response: String): String {
-        val html = renderMarkdown(addApplyDiffLinks(codeFiles, response) { newCodeMap ->
+      override fun renderResponse(response: String, task: SessionTask): String {
+        val html = renderMarkdown(addApplyDiffLinks2(codeFiles, response, handle = { newCodeMap ->
           newCodeMap.map { (path, newCode) ->
             val prev = codeFiles[path]
             if (prev != newCode) {
@@ -114,7 +115,7 @@ class MultiDiffChatAction : BaseAction() {
               ""
             }
           }
-        })
+        }, task = task))
         return """<div>$html</div>"""
       }
     }
@@ -153,17 +154,22 @@ class MultiDiffChatAction : BaseAction() {
   }
 }
 
-fun Array<Path>.commonRoot() = this.reduce { a, b ->
-  if (a.startsWith(b)) b
-  else if (b.startsWith(a)) a
-  else {
-    val common = a.commonPrefixWith(b)
-    if (common == a) a
-    else if (common == b) b
-    else common.toAbsolutePath()
+fun Array<Path>.commonRoot() : Path = when {
+  isEmpty() -> error("No paths")
+  size == 1 && first().toFile().isFile -> first().parent
+  size == 1 -> first()
+  else -> this.reduce { a, b ->
+    when {
+      a.startsWith(b) -> b
+      b.startsWith(a) -> a
+      else -> when (val common = a.commonPrefixWith(b)) {
+        a -> a
+        b -> b
+        else -> common.toAbsolutePath()
+      }
+    }
   }
 }
-
 private fun Path.commonPrefixWith(b: Path): Path {
   val a = this
   val aParts = a.toAbsolutePath().toString().split(File.separator)

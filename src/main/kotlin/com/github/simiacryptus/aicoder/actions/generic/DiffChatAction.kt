@@ -18,6 +18,7 @@ import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -36,8 +37,8 @@ class DiffChatAction : BaseAction() {
     val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return
     val primaryCaret = editor.caretModel.primaryCaret
     val rawText: String
-    val selectionStart : Int
-    val selectionEnd : Int
+    val selectionStart: Int
+    val selectionEnd: Int
     val selectedText = primaryCaret.selectedText
     if (null != selectedText) {
       rawText = selectedText
@@ -83,12 +84,13 @@ class DiffChatAction : BaseAction() {
           
           Note: The diff should accurately reflect the changes to be made to the code, including sufficient context to ensure the modifications can be correctly applied.
         """.trimIndent()
-      override fun renderResponse(response: String): String {
-        val withLinks = addApplyDiffLinks(rawText, response) { newCode ->
+
+      override fun renderResponse(response: String, task: SessionTask): String {
+        val withLinks = addApplyDiffLinks(rawText, response, handle = { newCode: String ->
           WriteCommandAction.runWriteCommandAction(e.project) {
             document.replaceString(selectionStart, selectionEnd, newCode)
           }
-        }
+        }, task = task)
         val html = renderMarkdown(withLinks)
         return """<div>$html</div>"""
       }

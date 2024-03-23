@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
+import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.API
@@ -199,6 +199,7 @@ class WebDevAction : BaseAction() {
     fun start(
       userMessage: String,
     ) {
+      val task = ui.newTask()
       val architectureResponse = AgentPatterns.iterate(
         input = userMessage,
         heading = userMessage,
@@ -207,11 +208,17 @@ class WebDevAction : BaseAction() {
         api = api,
         ui = ui,
         outputFn = { design ->
-          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
-        }
+//          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
+          AgentPatterns.displayMapInTabs(
+            mapOf(
+              "Text" to renderMarkdown(design.text),
+              "JSON" to renderMarkdown("```json\n${JsonUtil.toJson(design.obj)}\n```"),
+            )
+          )
+        },
+        task = task
       )
 
-      val task = ui.newTask()
       try {
         val toolSpecs = tools.map { ToolServlet.tools.find { t -> t.path == it } }
           .joinToString("\n\n") { it?.let { JsonUtil.toJson(it.openApiDescription) } ?: "" }
@@ -289,10 +296,9 @@ class WebDevAction : BaseAction() {
           //val task = ui.newTask()
           return task.complete(
             renderMarkdown(
-              ui.socketManager.addApplyDiffLinks(
+              ui.socketManager.addApplyDiffLinks2(
                 codeFiles,
-                design
-              ) { newCodeMap ->
+                design, handle = { newCodeMap ->
                 newCodeMap.forEach { (path, newCode) ->
                   val prev = codeFiles[path]
                   if (prev != newCode) {
@@ -307,7 +313,8 @@ class WebDevAction : BaseAction() {
                     )
                   }
                 }
-              })
+              }, task = task)
+              )
           )
         }
         try {

@@ -16,6 +16,7 @@ import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -75,7 +76,7 @@ class LineFilterChatAction : BaseAction() {
       storage = ApplicationServices.dataStorageFactory(root),
     ) {
       override fun canWrite(user: User?): Boolean = true
-      override fun renderResponse(response: String): String {
+      override fun renderResponse(response: String, task: SessionTask): String {
         return renderMarkdown(response.split("\n").joinToString("\n") {
           when {
             // Is numeric, use line if in range

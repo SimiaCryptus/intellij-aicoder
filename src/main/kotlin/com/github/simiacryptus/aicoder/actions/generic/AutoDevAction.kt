@@ -5,14 +5,14 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
+import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
-import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.jopenai.util.JsonUtil.toJson
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.core.actors.ActorSystem
 import com.simiacryptus.skyenet.core.actors.BaseActor
@@ -170,6 +170,7 @@ class AutoDevAction : BaseAction() {
         }\n$code\n```"
       }
 
+      val task = ui.newTask()
       val architectureResponse = AgentPatterns.iterate(
         input = userMessage,
         heading = userMessage,
@@ -178,11 +179,16 @@ class AutoDevAction : BaseAction() {
         api = api,
         ui = ui,
         outputFn = { design ->
-          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
-        }
+//          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
+          AgentPatterns.displayMapInTabs(mapOf(
+            "Text" to renderMarkdown(design.text),
+            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
+            )
+          )
+        },
+        task = task
       )
 
-      val task = ui.newTask()
       try {
         architectureResponse.obj.tasks.forEach { (paths, description) ->
           task.complete(ui.hrefLink(renderMarkdown("Task: $description")){
@@ -190,9 +196,23 @@ class AutoDevAction : BaseAction() {
             task.header("Task: $description")
             AgentPatterns.retryable(ui,task) {
               val filter = codeFiles.filter { (path, _) -> paths?.find { path.contains(it) }?.isNotEmpty() == true }
-              require(filter.isNotEmpty()) { "No files found for $paths" }
+              require(filter.isNotEmpty()) {
+                """
+                  |No files found for $paths
+                  |
+                  |Root:
+                  |$root
+                  |
+                  |Files:
+                  |${codeFiles.keys.joinToString("\n")}
+                  |
+                  |Paths:
+                  |${paths?.joinToString("\n") ?: ""}
+                  |
+                """.trimMargin()
+              }
               renderMarkdown(
-                ui.socketManager.addApplyDiffLinks(
+                ui.socketManager.addApplyDiffLinks2(
                   code = codeFiles,
                   response = taskActor.answer(listOf(
                     codeSummary(),
@@ -202,23 +222,25 @@ class AutoDevAction : BaseAction() {
                     },
                     architectureResponse.text,
                     "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                  ), api)
-                ) { newCodeMap ->
-                  newCodeMap.forEach { (path, newCode) ->
-                    val prev = codeFiles[path]
-                    if (prev != newCode) {
-                      codeFiles[path] = newCode
-                      task.complete(
-                        "<a href='${
-                          task.saveFile(
-                            path,
-                            newCode.toByteArray(Charsets.UTF_8)
-                          )
-                        }'>$path</a> Updated"
-                      )
+                  ), api),
+                  task = task,
+                  handle = { newCodeMap ->
+                    newCodeMap.forEach { (path, newCode) ->
+                      val prev = codeFiles[path]
+                      if (prev != newCode) {
+                        codeFiles[path] = newCode
+                        task.complete(
+                          "<a href='${
+                            task.saveFile(
+                              path,
+                              newCode.toByteArray(Charsets.UTF_8)
+                            )
+                          }'>$path</a> Updated"
+                        )
+                      }
                     }
                   }
-                })
+                ))
             }
           })
         }

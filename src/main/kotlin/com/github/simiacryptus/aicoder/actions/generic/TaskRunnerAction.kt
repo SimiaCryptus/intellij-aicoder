@@ -5,7 +5,7 @@ import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
+import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.github.simiacryptus.aicoder.util.addSaveLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
@@ -15,7 +15,8 @@ import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
 import com.simiacryptus.skyenet.AgentPatterns
-import com.simiacryptus.skyenet.AgentPatterns.Retryable
+import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.AgentPatterns.displayMapInTabs
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.ApplicationServices.clientManager
@@ -225,6 +226,7 @@ class TaskRunnerAgent(
         Provide a clear file name suggestion based on the content and purpose of the file.
           
         Response should use one or more ``` code blocks to output file contents.
+        Triple backticks should be bracketed by newlines and an optional the language identifier.
         Each file should be preceded by a header that identifies the file being modified.
         
         Example:
@@ -233,10 +235,12 @@ class TaskRunnerAgent(
         
         ### scripts/filename.js
         ```js
+        
         const b = 2;
         function exampleFunction() {
           return b + 1;
         }
+        
         ```
         
         Continued text
@@ -360,6 +364,7 @@ class TaskRunnerAgent(
       |Files:
       |${expandPaths(virtualFiles).joinToString("\n") { "* ${root.relativize(it)}" }}  
     """.trimMargin()
+    val task = ui.newTask()
     val highLevelPlan = AgentPatterns.iterate(
       input = userMessage,
       heading = userMessage,
@@ -373,20 +378,19 @@ class TaskRunnerAgent(
       api = api,
       ui = ui,
       outputFn = { design ->
-        AgentPatterns.displayMapInTabs(
-          mapOf(
-            "Text" to renderMarkdown(design.text),
-            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
-          )
-        )
-      }
+        displayMapInTabs(mapOf(
+          "Text" to renderMarkdown(design.text),
+          "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
+        ))
+      },
+      task = task
     )
 
     val pool: ThreadPoolExecutor = clientManager.getPool(session, user, dataStorage)
     val genState = GenState(highLevelPlan.obj.tasksByID?.toMutableMap() ?: mutableMapOf())
 
     try {
-      ui.newTask()
+      task
         .complete(renderMarkdown("## Task Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
       while (genState.taskIds.isNotEmpty()) {
         val taskId = genState.taskIds.removeAt(0)
@@ -419,7 +423,7 @@ class TaskRunnerAgent(
       }
     } catch (e: Throwable) {
       log.warn("Error during incremental code generation process", e)
-      ui.newTask().error(ui, e)
+      task.error(ui, e)
     }
   }
 
@@ -600,7 +604,7 @@ class TaskRunnerAgent(
         ), api
       )
       genState.replyText[taskId] = codeResult
-      renderMarkdown(ui.socketManager.addSaveLinks(codeResult) {  path, newCode ->
+      renderMarkdown(ui.socketManager.addSaveLinks(codeResult, task) {  path, newCode ->
         val prev = codeFiles[path]
         if (prev != newCode) {
           codeFiles[path] = newCode
@@ -643,7 +647,7 @@ class TaskRunnerAgent(
         ), api
       )
       genState.replyText[taskId] = codeResult
-      renderMarkdown(ui.socketManager.addApplyDiffLinks(codeFiles, codeResult) { newCodeMap ->
+      renderMarkdown(ui.socketManager.addApplyDiffLinks2(codeFiles, codeResult, handle = { newCodeMap ->
         newCodeMap.forEach { (path, newCode) ->
           val prev = codeFiles[path]
           if (prev != newCode) {
@@ -658,7 +662,7 @@ class TaskRunnerAgent(
             )
           }
         }
-      }) + accept(sb) {
+      }, task = task)) + accept(sb) {
         task.complete()
         onComplete()
       }
@@ -748,10 +752,10 @@ class TaskRunnerAgent(
       ui = ui,
       outputFn = { design ->
         renderMarkdown(design)
-      }
+      },
+      task = task
     )
     genState.replyText[taskId] = inquiryResult
-    task.complete(renderMarkdown("## Generated Inquiry Response\n$inquiryResult"))
   }
 
   private fun taskPlanning(
@@ -780,12 +784,10 @@ class TaskRunnerAgent(
       api = api,
       ui = ui,
       outputFn = { design ->
-        AgentPatterns.displayMapInTabs(
-          mapOf(
-            "Text" to renderMarkdown(design.text),
-            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
-          )
-        )
+        displayMapInTabs(mapOf(
+          "Text" to renderMarkdown(design.text),
+          "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
+        ))
       },
       task = task
     )
@@ -839,22 +841,36 @@ class TaskRunnerAgent(
 
   private fun buildMermaidGraph(subTasks: Map<String, Task>): String {
     val graphBuilder = StringBuilder("graph TD;\n")
-    val escapeMermaidCharacters: (String) -> String = { input ->
-      input.replace("\"", "\\\"")
-        .replace("[", "\\[")
-        .replace("]", "\\]")
-        .replace("(", "\\(")
-        .replace(")", "\\)")
-    }
     subTasks.forEach { (taskId, task) ->
-      val taskId = taskId.replace(" ", "_")
+      val sanitizedTaskId = sanitizeForMermaid(taskId)
+      val taskType = task.taskType?.name ?: "Unknown"
       val escapedDescription = escapeMermaidCharacters(task.description ?: "")
-      graphBuilder.append("    ${taskId}[\"${escapedDescription}\"];\n")
+      graphBuilder.append("    ${sanitizedTaskId}[$escapedDescription]:::$taskType;\n")
       task.task_dependencies?.forEach { dependency ->
-        graphBuilder.append("    ${dependency.replace(" ", "_")} --> ${taskId};\n")
+        val sanitizedDependency = sanitizeForMermaid(dependency)
+        graphBuilder.append("    ${sanitizedDependency} --> ${sanitizedTaskId};\n")
       }
     }
+    graphBuilder.append("    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef NewFile fill:lightblue,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef EditFile fill:lightgreen,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef Documentation fill:lightyellow,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef Inquiry fill:orange,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef TaskPlanning fill:lightgrey,stroke:#333,stroke-width:2px;\n")
     return graphBuilder.toString()
+  }
+
+  private fun sanitizeForMermaid(input: String): String {
+    return input.replace(" ", "_")
+      .replace("\"", "\\\"")
+      .replace("[", "\\[")
+      .replace("]", "\\]")
+      .replace("(", "\\(")
+      .replace(")", "\\)")
+  }
+
+  private fun escapeMermaidCharacters(input: String): String {
+    return input
   }
 
   enum class ActorTypes {
