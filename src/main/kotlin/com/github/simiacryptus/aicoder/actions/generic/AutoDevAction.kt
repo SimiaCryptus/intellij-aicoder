@@ -9,15 +9,17 @@ import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
+import com.simiacryptus.jopenai.ApiModel
+import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
+import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
+import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns
-import com.simiacryptus.skyenet.core.actors.ActorSystem
-import com.simiacryptus.skyenet.core.actors.BaseActor
-import com.simiacryptus.skyenet.core.actors.ParsedActor
-import com.simiacryptus.skyenet.core.actors.SimpleActor
+import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -27,6 +29,8 @@ import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
+import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicReference
 
 class AutoDevAction : BaseAction() {
 
@@ -171,45 +175,53 @@ class AutoDevAction : BaseAction() {
       }
 
       val task = ui.newTask()
-      val architectureResponse = AgentPatterns.iterate(
-        input = userMessage,
-        heading = userMessage,
-        actor = designActor,
-        toInput = { listOf(codeSummary(), it) },
-        api = api,
+      val toInput = { it: String -> listOf(codeSummary(), it) }
+      val architectureResponse = Acceptable(
+        task = task,
+        userMessage = userMessage,
+        initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
+        outputFn = { design: ParsedResponse<TaskList> ->
+    //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
+              AgentPatterns.displayMapInTabs(mapOf(
+                "Text" to renderMarkdown(design.text),
+                "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
+                )
+              )
+            },
         ui = ui,
-        outputFn = { design ->
-//          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
-          AgentPatterns.displayMapInTabs(mapOf(
-            "Text" to renderMarkdown(design.text),
-            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
-            )
+        reviseResponse = { userMessages: List<Pair<String, Role>> ->
+          designActor.respond(
+            messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray<ApiModel.ChatMessage>()),
+            input = toInput(userMessage),
+            api = api
           )
         },
-        task = task
-      )
+        atomicRef = AtomicReference(),
+        semaphore = Semaphore(0),
+        heading = userMessage
+      ).call()
 
       try {
         architectureResponse.obj.tasks.forEach { (paths, description) ->
           task.complete(ui.hrefLink(renderMarkdown("Task: $description")){
             val task = ui.newTask()
             task.header("Task: $description")
-            AgentPatterns.retryable(ui,task) {
+            val process = { it: StringBuilder ->
               val filter = codeFiles.filter { (path, _) -> paths?.find { path.contains(it) }?.isNotEmpty() == true }
               require(filter.isNotEmpty()) {
                 """
-                  |No files found for $paths
-                  |
-                  |Root:
-                  |$root
-                  |
-                  |Files:
-                  |${codeFiles.keys.joinToString("\n")}
-                  |
-                  |Paths:
-                  |${paths?.joinToString("\n") ?: ""}
-                  |
-                """.trimMargin()
+                              |No files found for $paths
+                              |
+                              |Root:
+                              |$root
+                              |
+                              |Files:
+                              |${codeFiles.keys.joinToString("\n")}
+                              |
+                              |Paths:
+                              |${paths?.joinToString("\n") ?: ""}
+                              |
+                            """.trimMargin()
               }
               renderMarkdown(
                 ui.socketManager.addApplyDiffLinks2(
@@ -242,6 +254,7 @@ class AutoDevAction : BaseAction() {
                   }
                 ))
             }
+            Retryable(ui, task, process).apply { addTab(ui, process(container!!)) }
           })
         }
       } catch (e: Throwable) {
