@@ -25,6 +25,7 @@ import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.ApplicationServices.clientManager
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
@@ -354,9 +355,10 @@ class TaskRunnerAgent(
           displayMapInTabs(mapOf(
             "Text" to renderMarkdown(design.text),
             "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
-            "Flow" to renderMarkdown("## Task Graph\n```mermaid\n${buildMermaidGraph(design.obj.tasksByID?.toMutableMap() ?: mutableMapOf())}\n```")
-          ))
-        },
+//            "Flow" to renderMarkdown("## Task Graph\n```mermaid\n${buildMermaidGraph(design.obj.tasksByID?.toMutableMap() ?: mutableMapOf())}\n```")
+          )
+        )
+      },
       ui = ui,
       reviseResponse = { userMessages: List<Pair<String, Role>> ->
         taskBreakdownActor.respond(
@@ -371,16 +373,26 @@ class TaskRunnerAgent(
     ).call()
 
     try {
+      val tasksByID = highLevelPlan.obj.tasksByID?.entries?.toTypedArray()?.associate { it.key to it.value } ?: mapOf()
       val pool: ThreadPoolExecutor = clientManager.getPool(session, user, dataStorage)
-      val genState = GenState(highLevelPlan.obj.tasksByID?.toMutableMap() ?: mutableMapOf())
-      val taskTabs = object : TabbedDisplay(task) {
+      val genState = GenState(tasksByID.toMutableMap())
+      val diagramTask = ui.newTask()
+      val diagramBuffer =
+        diagramTask.add(renderMarkdown("## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
+      val taskTabs = object : TabbedDisplay(ui.newTask()) {
        override fun renderTabButtons(): String {
+          diagramBuffer?.set(renderMarkdown("## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
+          diagramTask.complete()
          return buildString {
            append("<div class='tabs'>\n")
            super.tabs.withIndex().forEach { (idx, t) ->
              val (taskId, taskV) = t
-             val subTask = highLevelPlan.obj.tasksByID?.get(taskId)
-             val isChecked = if (taskId in genState.taskIds) "checked" else ""
+              val subTask = genState.tasksByDescription[taskId]
+              if (null == subTask) {
+                log.warn("Task tab not found: $taskId")
+              }
+              val isChecked = if (taskId in genState.taskIdProcessingQueue) "checked" else ""
+              log.debug("Task: '${subTask?.state}' ${System.identityHashCode(subTask)} '${taskId}'  ")
              val style = when(subTask?.state) {
                TaskState.Completed -> " style='text-decoration: line-through;'"
                null -> " style='opacity: 20%;'"
@@ -393,20 +405,21 @@ class TaskRunnerAgent(
          }
        }
       }
-      genState.taskIds.forEach { taskId ->
+      genState.taskIdProcessingQueue.forEach { taskId ->
         val newTask = ui.newTask()
-        genState.taskMap[taskId] = newTask
-        taskTabs[genState.subTasks[taskId]?.description ?: taskId] = "<div id=${newTask.operationID}></div>"
+        genState.uitaskMap[taskId] = newTask
+        val subtask = genState.subTasks[taskId]
+        val description = subtask?.description
+        log.debug("Creating task tab: $taskId ${System.identityHashCode(subtask)} $description")
+        taskTabs[description ?: taskId] = "<div id=${newTask.operationID}></div>"
       }
       Thread.sleep(100)
-      while (genState.taskIds.isNotEmpty()) {
-        val taskId = genState.taskIds.removeAt(0)
+      while (genState.taskIdProcessingQueue.isNotEmpty()) {
+        val taskId = genState.taskIdProcessingQueue.removeAt(0)
         val subTask = genState.subTasks[taskId] ?: throw RuntimeException("Task not found: $taskId")
-        taskTabs[subTask.description ?: taskId] ?: genState.taskMap.apply {
-          val newTask = ui.newTask()
-          put(taskId, newTask)
-          taskTabs[subTask.description ?: taskId] = "<div id=${newTask.operationID}></div>"
-        }
+        genState.taskFutures[taskId] = pool.submit {
+          subTask.state = TaskState.Pending
+          log.debug("Awaiting dependencies: ${subTask.task_dependencies?.joinToString(", ") ?: ""}")
         subTask.task_dependencies
           ?.associate { it to genState.taskFutures[it] }
           ?.forEach { (id, future) ->
@@ -416,14 +429,15 @@ class TaskRunnerAgent(
               log.warn("Error", e)
             }
           }
-        genState.taskFutures[taskId] = pool.submit {
+          subTask.state = TaskState.InProgress
+          log.debug("Running task: ${System.identityHashCode(subTask)} ${subTask.description}")
           runTask(
             taskId = taskId,
             subTask = subTask,
             userMessage = userMessage,
             highLevelPlan = highLevelPlan,
             genState = genState,
-            task = genState.taskMap.get(taskId) ?: ui.newTask(),
+            task = genState.uitaskMap.get(taskId) ?: ui.newTask(),
             taskTabs = taskTabs
           )
         }
@@ -447,11 +461,12 @@ class TaskRunnerAgent(
 
   data class GenState(
     val subTasks: MutableMap<String, Task>,
-    val taskIds: MutableList<String> = executionOrder(subTasks).toMutableList(),
-    val replyText: MutableMap<String, String> = mutableMapOf(),
+    val tasksByDescription: MutableMap<String?, Task> = subTasks.entries.toTypedArray().associate { it.value.description to it.value }.toMutableMap(),
+    val taskIdProcessingQueue: MutableList<String> = executionOrder(subTasks).toMutableList(),
+    val taskResult: MutableMap<String, String> = mutableMapOf(),
     val completedTasks: MutableList<String> = mutableListOf(),
     val taskFutures: MutableMap<String, Future<*>> = mutableMapOf(),
-    val taskMap : MutableMap<String, SessionTask> = mutableMapOf(),
+    val uitaskMap: MutableMap<String, SessionTask> = mutableMapOf(),
   )
 
   private fun runTask(
@@ -464,7 +479,6 @@ class TaskRunnerAgent(
     taskTabs: TabbedDisplay,
   ) {
     try {
-      subTask.state = TaskState.InProgress
       taskTabs.update()
       val dependencies = subTask.task_dependencies?.toMutableSet() ?: mutableSetOf()
       dependencies += getAllDependencies(subTask, genState.subTasks)
@@ -473,7 +487,7 @@ class TaskRunnerAgent(
           """
           |# $dependency
           |
-          |${genState.replyText[dependency] ?: ""}
+          |${genState.taskResult[dependency] ?: ""}
           """.trimMargin()
         }
       val inputFileCode = subTask.input_files?.joinToString("\n\n\n") {
@@ -598,6 +612,7 @@ class TaskRunnerAgent(
     } finally {
       genState.completedTasks.add(taskId)
       subTask.state = TaskState.Completed
+      log.debug("Completed task: $taskId ${System.identityHashCode(subTask)}")
       taskTabs.update()
     }
   }
@@ -624,7 +639,7 @@ class TaskRunnerAgent(
           subTask.description ?: "",
         ), api
       )
-      genState.replyText[taskId] = codeResult
+      genState.taskResult[taskId] = codeResult
       renderMarkdown(ui.socketManager.addSaveLinks(codeResult, task) {  path, newCode ->
         val prev = codeFiles[path]
         if (prev != newCode) {
@@ -667,7 +682,7 @@ class TaskRunnerAgent(
           subTask.description ?: "",
         ), api
       )
-      genState.replyText[taskId] = codeResult
+      genState.taskResult[taskId] = codeResult
       renderMarkdown(ui.socketManager.addApplyDiffLinks2(codeFiles, codeResult, handle = { newCodeMap ->
         newCodeMap.forEach { (path, newCode) ->
           val prev = codeFiles[path]
@@ -714,7 +729,7 @@ class TaskRunnerAgent(
           inputFileCode,
         ), api
       )
-      genState.replyText[taskId] = docResult
+      genState.taskResult[taskId] = docResult
       renderMarkdown("## Generated Documentation\n$docResult") + accept(sb) {
         task.complete()
         onComplete()
@@ -785,7 +800,7 @@ class TaskRunnerAgent(
       semaphore = Semaphore(0),
       heading = "Expand ${subTask.description ?: ""}"
     ).call()
-    genState.replyText[taskId] = inquiryResult
+    genState.taskResult[taskId] = inquiryResult
   }
 
   private fun taskPlanning(
@@ -831,12 +846,13 @@ class TaskRunnerAgent(
       semaphore = Semaphore(0),
       heading = "Expand ${subTask.description ?: ""}"
     ).call()
-    genState.replyText[taskId] = subPlan.text
+    genState.taskResult[taskId] = subPlan.text
     var newTasks = subPlan.obj.tasksByID
     newTasks?.forEach {
       val newTask = ui.newTask()
-      genState.taskMap[it.key] = newTask
-      taskTabs[it.key] = "<div id=${newTask.operationID}></div>"
+      genState.uitaskMap[it.key] = newTask
+      genState.tasksByDescription[it.value.description] = it.value
+      taskTabs[it.value.description ?: it.key] = "<div id=${newTask.operationID}></div>"
     }
     val conflictingKeys = newTasks?.keys?.intersect(genState.subTasks.keys)
     newTasks = newTasks?.entries?.associate { (key, value) ->
@@ -850,8 +866,9 @@ class TaskRunnerAgent(
         }
       })
     }
+    log.debug("New Tasks: ${newTasks?.keys}")
     genState.subTasks.putAll(newTasks ?: emptyMap())
-    executionOrder(newTasks ?: emptyMap()).reversed().forEach { genState.taskIds.add(0, it) }
+    executionOrder(newTasks ?: emptyMap()).reversed().forEach { genState.taskIdProcessingQueue.add(0, it) }
     genState.subTasks.values.forEach {
       it.task_dependencies = it.task_dependencies?.map { dep ->
         when {
@@ -860,7 +877,6 @@ class TaskRunnerAgent(
         }
       }
     }
-    task.complete(renderMarkdown("## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
   }
 
   private fun getAllDependencies(subTask: Task, subTasks: MutableMap<String, Task>): List<String> {
