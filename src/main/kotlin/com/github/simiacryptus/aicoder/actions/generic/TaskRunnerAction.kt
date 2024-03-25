@@ -2,22 +2,30 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
+import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.github.simiacryptus.aicoder.util.addSaveLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.simiacryptus.jopenai.API
+import com.simiacryptus.jopenai.ApiModel
+import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
-import com.simiacryptus.skyenet.AgentPatterns
-import com.simiacryptus.skyenet.AgentPatterns.Retryable
+import com.simiacryptus.skyenet.Acceptable
+import com.simiacryptus.skyenet.AgentPatterns.displayMapInTabs
+import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.ApplicationServices.clientManager
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
@@ -25,49 +33,14 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
+import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
 import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The provided Kotlin code outlines a complex application designed for task planning and execution, integrating with a chat server and utilizing AI models for task breakdown, documentation generation, new file creation, file patching, and inquiries. The application leverages several components, including an IntelliJ plugin, a web UI, and AI-driven actors for processing user inputs and generating code or documentation. Below is a mermaid.js diagram that visualizes the high-level architecture and flow of this application.
- *
- * ```mermaid
- * graph TD
- *     A[TaskRunner] -->|initiates| B(AppServer)
- *     A -->|selects file| C(DataStorage)
- *     A -->|opens browser| D[Desktop]
- *     B -->|registers| E[TaskRunnerApp]
- *     E -->|handles user message| F[TaskRunnerAgent]
- *     E -->|initializes settings| G[Settings]
- *     F -->|processes user message| H[ActorSystem]
- *     H -->|executes actors based on task type| I[TaskBreakdownActor]
- *     H -->|executes actors based on task type| J[DocumentationGeneratorActor]
- *     H -->|executes actors based on task type| K[NewFileCreatorActor]
- *     H -->|executes actors based on task type| L[FilePatcherActor]
- *     H -->|executes actors based on task type| M[InquiryActor]
- *     I -->|generates tasks| N[TaskBreakdownResult]
- *     J -->|generates documentation| O[Documentation]
- *     K -->|creates new file| P[NewFile]
- *     L -->|patches existing file| Q[PatchedFile]
- *     M -->|provides inquiry response| R[InquiryResponse]
- *     N -->|is used for| S[Subsequent Task Planning]
- *     O -->|is linked to| T[Related Code]
- *     P -->|is added to| U[Codebase]
- *     Q -->|updates| V[Codebase]
- *     R -->|informs| W[Task Planning]
- *
- * style A fill:#f9f,stroke:#333,stroke-width:4px
- * style B fill:#bbf,stroke:#333,stroke-width:2px
- * style E fill:#bbf,stroke:#333,stroke-width:2px
- * style F fill:#bbf,stroke:#333,stroke-width:2px
- * style H fill:#bbf,stroke:#333,stroke-width:2px
- * style I fill:#bfb,stroke:#333,stroke-width:2px
- * style J fill:#bfb,stroke:#333,stroke-width:2px
- * style K fill:#bfb,stroke:#333,stroke-width:2px
- * style L fill:#bfb,stroke:#333,stroke-width:2px
- * style M fill:#bfb,stroke:#333,stroke-width:2px
- * ```
  *
  * ### Key Components and Flow:
  *
@@ -114,8 +87,8 @@ class TaskRunnerApp(
   path = path,
 ) {
   data class Settings(
-    val model: ChatModels = ChatModels.GPT4Turbo,
-    val parsingModel: ChatModels = ChatModels.GPT35Turbo,
+    val model: ChatModels = AppSettingsState.instance.smartModel.chatModel(),
+    val parsingModel: ChatModels = AppSettingsState.instance.fastModel.chatModel(),
     val temperature: Double = 0.2,
     val budget: Double = 2.0,
   )
@@ -141,8 +114,8 @@ class TaskRunnerApp(
         dataStorage = dataStorage,
         api = api,
         ui = ui,
-        model = settings?.model ?: ChatModels.GPT4Turbo,
-        parsingModel = settings?.parsingModel ?: ChatModels.GPT35Turbo,
+        model = settings?.model ?: AppSettingsState.instance.smartModel.chatModel(),
+        parsingModel = settings?.parsingModel ?: AppSettingsState.instance.fastModel.chatModel(),
         temperature = settings?.temperature ?: 0.3,
         event = event,
       ).startProcess(userMessage = userMessage)
@@ -222,6 +195,7 @@ class TaskRunnerAgent(
         Provide a clear file name suggestion based on the content and purpose of the file.
           
         Response should use one or more ``` code blocks to output file contents.
+        Triple backticks should be bracketed by newlines and an optional the language identifier.
         Each file should be preceded by a header that identifies the file being modified.
         
         Example:
@@ -230,10 +204,12 @@ class TaskRunnerAgent(
         
         ### scripts/filename.js
         ```js
+        
         const b = 2;
         function exampleFunction() {
           return b + 1;
         }
+        
         ```
         
         Continued text
@@ -287,7 +263,7 @@ class TaskRunnerAgent(
 
   val event: AnActionEvent
 ) : ActorSystem<TaskRunnerAgent.ActorTypes>(
-  actorMap.map { it.key.name to it.value.javaClass }.toMap(),
+  actorMap.map { it.key.name to it.value }.toMap(),
   dataStorage,
   user,
   session
@@ -309,7 +285,14 @@ class TaskRunnerAgent(
     var task_dependencies: List<String>? = null,
     val input_files: List<String>? = null,
     val output_files: List<String>? = null,
+    var state: TaskState? = null,
   )
+
+  enum class TaskState {
+    Pending,
+    InProgress,
+    Completed,
+  }
 
   enum class TaskType {
     TaskPlanning,
@@ -320,10 +303,27 @@ class TaskRunnerAgent(
   }
 
   val root by lazy {
-    PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile.toPath() }?.toTypedArray()
+    VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+      ?.map { it.toFile.toPath() }?.toTypedArray()
       ?.commonRoot()!!
   }
-  val virtualFiles by lazy { PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext) }
+
+  val virtualFiles by lazy { expandFileList(
+    VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf()) }
+
+  private fun expandFileList(data: Array<VirtualFile>): Array<VirtualFile> {
+    return data.flatMap {
+      (when {
+        it.name.startsWith(".") -> arrayOf()
+        it.length > 1e6 -> arrayOf()
+        it.extension?.lowercase(Locale.getDefault()) in
+            setOf("jar", "zip", "class", "png", "jpg", "jpeg", "gif", "ico") -> arrayOf()
+        it.isDirectory -> expandFileList(it.children)
+        else -> arrayOf(it)
+      }).toList()
+    }.toTypedArray()
+  }
+
   val codeFiles by lazy {
     mutableMapOf<String, String>().apply {
       virtualFiles?.filter { it.isFile }?.forEach { file ->
@@ -340,37 +340,86 @@ class TaskRunnerAgent(
       |Files:
       |${expandPaths(virtualFiles).joinToString("\n") { "* ${root.relativize(it)}" }}  
     """.trimMargin()
-    val highLevelPlan = AgentPatterns.iterate(
-      input = userMessage,
-      heading = userMessage,
-      actor = taskBreakdownActor,
-      toInput = {
-        listOf(
-          eventStatus,
-          it
-        )
-      },
-      api = api,
-      ui = ui,
-      outputFn = { design ->
-        AgentPatterns.displayMapInTabs(
-          mapOf(
+    val task = ui.newTask()
+    val toInput = { it: String ->
+      listOf(
+        eventStatus,
+        it
+      )
+    }
+    val highLevelPlan = Acceptable(
+      task = task,
+      userMessage = userMessage,
+      initialResponse = { it: String -> taskBreakdownActor.answer(toInput(it), api = api) },
+      outputFn = { design: ParsedResponse<TaskBreakdownResult> ->
+          displayMapInTabs(mapOf(
             "Text" to renderMarkdown(design.text),
-            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
+            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
+//            "Flow" to renderMarkdown("## Task Graph\n```mermaid\n${buildMermaidGraph(design.obj.tasksByID?.toMutableMap() ?: mutableMapOf())}\n```")
           )
         )
-      }
-    )
-
-    val pool: ThreadPoolExecutor = clientManager.getPool(session, user, dataStorage)
-    val genState = GenState(highLevelPlan.obj.tasksByID?.toMutableMap() ?: mutableMapOf())
+      },
+      ui = ui,
+      reviseResponse = { userMessages: List<Pair<String, Role>> ->
+        taskBreakdownActor.respond(
+          messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray<ApiModel.ChatMessage>()),
+          input = toInput(userMessage),
+          api = api
+        )
+      },
+      atomicRef = AtomicReference(),
+      semaphore = Semaphore(0),
+      heading = userMessage
+    ).call()
 
     try {
-      ui.newTask()
-        .complete(renderMarkdown("## Task Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
-      while (genState.taskIds.isNotEmpty()) {
-        val taskId = genState.taskIds.removeAt(0)
+      val tasksByID = highLevelPlan.obj.tasksByID?.entries?.toTypedArray()?.associate { it.key to it.value } ?: mapOf()
+      val pool: ThreadPoolExecutor = clientManager.getPool(session, user, dataStorage)
+      val genState = GenState(tasksByID.toMutableMap())
+      val diagramTask = ui.newTask()
+      val diagramBuffer =
+        diagramTask.add(renderMarkdown("## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
+      val taskTabs = object : TabbedDisplay(ui.newTask()) {
+       override fun renderTabButtons(): String {
+          diagramBuffer?.set(renderMarkdown("## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
+          diagramTask.complete()
+         return buildString {
+           append("<div class='tabs'>\n")
+           super.tabs.withIndex().forEach { (idx, t) ->
+             val (taskId, taskV) = t
+              val subTask = genState.tasksByDescription[taskId]
+              if (null == subTask) {
+                log.warn("Task tab not found: $taskId")
+              }
+              val isChecked = if (taskId in genState.taskIdProcessingQueue) "checked" else ""
+              log.debug("Task: '${subTask?.state}' ${System.identityHashCode(subTask)} '${taskId}'  ")
+             val style = when(subTask?.state) {
+               TaskState.Completed -> " style='text-decoration: line-through;'"
+               null -> " style='opacity: 20%;'"
+               TaskState.Pending -> " style='opacity: 30%;'"
+               else -> ""
+             }
+             append("<label class='tab-button' data-for-tab='${idx}'$style><input type='checkbox' $isChecked disabled /> $taskId</label><br/>\n")
+           }
+           append("</div>")
+         }
+       }
+      }
+      genState.taskIdProcessingQueue.forEach { taskId ->
+        val newTask = ui.newTask()
+        genState.uitaskMap[taskId] = newTask
+        val subtask = genState.subTasks[taskId]
+        val description = subtask?.description
+        log.debug("Creating task tab: $taskId ${System.identityHashCode(subtask)} $description")
+        taskTabs[description ?: taskId] = "<div id=${newTask.operationID}></div>"
+      }
+      Thread.sleep(100)
+      while (genState.taskIdProcessingQueue.isNotEmpty()) {
+        val taskId = genState.taskIdProcessingQueue.removeAt(0)
         val subTask = genState.subTasks[taskId] ?: throw RuntimeException("Task not found: $taskId")
+        genState.taskFutures[taskId] = pool.submit {
+          subTask.state = TaskState.Pending
+          log.debug("Awaiting dependencies: ${subTask.task_dependencies?.joinToString(", ") ?: ""}")
         subTask.task_dependencies
           ?.associate { it to genState.taskFutures[it] }
           ?.forEach { (id, future) ->
@@ -380,13 +429,16 @@ class TaskRunnerAgent(
               log.warn("Error", e)
             }
           }
-        genState.taskFutures[taskId] = pool.submit {
+          subTask.state = TaskState.InProgress
+          log.debug("Running task: ${System.identityHashCode(subTask)} ${subTask.description}")
           runTask(
             taskId = taskId,
             subTask = subTask,
             userMessage = userMessage,
             highLevelPlan = highLevelPlan,
-            genState = genState
+            genState = genState,
+            task = genState.uitaskMap.get(taskId) ?: ui.newTask(),
+            taskTabs = taskTabs
           )
         }
       }
@@ -399,7 +451,7 @@ class TaskRunnerAgent(
       }
     } catch (e: Throwable) {
       log.warn("Error during incremental code generation process", e)
-      ui.newTask().error(ui, e)
+      task.error(ui, e)
     }
   }
 
@@ -409,10 +461,12 @@ class TaskRunnerAgent(
 
   data class GenState(
     val subTasks: MutableMap<String, Task>,
-    val taskIds: MutableList<String> = executionOrder(subTasks).toMutableList(),
-    val replyText: MutableMap<String, String> = mutableMapOf(),
+    val tasksByDescription: MutableMap<String?, Task> = subTasks.entries.toTypedArray().associate { it.value.description to it.value }.toMutableMap(),
+    val taskIdProcessingQueue: MutableList<String> = executionOrder(subTasks).toMutableList(),
+    val taskResult: MutableMap<String, String> = mutableMapOf(),
     val completedTasks: MutableList<String> = mutableListOf(),
     val taskFutures: MutableMap<String, Future<*>> = mutableMapOf(),
+    val uitaskMap: MutableMap<String, SessionTask> = mutableMapOf(),
   )
 
   private fun runTask(
@@ -421,9 +475,11 @@ class TaskRunnerAgent(
     userMessage: String,
     highLevelPlan: ParsedResponse<TaskBreakdownResult>,
     genState: GenState,
-    task: SessionTask = ui.newTask(),
+    task: SessionTask,
+    taskTabs: TabbedDisplay,
   ) {
     try {
+      taskTabs.update()
       val dependencies = subTask.task_dependencies?.toMutableSet() ?: mutableSetOf()
       dependencies += getAllDependencies(subTask, genState.subTasks)
       val priorCode = dependencies
@@ -431,7 +487,7 @@ class TaskRunnerAgent(
           """
           |# $dependency
           |
-          |${genState.replyText[dependency] ?: ""}
+          |${genState.taskResult[dependency] ?: ""}
           """.trimMargin()
         }
       val inputFileCode = subTask.input_files?.joinToString("\n\n\n") {
@@ -536,14 +592,15 @@ class TaskRunnerAgent(
 
         TaskType.TaskPlanning -> {
           taskPlanning(
-            subTask,
-            userMessage,
-            highLevelPlan,
-            priorCode,
-            inputFileCode,
-            genState,
-            taskId,
-            task
+            subTask = subTask,
+            userMessage = userMessage,
+            highLevelPlan = highLevelPlan,
+            priorCode = priorCode,
+            inputFileCode = inputFileCode,
+            genState = genState,
+            taskId = taskId,
+            task = task,
+            taskTabs = taskTabs,
           )
         }
 
@@ -554,6 +611,9 @@ class TaskRunnerAgent(
       task.error(ui, e)
     } finally {
       genState.completedTasks.add(taskId)
+      subTask.state = TaskState.Completed
+      log.debug("Completed task: $taskId ${System.identityHashCode(subTask)}")
+      taskTabs.update()
     }
   }
 
@@ -568,6 +628,7 @@ class TaskRunnerAgent(
     taskId: String,
     onComplete: () -> Unit
   ) {
+
     val process = { sb : StringBuilder ->
       val codeResult = newFileCreatorActor.answer(
         listOf(
@@ -578,13 +639,15 @@ class TaskRunnerAgent(
           subTask.description ?: "",
         ), api
       )
-      genState.replyText[taskId] = codeResult
-      renderMarkdown(ui.socketManager.addSaveLinks(codeResult) {  path, newCode ->
+      genState.taskResult[taskId] = codeResult
+      renderMarkdown(ui.socketManager.addSaveLinks(codeResult, task) {  path, newCode ->
         val prev = codeFiles[path]
         if (prev != newCode) {
           codeFiles[path] = newCode
           val bytes = newCode.toByteArray(Charsets.UTF_8)
-          task.complete("<a href='${task.saveFile(path, bytes)}'>$path</a> Updated")
+          task.complete("<a href='${task.saveFile(path, bytes)}'>$path</a> Created")
+        } else {
+          task.complete("No changes to $path")
         }
       }) + accept(sb) {
         task.complete()
@@ -619,8 +682,8 @@ class TaskRunnerAgent(
           subTask.description ?: "",
         ), api
       )
-      genState.replyText[taskId] = codeResult
-      renderMarkdown(ui.socketManager.addApplyDiffLinks(codeFiles, codeResult) { newCodeMap ->
+      genState.taskResult[taskId] = codeResult
+      renderMarkdown(ui.socketManager.addApplyDiffLinks2(codeFiles, codeResult, handle = { newCodeMap ->
         newCodeMap.forEach { (path, newCode) ->
           val prev = codeFiles[path]
           if (prev != newCode) {
@@ -635,7 +698,7 @@ class TaskRunnerAgent(
             )
           }
         }
-      }) + accept(sb) {
+      }, task = task)) + accept(sb) {
         task.complete()
         onComplete()
       }
@@ -666,7 +729,7 @@ class TaskRunnerAgent(
           inputFileCode,
         ), api
       )
-      genState.replyText[taskId] = docResult
+      genState.taskResult[taskId] = docResult
       renderMarkdown("## Generated Documentation\n$docResult") + accept(sb) {
         task.complete()
         onComplete()
@@ -708,27 +771,36 @@ class TaskRunnerAgent(
     taskId: String,
     task: SessionTask
   ) {
-    val inquiryResult = AgentPatterns.iterate(
-      input = "Expand ${subTask.description ?: ""}",
-      heading = "Expand ${subTask.description ?: ""}",
-      actor = inquiryActor,
-      toInput = {
-        listOf(
-          userMessage,
-          highLevelPlan.text,
-          priorCode,
-          inputFileCode,
-          it,
+    val input1 = "Expand ${subTask.description ?: ""}"
+    val toInput = { it: String ->
+      listOf(
+        userMessage,
+        highLevelPlan.text,
+        priorCode,
+        inputFileCode,
+        it,
+      )
+    }
+    val inquiryResult = Acceptable(
+      task = task,
+      userMessage = input1,
+      initialResponse = { it: String -> inquiryActor.answer(toInput(it), api = api) },
+      outputFn = { design: String ->
+          renderMarkdown(design)
+        },
+      ui = ui,
+      reviseResponse = { userMessages: List<Pair<String, Role>> ->
+        inquiryActor.respond(
+          messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray<ApiModel.ChatMessage>()),
+          input = toInput(input1),
+          api = api
         )
       },
-      api = api,
-      ui = ui,
-      outputFn = { design ->
-        renderMarkdown(design)
-      }
-    )
-    genState.replyText[taskId] = inquiryResult
-    task.complete(renderMarkdown("## Generated Inquiry Response\n$inquiryResult"))
+      atomicRef = AtomicReference(),
+      semaphore = Semaphore(0),
+      heading = "Expand ${subTask.description ?: ""}"
+    ).call()
+    genState.taskResult[taskId] = inquiryResult
   }
 
   private fun taskPlanning(
@@ -739,35 +811,49 @@ class TaskRunnerAgent(
     inputFileCode: String,
     genState: GenState,
     taskId: String,
-    task: SessionTask
+    task: SessionTask,
+    taskTabs: TabbedDisplay
   ) {
-    val subPlan = AgentPatterns.iterate(
-      input = "Expand ${subTask.description ?: ""}",
-      heading = "Expand ${subTask.description ?: ""}",
-      actor = taskBreakdownActor,
-      toInput = {
-        listOf(
-          userMessage,
-          highLevelPlan.text,
-          priorCode,
-          inputFileCode,
-          it
-        )
-      },
-      api = api,
-      ui = ui,
-      outputFn = { design ->
-        AgentPatterns.displayMapInTabs(
-          mapOf(
+    val input1 = "Expand ${subTask.description ?: ""}"
+    val toInput = { it: String ->
+      listOf(
+        userMessage,
+        highLevelPlan.text,
+        priorCode,
+        inputFileCode,
+        it
+      )
+    }
+    val subPlan = Acceptable(
+      task = task,
+      userMessage = input1,
+      initialResponse = { it: String -> taskBreakdownActor.answer(toInput(it), api = api) },
+      outputFn = { design: ParsedResponse<TaskBreakdownResult> ->
+          displayMapInTabs(mapOf(
             "Text" to renderMarkdown(design.text),
-            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```")
-          )
+            "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
+          ))
+        },
+      ui = ui,
+      reviseResponse = { userMessages: List<Pair<String, Role>> ->
+        taskBreakdownActor.respond(
+          messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray<ApiModel.ChatMessage>()),
+          input = toInput(input1),
+          api = api
         )
       },
-      task = task
-    )
-    genState.replyText[taskId] = subPlan.text
+      atomicRef = AtomicReference(),
+      semaphore = Semaphore(0),
+      heading = "Expand ${subTask.description ?: ""}"
+    ).call()
+    genState.taskResult[taskId] = subPlan.text
     var newTasks = subPlan.obj.tasksByID
+    newTasks?.forEach {
+      val newTask = ui.newTask()
+      genState.uitaskMap[it.key] = newTask
+      genState.tasksByDescription[it.value.description] = it.value
+      taskTabs[it.value.description ?: it.key] = "<div id=${newTask.operationID}></div>"
+    }
     val conflictingKeys = newTasks?.keys?.intersect(genState.subTasks.keys)
     newTasks = newTasks?.entries?.associate { (key, value) ->
       (when {
@@ -780,8 +866,9 @@ class TaskRunnerAgent(
         }
       })
     }
+    log.debug("New Tasks: ${newTasks?.keys}")
     genState.subTasks.putAll(newTasks ?: emptyMap())
-    executionOrder(newTasks ?: emptyMap()).reversed().forEach { genState.taskIds.add(0, it) }
+    executionOrder(newTasks ?: emptyMap()).reversed().forEach { genState.taskIdProcessingQueue.add(0, it) }
     genState.subTasks.values.forEach {
       it.task_dependencies = it.task_dependencies?.map { dep ->
         when {
@@ -790,7 +877,6 @@ class TaskRunnerAgent(
         }
       }
     }
-    task.complete(renderMarkdown("## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```"))
   }
 
   private fun getAllDependencies(subTask: Task, subTasks: MutableMap<String, Task>): List<String> {
@@ -816,22 +902,36 @@ class TaskRunnerAgent(
 
   private fun buildMermaidGraph(subTasks: Map<String, Task>): String {
     val graphBuilder = StringBuilder("graph TD;\n")
-    val escapeMermaidCharacters: (String) -> String = { input ->
-      input.replace("\"", "\\\"")
-        .replace("[", "\\[")
-        .replace("]", "\\]")
-        .replace("(", "\\(")
-        .replace(")", "\\)")
-    }
     subTasks.forEach { (taskId, task) ->
-      val taskId = taskId.replace(" ", "_")
+      val sanitizedTaskId = sanitizeForMermaid(taskId)
+      val taskType = task.taskType?.name ?: "Unknown"
       val escapedDescription = escapeMermaidCharacters(task.description ?: "")
-      graphBuilder.append("    ${taskId}[\"${escapedDescription}\"];\n")
+      graphBuilder.append("    ${sanitizedTaskId}[$escapedDescription]:::$taskType;\n")
       task.task_dependencies?.forEach { dependency ->
-        graphBuilder.append("    ${dependency.replace(" ", "_")} --> ${taskId};\n")
+        val sanitizedDependency = sanitizeForMermaid(dependency)
+        graphBuilder.append("    ${sanitizedDependency} --> ${sanitizedTaskId};\n")
       }
     }
+    graphBuilder.append("    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef NewFile fill:lightblue,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef EditFile fill:lightgreen,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef Documentation fill:lightyellow,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef Inquiry fill:orange,stroke:#333,stroke-width:2px;\n")
+    graphBuilder.append("    classDef TaskPlanning fill:lightgrey,stroke:#333,stroke-width:2px;\n")
     return graphBuilder.toString()
+  }
+
+  private fun sanitizeForMermaid(input: String): String {
+    return input.replace(" ", "_")
+      .replace("\"", "\\\"")
+      .replace("[", "\\[")
+      .replace("]", "\\]")
+      .replace("(", "\\(")
+      .replace(")", "\\)")
+  }
+
+  private fun escapeMermaidCharacters(input: String): String {
+    return input
   }
 
   enum class ActorTypes {

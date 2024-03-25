@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,6 +16,7 @@ import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -37,7 +39,7 @@ class LineFilterChatAction : BaseAction() {
     }
     agents[session] = object : ChatSocketManager(
       session = session,
-      model = AppSettingsState.instance.defaultChatModel(),
+      model = AppSettingsState.instance.smartModel.chatModel(),
       userInterfacePrompt = """
         |# `$filename`
         |
@@ -74,7 +76,7 @@ class LineFilterChatAction : BaseAction() {
       storage = ApplicationServices.dataStorageFactory(root),
     ) {
       override fun canWrite(user: User?): Boolean = true
-      override fun renderResponse(response: String): String {
+      override fun renderResponse(response: String, task: SessionTask): String {
         return renderMarkdown(response.split("\n").joinToString("\n") {
           when {
             // Is numeric, use line if in range

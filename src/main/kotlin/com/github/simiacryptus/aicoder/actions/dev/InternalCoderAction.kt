@@ -3,6 +3,7 @@
 import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.IdeaKotlinInterpreter
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -52,7 +53,7 @@ class InternalCoderAction : BaseAction() {
       symbols = symbols,
       temperature = 0.1,
       details = "Ensure that responses are printed; this is not a REPL.",
-      model = AppSettingsState.instance.defaultChatModel(),
+      model = AppSettingsState.instance.smartModel.chatModel(),
     )
 
     Thread {

@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.application.ApplicationManager
@@ -89,7 +90,7 @@ class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
   }
 
   private fun generateFile(baseFile: ProjectFile, directive: String): ProjectFile {
-    val model = AppSettingsState.instance.defaultChatModel()
+    val model = AppSettingsState.instance.smartModel.chatModel()
     val chatRequest = ApiModel.ChatRequest(
       model = model.modelName,
       temperature = AppSettingsState.instance.temperature,

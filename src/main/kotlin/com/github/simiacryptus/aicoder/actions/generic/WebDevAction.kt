@@ -4,21 +4,20 @@ import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
+import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
+import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns
-import com.simiacryptus.skyenet.core.actors.ActorSystem
-import com.simiacryptus.skyenet.core.actors.BaseActor
-import com.simiacryptus.skyenet.core.actors.ParsedActor
-import com.simiacryptus.skyenet.core.actors.SimpleActor
+import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -30,7 +29,9 @@ import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
+import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 val VirtualFile.toFile: File get() = File(this.path)
 
@@ -177,7 +178,7 @@ class WebDevAction : BaseAction() {
         model = model
       ),
     ),
-  ) : ActorSystem<WebDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value.javaClass }.toMap(), dataStorage, user, session) {
+  ) : ActorSystem<WebDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session) {
     enum class ActorTypes {
       HtmlCodingActor,
       JavascriptCodingActor,
@@ -199,19 +200,34 @@ class WebDevAction : BaseAction() {
     fun start(
       userMessage: String,
     ) {
-      val architectureResponse = AgentPatterns.iterate(
-        input = userMessage,
-        heading = userMessage,
-        actor = architectureDiscussionActor,
-        toInput = { listOf(it) },
-        api = api,
-        ui = ui,
-        outputFn = { design ->
-          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
-        }
-      )
-
       val task = ui.newTask()
+      val toInput = { it: String -> listOf(it) }
+      val architectureResponse = Acceptable(
+        task = task,
+        userMessage = userMessage,
+        initialResponse = { it: String -> architectureDiscussionActor.answer(toInput(it), api = api) },
+        outputFn = { design: ParsedResponse<PageResourceList> ->
+    //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
+              AgentPatterns.displayMapInTabs(
+                mapOf(
+                  "Text" to renderMarkdown(design.text),
+                  "JSON" to renderMarkdown("```json\n${JsonUtil.toJson(design.obj)}\n```"),
+                )
+              )
+            },
+        ui = ui,
+        reviseResponse = { userMessages: List<Pair<String, Role>> ->
+          architectureDiscussionActor.respond(
+            messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray<ApiModel.ChatMessage>()),
+            input = toInput(userMessage),
+            api = api
+          )
+        },
+        atomicRef = AtomicReference(),
+        semaphore = Semaphore(0),
+        heading = userMessage
+      ).call()
+
       try {
         val toolSpecs = tools.map { ToolServlet.tools.find { t -> t.path == it } }
           .joinToString("\n\n") { it?.let { JsonUtil.toJson(it.openApiDescription) } ?: "" }
@@ -289,10 +305,9 @@ class WebDevAction : BaseAction() {
           //val task = ui.newTask()
           return task.complete(
             renderMarkdown(
-              ui.socketManager.addApplyDiffLinks(
+              ui.socketManager.addApplyDiffLinks2(
                 codeFiles,
-                design
-              ) { newCodeMap ->
+                design, handle = { newCodeMap ->
                 newCodeMap.forEach { (path, newCode) ->
                   val prev = codeFiles[path]
                   if (prev != newCode) {
@@ -307,7 +322,8 @@ class WebDevAction : BaseAction() {
                     )
                   }
                 }
-              })
+              }, task = task)
+              )
           )
         }
         try {

@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -28,7 +29,7 @@ open class PasteAction : SelectionAction<String>(false) {
     return ChatProxy(
       VirtualAPI::class.java,
       api,
-      AppSettingsState.instance.defaultChatModel(),
+      AppSettingsState.instance.smartModel.chatModel(),
       AppSettingsState.instance.temperature,
     ).create().convert(
       getClipboard().toString().trim(),

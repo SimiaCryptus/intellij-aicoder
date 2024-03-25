@@ -2,18 +2,23 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextField
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import org.apache.commons.io.IOUtils
+import java.awt.BorderLayout
+import java.awt.Dimension
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Files
@@ -21,7 +26,11 @@ import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import javax.swing.JTextArea
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+
 
 class DocumentationCompilerAction : FileContextAction<DocumentationCompilerAction.Settings>() {
 
@@ -31,9 +40,14 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
   }
 
   class SettingsUI {
-
     @Name("Files to Process")
-    var filesToProcessScrollPane: JBScrollPane = JBScrollPane()
+    val filesToProcess = CheckBoxList<Path>()
+
+    @Name("AI Instruction")
+    val transformationMessage = JBTextField()
+
+    @Name("Output File")
+    val outputFilename = JBTextField()
   }
 
   class UserSettings(
@@ -49,26 +63,25 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
 
   override fun getConfig(project: Project?, e: AnActionEvent): Settings {
     val root = UITools.getSelectedFolder(e)?.toNioPath()
-    val filesToProcess: CheckBoxList<Path> = CheckBoxList()
     val files = Files.walk(root)
       .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
       .toList().filterNotNull().toTypedArray()
-    filesToProcess.setItems(files.toMutableList()) { path ->
-      root?.relativize(path)?.toString() ?: path.toString()
-    }
-    files.forEach { path ->
-      filesToProcess.setItemSelected(path, true)
-    }
     val settingsUI = SettingsUI().apply {
-      filesToProcessScrollPane.setViewportView(filesToProcess)
+      filesToProcess.setItems(files.toMutableList()) { path ->
+        root?.relativize(path)?.toString() ?: path.toString()
+      }
+      files.forEach { path ->
+        filesToProcess.setItemSelected(path, true)
+      }
     }
-    val settings: UserSettings = UITools.showDialog2(
-      project,
-      settingsUI,
-      UserSettings::class.java,
-      "Compile Documentation"
-    ) { }
-    settings.filesToProcess = files.filter { path -> filesToProcess.isItemSelected(path) }.toList()
+    val dialog = DocumentationCompilerDialog(project, settingsUI)
+    dialog.show()
+    val result = dialog.isOK
+    val settings: UserSettings = dialog.userSettings
+    settings.filesToProcess = when {
+      result -> files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.toList()
+      else -> listOf()
+    }
     //.map { path -> return@map root?.resolve(path) }.filterNotNull()
     return Settings(settings, project)
   }
@@ -122,7 +135,7 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
 
   private fun transformContent(fileContent: String, transformationMessage: String) = api.chat(
     ApiModel.ChatRequest(
-      model = AppSettingsState.instance.defaultChatModel().modelName,
+      model = AppSettingsState.instance.smartModel.chatModel().modelName,
       temperature = AppSettingsState.instance.temperature,
       messages = listOf(
         ApiModel.ChatMessage(
@@ -134,7 +147,7 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
         ApiModel.ChatMessage(ApiModel.Role.user, transformationMessage.toContentList()),
       ),
     ),
-    AppSettingsState.instance.defaultChatModel()
+    AppSettingsState.instance.smartModel.chatModel()
   ).choices.first().message?.content?.trim() ?: fileContent
 
   companion object {
@@ -165,4 +178,55 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
       scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
     }
   }
+
+  class DocumentationCompilerDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
+    val userSettings = UserSettings()
+
+    init {
+      title = "Compile Documentation"
+      // Set the default values for the UI elements from userSettings
+      settingsUI.transformationMessage.text = userSettings.transformationMessage
+      settingsUI.outputFilename.text = userSettings.outputFilename
+      init()
+    }
+
+    override fun createCenterPanel(): JComponent? {
+     val panel = JPanel(BorderLayout()).apply {
+       val filesScrollPane = JBScrollPane(settingsUI.filesToProcess).apply {
+         preferredSize = Dimension(400, 300) // Adjust the preferred size as needed
+       }
+       add(JLabel("Files to Process"), BorderLayout.NORTH)
+       add(filesScrollPane, BorderLayout.CENTER) // Make the files list the dominant element
+
+       val optionsPanel = JPanel().apply {
+         layout = BoxLayout(this, BoxLayout.Y_AXIS)
+         add(JLabel("AI Instruction"))
+         add(settingsUI.transformationMessage)
+         add(JLabel("Output File"))
+         add(settingsUI.outputFilename)
+       }
+       add(optionsPanel, BorderLayout.SOUTH)
+     }
+      return panel
+    }
+
+    override fun doOKAction() {
+      super.doOKAction()
+      userSettings.transformationMessage = settingsUI.transformationMessage.text
+      userSettings.outputFilename = settingsUI.outputFilename.text
+      // Assuming filesToProcess already reflects the user's selection
+//          userSettings.filesToProcess = settingsUI.filesToProcess.selectedValuesList
+      userSettings.filesToProcess =
+        settingsUI.filesToProcess.items.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }
+    }
+  }
 }
+
+private val <T> CheckBoxList<T>.items: List<T>
+  get() {
+    val items = mutableListOf<T>()
+    for (i in 0 until model.size) {
+      items.add(getItemAt(i)!!)
+    }
+    return items
+  }

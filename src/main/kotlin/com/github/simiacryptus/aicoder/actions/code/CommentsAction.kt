@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
@@ -18,11 +19,11 @@ class CommentsAction : SelectionAction<String>() {
 
     override fun processSelection(state: SelectionState, config: String?): String {
         return ChatProxy(
-            clazz = CommentsAction_VirtualAPI::class.java,
-            api = api,
-            temperature = AppSettingsState.instance.temperature,
-            model = AppSettingsState.instance.defaultChatModel(),
-            deserializerRetries = 5
+          clazz = CommentsAction_VirtualAPI::class.java,
+          api = api,
+          temperature = AppSettingsState.instance.temperature,
+          model = AppSettingsState.instance.smartModel.chatModel(),
+          deserializerRetries = 5
         ).create().editCode(
             state.selectedText ?: "",
             "Add comments to each line explaining the code",

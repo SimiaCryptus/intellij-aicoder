@@ -13,7 +13,8 @@ import java.io.File
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
   var temperature: Double = 0.1,
-  var modelName: String = ChatModels.GPT35Turbo.modelName,
+   var smartModel: String = ChatModels.GPT35Turbo.modelName,
+   var fastModel: String = ChatModels.GPT35Turbo.modelName,
   var listeningPort: Int = 8081,
   var listeningEndpoint: String = "localhost",
   var humanLanguage: String = "English",
@@ -33,9 +34,8 @@ data class AppSettingsState(
   val fileActions = ActionSettingsRegistry()
   private val recentCommands = mutableMapOf<String, MRUItems>()
 
-  fun defaultChatModel(): ChatModels = ChatModels.values().entries.firstOrNull {
-    it.value.modelName == modelName || it.key == modelName
-  }?.value ?: throw IllegalArgumentException("Unknown model: $modelName")
+  fun defaultSmartModel() = smartModel.chatModel()
+  fun defaultFastModel() = fastModel.chatModel()
 
   @JsonIgnore
   override fun getState() = SimpleEnvelope(JsonUtil.toJson(this))
@@ -74,6 +74,12 @@ data class AppSettingsState(
     @JvmStatic
     val instance: AppSettingsState by lazy {
       ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
+    }
+
+    fun String.chatModel(): ChatModels {
+      return ChatModels.values().entries.firstOrNull {
+        it.value.modelName == this || it.key == this
+      }?.value ?: throw IllegalArgumentException("Unknown model: ${this}")
     }
   }
 }

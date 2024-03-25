@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
@@ -17,6 +18,7 @@ import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -35,8 +37,8 @@ class DiffChatAction : BaseAction() {
     val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return
     val primaryCaret = editor.caretModel.primaryCaret
     val rawText: String
-    val selectionStart : Int
-    val selectionEnd : Int
+    val selectionStart: Int
+    val selectionEnd: Int
     val selectedText = primaryCaret.selectedText
     if (null != selectedText) {
       rawText = selectedText
@@ -58,21 +60,37 @@ class DiffChatAction : BaseAction() {
       codeSelection = numberedText,
       filename = filename,
       api = api,
-      model = AppSettingsState.instance.defaultChatModel(),
+      model = AppSettingsState.instance.smartModel.chatModel(),
       storage = ApplicationServices.dataStorageFactory(root)
     ) {
       override val systemPrompt: String
         get() = super.systemPrompt + """
-          Provide code patches in diff format within ```diff code blocks.
-          The diff format should use + for line additions, - for line deletions.
-          The diff should include sufficient context before every change to identify the location.
+          Please provide code modifications in the following diff format within triple-backtick diff code blocks. Each diff block should be preceded by a header that identifies the file being modified.
+          
+          The diff format rules are as follows:
+          - Use '-' at the beginning of a line to indicate a deletion.
+          - Use '+' at the beginning of a line to indicate an addition.
+          - Include 2 lines of context before and after every change to help identify the location of the change.
+          - If a line is part of the original code and hasn't been modified, simply include it without '+' or '-'.
+          - Lines starting with "@@" or "---" or "+++" are treated as headers and are ignored.
+          
+          Example:
+          
+          ### Path/To/YourFile.ext
+          ```diff
+          - This line will be removed.
+          + This line will be added.
+          ```
+          
+          Note: The diff should accurately reflect the changes to be made to the code, including sufficient context to ensure the modifications can be correctly applied.
         """.trimIndent()
-      override fun renderResponse(response: String): String {
-        val withLinks = addApplyDiffLinks(rawText, response) { newCode ->
+
+      override fun renderResponse(response: String, task: SessionTask): String {
+        val withLinks = addApplyDiffLinks(rawText, response, handle = { newCode: String ->
           WriteCommandAction.runWriteCommandAction(e.project) {
             document.replaceString(selectionStart, selectionEnd, newCode)
           }
-        }
+        }, task = task)
         val html = renderMarkdown(withLinks)
         return """<div>$html</div>"""
       }

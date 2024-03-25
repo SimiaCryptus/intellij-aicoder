@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
@@ -25,10 +26,10 @@ open class CustomEditAction : SelectionAction<String>() {
 
     val proxy: VirtualAPI get() {
         val chatProxy = ChatProxy(
-            clazz = VirtualAPI::class.java,
-            api = api,
-            temperature = AppSettingsState.instance.temperature,
-            model = AppSettingsState.instance.defaultChatModel(),
+          clazz = VirtualAPI::class.java,
+          api = api,
+          temperature = AppSettingsState.instance.temperature,
+          model = AppSettingsState.instance.smartModel.chatModel(),
         )
         chatProxy.addExample(
             VirtualAPI.EditedText(

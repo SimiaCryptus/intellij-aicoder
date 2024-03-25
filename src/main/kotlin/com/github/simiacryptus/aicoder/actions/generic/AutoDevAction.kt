@@ -3,20 +3,23 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks
+import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
+import com.simiacryptus.jopenai.ApiModel
+import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
-import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.jopenai.util.ClientUtil.toContentList
+import com.simiacryptus.jopenai.util.JsonUtil.toJson
+import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns
-import com.simiacryptus.skyenet.core.actors.ActorSystem
-import com.simiacryptus.skyenet.core.actors.BaseActor
-import com.simiacryptus.skyenet.core.actors.ParsedActor
-import com.simiacryptus.skyenet.core.actors.SimpleActor
+import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -26,6 +29,8 @@ import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
+import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicReference
 
 class AutoDevAction : BaseAction() {
 
@@ -77,8 +82,9 @@ class AutoDevAction : BaseAction() {
         user = user,
         ui = ui,
         tools = settings.tools,
-        model = settings.model,
+        model = settings.model!!,
         event = event,
+        parsingModel = AppSettingsState.instance.defaultFastModel(),
       ).start(
         userMessage = userMessage,
       )
@@ -87,7 +93,7 @@ class AutoDevAction : BaseAction() {
     data class Settings(
       val budget: Double? = 2.00,
       val tools: List<String> = emptyList(),
-      val model: ChatModels = ChatModels.GPT4Turbo,
+      val model: ChatModels? = AppSettingsState.instance.defaultSmartModel(),
     )
 
     override val settingsClass: Class<*> get() = Settings::class.java
@@ -103,8 +109,9 @@ class AutoDevAction : BaseAction() {
     user: User?,
     val ui: ApplicationInterface,
     val model: ChatModels,
+    val parsingModel: ChatModels,
     val tools: List<String> = emptyList(),
-    private val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+    actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
       ActorTypes.DesignActor to ParsedActor(
         resultClass = TaskList::class.java,
         prompt = """
@@ -113,7 +120,7 @@ class AutoDevAction : BaseAction() {
             For each task, provide a list of files to be modified and a description of the changes to be made.
           """.trimIndent(),
         model = model,
-        parsingModel = model,
+        parsingModel = parsingModel,
       ),
       ActorTypes.TaskCodingActor to SimpleActor(
         prompt = """
@@ -140,7 +147,8 @@ class AutoDevAction : BaseAction() {
       ),
     ),
     val event: AnActionEvent,
-  ) : ActorSystem<AutoDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value.javaClass }.toMap(), dataStorage, user, session) {
+  ) : ActorSystem<AutoDevAgent.ActorTypes>(
+    actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session) {
     enum class ActorTypes {
       DesignActor,
       TaskCodingActor,
@@ -153,7 +161,8 @@ class AutoDevAction : BaseAction() {
       userMessage: String,
     ) {
       val codeFiles = mutableMapOf<String, String>()
-      val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
+      val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+        ?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
       PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
         val code = file.inputStream.bufferedReader().use { it.readText() }
         codeFiles[root.relativize(file.toNioPath()).toString()] = code
@@ -165,29 +174,57 @@ class AutoDevAction : BaseAction() {
         }\n$code\n```"
       }
 
-      val architectureResponse = AgentPatterns.iterate(
-        input = userMessage,
-        heading = userMessage,
-        actor = designActor,
-        toInput = { listOf(codeSummary(), it) },
-        api = api,
-        ui = ui,
-        outputFn = { design ->
-          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
-        }
-      )
-
       val task = ui.newTask()
+      val toInput = { it: String -> listOf(codeSummary(), it) }
+      val architectureResponse = Acceptable(
+        task = task,
+        userMessage = userMessage,
+        initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
+        outputFn = { design: ParsedResponse<TaskList> ->
+    //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
+              AgentPatterns.displayMapInTabs(mapOf(
+                "Text" to renderMarkdown(design.text),
+                "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
+                )
+              )
+            },
+        ui = ui,
+        reviseResponse = { userMessages: List<Pair<String, Role>> ->
+          designActor.respond(
+            messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray<ApiModel.ChatMessage>()),
+            input = toInput(userMessage),
+            api = api
+          )
+        },
+        atomicRef = AtomicReference(),
+        semaphore = Semaphore(0),
+        heading = userMessage
+      ).call()
+
       try {
         architectureResponse.obj.tasks.forEach { (paths, description) ->
           task.complete(ui.hrefLink(renderMarkdown("Task: $description")){
             val task = ui.newTask()
             task.header("Task: $description")
-            AgentPatterns.retryable(ui,task) {
+            val process = { it: StringBuilder ->
               val filter = codeFiles.filter { (path, _) -> paths?.find { path.contains(it) }?.isNotEmpty() == true }
-              require(filter.isNotEmpty()) { "No files found for $paths" }
+              require(filter.isNotEmpty()) {
+                """
+                              |No files found for $paths
+                              |
+                              |Root:
+                              |$root
+                              |
+                              |Files:
+                              |${codeFiles.keys.joinToString("\n")}
+                              |
+                              |Paths:
+                              |${paths?.joinToString("\n") ?: ""}
+                              |
+                            """.trimMargin()
+              }
               renderMarkdown(
-                ui.socketManager.addApplyDiffLinks(
+                ui.socketManager.addApplyDiffLinks2(
                   code = codeFiles,
                   response = taskActor.answer(listOf(
                     codeSummary(),
@@ -197,24 +234,27 @@ class AutoDevAction : BaseAction() {
                     },
                     architectureResponse.text,
                     "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                  ), api)
-                ) { newCodeMap ->
-                  newCodeMap.forEach { (path, newCode) ->
-                    val prev = codeFiles[path]
-                    if (prev != newCode) {
-                      codeFiles[path] = newCode
-                      task.complete(
-                        "<a href='${
-                          task.saveFile(
-                            path,
-                            newCode.toByteArray(Charsets.UTF_8)
-                          )
-                        }'>$path</a> Updated"
-                      )
+                  ), api),
+                  task = task,
+                  handle = { newCodeMap ->
+                    newCodeMap.forEach { (path, newCode) ->
+                      val prev = codeFiles[path]
+                      if (prev != newCode) {
+                        codeFiles[path] = newCode
+                        task.complete(
+                          "<a href='${
+                            task.saveFile(
+                              path,
+                              newCode.toByteArray(Charsets.UTF_8)
+                            )
+                          }'>$path</a> Updated"
+                        )
+                      }
                     }
                   }
-                })
+                ))
             }
+            Retryable(ui, task, process).apply { addTab(ui, process(container!!)) }
           })
         }
       } catch (e: Throwable) {

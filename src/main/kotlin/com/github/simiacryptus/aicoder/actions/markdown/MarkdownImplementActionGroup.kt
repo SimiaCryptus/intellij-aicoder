@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -54,11 +55,11 @@ class MarkdownImplementActionGroup : ActionGroup() {
 
         private fun getProxy(): ConversionAPI {
             return ChatProxy(
-                clazz = ConversionAPI::class.java,
-                api = api,
-                model = AppSettingsState.instance.defaultChatModel(),
-                temperature = AppSettingsState.instance.temperature,
-                deserializerRetries = 5
+              clazz = ConversionAPI::class.java,
+              api = api,
+              model = AppSettingsState.instance.smartModel.chatModel(),
+              temperature = AppSettingsState.instance.temperature,
+              deserializerRetries = 5
             ).create()
         }
 

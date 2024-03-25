@@ -11,10 +11,11 @@ import java.util.stream.Collectors
 class ActionSettingsRegistry {
 
   val actionSettings: MutableMap<String, ActionSettings> = HashMap()
-  private val version = 2.0075
+  private val version = 2.0080  // Increment this value to force a reload of all actions
 
   private fun updateActionConfig(action: AnAction, code: String, language: String) {
     val actionConfig = this.getActionConfig(action)
+    log.info("Updating action config for action: ${action.javaClass.name}, language: $language")
     actionConfig.language = language
     actionConfig.isDynamic = false
     with(action) {
@@ -39,6 +40,7 @@ class ActionSettingsRegistry {
       val localCode = actionConfig.file.readText().dropWhile { !it.isLetter() }
       if (!localCode.equals(code)) {
         try {
+          log.info("Handling dynamic action config for action: ${action.javaClass.name}")
           val element = actionConfig.buildAction(localCode)
           actionConfig.version = version
           actionConfig.file.writeText(code)
@@ -55,6 +57,7 @@ class ActionSettingsRegistry {
       false
     }
     if (canLoad) {
+      log.info("Can load class for action: ${actionConfig.id}, updating code.")
       actionConfig.file.writeText(code)
       actionConfig.version = version
     } else {
@@ -66,6 +69,7 @@ class ActionSettingsRegistry {
     val children = superChildren.toList().toMutableList()
     children.toTypedArray().forEach { action ->
       val language = "kt"
+      log.info("Editing action: ${action.javaClass.name}, language: $language")
       val code: String? = load(action.javaClass, language)
       if (null != code) {
         try {
@@ -81,6 +85,7 @@ class ActionSettingsRegistry {
     this.getDynamicActions().forEach {
       try {
         if (!it.file.exists()) return@forEach
+        log.info("Adding dynamic action: ${it.id}")
         if (!it.enabled) return@forEach
         val element = it.buildAction(it.file.readText())
         children.add(element)
@@ -104,6 +109,7 @@ class ActionSettingsRegistry {
   data class ActionSettings(
     val id: String, // Static property
     var enabled: Boolean = true, // User settable
+    // Adding logging within the buildAction method to log the action building process
     var displayText: String? = null, // User settable
     var version: Double? = null, // System property
     var isDynamic: Boolean = false, // Static property
@@ -116,6 +122,7 @@ class ActionSettingsRegistry {
       val newClassName = this.className + "_" + Integer.toHexString(code.hashCode())
       with(
         actionCache.getOrPut("$packageName.$newClassName") {
+          log.info("Compiling code for new action: $newClassName")
           (compile(
             code.replace(
               ("""(?<![\w\d])$className(?![\w\d])""").toRegex(),
@@ -136,6 +143,7 @@ class ActionSettingsRegistry {
       try {
         val kotlinInterpreter = IdeaKotlinInterpreter(mapOf())
         val scriptEngine = kotlinInterpreter.scriptEngine
+        log.info("Compiling Kotlin code for action: ${this.id}")
         val eval = scriptEngine.eval(code)
         return eval as Class<*>
       } catch (e: Throwable) {
@@ -166,6 +174,8 @@ class ActionSettingsRegistry {
       return language == other.language
     }
 
+
+
     override fun hashCode(): Int {
       var result = id.hashCode()
       result = 31 * result + enabled.hashCode()
@@ -180,6 +190,7 @@ class ActionSettingsRegistry {
   private fun getActionConfig(action: AnAction): ActionSettings {
     return actionSettings.getOrPut(action.javaClass.name) {
       val actionConfig = ActionSettings(action.javaClass.name)
+      log.info("Creating new action config for action: ${action.javaClass.name}")
       actionConfig.displayText = action.templatePresentation.text
       actionConfig
     }

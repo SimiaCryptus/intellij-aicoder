@@ -2,6 +2,7 @@
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getIndent
@@ -30,10 +31,10 @@ class MarkdownListAction : BaseAction() {
     val proxy: ListAPI
         get() {
             val chatProxy = ChatProxy(
-                clazz = ListAPI::class.java,
-                api = api,
-                model = AppSettingsState.instance.defaultChatModel(),
-                deserializerRetries = 5,
+              clazz = ListAPI::class.java,
+              api = api,
+              model = AppSettingsState.instance.smartModel.chatModel(),
+              deserializerRetries = 5,
             )
             chatProxy.addExample(
                 returnValue = ListAPI.Items(
