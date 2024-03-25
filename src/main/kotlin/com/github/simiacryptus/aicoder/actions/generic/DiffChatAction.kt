@@ -68,18 +68,18 @@ class DiffChatAction : BaseAction() {
           Please provide code modifications in the following diff format within triple-backtick diff code blocks. Each diff block should be preceded by a header that identifies the file being modified.
           
           The diff format rules are as follows:
-          - Use '---' at the beginning of a line to indicate a deletion.
-          - Use '+++' at the beginning of a line to indicate an addition.
+          - Use '-' at the beginning of a line to indicate a deletion.
+          - Use '+' at the beginning of a line to indicate an addition.
           - Include 2 lines of context before and after every change to help identify the location of the change.
           - If a line is part of the original code and hasn't been modified, simply include it without '+' or '-'.
-          - Lines starting with "@@" are treated as hunk headers and should be skipped.
+          - Lines starting with "@@" or "---" or "+++" are treated as headers and are ignored.
           
           Example:
           
           ### Path/To/YourFile.ext
           ```diff
-          --- This line will be removed.
-          +++ This line will be added.
+          - This line will be removed.
+          + This line will be added.
           ```
           
           Note: The diff should accurately reflect the changes to be made to the code, including sufficient context to ensure the modifications can be correctly applied.
