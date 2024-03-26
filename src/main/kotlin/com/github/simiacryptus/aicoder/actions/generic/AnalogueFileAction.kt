@@ -5,17 +5,19 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.ChatMessage
 import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Path
@@ -106,14 +108,14 @@ class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
         ),
         ChatMessage(
           Role.user, """
-            Create a new file based on the following directive: $directive
-            
-            The file should be based on `${baseFile.path}` which contains the following code:
-            
-            ```
-            ${baseFile.code}
-            ```
-            """.trimIndent().toContentList(), null
+            |Create a new file based on the following directive: $directive
+            |
+            |The file should be based on `${baseFile.path}` which contains the following code:
+            |
+            |```
+            |${baseFile.code?.let { escapeHtml4(it).indent("  ") }}
+            |```
+            """.trimMargin().toContentList(), null
         )
 
       )

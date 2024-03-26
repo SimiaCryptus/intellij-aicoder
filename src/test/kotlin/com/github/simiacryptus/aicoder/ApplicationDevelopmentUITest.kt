@@ -13,7 +13,9 @@ import com.github.simiacryptus.aicoder.UITestUtil.Companion.screenshot
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.selectText
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.testProjectPath
 import com.github.simiacryptus.aicoder.UITestUtil.Companion.writeImage
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import org.apache.commons.io.FileUtils
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import org.junit.Test
 import java.awt.event.KeyEvent
 import java.io.File
@@ -119,7 +121,7 @@ class ApplicationDevelopmentUITest {
                                 
                                 """.trimIndent()
             )
-            out.println("```\n$description\n```")
+            out.println("```\n${description.toString()?.let { escapeHtml4(it).indent("  ") }}\n```")
             newFile("$name.$language")
 
 

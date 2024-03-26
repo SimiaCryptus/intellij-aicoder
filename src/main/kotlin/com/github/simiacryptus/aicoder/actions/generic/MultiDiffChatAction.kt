@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
@@ -20,7 +21,7 @@ import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
-import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
@@ -52,8 +53,8 @@ class MultiDiffChatAction : BaseAction() {
 
     fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
       "# $path\n```${
-        path.split('.').last()
-      }\n$code\n```"
+        path.split('.').lastOrNull()?.let { escapeHtml4(it).indent("  ") }
+      }\n${code?.let { escapeHtml4(it).indent("  ") }}\n```"
     }
     val session = StorageInterface.newGlobalID()
     //DataStorage.sessionPaths[session] = root.toFile()
@@ -63,7 +64,7 @@ class MultiDiffChatAction : BaseAction() {
       model = AppSettingsState.instance.smartModel.chatModel(),
       userInterfacePrompt = """
         |
-        |${codeSummary()}
+        |${escapeHtml4(codeSummary())}
         |
         """.trimMargin().trim(),
       systemPrompt = """
@@ -95,7 +96,8 @@ class MultiDiffChatAction : BaseAction() {
       storage = ApplicationServices.dataStorageFactory(DiffChatAction.root),
     ) {
       override fun renderResponse(response: String, task: SessionTask): String {
-        val html = renderMarkdown(addApplyDiffLinks2(codeFiles, response, handle = { newCodeMap ->
+        val html = addApplyDiffLinks2(
+          code = codeFiles, response = response, handle = { newCodeMap ->
           newCodeMap.map { (path, newCode) ->
             val prev = codeFiles[path]
             if (prev != newCode) {
@@ -115,7 +117,7 @@ class MultiDiffChatAction : BaseAction() {
               ""
             }
           }
-        }, task = task))
+        }, task = task, ui = null,)
         return """<div>$html</div>"""
       }
     }

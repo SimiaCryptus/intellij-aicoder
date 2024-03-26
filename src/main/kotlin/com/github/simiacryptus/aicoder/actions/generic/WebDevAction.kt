@@ -18,6 +18,7 @@ import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.core.actors.*
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -26,6 +27,7 @@ import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.servlet.ToolServlet
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
@@ -81,7 +83,7 @@ class WebDevAction : BaseAction() {
       api: API
     ) {
       val settings = getSettings(session, user) ?: Settings()
-      if(api is ClientManager.MonitoredClient) api.budget = settings.budget ?: 2.00
+      if (api is ClientManager.MonitoredClient) api.budget = settings.budget ?: 2.00
       WebDevAgent(
         api = api,
         dataStorage = dataStorage,
@@ -178,7 +180,8 @@ class WebDevAction : BaseAction() {
         model = model
       ),
     ),
-  ) : ActorSystem<WebDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session) {
+  ) :
+    ActorSystem<WebDevAgent.ActorTypes>(actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session) {
     enum class ActorTypes {
       HtmlCodingActor,
       JavascriptCodingActor,
@@ -207,18 +210,19 @@ class WebDevAction : BaseAction() {
         userMessage = userMessage,
         initialResponse = { it: String -> architectureDiscussionActor.answer(toInput(it), api = api) },
         outputFn = { design: ParsedResponse<PageResourceList> ->
-    //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
-              AgentPatterns.displayMapInTabs(
-                mapOf(
-                  "Text" to renderMarkdown(design.text),
-                  "JSON" to renderMarkdown("```json\n${JsonUtil.toJson(design.obj)}\n```"),
-                )
-              )
-            },
+          //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj).indent("  ")}\n```")
+          AgentPatterns.displayMapInTabs(
+            mapOf(
+              "Text" to renderMarkdown(design.text),
+              "JSON" to renderMarkdown("```json\n${JsonUtil.toJson(design.obj).indent("  ")}\n```"),
+            )
+          )
+        },
         ui = ui,
         reviseResponse = { userMessages: List<Pair<String, Role>> ->
           architectureDiscussionActor.respond(
-            messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray<ApiModel.ChatMessage>()),
+            messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
+              .toTypedArray<ApiModel.ChatMessage>()),
             input = toInput(userMessage),
             api = api
           )
@@ -233,7 +237,7 @@ class WebDevAction : BaseAction() {
           .joinToString("\n\n") { it?.let { JsonUtil.toJson(it.openApiDescription) } ?: "" }
         var messageWithTools = userMessage
         if (toolSpecs.isNotBlank()) messageWithTools += "\n\nThese services are available:\n$toolSpecs"
-        task.echo(renderMarkdown("```json\n${JsonUtil.toJson(architectureResponse.obj)}\n```"))
+        task.echo(renderMarkdown("```json\n${JsonUtil.toJson(architectureResponse.obj).indent("  ")}\n```"))
         architectureResponse.obj.resources.filter {
           !it.path!!.startsWith("http")
         }.forEach { (path, description) ->
@@ -289,25 +293,26 @@ class WebDevAction : BaseAction() {
                   "Render $path - $description"
                 )
               ),
-              etcActor, path)
+              etcActor, path
+            )
 
           }
         }
         // Apply codeReviewer
         fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
           "# $path\n```${
-            path.split('.').last()
-          }\n$code\n```"
+            path.split('.').last()?.let { escapeHtml4(it).indent("  ") }
+          }\n${code?.let { escapeHtml4(it).indent("  ") }}\n```"
         }
 
 
         fun outputFn(task: SessionTask, design: String): StringBuilder? {
           //val task = ui.newTask()
           return task.complete(
-            renderMarkdown(
-              ui.socketManager.addApplyDiffLinks2(
-                codeFiles,
-                design, handle = { newCodeMap ->
+            ui.socketManager.addApplyDiffLinks2(
+              code = codeFiles,
+              response = design,
+              handle = { newCodeMap ->
                 newCodeMap.forEach { (path, newCode) ->
                   val prev = codeFiles[path]
                   if (prev != newCode) {
@@ -322,8 +327,10 @@ class WebDevAction : BaseAction() {
                     )
                   }
                 }
-              }, task = task)
-              )
+              },
+              task = task,
+              ui = ui
+            )
           )
         }
         try {
@@ -381,7 +388,7 @@ class WebDevAction : BaseAction() {
           if (code.contains("```$language")) code = code.substringAfter("```$language").substringBefore("```")
         }
         try {
-          task.add(renderMarkdown("```${languages.first()}\n$code\n```"))
+          task.add(renderMarkdown("```${languages.first()}\n${code?.let { escapeHtml4(it).indent("  ") }}\n```"))
           task.add("<a href='${task.saveFile(path, code.toByteArray(Charsets.UTF_8))}'>$path</a> Updated")
           codeFiles[path] = code
           val request1 = (request.toList() +
@@ -394,7 +401,7 @@ class WebDevAction : BaseAction() {
             """
             |<div style="display: flex;flex-direction: column;">
             |${
-              ui.hrefLink("♻", "href-link regen-button"){
+              ui.hrefLink("♻", "href-link regen-button") {
                 val task = ui.newTask()
                 responseAction(task, "Regenerating...", formHandle!!, formText) {
                   draftResourceCode(
@@ -444,7 +451,7 @@ class WebDevAction : BaseAction() {
         log.warn("Error", e)
         val error = task.error(ui, e)
         var regenButton: StringBuilder? = null
-        regenButton = task.complete(ui.hrefLink("♻", "href-link regen-button"){
+        regenButton = task.complete(ui.hrefLink("♻", "href-link regen-button") {
           regenButton?.clear()
           val header = task.header("Regenerating...")
           draftResourceCode(task, request, actor, path, *languages)
@@ -469,7 +476,7 @@ class WebDevAction : BaseAction() {
       } finally {
         header?.clear()
         var revertButton: StringBuilder? = null
-        revertButton = task.complete(ui.hrefLink("↩", "href-link regen-button"){
+        revertButton = task.complete(ui.hrefLink("↩", "href-link regen-button") {
           revertButton?.clear()
           formHandle?.append(formText)
           task.complete()
