@@ -20,12 +20,14 @@ import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.*
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
@@ -171,7 +173,7 @@ class AutoDevAction : BaseAction() {
       fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
         "# $path\n```${
           path.split('.').last()
-        }\n$code\n```"
+        }\n${code.indent("  ")}\n```"
       }
 
       val task = ui.newTask()
@@ -181,10 +183,10 @@ class AutoDevAction : BaseAction() {
         userMessage = userMessage,
         initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
         outputFn = { design: ParsedResponse<TaskList> ->
-    //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)}\n```")
+    //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj).indent("  ")}\n```")
               AgentPatterns.displayMapInTabs(mapOf(
                 "Text" to renderMarkdown(design.text),
-                "JSON" to renderMarkdown("```json\n${toJson(design.obj)}\n```"),
+                "JSON" to renderMarkdown("```json\n${toJson(design.obj).indent("  ")}\n```"),
                 )
               )
             },
@@ -223,36 +225,36 @@ class AutoDevAction : BaseAction() {
                               |
                             """.trimMargin()
               }
-              renderMarkdown(
-                ui.socketManager.addApplyDiffLinks2(
-                  code = codeFiles,
-                  response = taskActor.answer(listOf(
-                    codeSummary(),
-                    userMessage,
-                    filter.entries.joinToString("\n\n") {
-                      "# ${it.key}\n```${it.key.split('.').last()}\n${it.value}\n```"
-                    },
-                    architectureResponse.text,
-                    "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                  ), api),
-                  task = task,
-                  handle = { newCodeMap ->
-                    newCodeMap.forEach { (path, newCode) ->
-                      val prev = codeFiles[path]
-                      if (prev != newCode) {
-                        codeFiles[path] = newCode
-                        task.complete(
-                          "<a href='${
-                            task.saveFile(
-                              path,
-                              newCode.toByteArray(Charsets.UTF_8)
-                            )
-                          }'>$path</a> Updated"
-                        )
-                      }
+              ui.socketManager.addApplyDiffLinks2(
+                code = codeFiles,
+                response = taskActor.answer(listOf(
+                  codeSummary(),
+                  userMessage,
+                  filter.entries.joinToString("\n\n") {
+                    "# ${it.key}\n```${it.key.split('.').last()?.let { escapeHtml4(it).indent("  ") }}\n${it.value.indent("  ")}\n```"
+                  },
+                  architectureResponse.text,
+                  "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
+                ), api),
+                handle = { newCodeMap ->
+                  newCodeMap.forEach { (path, newCode) ->
+                    val prev = codeFiles[path]
+                    if (prev != newCode) {
+                      codeFiles[path] = newCode
+                      task.complete(
+                        "<a href='${
+                          task.saveFile(
+                            path,
+                            newCode.toByteArray(Charsets.UTF_8)
+                          )
+                        }'>$path</a> Updated"
+                      )
                     }
                   }
-                ))
+                },
+                task = task,
+                ui = ui
+              )
             }
             Retryable(ui, task, process).apply { addTab(ui, process(container!!)) }
           })

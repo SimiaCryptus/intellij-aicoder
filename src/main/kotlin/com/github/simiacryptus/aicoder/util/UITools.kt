@@ -31,6 +31,7 @@ import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.exceptions.ModerationException
 import com.simiacryptus.jopenai.models.APIProvider
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory
 import java.awt.*
@@ -844,7 +845,7 @@ object UITools {
                 |
                 |Error Details:
                 |```
-                |${toString(e)}
+                |${toString(e).indent("  ")}
                 |```
                 |""".trimMargin()
         formBuilder.addLabeledComponent("Error Report", wrapScrollPane(bugReportTextArea))
@@ -916,7 +917,7 @@ object UITools {
           |
           |Error Details:
           |```
-          |${toString(e)}
+          |${toString(e).indent("  ")}
           |```
           |
           |Action History:
@@ -930,7 +931,7 @@ object UITools {
             """
             |${it.first}
             |```
-            |${toString(it.second)}
+            |${toString(it.second).indent("  ")}
             |```
             |""".trimMargin()
           }

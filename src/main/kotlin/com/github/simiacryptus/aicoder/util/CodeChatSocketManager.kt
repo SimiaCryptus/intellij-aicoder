@@ -2,11 +2,13 @@ package com.github.simiacryptus.aicoder.util
 
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
+import org.apache.commons.text.StringEscapeUtils
 
 open class CodeChatSocketManager(
   session: Session,
@@ -23,7 +25,7 @@ open class CodeChatSocketManager(
         |# `$filename`
         |
         |```$language
-        |$codeSelection
+        |${StringEscapeUtils.escapeHtml4(codeSelection).indent("  ")}
         |```
         """.trimMargin().trim(),
   systemPrompt = """
@@ -33,7 +35,7 @@ open class CodeChatSocketManager(
         |
         |```$language
         |${
-          codeSelection
+          codeSelection.indent("  ")
         }}
         |```
         |

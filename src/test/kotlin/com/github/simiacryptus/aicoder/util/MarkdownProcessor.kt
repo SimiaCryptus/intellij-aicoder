@@ -1,5 +1,7 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
+
 object MarkdownProcessor {
 
     data class MarkdownData(val name: String, val sections: List<Section>)
@@ -67,7 +69,11 @@ object MarkdownProcessor {
             output += "# ${markdownData.name}\n"
 
             for (section in markdownData.sections) {
-                output += "\n## ${section.title}\n\n```${section.codeType}\n${section.code}\n```\n"
+                output += "\n## ${section.title}\n\n```${section.codeType}\n${
+                  section.code?.let {
+                    /*escapeHtml4*/(it).indent("  ")
+                  }
+                }\n```\n"
             }
         }
 
