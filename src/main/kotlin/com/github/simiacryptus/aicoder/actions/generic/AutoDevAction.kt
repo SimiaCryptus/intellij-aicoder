@@ -139,6 +139,7 @@ class AutoDevAction : BaseAction() {
           
           ### scripts/filename.js
           ```diff
+ import com.simiacryptus.skyenet.webui.components.CheckboxTab
           - const b = 2;
           + const a = 1;
           ```
@@ -150,7 +151,8 @@ class AutoDevAction : BaseAction() {
     ),
     val event: AnActionEvent,
   ) : ActorSystem<AutoDevAgent.ActorTypes>(
-    actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session) {
+    actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session
+  ) {
     enum class ActorTypes {
       DesignActor,
       TaskCodingActor,
@@ -183,17 +185,19 @@ class AutoDevAction : BaseAction() {
         userMessage = userMessage,
         initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
         outputFn = { design: ParsedResponse<TaskList> ->
-    //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj).indent("  ")}\n```")
-              AgentPatterns.displayMapInTabs(mapOf(
-                "Text" to renderMarkdown(design.text),
-                "JSON" to renderMarkdown("```json\n${toJson(design.obj).indent("  ")}\n```"),
-                )
-              )
-            },
+          //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj).indent("  ")}\n```")
+          AgentPatterns.displayMapInTabs(
+            mapOf(
+              "Text" to renderMarkdown(design.text),
+              "JSON" to renderMarkdown("```json\n${toJson(design.obj).indent("  ")}\n```"),
+            )
+          )
+        },
         ui = ui,
         reviseResponse = { userMessages: List<Pair<String, Role>> ->
           designActor.respond(
-            messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray<ApiModel.ChatMessage>()),
+            messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
+              .toTypedArray<ApiModel.ChatMessage>()),
             input = toInput(userMessage),
             api = api
           )
@@ -205,7 +209,7 @@ class AutoDevAction : BaseAction() {
 
       try {
         architectureResponse.obj.tasks.forEach { (paths, description) ->
-          task.complete(ui.hrefLink(renderMarkdown("Task: $description")){
+          task.complete(ui.hrefLink(renderMarkdown("Task: $description")) {
             val task = ui.newTask()
             task.header("Task: $description")
             val process = { it: StringBuilder ->
@@ -226,12 +230,15 @@ class AutoDevAction : BaseAction() {
                             """.trimMargin()
               }
               ui.socketManager.addApplyDiffLinks2(
+                root = root,
                 code = codeFiles,
                 response = taskActor.answer(listOf(
                   codeSummary(),
                   userMessage,
                   filter.entries.joinToString("\n\n") {
-                    "# ${it.key}\n```${it.key.split('.').last()?.let { escapeHtml4(it).indent("  ") }}\n${it.value.indent("  ")}\n```"
+                    "# ${it.key}\n```${
+                      it.key.split('.').last()?.let { escapeHtml4(it).indent("  ") }
+                    }\n${it.value.indent("  ")}\n```"
                   },
                   architectureResponse.text,
                   "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
@@ -265,6 +272,8 @@ class AutoDevAction : BaseAction() {
       }
     }
   }
+
+  val taskStates = mutableMapOf<String, TaskState>()
 
   companion object {
     private val log = LoggerFactory.getLogger(AutoDevAction::class.java)
@@ -305,5 +314,10 @@ class AutoDevAction : BaseAction() {
       }
     }
 
+  }
+  enum class TaskState {
+    Pending,
+    InProgress,
+    Completed
   }
 }

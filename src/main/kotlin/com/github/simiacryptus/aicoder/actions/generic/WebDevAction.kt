@@ -310,6 +310,7 @@ class WebDevAction : BaseAction() {
           //val task = ui.newTask()
           return task.complete(
             ui.socketManager.addApplyDiffLinks2(
+              root = codeFiles.keys.map { File(it).toPath() }.toTypedArray().commonRoot(),
               code = codeFiles,
               response = design,
               handle = { newCodeMap ->

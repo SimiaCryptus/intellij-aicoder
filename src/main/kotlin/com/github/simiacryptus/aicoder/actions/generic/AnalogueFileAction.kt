@@ -165,15 +165,5 @@ class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
       scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
     }
 
-    fun getModuleRootForFile(file: File): File {
-      var current = file
-      while (current.parentFile != null) {
-        if (current.resolve(".git").exists()) {
-          return current
-        }
-        current = current.parentFile
-      }
-      return file
-    }
   }
 }

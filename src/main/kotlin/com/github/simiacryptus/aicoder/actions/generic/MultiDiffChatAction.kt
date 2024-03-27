@@ -6,26 +6,26 @@ import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
-import org.apache.commons.text.StringEscapeUtils.escapeHtml4
+import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
-import java.nio.file.Path
 
 class MultiDiffChatAction : BaseAction() {
 
@@ -39,10 +39,18 @@ class MultiDiffChatAction : BaseAction() {
       virtualFiles?.associate { it to ComputerLanguage.findByExtension(it.extension ?: "")?.name } ?: mapOf()
     val virtualFileMap = virtualFiles?.associate { it.toNioPath() to it } ?: mapOf()
     val codeFiles = mutableMapOf<String, String>()
-    val root = virtualFiles?.map { file ->
-      file.toNioPath()
-    }?.toTypedArray()?.commonRoot()!!
-    val paths = virtualFiles.associate { file ->
+    val folder = UITools.getSelectedFolder(e)
+    val root = if (null != folder) {
+      folder.toFile.toPath()
+    } else {
+      getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")).toPath()
+    }
+
+//    val root = virtualFiles?.map { file ->
+//      file.toNioPath()
+//    }?.toTypedArray()?.commonRoot()!!
+
+    virtualFiles?.associate { file ->
       val relative = root.relativize(file.toNioPath())
       val path = relative.toString()
       val language = languages[file] ?: "plaintext"
@@ -53,18 +61,19 @@ class MultiDiffChatAction : BaseAction() {
 
     fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
       "# $path\n```${
-        path.split('.').lastOrNull()?.let { escapeHtml4(it).indent("  ") }
-      }\n${code?.let { escapeHtml4(it).indent("  ") }}\n```"
+        path.split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+      }\n${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
     }
     val session = StorageInterface.newGlobalID()
     //DataStorage.sessionPaths[session] = root.toFile()
 
+    val codeSummary = codeSummary()
     agents[session] = object : ChatSocketManager(
       session = session,
       model = AppSettingsState.instance.smartModel.chatModel(),
       userInterfacePrompt = """
         |
-        |${escapeHtml4(codeSummary())}
+        |$codeSummary
         |
         """.trimMargin().trim(),
       systemPrompt = """
@@ -72,7 +81,7 @@ class MultiDiffChatAction : BaseAction() {
         
         You will be answering questions about the following code:
         
-        ${codeSummary()}
+        $codeSummary
         
         Response should use one or more code patches in diff format within ```diff code blocks.
         Each diff should be preceded by a header that identifies the file being modified.
@@ -97,7 +106,10 @@ class MultiDiffChatAction : BaseAction() {
     ) {
       override fun renderResponse(response: String, task: SessionTask): String {
         val html = addApplyDiffLinks2(
-          code = codeFiles, response = response, handle = { newCodeMap ->
+          root = root,
+          code = codeFiles,
+          response = response,
+          handle = { newCodeMap ->
           newCodeMap.map { (path, newCode) ->
             val prev = codeFiles[path]
             if (prev != newCode) {
@@ -117,8 +129,8 @@ class MultiDiffChatAction : BaseAction() {
               ""
             }
           }
-        }, task = task, ui = null,)
-        return """<div>$html</div>"""
+        }, task = task, ui = ApplicationInterface(this),)
+        return """<div>${renderMarkdown(html)}</div>"""
       }
     }
 
@@ -155,28 +167,3 @@ class MultiDiffChatAction : BaseAction() {
 
   }
 }
-
-fun Array<Path>.commonRoot() : Path = when {
-  isEmpty() -> error("No paths")
-  size == 1 && first().toFile().isFile -> first().parent
-  size == 1 -> first()
-  else -> this.reduce { a, b ->
-    when {
-      a.startsWith(b) -> b
-      b.startsWith(a) -> a
-      else -> when (val common = a.commonPrefixWith(b)) {
-        a -> a
-        b -> b
-        else -> common.toAbsolutePath()
-      }
-    }
-  }
-}
-private fun Path.commonPrefixWith(b: Path): Path {
-  val a = this
-  val aParts = a.toAbsolutePath().toString().split(File.separator)
-  val bParts = b.toAbsolutePath().toString().split(File.separator)
-  val common = aParts.zip(bParts).takeWhile { (a, b) -> a == b }.map { it.first }
-  return File(File.separator + common.joinToString(File.separator)).toPath()
-}
-
