@@ -139,6 +139,7 @@ class AutoDevAction : BaseAction() {
           
           ### scripts/filename.js
           ```diff
+ import com.simiacryptus.skyenet.webui.components.CheckboxTab
           - const b = 2;
           + const a = 1;
           ```
@@ -226,6 +227,7 @@ class AutoDevAction : BaseAction() {
                             """.trimMargin()
               }
               ui.socketManager.addApplyDiffLinks2(
+                root = root,
                 code = codeFiles,
                 response = taskActor.answer(listOf(
                   codeSummary(),
@@ -266,6 +268,7 @@ class AutoDevAction : BaseAction() {
     }
   }
 
+     val taskStates = mutableMapOf<String, TaskState>()
   companion object {
     private val log = LoggerFactory.getLogger(AutoDevAction::class.java)
     private val agents = mutableMapOf<Session, AutoDevApp>()
@@ -281,6 +284,7 @@ class AutoDevAction : BaseAction() {
       return socketServer
     }
 
+         taskStates = taskStates,
     data class TaskList(
       @Description("List of tasks to be performed in this project")
       val tasks: List<Task> = emptyList()
@@ -306,4 +310,17 @@ class AutoDevAction : BaseAction() {
     }
 
   }
+     val taskStates: MutableMap<String, TaskState>,
+ const a = 1;
+     fun updateTaskState(taskId: String, state: TaskState) {
+       taskStates[taskId] = state
+       ui.updateCheckboxTab(taskId, state)
+     }
+       // Example of updating task state
+       updateTaskState("taskId", TaskState.Completed)
+   enum class TaskState {
+     Pending,
+     InProgress,
+     Completed
+   }
 }
