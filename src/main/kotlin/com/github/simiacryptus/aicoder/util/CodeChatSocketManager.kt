@@ -25,7 +25,7 @@ open class CodeChatSocketManager(
         |# `$filename`
         |
         |```$language
-        |${StringEscapeUtils.escapeHtml4(codeSelection).indent("  ")}
+        |${/*StringEscapeUtils.escapeHtml4*/(codeSelection)/*.indent("  ")*/}
         |```
         """.trimMargin().trim(),
   systemPrompt = """

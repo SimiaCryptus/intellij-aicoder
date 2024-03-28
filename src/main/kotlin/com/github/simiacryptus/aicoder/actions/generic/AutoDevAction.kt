@@ -237,7 +237,7 @@ class AutoDevAction : BaseAction() {
                   userMessage,
                   filter.entries.joinToString("\n\n") {
                     "# ${it.key}\n```${
-                      it.key.split('.').last()?.let { escapeHtml4(it).indent("  ") }
+                      it.key.split('.').last()?.let { /*escapeHtml4*/.indent("  ") }
                     }\n${it.value.indent("  ")}\n```"
                   },
                   architectureResponse.text,

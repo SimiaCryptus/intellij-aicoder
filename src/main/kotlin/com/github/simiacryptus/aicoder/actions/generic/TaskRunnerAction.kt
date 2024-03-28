@@ -420,7 +420,7 @@ class TaskRunnerAgent(
                 log.warn("Task tab not found: $taskId")
               }
               val isChecked = if (taskId in genState.taskIdProcessingQueue) "checked" else ""
-              log.debug("Task: '${subTask?.state}' ${System.identityHashCode(subTask)} '${taskId}'  ")
+//              log.debug("Task: '${subTask?.state}' ${System.identityHashCode(subTask)} '${taskId}'  ")
               val style = when (subTask?.state) {
                 TaskState.Completed -> " style='text-decoration: line-through;'"
                 null -> " style='opacity: 20%;'"
@@ -829,6 +829,7 @@ class TaskRunnerAgent(
     task: SessionTask,
     taskTabs: TabbedDisplay
   ) {
+    val input1 = "Expand ${subTask.description ?: ""}"
     val toInput = { it: String ->
       listOf(
         userMessage,

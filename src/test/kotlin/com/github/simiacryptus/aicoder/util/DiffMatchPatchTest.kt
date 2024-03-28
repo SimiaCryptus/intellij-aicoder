@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.util
 
+import com.github.simiacryptus.aicoder.util.DiffMatchPatch
 import com.github.simiacryptus.aicoder.util.DiffMatchPatch.Diff
 import com.github.simiacryptus.aicoder.util.DiffMatchPatch.Operation.*
 import org.junit.Assert
