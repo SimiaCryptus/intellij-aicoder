@@ -21,6 +21,7 @@ import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns.displayMapInTabs
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
+import com.simiacryptus.skyenet.apps.coding.CodingAgent
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.ApplicationServices.clientManager
@@ -45,6 +46,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.reflect.KClass
 
 /**
  * The provided Kotlin code outlines a complex application designed for task planning and execution, integrating with a chat server and utilizing AI models for task breakdown, documentation generation, new file creation, file patching, and inquiries. The application leverages several components, including an IntelliJ plugin, a web UI, and AI-driven actors for processing user inputs and generating code or documentation. Below is a mermaid.js diagram that visualizes the high-level architecture and flow of this application.
