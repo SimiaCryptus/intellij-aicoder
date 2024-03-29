@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
@@ -44,7 +45,7 @@ class DocumentationCompilerAction : FileContextAction<DocumentationCompilerActio
     val filesToProcess = CheckBoxList<Path>()
 
     @Name("AI Instruction")
-    val transformationMessage = JBTextField()
+    val transformationMessage = JBTextArea(4, 40)
 
     @Name("Output File")
     val outputFilename = JBTextField()
