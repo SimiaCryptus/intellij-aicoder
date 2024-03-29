@@ -69,6 +69,10 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
           hasFocus: Boolean
         ) {
           text = value // Here you can add more customization if needed
+         if (value != null) {
+           val model = models.find { it.modelName == value }
+           text = "${model?.provider?.name} - $value"
+         }
         }
       }
 
