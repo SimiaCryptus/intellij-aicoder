@@ -113,7 +113,7 @@ class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
             |The file should be based on `${baseFile.path}` which contains the following code:
             |
             |```
-            |${baseFile.code?.let { /*escapeHtml4*/.indent("  ") }}
+            |${baseFile.code?.let { /*escapeHtml4*/it.indent("  ") }}
             |```
             """.trimMargin().toContentList(), null
         )

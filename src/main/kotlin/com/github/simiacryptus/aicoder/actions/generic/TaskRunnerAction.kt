@@ -128,6 +128,7 @@ class TaskRunnerApp(
         temperature = settings?.temperature ?: 0.3,
         event = event,
         root = root.toPath(),
+        taskPlanningEnabled = false,
       ).startProcess(userMessage = userMessage)
     } catch (e: Throwable) {
       log.warn("Error", e)
@@ -160,6 +161,7 @@ class TaskRunnerAgent(
   model: ChatModels = ChatModels.GPT4Turbo,
   parsingModel: ChatModels = ChatModels.GPT35Turbo,
   temperature: Double = 0.3,
+  val taskPlanningEnabled: Boolean,
   val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
     ActorTypes.TaskBreakdown to ParsedActor(
       resultClass = TaskBreakdownResult::class.java,
@@ -169,6 +171,8 @@ class TaskRunnerAgent(
         Briefly explain your rationale for the task breakdown and ordering.
         
         Tasks can be of the following types: 
+        ${if(!taskPlanningEnabled) "" else """"* TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
+          ** Specify the prior tasks and the goal of the task"""}
         * Inquiry - Answer questions by reading in files and providing a summary that can be discussed with and approved by the user
           ** Specify the questions and the goal of the inquiry
           ** List input files to be examined
@@ -246,7 +250,7 @@ class TaskRunnerAgent(
         + const a = 1;
         ```
 
-        Consider the following task types: Requirements, NewFile, EditFile, and Documentation.
+        Consider the following task types: ${if(!taskPlanningEnabled) "" else "TaskPlanning, "}Requirements, NewFile, EditFile, and Documentation.
         Ensure that each identified task fits one of these categories and specify the task type for better integration with the system.
         Continued text
       """.trimIndent(),
@@ -261,7 +265,7 @@ class TaskRunnerAgent(
         Provide a comprehensive overview, including key concepts, relevant technologies, best practices, and any potential challenges or considerations. 
         Ensure the information is accurate, up-to-date, and well-organized to facilitate easy understanding.
 
-        Focus on generating insights and information that support the task types available in the system (Requirements, NewFile, EditFile, Documentation).
+        Focus on generating insights and information that support the task types available in the system (${if(!taskPlanningEnabled) "" else "TaskPlanning, "}Requirements, NewFile, EditFile, Documentation).
         This will ensure that the inquiries are tailored to assist in the planning and execution of tasks within the system's framework.
      """.trimIndent(),
       model = model,
@@ -304,7 +308,7 @@ class TaskRunnerAgent(
   }
 
   enum class TaskType {
-    //    TaskPlanning,
+    TaskPlanning,
     Inquiry,
     NewFile,
     EditFile,
@@ -630,19 +634,19 @@ class TaskRunnerAgent(
           )
         }
 
-//        TaskType.TaskPlanning -> {
-//          taskPlanning(
-//            subTask = subTask,
-//            userMessage = userMessage,
-//            highLevelPlan = highLevelPlan,
-//            priorCode = priorCode,
-//            inputFileCode = inputFileCode,
-//            genState = genState,
-//            taskId = taskId,
-//            task = task,
-//            taskTabs = taskTabs,
-//          )
-//        }
+        TaskType.TaskPlanning -> {
+          if(taskPlanningEnabled) taskPlanning(
+            subTask = subTask,
+            userMessage = userMessage,
+            highLevelPlan = highLevelPlan,
+            priorCode = priorCode,
+            inputFileCode = inputFileCode,
+            genState = genState,
+            taskId = taskId,
+            task = task,
+            taskTabs = taskTabs,
+          )
+        }
 
         else -> null
       }
@@ -699,7 +703,7 @@ class TaskRunnerAgent(
     }
     object : Retryable(ui, task, process) {
       init {
-        addTab(ui, process(container!!))
+        set(label(size), process(container!!))
       }
     }
   }
@@ -759,7 +763,7 @@ class TaskRunnerAgent(
     }
     object : Retryable(ui, task, process) {
       init {
-        addTab(ui, process(container!!))
+        set(label(size), process(container!!))
       }
     }
   }
@@ -794,7 +798,7 @@ class TaskRunnerAgent(
     }
     object : Retryable(ui, task, process) {
       init {
-        addTab(ui, process(container!!))
+        set(label(size), process(container!!))
       }
     }
   }
