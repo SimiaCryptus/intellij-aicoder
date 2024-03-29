@@ -21,6 +21,7 @@ import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns.displayMapInTabs
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
+import com.simiacryptus.skyenet.apps.coding.CodingAgent
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.ApplicationServices.clientManager
@@ -29,6 +30,7 @@ import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.interpreter.ProcessInterpreter
 import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
@@ -44,6 +46,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.reflect.KClass
 
 /**
  * The provided Kotlin code outlines a complex application designed for task planning and execution, integrating with a chat server and utilizing AI models for task breakdown, documentation generation, new file creation, file patching, and inquiries. The application leverages several components, including an IntelliJ plugin, a web UI, and AI-driven actors for processing user inputs and generating code or documentation. Below is a mermaid.js diagram that visualizes the high-level architecture and flow of this application.
@@ -100,6 +103,8 @@ class TaskRunnerApp(
     val parsingModel: ChatModels = AppSettingsState.instance.fastModel.chatModel(),
     val temperature: Double = 0.2,
     val budget: Double = 2.0,
+    val taskPlanningEnabled: Boolean = false,
+    val shellCommandTaskEnabled: Boolean = true,
   )
 
   override val settingsClass: Class<*> get() = Settings::class.java
@@ -128,6 +133,8 @@ class TaskRunnerApp(
         temperature = settings?.temperature ?: 0.3,
         event = event,
         root = root.toPath(),
+        taskPlanningEnabled = false,
+        shellCommandTaskEnabled = false,
       ).startProcess(userMessage = userMessage)
     } catch (e: Throwable) {
       log.warn("Error", e)
@@ -160,6 +167,12 @@ class TaskRunnerAgent(
   model: ChatModels = ChatModels.GPT4Turbo,
   parsingModel: ChatModels = ChatModels.GPT35Turbo,
   temperature: Double = 0.3,
+  val taskPlanningEnabled: Boolean,
+  val shellCommandTaskEnabled: Boolean,
+  val env: Map<String, String> = mapOf(),
+  val workingDir: String = ".",
+  val language: String = if (isWindows) "powershell" else "bash",
+  val command: List<String> = listOf(language),
   val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
     ActorTypes.TaskBreakdown to ParsedActor(
       resultClass = TaskBreakdownResult::class.java,
@@ -169,6 +182,21 @@ class TaskRunnerAgent(
         Briefly explain your rationale for the task breakdown and ordering.
         
         Tasks can be of the following types: 
+        ${
+        if (!taskPlanningEnabled) "" else
+          """
+          |* TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
+          |  ** Specify the prior tasks and the goal of the task
+        """.trimMargin().trim()
+      }
+        ${
+        if (!shellCommandTaskEnabled) "" else
+          """
+          |* RunShellCommand - Execute shell commands and provide the output
+          |  ** Specify the environment variables, working directory, language, and command to be executed
+          |  ** List input files/tasks to be examined
+        """.trimMargin().trim()
+      }
         * Inquiry - Answer questions by reading in files and providing a summary that can be discussed with and approved by the user
           ** Specify the questions and the goal of the inquiry
           ** List input files to be examined
@@ -246,7 +274,7 @@ class TaskRunnerAgent(
         + const a = 1;
         ```
 
-        Consider the following task types: Requirements, NewFile, EditFile, and Documentation.
+        Consider the following task types: ${if (!taskPlanningEnabled) "" else "TaskPlanning, "}${if (!shellCommandTaskEnabled) "" else "RunShellCommand, "}Requirements, NewFile, EditFile, and Documentation.
         Ensure that each identified task fits one of these categories and specify the task type for better integration with the system.
         Continued text
       """.trimIndent(),
@@ -261,13 +289,30 @@ class TaskRunnerAgent(
         Provide a comprehensive overview, including key concepts, relevant technologies, best practices, and any potential challenges or considerations. 
         Ensure the information is accurate, up-to-date, and well-organized to facilitate easy understanding.
 
-        Focus on generating insights and information that support the task types available in the system (Requirements, NewFile, EditFile, Documentation).
+        Focus on generating insights and information that support the task types available in the system (${if (!taskPlanningEnabled) "" else "TaskPlanning, "}${if (!shellCommandTaskEnabled) "" else "RunShellCommand, "}Requirements, NewFile, EditFile, Documentation).
         This will ensure that the inquiries are tailored to assist in the planning and execution of tasks within the system's framework.
      """.trimIndent(),
       model = model,
       temperature = temperature,
     ),
-  ),
+  )+ (if (!shellCommandTaskEnabled) mapOf() else mapOf(
+    ActorTypes.RunShellCommand to CodingActor(
+      interpreterClass = ProcessInterpreter::class,
+      details = """
+        Execute the following shell command(s) and provide the output. Ensure to handle any errors or exceptions gracefully.
+    
+        Note: This task is for running simple and safe commands. Avoid executing commands that can cause harm to the system or compromise security.
+      """.trimIndent(),
+      symbols = mapOf(
+        "env" to (env ?: mapOf()),
+        "workingDir" to File(workingDir ?: ".").absolutePath,
+        "language" to (language ?: "bash"),
+        "command" to (command ?: listOf("bash")),
+      ),
+      model = model,
+      temperature = temperature,
+    ),
+  )),
 
   val event: AnActionEvent,
   val root: Path
@@ -282,6 +327,7 @@ class TaskRunnerAgent(
   val newFileCreatorActor by lazy { actorMap[ActorTypes.NewFileCreator] as SimpleActor }
   val filePatcherActor by lazy { actorMap[ActorTypes.FilePatcher] as SimpleActor }
   val inquiryActor by lazy { actorMap[ActorTypes.Inquiry] as SimpleActor }
+  val shellCommandActor by lazy { actorMap[ActorTypes.RunShellCommand] as CodingActor }
 
   data class TaskBreakdownResult(
     val tasksByID: Map<String, Task>? = null,
@@ -304,11 +350,12 @@ class TaskRunnerAgent(
   }
 
   enum class TaskType {
-    //    TaskPlanning,
+    TaskPlanning,
     Inquiry,
     NewFile,
     EditFile,
     Documentation,
+    RunShellCommand,
   }
 
 //  val root by lazy {
@@ -420,7 +467,7 @@ class TaskRunnerAgent(
                 log.warn("Task tab not found: $taskId")
               }
               val isChecked = if (taskId in genState.taskIdProcessingQueue) "checked" else ""
-              log.debug("Task: '${subTask?.state}' ${System.identityHashCode(subTask)} '${taskId}'  ")
+//              log.debug("Task: '${subTask?.state}' ${System.identityHashCode(subTask)} '${taskId}'  ")
               val style = when (subTask?.state) {
                 TaskState.Completed -> " style='text-decoration: line-through;'"
                 null -> " style='opacity: 20%;'"
@@ -630,19 +677,43 @@ class TaskRunnerAgent(
           )
         }
 
-//        TaskType.TaskPlanning -> {
-//          taskPlanning(
-//            subTask = subTask,
-//            userMessage = userMessage,
-//            highLevelPlan = highLevelPlan,
-//            priorCode = priorCode,
-//            inputFileCode = inputFileCode,
-//            genState = genState,
-//            taskId = taskId,
-//            task = task,
-//            taskTabs = taskTabs,
-//          )
-//        }
+        TaskType.TaskPlanning -> {
+          if(taskPlanningEnabled) taskPlanning(
+            subTask = subTask,
+            userMessage = userMessage,
+            highLevelPlan = highLevelPlan,
+            priorCode = priorCode,
+            inputFileCode = inputFileCode,
+            genState = genState,
+            taskId = taskId,
+            task = task,
+            taskTabs = taskTabs,
+          )
+        }
+
+        /*RunShellCommand*/
+        TaskType.RunShellCommand -> {
+          if (shellCommandTaskEnabled) {
+            val semaphore = Semaphore(0)
+            runShellCommand(
+              task = task,
+              userMessage = userMessage,
+              highLevelPlan = highLevelPlan,
+              priorCode = priorCode,
+              inputFileCode = inputFileCode,
+              genState = genState,
+              taskId = taskId,
+              taskTabs = taskTabs,
+            ) {
+              semaphore.release()
+            }
+            try {
+              semaphore.acquire()
+            } catch (e: Throwable) {
+              log.warn("Error", e)
+            }
+          }
+        }
 
         else -> null
       }
@@ -654,6 +725,81 @@ class TaskRunnerAgent(
       subTask.state = TaskState.Completed
       log.debug("Completed task: $taskId ${System.identityHashCode(subTask)}")
       taskTabs.update()
+    }
+  }
+
+  private fun runShellCommand(
+    task: SessionTask,
+    userMessage: String,
+    highLevelPlan: ParsedResponse<TaskRunnerAgent.TaskBreakdownResult>,
+    priorCode: String,
+    inputFileCode: String,
+    genState: TaskRunnerAgent.GenState,
+    taskId: String,
+    taskTabs: TabbedDisplay,
+    function: () -> Unit
+  ) {
+    val semaphore = Semaphore(0)
+    val process = { sb: StringBuilder ->
+      object : CodingAgent<ProcessInterpreter>(
+        api = api,
+        dataStorage = dataStorage,
+        session = session,
+        user = user,
+        ui = ui,
+        interpreter = shellCommandActor.interpreterClass as KClass<ProcessInterpreter>,
+        symbols = shellCommandActor.symbols,
+        temperature = shellCommandActor.temperature,
+        details = shellCommandActor.details,
+        model = shellCommandActor.model,
+      ) {
+        override fun displayFeedback(
+          task: SessionTask,
+          request: CodingActor.CodeRequest,
+          response: CodingActor.CodeResult
+        ) {
+          val formText = StringBuilder()
+          var formHandle: StringBuilder? = null
+          formHandle = task.add(
+            """
+            |<div style="display: flex;flex-direction: column;">
+            |${if (!super.canPlay) "" else super.playButton(task, request, response, formText) { formHandle!! }}
+            |${acceptButton(task, request, response, formText) { formHandle!! }}
+            |</div>
+            |${super.reviseMsg(task, request, response, formText) { formHandle!! }}
+            """.trimMargin(), className = "reply-message"
+          )
+          formText.append(formHandle.toString())
+          formHandle.toString()
+          task.complete()
+        }
+
+        protected fun acceptButton(
+          task: SessionTask,
+          request: CodingActor.CodeRequest,
+          response: CodingActor.CodeResult,
+          formText: StringBuilder,
+          formHandle: () -> StringBuilder
+        ): String {
+          return ui.hrefLink("▶", "href-link play-button") {
+            genState.taskResult[taskId] = response.let {
+              """
+                    |## Shell Command Output
+                    |
+                    |```
+                    |${response.code}
+                    |```
+                    |
+                    |```
+                    |${response.renderedResponse}
+                    |```
+                    """.trimMargin()
+            }
+            semaphore.release()
+          }
+        }
+      }.start(userMessage)
+      semaphore.acquire()
     }
   }
 
@@ -699,7 +845,7 @@ class TaskRunnerAgent(
     }
     object : Retryable(ui, task, process) {
       init {
-        addTab(ui, process(container!!))
+        set(label(size), process(container!!))
       }
     }
   }
@@ -759,7 +905,7 @@ class TaskRunnerAgent(
     }
     object : Retryable(ui, task, process) {
       init {
-        addTab(ui, process(container!!))
+        set(label(size), process(container!!))
       }
     }
   }
@@ -794,7 +940,7 @@ class TaskRunnerAgent(
     }
     object : Retryable(ui, task, process) {
       init {
-        addTab(ui, process(container!!))
+        set(label(size), process(container!!))
       }
     }
   }
@@ -829,6 +975,7 @@ class TaskRunnerAgent(
     task: SessionTask,
     taskTabs: TabbedDisplay
   ) {
+    val input1 = "Expand ${subTask.description ?: ""}"
     val toInput = { it: String ->
       listOf(
         userMessage,
@@ -999,6 +1146,7 @@ class TaskRunnerAgent(
     NewFileCreator,
     FilePatcher,
     Inquiry,
+    RunShellCommand,
   }
 
   companion object {
@@ -1016,5 +1164,7 @@ class TaskRunnerAgent(
       }
       return taskIds
     }
+
+    val isWindows = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("windows")
   }
 }

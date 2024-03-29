@@ -27,7 +27,6 @@ import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
-import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
@@ -237,7 +236,7 @@ class AutoDevAction : BaseAction() {
                   userMessage,
                   filter.entries.joinToString("\n\n") {
                     "# ${it.key}\n```${
-                      it.key.split('.').last()?.let { escapeHtml4(it).indent("  ") }
+                      it.key.split('.').last()?.let { /*escapeHtml4*/it.indent("  ") }
                     }\n${it.value.indent("  ")}\n```"
                   },
                   architectureResponse.text,
@@ -263,7 +262,7 @@ class AutoDevAction : BaseAction() {
                 ui = ui
               )
             }
-            Retryable(ui, task, process).apply { addTab(ui, process(container!!)) }
+            Retryable(ui, task, process).apply { set(label(size), process(container!!)) }
           })
         }
       } catch (e: Throwable) {

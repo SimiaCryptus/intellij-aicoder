@@ -121,7 +121,7 @@ class ApplicationDevelopmentUITest {
                                 
                                 """.trimIndent()
             )
-            out.println("```\n${description.toString()?.let { escapeHtml4(it).indent("  ") }}\n```")
+            out.println("```\n${description.toString()?.let { /*escapeHtml4*/(it).indent("  ") }}\n```")
             newFile("$name.$language")
 
 

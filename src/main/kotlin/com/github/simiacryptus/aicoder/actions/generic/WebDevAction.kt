@@ -301,8 +301,8 @@ class WebDevAction : BaseAction() {
         // Apply codeReviewer
         fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
           "# $path\n```${
-            path.split('.').last()?.let { escapeHtml4(it).indent("  ") }
-          }\n${code?.let { escapeHtml4(it).indent("  ") }}\n```"
+            path.split('.').last()?.let { /*escapeHtml4*/(it).indent("  ") }
+          }\n${code?.let { /*escapeHtml4*/(it).indent("  ") }}\n```"
         }
 
 
@@ -389,7 +389,7 @@ class WebDevAction : BaseAction() {
           if (code.contains("```$language")) code = code.substringAfter("```$language").substringBefore("```")
         }
         try {
-          task.add(renderMarkdown("```${languages.first()}\n${code?.let { escapeHtml4(it).indent("  ") }}\n```"))
+          task.add(renderMarkdown("```${languages.first()}\n${code?.let { /*escapeHtml4*/(it).indent("  ") }}\n```"))
           task.add("<a href='${task.saveFile(path, code.toByteArray(Charsets.UTF_8))}'>$path</a> Updated")
           codeFiles[path] = code
           val request1 = (request.toList() +

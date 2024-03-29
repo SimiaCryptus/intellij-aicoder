@@ -20,7 +20,6 @@ import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
-import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
@@ -46,7 +45,7 @@ class LineFilterChatAction : BaseAction() {
         |# `$filename`
         |
         |```$language
-        |${code?.let { escapeHtml4(it).indent("  ") }}
+        |${code?.let { /*escapeHtml4*/(it).indent("  ") }}
         |```
         """.trimMargin().trim(),
       systemPrompt = """
@@ -55,7 +54,7 @@ class LineFilterChatAction : BaseAction() {
         |You will be answering questions about the following code located in `$filename`:
         |
         |```$language
-        |${codelines?.let { escapeHtml4(it).indent("  ") }}
+        |${codelines?.let { /*escapeHtml4*/(it).indent("  ") }}
         |```
         |
         |Responses may use markdown formatting. Lines from the prompt can be included by using the line number in a response line (e.g. `\nLINE\n`).
