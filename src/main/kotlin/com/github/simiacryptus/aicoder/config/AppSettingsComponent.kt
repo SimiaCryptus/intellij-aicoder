@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.config
 
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
@@ -103,6 +104,15 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
   @Suppress("unused")
   @Name("Edit API Requests")
   val editRequests = JBCheckBox()
+
+  @Suppress("unused")
+  @Name("Plugin Home")
+  val pluginHome = JBTextField()
+
+  @Suppress("unused")
+  val choosePluginHome = com.intellij.openapi.ui.TextFieldWithBrowseButton(pluginHome).apply {
+    addBrowseFolderListener("Select Plugin Home Directory", null, null, FileChooserDescriptorFactory.createSingleFolderDescriptor())
+  }
 
   @Suppress("unused")
   @Name("Temperature")

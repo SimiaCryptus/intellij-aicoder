@@ -156,7 +156,7 @@ class ActionSettingsRegistry {
 
     val file: File
       get() {
-        val file = File(configDir(), "aicoder/actions/${packageName.replace('.', '/')}/$className.$language")
+        val file = File(configDir(), "actions/${packageName.replace('.', '/')}/$className.$language")
         file.parentFile.mkdirs()
         return file
       }
@@ -229,11 +229,7 @@ class ActionSettingsRegistry {
     fun load(clazz: Class<AnAction>, language: String) =
       load(clazz.`package`.name.replace('.', '/'), clazz.simpleName, language)
 
-    fun configDir(): File {
-      var baseDir = System.getProperty("idea.config.path")
-      if (baseDir == null) baseDir = System.getProperty("user.home")
-      return File(baseDir)
-    }
+    fun configDir() = AppSettingsState.instance.pluginHome.apply { mkdirs() }
   }
 
 }

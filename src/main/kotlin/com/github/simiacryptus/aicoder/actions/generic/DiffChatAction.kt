@@ -1,6 +1,5 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
-import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -115,7 +114,7 @@ class DiffChatAction : BaseAction() {
   companion object {
     private val log = LoggerFactory.getLogger(DiffChatAction::class.java)
     private val agents = mutableMapOf<Session, SocketManager>()
-    val root: File get() = File(ApplicationEvents.pluginHome, "code_chat")
+    val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
     private fun initApp(server: AppServer, path: String): ChatServer {
       server.appRegistry[path]?.let { return it }
       val socketServer = object : ApplicationServer("Code Chat", path) {

@@ -1,6 +1,5 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -161,7 +160,7 @@ class IdeaOpenAIClient : OpenAIClient(
       val client = IdeaOpenAIClient()
       if (AppSettingsState.instance.apiLog) {
         try {
-          val file = File(ApplicationEvents.pluginHome, "openai.log")
+          val file = File(AppSettingsState.instance.pluginHome, "openai.log")
           file.parentFile.mkdirs()
           AppSettingsState.auxiliaryLog = file
           client.logStreams.add(java.io.FileOutputStream(file, file.exists()).buffered())
