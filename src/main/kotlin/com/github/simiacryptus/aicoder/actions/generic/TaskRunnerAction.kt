@@ -423,6 +423,7 @@ class TaskRunnerAgent(
     }
     val highLevelPlan = Acceptable(
       task = task,
+      heading = renderMarkdown(userMessage),
       userMessage = userMessage,
       initialResponse = { it: String -> taskBreakdownActor.answer(toInput(it), api = api) },
       outputFn = { design: ParsedResponse<TaskBreakdownResult> ->
@@ -444,7 +445,6 @@ class TaskRunnerAgent(
       },
 //      atomicRef = AtomicReference(),
 //      semaphore = Semaphore(0),
-      heading = userMessage
     ).call()
 
     try {
@@ -578,7 +578,7 @@ class TaskRunnerAgent(
         |```
         """.trimMargin()
         } catch (e: Throwable) {
-          log.warn("Error", e)
+          log.warn("Error: root=$root    ", e)
           ""
         }
       } ?: ""
@@ -712,6 +712,7 @@ class TaskRunnerAgent(
             } catch (e: Throwable) {
               log.warn("Error", e)
             }
+            log.debug("Completed shell command: $taskId")
           }
         }
 
@@ -739,8 +740,6 @@ class TaskRunnerAgent(
     taskTabs: TabbedDisplay,
     function: () -> Unit
   ) {
-    val semaphore = Semaphore(0)
-    val process = { sb: StringBuilder ->
       object : CodingAgent<ProcessInterpreter>(
         api = api,
         dataStorage = dataStorage,
@@ -774,14 +773,14 @@ class TaskRunnerAgent(
           task.complete()
         }
 
-        protected fun acceptButton(
+      fun acceptButton(
           task: SessionTask,
           request: CodingActor.CodeRequest,
           response: CodingActor.CodeResult,
           formText: StringBuilder,
           formHandle: () -> StringBuilder
         ): String {
-          return ui.hrefLink("▶", "href-link play-button") {
+        return ui.hrefLink("\uD83D\uDC4D", "href-link play-button") {
             genState.taskResult[taskId] = response.let {
               """
                     |## Shell Command Output
@@ -795,11 +794,16 @@ class TaskRunnerAgent(
                     |```
                     """.trimMargin()
             }
-            semaphore.release()
+          function()
           }
         }
-      }.start(userMessage)
-      semaphore.acquire()
+    }.apply {
+      start(codeRequest(listOf(
+        userMessage to Role.user,
+        highLevelPlan.text to Role.assistant,
+        priorCode to Role.assistant,
+        inputFileCode to Role.assistant,
+      )))
     }
   }
 
