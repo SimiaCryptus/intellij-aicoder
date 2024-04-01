@@ -75,7 +75,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
                 |
                 |
                 |```$language
-                |${code?.let { /*escapeHtml4*/(it).indent("  ") }}
+                |${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
                 |```
                 |
                 |""".trimMargin()

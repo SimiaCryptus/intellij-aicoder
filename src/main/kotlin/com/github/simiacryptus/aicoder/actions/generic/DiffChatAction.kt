@@ -15,6 +15,8 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.set
+import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
@@ -84,12 +86,15 @@ class DiffChatAction : BaseAction() {
           Note: The diff should accurately reflect the changes to be made to the code, including sufficient context to ensure the modifications can be correctly applied.
         """.trimIndent()
 
+      val ui by lazy { ApplicationInterface(this) }
       override fun renderResponse(response: String, task: SessionTask): String {
-        val withLinks = addApplyDiffLinks(rawText, response, handle = { newCode: String ->
+        val codeBuffer = StringBuilder(rawText)
+        val withLinks = addApplyDiffLinks(codeBuffer, response, handle = { newCode: String ->
           WriteCommandAction.runWriteCommandAction(e.project) {
-            document.replaceString(selectionStart, selectionEnd, newCode)
+            document.replaceString(selectionStart, selectionStart + codeBuffer.length, newCode)
           }
-        }, task = task)
+          codeBuffer.set(newCode)
+        }, task = task, ui=ui)
         val html = renderMarkdown(withLinks)
         return """<div>$html</div>"""
       }

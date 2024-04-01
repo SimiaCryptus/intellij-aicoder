@@ -71,7 +71,7 @@ object MarkdownProcessor {
             for (section in markdownData.sections) {
                 output += "\n## ${section.title}\n\n```${section.codeType}\n${
                   section.code?.let {
-                    /*escapeHtml4*/(it).indent("  ")
+                    /*escapeHtml4*/(it)/*.indent("  ")*/
                   }
                 }\n```\n"
             }

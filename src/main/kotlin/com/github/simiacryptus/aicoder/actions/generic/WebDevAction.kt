@@ -209,11 +209,11 @@ class WebDevAction : BaseAction() {
         userMessage = userMessage,
         initialResponse = { it: String -> architectureDiscussionActor.answer(toInput(it), api = api) },
         outputFn = { design: ParsedResponse<PageResourceList> ->
-          //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj).indent("  ")}\n```")
+          //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```")
           AgentPatterns.displayMapInTabs(
             mapOf(
-              "Text" to renderMarkdown(design.text),
-              "JSON" to renderMarkdown("```json\n${JsonUtil.toJson(design.obj).indent("  ")}\n```"),
+              "Text" to renderMarkdown(design.text, ui=ui),
+              "JSON" to renderMarkdown("```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```", ui=ui),
             )
           )
         },
@@ -236,7 +236,7 @@ class WebDevAction : BaseAction() {
           .joinToString("\n\n") { it?.let { JsonUtil.toJson(it.openApiDescription) } ?: "" }
         var messageWithTools = userMessage
         if (toolSpecs.isNotBlank()) messageWithTools += "\n\nThese services are available:\n$toolSpecs"
-        task.echo(renderMarkdown("```json\n${JsonUtil.toJson(architectureResponse.obj).indent("  ")}\n```"))
+        task.echo(renderMarkdown("```json\n${JsonUtil.toJson(architectureResponse.obj)/*.indent("  ")*/}\n```", ui=ui))
         architectureResponse.obj.resources.filter {
           !it.path!!.startsWith("http")
         }.forEach { (path, description) ->
@@ -300,8 +300,8 @@ class WebDevAction : BaseAction() {
         // Apply codeReviewer
         fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
           "# $path\n```${
-            path.split('.').last()?.let { /*escapeHtml4*/(it).indent("  ") }
-          }\n${code?.let { /*escapeHtml4*/(it).indent("  ") }}\n```"
+            path.split('.').last()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+          }\n${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
         }
 
 
@@ -335,7 +335,7 @@ class WebDevAction : BaseAction() {
         }
         try {
           var task = ui.newTask()
-          task.add(message = renderMarkdown(codeSummary()))
+          task.add(message = renderMarkdown(codeSummary(), ui=ui))
           var design = codeReviewer.answer(listOf(element = codeSummary()), api = api)
           outputFn(task, design)
           var textInputHandle: StringBuilder? = null
@@ -346,9 +346,9 @@ class WebDevAction : BaseAction() {
             textInputHandle?.clear()
             task.complete()
             task = ui.newTask()
-            task.echo(renderMarkdown(userResponse))
+            task.echo(renderMarkdown(userResponse, ui=ui))
             val codeSummary = codeSummary()
-            task.add(renderMarkdown(codeSummary))
+            task.add(renderMarkdown(codeSummary, ui=ui))
             design = codeReviewer.respond(
               messages = codeReviewer.chatMessages(
                 listOf(
@@ -388,7 +388,7 @@ class WebDevAction : BaseAction() {
           if (code.contains("```$language")) code = code.substringAfter("```$language").substringBefore("```")
         }
         try {
-          task.add(renderMarkdown("```${languages.first()}\n${code?.let { /*escapeHtml4*/(it).indent("  ") }}\n```"))
+          task.add(renderMarkdown("```${languages.first()}\n${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```", ui=ui))
           task.add("<a href='${task.saveFile(path, code.toByteArray(Charsets.UTF_8))}'>$path</a> Updated")
           codeFiles[path] = code
           val request1 = (request.toList() +
@@ -418,7 +418,7 @@ class WebDevAction : BaseAction() {
                 responseAction(task, "Revising...", formHandle!!, formText) {
                   //val task = ui.newTask()
                   try {
-                    task.echo(renderMarkdown(feedback))
+                    task.echo(renderMarkdown(feedback, ui=ui))
                     draftResourceCode(
                       task, (request1.toList() + listOf(
                         code to ApiModel.Role.assistant,
