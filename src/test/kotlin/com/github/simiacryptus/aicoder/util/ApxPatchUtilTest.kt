@@ -1,10 +1,9 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.util.SimpleDiffUtil
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class SimpleDiffUtilTest {
+class ApxPatchUtilTest {
   private val patch = """
     --- IntArrayAppendFile.kt
     +++ IntArrayAppendFileUpdated.kt
@@ -70,7 +69,7 @@ class SimpleDiffUtilTest {
 
   @Test
   fun testPatch() {
-    val result = SimpleDiffUtil.patch(source, patch)
+    val result = ApxPatchUtil.patch(source, patch)
     println(result)
     assertTrue(result.contains("for (value in values"))
   }

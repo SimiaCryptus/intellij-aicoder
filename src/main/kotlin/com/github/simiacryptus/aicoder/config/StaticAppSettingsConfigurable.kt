@@ -1,6 +1,5 @@
 package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.simiacryptus.jopenai.models.APIProvider
 import java.awt.BorderLayout
@@ -17,7 +16,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
   override fun apply() {
     super.apply()
     if (settingsInstance.apiLog) {
-      val file = File(ApplicationEvents.pluginHome, "openai.log")
+      val file = File(AppSettingsState.instance.pluginHome, "openai.log")
       if (AppSettingsState.auxiliaryLog?.absolutePath?.lowercase() != file.absolutePath.lowercase()) {
         file.deleteOnExit()
         AppSettingsState.auxiliaryLog = file
@@ -92,6 +91,11 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
           add(JLabel("Server Endpoint:"))
           add(component.listeningEndpoint)
         })
+        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+          add(JLabel("Plugin Home:"))
+          add(component.pluginHome)
+          add(component.choosePluginHome)
+        })
       }, BorderLayout.NORTH)
     })
 
@@ -123,6 +127,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       component.devActions.isSelected = settings.devActions
       component.editRequests.isSelected = settings.editRequests
       component.temperature.text = settings.temperature.toString()
+      component.pluginHome.text = settings.pluginHome.absolutePath
       val model = component.apis.model as DefaultTableModel
       model.setRowCount(0) // Clear existing rows
       APIProvider.values().forEach { value ->
@@ -149,6 +154,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       settings.devActions = component.devActions.isSelected
       settings.editRequests = component.editRequests.isSelected
       settings.temperature = component.temperature.text.safeDouble()
+      settings.pluginHome = File(component.pluginHome.text)
       val model = component.apis.model as DefaultTableModel
       for (row in 0 until model.rowCount) {
         val provider = model.getValueAt(row, 0) as String

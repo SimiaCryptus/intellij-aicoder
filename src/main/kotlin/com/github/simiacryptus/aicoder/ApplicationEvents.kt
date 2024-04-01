@@ -1,5 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder
 
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.wm.IdeFrame
@@ -31,7 +32,7 @@ class ApplicationEvents : ApplicationActivationListener {
             override fun createClient(session: Session, user: User?, dataStorage: StorageInterface?) =
                 IdeaOpenAIClient.instance
         }
-        ApplicationServices.usageManager = UsageManager(File(pluginHome, "usage"))
+        ApplicationServices.usageManager = UsageManager(File(AppSettingsState.instance.pluginHome, "usage"))
         ApplicationServices.authorizationManager = object : AuthorizationInterface {
             override fun isAuthorized(
                 applicationClass: Class<*>?,
@@ -47,18 +48,5 @@ class ApplicationEvents : ApplicationActivationListener {
         ApplicationServices.isLocked = true
     }
 
-    companion object {
-        val pluginHome by lazy {
-                var logPath = System.getProperty("idea.plugins.path")
-                if (logPath == null) {
-                    logPath = System.getProperty("java.io.tmpdir")
-                }
-                if (logPath == null) {
-                    logPath = System.getProperty("user.home")
-                }
-                File(logPath, "AICodingAsst")
-            }
-
-    }
 }
 

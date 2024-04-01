@@ -27,6 +27,16 @@ data class AppSettingsState(
   var apiLog: Boolean = false,
   var devActions: Boolean = false,
   var editRequests: Boolean = false,
+  var pluginHome: File = run {
+    var logPath = System.getProperty("idea.plugins.path")
+    if (logPath == null) {
+      logPath = System.getProperty("java.io.tmpdir")
+    }
+    if (logPath == null) {
+      logPath = System.getProperty("user.home")
+    }
+    File(logPath, "AICodingAsst")
+  }
 ) : PersistentStateComponent<SimpleEnvelope> {
 
   private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()

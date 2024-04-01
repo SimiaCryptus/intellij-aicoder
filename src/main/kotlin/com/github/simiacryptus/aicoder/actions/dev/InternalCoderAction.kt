@@ -1,6 +1,5 @@
 ﻿package com.github.simiacryptus.aicoder.actions.dev
 
-import com.github.simiacryptus.aicoder.ApplicationEvents
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
@@ -83,7 +82,7 @@ class InternalCoderAction : BaseAction() {
         override fun userMessage(session: Session, user: User?, userMessage: String, ui: ApplicationInterface, api: API) {
           agents[session]?.start(userMessage)
         }
-        override val root: File get() = File(ApplicationEvents.pluginHome, "coding_agent")
+        override val root: File get() = File(AppSettingsState.instance.pluginHome, "coding_agent")
       }
       server.addApp(path, codingApp)
       return codingApp
