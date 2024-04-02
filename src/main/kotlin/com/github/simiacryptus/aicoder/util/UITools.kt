@@ -845,7 +845,7 @@ object UITools {
                 |
                 |Error Details:
                 |```
-                |${toString(e).indent("  ")}
+                |${toString(e)/*.indent("  ")*/}
                 |```
                 |""".trimMargin()
         formBuilder.addLabeledComponent("Error Report", wrapScrollPane(bugReportTextArea))
@@ -917,7 +917,7 @@ object UITools {
           |
           |Error Details:
           |```
-          |${toString(e).indent("  ")}
+          |${toString(e)/*.indent("  ")*/}
           |```
           |
           |Action History:
@@ -931,7 +931,7 @@ object UITools {
             """
             |${it.first}
             |```
-            |${toString(it.second).indent("  ")}
+            |${toString(it.second)/*.indent("  ")*/}
             |```
             |""".trimMargin()
           }

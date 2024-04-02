@@ -35,7 +35,7 @@ open class CodeChatSocketManager(
         |
         |```$language
         |${
-          codeSelection.indent("  ")
+          codeSelection/*.indent("  ")*/
         }}
         |```
         |

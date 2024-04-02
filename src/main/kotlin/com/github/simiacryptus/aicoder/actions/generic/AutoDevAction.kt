@@ -173,7 +173,7 @@ class AutoDevAction : BaseAction() {
       fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
         "# $path\n```${
           path.split('.').last()
-        }\n${code.indent("  ")}\n```"
+        }\n${code/*.indent("  ")*/}\n```"
       }
 
       val task = ui.newTask()
@@ -183,11 +183,11 @@ class AutoDevAction : BaseAction() {
         userMessage = userMessage,
         initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
         outputFn = { design: ParsedResponse<TaskList> ->
-          //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj).indent("  ")}\n```")
+          //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```")
           AgentPatterns.displayMapInTabs(
             mapOf(
-              "Text" to renderMarkdown(design.text),
-              "JSON" to renderMarkdown("```json\n${toJson(design.obj).indent("  ")}\n```"),
+              "Text" to renderMarkdown(design.text, ui=ui),
+              "JSON" to renderMarkdown("```json\n${toJson(design.obj)/*.indent("  ")*/}\n```", ui=ui),
             )
           )
         },
@@ -207,7 +207,7 @@ class AutoDevAction : BaseAction() {
 
       try {
         architectureResponse.obj.tasks.forEach { (paths, description) ->
-          task.complete(ui.hrefLink(renderMarkdown("Task: $description")) {
+          task.complete(ui.hrefLink(renderMarkdown("Task: $description", ui=ui)) {
             val task = ui.newTask()
             task.header("Task: $description")
             val process = { it: StringBuilder ->
@@ -235,8 +235,8 @@ class AutoDevAction : BaseAction() {
                   userMessage,
                   filter.entries.joinToString("\n\n") {
                     "# ${it.key}\n```${
-                      it.key.split('.').last()?.let { /*escapeHtml4*/it.indent("  ") }
-                    }\n${it.value.indent("  ")}\n```"
+                      it.key.split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
+                    }\n${it.value/*.indent("  ")*/}\n```"
                   },
                   architectureResponse.text,
                   "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"

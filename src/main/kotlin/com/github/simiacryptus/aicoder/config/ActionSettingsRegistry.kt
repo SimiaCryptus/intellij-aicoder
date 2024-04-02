@@ -114,6 +114,11 @@ class ActionSettingsRegistry {
     var version: Double? = null, // System property
     var isDynamic: Boolean = false, // Static property
     var language: String? = null, // Static property
+    val packageName: String = id.substringBeforeLast('.'),
+    val className: String = id.substringAfterLast('.'),
+    val file: File = File(configDir(), "actions/${packageName.replace('.', '/')}/$className.$language").apply {
+      parentFile.mkdirs()
+    },
   ) {
 
     fun buildAction(
@@ -151,15 +156,6 @@ class ActionSettingsRegistry {
       }
     }
 
-    private val packageName: String get() = id.substringBeforeLast('.')
-    val className: String get() = id.substringAfterLast('.')
-
-    val file: File
-      get() {
-        val file = File(configDir(), "actions/${packageName.replace('.', '/')}/$className.$language")
-        file.parentFile.mkdirs()
-        return file
-      }
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
@@ -173,7 +169,6 @@ class ActionSettingsRegistry {
       if (isDynamic != other.isDynamic) return false
       return language == other.language
     }
-
 
 
     override fun hashCode(): Int {

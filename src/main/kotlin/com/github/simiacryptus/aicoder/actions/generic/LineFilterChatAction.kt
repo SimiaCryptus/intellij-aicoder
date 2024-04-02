@@ -44,7 +44,7 @@ class LineFilterChatAction : BaseAction() {
         |# `$filename`
         |
         |```$language
-        |${code?.let { /*escapeHtml4*/(it).indent("  ") }}
+        |${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
         |```
         """.trimMargin().trim(),
       systemPrompt = """
@@ -53,7 +53,7 @@ class LineFilterChatAction : BaseAction() {
         |You will be answering questions about the following code located in `$filename`:
         |
         |```$language
-        |${codelines?.let { /*escapeHtml4*/(it).indent("  ") }}
+        |${codelines?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
         |```
         |
         |Responses may use markdown formatting. Lines from the prompt can be included by using the line number in a response line (e.g. `\nLINE\n`).
