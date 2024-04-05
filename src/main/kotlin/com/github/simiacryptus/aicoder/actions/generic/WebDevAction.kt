@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
+import com.github.simiacryptus.aicoder.util.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.API
@@ -18,7 +18,6 @@ import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.core.actors.*
-import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -308,7 +307,7 @@ class WebDevAction : BaseAction() {
         fun outputFn(task: SessionTask, design: String): StringBuilder? {
           //val task = ui.newTask()
           return task.complete(
-            ui.socketManager.addApplyDiffLinks2(
+            ui.socketManager.addApplyFileDiffLinks(
               root = codeFiles.keys.map { File(it).toPath() }.toTypedArray().commonRoot(),
               code = codeFiles,
               response = design,

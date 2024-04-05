@@ -40,15 +40,20 @@ data class AppSettingsState(
 ) : PersistentStateComponent<SimpleEnvelope> {
 
   private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
-  val editorActions = ActionSettingsRegistry()
-  val fileActions = ActionSettingsRegistry()
+  val editorActions: ActionSettingsRegistry
+    get() = ActionSettingsRegistry(pluginHome.resolve("editorActions").apply { mkdirs() })
+  val fileActions: ActionSettingsRegistry
+    get() = ActionSettingsRegistry(pluginHome.resolve("fileActions").apply { mkdirs() })
   private val recentCommands = mutableMapOf<String, MRUItems>()
 
   fun defaultSmartModel() = smartModel.chatModel()
   fun defaultFastModel() = fastModel.chatModel()
 
   @JsonIgnore
-  override fun getState() = SimpleEnvelope(JsonUtil.toJson(this))
+  override fun getState(): SimpleEnvelope {
+    val value = JsonUtil.toJson(this)
+    return SimpleEnvelope(value)
+  }
 
   fun getRecentCommands(id: String) = recentCommands.computeIfAbsent(id) { MRUItems() }
 
@@ -63,10 +68,10 @@ data class AppSettingsState(
     XmlSerializerUtil.copyBean(fromJson, this)
     recentCommands.clear();
     recentCommands.putAll(fromJson.recentCommands)
-    editorActions.actionSettings.clear();
-    editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
-    fileActions.actionSettings.clear();
-    fileActions.actionSettings.putAll(fromJson.fileActions.actionSettings)
+//    editorActions.actionSettings.clear();
+//    editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
+//    fileActions.actionSettings.clear();
+//    fileActions.actionSettings.putAll(fromJson.fileActions.actionSettings)
     notifySettingsLoaded()
   }
 
@@ -77,6 +82,57 @@ data class AppSettingsState(
   private fun notifySettingsLoaded() {
     onSettingsLoadedListeners.forEach { it() }
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as AppSettingsState
+
+    if (temperature != other.temperature) return false
+    if (smartModel != other.smartModel) return false
+    if (fastModel != other.fastModel) return false
+    if (listeningPort != other.listeningPort) return false
+    if (listeningEndpoint != other.listeningEndpoint) return false
+    if (humanLanguage != other.humanLanguage) return false
+    if (apiThreads != other.apiThreads) return false
+    if (apiBase != other.apiBase) return false
+    if (apiKey != other.apiKey) return false
+    if (modalTasks != other.modalTasks) return false
+    if (suppressErrors != other.suppressErrors) return false
+    if (apiLog != other.apiLog) return false
+    if (devActions != other.devActions) return false
+    if (editRequests != other.editRequests) return false
+    if (pluginHome != other.pluginHome) return false
+    if (editorActions != other.editorActions) return false
+    if (fileActions != other.fileActions) return false
+    if (recentCommands != other.recentCommands) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = temperature.hashCode()
+    result = 31 * result + smartModel.hashCode()
+    result = 31 * result + fastModel.hashCode()
+    result = 31 * result + listeningPort
+    result = 31 * result + listeningEndpoint.hashCode()
+    result = 31 * result + humanLanguage.hashCode()
+    result = 31 * result + apiThreads
+    result = 31 * result + (apiBase?.hashCode() ?: 0)
+    result = 31 * result + (apiKey?.hashCode() ?: 0)
+    result = 31 * result + modalTasks.hashCode()
+    result = 31 * result + suppressErrors.hashCode()
+    result = 31 * result + apiLog.hashCode()
+    result = 31 * result + devActions.hashCode()
+    result = 31 * result + editRequests.hashCode()
+    result = 31 * result + pluginHome.hashCode()
+    result = 31 * result + editorActions.hashCode()
+    result = 31 * result + fileActions.hashCode()
+    result = 31 * result + recentCommands.hashCode()
+    return result
+  }
+
 
   companion object {
     var auxiliaryLog: File? = null

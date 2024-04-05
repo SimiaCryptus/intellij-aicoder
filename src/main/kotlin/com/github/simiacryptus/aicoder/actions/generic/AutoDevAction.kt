@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
+import com.github.simiacryptus.aicoder.util.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
@@ -19,7 +19,6 @@ import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.*
-import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -227,7 +226,7 @@ class AutoDevAction : BaseAction() {
                               |
                             """.trimMargin()
               }
-              ui.socketManager.addApplyDiffLinks2(
+              ui.socketManager.addApplyFileDiffLinks(
                 root = root,
                 code = codeFiles,
                 response = taskActor.answer(listOf(
