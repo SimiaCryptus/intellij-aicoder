@@ -95,8 +95,7 @@ class DiffChatAction : BaseAction() {
           }
           codeBuffer.set(newCode)
         }, task = task, ui=ui)
-        val html = renderMarkdown(withLinks)
-        return """<div>$html</div>"""
+        return """<div>${renderMarkdown(withLinks)}</div>"""
       }
     }
 

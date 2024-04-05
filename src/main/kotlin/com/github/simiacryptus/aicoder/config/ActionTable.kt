@@ -25,13 +25,13 @@ class ActionTable(
 ) : JPanel(BorderLayout()) {
 
     fun read(registry: ActionSettingsRegistry) {
-        registry.actionSettings.clear()
+//        registry.actionSettings.clear()
         rowData.map { row ->
             val copy = (actionSettings.find { it.id == row[2] })!!.copy(
                 enabled = ((row[0] as String) == "true"),
                 displayText = row[1] as String
             )
-            registry.actionSettings.put(copy.id, copy)
+//            registry.actionSettings.put(copy.id, copy)
         }
     }
 

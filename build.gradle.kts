@@ -7,7 +7,7 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 
 plugins {
     id("java") // Java support
-    id("org.jetbrains.kotlin.jvm") version "1.9.21"
+    id("org.jetbrains.kotlin.jvm") version "2.0.0-Beta5"
     id("org.jetbrains.intellij") version "1.17.2"
     id("org.jetbrains.changelog") version "2.2.0"
     id("org.jetbrains.qodana") version "2023.2.1"
@@ -23,10 +23,10 @@ repositories {
     maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
 
-val kotlin_version = "1.9.21"
+val kotlin_version = "2.0.0-Beta5"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.60"
+val skyenet_version = "1.0.61"
 val remoterobot_version = "0.11.21"
 dependencies {
 

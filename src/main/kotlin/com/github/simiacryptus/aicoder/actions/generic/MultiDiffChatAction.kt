@@ -6,7 +6,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
+import com.github.simiacryptus.aicoder.util.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -104,7 +104,7 @@ class MultiDiffChatAction : BaseAction() {
       storage = ApplicationServices.dataStorageFactory(DiffChatAction.root),
     ) {
       override fun renderResponse(response: String, task: SessionTask): String {
-        val html = addApplyDiffLinks2(
+        val html = addApplyFileDiffLinks(
           root = root,
           code = codeFiles,
           response = response,

@@ -5,7 +5,7 @@ import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyDiffLinks2
+import com.github.simiacryptus.aicoder.util.addApplyFileDiffLinks
 import com.github.simiacryptus.aicoder.util.addSaveLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
@@ -23,7 +23,6 @@ import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.apps.coding.CodingAgent
 import com.simiacryptus.skyenet.core.actors.*
-import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.ApplicationServices.clientManager
 import com.simiacryptus.skyenet.core.platform.ClientManager
 import com.simiacryptus.skyenet.core.platform.Session
@@ -123,6 +122,7 @@ class TaskRunnerApp(
         shellCommandTaskEnabled = false,
       ).startProcess(userMessage = userMessage)
     } catch (e: Throwable) {
+      ui.newTask().error(ui, e)
       log.warn("Error", e)
     }
   }
@@ -163,44 +163,44 @@ class TaskRunnerAgent(
     ActorTypes.TaskBreakdown to ParsedActor(
       resultClass = TaskBreakdownResult::class.java,
       prompt = """
-        Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
-        Detail task dependencies and relationships, and ensure the tasks are well-organized and logically ordered.
-        Briefly explain your rationale for the task breakdown and ordering.
-        
-        Tasks can be of the following types: 
-        ${
+        |Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
+        |Detail files input and output as well as task execution dependencies.
+        |Keep in mind that implementation details need to be shared between the file generation tasks.
+        |Creating directories and initializing source control are out of scope.
+        |
+        |Tasks can be of the following types: 
+        |${
         if (!taskPlanningEnabled) "" else
           """
           |* TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
           |  ** Specify the prior tasks and the goal of the task
         """.trimMargin().trim()
       }
-        ${
-        if (!shellCommandTaskEnabled) "" else
-          """
+        |${
+        if (!shellCommandTaskEnabled) "" else """
           |* RunShellCommand - Execute shell commands and provide the output
-          |  ** Specify the environment variables, working directory, language, and command to be executed
-          |  ** List input files/tasks to be examined
-        """.trimMargin().trim()
+          |  ** Specify the command to be executed, or describe the task to be performed
+          |  ** List input files/tasks to be examined when writing the command
+          """.trimMargin().trim()
       }
-        * Inquiry - Answer questions by reading in files and providing a summary that can be discussed with and approved by the user
-          ** Specify the questions and the goal of the inquiry
-          ** List input files to be examined
-        * NewFile - Create one or more new files
-          ** For each file, specify the relative file path and the purpose of the file
-          ** List input files/tasks to be examined
-        * EditFile - Modify existing files
-          ** For each file, specify the relative file path and the goal of the modification
-          ** List input files/tasks to be examined
-        * Documentation - Generate documentation
-          ** List input files/tasks to be examined
-        
-      """.trimIndent(),
+        |* Inquiry - Answer questions by reading in files and providing a summary that can be discussed with and approved by the user
+        |  ** Specify the questions and the goal of the inquiry
+        |  ** List input files to be examined when answering the questions
+        |* NewFile - Create one or more new files, carefully considering how they fit into the existing project structure
+        |  ** For each file, specify the relative file path and the purpose of the file
+        |  ** List input files/tasks to be examined when authoring the new files
+        |* EditFile - Modify existing files
+        |  ** For each file, specify the relative file path and the goal of the modification
+        |  ** List input files/tasks to be examined when designing the modifications
+        |* Documentation - Generate documentation
+        |  ** List input files/tasks to be examined
+      """.trimMargin(),
       model = model,
       parsingModel = parsingModel,
       temperature = temperature,
     ),
     ActorTypes.DocumentationGenerator to SimpleActor(
+      name = "DocumentationGenerator",
       prompt = """
         Create detailed and clear documentation for the provided code, covering its purpose, functionality, inputs, outputs, and any assumptions or limitations.
         Use a structured and consistent format that facilitates easy understanding and navigation. 
@@ -211,9 +211,12 @@ class TaskRunnerAgent(
       temperature = temperature,
     ),
     ActorTypes.NewFileCreator to SimpleActor(
+      name = "NewFileCreator",
       prompt = """
         Generate the necessary code for a new file based on the given requirements and context. 
         Ensure the code is well-structured, follows best practices, and meets the specified functionality. 
+        Carefully consider how the new file fits into the existing project structure and architecture.
+        Avoid creating files that duplicate functionality or introduce inconsistencies.
         Provide a clear file name suggestion based on the content and purpose of the file.
           
         Response should use one or more ``` code blocks to output file contents.
@@ -240,9 +243,13 @@ class TaskRunnerAgent(
       temperature = temperature,
     ),
     ActorTypes.FilePatcher to SimpleActor(
+      name = "FilePatcher",
       prompt = """
         Generate a patch for an existing file to modify its functionality or fix issues based on the given requirements and context. 
         Ensure the modifications are efficient, maintain readability, and adhere to coding standards. 
+        Carefully review the existing code and project structure to ensure the changes are consistent and do not introduce bugs.
+        Consider the impact of the modifications on other parts of the codebase.
+
         Provide a summary of the changes made.
           
         Response should use one or more code patches in diff format within ```diff code blocks.
@@ -260,14 +267,13 @@ class TaskRunnerAgent(
         + const a = 1;
         ```
 
-        Consider the following task types: ${if (!taskPlanningEnabled) "" else "TaskPlanning, "}${if (!shellCommandTaskEnabled) "" else "RunShellCommand, "}Requirements, NewFile, EditFile, and Documentation.
-        Ensure that each identified task fits one of these categories and specify the task type for better integration with the system.
         Continued text
       """.trimIndent(),
       model = model,
       temperature = temperature,
     ),
     ActorTypes.Inquiry to SimpleActor(
+      name = "Inquiry",
       prompt = """
         Create code for a new file that fulfills the specified requirements and context.
         Given a detailed user request, break it down into smaller, actionable tasks suitable for software development.
@@ -275,7 +281,12 @@ class TaskRunnerAgent(
         Provide a comprehensive overview, including key concepts, relevant technologies, best practices, and any potential challenges or considerations. 
         Ensure the information is accurate, up-to-date, and well-organized to facilitate easy understanding.
 
-        Focus on generating insights and information that support the task types available in the system (${if (!taskPlanningEnabled) "" else "TaskPlanning, "}${if (!shellCommandTaskEnabled) "" else "RunShellCommand, "}Requirements, NewFile, EditFile, Documentation).
+        When generating insights, consider the existing project context and focus on information that is directly relevant and applicable.
+        Focus on generating insights and information that support the task types available in the system (${
+          if (!taskPlanningEnabled) "" else "TaskPlanning, "
+        }${
+          if (!shellCommandTaskEnabled) "" else "RunShellCommand, "
+        }Requirements, NewFile, EditFile, Documentation).
         This will ensure that the inquiries are tailored to assist in the planning and execution of tasks within the system's framework.
      """.trimIndent(),
       model = model,
@@ -283,6 +294,7 @@ class TaskRunnerAgent(
     ),
   ) + (if (!shellCommandTaskEnabled) mapOf() else mapOf(
     ActorTypes.RunShellCommand to CodingActor(
+      name = "RunShellCommand",
       interpreterClass = ProcessInterpreter::class,
       details = """
         Execute the following shell command(s) and provide the output. Ensure to handle any errors or exceptions gracefully.
@@ -302,7 +314,7 @@ class TaskRunnerAgent(
 
   val event: AnActionEvent,
   val root: Path
-) : ActorSystem<TaskRunnerAgent.ActorTypes>(
+) : ActorSystem<TaskRunnerAgent.Companion.ActorTypes>(
   actorMap.map { it.key.name to it.value }.toMap(),
   dataStorage,
   user,
@@ -379,15 +391,11 @@ class TaskRunnerAgent(
 
   fun startProcess(userMessage: String) {
     val codeFiles = codeFiles
-    val eventStatus = if (codeFiles.size > 2) """
-      |Root: ${root.toFile().absolutePath}
-      |
+    val eventStatus = if (!codeFiles.all { File(it.key).isFile } || codeFiles.size > 2) """
       |Files:
       |${codeFiles.keys.joinToString("\n") { "* ${it}" }}  
     """.trimMargin() else {
       """
-            |Root: ${root.toFile().absolutePath}
-            |
             |${
         virtualFiles.joinToString("\n\n") {
           val path = root.relativize(it.toNioPath())
@@ -429,8 +437,6 @@ class TaskRunnerAgent(
           api = api
         )
       },
-//      atomicRef = AtomicReference(),
-//      semaphore = Semaphore(0),
     ).call()
 
     try {
@@ -677,7 +683,6 @@ class TaskRunnerAgent(
           )
         }
 
-        /*RunShellCommand*/
         TaskType.RunShellCommand -> {
           if (shellCommandTaskEnabled) {
             val semaphore = Semaphore(0)
@@ -868,7 +873,7 @@ class TaskRunnerAgent(
       )
       genState.taskResult[taskId] = codeResult
       renderMarkdown(
-        ui.socketManager.addApplyDiffLinks2(
+        ui.socketManager.addApplyFileDiffLinks(
           root = root,
           ui = ui,
           code = codeFiles,
@@ -1134,6 +1139,9 @@ class TaskRunnerAgent(
     return input
   }
 
+  companion object {
+    private val log = LoggerFactory.getLogger(TaskRunnerAgent::class.java)
+
   enum class ActorTypes {
     TaskBreakdown,
     DocumentationGenerator,
@@ -1143,8 +1151,6 @@ class TaskRunnerAgent(
     RunShellCommand,
   }
 
-  companion object {
-    private val log = LoggerFactory.getLogger(TaskRunnerAgent::class.java)
     fun executionOrder(tasks: Map<String, Task>): List<String> {
       val taskIds: MutableList<String> = mutableListOf()
       val taskMap = tasks.toMutableMap()
