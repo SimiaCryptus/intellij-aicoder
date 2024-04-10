@@ -40,10 +40,6 @@ data class AppSettingsState(
 ) : PersistentStateComponent<SimpleEnvelope> {
 
   private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
-  val editorActions: ActionSettingsRegistry
-    get() = ActionSettingsRegistry(pluginHome.resolve("editorActions").apply { mkdirs() })
-  val fileActions: ActionSettingsRegistry
-    get() = ActionSettingsRegistry(pluginHome.resolve("fileActions").apply { mkdirs() })
   private val recentCommands = mutableMapOf<String, MRUItems>()
 
   fun defaultSmartModel() = smartModel.chatModel()
@@ -104,8 +100,6 @@ data class AppSettingsState(
     if (devActions != other.devActions) return false
     if (editRequests != other.editRequests) return false
     if (pluginHome != other.pluginHome) return false
-    if (editorActions != other.editorActions) return false
-    if (fileActions != other.fileActions) return false
     if (recentCommands != other.recentCommands) return false
 
     return true
@@ -127,8 +121,6 @@ data class AppSettingsState(
     result = 31 * result + devActions.hashCode()
     result = 31 * result + editRequests.hashCode()
     result = 31 * result + pluginHome.hashCode()
-    result = 31 * result + editorActions.hashCode()
-    result = 31 * result + fileActions.hashCode()
     result = 31 * result + recentCommands.hashCode()
     return result
   }

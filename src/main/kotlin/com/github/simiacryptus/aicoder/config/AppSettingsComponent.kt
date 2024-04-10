@@ -132,14 +132,6 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     }
   }
 
-  @Name("File Actions")
-  var fileActions = ActionTable(AppSettingsState.instance.fileActions.actionSettings.values.map { it.copy() }
-    .toTypedArray().toMutableList())
-
-  @Name("Editor Actions")
-  var editorActions = ActionTable(AppSettingsState.instance.editorActions.actionSettings.values.map { it.copy() }
-    .toTypedArray().toMutableList())
-
   @Name("Editor Actions")
   var usage = UsageTable(ApplicationServices.usageManager)
 
