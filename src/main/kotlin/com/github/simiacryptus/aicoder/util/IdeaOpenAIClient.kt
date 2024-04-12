@@ -63,21 +63,25 @@ class IdeaOpenAIClient : OpenAIClient(
     lastEvent ?: return super.chat(chatRequest, model)
     if (isInRequest.getAndSet(true)) {
       val response = super.chat(chatRequest, model)
-      UITools.logAction(
-        """
+      if(null != response.usage) {
+        UITools.logAction(
+          """
                 |Chat Response: ${JsonUtil.toJson(response.usage!!)}
             """.trimMargin().trim()
-      )
+        )
+      }
       return response
     } else {
       try {
         if (!AppSettingsState.instance.editRequests) {
           val response = super.chat(chatRequest, model)
-          UITools.logAction(
-            """
+          if(null != response.usage) {
+            UITools.logAction(
+              """
                         |Chat Response: ${JsonUtil.toJson(response.usage!!)}
                     """.trimMargin().trim()
-          )
+            )
+          }
           return response
         }
         return withJsonDialog(chatRequest, { chatRequest ->
@@ -85,11 +89,13 @@ class IdeaOpenAIClient : OpenAIClient(
             lastEvent!!.project, "OpenAI Request", true, suppressProgress = false
           ) {
             val response = super.chat(chatRequest, model)
-            UITools.logAction(
-              """
+            if(null != response.usage) {
+              UITools.logAction(
+                """
                             |Chat Response: ${JsonUtil.toJson(response.usage!!)}
                         """.trimMargin().trim()
-            )
+              )
+            }
             response
           }
         }, "Edit Chat Request")

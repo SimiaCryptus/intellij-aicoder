@@ -5,8 +5,8 @@ import com.github.simiacryptus.aicoder.actions.dev.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyFileDiffLinks
-import com.github.simiacryptus.aicoder.util.addSaveLinks
+import com.github.simiacryptus.diff.addApplyFileDiffLinks
+import com.github.simiacryptus.diff.addSaveLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
 import com.intellij.openapi.vfs.VirtualFile

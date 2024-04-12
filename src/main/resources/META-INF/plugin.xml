@@ -342,6 +342,16 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
 
+        <action id="PrintGitCommitPatch" class="com.github.simiacryptus.aicoder.actions.git.PrintGitCommitPatchAction"
+                text="Print Git Commit Patch"
+                description="Print the patch of the selected git commit">
+            <!--DOC
+        The `Print Git Commit Patch` action prints the patch of the selected git commit in the git revision history view.
+        This is useful for quickly accessing the changes made in a specific commit.
+            -->
+            <add-to-group group-id="Git.ContextMenu" anchor="last"/>
+        </action>
+
     </actions>
 
 </idea-plugin>

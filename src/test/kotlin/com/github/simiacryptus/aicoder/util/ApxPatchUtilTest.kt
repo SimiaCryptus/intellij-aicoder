@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.util
 
+import com.github.simiacryptus.diff.ApxPatchUtil
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

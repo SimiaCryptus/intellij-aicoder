@@ -26,7 +26,7 @@ repositories {
 val kotlin_version = "2.0.0-Beta5"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.61"
+val skyenet_version = "1.0.62"
 val remoterobot_version = "0.11.21"
 dependencies {
 
@@ -39,7 +39,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.50")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.51")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
@@ -162,7 +162,7 @@ tasks {
     publishPlugin {
         dependsOn("patchChangelog")
         token.set(System.getenv("PUBLISH_TOKEN"))
-        channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
+//        channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
     }
 }
 
