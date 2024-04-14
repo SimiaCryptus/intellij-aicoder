@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
+import com.jetbrains.rd.util.firstOrNull
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.JsonUtil
 import java.io.File
@@ -137,7 +138,7 @@ data class AppSettingsState(
     fun String.chatModel(): ChatModels {
       return ChatModels.values().entries.firstOrNull {
         it.value.modelName == this || it.key == this
-      }?.value ?: throw IllegalArgumentException("Unknown model: ${this}")
+      }?.value ?: ChatModels.GPT35Turbo
     }
   }
 }
