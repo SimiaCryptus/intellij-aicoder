@@ -59,6 +59,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
+    implementation(group = "com.vladsch.flexmark", name = "flexmark-all", version = "0.64.8")
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
