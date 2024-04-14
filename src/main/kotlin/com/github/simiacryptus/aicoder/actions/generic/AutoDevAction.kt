@@ -227,37 +227,36 @@ class AutoDevAction : BaseAction() {
                             """.trimMargin()
               }
               ui.socketManager.addApplyFileDiffLinks(
-                root = root,
-                code = codeFiles,
-                response = taskActor.answer(listOf(
-                  codeSummary(),
-                  userMessage,
-                  filter.entries.joinToString("\n\n") {
-                    "# ${it.key}\n```${
-                      it.key.split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
-                    }\n${it.value/*.indent("  ")*/}\n```"
-                  },
-                  architectureResponse.text,
-                  "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                ), api),
-                handle = { newCodeMap ->
-                  newCodeMap.forEach { (path, newCode) ->
-                    val prev = codeFiles[path]
-                    if (prev != newCode) {
-                      codeFiles[path] = newCode
-                      task.complete(
-                        "<a href='${
-                          task.saveFile(
-                            path,
-                            newCode.toByteArray(Charsets.UTF_8)
-                          )
-                        }'>$path</a> Updated"
-                      )
+                  root = root,
+                  code = codeFiles,
+                  response = taskActor.answer(listOf(
+                    codeSummary(),
+                    userMessage,
+                    filter.entries.joinToString("\n\n") {
+                      "# ${it.key}\n```${
+                        it.key.split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
+                      }\n${it.value/*.indent("  ")*/}\n```"
+                    },
+                    architectureResponse.text,
+                    "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
+                  ), api),
+                  handle = { newCodeMap ->
+                    newCodeMap.forEach { (path, newCode) ->
+                      val prev = codeFiles[path]
+                      if (prev != newCode) {
+                        codeFiles[path] = newCode
+                        task.complete(
+                          "<a href='${
+                            task.saveFile(
+                              path,
+                              newCode.toByteArray(Charsets.UTF_8)
+                            )
+                          }'>$path</a> Updated"
+                        )
+                      }
                     }
-                  }
-                },
-                task = task,
-                ui = ui
+                  },
+                  ui = ui
               )
             }
             Retryable(ui, task, process).apply { set(label(size), process(container!!)) }

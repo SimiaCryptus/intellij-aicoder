@@ -103,6 +103,7 @@ class MultiDiffChatAction : BaseAction() {
       applicationClass = ApplicationServer::class.java,
       storage = ApplicationServices.dataStorageFactory(DiffChatAction.root),
     ) {
+      val ui by lazy { ApplicationInterface(this) }
       override fun renderResponse(response: String, task: SessionTask): String {
         val html = addApplyFileDiffLinks(
           root = root,
@@ -128,7 +129,7 @@ class MultiDiffChatAction : BaseAction() {
               ""
             }
           }
-        }, task = task, ui = ApplicationInterface(this),)
+        }, ui = ui,)
         return """<div>${renderMarkdown(html)}</div>"""
       }
     }

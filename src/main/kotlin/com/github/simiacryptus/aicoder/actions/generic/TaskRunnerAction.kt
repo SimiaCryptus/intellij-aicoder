@@ -170,7 +170,7 @@ class TaskRunnerAgent(
         |
         |Tasks can be of the following types: 
         |${
-            if (!taskPlanningEnabled) "" else """
+                if (!taskPlanningEnabled) "" else """
           |* TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
           |  ** Specify the prior tasks and the goal of the task
         """.trimMargin().trim()
@@ -773,7 +773,7 @@ class TaskRunnerAgent(
                 formText: StringBuilder,
                 formHandle: () -> StringBuilder
             ): String {
-                return ui.hrefLink("\uD83D\uDC4D", "href-link play-button") {
+                return ui.hrefLink("Accept", "href-link play-button") {
                     genState.taskResult[taskId] = response.let {
                         """
                   |## Shell Command Output
@@ -828,7 +828,7 @@ class TaskRunnerAgent(
                 ).filter { it.isNotBlank() }, api
             )
             genState.taskResult[taskId] = codeResult
-            renderMarkdown(ui.socketManager.addSaveLinks(codeResult, task) { path, newCode ->
+            renderMarkdown(ui.socketManager.addSaveLinks(codeResult, task, ui = ui) { path, newCode ->
                 val prev = codeFiles[path]
                 if (prev != newCode) {
 //          codeFiles[path] = newCode
@@ -838,7 +838,7 @@ class TaskRunnerAgent(
                 } else {
                     task.complete("No changes to $path")
                 }
-            }, ui = ui) + accept(sb) {
+            }, ui = ui) + acceptButtonFooter(sb) {
                 taskTabs.selectedTab = taskTabs.selectedTab + 1
                 taskTabs.update()
                 onComplete()
@@ -877,7 +877,6 @@ class TaskRunnerAgent(
             renderMarkdown(
                 ui.socketManager.addApplyFileDiffLinks(
                     root = root,
-                    ui = ui,
                     code = codeFiles,
                     response = codeResult,
                     handle = { newCodeMap ->
@@ -896,8 +895,9 @@ class TaskRunnerAgent(
                                 )
                             }
                         }
-                    }, task = task
-                ) + accept(sb) {
+                    },
+                    ui = ui
+                ) + acceptButtonFooter(sb) {
                     taskTabs.selectedTab += 1
                     taskTabs.update()
                     task.complete()
@@ -933,7 +933,7 @@ class TaskRunnerAgent(
                 ).filter { it.isNotBlank() }, api
             )
             genState.taskResult[taskId] = docResult
-            renderMarkdown("## Generated Documentation\n$docResult", ui = ui) + accept(sb) {
+            renderMarkdown("## Generated Documentation\n$docResult", ui = ui) + acceptButtonFooter(sb) {
                 taskTabs.selectedTab = taskTabs.selectedTab + 1
                 taskTabs.update()
                 task.complete()
@@ -947,23 +947,19 @@ class TaskRunnerAgent(
         }
     }
 
-    private fun accept(stringBuilder: StringBuilder, fn: () -> Unit): String {
-        val startTag = """<!-- BEGIN ACCEPT LINK -->"""
-        val endTag = """<!-- END ACCEPT LINK -->"""
-        return startTag + ui.hrefLink("Accept") {
+    private fun acceptButtonFooter(stringBuilder: StringBuilder, fn: () -> Unit): String {
+        val footerTask = ui.newTask(false)
+        lateinit var textHandle: StringBuilder
+        textHandle = footerTask.complete(ui.hrefLink("Accept", classname = "href-link cmd-button") {
             try {
-                val prev = stringBuilder.toString()
-                require(prev.contains(startTag) && prev.contains(endTag)) {
-                    "Accept link not found"
-                }
-                val newValue = prev.substringBefore(startTag) + "Accepted" + prev.substringAfter(endTag)
-                stringBuilder.clear()
-                stringBuilder.append(newValue)
+                textHandle.set("""<div class="cmd-button">Accepted</div>""")
+                footerTask.complete()
             } catch (e: Throwable) {
                 log.warn("Error", e)
             }
             fn()
-        } + endTag
+        })!!
+        return footerTask.placeholder
     }
 
     private fun inquiry(
@@ -1129,18 +1125,18 @@ class TaskRunnerAgent(
         return graphBuilder.toString()
     }
 
-    private fun sanitizeForMermaid(input: String): String {
-        return input.replace(" ", "_")
-            .replace("\"", "\\\"")
-            .replace("[", "\\[")
-            .replace("]", "\\]")
-            .replace("(", "\\(")
-            .replace(")", "\\)")
-    }
+    private fun sanitizeForMermaid(input: String) = input
+        .replace(" ", "_")
+        .replace("\"", "\\\"")
+        .replace("[", "\\[")
+        .replace("]", "\\]")
+        .replace("(", "\\(")
+        .replace(")", "\\)")
+        .let { "`$it`" }
 
-    private fun escapeMermaidCharacters(input: String): String {
-        return input
-    }
+    private fun escapeMermaidCharacters(input: String) = input
+        .replace("\"", "\\\"")
+        .let { '"' + it + '"' }
 
     companion object {
         private val log = LoggerFactory.getLogger(TaskRunnerAgent::class.java)

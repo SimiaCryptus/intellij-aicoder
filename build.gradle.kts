@@ -85,6 +85,7 @@ dependencies {
 }
 
 
+/*
 tasks.register<Copy>("copySourcesToResources") {
     from("src/main/kotlin")
     into("src/main/resources/sources/kt")
@@ -92,6 +93,7 @@ tasks.register<Copy>("copySourcesToResources") {
 tasks.named("processResources") {
     dependsOn("copySourcesToResources")
 }
+*/
 
 
 kotlin {
