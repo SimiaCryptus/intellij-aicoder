@@ -1,16 +1,10 @@
-# intellij-aicoder
+# **AI Coding Assistant: The Ultimate IntelliJ Plugin for Developers**
 
 ![Build](https://github.com/SimiaCryptus/intellij-aicoder/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 
 <!-- Plugin description -->
-
-# **AI Coding Assistant: The Ultimate IntelliJ Plugin for Developers**
-
-![Build](https://github.com/SimiaCryptus/intellij-aicoder/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 
 Are you a developer looking to supercharge your coding workflow? Look no further than AI Coding Assistant, the
 game-changing IntelliJ plugin that harnesses the power of cutting-edge Language Model APIs to revolutionize the way you
@@ -19,7 +13,7 @@ code!
 ## **Key Features**
 
 * 🌐 **Extensive API Support**: AI Coding Assistant seamlessly integrates with a wide range of leading LLM APIs,
-  including [OpenAI](https://platform.openai.com/), [AWS Bedrock](https://console.aws.amazon.com/bedrock/), [Anthropic](https://api.anthropic.com/v1), [Google Generative Language](https://generativelanguage.googleapis.com/), [Groq](https://console.groq.com/), [Perplexity AI](https://www.perplexity.ai/),
+  including [OpenAI](https://platform.openai.com/), [AWS Bedrock](https://console.aws.amazon.com/bedrock/), [Anthropic](https://api.anthropic.com/v1), [Google](https://generativelanguage.googleapis.com/), [Groq](https://console.groq.com/), [Perplexity AI](https://www.perplexity.ai/),
   and [ModelsLab](https://modelslab.com/dashboard/). Get your API keys and unlock a world of possibilities!
 
 * 💸 **No Membership Fees**: While API access is typically paid, AI Coding Assistant charges no base fee. You only pay
