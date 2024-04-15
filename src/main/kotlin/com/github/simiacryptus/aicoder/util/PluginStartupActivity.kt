@@ -31,7 +31,7 @@ class PluginStartupActivity : ProjectActivity {
                 currentThread.contextClassLoader = prevClassLoader
             }
 
-            if (isFirstRun()) {
+           if (AppSettingsState.instance.showWelcomeScreen || AppSettingsState.instance.greetedVersion != AppSettingsState.CURRENT_VERSION) {
                 val welcomeFile = "welcomePage.md"
                 val resource = PluginStartupActivity::class.java.classLoader.getResource(welcomeFile)
                 var virtualFile = resource?.let { VirtualFileManager.getInstance().findFileByUrl(it.toString()) }
@@ -72,6 +72,9 @@ class PluginStartupActivity : ProjectActivity {
                         log.error("Error opening welcome page", e)
                     }
                 } ?: log.error("Welcome page not found")
+               // Set showWelcomeScreen to false after showing it for the first time
+               AppSettingsState.instance.greetedVersion = AppSettingsState.CURRENT_VERSION
+               AppSettingsState.instance.showWelcomeScreen = false
             }
         } catch (e: Exception) {
             log.error("Error during plugin startup", e)
