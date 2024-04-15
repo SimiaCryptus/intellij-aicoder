@@ -9,14 +9,12 @@
     <depends>org.jetbrains.kotlin</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="com.github.simiacryptus.aicoder.util.PluginStartupActivity" />
         <applicationService serviceImplementation="com.github.simiacryptus.aicoder.config.AppSettingsState"/>
         <applicationConfigurable parentId="tools"
                                  instance="com.github.simiacryptus.aicoder.config.StaticAppSettingsConfigurable"
                                  id="org.intellij.sdk.settings.AppSettingsConfigurable"
                                  displayName="AI Coder"/>
-    </extensions>
-
-    <extensions defaultExtensionNs="com.intellij">
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
                                 order="first"/>
@@ -28,10 +26,6 @@
                                 order="first"/>
     </extensions>
 
-    <applicationListeners>
-        <listener class="com.github.simiacryptus.aicoder.ApplicationEvents"
-                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    </applicationListeners>
 
     <actions>
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"
@@ -173,8 +167,6 @@
         </action>
 
 
-
-
         <group id="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
                class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
                text="Imple_ment As..."
@@ -200,11 +192,6 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="L"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
         </action>
-
-
-
-
-
 
 
         <action class="com.github.simiacryptus.aicoder.actions.code.CustomEditAction"
@@ -342,15 +329,17 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
 
-        <action id="PrintGitCommitPatch" class="com.github.simiacryptus.aicoder.actions.git.PrintGitCommitPatchAction"
-                text="Print Git Commit Patch"
-                description="Print the patch of the selected git commit">
-            <!--DOC
-        The `Print Git Commit Patch` action prints the patch of the selected git commit in the git revision history view.
-        This is useful for quickly accessing the changes made in a specific commit.
-            -->
-            <add-to-group group-id="Git.ContextMenu" anchor="last"/>
-        </action>
+        <!--
+                <action id="PrintGitCommitPatch" class="com.github.simiacryptus.aicoder.actions.git.PrintGitCommitPatchAction"
+                        text="Print Git Commit Patch"
+                        description="Print the patch of the selected git commit">
+                    &lt;!&ndash;DOC
+                The `Print Git Commit Patch` action prints the patch of the selected git commit in the git revision history view.
+                This is useful for quickly accessing the changes made in a specific commit.
+                    &ndash;&gt;
+                    <add-to-group group-id="Git.ContextMenu" anchor="last"/>
+                </action>
+        -->
 
     </actions>
 
