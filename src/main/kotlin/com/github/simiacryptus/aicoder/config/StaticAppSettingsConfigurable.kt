@@ -125,7 +125,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             component.temperature.text = settings.temperature.toString()
             component.pluginHome.text = settings.pluginHome.absolutePath
             val model = component.apis.model as DefaultTableModel
-            model.setRowCount(0) // Clear existing rows
+            model.rowCount = 0 // Clear existing rows
             APIProvider.values().forEach { value ->
                 val key = value.name
                 model.addRow(arrayOf(key, settings.apiKey?.get(key) ?: "", settings.apiBase?.get(key) ?: value.base))

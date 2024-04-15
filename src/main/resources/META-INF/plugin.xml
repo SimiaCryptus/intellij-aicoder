@@ -17,12 +17,15 @@
                                  instance="com.github.simiacryptus.aicoder.config.StaticAppSettingsConfigurable"
                                  id="org.intellij.sdk.settings.AppSettingsConfigurable"
                                  displayName="AI Coder"/>
-        <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
+        <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.ConsolidatedWidgetFactory"
+                                id="com.github.simiacryptus.aicoder.ui.ConsolidatedWidgetFactory"
+                                order="first"/>
+        <!--<statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
                                 order="first"/>
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.ModelSelectionWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.ModelSelectionWidgetFactory"
-                                order="first"/>
+                                order="first"/>-->
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 order="first"/>

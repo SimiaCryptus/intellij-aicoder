@@ -21,6 +21,7 @@ object PsiUtil {
         "CssBlock",
         "FunctionDefinition"
     )
+
     @JvmStatic
     val ELEMENTS_COMMENTS = arrayOf<CharSequence>(
         "Comment"

@@ -28,15 +28,16 @@ open class RenameVariablesAction : SelectionAction<String>() {
         }
     }
 
-    val proxy: RenameAPI get() {
-        return ChatProxy(
-          clazz = RenameAPI::class.java,
-          api = api,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          temperature = AppSettingsState.instance.temperature,
-          deserializerRetries = 5
-        ).create()
-    }
+    val proxy: RenameAPI
+        get() {
+            return ChatProxy(
+                clazz = RenameAPI::class.java,
+                api = api,
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                temperature = AppSettingsState.instance.temperature,
+                deserializerRetries = 5
+            ).create()
+        }
 
     override fun getConfig(project: Project?): String {
         return ""

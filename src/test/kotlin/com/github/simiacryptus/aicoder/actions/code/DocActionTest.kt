@@ -23,7 +23,8 @@ class DocActionTest : ActionTestBase() {
     @Test
     fun testEditSelection() {
         val docAction = DocAction()
-        val editorState = SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, Pair(0, 10), null, arrayOf())
+        val editorState =
+            SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, Pair(0, 10), null, arrayOf())
         val result = docAction.editSelection(editorState, 0, 10)
         assertEquals(Pair(0, 10), result)
     }

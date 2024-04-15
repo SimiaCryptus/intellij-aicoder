@@ -31,7 +31,7 @@ class DictationAction : BaseAction() {
                 AudioRecorder(rawBuffer, 0.05, continueFn).run()
                 log.warn("Recording thread complete")
             } catch (e: Throwable) {
-                UITools.error(log,"Error", e)
+                UITools.error(log, "Error", e)
             }
         }, "dication-audio-recorder").start()
 
@@ -41,7 +41,7 @@ class DictationAction : BaseAction() {
             try {
                 LookbackLoudnessWindowBuffer(rawBuffer, wavBuffer, continueFn).run()
             } catch (e: Throwable) {
-                UITools.error(log,"Error", e)
+                UITools.error(log, "Error", e)
             }
             log.warn("Audio processing thread complete")
         }, "dictation-audio-processor").start()
@@ -58,7 +58,7 @@ class DictationAction : BaseAction() {
             try {
                 dictationPump.run()
             } catch (e: Throwable) {
-                UITools.error(log,"Error", e)
+                UITools.error(log, "Error", e)
             }
             log.warn("Speech-To-Text thread complete")
         }, "dictation-api-processor").start()

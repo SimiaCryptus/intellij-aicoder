@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.Panel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.Consumer
 import kotlinx.coroutines.CoroutineScope
@@ -19,7 +18,6 @@ import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.net.URI
-import java.util.concurrent.Executors
 import javax.swing.Icon
 import javax.swing.JPanel
 import javax.swing.JSlider
@@ -29,9 +27,7 @@ import javax.swing.event.ChangeListener
 
 
 class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
-    companion object {
-      val pool = Executors.newCachedThreadPool()
-    }
+    companion object
 
     class TemperatureControlWidget : StatusBarWidget, StatusBarWidget.IconPresentation {
 

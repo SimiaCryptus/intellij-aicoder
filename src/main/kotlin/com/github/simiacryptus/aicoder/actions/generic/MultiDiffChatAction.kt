@@ -61,7 +61,7 @@ class MultiDiffChatAction : BaseAction() {
         fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
             "# $path\n```${
                 path.split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-            }\n${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
+            }\n${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
         }
 
         val session = StorageInterface.newGlobalID()

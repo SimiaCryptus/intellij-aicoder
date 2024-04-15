@@ -10,8 +10,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
-import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
-import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 
 class MarkdownImplementActionGroup : ActionGroup() {
     private val markdownLanguages = listOf(
@@ -57,11 +55,11 @@ class MarkdownImplementActionGroup : ActionGroup() {
 
         private fun getProxy(): ConversionAPI {
             return ChatProxy(
-              clazz = ConversionAPI::class.java,
-              api = api,
-              model = AppSettingsState.instance.smartModel.chatModel(),
-              temperature = AppSettingsState.instance.temperature,
-              deserializerRetries = 5
+                clazz = ConversionAPI::class.java,
+                api = api,
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                temperature = AppSettingsState.instance.temperature,
+                deserializerRetries = 5
             ).create()
         }
 
@@ -75,7 +73,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
                 |
                 |
                 |```$language
-                |${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+                |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
                 |```
                 |
                 |""".trimMargin()

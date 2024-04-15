@@ -1,13 +1,10 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.simiacryptus.skyenet.core.OutputInterceptor
@@ -31,7 +28,7 @@ class PluginStartupActivity : ProjectActivity {
                 currentThread.contextClassLoader = prevClassLoader
             }
 
-           if (AppSettingsState.instance.showWelcomeScreen || AppSettingsState.instance.greetedVersion != AppSettingsState.CURRENT_VERSION) {
+            if (AppSettingsState.instance.showWelcomeScreen || AppSettingsState.instance.greetedVersion != AppSettingsState.CURRENT_VERSION) {
                 val welcomeFile = "welcomePage.md"
                 val resource = PluginStartupActivity::class.java.classLoader.getResource(welcomeFile)
                 var virtualFile = resource?.let { VirtualFileManager.getInstance().findFileByUrl(it.toString()) }
@@ -72,9 +69,9 @@ class PluginStartupActivity : ProjectActivity {
                         log.error("Error opening welcome page", e)
                     }
                 } ?: log.error("Welcome page not found")
-               // Set showWelcomeScreen to false after showing it for the first time
-               AppSettingsState.instance.greetedVersion = AppSettingsState.CURRENT_VERSION
-               AppSettingsState.instance.showWelcomeScreen = false
+                // Set showWelcomeScreen to false after showing it for the first time
+                AppSettingsState.instance.greetedVersion = AppSettingsState.CURRENT_VERSION
+                AppSettingsState.instance.showWelcomeScreen = false
             }
         } catch (e: Exception) {
             log.error("Error during plugin startup", e)
@@ -104,19 +101,6 @@ class PluginStartupActivity : ProjectActivity {
             override fun logout(accessToken: String, user: User) {}
         }
         ApplicationServices.isLocked = true
-    }
-
-    private fun isFirstRun(): Boolean {
-        // Implement logic to determine if this is the first run after installation
-        // This could involve checking a persistent setting or a flag file
-        // For simplicity, assuming a function that checks this condition
-        return checkFirstRunFlag()
-    }
-
-    private fun checkFirstRunFlag(): Boolean {
-        // Placeholder for actual implementation
-        // This should check a flag from persistent storage or settings
-        return true // Assuming it's the first run for example purposes
     }
 
 

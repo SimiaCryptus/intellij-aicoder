@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ApxPatchUtilTest {
-  private val patch = """
+    private val patch = """
     --- IntArrayAppendFile.kt
     +++ IntArrayAppendFileUpdated.kt
     @@ -8,7 +8,7 @@
@@ -34,7 +34,7 @@ class ApxPatchUtilTest {
     +     }
         }
   """.trimIndent()
-  private val source = """
+    private val source = """
     package com.simiacryptus.util.files
 
     import java.io.File
@@ -68,10 +68,10 @@ class ApxPatchUtilTest {
     }
   """.trimIndent()
 
-  @Test
-  fun testPatch() {
-    val result = PatchUtil.patch(source, patch)
-    println(result)
-    assertTrue(result.contains("for (value in values"))
-  }
+    @Test
+    fun testPatch() {
+        val result = PatchUtil.patch(source, patch)
+        println(result)
+        assertTrue(result.contains("for (value in values"))
+    }
 }

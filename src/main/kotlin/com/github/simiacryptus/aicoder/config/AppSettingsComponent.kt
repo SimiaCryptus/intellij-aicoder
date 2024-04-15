@@ -74,8 +74,8 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
                         val openFileDescriptor = OpenFileDescriptor(project, virtualFile!!, virtualFile.length.toInt())
                         FileEditorManager.getInstance(project!!)
                             .openTextEditor(openFileDescriptor, true)?.document?.setReadOnly(
-                            true
-                        )
+                                true
+                            )
                     }
                 }
             }
@@ -134,7 +134,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         columnModel.getColumn(1).preferredWidth = 200
         columnModel.getColumn(2).preferredWidth = 200
         val keyColumnIndex = 1
-        getColumnModel().getColumn(keyColumnIndex).cellRenderer = object : DefaultTableCellRenderer() {
+        columnModel.getColumn(keyColumnIndex).cellRenderer = object : DefaultTableCellRenderer() {
             override fun setValue(value: Any?) {
                 text =
                     if (value is String && value.isNotEmpty()) value.map { '*' }.joinToString("") else value?.toString()
@@ -161,8 +161,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         this.fastModel.isEditable = true
     }
 
-    companion object {
-    }
+    companion object;
 
     override fun dispose() {
     }

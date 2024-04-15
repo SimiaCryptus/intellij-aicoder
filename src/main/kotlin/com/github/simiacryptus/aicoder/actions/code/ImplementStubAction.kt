@@ -28,11 +28,11 @@ class ImplementStubAction : SelectionAction<String>() {
 
     private fun getProxy(): VirtualAPI {
         return ChatProxy(
-          clazz = VirtualAPI::class.java,
-          api = api,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          temperature = AppSettingsState.instance.temperature,
-          deserializerRetries = 5
+            clazz = VirtualAPI::class.java,
+            api = api,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            temperature = AppSettingsState.instance.temperature,
+            deserializerRetries = 5
         ).create()
     }
 
@@ -64,7 +64,8 @@ class ImplementStubAction : SelectionAction<String>() {
             )
         }
         var smallestIntersectingMethod = ""
-        if (codeContext.isNotEmpty()) smallestIntersectingMethod = codeContext.minByOrNull { it.length() }?.subString(state.entireDocument ?: "") ?: ""
+        if (codeContext.isNotEmpty()) smallestIntersectingMethod =
+            codeContext.minByOrNull { it.length() }?.subString(state.entireDocument ?: "") ?: ""
 
         var declaration = code
         declaration = StringUtil.stripSuffix(declaration.trim(), smallestIntersectingMethod)
