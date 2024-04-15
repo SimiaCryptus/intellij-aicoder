@@ -103,14 +103,6 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       add(component.usage, BorderLayout.CENTER)
     })
 
-    tabbedPane.addTab("File Actions", JPanel(BorderLayout()).apply {
-      add(component.fileActions, BorderLayout.CENTER)
-    })
-
-    tabbedPane.addTab("Editor Actions", JPanel(BorderLayout()).apply {
-      add(component.editorActions, BorderLayout.CENTER)
-    })
-
     return tabbedPane
   }
 
@@ -134,8 +126,6 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
         val key = value.name
         model.addRow(arrayOf(key, settings.apiKey?.get(key) ?: "", settings.apiBase?.get(key) ?: value.base))
       }
-      component.editorActions.read(settings.editorActions)
-      component.fileActions.read(settings.fileActions)
     } catch (e: Exception) {
       log.warn("Error setting UI", e)
     }
@@ -174,8 +164,6 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
           }
         }
       }
-      component.editorActions.write(settings.editorActions)
-      component.fileActions.write(settings.fileActions)
     } catch (e: Exception) {
       log.warn("Error reading UI", e)
     }

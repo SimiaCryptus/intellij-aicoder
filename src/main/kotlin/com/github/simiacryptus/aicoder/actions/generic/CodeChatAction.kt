@@ -22,54 +22,59 @@ import java.io.File
 
 class CodeChatAction : BaseAction() {
 
-  val path = "/codeChat"
+    val path = "/codeChat"
 
-  override fun handle(e: AnActionEvent) {
-    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+    override fun handle(e: AnActionEvent) {
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
-    val session = StorageInterface.newGlobalID()
-    val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
-    val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
-    agents[session] = CodeChatSocketManager(
-      session = session,
-      language = language,
-      codeSelection = editor.caretModel.primaryCaret.selectedText ?: editor.document.text,
-      filename = filename,
-      api = api,
-      model = AppSettingsState.instance.smartModel.chatModel(),
-      storage = ApplicationServices.dataStorageFactory(root)
-    )
+        val session = StorageInterface.newGlobalID()
+        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
+        val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
+        agents[session] = CodeChatSocketManager(
+            session = session,
+            language = language,
+            codeSelection = editor.caretModel.primaryCaret.selectedText ?: editor.document.text,
+            filename = filename,
+            api = api,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            storage = ApplicationServices.dataStorageFactory(root)
+        )
 
-    val server = AppServer.getServer(e.project)
-    val app = initApp(server, path)
-    app.sessions[session] = app.newSession(null, session)
+        val server = AppServer.getServer(e.project)
+        val app = initApp(server, path)
+        app.sessions[session] = app.newSession(null, session)
 
-    Thread {
-      Thread.sleep(500)
-      try {
-        Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
-      } catch (e: Throwable) {
-        log.warn("Error opening browser", e)
-      }
-    }.start()
-  }
-
-  override fun isEnabled(event: AnActionEvent) = true
-
-  companion object {
-    private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
-    private val agents = mutableMapOf<Session, SocketManager>()
-    val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
-    private fun initApp(server: AppServer, path: String): ChatServer {
-      server.appRegistry[path]?.let { return it }
-      val socketServer = object : ApplicationServer(applicationName = "Code Chat", path = path) {
-        override val singleInput = false
-        override val stickyInput = true
-        override fun newSession(user: User?, session: Session) = agents[session] ?: throw IllegalArgumentException("Unknown session: $session")
-      }
-      server.addApp(path, socketServer)
-      return socketServer
+        Thread {
+            Thread.sleep(500)
+            try {
+                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+            } catch (e: Throwable) {
+                log.warn("Error opening browser", e)
+            }
+        }.start()
     }
 
-  }
+    override fun isEnabled(event: AnActionEvent) = true
+
+    companion object {
+        private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
+        private val agents = mutableMapOf<Session, SocketManager>()
+        val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
+        private fun initApp(server: AppServer, path: String): ChatServer {
+            server.appRegistry[path]?.let { return it }
+            val socketServer = object : ApplicationServer(
+                applicationName = "Code Chat",
+                path = path,
+                showMenubar = false,
+            ) {
+                override val singleInput = false
+                override val stickyInput = true
+                override fun newSession(user: User?, session: Session) =
+                    agents[session] ?: throw IllegalArgumentException("Unknown session: $session")
+            }
+            server.addApp(path, socketServer)
+            return socketServer
+        }
+
+    }
 }

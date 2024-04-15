@@ -1,18 +1,16 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.aicoder.config.ActionSettingsRegistry
+//import com.github.simiacryptus.aicoder.config.ActionSettingsRegistry
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.google.common.util.concurrent.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -21,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPasswordField
@@ -825,8 +822,8 @@ object UITools {
         log.info("showOptionDialog = $showOptionDialog")
       } else if (e.matches { ScriptException::class.java.isAssignableFrom(it.javaClass) }) {
         val scriptException = e.get { ScriptException::class.java.isAssignableFrom(it.javaClass) } as ScriptException?
-        val dynamicActionException =
-          e.get { ActionSettingsRegistry.DynamicActionException::class.java.isAssignableFrom(it.javaClass) } as ActionSettingsRegistry.DynamicActionException?
+//        val dynamicActionException =
+//          e.get { ActionSettingsRegistry.DynamicActionException::class.java.isAssignableFrom(it.javaClass) } as ActionSettingsRegistry.DynamicActionException?
         val formBuilder = FormBuilder.createFormBuilder()
 
         formBuilder.addLabeledComponent(
@@ -838,8 +835,6 @@ object UITools {
         bugReportTextArea.columns = 80
         bugReportTextArea.isEditable = false
         bugReportTextArea.text = """
-                |Action Name: ${dynamicActionException?.actionSetting?.displayText}
-                |Action ID: ${dynamicActionException?.actionSetting?.id}
                 |Script Error: ${scriptException?.message}
                 |
                 |Error Details:
@@ -848,39 +843,6 @@ object UITools {
                 |```
                 |""".trimMargin()
         formBuilder.addLabeledComponent("Error Report", wrapScrollPane(bugReportTextArea))
-
-        if (dynamicActionException?.actionSetting?.isDynamic == false) {
-          val openButton = JXButton("Revert to Default")
-          openButton.addActionListener {
-            dynamicActionException?.actionSetting?.file?.delete()
-          }
-          formBuilder.addLabeledComponent("Revert Built-in Action", openButton)
-        }
-
-        if (null != dynamicActionException) {
-          val openButton = JXButton("Open Dynamic Action")
-          openButton.addActionListener {
-            dynamicActionException?.file?.let {
-              val project = ApplicationManager.getApplication().runReadAction<Project> {
-                com.intellij.openapi.project.ProjectManager.getInstance().openProjects.firstOrNull()
-              }
-              if (it.exists()) {
-                ApplicationManager.getApplication().invokeLater {
-                  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(it)
-                  FileEditorManager.getInstance(project!!).openFile(virtualFile!!, true)
-                }
-              } else {
-                Thread {
-                  showOptionDialog(
-                    formBuilder.panel, "Dismiss", title = "Error - File Not Found", modal = true
-                  )
-                }.start()
-              }
-            }
-
-          }
-          formBuilder.addLabeledComponent("View Code", openButton)
-        }
 
         val supressFutureErrors = JCheckBox("Suppress Future Error Popups")
         supressFutureErrors.isSelected = false

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
+import com.jetbrains.rd.util.firstOrNull
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.JsonUtil
 import java.io.File
@@ -40,10 +41,6 @@ data class AppSettingsState(
 ) : PersistentStateComponent<SimpleEnvelope> {
 
   private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
-  val editorActions: ActionSettingsRegistry
-    get() = ActionSettingsRegistry(pluginHome.resolve("editorActions").apply { mkdirs() })
-  val fileActions: ActionSettingsRegistry
-    get() = ActionSettingsRegistry(pluginHome.resolve("fileActions").apply { mkdirs() })
   private val recentCommands = mutableMapOf<String, MRUItems>()
 
   fun defaultSmartModel() = smartModel.chatModel()
@@ -104,8 +101,6 @@ data class AppSettingsState(
     if (devActions != other.devActions) return false
     if (editRequests != other.editRequests) return false
     if (pluginHome != other.pluginHome) return false
-    if (editorActions != other.editorActions) return false
-    if (fileActions != other.fileActions) return false
     if (recentCommands != other.recentCommands) return false
 
     return true
@@ -127,8 +122,6 @@ data class AppSettingsState(
     result = 31 * result + devActions.hashCode()
     result = 31 * result + editRequests.hashCode()
     result = 31 * result + pluginHome.hashCode()
-    result = 31 * result + editorActions.hashCode()
-    result = 31 * result + fileActions.hashCode()
     result = 31 * result + recentCommands.hashCode()
     return result
   }
@@ -145,7 +138,7 @@ data class AppSettingsState(
     fun String.chatModel(): ChatModels {
       return ChatModels.values().entries.firstOrNull {
         it.value.modelName == this || it.key == this
-      }?.value ?: throw IllegalArgumentException("Unknown model: ${this}")
+      }?.value ?: ChatModels.GPT35Turbo
     }
   }
 }

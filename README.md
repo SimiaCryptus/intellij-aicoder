@@ -6,90 +6,73 @@
 
 <!-- Plugin description -->
 
-# **AI Coding Assistant Plugin for IntelliJ**
+# **AI Coding Assistant: The Ultimate IntelliJ Plugin for Developers**
 
-**Fully open source plugin for IntelliJ that integrates with a variety of LLM APIs**
+![Build](https://github.com/SimiaCryptus/intellij-aicoder/workflows/Build/badge.svg)
+[![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 
-* No membership fees! API access is typically paid but is billed by usage, with no base fee. 
-* The plugin is free and open source, with a focus on utility. No hype here! I'm sharing a tool I use, and I hope you find it useful too.
-* A variety of APIs are supported! Get your api keys at: 
-  * https://platform.openai.com/
-  * https://www.perplexity.ai/
-  * https://console.groq.com/
-  * https://modelslab.com/dashboard/
-  * https://console.aws.amazon.com/bedrock/
-* Fully customizable actions, including the ability to create your own actions using AI
-* Toolbar UI for quick configuration of temperature/model and display of current token count
-* Ability to intercept, edit, and log API requests
+Are you a developer looking to supercharge your coding workflow? Look no further than AI Coding Assistant, the
+game-changing IntelliJ plugin that harnesses the power of cutting-edge Language Model APIs to revolutionize the way you
+code!
 
-**NOTE**: This project is not affiliated with OpenAI, JetBrains, or any other corporation or organization. 
-It is provided free of charge, as-is, with no warranty or guarantee of any kind. 
-It is the work of a sole developer working as a hobby project.
+## **Key Features**
 
-## **Installation & Configuration**
+* 🌐 **Extensive API Support**: AI Coding Assistant seamlessly integrates with a wide range of leading LLM APIs,
+  including [OpenAI](https://platform.openai.com/), [AWS Bedrock](https://console.aws.amazon.com/bedrock/), [Anthropic](https://api.anthropic.com/v1), [Google Generative Language](https://generativelanguage.googleapis.com/), [Groq](https://console.groq.com/), [Perplexity AI](https://www.perplexity.ai/),
+  and [ModelsLab](https://modelslab.com/dashboard/). Get your API keys and unlock a world of possibilities!
 
-To begin with AI Coding Assistant, you will need one or more api tokens, 
-which needs to be input it into the appropriate field in the plugin's settings panel.
+* 💸 **No Membership Fees**: While API access is typically paid, AI Coding Assistant charges no base fee. You only pay
+  for what you use, giving you complete control over your expenses.
 
-## **Usage Overview**
+* 🌟 **Free and Open Source**: AI Coding Assistant is a free, open-source tool designed with a focus on utility. No hype,
+  no gimmicks – just a powerful, user-friendly plugin that enhances your coding experience.
 
-AI Coding Assistant offers a variety of actions, which are tools specifically designed to simplify and speed up your
-coding process. These are not passively triggered by your typing but are invoked on command, giving you full control
-over when and how to use them. You can access these actions via the context menu within an editor or in the project view.
+* 🎛️ **Intuitive Toolbar UI**: Easily configure temperature/model settings and monitor your current token count with AI
+  Coding Assistant's sleek, intuitive toolbar UI.
 
-### **New in Version 1.3.0**
+* 🔍 **API Request Management**: Intercept, edit, and log API requests with ease, giving you granular control over your
+  plugin's behavior.
 
-* **DiffChatAction**: Engage in a chat session to generate and apply code diffs directly within the IDE, streamlining the code review and modification process.
-* **MultiDiffChatAction**: Facilitates collaborative code review and diff generation across multiple files, enhancing team productivity.
-* **AutoDevAction**: Translates user directives into actionable development tasks and code modifications, automating parts of the development workflow.
-* **mermaid.js**: Generate diagrams using the mermaid.js library, providing a visual representation of your code and ideas.
+## **Installation & Setup**
 
-## **Action Customization**
+Getting started with AI Coding Assistant is a breeze:
 
-Tailor actions to your coding habits and project requirements!
-Within the settings UI, you can view, edit, clone, or delete actions, 
-enabling you to fine-tune existing tools or create new ones from scratch.
+1. Obtain one or more API tokens from your preferred LLM API provider(s).
+2. Input your token(s) into the appropriate field(s) in the plugin's settings panel.
+3. Start coding smarter, not harder!
 
-These custom actions use dynamically compiled Kotlin, and can be as complex or simple as required, even having access to the
-entire IntelliJ API. This powerful feature allows for numerous possibilities, from refining prompts to adding intricate
-logic to better support your preferred coding language.
+## **Unleash Your Coding Potential**
 
-## **Actions Catalogue**
+AI Coding Assistant offers a suite of powerful actions designed to streamline your coding process. Access these
+game-changing features via the context menu within your editor or project view:
 
-Our plugin includes a broad catalogue of actions, categorized into Plaintext, Code, Markdown, and Developer-Mode
-Actions.
+* 💬 **DiffChatAction & MultiDiffChatAction**: Collaborate effortlessly with AI-powered chat sessions that generate and
+  apply code diffs across single or multiple files.
 
-### **Plaintext Actions**
+* 🚀 **AutoDevAction**: Transform user directives into actionable development tasks and code modifications, automating
+  key aspects of your workflow.
 
-These actions offer text processing features for any language, and include tools such
-as `Chat Append Text`, `Dictation`, `Redo Last`, `Replace Options`, and `Generate Story`.
+* 📊 **mermaid.js Integration**: Visualize your code and ideas with stunning diagrams generated using the mermaid.js
+  library.
 
-### **Code Actions**
+* 📝 **Plaintext, Code, and Markdown Actions**: From text processing and code editing to Markdown enhancements, AI Coding
+  Assistant has you covered.
 
-Our Code Actions simplify and expedite your coding workflow with actions
-like `Add Code Comments`, `Convert To...`, `Edit Code...`, `Describe Code and Prepend Comment`, `Add Doc Comments`,
-`Implement Stub`, `Insert Implementation`, `Paste`, `Ask a question about the code`, `Recent Code Edits`,
-`Rename Variables`, and `Generate Project`.
+* 🛠️ **Developer-Mode Actions**: Access debugging tools, experimental features, and more with our developer-mode
+  actions.
 
-### **Markdown Actions**
+## **Join the AI Coding Revolution**
 
-Our Markdown Actions allow quick and easy additions to your Markdown documents. You can swiftly implement a Markdown
-prompt in a specific language with the `Implement As...` action or rapidly add list items to your document using
-the `Add List Items` action.
+Ready to take your coding to the next level? Install AI Coding Assistant today and experience the future of software
+development. With our powerful features, extensive API support, and user-friendly interface, you'll wonder how you ever
+coded without it!
 
-### **Developer-Mode Actions**
+🌟 Boost your productivity, unleash your creativity, and code smarter with AI Coding Assistant – the ultimate IntelliJ
+plugin for developers. 🌟
 
-The Developer-Mode Actions are available when the plugin is in developer mode. These actions offer debugging and
-development tools and experimental features that may not be fully functional. They
-include `Open Code Chat`, `Launch Skyenet`, and `Print PSI Tree`.
-
-## **Support**
-
-Should you encounter issues or require further information, please file an issue on our github project.
-
-Understand that this plugin is in active development, and we are constantly working to improve and expand its abilities.
-
-With AI Coding Assistant, coding becomes more efficient, versatile, and customizable, enhancing your productivity and
-creative potential. We look forward to seeing what you will create!
+*Please note that AI Coding Assistant is not affiliated with OpenAI, JetBrains, or any other corporation or
+organization. The plugin is provided free of charge, as-is, with no warranty or guarantee of any kind, and is the work
+of a sole developer working on a hobby project.*
 
 <!-- Plugin description end -->

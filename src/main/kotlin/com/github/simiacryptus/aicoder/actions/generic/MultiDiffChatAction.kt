@@ -6,7 +6,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.aicoder.util.addApplyFileDiffLinks
+import com.github.simiacryptus.diff.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -28,54 +28,55 @@ import java.io.File
 
 class MultiDiffChatAction : BaseAction() {
 
-  val path = "/multiDiffChat"
+    val path = "/multiDiffChat"
 
-  override fun handle(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
 
-    val dataContext = e.dataContext
-    val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-    val languages =
-      virtualFiles?.associate { it to ComputerLanguage.findByExtension(it.extension ?: "")?.name } ?: mapOf()
-    val virtualFileMap = virtualFiles?.associate { it.toNioPath() to it } ?: mapOf()
-    val codeFiles = mutableMapOf<String, String>()
-    val folder = UITools.getSelectedFolder(e)
-    val root = if (null != folder) {
-      folder.toFile.toPath()
-    } else {
-      getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")).toPath()
-    }
+        val dataContext = e.dataContext
+        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+        val languages =
+            virtualFiles?.associate { it to ComputerLanguage.findByExtension(it.extension ?: "")?.name } ?: mapOf()
+        val virtualFileMap = virtualFiles?.associate { it.toNioPath() to it } ?: mapOf()
+        val codeFiles = mutableMapOf<String, String>()
+        val folder = UITools.getSelectedFolder(e)
+        val root = if (null != folder) {
+            folder.toFile.toPath()
+        } else {
+            getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")).toPath()
+        }
 
 //    val root = virtualFiles?.map { file ->
 //      file.toNioPath()
 //    }?.toTypedArray()?.commonRoot()!!
 
-    virtualFiles?.associate { file ->
-      val relative = root.relativize(file.toNioPath())
-      val path = relative.toString()
-      val language = languages[file] ?: "plaintext"
-      val code = file.contentsToByteArray().toString(Charsets.UTF_8)
-      codeFiles[path] = code
-      path to language
-    }
+        virtualFiles?.associate { file ->
+            val relative = root.relativize(file.toNioPath())
+            val path = relative.toString()
+            val language = languages[file] ?: "plaintext"
+            val code = file.contentsToByteArray().toString(Charsets.UTF_8)
+            codeFiles[path] = code
+            path to language
+        }
 
-    fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
-      "# $path\n```${
-        path.split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-      }\n${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
-    }
-    val session = StorageInterface.newGlobalID()
-    //DataStorage.sessionPaths[session] = root.toFile()
+        fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
+            "# $path\n```${
+                path.split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+            }\n${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
+        }
 
-    val codeSummary = codeSummary()
-    agents[session] = object : ChatSocketManager(
-      session = session,
-      model = AppSettingsState.instance.smartModel.chatModel(),
-      userInterfacePrompt = """
+        val session = StorageInterface.newGlobalID()
+        //DataStorage.sessionPaths[session] = root.toFile()
+
+        val codeSummary = codeSummary()
+        agents[session] = object : ChatSocketManager(
+            session = session,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            userInterfacePrompt = """
         |
         |$codeSummary
         |
         """.trimMargin().trim(),
-      systemPrompt = """
+            systemPrompt = """
         You are a helpful AI that helps people with coding.
         
         You will be answering questions about the following code:
@@ -99,70 +100,78 @@ class MultiDiffChatAction : BaseAction() {
         
         Continued text
         """.trimIndent(),
-      api = api,
-      applicationClass = ApplicationServer::class.java,
-      storage = ApplicationServices.dataStorageFactory(DiffChatAction.root),
-    ) {
-      override fun renderResponse(response: String, task: SessionTask): String {
-        val html = addApplyFileDiffLinks(
-          root = root,
-          code = codeFiles,
-          response = response,
-          handle = { newCodeMap ->
-          newCodeMap.map { (path, newCode) ->
-            val prev = codeFiles[path]
-            if (prev != newCode) {
-              codeFiles[path] = newCode
-              root.resolve(path).let { file ->
-                file.toFile().writeText(newCode)
-                val virtualFile = virtualFileMap.get(file)
-                if(null != virtualFile) FileDocumentManager.getInstance().getDocument(virtualFile)?.let { doc ->
-                  WriteCommandAction.runWriteCommandAction(e.project) {
-                    doc.setText(newCode)
-                  }
-                }
-              }
-              "<a href='$path'>$path</a> Updated"
-            } else {
+            api = api,
+            applicationClass = ApplicationServer::class.java,
+            storage = ApplicationServices.dataStorageFactory(DiffChatAction.root),
+        ) {
+            val ui by lazy { ApplicationInterface(this) }
+            override fun renderResponse(response: String, task: SessionTask): String {
+                val html = addApplyFileDiffLinks(
+                    root = root,
+                    code = codeFiles,
+                    response = response,
+                    handle = { newCodeMap ->
+                        newCodeMap.map { (path, newCode) ->
+                            val prev = codeFiles[path]
+                            if (prev != newCode) {
+                                codeFiles[path] = newCode
+                                root.resolve(path).let { file ->
+                                    file.toFile().writeText(newCode)
+                                    val virtualFile = virtualFileMap.get(file)
+                                    if (null != virtualFile) FileDocumentManager.getInstance().getDocument(virtualFile)
+                                        ?.let { doc ->
+                                            WriteCommandAction.runWriteCommandAction(e.project) {
+                                                doc.setText(newCode)
+                                            }
+                                        }
+                                }
+                                "<a href='$path'>$path</a> Updated"
+                            } else {
 //              "<a href='$path'>$path</a> Unchanged"
-              ""
+                                ""
+                            }
+                        }
+                    },
+                    ui = ui,
+                )
+                return """<div>${renderMarkdown(html)}</div>"""
             }
-          }
-        }, task = task, ui = ApplicationInterface(this),)
-        return """<div>${renderMarkdown(html)}</div>"""
-      }
+        }
+
+        val server = AppServer.getServer(e.project)
+        val app = initApp(server, path)
+        app.sessions[session] = app.newSession(null, session)
+
+        Thread {
+            Thread.sleep(500)
+            try {
+                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+            } catch (e: Throwable) {
+                log.warn("Error opening browser", e)
+            }
+        }.start()
     }
 
-    val server = AppServer.getServer(e.project)
-    val app = initApp(server, path)
-    app.sessions[session] = app.newSession(null, session)
+    override fun isEnabled(event: AnActionEvent) = true
 
-    Thread {
-      Thread.sleep(500)
-      try {
-        Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
-      } catch (e: Throwable) {
-        log.warn("Error opening browser", e)
-      }
-    }.start()
-  }
+    companion object {
+        private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
+        private val agents = mutableMapOf<Session, SocketManager>()
+        val root: File get() = File(AppSettingsState.instance.pluginHome, "mdiff_chat")
+        private fun initApp(server: AppServer, path: String): ChatServer {
+            server.appRegistry[path]?.let { return it }
+            val socketServer = object : ApplicationServer(
+                applicationName = "Multi-file Diff Chat",
+                path = path,
+                showMenubar = false,
+            ) {
+                override val singleInput = false
+                override val stickyInput = true
+                override fun newSession(user: User?, session: Session) = agents[session]!!
+            }
+            server.addApp(path, socketServer)
+            return socketServer
+        }
 
-  override fun isEnabled(event: AnActionEvent) = true
-
-  companion object {
-    private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
-    private val agents = mutableMapOf<Session, SocketManager>()
-    val root: File get() = File(AppSettingsState.instance.pluginHome, "mdiff_chat")
-    private fun initApp(server: AppServer, path: String): ChatServer {
-      server.appRegistry[path]?.let { return it }
-      val socketServer = object : ApplicationServer("Multi-file Diff Chat", path) {
-        override val singleInput = false
-        override val stickyInput = true
-        override fun newSession(user: User?, session: Session) = agents[session]!!
-      }
-      server.addApp(path, socketServer)
-      return socketServer
     }
-
-  }
 }
