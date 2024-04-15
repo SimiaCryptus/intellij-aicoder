@@ -64,6 +64,7 @@ class AutoDevAction : BaseAction() {
   ) : ApplicationServer(
     applicationName = applicationName,
     path = "/autodev",
+    showMenubar = false,
   ) {
     override fun userMessage(
       session: Session,

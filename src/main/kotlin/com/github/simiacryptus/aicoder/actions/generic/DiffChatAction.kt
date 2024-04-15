@@ -28,44 +28,44 @@ import java.io.File
 
 class DiffChatAction : BaseAction() {
 
-  val path = "/diffChat"
+    val path = "/diffChat"
 
-  override fun handle(e: AnActionEvent) {
-    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-    val session = StorageInterface.newGlobalID()
-    val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
-    val document = editor.document
-    val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return
-    val primaryCaret = editor.caretModel.primaryCaret
-    val rawText: String
-    val selectionStart: Int
-    val selectionEnd: Int
-    val selectedText = primaryCaret.selectedText
-    if (null != selectedText) {
-      rawText = selectedText
-      selectionStart = primaryCaret.selectionStart
-      selectionEnd = primaryCaret.selectionEnd
-    } else {
-      rawText = document.text
-      selectionStart = 0
-      selectionEnd = rawText.length
-    }
-    val numberedText = rawText.split("\n")
-      .mapIndexed { lineNumber: Int, lineText: String ->
-        lineText
+    override fun handle(e: AnActionEvent) {
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+        val session = StorageInterface.newGlobalID()
+        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
+        val document = editor.document
+        val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return
+        val primaryCaret = editor.caretModel.primaryCaret
+        val rawText: String
+        val selectionStart: Int
+        val selectionEnd: Int
+        val selectedText = primaryCaret.selectedText
+        if (null != selectedText) {
+            rawText = selectedText
+            selectionStart = primaryCaret.selectionStart
+            selectionEnd = primaryCaret.selectionEnd
+        } else {
+            rawText = document.text
+            selectionStart = 0
+            selectionEnd = rawText.length
+        }
+        val numberedText = rawText.split("\n")
+            .mapIndexed { lineNumber: Int, lineText: String ->
+                lineText
 //        String.format("%4d: %s", lineNumber + 1, lineText)
-      }.joinToString("\n")
-    agents[session] = object : CodeChatSocketManager(
-      session = session,
-      language = language,
-      codeSelection = numberedText,
-      filename = filename,
-      api = api,
-      model = AppSettingsState.instance.smartModel.chatModel(),
-      storage = ApplicationServices.dataStorageFactory(root)
-    ) {
-      override val systemPrompt: String
-        get() = super.systemPrompt + """
+            }.joinToString("\n")
+        agents[session] = object : CodeChatSocketManager(
+            session = session,
+            language = language,
+            codeSelection = numberedText,
+            filename = filename,
+            api = api,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            storage = ApplicationServices.dataStorageFactory(root)
+        ) {
+            override val systemPrompt: String
+                get() = super.systemPrompt + """
           Please provide code modifications in the following diff format within triple-backtick diff code blocks. Each diff block should be preceded by a header that identifies the file being modified.
           
           The diff format rules are as follows:
@@ -86,49 +86,53 @@ class DiffChatAction : BaseAction() {
           Note: The diff should accurately reflect the changes to be made to the code, including sufficient context to ensure the modifications can be correctly applied.
         """.trimIndent()
 
-      val ui by lazy { ApplicationInterface(this) }
-      override fun renderResponse(response: String, task: SessionTask): String {
-        val codeBuffer = StringBuilder(rawText)
-        val withLinks = addApplyDiffLinks(codeBuffer, response, handle = { newCode: String ->
-          WriteCommandAction.runWriteCommandAction(e.project) {
-            document.replaceString(selectionStart, selectionStart + codeBuffer.length, newCode)
-          }
-          codeBuffer.set(newCode)
-        }, task = task, ui=ui)
-        return """<div>${renderMarkdown(withLinks)}</div>"""
-      }
+            val ui by lazy { ApplicationInterface(this) }
+            override fun renderResponse(response: String, task: SessionTask): String {
+                val codeBuffer = StringBuilder(rawText)
+                val withLinks = addApplyDiffLinks(codeBuffer, response, handle = { newCode: String ->
+                    WriteCommandAction.runWriteCommandAction(e.project) {
+                        document.replaceString(selectionStart, selectionStart + codeBuffer.length, newCode)
+                    }
+                    codeBuffer.set(newCode)
+                }, task = task, ui = ui)
+                return """<div>${renderMarkdown(withLinks)}</div>"""
+            }
+        }
+
+        val server = AppServer.getServer(e.project)
+        val app = initApp(server, path)
+        app.sessions[session] = app.newSession(null, session)
+
+        Thread {
+            Thread.sleep(500)
+            try {
+                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+            } catch (e: Throwable) {
+                log.warn("Error opening browser", e)
+            }
+        }.start()
     }
 
-    val server = AppServer.getServer(e.project)
-    val app = initApp(server, path)
-    app.sessions[session] = app.newSession(null, session)
+    override fun isEnabled(event: AnActionEvent) = true
 
-    Thread {
-      Thread.sleep(500)
-      try {
-        Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
-      } catch (e: Throwable) {
-        log.warn("Error opening browser", e)
-      }
-    }.start()
-  }
+    companion object {
+        private val log = LoggerFactory.getLogger(DiffChatAction::class.java)
+        private val agents = mutableMapOf<Session, SocketManager>()
+        val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
+        private fun initApp(server: AppServer, path: String): ChatServer {
+            server.appRegistry[path]?.let { return it }
+            val socketServer = object : ApplicationServer(
+                applicationName = "Code Chat",
+                path = path,
+                showMenubar = false,
+            ) {
+                override val singleInput = false
+                override val stickyInput = true
+                override fun newSession(user: User?, session: Session) = agents[session]!!
+            }
+            server.addApp(path, socketServer)
+            return socketServer
+        }
 
-  override fun isEnabled(event: AnActionEvent) = true
-
-  companion object {
-    private val log = LoggerFactory.getLogger(DiffChatAction::class.java)
-    private val agents = mutableMapOf<Session, SocketManager>()
-    val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
-    private fun initApp(server: AppServer, path: String): ChatServer {
-      server.appRegistry[path]?.let { return it }
-      val socketServer = object : ApplicationServer("Code Chat", path) {
-        override val singleInput = false
-        override val stickyInput = true
-        override fun newSession(user: User?, session: Session) = agents[session]!!
-      }
-      server.addApp(path, socketServer)
-      return socketServer
     }
-
-  }
 }

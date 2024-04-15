@@ -82,6 +82,7 @@ class TaskRunnerApp(
 ) : ApplicationServer(
     applicationName = applicationName,
     path = path,
+    showMenubar = false,
 ) {
     data class Settings(
         val model: ChatModels = AppSettingsState.instance.smartModel.chatModel(),
@@ -130,7 +131,11 @@ class TaskRunnerApp(
     companion object {
         fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(applicationName = "Task Agent", path = path) {
+            val socketServer = object : ApplicationServer(
+                applicationName = "Task Agent",
+                path = path,
+                showMenubar = false,
+            ) {
                 override val singleInput = true
                 override val stickyInput = false
                 override fun newSession(user: User?, session: Session) = agents[session]!!.newSession(user, session)
