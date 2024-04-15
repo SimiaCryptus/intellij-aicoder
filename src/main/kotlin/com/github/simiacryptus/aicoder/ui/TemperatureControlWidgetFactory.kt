@@ -65,7 +65,7 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
             return Consumer { event: MouseEvent ->
                 val widgetComp = event.component
                 if (widgetComp != null) {
-                    val modePanel = Panel()
+                    val modePanel = JPanel()
                     modePanel.layout = VerticalLayout(0)
                     modePanel.add(JBLabel("AI Coding Assistant"))
 

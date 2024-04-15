@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.diff.ApxPatchUtil
+import com.github.simiacryptus.diff.PatchUtil
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -70,7 +70,7 @@ class ApxPatchUtilTest {
 
   @Test
   fun testPatch() {
-    val result = ApxPatchUtil.patch(source, patch)
+    val result = PatchUtil.patch(source, patch)
     println(result)
     assertTrue(result.contains("for (value in values"))
   }
