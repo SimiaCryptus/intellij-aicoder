@@ -484,12 +484,12 @@ class TaskRunnerAgent(
                 }
             }
             genState.taskIdProcessingQueue.forEach { taskId ->
-                val newTask = ui.newTask()
+                val newTask = ui.newTask(false)
                 genState.uitaskMap[taskId] = newTask
                 val subtask = genState.subTasks[taskId]
                 val description = subtask?.description
                 log.debug("Creating task tab: $taskId ${System.identityHashCode(subtask)} $description")
-                taskTabs[description ?: taskId] = "<div id=${newTask.operationID}></div>"
+                taskTabs[description ?: taskId] = newTask.placeholder
             }
             Thread.sleep(100)
             while (genState.taskIdProcessingQueue.isNotEmpty()) {
@@ -517,7 +517,7 @@ class TaskRunnerAgent(
                         userMessage = userMessage,
                         highLevelPlan = highLevelPlan,
                         genState = genState,
-                        task = genState.uitaskMap.get(taskId) ?: ui.newTask(),
+                        task = genState.uitaskMap.get(taskId) ?: ui.newTask(false),
                         taskTabs = taskTabs
                     )
                 }
@@ -1058,10 +1058,10 @@ class TaskRunnerAgent(
         genState.taskResult[taskId] = subPlan.text
         var newTasks = subPlan.obj.tasksByID
         newTasks?.forEach {
-            val newTask = ui.newTask()
+            val newTask = ui.newTask(false)
             genState.uitaskMap[it.key] = newTask
             genState.tasksByDescription[it.value.description] = it.value
-            taskTabs[it.value.description ?: it.key] = "<div id=${newTask.operationID}></div>"
+            taskTabs[it.value.description ?: it.key] = newTask.placeholder
         }
         val conflictingKeys = newTasks?.keys?.intersect(genState.subTasks.keys)
         newTasks = newTasks?.entries?.associate { (key, value) ->
