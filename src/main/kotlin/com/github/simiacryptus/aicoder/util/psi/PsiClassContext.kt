@@ -5,7 +5,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 
-class PsiClassContext(val text: String, private val isPrior: Boolean, private val isOverlap: Boolean, val language: ComputerLanguage) {
+class PsiClassContext(
+    val text: String,
+    private val isPrior: Boolean,
+    private val isOverlap: Boolean,
+    val language: ComputerLanguage
+) {
     val children = ArrayList<PsiClassContext>()
 
     /**

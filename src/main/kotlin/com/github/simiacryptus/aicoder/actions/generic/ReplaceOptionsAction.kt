@@ -21,15 +21,16 @@ open class ReplaceOptionsAction : SelectionAction<String>() {
         }
     }
 
-    val proxy: VirtualAPI get() {
-        return ChatProxy(
-          clazz = VirtualAPI::class.java,
-          api = api,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          temperature = AppSettingsState.instance.temperature,
-          deserializerRetries = 5
-        ).create()
-    }
+    val proxy: VirtualAPI
+        get() {
+            return ChatProxy(
+                clazz = VirtualAPI::class.java,
+                api = api,
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                temperature = AppSettingsState.instance.temperature,
+                deserializerRetries = 5
+            ).create()
+        }
 
     override fun getConfig(project: Project?): String {
         return ""
@@ -54,6 +55,7 @@ open class ReplaceOptionsAction : SelectionAction<String>() {
     }
 
     open fun choose(choices: List<String>): String {
-        return UITools.showRadioButtonDialog("Select an option to fill in the blank:", *choices.toTypedArray())?.toString() ?: ""
+        return UITools.showRadioButtonDialog("Select an option to fill in the blank:", *choices.toTypedArray())
+            ?.toString() ?: ""
     }
 }

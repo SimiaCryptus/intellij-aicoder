@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.ui
+package com.github.simiacryptus.aicoder.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
@@ -16,13 +16,18 @@ import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
 import javax.swing.*
 
-class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
+class ConsolidatedWidgetFactory : StatusBarWidgetFactory {
 
-    class ModelSelectionWidget : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
+    class ConsolidatedWidget : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
 
         private var statusBar: StatusBar? = null
         private var activeModel: String = AppSettingsState.instance.smartModel.chatModel().modelName
         var models: List<ChatModels> = models()
+        private val temperatureSlider by lazy {
+            val slider = JSlider(0, 100, (AppSettingsState.instance.temperature * 100).toInt())
+            slider.addChangeListener { AppSettingsState.instance.temperature = slider.value / 100.0 }
+            slider
+        }
 
         init {
             AppSettingsState.instance.addOnSettingsLoadedListener {
@@ -37,7 +42,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         }.map { it.value }.toList()
 
         override fun ID(): String {
-            return "ModelSelectionComponent"
+            return "ConsolidatedComponent"
         }
 
         override fun getPresentation(): StatusBarWidget.WidgetPresentation {
@@ -53,7 +58,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         }
 
         override fun getTooltipText(): String {
-            return "Current active model"
+            return "Current active model and temperature control"
         }
 
         override fun getSelectedValue(): String {
@@ -85,6 +90,7 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
             val panel = JPanel(BorderLayout())
             panel.add(inputField, BorderLayout.NORTH)
             panel.add(JScrollPane(list), BorderLayout.CENTER)
+            panel.add(temperatureSlider, BorderLayout.SOUTH)
 
             val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, inputField)
                 .setRequestFocus(true)
@@ -114,19 +120,19 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun getId(): String {
-        return "ModelSelectionComponent"
+        return "ConsolidatedComponent"
     }
 
     override fun getDisplayName(): String {
-        return "Model Selector"
+        return "Consolidated Widget"
     }
 
     override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
-        return ModelSelectionWidget()
+        return ConsolidatedWidget()
     }
 
     override fun createWidget(project: Project): StatusBarWidget {
-        return ModelSelectionWidget()
+        return ConsolidatedWidget()
     }
 
     override fun isAvailable(project: Project): Boolean {

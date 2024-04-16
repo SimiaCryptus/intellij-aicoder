@@ -19,11 +19,11 @@ class CommentsAction : SelectionAction<String>() {
 
     override fun processSelection(state: SelectionState, config: String?): String {
         return ChatProxy(
-          clazz = CommentsAction_VirtualAPI::class.java,
-          api = api,
-          temperature = AppSettingsState.instance.temperature,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          deserializerRetries = 5
+            clazz = CommentsAction_VirtualAPI::class.java,
+            api = api,
+            temperature = AppSettingsState.instance.temperature,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            deserializerRetries = 5
         ).create().editCode(
             state.selectedText ?: "",
             "Add comments to each line explaining the code",

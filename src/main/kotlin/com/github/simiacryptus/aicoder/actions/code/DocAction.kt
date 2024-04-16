@@ -27,11 +27,11 @@ class DocAction : SelectionAction<String>() {
 
     private val proxy: DocAction_VirtualAPI by lazy {
         val chatProxy = ChatProxy(
-          clazz = DocAction_VirtualAPI::class.java,
-          api = api,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          temperature = AppSettingsState.instance.temperature,
-          deserializerRetries = 5
+            clazz = DocAction_VirtualAPI::class.java,
+            api = api,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            temperature = AppSettingsState.instance.temperature,
+            deserializerRetries = 5
         )
         chatProxy.addExample(
             DocAction_VirtualAPI.DocAction_ConvertedText().apply {

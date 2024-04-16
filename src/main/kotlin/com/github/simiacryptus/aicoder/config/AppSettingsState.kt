@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.jetbrains.rd.util.firstOrNull
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.JsonUtil
 import java.io.File
@@ -65,7 +64,7 @@ data class AppSettingsState(
             AppSettingsState()
         }
         XmlSerializerUtil.copyBean(fromJson, this)
-        recentCommands.clear();
+        recentCommands.clear()
         recentCommands.putAll(fromJson.recentCommands)
 //    editorActions.actionSettings.clear();
 //    editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)

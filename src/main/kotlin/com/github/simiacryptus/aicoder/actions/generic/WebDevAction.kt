@@ -67,7 +67,6 @@ class WebDevAction : BaseAction() {
 
     open class WebDevApp(
         applicationName: String = "Web Dev Assistant v1.1",
-        open val symbols: Map<String, Any> = mapOf(),
         val temperature: Double = 0.1,
     ) : ApplicationServer(
         applicationName = applicationName,
@@ -266,7 +265,7 @@ class WebDevAction : BaseAction() {
                                 )
                             ),
                             javascriptActor,
-                            path!!, "js", "javascript"
+                            path, "js", "javascript"
                         )
 
 
@@ -313,8 +312,8 @@ class WebDevAction : BaseAction() {
                 // Apply codeReviewer
                 fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
                     "# $path\n```${
-                        path.split('.').last()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-                    }\n${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
+                        path.split('.').last().let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+                    }\n${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
                 }
 
 
@@ -391,7 +390,7 @@ class WebDevAction : BaseAction() {
                 try {
                     task.add(
                         renderMarkdown(
-                            "```${languages.first()}\n${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```",
+                            "```${languages.first()}\n${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```",
                             ui = ui
                         )
                     )
@@ -399,7 +398,7 @@ class WebDevAction : BaseAction() {
                     codeFiles[path] = code
                     val request1 = (request.toList() +
                             listOf(
-                                ApiModel.ChatMessage(ApiModel.Role.assistant, code.toContentList()),
+                                ApiModel.ChatMessage(Role.assistant, code.toContentList()),
                             )).toTypedArray<ApiModel.ChatMessage>()
                     val formText = StringBuilder()
                     var formHandle: StringBuilder? = null
@@ -412,7 +411,7 @@ class WebDevAction : BaseAction() {
                                 responseAction(task, "Regenerating...", formHandle!!, formText) {
                                     draftResourceCode(
                                         task,
-                                        request1.dropLastWhile { it.role == ApiModel.Role.assistant }
+                                        request1.dropLastWhile { it.role == Role.assistant }
                                             .toTypedArray<ApiModel.ChatMessage>(),
                                         actor, path, *languages
                                     )
@@ -428,8 +427,8 @@ class WebDevAction : BaseAction() {
                                         task.echo(renderMarkdown(feedback, ui = ui))
                                         draftResourceCode(
                                             task, (request1.toList() + listOf(
-                                                code to ApiModel.Role.assistant,
-                                                feedback to ApiModel.Role.user,
+                                                code to Role.assistant,
+                                                feedback to Role.user,
                                             ).filter { it.first.isNotBlank() }
                                                 .map {
                                                     ApiModel.ChatMessage(

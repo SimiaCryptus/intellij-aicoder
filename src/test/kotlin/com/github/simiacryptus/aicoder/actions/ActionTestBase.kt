@@ -13,7 +13,7 @@ import java.util.*
 open class ActionTestBase {
     companion object {
 
-        fun <T:Any>testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
+        fun <T : Any> testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
             AppSettingsState.instance.apiKey = ClientUtil.keyMap.mapKeys { it.key }.toMutableMap()
             AppSettingsState.instance.temperature = 0.0
             AppSettingsState.instance.smartModel = ChatModels.GPT35Turbo.name

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 
@@ -22,7 +21,7 @@ class PrintGitCommitPatchAction : AnAction("Print Git Commit Patch") {
             return
         }
 
-        val changes = filePaths.mapNotNull { it as? Change }
+        val changes = filePaths.mapNotNull { it }
         val patches = changes.mapNotNull { change ->
             val changeListManager = ChangeListManager.getInstance(project)
             changeListManager.getChangeList(change)?.changes?.firstOrNull()?.beforeRevision?.content

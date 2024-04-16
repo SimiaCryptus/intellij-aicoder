@@ -9,7 +9,7 @@ class MRUItems {
     private var historyLimit = 10
     fun addInstructionToHistory(instruction: CharSequence) {
         synchronized(mostRecentHistory) {
-            if(mostRecentHistory.contains(instruction.toString())) {
+            if (mostRecentHistory.contains(instruction.toString())) {
                 mostRecentHistory.remove(instruction.toString())
             }
             mostRecentHistory.add(instruction.toString())

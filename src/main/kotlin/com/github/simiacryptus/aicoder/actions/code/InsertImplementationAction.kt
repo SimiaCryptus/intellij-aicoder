@@ -30,11 +30,11 @@ class InsertImplementationAction : SelectionAction<String>() {
 
     private fun getProxy(): VirtualAPI {
         return ChatProxy(
-          clazz = VirtualAPI::class.java,
-          api = api,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          temperature = AppSettingsState.instance.temperature,
-          deserializerRetries = 5
+            clazz = VirtualAPI::class.java,
+            api = api,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            temperature = AppSettingsState.instance.temperature,
+            deserializerRetries = 5
         ).create()
     }
 
@@ -123,6 +123,6 @@ class InsertImplementationAction : SelectionAction<String>() {
     private class PsiClassContextActionParams(
         val selectionStart: Int,
         val selectionEnd: Int,
-        val largestIntersectingComment: SelectionAction.ContextRange?
+        val largestIntersectingComment: ContextRange?
     )
 }

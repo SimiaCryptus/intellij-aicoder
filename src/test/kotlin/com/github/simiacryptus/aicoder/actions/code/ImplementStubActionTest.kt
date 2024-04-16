@@ -23,7 +23,8 @@ class ImplementStubActionTest : ActionTestBase() {
     @Test
     fun testEditSelection() {
         val docAction = ImplementStubAction()
-        val editorState = SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, Pair(0, 10), null, arrayOf())
+        val editorState =
+            SelectionAction.EditorState("fun hello() {\nprintln(\"Hello, world!\")\n}", 0, Pair(0, 10), null, arrayOf())
         val result = docAction.editSelection(editorState, 0, 10)
         Assertions.assertEquals(Pair(0, 10), result)
     }

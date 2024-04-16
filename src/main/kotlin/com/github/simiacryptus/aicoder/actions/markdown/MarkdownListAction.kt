@@ -31,10 +31,10 @@ class MarkdownListAction : BaseAction() {
     val proxy: ListAPI
         get() {
             val chatProxy = ChatProxy(
-              clazz = ListAPI::class.java,
-              api = api,
-              model = AppSettingsState.instance.smartModel.chatModel(),
-              deserializerRetries = 5,
+                clazz = ListAPI::class.java,
+                api = api,
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                deserializerRetries = 5,
             )
             chatProxy.addExample(
                 returnValue = ListAPI.Items(

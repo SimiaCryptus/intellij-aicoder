@@ -96,7 +96,7 @@ class TaskRunnerApp(
     override val settingsClass: Class<*> get() = Settings::class.java
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> initSettings(session: Session): T? = Settings() as T
+    override fun <T : Any> initSettings(session: Session): T = Settings() as T
 
     override fun userMessage(
         session: Session,
@@ -306,10 +306,10 @@ class TaskRunnerAgent(
         Note: This task is for running simple and safe commands. Avoid executing commands that can cause harm to the system or compromise security.
       """.trimIndent(),
             symbols = mapOf(
-                "env" to (env ?: mapOf()),
-                "workingDir" to File(workingDir ?: ".").absolutePath,
-                "language" to (language ?: "bash"),
-                "command" to (command ?: listOf("bash")),
+                "env" to env,
+                "workingDir" to File(workingDir).absolutePath,
+                "language" to language,
+                "command" to command,
             ),
             model = model,
             temperature = temperature,
@@ -854,7 +854,7 @@ class TaskRunnerAgent(
         }
         object : Retryable(ui, task, process) {
             init {
-                set(label(size), process(container!!))
+                set(label(size), process(container))
             }
         }
     }
@@ -903,7 +903,7 @@ class TaskRunnerAgent(
         }
         object : Retryable(ui, task, process) {
             init {
-                set(label(size), process(container!!))
+                set(label(size), process(container))
             }
         }
     }
@@ -938,7 +938,7 @@ class TaskRunnerAgent(
         }
         object : Retryable(ui, task, process) {
             init {
-                set(label(size), process(container!!))
+                set(label(size), process(container))
             }
         }
     }
