@@ -323,22 +323,11 @@ class WebDevAction : BaseAction() {
                     return task.complete(
                         ui.socketManager.addApplyFileDiffLinks(
                             root = codeFiles.keys.map { File(it).toPath() }.toTypedArray().commonRoot(),
-                            code = codeFiles,
+                            code = { codeFiles },
                             response = design,
                             handle = { newCodeMap ->
                                 newCodeMap.forEach { (path, newCode) ->
-                                    val prev = codeFiles[path]
-                                    if (prev != newCode) {
-                                        codeFiles[path] = newCode
-                                        task.complete(
-                                            "<a href='${
-                                                task.saveFile(
-                                                    path,
-                                                    newCode.toByteArray(Charsets.UTF_8)
-                                                )
-                                            }'>$path</a> Updated"
-                                        )
-                                    }
+                                    task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                                 }
                             },
                             ui = ui

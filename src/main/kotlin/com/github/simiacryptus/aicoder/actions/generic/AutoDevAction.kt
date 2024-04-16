@@ -229,7 +229,7 @@ class AutoDevAction : BaseAction() {
               }
               ui.socketManager.addApplyFileDiffLinks(
                   root = root,
-                  code = codeFiles,
+                  code = { codeFiles },
                   response = taskActor.answer(listOf(
                     codeSummary(),
                     userMessage,
@@ -243,18 +243,7 @@ class AutoDevAction : BaseAction() {
                   ), api),
                   handle = { newCodeMap ->
                     newCodeMap.forEach { (path, newCode) ->
-                      val prev = codeFiles[path]
-                      if (prev != newCode) {
-                        codeFiles[path] = newCode
-                        task.complete(
-                          "<a href='${
-                            task.saveFile(
-                              path,
-                              newCode.toByteArray(Charsets.UTF_8)
-                            )
-                          }'>$path</a> Updated"
-                        )
-                      }
+                      task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                     }
                   },
                   ui = ui

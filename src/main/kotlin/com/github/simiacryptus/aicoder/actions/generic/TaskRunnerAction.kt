@@ -380,12 +380,15 @@ class TaskRunnerAgent(
         }.toTypedArray()
     }
 
-    val codeFiles = mutableMapOf<String, String>().apply {
-        virtualFiles.filter { it.isFile }.forEach { file ->
-            val code = file.inputStream.bufferedReader().use { it.readText() }
-            this[root.relativize(file.toNioPath()).toString()] = code
+    private val codeFiles
+        get() = virtualFiles.filter { it.isFile }.associate { file ->
+            getKey(file) to getValue(file)
         }
-    }
+
+
+    private fun getValue(file: VirtualFile) = file.inputStream.bufferedReader().use { it.readText() }
+
+    private fun getKey(file: VirtualFile) = root.relativize(file.toNioPath()).toString()
 
     fun startProcess(userMessage: String) {
         val codeFiles = codeFiles
@@ -882,23 +885,11 @@ class TaskRunnerAgent(
             renderMarkdown(
                 ui.socketManager.addApplyFileDiffLinks(
                     root = root,
-                    code = codeFiles,
+                    code = { codeFiles },
                     response = codeResult,
                     handle = { newCodeMap ->
-                        val codeFiles = codeFiles
                         newCodeMap.forEach { (path, newCode) ->
-                            val prev = codeFiles[path]
-                            if (prev != newCode) {
-//            codeFiles[path] = newCode
-                                task.complete(
-                                    "<a href='${
-                                        task.saveFile(
-                                            path,
-                                            newCode.toByteArray(Charsets.UTF_8)
-                                        )
-                                    }'>$path</a> Updated"
-                                )
-                            }
+                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                         }
                     },
                     ui = ui

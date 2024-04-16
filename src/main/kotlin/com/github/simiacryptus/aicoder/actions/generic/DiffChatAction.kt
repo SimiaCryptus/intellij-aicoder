@@ -11,11 +11,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.TextRange
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
-import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
@@ -39,7 +39,7 @@ class DiffChatAction : BaseAction() {
         val primaryCaret = editor.caretModel.primaryCaret
         val rawText: String
         val selectionStart: Int
-        val selectionEnd: Int
+        var selectionEnd: Int
         val selectedText = primaryCaret.selectedText
         if (null != selectedText) {
             rawText = selectedText
@@ -50,15 +50,10 @@ class DiffChatAction : BaseAction() {
             selectionStart = 0
             selectionEnd = rawText.length
         }
-        val numberedText = rawText.split("\n")
-            .mapIndexed { lineNumber: Int, lineText: String ->
-                lineText
-//        String.format("%4d: %s", lineNumber + 1, lineText)
-            }.joinToString("\n")
         agents[session] = object : CodeChatSocketManager(
             session = session,
             language = language,
-            codeSelection = numberedText,
+            codeSelection = rawText,
             filename = filename,
             api = api,
             model = AppSettingsState.instance.smartModel.chatModel(),
@@ -87,16 +82,23 @@ class DiffChatAction : BaseAction() {
         """.trimIndent()
 
             val ui by lazy { ApplicationInterface(this) }
-            override fun renderResponse(response: String, task: SessionTask): String {
-                val codeBuffer = StringBuilder(rawText)
-                val withLinks = addApplyDiffLinks(codeBuffer, response, handle = { newCode: String ->
-                    WriteCommandAction.runWriteCommandAction(e.project) {
-                        document.replaceString(selectionStart, selectionStart + codeBuffer.length, newCode)
-                    }
-                    codeBuffer.set(newCode)
-                }, task = task, ui = ui)
-                return """<div>${renderMarkdown(withLinks)}</div>"""
-            }
+            override fun renderResponse(response: String, task: SessionTask) = """<div>${
+                renderMarkdown(
+                    addApplyDiffLinks(
+                        code = {
+                            editor.document.getText(TextRange(selectionStart, selectionEnd))
+                        },
+                        response = response,
+                        handle = { newCode: String ->
+                            WriteCommandAction.runWriteCommandAction(e.project) {
+                                selectionEnd = selectionStart + newCode.length
+                                document.replaceString(selectionStart, selectionStart + rawText.length, newCode)
+                            }
+                        }, 
+                        task = task, 
+                        ui = ui
+                    )
+                )}</div>"""
         }
 
         val server = AppServer.getServer(e.project)

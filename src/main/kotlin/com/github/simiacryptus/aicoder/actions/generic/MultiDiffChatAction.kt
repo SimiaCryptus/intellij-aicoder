@@ -45,10 +45,6 @@ class MultiDiffChatAction : BaseAction() {
             getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")).toPath()
         }
 
-//    val root = virtualFiles?.map { file ->
-//      file.toNioPath()
-//    }?.toTypedArray()?.commonRoot()!!
-
         virtualFiles?.associate { file ->
             val relative = root.relativize(file.toNioPath())
             val path = relative.toString()
@@ -108,28 +104,11 @@ class MultiDiffChatAction : BaseAction() {
             override fun renderResponse(response: String, task: SessionTask): String {
                 val html = addApplyFileDiffLinks(
                     root = root,
-                    code = codeFiles,
+                    code = { codeFiles },
                     response = response,
                     handle = { newCodeMap ->
-                        newCodeMap.map { (path, newCode) ->
-                            val prev = codeFiles[path]
-                            if (prev != newCode) {
-                                codeFiles[path] = newCode
-                                root.resolve(path).let { file ->
-                                    file.toFile().writeText(newCode)
-                                    val virtualFile = virtualFileMap.get(file)
-                                    if (null != virtualFile) FileDocumentManager.getInstance().getDocument(virtualFile)
-                                        ?.let { doc ->
-                                            WriteCommandAction.runWriteCommandAction(e.project) {
-                                                doc.setText(newCode)
-                                            }
-                                        }
-                                }
-                                "<a href='$path'>$path</a> Updated"
-                            } else {
-//              "<a href='$path'>$path</a> Unchanged"
-                                ""
-                            }
+                        newCodeMap.forEach { (path, newCode) ->
+                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                         }
                     },
                     ui = ui,
