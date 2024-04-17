@@ -1027,19 +1027,19 @@ To verify that the `PrintTreeAction` in the IntelliJ plugin correctly prints the
 
 This manual test plan will help ensure that the `PrintTreeAction` functions correctly across different scenarios and setups, providing confidence in its reliability and effectiveness.
 
-# generic\AnalogueFileAction.kt
+# generic\GenerateRelatedFileAction.kt
 
 
-#### Manual Test Plan for AnalogueFileAction Class
+#### Manual Test Plan for CreateFileFromTemplateAction Class
 
 
 ##### Objective:
-To verify that the `AnalogueFileAction` class functions correctly across various scenarios, including file generation based on user directives and handling of file paths.
+To verify that the `CreateFileFromTemplateAction` class functions correctly across various scenarios, including file generation based on user directives and handling of file paths.
 
 
 ##### Test Environment Setup:
 - Install IntelliJ IDEA or compatible IDE.
-- Ensure the plugin containing `AnalogueFileAction` is installed and enabled.
+- Ensure the plugin containing `CreateFileFromTemplateAction` is installed and enabled.
 - Configure necessary dependencies and environment as per the project requirements.
 
 
@@ -1126,16 +1126,16 @@ To verify that the `AnalogueFileAction` class functions correctly across various
 - Document all test results, including any discrepancies from expected outcomes.
 - Report bugs or enhancement requests based on the findings.
 
-This manual test plan ensures comprehensive coverage of the `AnalogueFileAction` functionality and helps maintain high quality and reliability of the feature.
+This manual test plan ensures comprehensive coverage of the `CreateFileFromTemplateAction` functionality and helps maintain high quality and reliability of the feature.
 
-# generic\AppendAction.kt
+# generic\AppendTextWithChatAction.kt
 
 
-#### Manual Test Plan for `AppendAction` Class
+#### Manual Test Plan for `AppendTextWithChatAction` Class
 
 
 ##### Objective:
-To verify that the `AppendAction` class correctly appends text to the user's selected text using the AI model's response.
+To verify that the `AppendTextWithChatAction` class correctly appends text to the user's selected text using the AI model's response.
 
 
 ##### Pre-requisites:
@@ -1161,7 +1161,7 @@ To verify that the `AppendAction` class correctly appends text to the user's sel
 **Objective**: To test if the system appends any text to the selected text.
 **Steps**:
 1. Open a file in the IDE and select a string of text.
-2. Trigger the `AppendAction`.
+2. Trigger the `AppendTextWithChatAction`.
 3. Observe the output in the IDE or the designated output area.
 **Expected Result**: The selected text should have additional text appended at the end.
 
@@ -1170,7 +1170,7 @@ To verify that the `AppendAction` class correctly appends text to the user's sel
 **Objective**: To verify the behavior when no text is selected.
 **Steps**:
 1. Ensure no text is selected in the IDE.
-2. Trigger the `AppendAction`.
+2. Trigger the `AppendTextWithChatAction`.
 3. Observe the output or any error messages.
 **Expected Result**: No changes should occur, or a user-friendly message should be displayed.
 
@@ -1179,7 +1179,7 @@ To verify that the `AppendAction` class correctly appends text to the user's sel
 **Objective**: To test the handling of different API responses, including errors.
 **Steps**:
 1. Mock different responses from the API, including success, failure, and edge cases like empty strings or null.
-2. Select a string of text and trigger the `AppendAction` for each mocked response.
+2. Select a string of text and trigger the `AppendTextWithChatAction` for each mocked response.
 3. Observe how the application handles each response.
 **Expected Result**: The application should handle each scenario gracefully, appending text correctly on success, and showing appropriate messages or handling on failures.
 
@@ -1188,7 +1188,7 @@ To verify that the `AppendAction` class correctly appends text to the user's sel
 **Objective**: To test the system's performance with very long text selections.
 **Steps**:
 1. Select a very long string of text in the IDE.
-2. Trigger the `AppendAction`.
+2. Trigger the `AppendTextWithChatAction`.
 3. Observe the performance and any potential lag or failure.
 **Expected Result**: The action should complete within a reasonable time without errors.
 
@@ -1197,7 +1197,7 @@ To verify that the `AppendAction` class correctly appends text to the user's sel
 **Objective**: To verify that the action handles text with special characters and formats correctly.
 **Steps**:
 1. Select text containing special characters (e.g., emojis, symbols) or formats (e.g., code snippets, markdown).
-2. Trigger the `AppendAction`.
+2. Trigger the `AppendTextWithChatAction`.
 3. Check if the appended text respects the original format and characters.
 **Expected Result**: The appended text should correctly include and display special characters and formats.
 
@@ -1206,7 +1206,7 @@ To verify that the `AppendAction` class correctly appends text to the user's sel
 **Objective**: To test the system's response to changes in configuration settings.
 **Steps**:
 1. Change the settings in `AppSettingsState` (e.g., different AI models, temperature settings).
-2. Select a string of text and trigger the `AppendAction`.
+2. Select a string of text and trigger the `AppendTextWithChatAction`.
 3. Observe how the changes affect the output.
 **Expected Result**: Outputs should vary according to the configuration, reflecting the changes accurately.
 
@@ -1220,7 +1220,7 @@ To verify that the `AppendAction` class correctly appends text to the user's sel
 - Document any discrepancies from the expected results.
 - Provide feedback and suggestions based on the test outcomes.
 
-This manual test plan will help ensure that the `AppendAction` class functions correctly across various scenarios and handles both expected and edge cases gracefully.
+This manual test plan will help ensure that the `AppendTextWithChatAction` class functions correctly across various scenarios and handles both expected and edge cases gracefully.
 
 # generic\CodeChatAction.kt
 
@@ -1317,14 +1317,14 @@ To manually test the `CodeChatAction` class to ensure it correctly initializes a
 
 This manual test plan will help ensure that the `CodeChatAction` behaves as expected across various scenarios and handles edge cases gracefully.
 
-# generic\DictationAction.kt
+# generic\VoiceToTextAction.kt
 
 
-#### Manual Test Plan for DictationAction Class
+#### Manual Test Plan for VoiceToTextAction Class
 
 
 ##### Objective:
-To ensure that the `DictationAction` class functions correctly, handling audio input, processing it, and converting it into text which is then inserted into the editor at the correct position.
+To ensure that the `VoiceToTextAction` class functions correctly, handling audio input, processing it, and converting it into text which is then inserted into the editor at the correct position.
 
 
 ##### Test Environment:
@@ -1345,7 +1345,7 @@ To ensure that the `DictationAction` class functions correctly, handling audio i
 **Objective**: Verify that the dictation starts, processes audio, and the text is inserted into the editor.
 1. Open a project and a file in the IDE.
 2. Place the cursor in the editor where the text should be inserted.
-3. Trigger the `DictationAction`.
+3. Trigger the `VoiceToTextAction`.
 4. Speak a few sentences into the microphone.
 5. Verify that:
    - The recording starts and the status dialog appears.
@@ -1359,7 +1359,7 @@ To ensure that the `DictationAction` class functions correctly, handling audio i
 **Objective**: Ensure that dictation handles initial prompts from selected text correctly.
 1. Open a project and a file in the IDE.
 2. Select a portion of text in the editor.
-3. Trigger the `DictationAction`.
+3. Trigger the `VoiceToTextAction`.
 4. Speak a continuation of the selected text.
 5. Verify that:
    - The selected text is used as a prompt.
@@ -1371,7 +1371,7 @@ To ensure that the `DictationAction` class functions correctly, handling audio i
 ###### TC3: Error Handling
 **Objective**: Test the error handling when an exception occurs during recording or processing.
 1. Open a project and a file in the IDE.
-2. Trigger the `DictationAction`.
+2. Trigger the `VoiceToTextAction`.
 3. During recording, simulate an error (e.g., disconnect the microphone).
 4. Verify that:
    - An error message is displayed.
@@ -1392,7 +1392,7 @@ To ensure that the `DictationAction` class functions correctly, handling audio i
 ###### TC5: Stop Dictation Midway
 **Objective**: Verify that stopping the dictation midway works correctly.
 1. Open a project and a file in the IDE.
-2. Trigger the `DictationAction`.
+2. Trigger the `VoiceToTextAction`.
 3. Start dictating and then abruptly close the status dialog to stop dictation.
 4. Verify that:
    - The dictation stops immediately.
@@ -1414,21 +1414,21 @@ To ensure that the `DictationAction` class functions correctly, handling audio i
 - Restore any settings changed during testing.
 - Remove test artifacts from the IDE environment.
 
-This manual test plan will help ensure that the `DictationAction` class functions as expected and provides a robust feature within the IDE environment.
+This manual test plan will help ensure that the `VoiceToTextAction` class functions as expected and provides a robust feature within the IDE environment.
 
-# generic\CreateFileAction.kt
+# generic\CreateFileFromDescriptionAction.kt
 
 
-#### Manual Test Plan for `CreateFileAction` Class
+#### Manual Test Plan for `CreateFileFromDescriptionAction` Class
 
 
 ##### Objective:
-To verify that the `CreateFileAction` class functions correctly, creating new files based on directives provided by the user, and handling file paths and naming conflicts appropriately.
+To verify that the `CreateFileFromDescriptionAction` class functions correctly, creating new files based on directives provided by the user, and handling file paths and naming conflicts appropriately.
 
 
 ##### Test Environment Setup:
 - Ensure the testing environment has access to a Java development setup with necessary libraries installed.
-- Clone or have access to the repository containing the `CreateFileAction` class.
+- Clone or have access to the repository containing the `CreateFileFromDescriptionAction` class.
 - Setup an instance of the `AppSettingsState` with appropriate configurations for the chat model and temperature settings.
 
 
@@ -1495,7 +1495,7 @@ To verify that the `CreateFileAction` class functions correctly, creating new fi
 - Remove any files or directories created during testing.
 - Reset any configurations changed during the test setup.
 
-This manual test plan will help ensure that the `CreateFileAction` class meets its functional requirements and handles various scenarios gracefully.
+This manual test plan will help ensure that the `CreateFileFromDescriptionAction` class meets its functional requirements and handles various scenarios gracefully.
 
 # generic\DiffChatAction.kt
 
@@ -1683,14 +1683,14 @@ To validate the functionality of the `LineFilterChatAction` class, ensuring that
 
 This manual test plan will help ensure that the `LineFilterChatAction` behaves as expected under various conditions and usage scenarios.
 
-# generic\AutoDevAction.kt
+# generic\MultiStepPatchAction.kt
 
 
-#### Manual Test Plan for AutoDevAction
+#### Manual Test Plan for MultiStepPatchAction
 
 
 ##### Objective:
-To verify the functionality and robustness of the `AutoDevAction` class, ensuring it correctly handles user interactions, processes data, and integrates with the system environment and other components.
+To verify the functionality and robustness of the `MultiStepPatchAction` class, ensuring it correctly handles user interactions, processes data, and integrates with the system environment and other components.
 
 
 ##### Test Environment:
@@ -1701,31 +1701,31 @@ To verify the functionality and robustness of the `AutoDevAction` class, ensurin
 
 
 ##### Pre-conditions:
-- The plugin containing `AutoDevAction` is properly installed and enabled in the IDE.
+- The plugin containing `MultiStepPatchAction` is properly installed and enabled in the IDE.
 - The user has a project open in the IDE with multiple files for testing.
 
 
 ##### Test Cases:
 
 1. **Initialization Test**
-   - **Objective**: Ensure the `AutoDevAction` initializes correctly within the IDE environment.
+   - **Objective**: Ensure the `MultiStepPatchAction` initializes correctly within the IDE environment.
    - **Steps**:
      1. Start the IDE.
      2. Open a project.
-     3. Trigger the `AutoDevAction`.
+     3. Trigger the `MultiStepPatchAction`.
    - **Expected Result**: The action initializes without errors, and the Auto Dev Assistant UI is accessible.
 
 2. **UI Accessibility Test**
    - **Objective**: Verify that the Auto Dev Assistant UI opens in the default browser and displays correctly.
    - **Steps**:
-     1. Trigger the `AutoDevAction`.
+     1. Trigger the `MultiStepPatchAction`.
      2. Observe the browser opening automatically.
    - **Expected Result**: The Auto Dev Assistant UI is displayed correctly in the browser with all elements visible.
 
 3. **Session Handling Test**
    - **Objective**: Confirm that sessions are handled correctly, allowing multiple instances without conflict.
    - **Steps**:
-     1. Trigger the `AutoDevAction` multiple times with different projects.
+     1. Trigger the `MultiStepPatchAction` multiple times with different projects.
      2. Navigate between different sessions in the browser.
    - **Expected Result**: Each session should maintain its state independently.
 
@@ -1733,7 +1733,7 @@ To verify the functionality and robustness of the `AutoDevAction` class, ensurin
    - **Objective**: Ensure that the action correctly handles file selections and interacts with the data storage.
    - **Steps**:
      1. Select different folders and files in the IDE.
-     2. Trigger the `AutoDevAction`.
+     2. Trigger the `MultiStepPatchAction`.
      3. Check if the selected files are correctly recognized and listed in the UI.
    - **Expected Result**: The selected files should be correctly passed to the Auto Dev Assistant and displayed in the UI.
 
@@ -1754,7 +1754,7 @@ To verify the functionality and robustness of the `AutoDevAction` class, ensurin
 7. **Concurrency Test**
    - **Objective**: Verify that the system handles concurrent operations without data corruption or crashes.
    - **Steps**:
-     1. Trigger multiple instances of `AutoDevAction` simultaneously.
+     1. Trigger multiple instances of `MultiStepPatchAction` simultaneously.
      2. Perform operations in multiple UI sessions at the same time.
    - **Expected Result**: All operations are processed correctly without interference, data corruption, or system crashes.
 
@@ -1775,7 +1775,7 @@ To verify the functionality and robustness of the `AutoDevAction` class, ensurin
 - All findings from the test cases should be documented, including any discrepancies from the expected results.
 - Severity and priority should be assigned to each finding for further action and resolution.
 
-This manual test plan provides a structured approach to validate the functionality and reliability of the `AutoDevAction` within a development environment. Adjustments may be necessary based on specific configurations or additional requirements.
+This manual test plan provides a structured approach to validate the functionality and reliability of the `MultiStepPatchAction` within a development environment. Adjustments may be necessary based on specific configurations or additional requirements.
 
 # generic\RedoLast.kt
 
@@ -1961,24 +1961,24 @@ To ensure that the `MultiDiffChatAction` class functions correctly across variou
 - Each test should be documented with screenshots or video captures where applicable.
 - Any anomalies or deviations from the expected results should be logged and investigated.
 
-# generic\DocumentationCompilerAction.kt
+# generic\GenerateDocumentationAction.kt
 
 
-#### Manual Test Plan for DocumentationCompilerAction
+#### Manual Test Plan for GenerateDocumentationAction
 
 
 ##### Objective
-To verify that the `DocumentationCompilerAction` class functions correctly, allowing users to compile documentation from selected files using AI-generated content.
+To verify that the `GenerateDocumentationAction` class functions correctly, allowing users to compile documentation from selected files using AI-generated content.
 
 
 ##### Test Environment
 - IDE: IntelliJ IDEA (or compatible IDE)
-- Plugin: Ensure the plugin containing `DocumentationCompilerAction` is installed and enabled.
+- Plugin: Ensure the plugin containing `GenerateDocumentationAction` is installed and enabled.
 - Operating System: Windows, macOS, or Linux
 
 
 ##### Pre-requisites
-- The plugin containing the `DocumentationCompilerAction` is installed and enabled in the IDE.
+- The plugin containing the `GenerateDocumentationAction` is installed and enabled in the IDE.
 - Sample project files are available within the IDE for testing.
 
 
@@ -2058,19 +2058,19 @@ To verify that the `DocumentationCompilerAction` class functions correctly, allo
 - Capture screenshots or logs if applicable.
 - Provide a detailed report to the development team for any failures or bugs encountered.
 
-# generic\ReplaceOptionsAction.kt
+# generic\ReplaceWithSuggestionsAction.kt
 
 
-#### Manual Test Plan for `ReplaceOptionsAction` Class
+#### Manual Test Plan for `ReplaceWithSuggestionsAction` Class
 
 
 ##### Objective
-To verify that the `ReplaceOptionsAction` class functions correctly, providing appropriate suggestions for text replacement based on the selected text within an IDE environment.
+To verify that the `ReplaceWithSuggestionsAction` class functions correctly, providing appropriate suggestions for text replacement based on the selected text within an IDE environment.
 
 
 ##### Pre-requisites
 - IntelliJ IDEA or a compatible IDE installed.
-- Plugin containing the `ReplaceOptionsAction` class is installed and enabled in the IDE.
+- Plugin containing the `ReplaceWithSuggestionsAction` class is installed and enabled in the IDE.
 - A project is open in the IDE with at least one editable file.
 
 
@@ -2092,7 +2092,7 @@ To verify that the `ReplaceOptionsAction` class functions correctly, providing a
 **Steps**:
 1. Open a file in the IDE.
 2. Select a portion of text.
-3. Trigger the `ReplaceOptionsAction`.
+3. Trigger the `ReplaceWithSuggestionsAction`.
 4. Observe if the suggestions dialog appears.
 
 **Expected Result**: A dialog with suggested replacements should appear.
@@ -2102,7 +2102,7 @@ To verify that the `ReplaceOptionsAction` class functions correctly, providing a
 **Objective**: Verify behavior when no text is selected.
 **Steps**:
 1. Ensure no text is selected.
-2. Trigger the `ReplaceOptionsAction`.
+2. Trigger the `ReplaceWithSuggestionsAction`.
 3. Observe the behavior.
 
 **Expected Result**: No action should be taken, or a user-friendly message should be displayed indicating no text is selected.
@@ -2112,7 +2112,7 @@ To verify that the `ReplaceOptionsAction` class functions correctly, providing a
 **Objective**: Test the action with a large text selection.
 **Steps**:
 1. Select a large block of text (e.g., several paragraphs or a complete function).
-2. Trigger the `ReplaceOptionsAction`.
+2. Trigger the `ReplaceWithSuggestionsAction`.
 3. Observe the suggestions provided.
 
 **Expected Result**: The action should handle large texts gracefully, possibly truncating or summarizing the context appropriately.
@@ -2122,7 +2122,7 @@ To verify that the `ReplaceOptionsAction` class functions correctly, providing a
 **Objective**: Ensure special characters in the text do not cause errors.
 **Steps**:
 1. Select text that includes special characters (e.g., symbols, non-ASCII characters).
-2. Trigger the `ReplaceOptionsAction`.
+2. Trigger the `ReplaceWithSuggestionsAction`.
 3. Check if the suggestions are generated without errors.
 
 **Expected Result**: Suggestions are generated without errors, and special characters are handled correctly.
@@ -2132,7 +2132,7 @@ To verify that the `ReplaceOptionsAction` class functions correctly, providing a
 **Objective**: Determine the behavior when the backend API fails or is unavailable.
 **Steps**:
 1. Simulate API failure (e.g., by disconnecting from the network or using a mock to force a failure).
-2. Trigger the `ReplaceOptionsAction`.
+2. Trigger the `ReplaceWithSuggestionsAction`.
 3. Observe the behavior.
 
 **Expected Result**: The action should handle API failures gracefully, notifying the user of the issue without crashing.
@@ -2142,7 +2142,7 @@ To verify that the `ReplaceOptionsAction` class functions correctly, providing a
 **Objective**: Ensure the action performs well under typical conditions.
 **Steps**:
 1. Select a reasonable amount of text.
-2. Trigger the `ReplaceOptionsAction` multiple times in quick succession.
+2. Trigger the `ReplaceWithSuggestionsAction` multiple times in quick succession.
 3. Observe any lag or performance degradation.
 
 **Expected Result**: The action should perform efficiently without significant delays or resource consumption spikes.
@@ -2158,16 +2158,16 @@ To verify that the `ReplaceOptionsAction` class functions correctly, providing a
 - Restore any settings or configurations changed during testing to their original state.
 - Close and reopen the IDE to clear any temporary states or caches if necessary.
 
-This manual test plan will help ensure that the `ReplaceOptionsAction` behaves as expected across various scenarios and handles edge cases and errors gracefully.
+This manual test plan will help ensure that the `ReplaceWithSuggestionsAction` behaves as expected across various scenarios and handles edge cases and errors gracefully.
 
-# generic\TaskRunnerAction.kt
+# generic\PlanAheadAction.kt
 
 
-#### Manual Test Plan for TaskRunnerAction and TaskRunnerApp
+#### Manual Test Plan for PlanAheadAction and TaskRunnerApp
 
 
 ##### Objective:
-To verify the functionality and robustness of the TaskRunnerAction and TaskRunnerApp components, ensuring they handle task creation, session management, and user interactions correctly.
+To verify the functionality and robustness of the PlanAheadAction and TaskRunnerApp components, ensuring they handle task creation, session management, and user interactions correctly.
 
 
 ##### Test Environment:
@@ -2187,16 +2187,16 @@ To verify the functionality and robustness of the TaskRunnerAction and TaskRunne
 
 ###### TC1: Initialization and Session Creation
 **Objective**: Verify that a new session is created successfully when the action is triggered.
-1. Trigger the TaskRunnerAction from the IDE.
+1. Trigger the PlanAheadAction from the IDE.
 2. Check if a new session ID is generated and stored correctly.
 3. Verify that the session is associated with the correct project and user.
 
 
 ###### TC2: Folder and File Selection
 **Objective**: Ensure the application correctly handles the selection of folders and files.
-1. Select a folder and trigger the TaskRunnerAction.
+1. Select a folder and trigger the PlanAheadAction.
 2. Verify that the application uses the selected folder as the root.
-3. Select a file and trigger the TaskRunnerAction.
+3. Select a file and trigger the PlanAheadAction.
 4. Verify that the application identifies the correct module root based on the file location.
 
 
@@ -2244,21 +2244,21 @@ To verify the functionality and robustness of the TaskRunnerAction and TaskRunne
 
 
 ##### Conclusion:
-This manual test plan aims to cover critical functionalities of the TaskRunnerAction and TaskRunnerApp to ensure they meet the required standards for performance, usability, and reliability. Regular testing and updates based on the findings will help maintain the quality of the application.
+This manual test plan aims to cover critical functionalities of the PlanAheadAction and TaskRunnerApp to ensure they meet the required standards for performance, usability, and reliability. Regular testing and updates based on the findings will help maintain the quality of the application.
 
-# generic\WebDevAction.kt
+# generic\WebDevelopmentAssistantAction.kt
 
 
-#### Manual Test Plan for WebDevAction
+#### Manual Test Plan for WebDevelopmentAssistantAction
 
 
 ##### Objective:
-To ensure that the `WebDevAction` class and its associated components function correctly across various scenarios, handling user interactions, file operations, and server communications effectively.
+To ensure that the `WebDevelopmentAssistantAction` class and its associated components function correctly across various scenarios, handling user interactions, file operations, and server communications effectively.
 
 
 ##### Test Environment Setup:
 1. **IDE Setup**: Ensure IntelliJ IDEA is installed and configured.
-2. **Plugin Installation**: Install the plugin containing the `WebDevAction` class.
+2. **Plugin Installation**: Install the plugin containing the `WebDevelopmentAssistantAction` class.
 3. **Server Setup**: Verify that the `AppServer` is up and running.
 4. **File System**: Prepare a directory structure with various file types to simulate user projects.
 5. **Browser Setup**: Ensure a default browser is set and functional.
@@ -2361,7 +2361,7 @@ To ensure that the `WebDevAction` class and its associated components function c
 - Remove any test-specific configurations and files.
 - Restart the server to clear all sessions and data.
 
-This manual test plan will help ensure that the `WebDevAction` behaves as expected under various conditions and handles user interactions correctly.
+This manual test plan will help ensure that the `WebDevelopmentAssistantAction` behaves as expected under various conditions and handles user interactions correctly.
 
 # markdown\MarkdownImplementActionGroup.kt
 

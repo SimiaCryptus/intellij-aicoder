@@ -1,9 +1,10 @@
-package com.github.simiacryptus.aicoder.actions.generic
+package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
@@ -12,7 +13,9 @@ import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.pow
 
-open class ReplaceOptionsAction : SelectionAction<String>() {
+open class ReplaceWithSuggestionsAction : SelectionAction<String>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     interface VirtualAPI {
         fun suggestText(template: String, examples: List<String>): Suggestions
 

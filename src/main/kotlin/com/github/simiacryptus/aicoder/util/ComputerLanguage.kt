@@ -64,6 +64,14 @@ enum class ComputerLanguage(configuration: Configuration) {
             .setLineComments(LineComment.Factory("#"))
             .setFileExtensions("txt")
     ),
+    XML(
+        Configuration()
+            .setDocumentationStyle("XML")
+            .setLineComments(BlockComment.Factory("<!--", "", "-->"))
+            .setBlockComments(BlockComment.Factory("<!--", "", "-->"))
+            .setDocComments(BlockComment.Factory("<!--", "", "-->"))
+            .setFileExtensions("xml")
+    ),
     Ada(
         Configuration()
             .setLineComments(LineComment.Factory("--"))

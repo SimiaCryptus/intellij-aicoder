@@ -1,10 +1,11 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.diff.addApplyFileDiffLinks
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.API
@@ -29,13 +30,15 @@ import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 val VirtualFile.toFile: File get() = File(this.path)
 
-class WebDevAction : BaseAction() {
+class WebDevelopmentAssistantAction : BaseAction() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/webDev"
 
@@ -201,7 +204,7 @@ class WebDevAction : BaseAction() {
         private val codeReviewer by lazy { getActor(ActorTypes.CodeReviewer) as SimpleActor }
         private val etcActor by lazy { getActor(ActorTypes.EtcCodingActor) as SimpleActor }
 
-        private val codeFiles = mutableMapOf<String, String>()
+        private val codeFiles = mutableMapOf<Path, String>()
 
         fun start(
             userMessage: String,
@@ -265,7 +268,7 @@ class WebDevAction : BaseAction() {
                                 )
                             ),
                             javascriptActor,
-                            path, "js", "javascript"
+                            File(path).toPath(), "js", "javascript"
                         )
 
 
@@ -279,7 +282,7 @@ class WebDevAction : BaseAction() {
                                 )
                             ),
                             cssActor,
-                            path
+                            File(path).toPath()
                         )
 
                         "html" -> draftResourceCode(
@@ -292,7 +295,7 @@ class WebDevAction : BaseAction() {
                                 )
                             ),
                             htmlActor,
-                            path
+                            File(path).toPath()
                         )
 
                         else -> draftResourceCode(
@@ -304,7 +307,8 @@ class WebDevAction : BaseAction() {
                                     "Render $path - $description"
                                 )
                             ),
-                            etcActor, path
+                            etcActor,
+                            File(path).toPath()
                         )
 
                     }
@@ -312,7 +316,7 @@ class WebDevAction : BaseAction() {
                 // Apply codeReviewer
                 fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
                     "# $path\n```${
-                        path.split('.').last().let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+                        path.toString().split('.').last().let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
                     }\n${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
                 }
 
@@ -321,7 +325,7 @@ class WebDevAction : BaseAction() {
                     //val task = ui.newTask()
                     return task.complete(
                         ui.socketManager.addApplyFileDiffLinks(
-                            root = codeFiles.keys.map { File(it).toPath() }.toTypedArray().commonRoot(),
+                            root = codeFiles.keys.map { it }.toTypedArray().commonRoot(),
                             code = { codeFiles },
                             response = design,
                             handle = { newCodeMap ->
@@ -379,8 +383,8 @@ class WebDevAction : BaseAction() {
             task: SessionTask,
             request: Array<ApiModel.ChatMessage>,
             actor: SimpleActor,
-            path: String,
-            vararg languages: String = arrayOf(path.split(".").last().lowercase()),
+            path: Path,
+            vararg languages: String = arrayOf(path.toString().split(".").last().lowercase()),
         ) {
             try {
                 var code = actor.respond(emptyList(), api, *request)
@@ -394,7 +398,7 @@ class WebDevAction : BaseAction() {
                             ui = ui
                         )
                     )
-                    task.add("<a href='${task.saveFile(path, code.toByteArray(Charsets.UTF_8))}'>$path</a> Updated")
+                    task.add("<a href='${task.saveFile(path.toString(), code.toByteArray(Charsets.UTF_8))}'>$path</a> Updated")
                     codeFiles[path] = code
                     val request1 = (request.toList() +
                             listOf(
@@ -492,7 +496,7 @@ class WebDevAction : BaseAction() {
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(WebDevAction::class.java)
+        private val log = LoggerFactory.getLogger(WebDevelopmentAssistantAction::class.java)
         private val agents = mutableMapOf<Session, WebDevApp>()
         val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
         private fun initApp(server: AppServer, path: String): ChatServer {

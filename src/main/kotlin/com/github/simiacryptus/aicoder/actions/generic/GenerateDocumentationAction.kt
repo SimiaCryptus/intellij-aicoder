@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -33,7 +34,8 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 
-class DocumentationCompilerAction : FileContextAction<DocumentationCompilerAction.Settings>() {
+class GenerateDocumentationAction : FileContextAction<GenerateDocumentationAction.Settings>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.getSelectedFile(event)?.isDirectory == false) return false

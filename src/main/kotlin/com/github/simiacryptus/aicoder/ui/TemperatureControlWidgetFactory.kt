@@ -1,5 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.ui
 
+import icons.MyIcons
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -112,13 +113,13 @@ class TemperatureControlWidgetFactory : StatusBarWidgetFactory {
         }
 
         override fun getIcon(): Icon? =
-            IconLoader.findIcon(
-                url = javaClass.classLoader.getResource("./META-INF/toolbarIcon.svg"),
-                storeToCache = true
-            )
+            MyIcons.icon
 
         override fun getPresentation(): StatusBarWidget.WidgetPresentation {
             return this
+        }
+
+        companion object {
         }
     }
 

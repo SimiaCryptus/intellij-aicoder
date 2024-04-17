@@ -5,10 +5,6 @@
     <category>AI-Powered</category>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
-    <!--
-    <depends>com.intellij.java</depends>
-    <depends>org.jetbrains.kotlin</depends>
-    -->
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="com.github.simiacryptus.aicoder.util.PluginStartupActivity" />
@@ -20,12 +16,6 @@
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.ConsolidatedWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.ConsolidatedWidgetFactory"
                                 order="first"/>
-        <!--<statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
-                                id="com.github.simiacryptus.aicoder.ui.TemperatureControlWidgetFactory"
-                                order="first"/>
-        <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.ModelSelectionWidgetFactory"
-                                id="com.github.simiacryptus.aicoder.ui.ModelSelectionWidgetFactory"
-                                order="first"/>-->
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 order="first"/>
@@ -33,37 +23,44 @@
 
 
     <actions>
+        <action id="GenericChat" class="com.github.simiacryptus.aicoder.actions.generic.GenericChatAction"
+                icon="MyIcons.icon"
+                text="Chat with AI"
+                description="Start a chat session with an AI to discuss code or get assistance">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"
                class="com.github.simiacryptus.aicoder.ui.EditorMenu"
                popup="true"
+               icon="MyIcons.icon"
                text="_AI Coder"
-               icon="AllIcons.Actions.Lightning"
                description="AI coding assistant tools">
-            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+               <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>
         <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu"
                class="com.github.simiacryptus.aicoder.ui.ProjectMenu"
                popup="true"
+               icon="MyIcons.icon"
                text="_AI Coder"
-               icon="AllIcons.Actions.Lightning"
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
         </group>
 
-        <action class="com.github.simiacryptus.aicoder.actions.generic.DictationAction"
-                text="Dictation"
-                description="Voice to text dictation">
+        <action class="com.github.simiacryptus.aicoder.actions.legacy.VoiceToTextAction"
+            text="Voice to Text"
+            description="Convert spoken language into text using AI.">
             <!--DOC
-        The `Dictation` action allows you to speak into the microphone and have the text automatically inserted into the document. This uses OpenAI's Whisper API.
+        Speak into your microphone and convert your speech to text in your document using OpenAI's Whisper API.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.generic.ReplaceOptionsAction"
-                text="Replace Optio_ns"
-                description="Replace options">
+        <action class="com.github.simiacryptus.aicoder.actions.legacy.ReplaceWithSuggestionsAction"
+            text="Replace with Suggestions"
+            description="Suggest replacements for selected text based on context.">
             <!--DOC
-        The `Replace Options` action allows you to quickly replace selected text with one of a set of suggested options.
+        Quickly replace selected text with AI-suggested alternatives, considering the surrounding context.
         This also captures some preceding and following context, but uses a different prompting method to suggest the
         options.
         For example, if you type â€˜I had a dayâ€™ and place the cursor after 'a' and then use the `Replace Options` action,
@@ -72,36 +69,36 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="N"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.AppendAction"
-                text="_Chat Append Text"
-                description="Append text using the Chat API">
+        </action> 
+        <action class="com.github.simiacryptus.aicoder.actions.legacy.AppendTextWithChatAction"
+            text="Append Text via Chat"
+            description="Append text to your current selection using AI-driven chat suggestions.">
             <!--DOC
             The `Chat Append Text` action allows you to quickly append text to the end of the current selection.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/> 
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.CreateFileAction"
-                text="_Create File"
-                description="Create file">
+        <action class="com.github.simiacryptus.aicoder.actions.generic.CreateFileFromDescriptionAction"
+            text="Create File from Description"
+            description="Generate a new file based on a natural language description.">
             <!--DOC
             The `Create File` action allows you to quickly create a new file via a user-supplied directive.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.generic.AnalogueFileAction"
-                text="_Create Analogue File"
-                description="Create analogue file">
+        <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateRelatedFileAction"
+            text="Generate Related File"
+            description="Create a new file related to the selected one based on AI suggestions.">
             <!--DOC
         The `Create Analogue File` action allows you to quickly create a new analogue file - a file which is
         automatically generated from the selected file using a user-supplied directive.
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.DocumentationCompilerAction"
+        <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateDocumentationAction"
                 text="Compile Documentation"
                 description="Compile documentation">
             <!--DOC
@@ -110,7 +107,7 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.WebDevAction"
+        <action class="com.github.simiacryptus.aicoder.actions.generic.WebDevelopmentAssistantAction"
                 text="Web Dev"
                 description="Web Dev">
             <!--DOC
@@ -119,7 +116,7 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.AutoDevAction"
+        <action class="com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction"
                 text="Auto Dev"
                 description="Auto Dev">
             <!--DOC
@@ -129,7 +126,7 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
         <!--IncrementalCodeGenAction-->
-        <action class="com.github.simiacryptus.aicoder.actions.generic.TaskRunnerAction"
+        <action class="com.github.simiacryptus.aicoder.actions.generic.PlanAheadAction"
                 text="Task Runner"
                 description="Task Runner">
             <!--DOC
@@ -138,7 +135,7 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.LineFilterChatAction"
+        <action class="com.github.simiacryptus.aicoder.actions.dev.LineFilterChatAction"
                 text="Filter Lines"
                 description="Filter lines">
             <!--DOC
@@ -157,7 +154,7 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="first"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.RedoLast"
+        <action class="com.github.simiacryptus.aicoder.actions.code.RedoLast"
                 text="Re_do Last"
                 description="Redo last">
             <!--DOC
@@ -239,7 +236,7 @@
             -->
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="first"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.RenameVariablesAction"
+        <action class="com.github.simiacryptus.aicoder.actions.legacy.RenameVariablesAction"
                 text="Rename _Variables"
                 description="Rename variables">
             <!--DOC
@@ -263,7 +260,7 @@
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.code.InsertImplementationAction"
+        <action class="com.github.simiacryptus.aicoder.actions.legacy.InsertImplementationAction"
                 text="Insert _Implementation"
                 description="Insert implementation">
             <!--DOC
@@ -286,7 +283,7 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.CommentsAction"
+        <action class="com.github.simiacryptus.aicoder.actions.legacy.CommentsAction"
                 text="Add Code _Comments"
                 description="Add code comments">
             <!--DOC
@@ -298,7 +295,7 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.DocAction"
+        <action class="com.github.simiacryptus.aicoder.actions.legacy.DocAction"
                 text="Add D_oc Comments"
                 description="Add code comments">
             <!--DOC
@@ -311,7 +308,7 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.ImplementStubAction"
+        <action class="com.github.simiacryptus.aicoder.actions.legacy.ImplementStubAction"
                 text="_Implement Stub"
                 description="Implement stub">
             <!--DOC

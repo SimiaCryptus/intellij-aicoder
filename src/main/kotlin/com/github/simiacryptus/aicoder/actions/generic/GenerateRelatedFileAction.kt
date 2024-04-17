@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -20,7 +21,8 @@ import java.io.FileInputStream
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
-class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
+class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Settings>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (UITools.getSelectedFile(event)?.isDirectory == true) return false
         return super.isEnabled(event)

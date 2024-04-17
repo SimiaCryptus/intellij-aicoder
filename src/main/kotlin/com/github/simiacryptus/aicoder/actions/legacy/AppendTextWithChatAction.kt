@@ -1,13 +1,16 @@
-package com.github.simiacryptus.aicoder.actions.generic
+package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.ApiModel.*
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 
-class AppendAction : SelectionAction<String>() {
+class AppendTextWithChatAction : SelectionAction<String>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun getConfig(project: Project?): String {
         return ""
     }

@@ -1,16 +1,15 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.diff.addApplyFileDiffLinks
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
@@ -25,8 +24,10 @@ import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
+import java.nio.file.Path
 
 class MultiDiffChatAction : BaseAction() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/multiDiffChat"
 
@@ -34,10 +35,7 @@ class MultiDiffChatAction : BaseAction() {
 
         val dataContext = e.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-        val languages =
-            virtualFiles?.associate { it to ComputerLanguage.findByExtension(it.extension ?: "")?.name } ?: mapOf()
-        val virtualFileMap = virtualFiles?.associate { it.toNioPath() to it } ?: mapOf()
-        val codeFiles = mutableMapOf<String, String>()
+        val codeFiles = mutableMapOf<Path, String>()
         val folder = UITools.getSelectedFolder(e)
         val root = if (null != folder) {
             folder.toFile.toPath()
@@ -45,19 +43,20 @@ class MultiDiffChatAction : BaseAction() {
             getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")).toPath()
         }
 
-        virtualFiles?.associate { file ->
+        virtualFiles?.forEach { file ->
             val relative = root.relativize(file.toNioPath())
-            val path = relative.toString()
-            val language = languages[file] ?: "plaintext"
-            val code = file.contentsToByteArray().toString(Charsets.UTF_8)
-            codeFiles[path] = code
-            path to language
+            val path = relative
+            codeFiles[path] = file.contentsToByteArray().toString(Charsets.UTF_8)
         }
 
         fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
-            "# $path\n```${
-                path.split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-            }\n${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
+            val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+            """
+            |# $path
+            |```$extension
+            |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+            |```
+            """.trimMargin()
         }
 
         val session = StorageInterface.newGlobalID()
@@ -68,34 +67,34 @@ class MultiDiffChatAction : BaseAction() {
             session = session,
             model = AppSettingsState.instance.smartModel.chatModel(),
             userInterfacePrompt = """
-        |
-        |$codeSummary
-        |
-        """.trimMargin().trim(),
+                |
+                |$codeSummary
+                |
+                """.trimMargin().trim(),
             systemPrompt = """
-        You are a helpful AI that helps people with coding.
-        
-        You will be answering questions about the following code:
-        
-        $codeSummary
-        
-        Response should use one or more code patches in diff format within ```diff code blocks.
-        Each diff should be preceded by a header that identifies the file being modified.
-        The diff format should use + for line additions, - for line deletions.
-        The diff should include 2 lines of context before and after every change.
-        
-        Example:
-        
-        Explanation text
-        
-        ### scripts/filename.js
-        ```diff
-        - const b = 2;
-        + const a = 1;
-        ```
-        
-        Continued text
-        """.trimIndent(),
+                |You are a helpful AI that helps people with coding.
+                |
+                |You will be answering questions about the following code:
+                |
+                |$codeSummary
+                |
+                |Response should use one or more code patches in diff format within ```diff code blocks.
+                |Each diff should be preceded by a header that identifies the file being modified.
+                |The diff format should use + for line additions, - for line deletions.
+                |The diff should include 2 lines of context before and after every change.
+                |
+                |Example:
+                |
+                |Explanation text
+                |
+                |### scripts/filename.js
+                |```diff
+                |- const b = 2;
+                |+ const a = 1;
+                |```
+                |
+                |Continued text
+                """.trimMargin(),
             api = api,
             applicationClass = ApplicationServer::class.java,
             storage = ApplicationServices.dataStorageFactory(DiffChatAction.root),

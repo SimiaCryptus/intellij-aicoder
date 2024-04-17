@@ -33,7 +33,7 @@ Enhance your development workflow with AI Coding Assistant's diverse range of ac
 #### Code Editing and Review
 
 - **DiffChatAction & MultiDiffChatAction**: Initiate AI-driven chat sessions to generate and apply code diffs. Perfect for collaborative code reviews and multi-file adjustments.
-- **AutoDevAction**: Translate user directives into actionable development tasks and code modifications automatically, streamlining your project progress.
+- **MultiStepPatchAction**: Translate user directives into actionable development tasks and code modifications automatically, streamlining your project progress.
 
 #### Documentation and Comments
 
@@ -43,7 +43,7 @@ Enhance your development workflow with AI Coding Assistant's diverse range of ac
 #### Code Generation
 
 - **CodeChatAction**: Engage in real-time discussions about code snippets and receive AI-powered coding assistance directly within your IDE.
-- **WebDevAction**: Get AI-powered assistance with web development, including automatic code generation and architectural suggestions.
+- **WebDevelopmentAssistantAction**: Get AI-powered assistance with web development, including automatic code generation and architectural suggestions.
 
 #### Development Workflow Enhancement
 
@@ -52,7 +52,7 @@ Enhance your development workflow with AI Coding Assistant's diverse range of ac
 
 #### Text Transformation
 
-- **AppendAction**: Expand on your initial text selection with AI-generated content, seamlessly integrating new ideas into your work.
-- **ReplaceOptionsAction**: Explore and select from AI-generated text options to replace your current selection, enhancing content quality and variety.
+- **AppendTextWithChatAction**: Expand on your initial text selection with AI-generated content, seamlessly integrating new ideas into your work.
+- **ReplaceWithSuggestionsAction**: Explore and select from AI-generated text options to replace your current selection, enhancing content quality and variety.
 
 Start exploring these actions from the context menu within your editor or project view to significantly enhance your development experience.

@@ -614,12 +614,12 @@ The `InternalCoderAction` class is part of a plugin designed to integrate an int
 
 This class exemplifies how to extend IDE functionality with external services (like a coding agent) by integrating with the IDE's action system, managing sessions, and interacting with application servers and user interfaces.
 
-# generic\AnalogueFileAction.kt
+# generic\GenerateRelatedFileAction.kt
 
 
-#### AnalogueFileAction Class Documentation
+#### CreateFileFromTemplateAction Class Documentation
 
-The `AnalogueFileAction` class is designed to facilitate the creation of new files within a project, based on a given directive and the content of an existing file. This action is context-sensitive, meaning it is only enabled when a non-directory file is selected in the IDE. The class extends `FileContextAction` and is tailored for use within IntelliJ-based IDEs.
+The `CreateFileFromTemplateAction` class is designed to facilitate the creation of new files within a project, based on a given directive and the content of an existing file. This action is context-sensitive, meaning it is only enabled when a non-directory file is selected in the IDE. The class extends `FileContextAction` and is tailored for use within IntelliJ-based IDEs.
 
 
 ##### Key Components
@@ -665,12 +665,12 @@ This action is intended to be triggered from the IDE's context menu when a file 
 
 This class is a part of the `com.github.simiacryptus.aicoder.actions.generic` package and requires several dependencies, including the IntelliJ Platform SDK, Apache Commons IO, and the `com.simiacryptus.jopenai` package for AI model interaction.
 
-# generic\AppendAction.kt
+# generic\AppendTextWithChatAction.kt
 
 
-#### Class Documentation: `AppendAction`
+#### Class Documentation: `AppendTextWithChatAction`
 
-`AppendAction` is a specialized action class that extends the functionality of `SelectionAction<String>`. It is designed to append text to the end of a user's selected text within an IntelliJ IDEA project environment. This class leverages the OpenAI API to generate the text that will be appended, using a model specified in the application's settings.
+`AppendTextWithChatAction` is a specialized action class that extends the functionality of `SelectionAction<String>`. It is designed to append text to the end of a user's selected text within an IntelliJ IDEA project environment. This class leverages the OpenAI API to generate the text that will be appended, using a model specified in the application's settings.
 
 
 ##### Configuration
@@ -680,7 +680,7 @@ The `getConfig` method is designed to fetch configuration settings for the actio
 
 ##### Process Selection
 
-The core functionality of the `AppendAction` class is encapsulated in the `processSelection` method. This method takes a `SelectionState` and a configuration string as inputs and returns a string that represents the original selected text with additional text appended to it. The method performs the following steps:
+The core functionality of the `AppendTextWithChatAction` class is encapsulated in the `processSelection` method. This method takes a `SelectionState` and a configuration string as inputs and returns a string that represents the original selected text with additional text appended to it. The method performs the following steps:
 
 1. **Fetch Settings**: It retrieves the current application settings using `AppSettingsState.instance`, which includes the default chat model and temperature settings for generating text.
 
@@ -706,9 +706,9 @@ This class is intended to be used within the context of an IntelliJ IDEA plugin,
 
 This class demonstrates a practical application of AI in enhancing developer tools, specifically in automating text-related tasks within an IDE.
 
-# generic\DictationAction.kt
+# generic\VoiceToTextAction.kt
 
-The `DictationAction` class is designed to facilitate speech-to-text functionality within an IDE, leveraging audio recording and processing to convert spoken words into text. This process involves capturing audio, processing it for clarity, and then converting the audio into text which is inserted at the current caret position or replaces the selected text in the editor. A significant part of this functionality revolves around the management and use of a "prompt" text, which is crucial for understanding and documenting how the dictation action operates.
+The `VoiceToTextAction` class is designed to facilitate speech-to-text functionality within an IDE, leveraging audio recording and processing to convert spoken words into text. This process involves capturing audio, processing it for clarity, and then converting the audio into text which is inserted at the current caret position or replaces the selected text in the editor. A significant part of this functionality revolves around the management and use of a "prompt" text, which is crucial for understanding and documenting how the dictation action operates.
 
 
 #### Prompt Text Configuration and Logic
@@ -730,7 +730,7 @@ The prompt text plays a critical role in the speech-to-text conversion process, 
 
 #### Closing Remarks
 
-The management of the prompt text within the `DictationAction` class showcases a thoughtful approach to enhancing the accuracy and usability of speech-to-text functionality in an IDE setting. By maintaining and updating a context-aware prompt, the implementation ensures that users can enjoy a more seamless and accurate dictation experience, even during extended dictation sessions. This feature underscores the importance of context in natural language processing applications and demonstrates a practical application of such principles in software development tools.
+The management of the prompt text within the `VoiceToTextAction` class showcases a thoughtful approach to enhancing the accuracy and usability of speech-to-text functionality in an IDE setting. By maintaining and updating a context-aware prompt, the implementation ensures that users can enjoy a more seamless and accurate dictation experience, even during extended dictation sessions. This feature underscores the importance of context in natural language processing applications and demonstrates a practical application of such principles in software development tools.
 
 # generic\CodeChatAction.kt
 
@@ -799,14 +799,14 @@ The `CodeChatAction` class is designed to facilitate a code chat feature within 
 
 The `CodeChatAction` class is a comprehensive solution for integrating a code-focused chat feature within an IDE. It handles the initialization of necessary components, manages sessions, and ensures seamless communication between the IDE and the web-based chat interface.
 
-# generic\AutoDevAction.kt
+# generic\MultiStepPatchAction.kt
 
-The `AutoDevAction` class is part of a larger system designed to automate development tasks within a software project. It leverages AI models to interpret user requests, generate action plans, and apply changes to the codebase. This documentation focuses on the prompt text, configuration, and related logic within the `AutoDevAction` class.
+The `MultiStepPatchAction` class is part of a larger system designed to automate development tasks within a software project. It leverages AI models to interpret user requests, generate action plans, and apply changes to the codebase. This documentation focuses on the prompt text, configuration, and related logic within the `MultiStepPatchAction` class.
 
 
 #### Overview
 
-The `AutoDevAction` class initiates an automated development assistant that interacts with the user through a web interface. It creates a session for each user request, processes the input, and utilizes AI agents to generate and execute a series of development tasks based on the user's instructions.
+The `MultiStepPatchAction` class initiates an automated development assistant that interacts with the user through a web interface. It creates a session for each user request, processes the input, and utilizes AI agents to generate and execute a series of development tasks based on the user's instructions.
 
 
 #### Key Components
@@ -845,7 +845,7 @@ The `AutoDevAction` class initiates an automated development assistant that inte
 
 #### Logic Flow
 
-1. **Initialization**: Upon handling an `AnActionEvent`, the `AutoDevAction` class initializes a session and sets up the `AutoDevApp`.
+1. **Initialization**: Upon handling an `AnActionEvent`, the `MultiStepPatchAction` class initializes a session and sets up the `AutoDevApp`.
 2. **User Interaction**: The `AutoDevApp` listens for user messages and, upon receiving one, invokes the `AutoDevAgent`.
 3. **Task Generation**: The `AutoDevAgent` uses the `DesignActor` to break down the user's request into a list of tasks.
 4. **Task Execution**: For each task, the `TaskCodingActor` generates code patches to implement the required changes.
@@ -854,11 +854,11 @@ The `AutoDevAction` class initiates an automated development assistant that inte
 
 #### Conclusion
 
-The `AutoDevAction` class and its components represent a sophisticated system for automating development tasks using AI. By interpreting user requests, generating actionable plans, and executing code changes, it aims to streamline the development process and reduce manual effort.
+The `MultiStepPatchAction` class and its components represent a sophisticated system for automating development tasks using AI. By interpreting user requests, generating actionable plans, and executing code changes, it aims to streamline the development process and reduce manual effort.
 
-# generic\CreateFileAction.kt
+# generic\CreateFileFromDescriptionAction.kt
 
-This Kotlin class, `CreateFileAction`, is part of a larger system designed to automate file creation within a project structure based on natural language directives. It extends `FileContextAction` with specific settings for creating files. The action utilizes an AI model to interpret directives and generate the necessary file content and path. Below is a detailed breakdown of its components and functionality:
+This Kotlin class, `CreateFileFromDescriptionAction`, is part of a larger system designed to automate file creation within a project structure based on natural language directives. It extends `FileContextAction` with specific settings for creating files. The action utilizes an AI model to interpret directives and generate the necessary file content and path. Below is a detailed breakdown of its components and functionality:
 
 
 #### Class Overview
@@ -930,9 +930,9 @@ After configuring the prompts and related logic, the action initiates a chat ses
 
 The `LineFilterChatAction` class leverages detailed prompt configuration and sophisticated logic to facilitate an interactive chat session focused on code discussion. By providing clear prompts and managing the chat session efficiently, it offers a valuable tool for developers seeking assistance with their code.
 
-# generic\DocumentationCompilerAction.kt
+# generic\GenerateDocumentationAction.kt
 
-The `DocumentationCompilerAction` class is designed to automate the process of compiling documentation from selected files within an IntelliJ IDEA project. It leverages the OpenAI API to transform the content of these files into a more structured and user-friendly documentation format. Below is a detailed explanation of the key components and logic related to the configuration and processing of this action.
+The `GenerateDocumentationAction` class is designed to automate the process of compiling documentation from selected files within an IntelliJ IDEA project. It leverages the OpenAI API to transform the content of these files into a more structured and user-friendly documentation format. Below is a detailed explanation of the key components and logic related to the configuration and processing of this action.
 
 
 #### Configuration
@@ -1083,9 +1083,9 @@ The `RedoLast` class extends `BaseAction`, inheriting its basic action handling 
 
 The `RedoLast` action enhances the AI Coder experience in IntelliJ by providing a straightforward mechanism to redo the last performed action. By integrating with the IntelliJ action system and utilizing the `retry` map for tracking actions, it offers a seamless way for developers to manage their AI-assisted coding changes.
 
-# generic\ReplaceOptionsAction.kt
+# generic\ReplaceWithSuggestionsAction.kt
 
-The `ReplaceOptionsAction` class, part of the `com.github.simiacryptus.aicoder.actions.generic` package, extends the functionality of `SelectionAction<String>` to provide a mechanism for suggesting text replacements within an IDE environment. This class is designed to interact with a virtual API to generate text suggestions based on the context of the selected text in the editor. The core functionality revolves around generating suggestions for replacing a selected piece of text with alternatives, potentially improving or altering the code or documentation in meaningful ways.
+The `ReplaceWithSuggestionsAction` class, part of the `com.github.simiacryptus.aicoder.actions.generic` package, extends the functionality of `SelectionAction<String>` to provide a mechanism for suggesting text replacements within an IDE environment. This class is designed to interact with a virtual API to generate text suggestions based on the context of the selected text in the editor. The core functionality revolves around generating suggestions for replacing a selected piece of text with alternatives, potentially improving or altering the code or documentation in meaningful ways.
 
 
 #### Key Components and Logic
@@ -1120,11 +1120,11 @@ The `ReplaceOptionsAction` class, part of the `com.github.simiacryptus.aicoder.a
 
 
 #### Summary
-`ReplaceOptionsAction` leverages a virtual API to enhance text editing capabilities by suggesting contextually relevant replacements for selected text. It demonstrates a practical application of machine learning models, encapsulated by the `ChatProxy`, to improve developer productivity within an IDE.
+`ReplaceWithSuggestionsAction` leverages a virtual API to enhance text editing capabilities by suggesting contextually relevant replacements for selected text. It demonstrates a practical application of machine learning models, encapsulated by the `ChatProxy`, to improve developer productivity within an IDE.
 
-# generic\WebDevAction.kt
+# generic\WebDevelopmentAssistantAction.kt
 
-The `WebDevAction` class is part of a larger system designed to assist in web development tasks by leveraging AI-driven agents. This system is structured to handle user requests, generate web development artifacts (like HTML, CSS, and JavaScript files), and provide architectural guidance for web applications. The core components facilitating these functionalities are the `WebDevApp` and `WebDevAgent` classes, along with their nested classes and enums.
+The `WebDevelopmentAssistantAction` class is part of a larger system designed to assist in web development tasks by leveraging AI-driven agents. This system is structured to handle user requests, generate web development artifacts (like HTML, CSS, and JavaScript files), and provide architectural guidance for web applications. The core components facilitating these functionalities are the `WebDevApp` and `WebDevAgent` classes, along with their nested classes and enums.
 
 
 #### WebDevApp Class
@@ -1162,7 +1162,7 @@ When a user sends a message to the `WebDevApp`, a `WebDevAgent` instance is crea
 
 #### Summary
 
-The `WebDevAction` system is a sophisticated tool that leverages AI to assist in various aspects of web development, from planning and architecture to coding and code review. By defining specific roles for AI-driven agents and configuring them with detailed prompts, the system can generate accurate and useful responses to facilitate the web development process.
+The `WebDevelopmentAssistantAction` system is a sophisticated tool that leverages AI to assist in various aspects of web development, from planning and architecture to coding and code review. By defining specific roles for AI-driven agents and configuring them with detailed prompts, the system can generate accurate and useful responses to facilitate the web development process.
 
 # markdown\MarkdownImplementActionGroup.kt
 

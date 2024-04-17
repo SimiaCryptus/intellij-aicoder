@@ -27,7 +27,7 @@ and instructions on how to use them to improve your coding efficiency.
 - **Documentation Actions**
     - `DocAction`: Select a code block and activate this action to generate and insert documentation above the selected
       block.
-    - `DocumentationCompilerAction`: Select files or folders in your project, trigger this action, and specify output
+    - `GenerateDocumentationAction`: Select files or folders in your project, trigger this action, and specify output
       settings to compile documentation.
 - **Code Comments Actions**
     - `CommentsAction`: Highlight a code block and activate this action to automatically add comments explaining the
@@ -36,9 +36,9 @@ and instructions on how to use them to improve your coding efficiency.
       documentation.
 - **Code Generation Actions**
     - `InternalCoderAction`: Start a coding session with this action to receive coding assistance directly in the IDE.
-    - `WebDevAction`: Trigger this action for AI-powered assistance with web development tasks, including code
+    - `WebDevelopmentAssistantAction`: Trigger this action for AI-powered assistance with web development tasks, including code
       generation and architecture suggestions.
-    - `AutoDevAction`: Automates development tasks by translating user directives into actionable development tasks and code modifications.
+    - `MultiStepPatchAction`: Automates development tasks by translating user directives into actionable development tasks and code modifications.
 - **Markdown Enhancement Actions**
     - `MarkdownImplementActionGroup`: In a Markdown file, select text and use this action to generate code snippets in
       various languages.
@@ -49,9 +49,9 @@ and instructions on how to use them to improve your coding efficiency.
       of them.
     - `RedoLast`: Use this action to redo the last AI Coder action you executed, enhancing your workflow efficiency.
 - **Text Transformation Actions**
-    - `AppendAction`: Select text and trigger this action to append AI-generated text, expanding on your initial
+    - `AppendTextWithChatAction`: Select text and trigger this action to append AI-generated text, expanding on your initial
       selection.
-    - `ReplaceOptionsAction`: Highlight text and activate this action to receive and choose from AI-generated text
+    - `ReplaceWithSuggestionsAction`: Highlight text and activate this action to receive and choose from AI-generated text
       options for replacement.
 
 Each action is designed to seamlessly integrate into your development workflow, offering a range of enhancements from
@@ -868,13 +868,13 @@ development experience through context-aware suggestions and interactive coding 
 agents and a dedicated UI, developers can improve their coding efficiency and quality directly within their preferred
 development environment.
 
-# generic\AppendAction.kt
+# generic\AppendTextWithChatAction.kt
 
-## AppendAction Documentation
+## AppendTextWithChatAction Documentation
 
 ### Overview
 
-The `AppendAction` class is a specialized action designed to append text to the end of a user's selected text within an
+The `AppendTextWithChatAction` class is a specialized action designed to append text to the end of a user's selected text within an
 IDE environment. It leverages OpenAI's language model to generate contextually relevant text based on the user's
 selection.
 
@@ -902,7 +902,7 @@ selection.
 
 ### Usage
 
-To use the `AppendAction`, ensure it is properly integrated into your IntelliJ platform-based application or plugin. It
+To use the `AppendTextWithChatAction`, ensure it is properly integrated into your IntelliJ platform-based application or plugin. It
 does not require manual configuration but relies on the application's settings for the OpenAI API parameters.
 
 When triggered, it will automatically append contextually generated text to the user's selected text, enhancing or
@@ -917,11 +917,11 @@ completing their input based on the model's understanding and the provided promp
 
 ### Conclusion
 
-The `AppendAction` offers a convenient way to extend user input with AI-generated text, seamlessly integrating with the
+The `AppendTextWithChatAction` offers a convenient way to extend user input with AI-generated text, seamlessly integrating with the
 IntelliJ platform. By leveraging OpenAI's language models, it provides a powerful tool for enhancing user productivity
 and creativity within the development environment.
 
-# generic\AnalogueFileAction.kt
+# generic\GenerateRelatedFileAction.kt
 
 ## Analogue File Action Documentation
 
@@ -983,13 +983,13 @@ your IDE's plugin settings panel.
 For issues, feature requests, or contributions, please refer to the project's GitHub repository or contact the
 development team through the appropriate channels.
 
-# generic\AutoDevAction.kt
+# generic\MultiStepPatchAction.kt
 
-## AutoDevAction Documentation
+## MultiStepPatchAction Documentation
 
 ### Overview
 
-The `AutoDevAction` class is part of a system designed to automate development tasks within a project. It integrates
+The `MultiStepPatchAction` class is part of a system designed to automate development tasks within a project. It integrates
 with an IDE to provide a user-friendly interface for automating code modifications, leveraging AI models to interpret
 user requests and generate actionable development tasks.
 
@@ -1037,7 +1037,7 @@ suggestions.
 
 ### How It Works
 
-1. The `AutoDevAction` class initiates a session and opens a web UI for user interaction.
+1. The `MultiStepPatchAction` class initiates a session and opens a web UI for user interaction.
 2. The user inputs a development request in the web UI.
 3. The `AutoDevApp` processes this request, utilizing `AutoDevAgent` to interact with AI models and generate a list of
    actionable tasks.
@@ -1051,18 +1051,18 @@ suggestions.
 
 ### Conclusion
 
-The `AutoDevAction` system offers a powerful tool for automating development tasks, leveraging AI to streamline the
+The `MultiStepPatchAction` system offers a powerful tool for automating development tasks, leveraging AI to streamline the
 process of code modification. By providing a user-friendly interface and integrating with advanced AI models, it
 simplifies the task management process, making it easier for developers to implement changes and enhancements to their
 projects.
 
-# generic\CreateFileAction.kt
+# generic\CreateFileFromDescriptionAction.kt
 
-## CreateFileAction Documentation
+## CreateFileFromDescriptionAction Documentation
 
 ### Overview
 
-The `CreateFileAction` class is designed to automate the process of generating and creating new files within a project
+The `CreateFileFromDescriptionAction` class is designed to automate the process of generating and creating new files within a project
 based on natural language directives. It leverages the OpenAI API to interpret these directives and generate the
 corresponding file content and path. This action is part of a larger system aimed at enhancing developer productivity
 through automation.
@@ -1102,7 +1102,7 @@ an appropriate directory within the project.
 
 ### Conclusion
 
-The `CreateFileAction` class streamlines the process of creating new files within a project, guided by natural language
+The `CreateFileFromDescriptionAction` class streamlines the process of creating new files within a project, guided by natural language
 directives. It simplifies tasks that would otherwise require manual file creation and content generation, thereby
 enhancing developer productivity.
 
@@ -1161,13 +1161,13 @@ To use the `CodeChatAction`, follow these steps:
 
 For further assistance, consult the plugin's support resources or contact the development team.
 
-# generic\DictationAction.kt
+# generic\VoiceToTextAction.kt
 
-## DictationAction Plugin Documentation
+## VoiceToTextAction Plugin Documentation
 
 ### Overview
 
-The DictationAction plugin is designed to enhance your coding experience by allowing you to dictate code and comments
+The VoiceToTextAction plugin is designed to enhance your coding experience by allowing you to dictate code and comments
 directly into your IDE. This innovative tool captures your voice, processes the audio, and converts it into text,
 inserting the transcribed text at the current cursor position or replacing the selected text in your editor.
 
@@ -1182,7 +1182,7 @@ inserting the transcribed text at the current cursor position or replacing the s
 
 ### How to Use
 
-1. **Start Dictation**: Trigger the DictationAction from the IDE's action menu. A status dialog appears indicating that
+1. **Start Dictation**: Trigger the VoiceToTextAction from the IDE's action menu. A status dialog appears indicating that
    dictation is active.
 2. **Dictate Your Code or Comments**: Speak clearly into your microphone. Your voice is captured, processed, and
    transcribed into text in real-time.
@@ -1192,7 +1192,7 @@ inserting the transcribed text at the current cursor position or replacing the s
 ### Requirements
 
 - A microphone connected to your computer.
-- The DictationAction plugin installed in your IDE.
+- The VoiceToTextAction plugin installed in your IDE.
 
 ### Troubleshooting
 
@@ -1204,11 +1204,11 @@ inserting the transcribed text at the current cursor position or replacing the s
 
 ### Support
 
-For issues, suggestions, or contributions, please visit the DictationAction plugin repository on GitHub.
+For issues, suggestions, or contributions, please visit the VoiceToTextAction plugin repository on GitHub.
 
 ---
 
-This documentation provides a concise overview of the DictationAction plugin's functionality and usage. For more
+This documentation provides a concise overview of the VoiceToTextAction plugin's functionality and usage. For more
 detailed information or to contribute to the project, please refer to the project's GitHub page.
 
 # generic\DiffChatAction.kt
@@ -1382,7 +1382,7 @@ The `LineFilterChatAction` enhances coding efficiency by providing an AI-powered
 assistance. It leverages the context of your code, including language and structure, to offer relevant and interactive
 support.
 
-# generic\DocumentationCompilerAction.kt
+# generic\GenerateDocumentationAction.kt
 
 ## Documentation Compiler Action
 
@@ -1428,7 +1428,7 @@ leveraging natural language processing to enhance the documentation process.
 This action is part of a plugin package. To install:
 
 1. Open your IDE and navigate to the plugin marketplace.
-2. Search for the plugin package containing `DocumentationCompilerAction`.
+2. Search for the plugin package containing `GenerateDocumentationAction`.
 3. Install the plugin and restart your IDE.
 
 ### Conclusion
@@ -1481,13 +1481,13 @@ The RedoLast action is a valuable tool for developers using AI Coder in IntelliJ
 redo actions. By integrating this feature into your workflow, you can enhance your productivity and streamline your
 development process.
 
-# generic\ReplaceOptionsAction.kt
+# generic\ReplaceWithSuggestionsAction.kt
 
-## ReplaceOptionsAction Documentation
+## ReplaceWithSuggestionsAction Documentation
 
 ### Overview
 
-`ReplaceOptionsAction` is an IntelliJ IDEA plugin action designed to assist developers by suggesting alternative text
+`ReplaceWithSuggestionsAction` is an IntelliJ IDEA plugin action designed to assist developers by suggesting alternative text
 options for a selected piece of code or text within the IDE. This action leverages a virtual API to generate suggestions
 based on the context surrounding the selected text, aiming to enhance code quality and developer productivity.
 
@@ -1543,13 +1543,13 @@ The action utilizes settings from `AppSettingsState` for configuring the virtual
 
 ### Extensibility
 
-Developers can extend `ReplaceOptionsAction` to customize the suggestion process or the user interface for selecting
+Developers can extend `ReplaceWithSuggestionsAction` to customize the suggestion process or the user interface for selecting
 suggestions. The `choose` method can be overridden to implement different mechanisms for presenting and selecting among
 the suggestions.
 
 ### Conclusion
 
-`ReplaceOptionsAction` is a powerful tool for IntelliJ IDEA users, offering smart, context-aware suggestions to improve
+`ReplaceWithSuggestionsAction` is a powerful tool for IntelliJ IDEA users, offering smart, context-aware suggestions to improve
 code quality and accelerate development workflows. Through its integration with a virtual API, it provides a flexible
 and customizable solution for code enhancement.
 
@@ -1607,7 +1607,7 @@ The `MarkdownImplementActionGroup` is a powerful tool for anyone involved in cre
 include code snippets. By automating the code generation process, it not only saves time but also ensures consistency
 and accuracy in your documentation.
 
-# generic\WebDevAction.kt
+# generic\WebDevelopmentAssistantAction.kt
 
 ## Web Development Assistant Plugin Documentation
 
@@ -1641,7 +1641,7 @@ projects directly within the IDE environment.
 
 ### Key Components
 
-- **WebDevAction**: The main class that handles user actions, initiating sessions, and opening the browser interface for
+- **WebDevelopmentAssistantAction**: The main class that handles user actions, initiating sessions, and opening the browser interface for
   interaction.
 - **WebDevApp**: Represents a web development session, managing settings, user messages, and interactions with the AI.
 - **WebDevAgent**: Acts as the intermediary between the user and the AI, handling specific tasks like code generation,

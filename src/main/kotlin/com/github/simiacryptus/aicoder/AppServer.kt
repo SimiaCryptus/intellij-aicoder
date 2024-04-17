@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.dev
+package com.github.simiacryptus.aicoder
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools

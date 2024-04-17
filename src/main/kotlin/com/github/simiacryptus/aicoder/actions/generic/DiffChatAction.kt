@@ -1,12 +1,13 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.diff.addApplyDiffLinks
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -27,13 +28,14 @@ import java.awt.Desktop
 import java.io.File
 
 class DiffChatAction : BaseAction() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/diffChat"
 
     override fun handle(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val session = StorageInterface.newGlobalID()
-        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
+        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: ""
         val document = editor.document
         val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return
         val primaryCaret = editor.caretModel.primaryCaret

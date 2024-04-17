@@ -1,10 +1,11 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.diff.addApplyFileDiffLinks
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.jopenai.API
@@ -17,7 +18,6 @@ import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
 import com.simiacryptus.skyenet.Acceptable
 import com.simiacryptus.skyenet.AgentPatterns
-import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
@@ -28,10 +28,12 @@ import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
-class AutoDevAction : BaseAction() {
+class MultiStepPatchAction : BaseAction() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/autodev"
 
@@ -159,17 +161,17 @@ import com.simiacryptus.skyenet.webui.components.CheckboxTab
         fun start(
             userMessage: String,
         ) {
-            val codeFiles = mutableMapOf<String, String>()
+            val codeFiles = mutableMapOf<Path, String>()
             val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
                 ?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
             PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
                 val code = file.inputStream.bufferedReader().use { it.readText() }
-                codeFiles[root.relativize(file.toNioPath()).toString()] = code
+                codeFiles[root.relativize(file.toNioPath())] = code
             }
             require(codeFiles.isNotEmpty()) { "No files selected" }
             fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
                 "# $path\n```${
-                    path.split('.').last()
+                    path.toString().split('.').last()
                 }\n${code/*.indent("  ")*/}\n```"
             }
 
@@ -209,7 +211,7 @@ import com.simiacryptus.skyenet.webui.components.CheckboxTab
                         task.header("Task: $description")
                         val process = { it: StringBuilder ->
                             val filter = codeFiles.filter { (path, _) ->
-                                paths?.find { path.contains(it) }?.isNotEmpty() == true
+                                paths?.find { path.toString().contains(it) }?.isNotEmpty() == true
                             }
                             require(filter.isNotEmpty()) {
                                 """
@@ -225,34 +227,38 @@ import com.simiacryptus.skyenet.webui.components.CheckboxTab
                               |${paths?.joinToString("\n") ?: ""}
                               |
                             """.trimMargin()
-              }
-              ui.socketManager.addApplyFileDiffLinks(
-                  root = root,
-                  code = { codeFiles },
-                  response = taskActor.answer(listOf(
-                    codeSummary(),
-                    userMessage,
-                    filter.entries.joinToString("\n\n") {
-                      "# ${it.key}\n```${
-                        it.key.split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
-                      }\n${it.value/*.indent("  ")*/}\n```"
-                    },
-                    architectureResponse.text,
-                    "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                  ), api),
-                  handle = { newCodeMap ->
-                    newCodeMap.forEach { (path, newCode) ->
-                      task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                    }
-                  },
-                  ui = ui
-              )
+                            }
+                            ui.socketManager.addApplyFileDiffLinks(
+                                root = root,
+                                code = { codeFiles },
+                                response = taskActor.answer(listOf(
+                                    codeSummary(),
+                                    userMessage,
+                                    filter.entries.joinToString("\n\n") {
+                                        "# ${it.key}\n```${
+                                            it.key.toString().split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
+                                        }\n${it.value/*.indent("  ")*/}\n```"
+                                    },
+                                    architectureResponse.text,
+                                    "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
+                                ), api),
+                                handle = { newCodeMap ->
+                                    newCodeMap.forEach { (path, newCode) ->
+                                        task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                    }
+                                },
+                                ui = ui
+                            )
+                        }
+                    })
+                }
+            } catch (e : Exception) {
+                log.warn("Error",e)
             }
         }
     }
-
     companion object {
-        private val log = LoggerFactory.getLogger(AutoDevAction::class.java)
+        private val log = LoggerFactory.getLogger(MultiStepPatchAction::class.java)
         private val agents = mutableMapOf<Session, AutoDevApp>()
         val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
         private fun initApp(server: AppServer, path: String): ChatServer {

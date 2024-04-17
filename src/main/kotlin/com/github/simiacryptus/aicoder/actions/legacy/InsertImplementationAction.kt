@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.code
+package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -8,11 +8,13 @@ import com.github.simiacryptus.aicoder.util.TextBlock
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiClassContext
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
 
 class InsertImplementationAction : SelectionAction<String>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     interface VirtualAPI {
         fun implementCode(
