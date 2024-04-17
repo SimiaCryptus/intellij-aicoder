@@ -143,8 +143,8 @@ class MultiDiffChatAction : BaseAction() {
                 path = path,
                 showMenubar = false,
             ) {
-                override val singleInput = false
-                override val stickyInput = true
+                override val singleInput = true
+                override val stickyInput = false
                 override fun newSession(user: User?, session: Session) = agents[session]!!
             }
             server.addApp(path, socketServer)
