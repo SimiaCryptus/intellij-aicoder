@@ -1,7 +1,8 @@
-﻿package com.github.simiacryptus.aicoder.actions.generic
+﻿package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -20,7 +21,9 @@ import javax.sound.sampled.TargetDataLine
 import javax.swing.JFrame
 import javax.swing.JLabel
 
-class DictationAction : BaseAction() {
+class VoiceToTextAction : BaseAction() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun handle(e: AnActionEvent) {
         val continueFn = statusDialog(e)::isVisible
 
@@ -31,7 +34,7 @@ class DictationAction : BaseAction() {
                 AudioRecorder(rawBuffer, 0.05, continueFn).run()
                 log.warn("Recording thread complete")
             } catch (e: Throwable) {
-                UITools.error(log,"Error", e)
+                UITools.error(log, "Error", e)
             }
         }, "dication-audio-recorder").start()
 
@@ -41,7 +44,7 @@ class DictationAction : BaseAction() {
             try {
                 LookbackLoudnessWindowBuffer(rawBuffer, wavBuffer, continueFn).run()
             } catch (e: Throwable) {
-                UITools.error(log,"Error", e)
+                UITools.error(log, "Error", e)
             }
             log.warn("Audio processing thread complete")
         }, "dictation-audio-processor").start()
@@ -58,7 +61,7 @@ class DictationAction : BaseAction() {
             try {
                 dictationPump.run()
             } catch (e: Throwable) {
-                UITools.error(log,"Error", e)
+                UITools.error(log, "Error", e)
             }
             log.warn("Speech-To-Text thread complete")
         }, "dictation-api-processor").start()
@@ -121,7 +124,7 @@ class DictationAction : BaseAction() {
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(DictationAction::class.java)
+        private val log = LoggerFactory.getLogger(VoiceToTextAction::class.java)
 
         private val pool = Executors.newFixedThreadPool(1)
 

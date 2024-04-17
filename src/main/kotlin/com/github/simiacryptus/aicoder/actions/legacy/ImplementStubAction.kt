@@ -1,16 +1,18 @@
-package com.github.simiacryptus.aicoder.actions.code
+package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
 import com.simiacryptus.jopenai.util.StringUtil
 import java.util.*
 
 class ImplementStubAction : SelectionAction<String>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     interface VirtualAPI {
         fun editCode(
@@ -28,11 +30,11 @@ class ImplementStubAction : SelectionAction<String>() {
 
     private fun getProxy(): VirtualAPI {
         return ChatProxy(
-          clazz = VirtualAPI::class.java,
-          api = api,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          temperature = AppSettingsState.instance.temperature,
-          deserializerRetries = 5
+            clazz = VirtualAPI::class.java,
+            api = api,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            temperature = AppSettingsState.instance.temperature,
+            deserializerRetries = 5
         ).create()
     }
 
@@ -64,7 +66,8 @@ class ImplementStubAction : SelectionAction<String>() {
             )
         }
         var smallestIntersectingMethod = ""
-        if (codeContext.isNotEmpty()) smallestIntersectingMethod = codeContext.minByOrNull { it.length() }?.subString(state.entireDocument ?: "") ?: ""
+        if (codeContext.isNotEmpty()) smallestIntersectingMethod =
+            codeContext.minByOrNull { it.length() }?.subString(state.entireDocument ?: "") ?: ""
 
         var declaration = code
         declaration = StringUtil.stripSuffix(declaration.trim(), smallestIntersectingMethod)

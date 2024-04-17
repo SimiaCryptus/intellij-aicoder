@@ -9,6 +9,7 @@ import com.github.simiacryptus.aicoder.util.UITools.getIndent
 import com.github.simiacryptus.aicoder.util.UITools.insertString
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getAll
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil.getSmallestIntersecting
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +17,7 @@ import com.simiacryptus.jopenai.proxy.ChatProxy
 import com.simiacryptus.jopenai.util.StringUtil
 
 class MarkdownListAction : BaseAction() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     interface ListAPI {
         fun newListItems(
@@ -31,10 +33,10 @@ class MarkdownListAction : BaseAction() {
     val proxy: ListAPI
         get() {
             val chatProxy = ChatProxy(
-              clazz = ListAPI::class.java,
-              api = api,
-              model = AppSettingsState.instance.smartModel.chatModel(),
-              deserializerRetries = 5,
+                clazz = ListAPI::class.java,
+                api = api,
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                deserializerRetries = 5,
             )
             chatProxy.addExample(
                 returnValue = ListAPI.Items(

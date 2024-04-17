@@ -25,19 +25,36 @@ time, and write better code. Get started today and explore the possibilities of 
 
 # Actions
 
- Action                       | Description                                                                                                                                               | Usage                                                               | Dependencies                                                                                                                                            |
-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
- `DescribeAction`             | Generates natural language descriptions for selected code snippets using an AI model.                                                                     | Select code, invoke action, description is inserted as a comment.   | `com.github.simiacryptus.aicoder.actions.SelectionAction`                                                                                               |
- `DocAction`                  | Generates documentation comments (e.g., JavaDoc, KDoc) for selected code blocks using an AI model.                                                        | Select code, invoke action, documentation is generated.             | `com.github.simiacryptus.aicoder.actions.SelectionAction`                                                                                               |
- `CustomEditAction`           | Allows editing code using natural language instructions via an AI model.                                                                                  | Select code, invoke action, provide instructions, code is modified. | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
- `CommentsAction`             | Adds comments to each line of the selected code, explaining its functionality using an AI model.                                                          | Select code, invoke action, comments are added.                     | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
- `InsertImplementationAction` | Generates code implementation based on a natural language specification or code comments using an AI model.                                               | Select text or comment, invoke action, implementation is generated. | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
- `PasteAction`                | Converts the text content of the system clipboard from one programming language to another using an AI model.                                             | Copy code, invoke action, converted code is returned.               | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
- `ImplementStubAction`        | Generates code implementations for code stubs or declarations using an AI language model.                                                                 | Select code stub, invoke action, implementation is generated.       | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
- `RecentCodeEditsAction`      | Provides a menu for quickly applying recent custom code edits to the selected code.                                                                       | Select code, invoke action, choose recent edit from menu.           | `com.github.simiacryptus.aicoder.actions.ActionGroup`, `com.github.simiacryptus.aicoder.config.AppSettingsState`                                        |
- `RenameVariablesAction`      | Suggests variable name renames for the selected code using an AI model.                                                                                   | Select code, invoke action, choose renames to apply.                | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
- `PrintTreeAction`            | Prints the tree structure of a PsiFile (Program Structure Interface file) to the log.                                                                     | Open file, invoke action, tree structure is printed to log.         | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.github.simiacryptus.aicoder.util.PsiUtil`                                                    |
- `InternalCoderAction`        | Launches a web-based interface for an internal coding agent that assists with coding tasks using natural language processing and machine learning models. | Invoke action, interact with coding agent via web interface.        | `com.github.simiacryptus.aicoder.ApplicationEvents`, `com.simiacryptus.skyenet.apps.coding.CodingAgent`, `com.simiacryptus.skyenet.webui.application.*` |
+ Action                            | Description                                                                                                                                               | Usage                                                               | Dependencies                                                                                                                                            |
+ -----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+ `GenerateDocumentationAction`     | Generates documentation for a set of code files using OpenAI's language model.                                                                            | Right-click on a folder, select "Compile Documentation"             | `com.github.simiacryptus.aicoder.actions.FileContextAction`, `com.simiacryptus.jopenai.proxy`                                                           |
+ `DescribeAction`                  | Generates natural language descriptions for selected code snippets using an AI model.                                                                     | Select code, invoke action, description is inserted as a comment.   | `com.github.simiacryptus.aicoder.actions.SelectionAction`                                                                                               |
+ `DocAction`                       | Generates documentation comments (e.g., JavaDoc, KDoc) for selected code blocks using an AI model.                                                        | Select code, invoke action, documentation is generated.             | `com.github.simiacryptus.aicoder.actions.SelectionAction`                                                                                               |
+ `CustomEditAction`                | Allows editing code using natural language instructions via an AI model.                                                                                  | Select code, invoke action, provide instructions, code is modified. | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
+ `CommentsAction`                  | Adds comments to each line of the selected code, explaining its functionality using an AI model.                                                          | Select code, invoke action, comments are added.                     | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
+ `InsertImplementationAction`      | Generates code implementation based on a natural language specification or code comments using an AI model.                                               | Select text or comment, invoke action, implementation is generated. | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
+ `PasteAction`                     | Converts the text content of the system clipboard from one programming language to another using an AI model.                                             | Copy code, invoke action, converted code is returned.               | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
+ `ImplementStubAction`             | Generates code implementations for code stubs or declarations using an AI language model.                                                                 | Select code stub, invoke action, implementation is generated.       | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
+ `RecentCodeEditsAction`           | Provides a menu for quickly applying recent custom code edits to the selected code.                                                                       | Select code, invoke action, choose recent edit from menu.           | `com.github.simiacryptus.aicoder.actions.ActionGroup`, `com.github.simiacryptus.aicoder.config.AppSettingsState`                                        |
+ `RenameVariablesAction`           | Suggests variable name renames for the selected code using an AI model.                                                                                   | Select code, invoke action, choose renames to apply.                | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
+ `PrintTreeAction`                 | Prints the tree structure of a PsiFile (Program Structure Interface file) to the log.                                                                     | Open file, invoke action, tree structure is printed to log.         | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.github.simiacryptus.aicoder.util.PsiUtil`                                                    |
+ `InternalCoderAction`             | Launches a web-based interface for an internal coding agent that assists with coding tasks using natural language processing and machine learning models. | Invoke action, interact with coding agent via web interface.        | `com.github.simiacryptus.aicoder.ApplicationEvents`, `com.simiacryptus.skyenet.apps.coding.CodingAgent`, `com.simiacryptus.skyenet.webui.application.*` |
+ `FileContextAction`               | Provides a framework for creating file-based actions in an IntelliJ IDEA plugin.                                                                          | Right-click on a file or folder, select the action from the menu.   | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.github.simiacryptus.aicoder.util.UITools`                                                    |
+ `SelectionAction`                 | Provides a base class for actions that operate on selected text in the editor.                                                                            | Select text, invoke action, and the action processes the selection. | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.github.simiacryptus.aicoder.util.ComputerLanguage`                                           |
+ `AppendTextWithChatAction`        | Appends text to the end of the user's selected text using OpenAI's chat API.                                                                              | Select text, invoke action, and the text is appended.               | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
+ `CreateFileFromTemplateAction`    | Generates a new file based on an existing file and a natural language directive.                                                                          | Right-click on a file, select the action, and provide a directive.  | `com.github.simiacryptus.aicoder.actions.FileContextAction`, `com.simiacryptus.jopenai.proxy`                                                           |
+ `MultiStepPatchAction`            | Provides an automated development assistant for code modification tasks using natural language instructions.                                              | Select files or folders, invoke action, and provide instructions.   | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.simiacryptus.skyenet.webui.application.*`                                                    |
+ `CreateFileFromDescriptionAction` | Creates a new file based on a natural language description.                                                                                               | Invoke action, provide a description, and the file is created.      | `com.github.simiacryptus.aicoder.actions.FileContextAction`, `com.simiacryptus.jopenai.proxy`                                                           |
+ `CodeChatAction`                  | Initiates a code chat session with an AI assistant for coding assistance.                                                                                 | Select code, invoke action, and chat with the AI assistant.         | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.simiacryptus.skyenet.webui.application.*`                                                    |
+ `VoiceToTextAction`               | Allows users to dictate text into their code editor using speech recognition.                                                                             | Invoke action, speak into the microphone, and text is inserted.     | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.simiacryptus.jopenai.proxy`                                                                  |
+ `LineFilterChatAction`            | Provides a chat interface for interacting with an AI assistant for coding assistance with line references and Markdown support.                           | Select code, invoke action, and chat with the AI assistant.         | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.simiacryptus.skyenet.webui.application.*`                                                    |
+ `MultiDiffChatAction`             | Allows interacting with an AI assistant to modify multiple code files simultaneously using natural language instructions and code diffs.                  | Select files, invoke action, chat, and apply generated diffs.       | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.simiacryptus.skyenet.webui.application.*`                                                    |
+ `ReplaceWithSuggestionsAction`    | Provides options for replacing selected text using an AI language model.                                                                                  | Select text, invoke action, and choose a replacement option.        | `com.github.simiacryptus.aicoder.actions.SelectionAction`, `com.simiacryptus.jopenai.proxy`                                                             |
+ `RedoLast`                        | Repeats the last AI Coder action performed.                                                                                                               | Invoke action to repeat the last action.                            | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.github.simiacryptus.aicoder.config.AppSettingsState`                                         |
+ `WebDevelopmentAssistantAction`   | Provides a tool for developing web applications with AI assistance, including architecture design, code generation, and code review.                      | Right-click on a project or directory, select the action.           | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.simiacryptus.skyenet.webui.application.*`                                                    |
+ `MarkdownImplementActionGroup`    | Provides a way to convert selected text in Markdown files into code snippets for various programming languages.                                           | Select text in a Markdown file, choose the language from the menu.  | `com.github.simiacryptus.aicoder.actions.ActionGroup`, `com.simiacryptus.jopenai.proxy`                                                                 |
+ `PlanAheadAction`                 | Assists developers in task planning, code generation, documentation, and file management using AI models and a web UI.                                    | Open a project, invoke action, and interact with the web UI.        | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.simiacryptus.skyenet.webui.application.*`                                                    |
+ `MarkdownListAction`              | Generates new list items for an existing Markdown list using OpenAI's language model.                                                                     | Select or place cursor in a list, invoke action to generate items.  | `com.github.simiacryptus.aicoder.actions.BaseAction`, `com.simiacryptus.jopenai.proxy`                                                                  |
 
 # code\DescribeAction.kt
 
@@ -543,7 +560,7 @@ print the tree structure of the entity to the log.
 
 ```kotlin
 override fun handle(e: AnActionEvent) {
-  log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e)!!))
+    log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e)!!))
 }
 ```
 
@@ -554,7 +571,7 @@ enabled and can be triggered.
 
 ```kotlin
 override fun isEnabled(event: AnActionEvent): Boolean {
-  return AppSettingsState.instance.devActions
+    return AppSettingsState.instance.devActions
 }
 ```
 
@@ -564,7 +581,7 @@ The `PrintTreeAction` class has a companion object that initializes a logger ins
 
 ```kotlin
 companion object {
-  private val log = LoggerFactory.getLogger(PrintTreeAction::class.java)
+    private val log = LoggerFactory.getLogger(PrintTreeAction::class.java)
 }
 ```
 
@@ -690,20 +707,20 @@ Overall, this class provides a framework for creating file-based actions in an I
 extend this class and implement the `processSelection` method to define the specific behavior of the action. The class
 handles the UI interactions, file selection, and opening of generated files in the editor.
 
-# generic\AppendAction.kt
+# generic\AppendTextWithChatAction.kt
 
-Sure, here's a README for the `AppendAction` class:
+Sure, here's a README for the `AppendTextWithChatAction` class:
 
-## AppendAction
+## AppendTextWithChatAction
 
-The `AppendAction` class is an implementation of the `SelectionAction` interface in
+The `AppendTextWithChatAction` class is an implementation of the `SelectionAction` interface in
 the `com.github.simiacryptus.aicoder.actions.generic` package. It is designed to append text to the end of a user's
 selected text using OpenAI's chat API.
 
 ### Usage
 
 1. The user selects a piece of text in the IDE.
-2. The `AppendAction` is triggered (e.g., through a keyboard shortcut or menu item).
+2. The `AppendTextWithChatAction` is triggered (e.g., through a keyboard shortcut or menu item).
 3. The selected text is sent to the OpenAI chat API as a user prompt, along with a system prompt instructing the model
    to append text to the end of the user's prompt.
 4. The API response is processed, and the original selected text is concatenated with the appended text from the API
@@ -714,12 +731,13 @@ selected text using OpenAI's chat API.
 
 #### `getConfig(project: Project?): String`
 
-This method is required by the `SelectionAction` interface but is not used in the `AppendAction` implementation. It
+This method is required by the `SelectionAction` interface but is not used in the `AppendTextWithChatAction`
+implementation. It
 returns an empty string.
 
 #### `processSelection(state: SelectionState, config: String?): String`
 
-This is the main method of the `AppendAction` class. It performs the following steps:
+This is the main method of the `AppendTextWithChatAction` class. It performs the following steps:
 
 1. Retrieves the current app settings from `AppSettingsState.instance`.
 2. Constructs a `ChatRequest` object with the following properties:
@@ -736,7 +754,7 @@ This is the main method of the `AppendAction` class. It performs the following s
 
 ### Dependencies
 
-The `AppendAction` class relies on the following dependencies:
+The `AppendTextWithChatAction` class relies on the following dependencies:
 
 - `com.github.simiacryptus.aicoder.actions.SelectionAction`
 - `com.github.simiacryptus.aicoder.config.AppSettingsState`
@@ -746,13 +764,14 @@ The `AppendAction` class relies on the following dependencies:
 
 Make sure these dependencies are properly imported and available in your project.
 
-# generic\AnalogueFileAction.kt
+# generic\GenerateRelatedFileAction.kt
 
-Sure, here's a README for the `AnalogueFileAction` plugin:
+Sure, here's a README for the `CreateFileFromTemplateAction` plugin:
 
-## AnalogueFileAction
+## CreateFileFromTemplateAction
 
-The `AnalogueFileAction` is an IntelliJ IDEA plugin that allows you to generate a new file based on an existing file and
+The `CreateFileFromTemplateAction` is an IntelliJ IDEA plugin that allows you to generate a new file based on an
+existing file and
 a natural language directive. This can be useful for creating test cases, examples, or other related files based on your
 existing code.
 
@@ -791,21 +810,23 @@ public class Calculator {
 ```
 
 To generate test cases for this class, you can use the directive "Create test cases for the Calculator class" in
-the `AnalogueFileAction` dialog. The plugin will generate a new file `CalculatorTest.java` with test cases for the `add`
+the `CreateFileFromTemplateAction` dialog. The plugin will generate a new file `CalculatorTest.java` with test cases for
+the `add`
 and `subtract` methods.
 
 ### Contributing
 
-Contributions to the `AnalogueFileAction` plugin are welcome! If you find any issues or have suggestions for
+Contributions to the `CreateFileFromTemplateAction` plugin are welcome! If you find any issues or have suggestions for
 improvements, please open an issue or submit a pull request on the project's GitHub repository.
 
-# generic\AutoDevAction.kt
+# generic\MultiStepPatchAction.kt
 
 Sure, here's a README file that documents the code you provided:
 
-## AutoDevAction
+## MultiStepPatchAction
 
-`AutoDevAction` is an IntelliJ IDEA plugin action that provides an automated development assistant for code modification
+`MultiStepPatchAction` is an IntelliJ IDEA plugin action that provides an automated development assistant for code
+modification
 tasks. It allows users to provide natural language instructions, and the plugin generates an action plan, breaks it down
 into tasks, and applies code changes based on the instructions.
 
@@ -831,7 +852,8 @@ into tasks, and applies code changes based on the instructions.
 
 ### Implementation Details
 
-The `AutoDevAction` class extends `BaseAction` and handles the user interaction and plugin setup. It creates an instance
+The `MultiStepPatchAction` class extends `BaseAction` and handles the user interaction and plugin setup. It creates an
+instance
 of the `AutoDevApp` class, which manages the application server and user sessions.
 
 The `AutoDevApp` class is responsible for processing user messages and delegating the work to the `AutoDevAgent`.
@@ -849,10 +871,11 @@ The plugin relies on the following external libraries:
 
 ### Contributing
 
-Contributions to the AutoDevAction plugin are welcome! If you find any issues or have suggestions for improvements,
+Contributions to the MultiStepPatchAction plugin are welcome! If you find any issues or have suggestions for
+improvements,
 please open an issue or submit a pull request on the project's GitHub repository.
 
-# generic\CreateFileAction.kt
+# generic\CreateFileFromDescriptionAction.kt
 
 ```
 File: README.md
@@ -950,13 +973,13 @@ The `CodeChatAction` class relies on the following dependencies:
 Contributions to the `CodeChatAction` plugin are welcome. If you encounter any issues or have suggestions for
 improvements, please open an issue or submit a pull request on the project's repository.
 
-# generic\DictationAction.kt
+# generic\VoiceToTextAction.kt
 
-Sure, here's a README file that explains the functionality of the `DictationAction` class:
+Sure, here's a README file that explains the functionality of the `VoiceToTextAction` class:
 
-## DictationAction
+## VoiceToTextAction
 
-The `DictationAction` class is an IntelliJ IDEA plugin action that allows users to dictate text into their code editor
+The `VoiceToTextAction` class is an IntelliJ IDEA plugin action that allows users to dictate text into their code editor
 using speech recognition. When the action is triggered, it starts recording audio from the user's microphone and sends
 the recorded audio to an AI-powered speech-to-text service for transcription. The transcribed text is then inserted into
 the code editor at the current cursor position or replaces the selected text if there is a selection.
@@ -995,7 +1018,7 @@ To use the dictation feature, follow these steps:
 
 1. Open an IntelliJ IDEA project.
 2. Open a code editor window.
-3. Trigger the `DictationAction` by going to the `Tools` menu and selecting the "Dictation" option, or by using the
+3. Trigger the `VoiceToTextAction` by going to the `Tools` menu and selecting the "Dictation" option, or by using the
    keyboard shortcut (if configured).
 4. The status dialog window will appear, indicating that the recording and dictation process has started.
 5. Start speaking into your microphone. The transcribed text will be inserted into the code editor at the current cursor
@@ -1121,13 +1144,13 @@ The `DiffChatAction` relies on the following dependencies:
 
 Make sure to include these dependencies in your project for the `DiffChatAction` to work correctly.
 
-# generic\DocumentationCompilerAction.kt
+# generic\GenerateDocumentationAction.kt
 
 Sure, here's a README file that documents the code you provided:
 
 ## Documentation Compiler Action
 
-The `DocumentationCompilerAction` is an IntelliJ IDEA plugin action that allows you to generate documentation for a set
+The `GenerateDocumentationAction` is an IntelliJ IDEA plugin action that allows you to generate documentation for a set
 of code files using OpenAI's language model. It provides a user interface to select the files to process, specify the AI
 instruction for generating the documentation, and set the output file name.
 
@@ -1148,7 +1171,7 @@ The generated documentation will be saved in the specified output file within th
 
 ### Implementation Details
 
-The `DocumentationCompilerAction` class extends the `FileContextAction` class and provides the following functionality:
+The `GenerateDocumentationAction` class extends the `FileContextAction` class and provides the following functionality:
 
 1. `isEnabled(event: AnActionEvent)`: Checks if the selected file is a directory. If not, the action is disabled.
 2. `getConfig(project: Project?, e: AnActionEvent)`: Displays the "Compile Documentation" dialog and collects the user
@@ -1168,7 +1191,7 @@ the IntelliJ IDEA editor.
 
 ### Dependencies
 
-The `DocumentationCompilerAction` relies on the following dependencies:
+The `GenerateDocumentationAction` relies on the following dependencies:
 
 - `com.github.simiacryptus.aicoder.actions.FileContextAction`
 - `com.github.simiacryptus.aicoder.config.AppSettingsState`
@@ -1248,13 +1271,14 @@ To install the `MultiDiffChatAction` plugin, follow these steps:
 If you find any issues or have suggestions for improvements, please feel free to open an issue or submit a pull request
 on the project's GitHub repository.
 
-# generic\ReplaceOptionsAction.kt
+# generic\ReplaceWithSuggestionsAction.kt
 
-Sure, here's a README file that explains the purpose and usage of the `ReplaceOptionsAction` plugin:
+Sure, here's a README file that explains the purpose and usage of the `ReplaceWithSuggestionsAction` plugin:
 
-## ReplaceOptionsAction Plugin
+## ReplaceWithSuggestionsAction Plugin
 
-The `ReplaceOptionsAction` plugin is an IntelliJ IDEA plugin that provides a convenient way to replace selected text
+The `ReplaceWithSuggestionsAction` plugin is an IntelliJ IDEA plugin that provides a convenient way to replace selected
+text
 with one of the suggested options generated by an AI language model. This plugin leverages the OpenAI API to generate
 relevant and contextual suggestions based on the selected text and its surrounding context.
 
@@ -1276,7 +1300,8 @@ relevant and contextual suggestions based on the selected text and its surroundi
 
 ### Configuration
 
-The `ReplaceOptionsAction` plugin uses the OpenAI API to generate suggestions. You need to provide your OpenAI API key
+The `ReplaceWithSuggestionsAction` plugin uses the OpenAI API to generate suggestions. You need to provide your OpenAI
+API key
 in the plugin settings. Additionally, you can configure the following options:
 
 - **Default Chat Model**: Specify the AI language model to use for generating suggestions.
@@ -1289,7 +1314,8 @@ in the plugin settings. Additionally, you can configure the following options:
 
 ### Contributing
 
-Contributions to the `ReplaceOptionsAction` plugin are welcome! If you encounter any issues or have suggestions for
+Contributions to the `ReplaceWithSuggestionsAction` plugin are welcome! If you encounter any issues or have suggestions
+for
 improvements, please open an issue or submit a pull request on the project's GitHub repository.
 
 ### License
@@ -1373,7 +1399,7 @@ This README provides an overview of the AI Coder plugin for IntelliJ IDEA, inclu
 instructions, usage examples, contributing guidelines, license information, and support contact details. Feel free to
 customize it further based on your specific requirements.
 
-# generic\WebDevAction.kt
+# generic\WebDevelopmentAssistantAction.kt
 
 ```markdown
 
@@ -1473,7 +1499,7 @@ an issue or submit a pull request on the project's GitHub repository.
 
 This plugin is released under the [MIT License](LICENSE).
 
-# generic\TaskRunnerAction.kt
+# generic\PlanAheadAction.kt
 
 ```markdown
 
@@ -1651,4 +1677,3 @@ Special thanks to the developers and contributors of these projects.
 This README provides an overview of the AI Coder Plugin, its features, usage instructions, contributing guidelines,
 license information, and acknowledgments. Feel free to modify it as needed to better fit your project's specific
 details.
-

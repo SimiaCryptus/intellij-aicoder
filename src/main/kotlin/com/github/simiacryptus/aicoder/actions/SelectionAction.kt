@@ -60,7 +60,7 @@ abstract class SelectionAction<T : Any>(
 
         UITools.redoableTask(e) {
             val document = e.getData(CommonDataKeys.EDITOR)?.document
-            var rangeMarker: RangeMarker?  = null
+            var rangeMarker: RangeMarker? = null
             WriteCommandAction.runWriteCommandAction(e.project) {
                 rangeMarker = document?.createGuardedBlock(selectionStart, selectionEnd)
             }
@@ -82,7 +82,7 @@ abstract class SelectionAction<T : Any>(
                     config = config
                 )
             } finally {
-                if(null != rangeMarker)
+                if (null != rangeMarker)
                     WriteCommandAction.runWriteCommandAction(e.project) {
                         document?.removeGuardedBlock(rangeMarker!!)
                     }

@@ -6,14 +6,14 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatMod
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
-import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
-import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 
 class MarkdownImplementActionGroup : ActionGroup() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
     private val markdownLanguages = listOf(
         "sql", "java", "asp", "c", "clojure", "coffee", "cpp", "csharp", "css", "bash", "go", "java", "javascript",
         "less", "make", "matlab", "objectivec", "pascal", "PHP", "Perl", "python", "rust", "scss", "sql", "svg",
@@ -41,6 +41,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
     }
 
     open class MarkdownImplementAction(private val language: String) : SelectionAction<String>(true) {
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
         init {
             templatePresentation.text = language
             templatePresentation.description = language
@@ -57,11 +58,11 @@ class MarkdownImplementActionGroup : ActionGroup() {
 
         private fun getProxy(): ConversionAPI {
             return ChatProxy(
-              clazz = ConversionAPI::class.java,
-              api = api,
-              model = AppSettingsState.instance.smartModel.chatModel(),
-              temperature = AppSettingsState.instance.temperature,
-              deserializerRetries = 5
+                clazz = ConversionAPI::class.java,
+                api = api,
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                temperature = AppSettingsState.instance.temperature,
+                deserializerRetries = 5
             ).create()
         }
 
@@ -75,7 +76,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
                 |
                 |
                 |```$language
-                |${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+                |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
                 |```
                 |
                 |""".trimMargin()

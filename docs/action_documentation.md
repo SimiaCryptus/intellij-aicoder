@@ -1,2124 +1,1730 @@
-# code\DocAction.kt
+# Project User Documentation
 
-Sure, here's the documentation for the `DocAction` class:
+Welcome to the user documentation for our IntelliJ IDEA plugin suite, designed to enhance your development experience
+with a variety of actions. This document provides an overview of the available actions, categorized for easy reference,
+and instructions on how to use them to improve your coding efficiency.
 
-```kotlin
-/**
- * The `DocAction` class is an implementation of the `SelectionAction` interface that generates
- * documentation for a selected code block using OpenAI's language model.
- *
- * The class defines a virtual API interface `DocAction_VirtualAPI` that provides a single method
- * `processCode` to generate the documentation text. The `ChatProxy` class is used to create an
- * instance of this virtual API, which is initialized with an example input-output pair.
- *
- * The `processSelection` method is the main entry point for the action. It takes the selected text
- * from the editor, formats it as an `IndentedText` object, and passes it to the `processCode` method
- * of the virtual API along with the language and documentation style. The generated documentation
- * text is then prepended to the original code and returned.
- *
- * The `isLanguageSupported` method checks if the given `ComputerLanguage` is supported for
- * documentation generation by verifying that it is not plain text and has a non-empty documentation
- * style defined.
- *
- * The `editSelection` method is overridden to handle cases where the selected text is not the entire
- * code block. It uses the `PsiUtil` class to find the enclosing code element and adjusts the selection
- * range accordingly.
- *
- * @param project The current project instance (not used in this implementation).
- * @param state The `SelectionState` object containing the selected text and language information.
- * @param config An optional configuration string (not used in this implementation).
- * @return The generated documentation text prepended to the original code.
- */
-class DocAction : SelectionAction<String>() { ... }
-```
+## Table of Categorized Actions
 
-This documentation explains the purpose of the `DocAction` class, its main methods and their responsibilities, and the parameters and return values of the `processSelection` method. It also mentions the use of the `ChatProxy` class and the `PsiUtil` utility class.
+- `DiffChatAction`: Engages in a chat session to generate and apply code diffs directly within the IDE.
+- **Collaboration and Review**
+    - `DiffChatAction`: Initiates a chat session for collaborative code review and diff generation.
+    - `MultiDiffChatAction`: Allows for collaborative code review and diff generation across multiple files.
+    - `LineFilterChatAction`: Provides an interactive chat interface for discussing specific lines of code.
+    - `CodeChatAction`: Offers a real-time chat interface for discussing code snippets and receiving AI-powered coding assistance.
 
-# code\DescribeAction.kt
+## How to Use Actions
 
-Sure, here's the documentation for the `DescribeAction` class:
+- **Code Editing Actions**
+    - `CustomEditAction`: Trigger this action to open a dialog where you can input a natural language instruction for
+      editing your selected code.
+    - `ImplementStubAction`: Automatically selects code elements that match stub patterns and implements them based on
+      AI suggestions.
+    - `PasteAction`: Simply copy text to your clipboard and use this action to paste it as converted code in your
+      editor.
+    - `RenameVariablesAction`: Select a block of code and trigger this action to receive suggestions for renaming
+      variables.
+- **Documentation Actions**
+    - `DocAction`: Select a code block and activate this action to generate and insert documentation above the selected
+      block.
+    - `GenerateDocumentationAction`: Select files or folders in your project, trigger this action, and specify output
+      settings to compile documentation.
+- **Code Comments Actions**
+    - `CommentsAction`: Highlight a code block and activate this action to automatically add comments explaining the
+      code.
+    - `DescribeAction`: Use this action to generate a detailed description of the selected code, enhancing its
+      documentation.
+- **Code Generation Actions**
+    - `InternalCoderAction`: Start a coding session with this action to receive coding assistance directly in the IDE.
+    - `WebDevelopmentAssistantAction`: Trigger this action for AI-powered assistance with web development tasks, including code
+      generation and architecture suggestions.
+    - `MultiStepPatchAction`: Automates development tasks by translating user directives into actionable development tasks and code modifications.
+- **Markdown Enhancement Actions**
+    - `MarkdownImplementActionGroup`: In a Markdown file, select text and use this action to generate code snippets in
+      various languages.
+    - `MarkdownListAction`: Highlight a list in your Markdown file and activate this action to automatically generate
+      and insert new list items.
+- **Development Workflow Actions**
+    - `RecentCodeEditsAction`: Access this action to see a list of your most recent code edits and quickly reapply any
+      of them.
+    - `RedoLast`: Use this action to redo the last AI Coder action you executed, enhancing your workflow efficiency.
+- **Text Transformation Actions**
+    - `AppendTextWithChatAction`: Select text and trigger this action to append AI-generated text, expanding on your initial
+      selection.
+    - `ReplaceWithSuggestionsAction`: Highlight text and activate this action to receive and choose from AI-generated text
+      options for replacement.
 
-```kotlin
-/**
- * The DescribeAction class is an implementation of the SelectionAction interface.
- * It is responsible for generating a description of the selected code using OpenAI's language model.
- *
- * The class defines a virtual API interface called DescribeAction_VirtualAPI, which contains a single method:
- * - describeCode(code: String, computerLanguage: String, humanLanguage: String): DescribeAction_ConvertedText
- *   This method takes the selected code, the programming language of the code, and the human language for the description.
- *   It returns an instance of DescribeAction_ConvertedText, which contains the generated description and its language.
- *
- * The DescribeAction class uses the ChatProxy class to create an instance of the DescribeAction_VirtualAPI interface.
- * The ChatProxy is configured with the appropriate API key, temperature, and language model settings from the AppSettingsState.
- *
- * The processSelection method is the main entry point for the action. It takes a SelectionState object, which contains
- * the selected text, the programming language, and other context information. It then calls the describeCode method
- * of the DescribeAction_VirtualAPI instance to generate the description.
- *
- * The generated description is then wrapped to a maximum line length of 120 characters using the StringUtil.lineWrapping
- * method. Based on the number of lines in the wrapped description, the method determines whether to use a line comment
- * or a block comment style for the programming language.
- *
- * Finally, the method returns a string that combines the comment style with the original selected text, indented
- * appropriately.
- */
-```
-
-This class is part of the `com.github.simiacryptus.aicoder.actions.code` package and is used in the context of an IntelliJ IDEA plugin for generating code descriptions using OpenAI's language model. It leverages the `SelectionAction` interface and other utility classes from the project to interact with the user's code selection and generate a descriptive comment.
-
-# code\CommentsAction.kt
-
-Sure, here's the documentation for the `CommentsAction` class:
-
-```kotlin
-/**
- * The CommentsAction class is an implementation of the SelectionAction interface.
- * It is responsible for adding comments to the selected code in the IDE.
- *
- * The action uses the OpenAI API to generate comments for the selected code.
- * It sends the selected code, the desired operation (adding comments), the computer language,
- * and the human language to the OpenAI API, which generates the commented code.
- *
- * The action supports all computer languages except for plain text.
- */
-class CommentsAction : SelectionAction<String>() {
-
-    /**
-     * Returns an empty string as the configuration for this action.
-     *
-     * @param project The current project.
-     * @return An empty string.
-     */
-    override fun getConfig(project: Project?): String {
-        return ""
-    }
-
-    /**
-     * Checks if the given computer language is supported by this action.
-     *
-     * @param computerLanguage The computer language to check.
-     * @return True if the language is not null and not plain text, false otherwise.
-     */
-    override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        return computerLanguage != null && computerLanguage != ComputerLanguage.Text
-    }
-
-    /**
-     * Processes the selected text by adding comments to each line of code.
-     *
-     * @param state The selection state containing the selected text and language.
-     * @param config The configuration for this action (not used).
-     * @return The commented code.
-     */
-    override fun processSelection(state: SelectionState, config: String?): String {
-        return ChatProxy(
-            clazz = CommentsAction_VirtualAPI::class.java,
-            api = api,
-            temperature = AppSettingsState.instance.temperature,
-            model = AppSettingsState.instance.defaultChatModel(),
-            deserializerRetries = 5
-        ).create().editCode(
-            state.selectedText ?: "",
-            "Add comments to each line explaining the code",
-            state.language.toString(),
-            AppSettingsState.instance.humanLanguage
-        ).code ?: ""
-    }
-
-    /**
-     * The CommentsAction_VirtualAPI interface defines the contract for the OpenAI API call.
-     */
-    interface CommentsAction_VirtualAPI {
-        /**
-         * Edits the given code by performing the specified operations.
-         *
-         * @param code The code to edit.
-         * @param operations The operations to perform on the code.
-         * @param computerLanguage The computer language of the code.
-         * @param humanLanguage The human language for the comments.
-         * @return The edited code with comments.
-         */
-        fun editCode(
-            code: String,
-            operations: String,
-            computerLanguage: String,
-            humanLanguage: String
-        ): CommentsAction_ConvertedText
-
-        /**
-         * The CommentsAction_ConvertedText class represents the result of the editCode operation.
-         */
-        class CommentsAction_ConvertedText {
-            var code: String? = null
-            var language: String? = null
-        }
-    }
-}
-```
-
-This documentation explains the purpose of the `CommentsAction` class, the responsibilities of each method, and the interfaces it uses. It also provides information about the parameters and return values of each method.
+Each action is designed to seamlessly integrate into your development workflow, offering a range of enhancements from
+code editing to documentation and AI integration. Explore these actions to discover how they can improve your
+productivity and coding experience in IntelliJ IDEA.
 
 # code\CustomEditAction.kt
 
-Sure, here's the documentation for the `CustomEditAction` class:
+## CustomEditAction Documentation
 
-```kotlin
-/**
- * An action that allows the user to edit code using natural language instructions.
- * The action prompts the user for an instruction, and then uses the OpenAI API to generate
- * the edited code based on the user's selection and instruction.
- */
-open class CustomEditAction : SelectionAction<String>() {
+### Overview
 
-    /**
-     * A virtual API interface that defines the `editCode` function.
-     * This function takes the code, operation, computer language, and human language as input,
-     * and returns an `EditedText` object containing the edited code and language.
-     */
-    interface VirtualAPI {
-        fun editCode(
-            code: String,
-            operation: String,
-            computerLanguage: String,
-            humanLanguage: String
-        ): EditedText
+The `CustomEditAction` class extends the functionality of `SelectionAction` to provide a mechanism for editing code
+based on user instructions. It leverages a virtual API to process the code modifications, which can include operations
+like adding comments, refactoring, or any other code transformation specified by the user. This action is designed to
+integrate with an IDE environment, allowing users to easily modify their code using natural language instructions.
 
-        data class EditedText(
-            var code: String? = null,
-            var language: String? = null
-        )
-    }
+### Key Components
 
-    /**
-     * Returns a proxy instance of the `VirtualAPI` interface.
-     * The proxy is configured with the OpenAI API, temperature, and model settings from the app settings.
-     * It also includes an example of how to use the `editCode` function.
-     */
-    val proxy: VirtualAPI
-        get() {
-            // Implementation details omitted for brevity
-        }
+#### VirtualAPI Interface
 
-    /**
-     * Prompts the user for an instruction using an input dialog.
-     * @param project The current project.
-     * @return The user's instruction, or an empty string if the user cancels the dialog.
-     */
-    override fun getConfig(project: Project?): String {
-        // Implementation details omitted for brevity
-    }
+- **Purpose**: Defines the contract for the code editing service.
+- **Methods**:
+    - `editCode(code: String, operation: String, computerLanguage: String, humanLanguage: String)`: Takes the original
+      code, an operation in natural language, the programming language of the code, and the human language of the
+      operation. Returns an `EditedText` object containing the modified code.
 
-    /**
-     * Processes the user's selection and instruction to generate the edited code.
-     * @param state The selection state containing the selected text and language.
-     * @param instruction The user's instruction for editing the code.
-     * @return The edited code, or the original selected text if no instruction is provided.
-     */
-    override fun processSelection(state: SelectionState, instruction: String?): String {
-        // Implementation details omitted for brevity
-    }
-}
-```
+- **EditedText Data Class**:
+    - Holds the result of the code editing operation, including the modified code and its language.
 
-This class extends the `SelectionAction` class and overrides the `getConfig` and `processSelection` methods. The `getConfig` method prompts the user for an instruction using an input dialog, while the `processSelection` method uses the OpenAI API to generate the edited code based on the user's selection and instruction.
+#### CustomEditAction Class
 
-The `VirtualAPI` interface defines the `editCode` function, which takes the code, operation, computer language, and human language as input, and returns an `EditedText` object containing the edited code and language. The `proxy` property returns an instance of this interface, configured with the OpenAI API settings and an example of how to use the `editCode` function.
+- **Functionality**: Allows users to input natural language instructions to edit selected code within an IDE.
+- **Key Methods**:
+    - `getConfig(project: Project?)`: Displays a dialog to the user to input the editing instruction.
+    - `processSelection(state: SelectionState, instruction: String?)`: Processes the user's instruction on the selected
+      code and returns the edited code.
 
-Overall, this class provides a convenient way for users to edit code using natural language instructions, leveraging the power of the OpenAI API.
+#### Proxy Property
+
+- **Purpose**: Creates an instance of the `VirtualAPI` using a `ChatProxy`, pre-configured with examples and settings
+  from `AppSettingsState`.
+- **Functionality**: It demonstrates how to use the virtual API by adding an example of code editing and then creates
+  the proxy instance that will be used for actual code editing operations.
+
+### Usage
+
+1. **Invoke CustomEditAction**: This action can be triggered within an IDE environment where it is integrated.
+2. **Input Instruction**: When prompted, the user inputs a natural language instruction detailing how the selected code
+   should be edited.
+3. **Code Transformation**: The action processes the instruction and applies the specified edits to the selected code.
+
+### Integration Points
+
+- **AppSettingsState**: Utilizes application settings for configuring the chat proxy, including the model to use and the
+  temperature setting for the AI's responses.
+- **UITools**: Used for displaying the input dialog to the user.
+
+### Example
+
+If a user selects a piece of code and inputs the instruction "Add code comments explaining the
+function", `CustomEditAction` will process this instruction, potentially resulting in the selected code being annotated
+with comments that explain its functionality, based on the capabilities of the underlying virtual API.
+
+### Conclusion
+
+`CustomEditAction` provides a powerful and intuitive way for developers to edit and refactor their code using natural
+language instructions, seamlessly integrating AI-powered code transformation into their development workflow.
+
+# code\CommentsAction.kt
+
+#### CommentsAction Class Documentation
+
+The `CommentsAction` class is part of the AI Coder extension, designed to enhance code readability by automatically
+adding comments to the selected code block within your IDE. This class extends the functionality
+of `SelectionAction<String>`, allowing it to process selected text and utilize AI services to generate insightful
+comments.
+
+##### Features
+
+- **Language Support**: The action is designed to work with a variety of programming languages, excluding plain text. It
+  ensures that the feature is only applied to code, where commenting is beneficial.
+- **AI-Powered**: Utilizes the `ChatProxy` class to communicate with an AI model, specifically tailored to generate
+  comments for code. This integration allows for context-aware, meaningful comments that improve code understanding.
+- **Customizable**: Leverages settings from `AppSettingsState` to allow customization of the AI's behavior, including
+  the model's temperature and the choice of language model, adapting the comments to the user's preferences.
+
+##### Key Methods
+
+- **getConfig(Project?): String**: Returns a configuration string for the action. Currently, this method returns an
+  empty string, serving as a placeholder for future configurations.
+
+- **isLanguageSupported(ComputerLanguage?): Boolean**: Checks if the given programming language is supported by the
+  action. It returns `true` for all programming languages except for plain text, ensuring the action is applied to
+  actual code.
+
+- **processSelection(SelectionState, String?): String**: The core method of the class, it takes the selected code block
+  and processes it through the AI model to generate and insert comments. It utilizes the `ChatProxy` class to
+  communicate with the AI, passing parameters such as the selected text, desired operations, and language settings.
+
+##### CommentsAction_VirtualAPI Interface
+
+An interface defining the `editCode` method, which is essential for the interaction with the AI model to edit and
+comment on the code. It specifies the parameters required for the operation, including the code block, operation
+description, computer language, and human language.
+
+##### CommentsAction_ConvertedText Class
+
+A nested class within the `CommentsAction_VirtualAPI` interface, designed to encapsulate the result of the AI's code
+commenting process. It contains fields for the commented code (`code`) and the language of the code (`language`),
+facilitating easy integration and use of the AI-generated comments within the IDE.
+
+#### Usage
+
+To use the `CommentsAction` feature, ensure your IDE project is set up with the AI Coder extension and configured
+according to your preferences in `AppSettingsState`. Select a block of code in a supported language, and trigger
+the `CommentsAction`. The AI will analyze the selected code and insert comments, enhancing the code's readability and
+maintainability.
+
+This documentation provides a concise overview of the `CommentsAction` class and its functionalities. For further
+details or customization options, refer to the source code or extension documentation.
+
+# code\DocAction.kt
+
+## DocAction Documentation
+
+### Overview
+
+`DocAction` is a specialized action within the AI Coder plugin designed to automatically generate documentation for
+selected code blocks within your project. It leverages a virtual API and a chat model to process and convert code into
+well-documented text, enhancing readability and maintainability.
+
+### Key Components
+
+#### DocAction_VirtualAPI
+
+An interface that defines the method `processCode`, which takes a code snippet and other parameters to return
+a `DocAction_ConvertedText` object containing the generated documentation text and its language.
+
+##### DocAction_ConvertedText
+
+A class that holds the resulting documentation text (`text`) and the language of the documentation (`language`).
+
+#### Proxy Initialization
+
+Upon instantiation, `DocAction` initializes a `ChatProxy` with a predefined example to guide the documentation
+generation process. This setup involves specifying the operation (e.g., "Write detailed KDoc prefix for code block"),
+the code language, and the target human language.
+
+### Functionality
+
+#### processSelection
+
+When a code selection is made, `processSelection` is invoked to generate documentation for the selected code block. It
+formats the selected text, calls the `processCode` method through the proxy, and prepends the generated documentation to
+the original code.
+
+#### isLanguageSupported
+
+Determines if the selected code's language is supported for documentation generation, based on the presence and
+non-emptiness of the `docStyle` attribute in the `ComputerLanguage` object.
+
+#### editSelection
+
+Adjusts the selection range to encompass the entire code block identified by the PSI (Program Structure Interface) tree,
+ensuring that the documentation is generated for the complete logical code block.
+
+### Usage
+
+To use `DocAction`, simply select a code block within your project and activate the action. The plugin will
+automatically generate and insert the appropriate documentation based on the code's context, language, and specified
+documentation style.
+
+### Configuration
+
+`DocAction` relies on the `AppSettingsState` for configuration, including the default chat model, temperature for the
+chat model's responses, and the target human language for the documentation.
+
+### Limitations
+
+- The action does not support plain text (`ComputerLanguage.Text`) or languages without a defined documentation
+  style (`docStyle`).
+- The quality and accuracy of the generated documentation may vary based on the complexity of the code and the
+  effectiveness of the provided examples to the chat model.
+
+### Conclusion
+
+`DocAction` enhances the development experience by automating the documentation process, making code easier to
+understand and maintain. By integrating advanced AI models, it offers a sophisticated approach to code documentation,
+tailored to the developers' needs.
 
 # code\ImplementStubAction.kt
 
-Sure, here's the documentation for the `ImplementStubAction` class:
+## ImplementStubAction Documentation
 
-```kotlin
-/**
- * An action that implements a code stub or declaration based on the selected code and context.
- *
- * This action is designed to work with code editors and uses the OpenAI API to generate the implementation
- * for a given code stub or declaration. It supports various programming languages, excluding plain text.
- *
- * The action works by extracting the selected code and the smallest intersecting method or function from
- * the context. It then sends this information, along with the programming language and the desired output
- * language, to the OpenAI API using the `VirtualAPI` interface.
- *
- * The `VirtualAPI` interface defines a single method `editCode` that takes the code, operation, computer
- * language, and human language as input, and returns a `ConvertedText` object containing the generated
- * code and the language it's written in.
- *
- * The `ImplementStubAction` class extends `SelectionAction<String>` and overrides the following methods:
- *
- * - `isLanguageSupported`: Checks if the given computer language is supported (excludes plain text).
- * - `defaultSelection`: Determines the default selection range based on the editor state and offset.
- * - `getConfig`: Returns an empty string as no additional configuration is required.
- * - `processSelection`: Processes the selected code, extracts the necessary context, and calls the
- *   `editCode` method of the `VirtualAPI` to generate the implementation.
- *
- * The action uses the `ChatProxy` class from the `com.simiacryptus.jopenai.proxy` package to create an
- * instance of the `VirtualAPI` interface. The `ChatProxy` is configured with the OpenAI API key, the
- * desired model, temperature, and other settings from the `AppSettingsState` class.
- *
- * @see SelectionAction
- * @see VirtualAPI
- * @see ChatProxy
- * @see AppSettingsState
- */
-class ImplementStubAction : SelectionAction<String>() { ... }
-```
+### Overview
 
-This documentation explains the purpose of the `ImplementStubAction` class, its dependencies, and the responsibilities of each overridden method. It also provides information about the `VirtualAPI` interface and how the `ChatProxy` is used to interact with the OpenAI API.
+The `ImplementStubAction` class is part of a larger framework designed to enhance coding efficiency by automating
+certain tasks. This specific action focuses on assisting developers in implementing stubs—placeholders for
+functionalities yet to be developed—by leveraging AI-powered code editing capabilities.
 
-# code\RecentCodeEditsAction.kt
+### Key Features
 
-Sure, here's the documentation for the `RecentCodeEditsAction` class:
+- **Language Support**: Not all programming languages are supported. The action excludes plain
+  text (`ComputerLanguage.Text`) but supports a variety of other programming languages.
+- **Automatic Selection**: It automatically selects the smallest code range that matches a code element within the
+  editor's current state, providing a default selection for operation.
+- **AI-Powered Code Editing**: Utilizes a virtual API to communicate with an AI model, editing code based on the
+  operation "Implement Stub". This process considers both the computer and human languages set in the application
+  settings.
 
-```kotlin
-/**
- * An ActionGroup that displays a list of recent code edits as child actions.
- * The child actions are dynamically generated based on the user's recent command history.
- * When a child action is selected, it applies the corresponding code edit to the current selection.
- */
-class RecentCodeEditsAction : ActionGroup() {
+### How It Works
 
-    /**
-     * Updates the visibility and enabled state of the action based on whether a valid code selection exists.
-     */
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
-    }
+1. **Language Check**: Initially, it checks if the programming language of the code is supported, excluding plain text.
+2. **Selection Identification**: It identifies the optimal code selection for the operation by finding the smallest code
+   range that matches a code element.
+3. **Code Processing**: The selected code is processed to remove any suffixes and trimmed. This processed code is then
+   sent to the AI-powered virtual API.
+4. **AI Interaction**: Through the `VirtualAPI`, the action sends the code, operation type ("Implement Stub"), computer
+   language, and human language to an AI model for processing.
+5. **Result**: The AI model returns the edited code, which is then provided as the action's output.
 
-    /**
-     * Generates and returns an array of child actions representing recent code edits.
-     * Each child action is an instance of CustomEditAction with a specific code edit instruction.
-     */
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-        if (e == null) return emptyArray()
-        val children = mutableListOf<AnAction>()
-        for ((instruction, _) in AppSettingsState.instance.getRecentCommands("customEdits").mostUsedHistory) {
-            val id = children.size + 1
-            val text = if (id < 10) "_$id: $instruction" else "$id: $instruction"
-            val element = object : CustomEditAction() {
-                override fun getConfig(project: Project?): String {
-                    return instruction
-                }
-            }
-            element.templatePresentation.text = text
-            element.templatePresentation.description = instruction
-            element.templatePresentation.icon = null
-            children.add(element)
-        }
-        return children.toTypedArray()
-    }
+### VirtualAPI
 
-    companion object {
-        /**
-         * Checks if the action should be enabled based on the current selection and language.
-         * The action is enabled if a valid code selection exists (not plain text).
-         */
-        fun isEnabled(e: AnActionEvent): Boolean {
-            if (!UITools.hasSelection(e)) return false
-            val computerLanguage = ComputerLanguage.getComputerLanguage(e)
-            return computerLanguage != ComputerLanguage.Text
-        }
-    }
-}
-```
+An interface within the `ImplementStubAction` class, `VirtualAPI` is crucial for the AI interaction. It defines the
+method `editCode` for sending code to the AI model and receiving the edited code. The `ConvertedText` inner class is
+used to encapsulate the result, containing the edited code and its language.
 
-This class represents an action group that displays a list of recent code edits as child actions. The child actions are dynamically generated based on the user's recent command history stored in the `AppSettingsState`.
+### Usage
 
-The `update` function updates the visibility and enabled state of the action based on whether a valid code selection exists. The `isEnabled` function checks if the current selection is not plain text, ensuring that the action is only enabled for code selections.
+This action is designed to be integrated into a larger system, likely an IDE plugin, where it can be triggered in the
+context of editing code. Users do not interact with this action directly but benefit from its functionality during their
+development workflow, particularly when implementing stubs or placeholders in their codebase.
 
-The `getChildren` function generates and returns an array of child actions representing recent code edits. Each child action is an instance of `CustomEditAction` with a specific code edit instruction. The text and description of each child action are set based on the instruction and an index number.
+### Configuration
 
-When a child action is selected, it applies the corresponding code edit instruction to the current selection by overriding the `getConfig` function of the `CustomEditAction` class.
+The action requires minimal configuration, primarily relying on the application's settings for determining the human and
+computer languages. The `AppSettingsState` singleton is used to fetch these settings, including the AI model's
+temperature setting for processing.
+
+### Conclusion
+
+The `ImplementStubAction` enhances coding efficiency by automating the implementation of stubs through AI-powered code
+editing. It supports various programming languages, automatically identifies the optimal code selection, and leverages a
+virtual API for AI interaction, streamlining the development process.
 
 # code\PasteAction.kt
 
-Sure, here's the documentation for the `PasteAction` class:
+## PasteAction Documentation
 
-```kotlin
-/**
- * An action that converts the text from the system clipboard into code in the specified language.
- *
- * This action uses the OpenAI API to convert the clipboard text into code. It supports converting
- * text from any language into code in a supported programming language.
- *
- * The action is enabled only if the system clipboard contains text data.
- *
- * @see SelectionAction
- * @see VirtualAPI
- */
-open class PasteAction : SelectionAction<String>(false) {
+### Overview
 
-    /**
-     * A virtual API interface used to define the contract for the OpenAI API call.
-     */
-    interface VirtualAPI {
-        /**
-         * Converts the given text from one language to another.
-         *
-         * @param text The text to be converted.
-         * @param from_language The source language of the text. Use "autodetect" to automatically detect the language.
-         * @param to_language The target language for the converted text.
-         * @return The converted text and its language.
-         */
-        fun convert(text: String, from_language: String, to_language: String): ConvertedText
+The `PasteAction` class is designed to enhance the functionality of pasting text within the IDE. It automatically
+converts the text from the clipboard into a specified programming language, leveraging a virtual API for the conversion
+process. This feature is particularly useful for developers working with multiple programming languages or needing to
+integrate code snippets from various sources seamlessly.
 
-        /**
-         * A data class representing the converted text and its language.
-         */
-        class ConvertedText {
-            var code: String? = null
-            var language: String? = null
-        }
-    }
+### Features
 
-    /**
-     * Returns an empty string as the configuration for this action.
-     */
-    override fun getConfig(project: Project?): String = ""
+- **Automatic Language Detection:** The action can automatically detect the source language of the text in the
+  clipboard.
+- **Language Conversion:** Converts the clipboard text to the target programming language as specified by the user's
+  current context or selection.
+- **Clipboard Support:** Efficiently handles text from the clipboard, supporting both plain text and Unicode text
+  flavors.
+- **Language Support Check:** Ensures that the action is only available for supported programming languages, excluding
+  plain text.
 
-    /**
-     * Processes the selected text by converting it to code using the OpenAI API.
-     *
-     * @param state The selection state containing the selected text and language.
-     * @param config The configuration for the action (not used in this implementation).
-     * @return The converted code.
-     */
-    override fun processSelection(state: SelectionState, config: String?): String {
-        return ChatProxy(
-            VirtualAPI::class.java,
-            api,
-            AppSettingsState.instance.defaultChatModel(),
-            AppSettingsState.instance.temperature,
-        ).create().convert(
-            getClipboard().toString().trim(),
-            "autodetect",
-            state.language?.name ?: ""
-        ).code ?: ""
-    }
+### Usage
 
-    /**
-     * Checks if the given language is supported by this action.
-     *
-     * @param computerLanguage The language to check.
-     * @return `true` if the language is supported (not plain text), `false` otherwise.
-     */
-    override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean =
-        computerLanguage != null && computerLanguage != ComputerLanguage.Text
+1. **Clipboard Preparation:** Ensure that the text you wish to convert is copied to your system's clipboard.
+2. **Triggering PasteAction:** Use the designated shortcut or menu option to trigger the `PasteAction` within your IDE.
+3. **Automatic Conversion:** The action automatically detects the language of the text in the clipboard, converts it to
+   the target language, and pastes it into your current editor window.
 
-    /**
-     * Checks if the action should be enabled based on the current event.
-     *
-     * @param event The action event.
-     * @return `true` if the system clipboard contains text data, `false` otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent): Boolean =
-        hasClipboard() && super.isEnabled(event)
+### Requirements
 
-    /**
-     * Checks if the system clipboard contains text data.
-     *
-     * @return `true` if the clipboard contains text data, `false` otherwise.
-     */
-    private fun hasClipboard() = Toolkit.getDefaultToolkit().systemClipboard.getContents(null)?.let { contents ->
-        return@let when {
-            contents.isDataFlavorSupported(DataFlavor.stringFlavor) -> true
-            contents.isDataFlavorSupported(DataFlavor.getTextPlainUnicodeFlavor()) -> true
-            else -> false
-        }
-    } ?: false
+- The action requires access to a virtual API (`VirtualAPI`) for converting the text between languages.
+- The IDE should have access to the `AppSettingsState` configuration for default model and temperature settings used
+  during conversion.
 
-    /**
-     * Retrieves the text data from the system clipboard.
-     *
-     * @return The text data from the clipboard, or `null` if no text data is available.
-     */
-    private fun getClipboard(): Any? = Toolkit.getDefaultToolkit().systemClipboard.getContents(null)?.let { contents ->
-        return@let when {
-            contents.isDataFlavorSupported(DataFlavor.stringFlavor) -> contents.getTransferData(DataFlavor.stringFlavor)
-            contents.isDataFlavorSupported(DataFlavor.getTextPlainUnicodeFlavor()) -> contents.getTransferData(DataFlavor.getTextPlainUnicodeFlavor())
-            else -> null
-        }
-    }
-}
-```
+### Limitations
 
-This class extends the `SelectionAction` class and provides an action that converts the text from the system clipboard into code in the specified language. The conversion is performed using the OpenAI API, and the action supports converting text from any language into code in a supported programming language.
+- The action does not support plain text (`ComputerLanguage.Text`) as a target language for conversion.
+- The functionality is dependent on the availability and response of the `VirtualAPI`.
 
-The `VirtualAPI` interface defines the contract for the OpenAI API call, which includes a `convert` function that takes the text, source language, and target language as input and returns the converted text and its language.
+### API Reference
 
-The `getConfig` function returns an empty string as the configuration for this action.
+#### VirtualAPI
 
-The `processSelection` function processes the selected text by converting it to code using the OpenAI API. It creates a `ChatProxy` instance with the `VirtualAPI` interface, the OpenAI API key, the default chat model, and the temperature setting. It then calls the `convert` function of the `VirtualAPI` with the clipboard text, "autodetect" as the source language, and the target language specified in the selection state.
+An interface used for converting text between different programming languages.
 
-The `isLanguageSupported` function checks if the given language is supported by this action. It returns `true` if the language is not `null` and not plain text (`ComputerLanguage.Text`).
+##### Methods
 
-The `isEnabled` function checks if the action should be enabled based on the current event. It returns `true` if the system clipboard contains text data and the action is enabled by the parent class (`super.isEnabled(event)`).
+- `convert(text: String, from_language: String, to_language: String): ConvertedText` - Converts the given text from one
+  language to another.
 
-The `hasClipboard` function checks if the system clipboard contains text data by checking if the clipboard contents support the `DataFlavor.stringFlavor` or `DataFlavor.getTextPlainUnicodeFlavor` data flavors.
+##### Inner Class
 
-The `getClipboard` function retrieves the text data from the system clipboard by checking if the clipboard contents support the `DataFlavor.stringFlavor` or `DataFlavor.getTextPlainUnicodeFlavor` data flavors and returning the corresponding data.
+- `ConvertedText` - Holds the result of a conversion, including the converted code and its language.
+
+### Troubleshooting
+
+- **Conversion Not Triggering:** Ensure that the clipboard contains text and that the text is in a supported format (
+  plain text or Unicode text).
+- **Unsupported Language Error:** Check if the target language is supported and not marked as plain text.
+
+For further assistance, refer to the developer documentation or contact support.
+
+# code\DescribeAction.kt
+
+## DescribeAction Documentation
+
+### Overview
+
+The `DescribeAction` class is part of a larger system designed to enhance coding efficiency by automatically generating
+descriptions for code snippets. This functionality is particularly useful within the context of an IDE (Integrated
+Development Environment), where understanding and documenting code can significantly improve readability and
+maintainability.
+
+### Key Components
+
+#### DescribeAction_VirtualAPI
+
+This interface defines the core functionality for describing code. It includes a single method, `describeCode`, which
+takes a code snippet, the programming language of the code, and the desired language for the description. It returns an
+instance of `DescribeAction_ConvertedText`, which contains the generated description.
+
+##### DescribeAction_ConvertedText
+
+A simple data class that holds the result of the code description process. It has two properties: `text`, which is the
+generated description of the code, and `language`, indicating the language used for the description.
+
+#### DescribeAction Class
+
+Extends `SelectionAction<String>` and utilizes the `DescribeAction_VirtualAPI` to generate descriptions for selected
+code snippets within the IDE.
+
+##### Key Methods
+
+- `getConfig(project: Project?)`: Returns a configuration string for the action. Currently, this method returns an empty
+  string.
+
+- `processSelection(state: SelectionState, config: String?)`: Takes the current selection state and configuration,
+  generates a description for the selected code, and formats it according to the code's comment style. The result is a
+  string that combines the generated description with the original code, properly indented and commented.
+
+#### Proxy Initialization
+
+The `proxy` property lazily initializes an instance of `DescribeAction_VirtualAPI` using the `ChatProxy` class. This
+setup allows for dynamic interaction with a backend service capable of generating code descriptions. The configuration
+for this proxy includes settings for the AI model, temperature, and the number of retries for deserialization.
+
+### Usage
+
+To use `DescribeAction`, a user would typically select a portion of code within their IDE. The action then triggers
+the `processSelection` method, which communicates with the backend service to generate a description for the selected
+code. The description is formatted according to the code's comment style and inserted above the selected code snippet,
+providing immediate, in-context documentation.
+
+### Configuration
+
+The behavior of `DescribeAction` can be influenced by settings in `AppSettingsState`, such as the desired human language
+for descriptions, the AI model used for generating descriptions, and the temperature setting for the AI's responses.
+
+### Conclusion
+
+`DescribeAction` offers a convenient way to automatically generate descriptions for code snippets, facilitating better
+documentation and understanding of code within projects. By leveraging AI through a backend service, it provides
+accurate and context-aware descriptions, enhancing the development workflow.
 
 # code\InsertImplementationAction.kt
 
-Sure, here's the documentation for the `InsertImplementationAction` class:
+## Insert Implementation Action Documentation
 
-```kotlin
-/**
- * An action that inserts an implementation based on a natural language specification.
- *
- * This action looks for a comment or selected text that describes the desired implementation.
- * It then uses an AI model to generate code that implements the specified functionality.
- * The generated code is inserted below the comment or selected text.
- *
- * The action supports various programming languages and can use the surrounding code context
- * to generate more relevant implementations.
- */
-class InsertImplementationAction : SelectionAction<String>() {
+### Overview
 
-    /**
-     * A virtual API interface for generating code implementations.
-     */
-    interface VirtualAPI {
-        /**
-         * Generates code based on a natural language specification.
-         *
-         * @param specification The natural language specification for the desired implementation.
-         * @param prefix The code context or prefix for the implementation.
-         * @param computerLanguage The programming language for the implementation.
-         * @param humanLanguage The natural language used for the specification.
-         * @return A ConvertedText object containing the generated code and language.
-         */
-        fun implementCode(
-            specification: String,
-            prefix: String,
-            computerLanguage: String,
-            humanLanguage: String
-        ): ConvertedText
+The `InsertImplementationAction` class is part of a code generation tool designed to automatically insert code
+implementations into your project. It leverages AI to generate code based on a given specification, which can be derived
+from comments or selected text within your code editor. This action is integrated into an IDE environment, providing a
+seamless experience for generating and inserting code.
 
-        /**
-         * A data class representing the generated code and language.
-         */
-        class ConvertedText {
-            var code: String? = null
-            var language: String? = null
-        }
-    }
+### Key Features
 
-    // ... (other methods and classes)
-}
-```
+- **AI-Powered Code Generation**: Utilizes an AI model to generate code implementations based on natural language
+  specifications.
+- **Support for Multiple Languages**: Capable of generating code for various programming languages, excluding Text and
+  Markdown.
+- **Context-Aware**: Takes into account the surrounding context of the selected text or comment to generate relevant
+  code.
+- **Customizable**: Leverages project-specific settings for human and computer languages, as well as AI model
+  configurations.
 
-This class extends `SelectionAction<String>` and provides an implementation for generating code based on a natural language specification. Here's a breakdown of the key components:
+### How It Works
 
-1. `VirtualAPI` interface: This interface defines a contract for generating code implementations. The `implementCode` function takes a natural language specification, code context/prefix, programming language, and human language as input, and returns a `ConvertedText` object containing the generated code and language.
+1. **Selection**: The action can be triggered on a specific selection within your code editor. This selection can either
+   be a comment or a block of code.
+2. **Specification Extraction**: The tool extracts a specification from the selected text or the largest intersecting
+   comment. This specification is then used as input for the AI model.
+3. **AI Code Generation**: The extracted specification, along with contextual information about the surrounding code, is
+   sent to an AI model. The model generates a code implementation based on this input.
+4. **Insertion**: The generated code is automatically inserted into your codebase, directly following the selected text
+   or comment.
 
-2. `getProxy()` function: This function creates an instance of the `VirtualAPI` interface using the `ChatProxy` class from the `com.simiacryptus.jopenai.proxy` package. It configures the proxy with the appropriate API, model, temperature, and deserialization retries.
+### Usage
 
-3. `getConfig()` function: This function is required by the `SelectionAction` interface and returns an empty string, as no additional configuration is needed for this action.
+To use the `InsertImplementationAction`, follow these steps:
 
-4. `defaultSelection()` and `editSelection()` functions: These functions are responsible for determining the initial selection range and editing the selection range, respectively. They look for comments or other relevant code elements to determine the selection range.
+1. **Select Text or Comment**: In your code editor, select a block of text or a comment that describes the functionality
+   you wish to implement.
+2. **Trigger Action**: Trigger the `InsertImplementationAction` through your IDE's action or shortcut mechanism.
+3. **Review and Save**: The generated code will be inserted automatically. Review the inserted code and make any
+   necessary adjustments before saving your file.
 
-5. `processSelection()` function: This is the main function that processes the selected text or comment and generates the code implementation. It extracts the natural language specification from the selected text or comment, retrieves the code context (if available), and calls the `implementCode` function from the `VirtualAPI` to generate the code implementation. The generated code is then inserted below the selected text or comment.
+### Requirements
 
-6. `getPsiClassContextActionParams()` function: This function retrieves the selection start and end offsets, as well as the largest intersecting comment, for use in the `processSelection()` function.
+- The action requires an IDE environment that supports the integration of custom actions.
+- A configured AI model and API key are necessary for code generation. These can be set up in the project's settings.
 
-7. `isLanguageSupported()` function: This function checks if the current programming language is supported by the action. It returns `false` for plain text, Markdown, or if the language is `null`.
+### Supported Languages
 
-8. `PsiClassContextActionParams` class: This is a data class used to hold the selection start and end offsets, as well as the largest intersecting comment.
+The `InsertImplementationAction` supports various programming languages for code generation. However, it does not
+support generating code for Text or Markdown files.
 
-Overall, this action provides a convenient way to generate code implementations based on natural language specifications within an Integrated Development Environment (IDE) or code editor.
+### Configuration
+
+Project-specific configurations, such as the preferred human and computer languages and AI model settings, can be
+adjusted in the project's settings. These settings influence the behavior of the code generation process.
+
+### Conclusion
+
+The `InsertImplementationAction` offers a powerful way to accelerate the development process by automatically generating
+and inserting code implementations. By leveraging AI and understanding the context of your project, it provides relevant
+and customizable code snippets, enhancing productivity and code quality.
+
+# code\RecentCodeEditsAction.kt
+
+## Recent Code Edits Action
+
+### Overview
+
+The `RecentCodeEditsAction` is an IntelliJ IDEA plugin component that provides users with a dynamic action group listing
+their most recent custom code edits. This feature enhances the development environment by allowing quick access and
+reapplication of frequently used custom edits, streamlining the coding process.
+
+### Features
+
+- **Dynamic Listing**: Displays a list of the most recent custom code edits as individual actions.
+- **Quick Access**: Enables users to quickly reapply a recent edit from the list.
+- **Visibility Control**: The action group is only visible and enabled when applicable, ensuring a clutter-free
+  environment.
+
+### Usage
+
+#### Activation Conditions
+
+- The action group becomes visible and enabled only when there is a selection in the editor, and the current file is
+  recognized as a programming language file (not plain text).
+- It is context-sensitive and tailored to enhance productivity by providing relevant actions based on the user's recent
+  activities.
+
+#### Accessing Recent Edits
+
+1. **Selection Requirement**: Ensure that you have selected a portion of code in your editor. The action group is
+   context-sensitive and requires a selection to operate.
+2. **Navigate to Action**: Access the `RecentCodeEditsAction` from the designated menu or action search in IntelliJ
+   IDEA.
+3. **Choose an Edit**: A list of recent custom edits will be displayed, each prefixed with a number for easy
+   identification. If the list contains fewer than ten items, they will be prefixed with an underscore and the item
+   number (e.g., `_1: YourRecentEdit`). For ten or more items, they will be listed simply with the number (
+   e.g., `10: YourRecentEdit`).
+4. **Apply an Edit**: Click on the desired edit to apply it to the current selection.
+
+### Customization
+
+The actions listed are dynamically generated based on the user's recent custom code edits, ensuring that the most
+relevant and frequently used edits are easily accessible. This list is managed through the `AppSettingsState`
+configuration, where the history of commands is maintained.
+
+### Limitations
+
+- The action group is not available for plain text files, as it is designed to support programming languages recognized
+  by IntelliJ IDEA.
+- The visibility and availability of the action group depend on the current context, specifically requiring a text
+  selection within the editor.
+
+### Conclusion
+
+The `RecentCodeEditsAction` enhances the IntelliJ IDEA development environment by providing a streamlined way to access
+and reapply frequently used custom code edits. By integrating this feature, developers can significantly reduce the time
+spent on repetitive coding tasks, focusing more on creative and complex aspects of their projects.
 
 # code\RenameVariablesAction.kt
 
-Sure, here's the documentation for the `RenameVariablesAction` class:
+## Rename Variables Action Documentation
 
-```kotlin
-/**
- * An action that suggests and applies variable name renames in the selected code.
- *
- * This action uses an AI model to suggest better variable names for the selected code.
- * The user can then choose which variable names to rename, and the action will apply
- * the selected renames to the code.
- *
- * @property proxy The proxy object used to communicate with the AI model for suggesting renames.
- */
-open class RenameVariablesAction : SelectionAction<String>() {
+### Overview
 
-    /**
-     * An interface defining the API for suggesting variable renames.
-     */
-    interface RenameAPI {
-        /**
-         * Suggests variable renames for the given code.
-         *
-         * @param code The code for which to suggest variable renames.
-         * @param computerLanguage The programming language of the code.
-         * @param humanLanguage The human language to use for the suggestions.
-         * @return A response containing the suggested renames.
-         */
-        fun suggestRenames(
-            code: String,
-            computerLanguage: String,
-            humanLanguage: String
-        ): SuggestionResponse
+The `RenameVariablesAction` class is an extension of the `SelectionAction` class designed to facilitate the renaming of
+variables in code. It leverages an AI-based suggestion system to propose new names for variables, aiming to improve code
+readability and maintainability.
 
-        /**
-         * A data class representing the response from the rename suggestion API.
-         *
-         * @property suggestions A list of suggested renames.
-         */
-        class SuggestionResponse {
-            var suggestions: MutableList<Suggestion> = mutableListOf()
+### Key Components
 
-            /**
-             * A data class representing a single suggested rename.
-             *
-             * @property originalName The original variable name.
-             * @property suggestedName The suggested variable name.
-             */
-            class Suggestion {
-                var originalName: String? = null
-                var suggestedName: String? = null
-            }
-        }
-    }
+#### RenameAPI Interface
 
-    /**
-     * The proxy object used to communicate with the AI model for suggesting renames.
-     */
-    val proxy: RenameAPI
-        get() = /* ... */
+- **Purpose**: Defines the contract for suggesting new names for variables.
+- **Method**: `suggestRenames(code: String, computerLanguage: String, humanLanguage: String)`: Accepts the current code
+  snippet, the programming language of the code, and the human language for the suggestions. It returns
+  a `SuggestionResponse` containing a list of suggested renames.
 
-    /**
-     * Returns an empty string as the configuration for this action.
-     */
-    override fun getConfig(project: Project?): String = ""
+#### SuggestionResponse Class
 
-    /**
-     * Processes the selected code and applies the chosen variable renames.
-     *
-     * @param event The action event.
-     * @param state The selection state containing the selected code and language.
-     * @param config The configuration for this action (unused).
-     * @return The code with the chosen variable renames applied.
-     */
-    override fun processSelection(event: AnActionEvent?, state: SelectionState, config: String?): String {
-        // Get rename suggestions from the AI model
-        val renameSuggestions = /* ... */
+- **Purpose**: Encapsulates the response from the rename suggestion API.
+- **Attributes**:
+    - `suggestions`: A mutable list of `Suggestion` objects.
 
-        // Let the user choose which renames to apply
-        val selectedSuggestions = choose(renameSuggestions)
+#### Suggestion Class
 
-        // Apply the chosen renames to the selected code
-        return /* ... */
-    }
+- **Purpose**: Represents a single rename suggestion.
+- **Attributes**:
+    - `originalName`: The original variable name.
+    - `suggestedName`: The suggested new name for the variable.
 
-    /**
-     * Displays a dialog for the user to choose which variable renames to apply.
-     *
-     * @param renameSuggestions A map of original variable names to suggested names.
-     * @return A set of original variable names for which to apply the suggested renames.
-     */
-    open fun choose(renameSuggestions: Map<String, String>): Set<String> {
-        return /* ... */
-    }
+### Usage
 
-    /**
-     * Checks if the action supports the given programming language.
-     *
-     * @param computerLanguage The programming language to check.
-     * @return `true` if the language is supported, `false` otherwise.
-     */
-    override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean =
-        computerLanguage != ComputerLanguage.Text
-}
-```
+1. **Initialization**: The `RenameVariablesAction` class is instantiated as part of the plugin's action system.
+2. **Configuration**: Override the `getConfig` method if you need to provide specific configurations for the action. By
+   default, it returns an empty string.
+3. **Processing Selection**: The `processSelection` method is the core of the action. It:
+    - Retrieves rename suggestions for the selected text in the code editor.
+    - Displays a dialog for the user to choose which suggestions to apply.
+    - Applies the selected renames to the text.
+4. **Choosing Suggestions**: The `choose` method displays a checkbox dialog with the suggested renames, allowing users
+   to select which renames to apply.
 
-This class extends the `SelectionAction` class and provides functionality for suggesting and applying variable renames to the selected code. The `RenameAPI` interface defines the API for suggesting renames, and the `proxy` property provides an instance of this API.
+### Supported Languages
 
-The `processSelection` function is the main entry point for the action. It gets rename suggestions from the AI model, displays a dialog for the user to choose which renames to apply, and then applies the chosen renames to the selected code.
+The action supports all programming languages except plain text (`ComputerLanguage.Text`). The support is determined by
+the `isLanguageSupported` method.
 
-The `choose` function is responsible for displaying the dialog and allowing the user to select which variable renames to apply.
+### Integration
 
-The `isLanguageSupported` function checks if the action supports the given programming language, returning `true` for all languages except plain text.
+This action is designed to be integrated into the IntelliJ IDEA platform. It utilizes the platform's action system and
+UI tools for displaying dialogs and processing text selections.
 
-Overall, this class provides a convenient way for users to improve the variable naming in their code with the help of an AI model.
+### Example
+
+When a user selects a block of code and triggers the `RenameVariablesAction`, the action will:
+
+- Analyze the selected code to identify variable names.
+- Use the `RenameAPI` to get suggestions for renaming these variables based on the code's and user's language.
+- Present the user with a dialog to select which variables to rename.
+- Apply the selected renames to the code.
+
+This action streamlines the process of renaming variables, making code more readable and maintainable with minimal
+effort from the user.
 
 # dev\AppServer.kt
 
-Sure, here's the documentation for the provided code:
+## AppServer Documentation
+
+### Overview
+
+The `AppServer` class is a core component designed to manage and serve web applications within a development
+environment. It facilitates the dynamic addition of applications, handling their web contexts, and managing a web server
+instance. This class is particularly useful for projects that require running and testing multiple web applications
+simultaneously.
+
+### Features
+
+- **Dynamic Application Management:** Allows adding and removing web applications dynamically without needing to restart
+  the server manually.
+- **WebSocket Support:** Integrated support for WebSocket applications, enabling real-time bi-directional communication
+  between clients and the server.
+- **Progress Monitoring:** Includes functionality to monitor the server's running state and gracefully handle shutdowns
+  or restarts.
+
+### Key Components
+
+- **Server Instance:** A Jetty server instance configured to listen on a specified port and address.
+- **Application Registry:** A registry for managing the active web applications (ChatServer instances) and their paths.
+- **Web Context Management:** Handles the creation and configuration of web contexts for each registered application.
+
+### Usage
+
+#### Starting the Server
+
+To start the server, simply call the `start()` method. This initializes the server (if not already running) and begins
+listening for incoming connections on the configured port and address.
 
 ```kotlin
-package com.github.simiacryptus.aicoder.actions.dev
-
-import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
-import com.simiacryptus.skyenet.webui.chat.ChatServer
-import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.server.handler.ContextHandlerCollection
-import org.eclipse.jetty.webapp.WebAppContext
-import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
-import org.slf4j.LoggerFactory
-import java.net.InetSocketAddress
-
-/**
- * This class represents an application server that can host multiple ChatServer instances.
- * It uses the Jetty server to run the ChatServer instances as web applications.
- *
- * @param localName The hostname or IP address to bind the server to.
- * @param port The port number to listen on.
- * @param project The IntelliJ project associated with this server (can be null).
- */
-class AppServer(
-  private val localName: String,
-  private val port: Int,
-  project: Project?
-) {
-    // ... (code omitted for brevity) ...
-
-    /**
-     * Adds a new ChatServer instance to the server.
-     *
-     * @param path The context path for the ChatServer instance.
-     * @param socketServer The ChatServer instance to add.
-     */
-    @Synchronized
-    fun addApp(path: String, socketServer: ChatServer) {
-        // ... (code omitted for brevity) ...
-    }
-
-    /**
-     * Creates a new WebAppContext for the given ChatServer instance.
-     *
-     * @param server The ChatServer instance.
-     * @param path The context path for the ChatServer instance.
-     * @return The created WebAppContext.
-     */
-    private fun newWebAppContext(server: ChatServer, path: String): WebAppContext {
-        // ... (code omitted for brevity) ...
-    }
-
-    // ... (code omitted for brevity) ...
-
-    companion object {
-        /**
-         * Gets the singleton instance of the AppServer.
-         *
-         * @param project The IntelliJ project associated with the server (can be null).
-         * @return The AppServer instance.
-         */
-        fun getServer(project: Project?): AppServer {
-            // ... (code omitted for brevity) ...
-        }
-
-        /**
-         * Stops and cleans up the singleton instance of the AppServer.
-         */
-        fun stop() {
-            // ... (code omitted for brevity) ...
-        }
-    }
-}
+val project: Project? = // Obtain your IntelliJ Project instance
+val appServer = AppServer("localhost", 8080, project)
+appServer.start()
 ```
 
-This code defines an `AppServer` class that is responsible for hosting multiple instances of `ChatServer` as web applications using the Jetty server. The `AppServer` class has the following main components:
+#### Adding Applications
 
-1. **Constructor**: The constructor takes three parameters: `localName` (the hostname or IP address to bind the server to), `port` (the port number to listen on), and `project` (the IntelliJ project associated with the server, which can be null).
+Applications can be added dynamically using the `addApp(path: String, socketServer: ChatServer)` method. This method
+registers the application and its web context, making it accessible at the specified path.
 
-2. **addApp()**: This method allows you to add a new `ChatServer` instance to the server. It takes two parameters: `path` (the context path for the `ChatServer` instance) and `socketServer` (the `ChatServer` instance to add).
+```kotlin
+val chatServer = ChatServer() // Your ChatServer instance
+appServer.addApp("/chat", chatServer)
+```
 
-3. **newWebAppContext()**: This private method creates a new `WebAppContext` for the given `ChatServer` instance. It configures the `WebAppContext` with the necessary settings, such as the base resource, class loader, context path, and welcome files.
+#### Stopping the Server
 
-4. **Companion Object**: The companion object provides two static methods:
-   - `getServer()`: This method returns the singleton instance of the `AppServer`. If the instance doesn't exist or the server is not running, it creates a new instance and starts it.
-   - `stop()`: This method stops and cleans up the singleton instance of the `AppServer`.
+To stop the server, call the `stop()` method. This method stops the server and clears any registered applications,
+preparing the server for a clean shutdown.
 
-The `AppServer` class also includes some helper methods and fields for managing the server lifecycle, handling progress indicators, and logging.
+```kotlin
+AppServer.stop()
+```
 
-Overall, this code provides a way to host multiple `ChatServer` instances as web applications within a single Jetty server instance. It allows you to dynamically add or remove `ChatServer` instances and manage the server lifecycle.
+### Singleton Access
+
+The `AppServer` class provides a singleton access pattern through its companion object, allowing for easy management of
+a single server instance across the application.
+
+- **Get Server:** `AppServer.getServer(project: Project?)` returns the current server instance, starting it if
+  necessary.
+- **Stop Server:** `AppServer.stop()` stops the current server instance and clears it.
+
+### Important Considerations
+
+- The server automatically restarts upon adding a new application to reflect the updated context. Ensure that this
+  behavior is accounted for in your application logic.
+- The server uses lazy initialization for performance optimization and to avoid unnecessary resource allocation.
+
+### Conclusion
+
+The `AppServer` class offers a flexible and efficient way to manage web applications and their server contexts within a
+development environment. Its dynamic application management, WebSocket support, and progress monitoring capabilities
+make it a valuable tool for developers working on web-based projects.
 
 # dev\PrintTreeAction.kt
 
-Sure, here's the documentation for the `PrintTreeAction` class:
+## PrintTreeAction User Guide
 
-```kotlin
-/**
- * The PrintTreeAction class is an IntelliJ action that enables developers to print the tree structure of a PsiFile.
- * To use this action, follow these steps:
- *
- * 1. Make sure that the "devActions" setting is enabled in the plugin's settings.
- * 2. Open the file you want to print the tree structure of in the IntelliJ editor.
- * 3. Right-click in the editor and select the "PrintTreeAction" option from the context menu.
- *
- * This action will print the tree structure of the currently open file to the log.
- *
- * @see BaseAction The base class for this action.
- * @see AppSettingsState The class that manages the plugin's settings.
- * @see PsiUtil A utility class for working with the IntelliJ PSI (Program Structure Interface).
- */
-class PrintTreeAction : BaseAction() {
+### Overview
 
-    /**
-     * Handles the action event by printing the tree structure of the largest contained entity
-     * (e.g., file, class, method) to the log.
-     *
-     * @param e The action event.
-     */
-    override fun handle(e: AnActionEvent) {
-        log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e)!!))
-    }
+The `PrintTreeAction` is a powerful tool integrated into the IntelliJ IDE, designed for developers who need to visualize
+the structure of their code files in a tree format. This action is particularly useful for understanding the
+organization and hierarchy of classes, methods, and other elements within a file.
 
-    /**
-     * Checks if the action is enabled based on the "devActions" setting in the plugin's settings.
-     *
-     * @param event The action event.
-     * @return True if the "devActions" setting is enabled, false otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        return AppSettingsState.instance.devActions
-    }
+### Prerequisites
 
-    companion object {
-        private val log = LoggerFactory.getLogger(PrintTreeAction::class.java)
-    }
-}
-```
+Before you can use the `PrintTreeAction`, ensure the following:
 
-This documentation explains the purpose of the `PrintTreeAction` class, how to use the action, and provides details about the class members and their responsibilities. It also includes cross-references to related classes and utilities used by the action.
+- You have IntelliJ IDE installed.
+- The "devActions" setting is enabled in your project's `AppSettingsState`.
 
-# dev\InternalCoderAction.kt
+### How to Use PrintTreeAction
 
-Sure, here's the documentation for the `InternalCoderAction` class:
+1. **Open the Desired File**: Navigate to and open the file you wish to analyze in IntelliJ.
+2. **Access the Action**: Right-click within the editor window to open the context menu. Look for the "PrintTreeAction"
+   option. If you do not see this option, ensure you have met all prerequisites.
+3. **Execute the Action**: Click on "PrintTreeAction". The action will process the currently open file.
+4. **View the Results**: The tree structure of the file will be printed to the IntelliJ log. You can access this log at
+   the bottom of the IntelliJ window, typically in the "Run" or "Debug" tabs.
 
-```kotlin
-/**
- * An action that launches an internal coding agent within the IntelliJ IDE.
- *
- * This action creates a new session for the coding agent and initializes it with the current
- * context information from the IDE, such as the current editor, file, project, and symbols.
- * It then starts a web server and opens a browser window to interact with the coding agent.
- *
- * The coding agent is an instance of [CodingAgent] and is configured with the specified API,
- * data storage, session, user, UI, interpreter, symbols, temperature, details, and model.
- *
- * When the user sends a message to the coding agent, the [userMessage] function of the
- * [ApplicationServer] is called, which starts the coding agent with the user's message.
- *
- * @property path The path for the internal coding agent's web server.
- */
-class InternalCoderAction : BaseAction() {
-    // ...
+### Features
 
-    /**
-     * Handles the action event by launching the internal coding agent.
-     *
-     * @param e The action event.
-     */
-    override fun handle(e: AnActionEvent) {
-        // ...
-    }
+- **Tree Structure Visualization**: Quickly understand the hierarchical structure of your PsiFile, including classes,
+  methods, and other code elements.
+- **Easy Access**: Available directly from the editor's context menu, allowing for seamless integration into your
+  development workflow.
+- **Conditional Availability**: This action is only available when the "devActions" setting is enabled, preventing
+  accidental usage in non-development environments.
 
-    /**
-     * Determines whether the action is enabled based on the development settings.
-     *
-     * @param event The action event.
-     * @return `true` if the action is enabled, `false` otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        // ...
-    }
+### Troubleshooting
 
-    companion object {
-        // ...
+- **Action Not Visible**: If the "PrintTreeAction" is not visible in the context menu, ensure that the "devActions"
+  setting is enabled in your `AppSettingsState`.
+- **Null Pointer Exceptions**: Ensure the file you are trying to analyze is fully loaded and not corrupted to avoid null
+  pointer exceptions during the action's execution.
 
-        /**
-         * Initializes the application server for the internal coding agent.
-         *
-         * @param server The app server instance.
-         * @param path The path for the internal coding agent's web server.
-         * @return The initialized [ApplicationServer] instance.
-         */
-        private fun initApp(server: AppServer, path: String): ApplicationServer {
-            // ...
-        }
-    }
-}
-```
+### Conclusion
 
-This class extends `BaseAction` and provides an implementation for the `handle` function, which is responsible for launching the internal coding agent. It creates a new session, initializes the coding agent with the current context information, starts a web server, and opens a browser window to interact with the agent.
-
-The `isEnabled` function checks if the development actions are enabled in the app settings before allowing the action to be executed.
-
-The `initApp` function is a companion object function that initializes the `ApplicationServer` for the internal coding agent. It creates a new instance of `ApplicationServer` if it doesn't already exist and registers it with the app server.
-
-The `ApplicationServer` instance overrides the `userMessage` function to start the coding agent with the user's message when a message is received. It also provides the root directory for the coding agent's data storage.
+The `PrintTreeAction` is an invaluable tool for developers looking to gain insights into the structure of their code
+files. By following the steps outlined in this guide, you can efficiently utilize this action to enhance your
+development process within the IntelliJ IDE.
 
 # FileContextAction.kt
 
-Sure, here's the documentation for the `FileContextAction` class:
+## FileContextAction Documentation
 
-The `FileContextAction` is an abstract class that extends `BaseAction` and provides a base implementation for actions that operate on files or folders in the current project. It defines two abstract methods that subclasses must implement:
+### Overview
 
-1. `processSelection(state: SelectionState, config: T?): Array<File>`: This method is responsible for processing the selected file or folder and returning an array of generated files.
+`FileContextAction` is an abstract class designed to extend the functionality of actions within a specific file or
+folder context in an IntelliJ platform-based IDE. It allows developers to create actions that can process selected files
+or folders, perform operations based on those selections, and integrate seamlessly with the IDE's UI and file system.
 
-2. `getConfig(project: Project?, e: AnActionEvent): T?`: This method returns an optional configuration object of type `T` that can be used by the `processSelection` method.
+### Key Features
 
-The `FileContextAction` class also provides the following functionality:
+- **Flexible File and Folder Support**: Actions can be configured to support either files, folders, or both, depending
+  on the needs of the specific action being implemented.
+- **Configurable Processing**: Implementers can define custom processing logic for selected files or folders, allowing
+  for a wide range of operations such as file generation, modification, or analysis.
+- **IDE Integration**: Utilizes the IntelliJ platform's UI and file system APIs for selecting files/folders, displaying
+  notifications, and managing file operations within the IDE environment.
+- **Asynchronous Execution**: Operations are performed in a separate thread, ensuring that the IDE remains responsive
+  during potentially time-consuming file processing tasks.
 
-- It handles the action execution by retrieving the selected file or folder, calling the `processSelection` method, and opening the generated files in the IDE.
-- It supports both file and folder selections, controlled by the `supportsFiles` and `supportsFolders` constructor parameters.
-- It provides a `SelectionState` data class that encapsulates the selected file or folder and the project root directory.
-- It includes a utility method `open(project: Project, outputPath: Path)` that opens a generated file in the IDE. This method uses a scheduled thread pool to periodically check if the file exists and is ready to be opened.
-- It has an `isDevAction` property that can be used to enable or disable the action based on the user's development mode settings.
+### Usage
 
-The `FileContextAction` class also includes a companion object with a logger instance and the `open` method implementation.
-
-To create a new action that extends `FileContextAction`, you need to implement the `processSelection` and `getConfig` methods. The `processSelection` method should perform the desired file or folder processing and return an array of generated files. The `getConfig` method can return an optional configuration object that will be passed to the `processSelection` method.
-
-Here's an example of how you might implement a subclass of `FileContextAction`:
+To use `FileContextAction`, you need to create a subclass and implement the abstract methods. Here's a simplified
+example:
 
 ```kotlin
 class MyFileAction : FileContextAction<MyConfig>() {
+  override fun processSelection(state: SelectionState, config: MyConfig?): Array<File> {
+    // Implement your file processing logic here
+    return arrayOf() // Return an array of files that were processed or generated
+  }
 
-    override fun processSelection(state: SelectionState, config: MyConfig?): Array<File> {
-        // Perform file or folder processing based on the selected file/folder and configuration
-        val generatedFiles = mutableListOf<File>()
-        // ... add generated files to the list
-        return generatedFiles.toTypedArray()
-    }
-
-    override fun getConfig(project: Project?, e: AnActionEvent): MyConfig? {
-        // Return a configuration object or null if no configuration is needed
-        return MyConfig(/* ... */)
-    }
-
+  override fun getConfig(project: Project?, e: AnActionEvent): MyConfig? {
+    // Optionally, provide configuration for the action based on the project or event context
+    return MyConfig()
+  }
 }
 ```
 
-In this example, `MyFileAction` is a subclass of `FileContextAction` that takes a custom configuration object `MyConfig`. The `processSelection` method performs the desired file or folder processing and returns an array of generated files. The `getConfig` method returns an instance of `MyConfig` or `null` if no configuration is needed.
+#### Implementing `processSelection`
 
-# generic\AppendAction.kt
+This method is where the main logic of your action should be implemented. It receives a `SelectionState` object
+containing the selected file or folder and the project root directory. You can use this information to perform your
+desired file operations.
 
-Sure, here's the documentation for the `AppendAction` class:
+#### Configuring Your Action
 
-```kotlin
-/**
- * An action that appends text to the end of the user's selected text using OpenAI's chat model.
- *
- * This action is a subclass of `SelectionAction<String>`, which means it operates on a selected text
- * and returns a `String` as the result.
- *
- * When the action is executed, it creates a `ChatRequest` with the following properties:
- * - The model specified in the app settings
- * - The temperature specified in the app settings
- * - Two messages:
- *   1. A system message instructing the model to append text to the user's prompt
- *   2. A user message containing the selected text
- *
- * The action then sends the `ChatRequest` to the OpenAI API and retrieves the response.
- * The response is then processed to append the generated text to the end of the selected text.
- * If the generated text starts with the selected text, the duplicated portion is removed.
- *
- * The `getConfig` method is overridden to return an empty string, as this action does not require
- * any additional configuration.
- */
-class AppendAction : SelectionAction<String>() {
-    /**
-     * Returns an empty string, as this action does not require any additional configuration.
-     */
-    override fun getConfig(project: Project?): String {
-        return ""
-    }
+The `getConfig` method allows you to provide custom configuration for your action, which can be useful for tailoring its
+behavior based on the project context or user preferences.
 
-    /**
-     * Processes the selected text by appending text generated by the OpenAI chat model.
-     *
-     * @param state The selection state containing the selected text.
-     * @param config Not used in this action.
-     * @return The selected text with the generated text appended to the end.
-     */
-    override fun processSelection(state: SelectionState, config: String?): String {
-        val settings = AppSettingsState.instance
-        val request = ChatRequest(
-            model = settings.defaultChatModel().modelName,
-            temperature = settings.temperature
-        ).copy(
-            temperature = settings.temperature,
-            messages = listOf(
-                ChatMessage(Role.system, "Append text to the end of the user's prompt".toContentList(), null),
-                ChatMessage(Role.user, state.selectedText.toString().toContentList(), null)
-            ),
-        )
-        val chatResponse = api.chat(request, settings.defaultChatModel())
-        val b4 = state.selectedText ?: ""
-        val str = chatResponse.choices[0].message?.content ?: ""
-        return b4 + if (str.startsWith(b4)) str.substring(b4.length) else str
-    }
-}
-```
+### Integration Points
 
-This documentation explains the purpose of the `AppendAction` class, its inheritance from `SelectionAction<String>`, and the details of how it creates and processes the `ChatRequest` to append text to the selected text using the OpenAI chat model. It also documents the `getConfig` and `processSelection` methods, explaining their roles and parameters.
+- **isEnabled**: Determines whether the action is enabled based on the current context, such as the type of file
+  selected or project settings.
+- **handle**: The entry point for the action's execution. It sets up the necessary context and invokes
+  the `processSelection` method.
 
-# generic\AnalogueFileAction.kt
+### Best Practices
 
-Sure, here's the documentation for the `AnalogueFileAction` class:
+- Ensure that your file operations are efficient and handle potential errors gracefully to avoid disrupting the user's
+  workflow.
+- Use the provided IDE APIs for UI interactions and file system operations to ensure compatibility and a consistent user
+  experience.
 
-```kotlin
-/**
- * An action that generates a new file based on a user-provided directive and an existing file's code.
- * The new file is created in the same directory as the existing file, with a unique filename if necessary.
- * After generating the file, it is opened in the IDE.
- */
-class AnalogueFileAction : FileContextAction<AnalogueFileAction.Settings>() {
+### Conclusion
 
-    /**
-     * Checks if the action is enabled for the current event.
-     * The action is disabled if the selected file is a directory.
-     */
-    override fun isEnabled(event: AnActionEvent): Boolean { ... }
+`FileContextAction` provides a powerful framework for extending the functionality of IntelliJ platform-based IDEs with
+custom file and folder actions. By implementing the abstract methods and following the best practices, developers can
+create sophisticated tools that enhance the development experience.
 
-    /**
-     * Data class representing a project file with its path and code content.
-     */
-    data class ProjectFile(
-        val path: String = "",
-        val code: String = ""
-    )
+# dev\InternalCoderAction.kt
 
-    /**
-     * UI class for displaying the directive input field.
-     */
-    class SettingsUI { ... }
+## InternalCoderAction Documentation
 
-    /**
-     * User settings data class for storing the directive.
-     */
-    class UserSettings(
-        var directive: String = "",
-    )
+### Overview
 
-    /**
-     * Settings data class for storing the user settings and the current project.
-     */
-    class Settings(
-        val settings: UserSettings? = null,
-        val project: Project? = null
-    )
+The `InternalCoderAction` class is part of a plugin designed to integrate coding assistance directly into the IntelliJ
+IDE. It facilitates the creation of a coding session within the IDE, leveraging an internal coding agent to provide
+suggestions and enhancements to the user's coding experience. This action is triggered through the IDE's action system
+and is intended for developers looking for an integrated coding assistant.
 
-    /**
-     * Gets the configuration for the action by showing a dialog to the user.
-     */
-    override fun getConfig(project: Project?, e: AnActionEvent): Settings { ... }
+### Features
 
-    /**
-     * Processes the selected file by generating a new file based on the directive and the existing file's code.
-     * Returns an array containing the generated file.
-     */
-    override fun processSelection(state: SelectionState, config: Settings?): Array<File> { ... }
+- **Session Initialization**: Creates a unique session for each coding instance, ensuring personalized and isolated
+  coding assistance.
+- **Dynamic Symbol Resolution**: Collects and resolves symbols from the current editor context, including the editor,
+  file, element, and project, to provide context-aware coding assistance.
+- **Coding Agent Integration**: Utilizes a `CodingAgent` to process coding requests and provide suggestions based on the
+  current context and user input.
+- **Web UI Support**: Opens a browser window pointing to the coding session's UI, allowing for an interactive coding
+  assistance experience.
+- **Customizable Assistance**: Supports customization of the coding agent's behavior, including the response temperature
+  and operational details.
 
-    /**
-     * Generates a new file based on the provided base file and directive.
-     */
-    private fun generateFile(baseFile: ProjectFile, directive: String): ProjectFile { ... }
+### Usage
 
-    companion object {
-        /**
-         * Opens the generated file in the IDE.
-         */
-        fun open(project: Project, outputPath: Path) { ... }
+1. **Prerequisites**: Ensure that the plugin is installed and enabled in your IntelliJ IDE. The feature is available
+   only if the development actions are enabled in the application settings (`AppSettingsState.instance.devActions`).
 
-        /**
-         * Gets the module root directory for the given file by searching for the nearest `.git` directory.
-         */
-        fun getModuleRootForFile(file: File): File { ... }
-    }
-}
-```
+2. **Triggering the Action**: The action can be triggered through the IDE's action system, typically via a menu item or
+   keyboard shortcut specific to the plugin.
 
-The `AnalogueFileAction` class extends `FileContextAction` and provides functionality to generate a new file based on a user-provided directive and an existing file's code. The user is prompted to enter a directive through a dialog, and the action then generates a new file using the OpenAI API. The generated file is created in the same directory as the existing file, with a unique filename if necessary. After generating the file, it is opened in the IDE.
+3. **Coding Session**: Once triggered, the action initializes a new coding session, setting up the necessary environment
+   and context for the coding agent to operate.
 
-The class has several nested classes:
+4. **Interaction**: Interact with the coding agent through the opened web UI or directly within the IDE, depending on
+   the implementation details of the plugin.
 
-- `ProjectFile`: A data class representing a project file with its path and code content.
-- `SettingsUI`: A UI class for displaying the directive input field.
-- `UserSettings`: A data class for storing the user-provided directive.
-- `Settings`: A data class for storing the user settings and the current project.
+5. **Session Closure**: The session remains active until manually closed or terminated by the user or the system.
 
-The `generateFile` function is responsible for generating the new file using the OpenAI API. It sends a request to the API with the existing file's code and the user-provided directive, and the API generates the new file's content based on these inputs.
+### Configuration
 
-The `open` function in the companion object is responsible for opening the generated file in the IDE. It uses the `FileEditorManager` to open the file and refreshes the file system if necessary.
+- **Development Actions**: Enable or disable development actions through the `AppSettingsState` configuration.
+- **Session Parameters**: Customize session parameters such as the response temperature and operational details directly
+  within the `InternalCoderAction` class or through external configuration options.
 
-The `getModuleRootForFile` function in the companion object finds the module root directory for the given file by searching for the nearest `.git` directory.
+### Troubleshooting
 
-Overall, this action provides a convenient way for developers to generate new files based on existing code and natural language instructions, leveraging the power of the OpenAI API.
+- **Browser Opening Failure**: If the system encounters an issue opening the browser automatically, check the system's
+  default browser settings and ensure that the IDE has the necessary permissions.
+- **Session Initialization Error**: Ensure that the plugin's server component (`AppServer`) is running and accessible.
+  Check the IDE's log files for any error messages related to the plugin.
 
-# generic\AutoDevAction.kt
+### Conclusion
 
-This code defines an IntelliJ IDEA plugin action called `AutoDevAction` that provides an interactive code development assistant powered by OpenAI's language models. Here's a breakdown of the code:
+The `InternalCoderAction` provides a seamless integration of coding assistance within the IntelliJ IDE, enhancing the
+development experience through context-aware suggestions and interactive coding sessions. By leveraging advanced coding
+agents and a dedicated UI, developers can improve their coding efficiency and quality directly within their preferred
+development environment.
 
-1. **AutoDevAction Class**
-   - This class extends `BaseAction` and is responsible for handling the action event triggered by the user.
-   - When the action is triggered, it creates a new session and initializes an `AutoDevApp` instance.
-   - It also starts a server and opens a web browser window pointing to the server's URL.
+# generic\AppendTextWithChatAction.kt
 
-2. **AutoDevApp Class**
-   - This class extends `ApplicationServer` and handles the user's input messages.
-   - It defines a `Settings` data class to store the user's preferences, such as the budget, tools, and model to be used.
-   - The `userMessage` function is called when the user sends a message.
-   - It creates an `AutoDevAgent` instance and starts the code development process based on the user's message.
+## AppendTextWithChatAction Documentation
 
-3. **AutoDevAgent Class**
-   - This class extends `ActorSystem` and is responsible for managing the code development process.
-   - It defines two actors: `DesignActor` and `TaskCodingActor`.
-   - The `DesignActor` is responsible for translating the user's directive into an action plan (a list of tasks).
-   - The `TaskCodingActor` is responsible for implementing the changes to the codebase as described in the task list.
-   - The `start` function is the entry point for the code development process.
-   - It iterates over the tasks in the action plan and applies the necessary code changes using the `TaskCodingActor`.
-   - The code changes are displayed as diffs, and the user can apply them to the codebase.
+### Overview
 
-4. **Companion Object**
-   - The companion object contains utility functions and data classes.
-   - The `TaskList` data class represents the action plan generated by the `DesignActor`.
-   - The `Task` data class represents an individual task in the action plan, including the paths of the files to be modified and a description of the changes.
+The `AppendTextWithChatAction` class is a specialized action designed to append text to the end of a user's selected text within an
+IDE environment. It leverages OpenAI's language model to generate contextually relevant text based on the user's
+selection.
 
-Overall, this code provides an interactive code development assistant that can understand natural language instructions from the user, generate an action plan, and apply the necessary code changes to the codebase. It leverages OpenAI's language models and integrates with IntelliJ IDEA to provide a seamless development experience.
+### How It Works
+
+1. **Configuration Retrieval**: Initially, the action retrieves any necessary configuration from the project settings,
+   though in its current implementation, it returns an empty string as it does not require specific configuration.
+
+2. **Processing Selection**: The core functionality resides in the `processSelection` method, where it performs the
+   following steps:
+    - Retrieves the application's settings, particularly focusing on the default chat model and temperature settings for
+      the OpenAI API request.
+    - Constructs a `ChatRequest` object with the model and temperature settings, and includes two messages:
+        - A system message indicating the action to be performed ("Append text to the end of the user's prompt").
+        - A user message containing the selected text.
+    - Sends the request to the OpenAI API and receives a chat response.
+    - Appends the generated text to the original selected text, ensuring no duplication of the initial selection.
+
+### Requirements
+
+- **IntelliJ Platform**: This action is designed to work within the IntelliJ platform, requiring a project context to
+  operate.
+- **AppSettingsState**: The action depends on `AppSettingsState` for retrieving application-wide settings, such as the
+  default chat model and temperature for API requests.
+
+### Usage
+
+To use the `AppendTextWithChatAction`, ensure it is properly integrated into your IntelliJ platform-based application or plugin. It
+does not require manual configuration but relies on the application's settings for the OpenAI API parameters.
+
+When triggered, it will automatically append contextually generated text to the user's selected text, enhancing or
+completing their input based on the model's understanding and the provided prompt.
+
+### Limitations
+
+- **Configuration**: Currently, the `getConfig` method does not utilize project-specific configurations and returns an
+  empty string.
+- **Context Sensitivity**: The effectiveness of the appended text depends on the accuracy of the OpenAI model's
+  understanding of the selected text and the provided prompt.
+
+### Conclusion
+
+The `AppendTextWithChatAction` offers a convenient way to extend user input with AI-generated text, seamlessly integrating with the
+IntelliJ platform. By leveraging OpenAI's language models, it provides a powerful tool for enhancing user productivity
+and creativity within the development environment.
+
+# generic\GenerateRelatedFileAction.kt
+
+## Analogue File Action Documentation
+
+### Overview
+
+The Analogue File Action is a feature designed for IntelliJ-based IDEs that assists developers in automatically
+generating new files based on existing ones, with modifications guided by user-provided directives. This action
+leverages the power of AI to interpret directives and apply them to the selected file, creating a new, analogous file
+that meets the specified requirements.
+
+### Features
+
+- **Context-Sensitive Activation**: The action is only enabled for non-directory files, ensuring it is contextually
+  relevant.
+- **Customizable Directives**: Users can input natural language directives to guide the creation of the new file.
+- **AI-Powered Processing**: Utilizes an AI model to interpret directives and generate the new file content.
+- **Automatic File Naming and Placement**: Generates a unique file name and path to avoid conflicts, placing the new
+  file relative to the project root.
+- **IDE Integration**: Automatically opens the newly created file in the IDE for immediate review and editing.
+
+### How to Use
+
+1. **Select a File**: In your project, select the file you want to base your new file on.
+2. **Activate the Action**: Right-click and find the "Create Analogue File" option. This option is only available for
+   non-directory files.
+3. **Enter Directive**: In the popup dialog, enter your directive in the provided text area. This directive should
+   describe how you want the new file to differ from the selected one.
+4. **Generate File**: Click "OK" to generate the new file. The AI will process your directive, create the new file, and
+   place it in an appropriate location within your project structure.
+5. **Review and Edit**: The new file will automatically open in your IDE. Review the generated content and make any
+   necessary adjustments.
+
+### Settings
+
+- **Directive**: A JTextArea where you input your natural language instructions for generating the new file.
+
+### Technical Details
+
+- **Settings Storage**: User settings, including the directive, are stored in a `UserSettings` class instance.
+- **File Generation**: The `generateFile` method processes the base file and directive, interacting with an AI model to
+  produce the new file content and path.
+- **File Handling**: The action ensures the new file does not overwrite existing files by checking for conflicts and
+  adjusting the file name as necessary.
+- **IDE Integration**: Utilizes IntelliJ platform APIs for file operations and UI interactions, ensuring a seamless
+  experience within the IDE.
+
+### Requirements
+
+- IntelliJ-based IDE (e.g., IntelliJ IDEA, PyCharm)
+- Java Development Kit (JDK)
+
+### Installation
+
+This feature is packaged as part of a specific IntelliJ plugin. Install the plugin from the JetBrains Marketplace or
+your IDE's plugin settings panel.
+
+### Support
+
+For issues, feature requests, or contributions, please refer to the project's GitHub repository or contact the
+development team through the appropriate channels.
+
+# generic\MultiStepPatchAction.kt
+
+## MultiStepPatchAction Documentation
+
+### Overview
+
+The `MultiStepPatchAction` class is part of a system designed to automate development tasks within a project. It integrates
+with an IDE to provide a user-friendly interface for automating code modifications, leveraging AI models to interpret
+user requests and generate actionable development tasks.
+
+### Key Features
+
+- **Automated Task Generation**: Translates user directives into a detailed action plan, breaking down requests into
+  manageable tasks.
+- **Code Modification Suggestions**: Generates code patches in diff format, suggesting specific changes to be made in
+  the project files.
+- **Interactive Web UI**: Opens a browser window to interact with the user, providing a session-based interface for task
+  management and execution.
+- **Integration with AI Models**: Utilizes GPT models for understanding user requests and generating code modifications.
+
+### Usage
+
+1. **Initialization**: The action is triggered within an IDE environment, starting a new session for the user.
+2. **Selecting a Project Folder**: The user selects a folder within their project. This folder's path is stored and
+   associated with the current session.
+3. **Web UI Interaction**: A browser window is opened, directing the user to an interactive session where they can input
+   their development requests.
+4. **Task Generation and Execution**: The system interprets the user's requests, generating a list of tasks and
+   suggesting code modifications to fulfill these tasks. The user can review and apply these suggestions directly from
+   the web UI.
+
+### Components
+
+#### AutoDevApp
+
+Represents the application server handling user sessions and messages. It processes user messages to generate
+development tasks and code modification suggestions.
+
+##### Key Methods
+
+- `userMessage()`: Handles incoming messages from users, generating tasks and code modifications based on the content of
+  the message.
+
+#### AutoDevAgent
+
+Responsible for processing individual development tasks, interacting with AI models to generate code patches and
+suggestions.
+
+##### Key Methods
+
+- `start()`: Initiates the process of generating development tasks and code modifications based on the user's request.
+
+### How It Works
+
+1. The `MultiStepPatchAction` class initiates a session and opens a web UI for user interaction.
+2. The user inputs a development request in the web UI.
+3. The `AutoDevApp` processes this request, utilizing `AutoDevAgent` to interact with AI models and generate a list of
+   actionable tasks.
+4. For each task, `AutoDevAgent` suggests specific code modifications in diff format.
+5. The user reviews and applies these suggestions to their project files directly from the web UI.
+
+### Prerequisites
+
+- An IDE environment compatible with the system.
+- Access to the web UI through a supported browser.
+
+### Conclusion
+
+The `MultiStepPatchAction` system offers a powerful tool for automating development tasks, leveraging AI to streamline the
+process of code modification. By providing a user-friendly interface and integrating with advanced AI models, it
+simplifies the task management process, making it easier for developers to implement changes and enhancements to their
+projects.
+
+# generic\CreateFileFromDescriptionAction.kt
+
+## CreateFileFromDescriptionAction Documentation
+
+### Overview
+
+The `CreateFileFromDescriptionAction` class is designed to automate the process of generating and creating new files within a project
+based on natural language directives. It leverages the OpenAI API to interpret these directives and generate the
+corresponding file content and path. This action is part of a larger system aimed at enhancing developer productivity
+through automation.
+
+### How It Works
+
+1. **Directive Input**: The user provides a natural language directive describing the file to be created. This can be as
+   simple as "Create a default log4j configuration file" or more complex, depending on the needs.
+
+2. **File Generation**: Based on the provided directive, the system uses the OpenAI API to generate both the content of
+   the file and the suggested file path relative to the project root.
+
+3. **File Creation**: The system then creates the file at the suggested path with the generated content. If a file with
+   the same name already exists, it appends a unique index to the file name to avoid overwriting.
+
+### Key Components
+
+- **ProjectFile**: A simple data class holding the path and code of the generated file.
+- **SettingsUI**: A user interface component that allows the user to input the directive in a text area.
+- **Settings**: Holds the directive as a string for processing.
+- **processSelection**: The main function that processes the user's selection and directive, generating and creating the
+  file accordingly.
+
+### Usage
+
+1. **Input Directive**: Through the `SettingsUI`, the user inputs a directive describing the file they wish to create.
+2. **Selection**: The user selects a file or directory within their project, which serves as a context for the file
+   generation.
+3. **Execution**: Upon executing the action, the system processes the directive and selection, generating and creating
+   the new file as described.
+
+### Example
+
+If a user inputs the directive "Create a default log4j configuration file" and selects the root directory of their Java
+project, the system might generate a file named `log4j.properties` with standard logging configurations, placing it in
+an appropriate directory within the project.
+
+### Conclusion
+
+The `CreateFileFromDescriptionAction` class streamlines the process of creating new files within a project, guided by natural language
+directives. It simplifies tasks that would otherwise require manual file creation and content generation, thereby
+enhancing developer productivity.
 
 # generic\CodeChatAction.kt
 
-Sure, here's the documentation for the `CodeChatAction` class:
+## CodeChatAction Documentation
 
-```kotlin
-/**
- * This class represents an action that opens a code chat session in a web browser.
- * It allows the user to interact with an AI model to get assistance with the code they have open in the editor.
- *
- * When the action is triggered, it creates a new session ID and initializes a [CodeChatSocketManager] instance
- * with the selected code, file name, and language. It then starts a web server and opens a browser window
- * pointing to the code chat application.
- *
- * The code chat application is a web-based interface that allows the user to chat with the AI model
- * and receive suggestions and explanations related to their code.
- */
-class CodeChatAction : BaseAction() {
+### Overview
 
-    /**
-     * The path where the code chat application is served.
-     */
-    val path = "/codeChat"
+The `CodeChatAction` class is part of a plugin designed to enhance coding productivity by integrating a code chat
+feature directly into your development environment. This feature allows developers to engage in discussions about code
+snippets, share insights, and collaborate more effectively.
 
-    /**
-     * Handles the action event by creating a new code chat session and opening a browser window.
-     *
-     * @param e The action event.
-     */
-    override fun handle(e: AnActionEvent) {
-        // ... (implementation details)
-    }
+### Key Features
 
-    /**
-     * Checks if the action is enabled for the given event.
-     *
-     * @param event The action event.
-     * @return `true` if the action is enabled, `false` otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent) = true
+- **Code Selection Sharing:** Share selected code snippets or entire files with collaborators in real-time.
+- **Language Detection:** Automatically detects the programming language of the shared code for syntax highlighting and
+  context-aware discussions.
+- **Session Management:** Creates unique sessions for each code chat, ensuring discussions are organized and easily
+  accessible.
+- **Browser Integration:** Opens the code chat in the default web browser, providing a seamless transition from code
+  editor to discussion platform.
 
-    companion object {
-        /**
-         * The logger instance for this class.
-         */
-        private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
+### How It Works
 
-        /**
-         * A map of active socket managers for code chat sessions.
-         */
-        private val agents = mutableMapOf<Session, SocketManager>()
+1. **Initialization:** When the action is triggered, the plugin checks for an active editor and the selected text within
+   it. If no text is selected, the entire document's text is used.
+2. **Session Creation:** A unique session ID is generated for the code chat session. This session is associated with the
+   selected code snippet or document, the detected programming language, and other relevant metadata.
+3. **Code Chat Server:** The plugin interacts with an `AppServer` instance to register the code chat session and
+   initialize the necessary backend services, including a `ChatServer` for managing chat sessions.
+4. **Opening the Chat:** After a brief delay to ensure server readiness, the plugin attempts to open the code chat in
+   the user's default web browser, directing them to the specific session URL.
 
-        /**
-         * The root directory for the code chat application.
-         */
-        val root: File get() = File(ApplicationEvents.pluginHome, "code_chat")
+### Requirements
 
-        /**
-         * Initializes the code chat application server and registers it with the provided [AppServer].
-         *
-         * @param server The [AppServer] instance.
-         * @param path The path where the code chat application is served.
-         * @return The initialized [ChatServer] instance.
-         */
-        private fun initApp(server: AppServer, path: String): ChatServer {
-            // ... (implementation details)
-        }
-    }
-}
-```
+- **IDE Support:** The plugin is designed to work within an IDE that supports the IntelliJ Platform, such as IntelliJ
+  IDEA.
+- **Desktop Environment:** Requires a desktop environment capable of opening web URLs in a browser.
 
-This documentation provides an overview of the `CodeChatAction` class, its purpose, and the responsibilities of its methods and properties. It also includes documentation for the companion object and its members.
+### Usage
 
-# generic\CreateFileAction.kt
+To use the `CodeChatAction`, follow these steps:
 
-This code defines a class `CreateFileAction` that extends `FileContextAction`. It is used to create a new file based on a natural language directive provided by the user. Here's a breakdown of the code:
+1. **Select Code:** In your IDE, select the code snippet you wish to discuss.
+2. **Trigger Action:** Trigger the `CodeChatAction` through the designated shortcut or menu option.
+3. **Engage in Discussion:** Once the code chat session opens in your browser, you can start discussing the code with
+   your collaborators.
 
-1. `CreateFileAction` class:
-   - Extends `FileContextAction` with `false` for `isReadOnly` and `true` for `isWritable`.
-   - Defines an inner class `ProjectFile` to hold the file path and code.
-   - Defines an inner class `Settings` to hold the user-provided directive.
+### Troubleshooting
 
-2. `processSelection` method:
-   - Takes a `SelectionState` and `Settings` object as input.
-   - Determines the project root, module root, and relative file path based on the selected file.
-   - Calls the `generateFile` method to generate the new file content based on the directive.
-   - Constructs the output file path, ensuring it doesn't already exist.
-   - Creates the necessary directories and writes the generated code to the output file.
-   - Returns an array containing the newly created file.
+- **Browser Not Opening:** Ensure your default web browser is set correctly and can be launched from your desktop
+  environment.
+- **Session Not Created:** Check your IDE's log for any errors related to the `CodeChatAction` or network issues that
+  may prevent session creation.
 
-3. `generateFile` method:
-   - Takes the base file path and the user-provided directive as input.
-   - Constructs a ChatRequest with instructions for generating a new file based on the directive.
-   - Sends the ChatRequest to the OpenAI API using the configured model and temperature settings.
-   - Parses the response to extract the file path and code.
-   - Returns a `ProjectFile` object containing the file path and code.
+For further assistance, consult the plugin's support resources or contact the development team.
 
-The `CreateFileAction` class is designed to be used within the context of a larger application that interacts with files and directories. It leverages the OpenAI API to generate new file content based on natural language instructions provided by the user. The generated file is created at a location relative to the selected file or project root, ensuring that it doesn't overwrite existing files.
+# generic\VoiceToTextAction.kt
 
-# generic\DictationAction.kt
+## VoiceToTextAction Plugin Documentation
 
-Sure, here's the documentation for the `DictationAction` class:
+### Overview
 
-```kotlin
-/**
- * This class represents an action in the IntelliJ IDEA plugin that allows users to dictate text
- * using speech-to-text functionality. When the action is triggered, it starts recording audio,
- * processes the audio data, and transcribes the speech into text, which is then inserted into
- * the currently open editor at the cursor position or replacing the selected text.
- */
-class DictationAction : BaseAction() {
+The VoiceToTextAction plugin is designed to enhance your coding experience by allowing you to dictate code and comments
+directly into your IDE. This innovative tool captures your voice, processes the audio, and converts it into text,
+inserting the transcribed text at the current cursor position or replacing the selected text in your editor.
 
-    /**
-     * This method is the entry point for the action. It sets up the necessary threads and components
-     * for recording audio, processing the audio data, and transcribing the speech into text.
-     *
-     * @param e The action event that triggered the action.
-     */
-    override fun handle(e: AnActionEvent) {
-        // Implementation details...
-    }
+### Features
 
-    /**
-     * This inner class is responsible for transcribing the audio data into text and inserting
-     * the transcribed text into the editor.
-     *
-     * @property event The action event that triggered the action.
-     * @property audioBuffer The buffer containing the audio data to be transcribed.
-     * @property continueFn A function that determines whether the transcription should continue.
-     * @property offsetStart The initial offset in the editor where the transcribed text should be inserted.
-     * @property prompt The initial prompt for the speech-to-text transcription.
-     */
-    private inner class DictationPump(
-        val event: AnActionEvent,
-        private val audioBuffer: Deque<ByteArray>,
-        val continueFn: () -> Boolean,
-        offsetStart: Int,
-        var prompt: String = ""
-    ) {
+- **Voice to Text Conversion**: Transcribe your voice into text directly in the IDE editor.
+- **Continuous Dictation**: Dictate for as long as you need; the transcription stops when you close the status dialog.
+- **Automatic Insertion**: The transcribed text is automatically inserted at the cursor's position or replaces the
+  selected text.
+- **Background Processing**: Audio recording, processing, and transcription run in separate threads, ensuring the IDE
+  remains responsive.
 
-        /**
-         * This method runs the transcription process. It continuously checks the audio buffer
-         * and transcribes the audio data into text, which is then inserted into the editor.
-         */
-        fun run() {
-            // Implementation details...
-        }
-    }
+### How to Use
 
-    /**
-     * This method creates and displays a dialog window that shows the status of the dictation process.
-     *
-     * @param e1 The action event that triggered the action.
-     * @return The JFrame instance representing the dialog window.
-     */
-    private fun statusDialog(e1: AnActionEvent): JFrame {
-        // Implementation details...
-    }
+1. **Start Dictation**: Trigger the VoiceToTextAction from the IDE's action menu. A status dialog appears indicating that
+   dictation is active.
+2. **Dictate Your Code or Comments**: Speak clearly into your microphone. Your voice is captured, processed, and
+   transcribed into text in real-time.
+3. **Stop Dictation**: Close the status dialog window to stop the dictation process. The transcription stops, and any
+   remaining audio is processed and inserted into the editor.
 
-    /**
-     * This method checks if the action is enabled by attempting to get a TargetDataLine instance,
-     * which is required for audio recording.
-     *
-     * @param event The action event that triggered the action.
-     * @return True if the action is enabled, false otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        // Implementation details...
-    }
+### Requirements
 
-    companion object {
-        // Companion object with logger and thread pool instances
-    }
-}
-```
+- A microphone connected to your computer.
+- The VoiceToTextAction plugin installed in your IDE.
 
-This documentation provides an overview of the `DictationAction` class, its purpose, and the responsibilities of its methods and inner classes. It also includes brief descriptions of the properties and parameters used in the class.
+### Troubleshooting
+
+- **Dictation Not Starting**: Ensure your microphone is properly connected and recognized by your system.
+- **Poor Transcription Quality**: Speak clearly and at a moderate pace. Background noise can affect transcription
+  accuracy.
+- **IDE Becomes Unresponsive**: Although designed to run in the background, extremely long dictation sessions may impact
+  IDE performance. Consider dictating in shorter bursts.
+
+### Support
+
+For issues, suggestions, or contributions, please visit the VoiceToTextAction plugin repository on GitHub.
+
+---
+
+This documentation provides a concise overview of the VoiceToTextAction plugin's functionality and usage. For more
+detailed information or to contribute to the project, please refer to the project's GitHub page.
 
 # generic\DiffChatAction.kt
 
-Sure, here's the documentation for the `DiffChatAction` class:
+## DiffChatAction Documentation
 
-```kotlin
-/**
- * An action that opens a chat interface for generating code diffs based on the selected code or the entire file.
- *
- * When triggered, this action creates a new session and opens a web interface where the user can interact with
- * an AI model to generate code diffs. The generated diffs are rendered with links that allow the user to apply
- * the changes directly to the code editor.
- *
- * The action supports the following features:
- *
- * - If text is selected in the code editor, the selected text is used as the input code. Otherwise, the entire
- *   file content is used.
- * - The AI model is instructed to provide code patches in the diff format, using `+` for line additions and `-`
- *   for line deletions, with sufficient context before each change.
- * - The generated response is rendered as HTML with Markdown support, and the diff sections are enhanced with
- *   links that allow the user to apply the changes to the code editor with a single click.
- * - The web interface is opened in the default system browser, and the session is managed by a `CodeChatSocketManager`
- *   instance.
- * - The action is enabled for all events.
- *
- * @property path The path at which the chat server is mounted.
- * @property agents A map of active sessions and their corresponding `SocketManager` instances.
- * @property root The root directory for storing data related to the code chat feature.
- */
-class DiffChatAction : BaseAction() {
-    // ...
-}
-```
+### Overview
 
-This class extends `BaseAction` and overrides the `handle` method to perform the action when triggered. The `handle` method performs the following steps:
+The `DiffChatAction` class is part of a plugin designed to enhance coding productivity by integrating a chat-based
+interface for generating and applying code diffs directly within the IDE. This action allows users to select a portion
+of code, initiate a chat session, and receive suggestions in the form of diffs. These diffs can then be applied directly
+to the code with ease.
 
-1. Retrieves the current editor and the selected text or the entire file content.
-2. Creates a new session and a `CodeChatSocketManager` instance with the selected code, language, and other settings.
-3. Customizes the `systemPrompt` and `renderResponse` methods of the `CodeChatSocketManager` to provide instructions for generating diffs and rendering the response with diff links.
-4. Initializes a chat server application and associates the session with the `CodeChatSocketManager` instance.
-5. Opens the chat interface in the default system browser.
+### Features
 
-The `isEnabled` method always returns `true`, allowing the action to be enabled in all contexts.
+- **Code Selection**: Users can select a specific portion of code or use the entire document for the chat session.
+- **Chat Session Initiation**: A unique session is created for each chat, allowing for focused and relevant suggestions.
+- **Diff Suggestions**: The chat interface provides code modifications in the diff format, making it clear what changes
+  are suggested.
+- **Direct Application of Diffs**: Users can apply suggested diffs directly from the chat interface, streamlining the
+  code improvement process.
+- **Markdown Rendering**: The chat interface renders responses in HTML, providing a rich and user-friendly experience.
 
-The companion object contains utility methods for managing the chat server and sessions, as well as a logger instance.
+### Usage
 
-# generic\LineFilterChatAction.kt
+1. **Select Code**: Highlight the code segment you wish to discuss or leave unselected for the entire document.
+2. **Activate DiffChatAction**: Trigger the `DiffChatAction` from the IDE's action menu.
+3. **Chat Session**: A chat session will open in your default web browser, connected to the selected code segment.
+4. **Receive and Apply Diffs**: Engage with the chat to receive diff suggestions. Use provided links to apply diffs
+   directly to your code.
 
-Sure, here's the documentation for the `LineFilterChatAction` class:
+### Requirements
 
-```kotlin
-/**
- * This class represents an action that opens a chat interface for discussing and annotating code.
- * When the action is triggered, it creates a new chat session with a prompt that includes the
- * selected code or the entire file content if no selection is made. The chat interface allows
- * the user to interact with an AI assistant to ask questions and receive explanations about the code.
- *
- * The chat interface is rendered in a web browser, and the responses from the AI assistant are
- * formatted using Markdown. Additionally, the assistant can reference specific lines of code by
- * including the line number in the response.
- */
-class LineFilterChatAction : BaseAction() {
+- **IDE Support**: This action is designed for use within an IDE that supports the plugin, such as IntelliJ IDEA.
+- **Desktop Environment**: A desktop environment capable of opening web links in a browser.
 
-    /**
-     * The path where the chat application is hosted.
-     */
-    val path = "/codeChat"
+### Limitations
 
-    /**
-     * Handles the action event and opens the chat interface.
-     *
-     * @param e The action event.
-     */
-    override fun handle(e: AnActionEvent) {
-        // ... (implementation details)
-    }
+- **Selection Requirement**: For the action to initiate, a text selection or an open document must be present.
+- **Browser Dependency**: The action requires a web browser to open the chat interface.
 
-    /**
-     * Checks if the action is enabled for the given event.
-     *
-     * @param event The action event.
-     * @return `true` if the action is enabled, `false` otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent) = true
+### Troubleshooting
 
-    companion object {
-        // ... (companion object implementation details)
-    }
-}
-```
+- **Browser Not Opening**: Ensure your default web browser is set correctly and is capable of opening new tabs or
+  windows from external applications.
+- **Diff Application Issues**: If diffs are not applying correctly, check for any conflicts or syntax errors in the
+  suggested changes.
 
-The `LineFilterChatAction` class extends the `BaseAction` class and overrides the `handle` method to handle the action event. When the action is triggered, it retrieves the selected code or the entire file content, creates a new chat session with a prompt that includes the code, and opens the chat interface in a web browser.
+### Conclusion
 
-The chat interface is powered by a `ChatSocketManager` instance, which is responsible for managing the chat session and rendering the responses from the AI assistant. The responses are formatted using Markdown, and the assistant can reference specific lines of code by including the line number in the response.
-
-The `isEnabled` method is overridden to always return `true`, indicating that the action is always enabled.
-
-The companion object contains utility methods and properties related to the chat application, such as initializing the application server, managing the chat sessions, and handling the application root directory.
-
-# generic\RedoLast.kt
-
-Sure, here's the documentation for the `RedoLast` action:
-
-```kotlin
-/**
- * The RedoLast action is an IntelliJ action that allows users to redo the last AI Coder action they performed in the editor.
- *
- * This action is part of the AI Coder plugin for IntelliJ IDEA. It provides a convenient way for users to redo the last
- * action performed by the AI Coder plugin in the current editor.
- *
- * To use this action, open the editor and select the RedoLast action from the editor context menu or use the corresponding
- * keyboard shortcut (if configured). This will redo the last action that was performed in the editor by the AI Coder plugin.
- *
- * The action is enabled only if there is a previous AI Coder action that can be redone in the current editor.
- *
- * @see BaseAction The base class for IntelliJ actions in the AI Coder plugin.
- * @see retry A utility function that manages the redo/undo operations for AI Coder actions.
- */
-class RedoLast : BaseAction() {
-
-    /**
-     * Handles the action event by redoing the last AI Coder action in the current editor.
-     *
-     * @param e The action event containing information about the context in which the action was invoked.
-     */
-    override fun handle(e: AnActionEvent) {
-        retry[e.getRequiredData(CommonDataKeys.EDITOR).document]!!.run()
-    }
-
-    /**
-     * Checks if the action is enabled in the current context.
-     *
-     * The action is enabled if there is a previous AI Coder action that can be redone in the current editor.
-     *
-     * @param event The action event containing information about the context in which the action was invoked.
-     * @return `true` if the action is enabled, `false` otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        return null != retry[event.getRequiredData(CommonDataKeys.EDITOR).document]
-    }
-}
-```
-
-This documentation explains the purpose of the `RedoLast` action, how to use it, and the conditions under which it is enabled. It also provides brief descriptions of the `handle` and `isEnabled` functions, explaining their roles and parameters.
+The `DiffChatAction` enhances coding efficiency by integrating a smart, chat-based diff suggestion and application
+mechanism directly within the IDE. By streamlining the process of reviewing and applying code changes, it offers a novel
+approach to code improvement and collaboration.
 
 # generic\MultiDiffChatAction.kt
 
-Sure, here's the documentation for the `MultiDiffChatAction` class:
+## MultiDiffChatAction Documentation
 
-```kotlin
-/**
- * The MultiDiffChatAction class is an action that allows users to interact with an AI assistant
- * to modify multiple code files simultaneously. When the action is triggered, it opens a web-based
- * chat interface where the user can ask questions and provide instructions to the AI assistant.
- * The assistant can then suggest code changes in the form of diffs, which can be applied to the
- * selected files with a single click.
- *
- * The action works as follows:
- *
- * 1. The user selects one or more files in the IDE.
- * 2. The action retrieves the contents of the selected files and their associated programming languages.
- * 3. A chat session is created with a custom prompt that includes the contents of the selected files.
- * 4. The chat interface is opened in the user's default web browser.
- * 5. The user can interact with the AI assistant through the chat interface.
- * 6. When the assistant suggests code changes in the form of diffs, the user can apply these changes
- *    to the corresponding files with a single click.
- *
- * The action uses the following components:
- *
- * - `ChatSocketManager`: Manages the chat session and handles user input and AI responses.
- * - `ApplicationServer`: Provides the web-based chat interface.
- * - `StorageInterface`: Manages the storage of chat sessions and associated data.
- *
- * The `handle` function is the entry point of the action. It retrieves the selected files, creates
- * the chat session, and opens the chat interface in the user's web browser.
- *
- * The `commonRoot` extension function is used to find the common root directory of the selected files.
- * This is used to display relative file paths in the chat interface.
- *
- * The `commonPrefixWith` extension function is a helper function used by `commonRoot`.
- */
-class MultiDiffChatAction : BaseAction() {
-    // Implementation details...
-}
-```
+### Overview
 
-This documentation explains the purpose of the `MultiDiffChatAction` class, its workflow, the components it uses, and the roles of the `handle`, `commonRoot`, and `commonPrefixWith` functions. It should provide a clear understanding of how the action works and what it does.
+The `MultiDiffChatAction` class is part of a larger system designed to facilitate coding assistance through a chat
+interface. This action allows users to interact with an AI model that provides coding help in the form of code diffs.
+Users can submit multiple files, and the AI will generate responses that include code modifications, explanations, and
+suggestions.
 
-# generic\DocumentationCompilerAction.kt
+### Key Features
 
-Sure, here's the documentation for the `DocumentationCompilerAction` class:
+- **Multi-File Support**: Users can submit multiple code files in different programming languages. The action processes
+  these files and prepares them for analysis by the AI model.
+- **Dynamic Code Analysis**: The AI model analyzes the submitted code and generates responses that may include code
+  modifications, suggestions, and explanations.
+- **Interactive Chat Interface**: Users interact with the AI through a chat interface, making it easier to ask questions
+  and receive assistance.
+- **Real-Time Code Updates**: The action supports applying suggested code changes directly to the source files, allowing
+  users to quickly adopt the AI's recommendations.
 
-```kotlin
-/**
- * An action that allows the user to select files and provide instructions to generate documentation
- * using an AI model. The generated documentation is saved to a file in the selected directory.
- */
-class DocumentationCompilerAction : FileContextAction<DocumentationCompilerAction.Settings>() {
+### How It Works
 
-    /**
-     * Checks if the action is enabled for the given event. The action is enabled only if a non-directory
-     * file is selected.
-     *
-     * @param event The action event.
-     * @return True if the action is enabled, false otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.getSelectedFile(event)?.isDirectory == false) return false
-        return super.isEnabled(event)
-    }
+1. **File Submission**: Users submit one or more code files through the interface. The action identifies the programming
+   language of each file based on its extension and prepares the content for analysis.
 
-    /**
-     * A class to hold the settings for the action.
-     *
-     * @property settings The user-defined settings, or null if not set.
-     * @property project The current project, or null if not available.
-     */
-    class Settings(
-        val settings: UserSettings? = null,
-        val project: Project? = null
-    )
+2. **AI Interaction**: The submitted code is sent to an AI model designed to assist with coding tasks. The model
+   generates responses based on the code analysis, which may include code diffs, explanations, and suggestions.
 
-    /**
-     * A class to hold the user-defined settings for the action.
-     *
-     * @property transformationMessage The instruction message for the AI model.
-     * @property outputFilename The name of the output file for the generated documentation.
-     * @property filesToProcess The list of files to process for documentation generation.
-     */
-    class UserSettings(
-        var transformationMessage: String = "Create user documentation",
-        var outputFilename: String = "compiled_documentation.md",
-        var filesToProcess: List<Path> = listOf(),
-    )
+3. **Response Rendering**: The AI's responses are rendered in a chat interface. Code diffs are presented in a way that
+   users can easily understand the suggested changes. The action also supports rendering the responses in Markdown
+   format for better readability.
 
-    /**
-     * A class to hold the UI elements for the settings dialog.
-     */
-    class SettingsUI {
-        @Name("Files to Process")
-        val filesToProcess = CheckBoxList<Path>()
+4. **Applying Changes**: Users have the option to apply the suggested code changes directly from the chat interface. The
+   action updates the source files with the new code, reflecting the AI's recommendations.
 
-        @Name("AI Instruction")
-        val transformationMessage = JBTextField()
+### Usage
 
-        @Name("Output File")
-        val outputFilename = JBTextField()
-    }
+To use the `MultiDiffChatAction`, follow these steps:
 
-    /**
-     * Gets the configuration for the action by displaying a settings dialog to the user.
-     *
-     * @param project The current project, or null if not available.
-     * @param e The action event.
-     * @return The settings for the action.
-     */
-    override fun getConfig(project: Project?, e: AnActionEvent): Settings { ... }
+1. **Initiate Action**: Trigger the action from within the supported environment (e.g., an IDE or a web interface).
 
-    /**
-     * Processes the selected files and generates documentation using the provided configuration.
-     *
-     * @param state The selection state containing the selected file.
-     * @param config The configuration for the action.
-     * @return An array of generated files.
-     */
-    override fun processSelection(state: SelectionState, config: Settings?): Array<File> { ... }
+2. **Submit Files**: Select and submit the code files you want assistance with. You can submit files in different
+   programming languages.
 
-    /**
-     * Transforms the given file content using the provided transformation message and an AI model.
-     *
-     * @param fileContent The content of the file to transform.
-     * @param transformationMessage The instruction message for the AI model.
-     * @return The transformed content.
-     */
-    private fun transformContent(fileContent: String, transformationMessage: String): String { ... }
+3. **Interact with AI**: Use the chat interface to ask questions or request assistance. The AI will analyze your code
+   and provide responses.
 
-    companion object {
-        /**
-         * Opens the generated documentation file in the IDE.
-         *
-         * @param project The current project.
-         * @param outputPath The path of the generated documentation file.
-         */
-        fun open(project: Project, outputPath: Path) { ... }
-    }
+4. **Apply Suggestions**: Review the AI's suggestions and apply any desired code changes directly through the interface.
 
-    /**
-     * A dialog for configuring the settings for the documentation compiler action.
-     *
-     * @property project The current project, or null if not available.
-     * @property settingsUI The UI elements for the settings dialog.
-     */
-    class DocumentationCompilerDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
-        val userSettings = UserSettings()
+### Requirements
 
-        init { ... }
+- Compatible IDE or web interface for initiating the action.
+- Internet connection for interacting with the AI model and applying code changes.
 
-        override fun createCenterPanel(): JComponent? { ... }
+### Conclusion
 
-        override fun doOKAction() { ... }
-    }
-}
+The `MultiDiffChatAction` offers a novel way to receive coding assistance through an interactive chat interface. By
+leveraging AI models to analyze code and generate suggestions, users can improve their code quality and efficiency. This
+documentation provides a basic understanding of how to use the action and benefit from its features.
 
-/**
- * An extension property to get the list of items in a CheckBoxList.
- */
-private val <T> CheckBoxList<T>.items: List<T>
-    get() { ... }
-```
+# generic\LineFilterChatAction.kt
 
-This class provides an action that allows the user to select files and provide instructions for generating documentation using an AI model. The generated documentation is saved to a file in the selected directory.
+## LineFilterChatAction Documentation
 
-The `DocumentationCompilerAction` class extends `FileContextAction` and overrides the `isEnabled` method to check if the action is enabled for the given event. The action is enabled only if a non-directory file is selected.
+### Overview
 
-The `Settings` class holds the user-defined settings and the current project. The `UserSettings` class holds the user-defined settings for the action, including the instruction message for the AI model, the name of the output file, and the list of files to process.
+The `LineFilterChatAction` class is part of a plugin designed to enhance coding productivity by providing an interactive
+chat interface. This interface allows users to ask questions and receive assistance with their code directly within
+their IDE. The action integrates with a chat model to analyze and respond to queries based on the selected or entire
+code in the current editor.
 
-The `SettingsUI` class holds the UI elements for the settings dialog, including a `CheckBoxList` for selecting files, text fields for the instruction message and output file name.
+### Features
 
-The `getConfig` method displays a settings dialog to the user and returns the configuration for the action. The `processSelection` method processes the selected files and generates documentation using the provided configuration. The `transformContent` method transforms the given file content using the provided transformation message and an AI model.
+- **Code Contextual Chat**: Engage in a chat session where the AI understands the context of your code, including
+  language and content.
+- **Markdown Support**: Responses from the AI can include markdown formatting for better readability and structure.
+- **Line Reference**: The AI can reference specific lines in its responses, making it easier to understand suggestions
+  or corrections.
 
-The `open` function in the companion object opens the generated documentation file in the IDE.
+### How It Works
 
-The `DocumentationCompilerDialog` class is a dialog for configuring the settings for the documentation compiler action. It extends `DialogWrapper` and provides a custom UI for the settings.
+1. **Activation**: The action is triggered within the IDE. It requires an active editor window with code.
+2. **Session Creation**: A unique chat session is created for the interaction.
+3. **Code Analysis**: The action extracts the code from the current editor, either the selected text or the entire
+   document if no text is selected.
+4. **Chat Interface**: The user is directed to a web-based chat interface where they can ask questions and receive
+   responses related to the code.
+5. **Interactive Responses**: The AI model provides responses, potentially including markdown and references to specific
+   lines in the code.
 
-Finally, the `items` extension property provides a convenient way to get the list of items in a `CheckBoxList`.
+### Requirements
 
-# generic\ReplaceOptionsAction.kt
+- An active editor window in the IDE with the code you want to discuss.
+- Desktop environment capable of opening web browsers for the chat interface.
 
-Sure, here's the documentation for the `ReplaceOptionsAction` class:
+### Usage
 
-```kotlin
-/**
- * An action that suggests replacement options for the selected text based on the surrounding context.
- *
- * This action uses a virtual API to generate suggestions for replacing the selected text with a new
- * text that fits the context. The virtual API is implemented using a ChatProxy, which sends a
- * request to a language model with the selected text and its surrounding context as examples.
- *
- * The action presents the user with a dialog to choose from the suggested options. The chosen option
- * replaces the selected text in the editor.
- */
-open class ReplaceOptionsAction : SelectionAction<String>() {
+1. **Select Code** (Optional): Select a specific portion of code in the editor if you want to focus the chat on that
+   segment.
+2. **Trigger Action**: Use the designated shortcut or menu option to activate the `LineFilterChatAction`.
+3. **Chat Session**: A browser window/tab will open, directing you to the chat interface. Wait a moment if it doesn't
+   open immediately.
+4. **Ask Questions**: Start asking your questions or discussing your code with the AI in the chat interface.
+5. **Review Responses**: The AI's responses may include markdown formatting and line references for clarity.
 
-    /**
-     * A virtual API interface for suggesting text based on a template and examples.
-     */
-    interface VirtualAPI {
-        /**
-         * Suggests text to fill in the blank in the given template based on the provided examples.
-         *
-         * @param template A string with a blank (`_____`) to be filled in.
-         * @param examples A list of example strings to guide the suggestions.
-         * @return A Suggestions object containing a list of suggested choices.
-         */
-        fun suggestText(template: String, examples: List<String>): Suggestions
+### Troubleshooting
 
-        /**
-         * A data class to hold the suggested choices.
-         */
-        class Suggestions {
-            /**
-             * A list of suggested choices for filling in the blank.
-             */
-            var choices: List<String>? = null
-        }
-    }
+- **Browser Not Opening**: Ensure your desktop environment supports opening web links and that no software is blocking
+  the action.
+- **No Response in Chat**: Verify your internet connection and ensure the server hosting the chat model is operational.
 
-    /**
-     * A proxy to the virtual API implemented using a ChatProxy.
-     */
-    val proxy: VirtualAPI
-        get() = ChatProxy(
-            clazz = VirtualAPI::class.java,
-            api = api,
-            model = AppSettingsState.instance.defaultChatModel(),
-            temperature = AppSettingsState.instance.temperature,
-            deserializerRetries = 5
-        ).create()
+### Conclusion
 
-    /**
-     * Returns an empty string as the configuration for this action.
-     */
-    override fun getConfig(project: Project?): String = ""
+The `LineFilterChatAction` enhances coding efficiency by providing an AI-powered chat interface for real-time code
+assistance. It leverages the context of your code, including language and structure, to offer relevant and interactive
+support.
 
-    /**
-     * Processes the selected text and generates replacement options using the virtual API.
-     *
-     * @param event The action event that triggered this action.
-     * @param state The selection state containing the selected text and its context.
-     * @param config The configuration for this action (not used).
-     * @return The chosen replacement option for the selected text.
-     */
-    override fun processSelection(event: AnActionEvent?, state: SelectionState, config: String?): String {
-        val choices = UITools.run(event?.project, templateText, true, true) {
-            val selectedText = state.selectedText
-            val idealLength = 2.0.pow(2 + ceil(ln(selectedText?.length?.toDouble() ?: 1.0))).toInt()
-            val selectionStart = state.selectionOffset
-            val allBefore = state.entireDocument?.substring(0, selectionStart) ?: ""
-            val selectionEnd = state.selectionOffset + (state.selectionLength ?: 0)
-            val allAfter = state.entireDocument?.substring(selectionEnd, state.entireDocument.length) ?: ""
-            val before = StringUtil.getSuffixForContext(allBefore, idealLength).toString().replace('\n', ' ')
-            val after = StringUtil.getPrefixForContext(allAfter, idealLength).toString().replace('\n', ' ')
-            proxy.suggestText(
-                "$before _____ $after",
-                listOf(selectedText.toString())
-            ).choices
-        }
-        return choose(choices ?: listOf())
-    }
+# generic\GenerateDocumentationAction.kt
 
-    /**
-     * Presents a dialog to the user to choose from the given list of options.
-     *
-     * @param choices A list of options to choose from.
-     * @return The chosen option, or an empty string if no option was chosen.
-     */
-    open fun choose(choices: List<String>): String =
-        UITools.showRadioButtonDialog("Select an option to fill in the blank:", *choices.toTypedArray())?.toString() ?: ""
-}
-```
+## Documentation Compiler Action
 
-This class extends the `SelectionAction` class and overrides the `processSelection` method to generate replacement options for the selected text using a virtual API implemented with a `ChatProxy`. The `choose` method presents a dialog to the user to select one of the suggested options.
+The Documentation Compiler Action is a feature designed for IntelliJ-based IDEs that assists developers in automatically
+generating documentation for their projects. This action compiles documentation from selected files within a project,
+leveraging natural language processing to enhance the documentation process.
 
-The `VirtualAPI` interface defines a `suggestText` method that takes a template string with a blank (`_____`) and a list of examples, and returns a `Suggestions` object containing a list of suggested choices for filling in the blank.
+### Features
 
-The `proxy` property creates an instance of the `VirtualAPI` using the `ChatProxy` class, which sends a request to a language model with the selected text and its surrounding context as examples.
+- **Automatic Documentation Generation**: Automatically compiles documentation from selected project files.
+- **Customizable Output**: Users can specify the output filename and the transformation message to tailor the
+  documentation process.
+- **File Selection**: Allows users to select specific files for documentation compilation.
+- **Concurrency Support**: Utilizes multi-threading to speed up the documentation compilation process.
 
-In the `processSelection` method, the selected text and its surrounding context are extracted from the `SelectionState` object. The context is truncated to an ideal length based on the length of the selected text. The `suggestText` method of the `proxy` is then called with the context and the selected text as an example, and the resulting list of suggested choices is returned.
+### How to Use
 
-The `choose` method displays a dialog with the suggested choices as radio buttons, allowing the user to select one of the options. The chosen option is returned as the result of the `processSelection` method.
+1. **Select Files**: Right-click on a folder or a selection of files in your project that you wish to document.
+2. **Configure Settings**: Upon triggering the action, a settings dialog will appear. Here, you can configure:
+    - **Transformation Message**: A custom message to guide the documentation transformation process.
+    - **Output Filename**: The name of the file where the compiled documentation will be saved.
+    - **Files to Process**: Select or deselect files to include in the documentation compilation.
+3. **Compile Documentation**: After configuring the settings, proceed to compile the documentation. The action will
+   process the selected files, applying natural language processing to generate or enhance the documentation content.
 
-# generic\WebDevAction.kt
+### Implementation Details
 
-Sure, here's the documentation for the `WebDevAction` class:
+- **File Selection Validation**: The action is only enabled for directories, ensuring that documentation is compiled at
+  a folder level.
+- **Concurrency**: Utilizes a fixed thread pool to process multiple files concurrently, enhancing performance.
+- **Dynamic Output File Naming**: If the specified output file already exists, the action automatically generates a new
+  filename to prevent overwriting.
+- **IDE Integration**: Seamlessly integrates with the IDE's file system and editor, automatically opening the generated
+  documentation upon completion.
 
-```kotlin
-/**
- * This class represents an action in the IntelliJ IDEA plugin that provides a web development assistant.
- * When triggered, it opens a new browser window with a web application that allows the user to describe
- * their desired web application, and the assistant will generate the necessary code files (HTML, CSS, JavaScript, etc.)
- * based on the user's input.
- *
- * The action is enabled only when a folder is selected in the project view.
- *
- * The main components of this class are:
- *
- * 1. [WebDevAction]: The main action class that handles the user's action and initializes the web application.
- * 2. [WebDevApp]: The web application server that handles user input and generates code files.
- * 3. [WebDevAgent]: The agent system that manages different actors responsible for generating code for different file types.
- *
- * The [WebDevApp] class uses an [ActorSystem] to manage different actors responsible for generating code for different file types.
- * The actors are defined in the [WebDevAgent] class, and they include:
- *
- * - [HtmlCodingActor]: Generates HTML code based on the user's input.
- * - [JavascriptCodingActor]: Generates JavaScript code based on the user's input.
- * - [CssCodingActor]: Generates CSS code based on the user's input.
- * - [ArchitectureDiscussionActor]: Generates a detailed architecture for the web application based on the user's input.
- * - [CodeReviewer]: Analyzes the generated code, looks for bugs, and provides fixes.
- * - [EtcCodingActor]: Generates other types of files (e.g., JSON, XML) based on the user's input.
- *
- * The [WebDevAgent] class orchestrates the interaction between these actors to generate the complete web application code.
- * It also provides a user interface for the user to provide feedback and revise the generated code.
- *
- * Overall, this action provides a convenient way for developers to quickly generate web application code based on natural language input,
- * leveraging the power of language models and the IntelliJ IDEA plugin ecosystem.
- */
-class WebDevAction : BaseAction() {
-    // ...
-}
-```
+### Requirements
 
-This documentation explains the purpose of the `WebDevAction` class, its main components, and the roles of the different actors involved in generating the web application code. It also provides an overview of how the different components interact with each other to achieve the desired functionality.
+- IntelliJ-based IDE (e.g., IntelliJ IDEA, PyCharm)
+- Java Development Kit (JDK)
 
-# generic\TaskRunnerAction.kt
+### Installation
 
-The provided Kotlin code is an IntelliJ plugin action that integrates with a web UI and utilizes AI models to assist in task planning, documentation generation, new file creation, file patching, and inquiries. Here's a breakdown of the key components and their functionalities:
+This action is part of a plugin package. To install:
 
-1. **TaskRunnerAction**
-   - This class extends `BaseAction` and is responsible for initiating the task planning process.
-   - When the action is triggered, it creates a new session, selects the current file or folder, and initializes the `TaskRunnerApp`.
-   - It also opens a browser window with the application server URL.
+1. Open your IDE and navigate to the plugin marketplace.
+2. Search for the plugin package containing `GenerateDocumentationAction`.
+3. Install the plugin and restart your IDE.
 
-2. **TaskRunnerApp**
-   - This class extends `ApplicationServer` and serves as the main application server for the task planning process.
-   - It handles user messages by creating a `TaskRunnerAgent` instance and starting the task processing.
-   - It also manages sessions and settings for the application.
+### Conclusion
 
-3. **TaskRunnerAgent**
-   - This class extends `ActorSystem` and is responsible for processing user messages and delegating tasks to specific actors based on the task type.
-   - It defines several actors for different tasks, such as `TaskBreakdownActor`, `DocumentationGeneratorActor`, `NewFileCreatorActor`, `FilePatcherActor`, and `InquiryActor`.
-   - The `startProcess` method is the entry point for processing user messages. It breaks down the user request into smaller tasks using the `TaskBreakdownActor`, and then executes each task concurrently using a thread pool.
-   - The `runTask` method handles the execution of individual tasks based on their type (e.g., creating new files, editing existing files, generating documentation, answering inquiries, or performing task planning).
+The Documentation Compiler Action streamlines the process of generating project documentation, making it easier for
+developers to maintain up-to-date documentation for their projects. By automating the documentation process and
+integrating directly with the IDE, this action saves time and enhances the quality of project documentation.
 
-4. **Actors**
-   - The actors are responsible for performing specific tasks based on the user request and the provided context.
-   - The `TaskBreakdownActor` identifies and lists smaller, actionable tasks from the user request.
-   - The `DocumentationGeneratorActor` generates documentation for the provided code.
-   - The `NewFileCreatorActor` creates new files based on the given requirements.
-   - The `FilePatcherActor` generates patches for existing files to modify their functionality or fix issues.
-   - The `InquiryActor` provides responses to user inquiries by compiling relevant information and insights.
+# generic\RedoLast.kt
 
-5. **Task Breakdown and Execution**
-   - The `TaskBreakdownResult` data class represents the output of the `TaskBreakdownActor`, containing a map of tasks and a final task ID.
-   - The `Task` data class represents an individual task, including its description, type, dependencies, input files, and output files.
-   - The `TaskType` enum defines the different types of tasks (TaskPlanning, Inquiry, NewFile, EditFile, Documentation).
-   - The `GenState` data class keeps track of the subtasks, task IDs, reply text, completed tasks, and task futures during the execution process.
-   - The `executionOrder` function determines the order in which tasks should be executed based on their dependencies.
-   - The `buildMermaidGraph` function generates a Mermaid graph representation of the task dependencies.
+## RedoLast Action for IntelliJ
 
-The code provides a comprehensive system for task planning, code generation, documentation, and inquiries, leveraging AI models and a web UI for user interaction. It demonstrates a modular design with separate actors for different tasks, allowing for easy extensibility and maintenance.
+### Overview
+
+The RedoLast action is a feature designed for IntelliJ users who are utilizing AI Coder. It enables users to easily redo
+the last AI Coder action they executed within the editor. This functionality is particularly useful for quickly
+reverting and reapplying changes made by AI Coder, enhancing productivity and workflow efficiency.
+
+### How to Use
+
+To utilize the RedoLast action, follow these simple steps:
+
+1. **Open the Editor**: Ensure you are in the IntelliJ editor where you previously performed an AI Coder action.
+2. **Access the Context Menu**: Right-click within the editor to open the context menu.
+3. **Select RedoLast**: Look for the RedoLast action in the context menu and select it.
+
+Upon selection, the RedoLast action will automatically redo the last AI Coder action that was performed in the editor.
+
+### Availability
+
+The RedoLast action is available only when there is a previous AI Coder action to redo. If no such action exists, the
+RedoLast option will be disabled.
+
+### Key Features
+
+- **Ease of Use**: Quickly redo the last AI Coder action with a simple selection from the context menu.
+- **Efficiency**: Saves time by allowing users to easily revert and reapply changes.
+- **Integration**: Seamlessly works within the IntelliJ environment, enhancing the AI Coder experience.
+
+### Requirements
+
+To use the RedoLast action, you must have:
+
+- IntelliJ IDE installed.
+- AI Coder plugin enabled in your IntelliJ environment.
+
+### Conclusion
+
+The RedoLast action is a valuable tool for developers using AI Coder in IntelliJ, offering a quick and efficient way to
+redo actions. By integrating this feature into your workflow, you can enhance your productivity and streamline your
+development process.
+
+# generic\ReplaceWithSuggestionsAction.kt
+
+## ReplaceWithSuggestionsAction Documentation
+
+### Overview
+
+`ReplaceWithSuggestionsAction` is an IntelliJ IDEA plugin action designed to assist developers by suggesting alternative text
+options for a selected piece of code or text within the IDE. This action leverages a virtual API to generate suggestions
+based on the context surrounding the selected text, aiming to enhance code quality and developer productivity.
+
+### Key Features
+
+- **Context-Aware Suggestions:** Generates text suggestions based on the content before and after the selected text,
+  ensuring relevance.
+- **Customizable Suggestions:** Utilizes a virtual API, allowing for customization of the suggestion engine.
+- **User-Friendly Interface:** Offers a simple dialog with radio buttons for users to choose from the generated
+  suggestions.
+
+### How It Works
+
+1. **Selection:** The user selects a piece of text within their code.
+2. **Context Analysis:** The plugin calculates an ideal length for context analysis and extracts the text before and
+   after the selection.
+3. **Suggestion Generation:** The virtual API is called with the contextual information to generate a list of
+   suggestions.
+4. **User Selection:** A dialog is presented to the user, allowing them to choose one of the suggested options to
+   replace the selected text.
+
+### Components
+
+#### VirtualAPI Interface
+
+Defines the contract for the suggestion engine, including the `suggestText` method which takes a template string and a
+list of examples to generate suggestions.
+
+##### Suggestions Class
+
+A nested class within `VirtualAPI` that holds the generated suggestions.
+
+#### Proxy
+
+A property that initializes the virtual API proxy with configuration settings from `AppSettingsState`, such as the model
+and temperature for generating suggestions.
+
+### Usage
+
+- **Initialization:** The action is initialized within the IntelliJ IDEA environment and listens for user selection.
+- **Selection:** The user highlights the text they wish to replace.
+- **Execution:** The action is triggered, either via a menu option or a shortcut, initiating the suggestion generation
+  process.
+- **Choice:** The user is presented with a dialog to choose one of the generated suggestions.
+- **Replacement:** The selected suggestion replaces the original text.
+
+### Configuration
+
+The action utilizes settings from `AppSettingsState` for configuring the virtual API, including:
+
+- The default chat model.
+- The temperature setting for suggestion variability.
+
+### Extensibility
+
+Developers can extend `ReplaceWithSuggestionsAction` to customize the suggestion process or the user interface for selecting
+suggestions. The `choose` method can be overridden to implement different mechanisms for presenting and selecting among
+the suggestions.
+
+### Conclusion
+
+`ReplaceWithSuggestionsAction` is a powerful tool for IntelliJ IDEA users, offering smart, context-aware suggestions to improve
+code quality and accelerate development workflows. Through its integration with a virtual API, it provides a flexible
+and customizable solution for code enhancement.
 
 # markdown\MarkdownImplementActionGroup.kt
 
-Sure, here's the documentation for the provided code:
+## Markdown Implement Action Group Documentation
 
-```kotlin
-package com.github.simiacryptus.aicoder.actions.markdown
+The `MarkdownImplementActionGroup` is an extension designed for IntelliJ-based IDEs that enhances your Markdown editing
+capabilities by allowing you to automatically generate code snippets in various programming languages directly from your
+Markdown files. This feature is particularly useful for developers, technical writers, and educators who frequently
+create technical documentation or tutorials.
 
-import com.github.simiacryptus.aicoder.actions.SelectionAction
-import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.UITools
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.Project
-import com.simiacryptus.jopenai.proxy.ChatProxy
+### Features
 
-/**
- * An ActionGroup that provides actions to implement the selected text in various programming languages using Markdown.
- */
-class MarkdownImplementActionGroup : ActionGroup() {
-    private val markdownLanguages = listOf(
-        "sql", "java", "asp", "c", "clojure", "coffee", "cpp", "csharp", "css", "bash", "go", "java", "javascript",
-        "less", "make", "matlab", "objectivec", "pascal", "PHP", "Perl", "python", "rust", "scss", "sql", "svg",
-        "swift", "ruby", "smalltalk", "vhdl"
-    )
+- **Multi-Language Support**: Supports a wide range of programming languages including SQL, Java, C, C++, Python, Ruby,
+  and many more, allowing you to generate code snippets in the language of your choice.
+- **Automatic Code Generation**: Utilizes a conversion API to transform selected text into code snippets, making it
+  easier to include code examples in your Markdown files.
+- **Easy Integration**: Seamlessly integrates with your development environment, providing a straightforward way to
+  enhance your Markdown documents without leaving your IDE.
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = isEnabled(e)
-        super.update(e)
-    }
+### How It Works
 
-    companion object {
-        /**
-         * Checks if the action should be enabled for the given event.
-         * @param e The action event.
-         * @return True if the action should be enabled, false otherwise.
-         */
-        fun isEnabled(e: AnActionEvent): Boolean {
-            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if (ComputerLanguage.Markdown != computerLanguage) return false
-            return UITools.hasSelection(e)
-        }
-    }
+1. **Language Detection**: The action group first checks if the current file is a Markdown file and if there is a text
+   selection within it.
+2. **Action Visibility**: If the conditions are met, the action becomes visible and enabled in the IDE's context menu.
+3. **Code Generation**: Upon selection of the desired programming language from the context menu, the extension
+   communicates with a conversion API to generate a code snippet based on the selected text.
+4. **Snippet Insertion**: The generated code snippet is then formatted and inserted into the Markdown document, wrapped
+   in the appropriate code block syntax for the selected language.
 
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-        if (e == null) return emptyArray()
-        val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return emptyArray()
-        val actions = markdownLanguages.map { language -> MarkdownImplementAction(language) }
-        return actions.toTypedArray()
-    }
+### Usage
 
-    /**
-     * An action that implements the selected text in a specific programming language using Markdown.
-     */
-    open class MarkdownImplementAction(private val language: String) : SelectionAction<String>(true) {
-        init {
-            templatePresentation.text = language
-            templatePresentation.description = language
-        }
+To use the `MarkdownImplementActionGroup`, follow these steps:
 
-        /**
-         * An interface for the conversion API.
-         */
-        interface ConversionAPI {
-            /**
-             * Implements the given text in the specified computer language.
-             * @param text The text to implement.
-             * @param humanLanguage The human language of the input text.
-             * @param computerLanguage The computer language to implement the text in.
-             * @return The converted text.
-             */
-            fun implement(text: String, humanLanguage: String, computerLanguage: String): ConvertedText
+1. Open a Markdown file in your IntelliJ-based IDE.
+2. Select the text you wish to convert into a code snippet.
+3. Right-click to open the context menu and navigate to the `Markdown Implement Action Group` submenu.
+4. Choose the programming language for your code snippet from the list.
+5. The extension will automatically generate and insert the code snippet into your document.
 
-            /**
-             * A data class representing the converted text.
-             */
-            class ConvertedText {
-                var code: String? = null
-                var language: String? = null
-            }
-        }
+### Requirements
 
-        /**
-         * Gets the proxy for the conversion API.
-         * @return The conversion API proxy.
-         */
-        private fun getProxy(): ConversionAPI {
-            return ChatProxy(
-                clazz = ConversionAPI::class.java,
-                api = api,
-                model = AppSettingsState.instance.defaultChatModel(),
-                temperature = AppSettingsState.instance.temperature,
-                deserializerRetries = 5
-            ).create()
-        }
+- IntelliJ-based IDE (e.g., IntelliJ IDEA, PyCharm, WebStorm)
+- Java Development Kit (JDK)
 
-        override fun getConfig(project: Project?): String {
-            return ""
-        }
+### Installation
 
-        /**
-         * Processes the selected text and implements it in the specified programming language using Markdown.
-         * @param state The selection state.
-         * @param config The configuration (not used in this implementation).
-         * @return The Markdown-formatted code block with the implemented code.
-         */
-        override fun processSelection(state: SelectionState, config: String?): String {
-            val code = getProxy().implement(state.selectedText ?: "", "autodetect", language).code ?: ""
-            return """
-                |
-                |
-                |```$language
-                |$code
-                |```
-                |
-                |""".trimMargin()
-        }
-    }
-}
-```
+This extension can be installed from the JetBrains Marketplace or by downloading the plugin JAR file and installing it
+manually through your IDE's plugin settings.
 
-This code defines an `ActionGroup` called `MarkdownImplementActionGroup` that provides actions to implement the selected text in various programming languages using Markdown. The group contains a list of supported programming languages (`markdownLanguages`).
+### Conclusion
 
-The `isEnabled` function checks if the action should be enabled for the given event. It checks if the current file is a Markdown file and if there is a text selection.
+The `MarkdownImplementActionGroup` is a powerful tool for anyone involved in creating or editing Markdown documents that
+include code snippets. By automating the code generation process, it not only saves time but also ensures consistency
+and accuracy in your documentation.
 
-The `getChildren` function creates an array of `MarkdownImplementAction` instances, one for each supported programming language.
+# generic\WebDevelopmentAssistantAction.kt
 
-The `MarkdownImplementAction` class is an implementation of the `SelectionAction` interface. It defines an interface called `ConversionAPI` that provides a method `implement` to convert the selected text into code in the specified programming language.
+## Web Development Assistant Plugin Documentation
 
-The `getProxy` function creates an instance of the `ConversionAPI` using the `ChatProxy` class from the `com.simiacryptus.jopenai.proxy` package. It configures the proxy with the API key, the default chat model, temperature, and the number of deserialization retries.
+### Overview
 
-The `processSelection` function is the main logic of the action. It calls the `implement` method of the `ConversionAPI` with the selected text, the human language ("autodetect"), and the target programming language. It then formats the resulting code as a Markdown code block and returns it.
+The Web Development Assistant is an IntelliJ IDEA plugin designed to streamline the process of developing web
+applications. It leverages AI to assist in generating code, reviewing code, and suggesting architectural designs for web
+projects directly within the IDE environment.
 
-Overall, this code provides a convenient way to implement selected text in various programming languages within a Markdown file using an AI-powered conversion API.
+### Features
+
+- **Code Generation**: Automatically generates HTML, CSS, and JavaScript code based on user input.
+- **Code Review**: Analyzes code for potential issues and suggests improvements or fixes.
+- **Architecture Suggestion**: Provides detailed architecture suggestions for web applications, including
+  framework/library recommendations and CDN links.
+- **Session Management**: Supports multiple development sessions with unique settings and resources.
+- **Interactive Feedback**: Allows users to provide feedback on generated code and suggestions, facilitating iterative
+  improvement.
+
+### Getting Started
+
+1. **Installation**: Ensure the plugin is installed in your IntelliJ IDEA environment.
+2. **Accessing the Plugin**: Navigate to the plugin through IntelliJ IDEA's action or menu system.
+3. **Starting a Session**: Initiate a new web development session by selecting a target folder for your project.
+4. **Interacting with the Assistant**: Provide your requirements or queries to the assistant through the provided UI.
+   The assistant will generate code, review existing code, or suggest architectural designs based on your input.
+5. **Reviewing Suggestions**: Examine the assistant's output, which may include code snippets, architectural designs, or
+   code review comments.
+6. **Providing Feedback**: Use the interactive feedback system to refine the suggestions, asking for revisions or
+   clarifications as needed.
+
+### Key Components
+
+- **WebDevelopmentAssistantAction**: The main class that handles user actions, initiating sessions, and opening the browser interface for
+  interaction.
+- **WebDevApp**: Represents a web development session, managing settings, user messages, and interactions with the AI.
+- **WebDevAgent**: Acts as the intermediary between the user and the AI, handling specific tasks like code generation,
+  code review, and architecture suggestion.
+- **Session Management**: Sessions are uniquely identified and managed, allowing for persistent settings and
+  interactions within a project.
+
+### Usage Tips
+
+- **Clear Requirements**: Provide clear and concise requirements to the assistant for more accurate suggestions.
+- **Iterative Feedback**: Use the feedback loop effectively by reviewing suggestions and providing specific feedback for
+  improvements.
+- **Explore Architectural Suggestions**: Take advantage of the architectural suggestions for insights on structuring
+  your web application and selecting appropriate technologies.
+
+### Troubleshooting
+
+- **Browser Issues**: If the browser does not open automatically, manually navigate to the provided URL.
+- **Session Persistence**: Ensure your project folder is correctly selected to maintain session continuity.
+- **Feedback Loop**: If feedback is not being correctly processed, ensure you are providing it in the expected format
+  and context.
+
+### Conclusion
+
+The Web Development Assistant plugin offers a powerful toolset for accelerating web development projects by integrating
+AI-driven code generation, review, and architectural suggestions directly into the IntelliJ IDEA environment. By
+following the guidelines and making effective use of the features, developers can enhance their productivity and focus
+on creative aspects of web development.
 
 # markdown\MarkdownListAction.kt
 
-Sure, here's the documentation for the `MarkdownListAction` class:
+## Markdown List Action Documentation
 
-```kotlin
-/**
- * An action that generates new list items for a selected Markdown list in the editor.
- *
- * This action is enabled when the current file is a Markdown file and the caret or selection is inside a Markdown list.
- * When triggered, it extracts the existing list items, sends them to an AI model, and generates new list items based on
- * the existing ones. The new items are then appended to the end of the list in the editor.
- *
- * The AI model used for generating new list items is defined by the `ListAPI` interface, which is implemented using
- * the OpenAI API via the `ChatProxy` class. The `ListAPI` interface has a single method `newListItems` that takes
- * a list of existing items and a desired count, and returns a new list of items.
- *
- * The action also handles different bullet types (-, *, and numbered lists) and preserves the indentation of the
- * original list.
- */
-class MarkdownListAction : BaseAction() {
-    // ...
-}
-```
+### Overview
 
-The `ListAPI` interface and its `Items` data class:
+The `MarkdownListAction` class is designed to enhance your Markdown editing experience in IntelliJ-based IDEs by
+automatically generating and inserting list items into your Markdown files. This action is particularly useful when
+you're looking to quickly expand lists with new, contextually relevant items without manually brainstorming and typing
+each one.
 
-```kotlin
-/**
- * An interface defining the API for generating new list items.
- */
-interface ListAPI {
-    /**
-     * Generates new list items based on the provided existing items and desired count.
-     *
-     * @param items The existing list items.
-     * @param count The desired total count of items (existing + new).
-     * @return A data class containing the new list items.
-     */
-    fun newListItems(
-        items: List<String?>?,
-        count: Int,
-    ): Items
+### Features
 
-    /**
-     * A data class representing the result of the `newListItems` function.
-     *
-     * @property items The new list items.
-     */
-    data class Items(
-        val items: List<String?>? = null,
-    )
-}
-```
+- **Automatic List Item Generation:** Leverages AI to generate new list items based on the existing ones in your
+  Markdown document.
+- **Context-Aware:** Understands the context of your list to provide relevant suggestions.
+- **Customizable Item Count:** Allows specifying the number of new items to generate.
+- **Support for Different Bullet Types:** Works with various bullet types including `- [ ]` (task list), `-`, and `*`.
 
-The `handle` function:
+### How It Works
 
-```kotlin
-/**
- * The main function that handles the action when triggered.
- *
- * @param e The action event containing information about the current editor state.
- */
-override fun handle(e: AnActionEvent) {
-    // ...
-}
-```
+1. **Selection Identification:** The action identifies the list you're working on based on your text selection in a
+   Markdown file.
+2. **Item Extraction:** It extracts existing list items and sends them to an AI service, which then generates additional
+   items based on the context.
+3. **List Expansion:** The new items are inserted into your document, directly after the selected list, maintaining the
+   original list's formatting and bullet type.
 
-The `isEnabled` function:
+### Usage
 
-```kotlin
-/**
- * Checks if the action should be enabled based on the current editor state.
- *
- * @param event The action event containing information about the current editor state.
- * @return `true` if the action should be enabled, `false` otherwise.
- */
-override fun isEnabled(event: AnActionEvent): Boolean {
-    // ...
-}
-```
+To use the `MarkdownListAction`, follow these steps:
 
-This documentation explains the purpose of the `MarkdownListAction` class, the `ListAPI` interface used for generating new list items, and the main functions `handle` and `isEnabled`. It also provides brief descriptions of the parameters and return values for the relevant functions.
+1. **Open a Markdown File:** Ensure you're working in a file recognized as Markdown by your IDE.
+2. **Select a List:** Highlight a portion of the list you wish to expand. It's important that the selection includes
+   part of the list recognized by the IDE as `MarkdownListImpl`.
+3. **Activate the Action:** Trigger the `MarkdownListAction`. This can be done through a menu option or a keyboard
+   shortcut, depending on how it's configured in your IDE.
+4. **Wait for Generation:** The action communicates with an AI service to generate new items. Once the process is
+   complete, the new items are automatically inserted into your document.
 
-# SelectionAction.kt
+### Requirements
 
-Sure, here's the documentation for the `SelectionAction` class:
+- IntelliJ-based IDE (e.g., IntelliJ IDEA, PyCharm, WebStorm)
+- Active internet connection for AI service communication
+- Plugin or configuration that recognizes `MarkdownListAction`
 
-```kotlin
-/**
- * An abstract class that provides a base implementation for actions that operate on selected text
- * or a default selection in an editor. This class handles the selection of text, retrieves the
- * necessary context information, and delegates the actual processing of the selection to subclasses.
- *
- * @param T The type of the configuration object used by the action.
- * @property requiresSelection Whether the action requires a non-empty selection to be enabled.
- *                             If set to false, the action will use a default selection if no text
- *                             is selected.
- */
-abstract class SelectionAction<T : Any>(
-    private val requiresSelection: Boolean = true
-) : BaseAction() {
+### Limitations
 
-    /**
-     * Returns the configuration object for the action, or null if no configuration is needed.
-     *
-     * @param project The current project, or null if no project is available.
-     * @return The configuration object, or null if no configuration is needed.
-     */
-    open fun getConfig(project: Project?): T? = null
+- The quality and relevance of the generated list items depend on the AI model's understanding of the context.
+- Requires the document to be properly formatted as Markdown for accurate context recognition and bullet type matching.
 
-    // ... (implementation details omitted for brevity) ...
+### Conclusion
 
-    /**
-     * Determines whether the action is enabled for the given event.
-     *
-     * @param event The action event.
-     * @return True if the action is enabled, false otherwise.
-     */
-    override fun isEnabled(event: AnActionEvent): Boolean { /* ... */ }
-
-    /**
-     * Data class representing the state of the selection and its context.
-     *
-     * @property selectedText The selected text, or null if no text is selected.
-     * @property selectionOffset The offset of the selection start.
-     * @property selectionLength The length of the selection, or null if no text is selected.
-     * @property entireDocument The entire document text, or null if not available.
-     * @property language The programming language of the document, or null if not available.
-     * @property indent The indentation string to use, or null if not available.
-     * @property contextRanges An array of context ranges surrounding the selection.
-     * @property psiFile The PSI file representing the document, or null if not available.
-     * @property project The current project, or null if no project is available.
-     */
-    data class SelectionState(
-        val selectedText: String? = null,
-        val selectionOffset: Int = 0,
-        val selectionLength: Int? = null,
-        val entireDocument: String? = null,
-        val language: ComputerLanguage? = null,
-        val indent: CharSequence? = null,
-        val contextRanges: Array<ContextRange> = arrayOf(),
-        val psiFile: PsiFile?,
-        val project: Project?
-    )
-
-    /**
-     * Determines whether the action supports the given programming language.
-     *
-     * @param computerLanguage The programming language.
-     * @return True if the language is supported, false otherwise.
-     */
-    open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean { /* ... */ }
-
-    /**
-     * Returns the default selection range for the given offset if no text is selected.
-     *
-     * @param editorState The state of the editor.
-     * @param offset The offset for which to get the default selection.
-     * @return A pair representing the start and end offsets of the default selection.
-     */
-    open fun defaultSelection(editorState: EditorState, offset: Int): Pair<Int, Int> { /* ... */ }
-
-    /**
-     * Adjusts the given selection range if needed.
-     *
-     * @param state The state of the editor.
-     * @param start The start offset of the selection.
-     * @param end The end offset of the selection.
-     * @return A pair representing the adjusted start and end offsets of the selection.
-     */
-    open fun editSelection(state: EditorState, start: Int, end: Int): Pair<Int, Int> { /* ... */ }
-
-    /**
-     * Processes the selected text or the default selection using the provided configuration.
-     *
-     * @param event The action event, or null if not available.
-     * @param selectionState The state of the selection and its context.
-     * @param config The configuration object for the action, or null if no configuration is needed.
-     * @return The processed text.
-     */
-    open fun processSelection(
-        event: AnActionEvent?,
-        selectionState: SelectionState,
-        config: T?
-    ): String { /* ... */ }
-
-    /**
-     * Processes the selected text or the default selection using the provided configuration.
-     * This method must be implemented by subclasses to perform the actual processing.
-     *
-     * @param state The state of the selection and its context.
-     * @param config The configuration object for the action, or null if no configuration is needed.
-     * @return The processed text.
-     */
-    open fun processSelection(state: SelectionState, config: T?): String {
-        throw NotImplementedError()
-    }
-}
-```
-
-This class provides a base implementation for actions that operate on selected text or a default selection in an editor. It handles the selection of text, retrieves the necessary context information (such as the programming language, indentation, and surrounding code elements), and delegates the actual processing of the selection to subclasses.
-
-Subclasses can override the `processSelection` method to implement their specific logic for processing the selected text or the default selection. They can also provide a configuration object by overriding the `getConfig` method.
-
-The `SelectionState` data class encapsulates the state of the selection and its context, including the selected text, selection offsets, entire document text, programming language, indentation, surrounding code elements, and the current project.
-
-The `isLanguageSupported` method can be overridden by subclasses to specify which programming languages are supported by the action.
-
-The `defaultSelection` and `editSelection` methods can be overridden to customize the behavior for determining the default selection range and adjusting the selection range, respectively.
-
-Overall, this class provides a reusable and extensible framework for implementing actions that operate on selected text or a default selection in an editor, while handling the necessary context information and delegating the actual processing logic to subclasses.
+The `MarkdownListAction` is a powerful tool for enhancing productivity and creativity when working with Markdown lists
+in IntelliJ-based IDEs. By automating the generation and insertion of list items, it allows users to focus more on
+content creation and less on manual list management.
 

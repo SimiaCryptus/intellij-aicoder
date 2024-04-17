@@ -316,7 +316,13 @@ class UITestUtil {
                         ```
                         """.trimIndent()
                 )
-                writeImage(screenshot("""//div[@class="IdeRootPane"]"""), reportDir, name, "${reportPrefix}result", report)
+                writeImage(
+                    screenshot("""//div[@class="IdeRootPane"]"""),
+                    reportDir,
+                    name,
+                    "${reportPrefix}result",
+                    report
+                )
                 // Close run tab
                 sleep(100)
                 clickr("""//div[@class="ContentTabLabel"]""")
@@ -390,7 +396,13 @@ class UITestUtil {
                 click("//div[@text.key='button.ok']")
                 awaitBackgroundProgress()
                 keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_HOME) // Move to top
-                writeImage(screenshot("""//div[@class="IdeRootPane"]"""), reportDir, name, "${reportPrefix}Ask_Q3", report)
+                writeImage(
+                    screenshot("""//div[@class="IdeRootPane"]"""),
+                    reportDir,
+                    name,
+                    "${reportPrefix}Ask_Q3",
+                    report
+                )
 
                 report.println(
                     """
@@ -591,7 +603,13 @@ class UITestUtil {
             writeImage(menuAction("Replace Options"), file, name, "${reportPrefix}replace_options", report)
             awaitBackgroundProgress()
             sleep(500)
-            writeImage(screenshot("""//div[@class="JDialog"]"""), file, name, "${reportPrefix}replace_options_2", report)
+            writeImage(
+                screenshot("""//div[@class="JDialog"]"""),
+                file,
+                name,
+                "${reportPrefix}replace_options_2",
+                report
+            )
             sleep(500)
 
             keyboard.enter()

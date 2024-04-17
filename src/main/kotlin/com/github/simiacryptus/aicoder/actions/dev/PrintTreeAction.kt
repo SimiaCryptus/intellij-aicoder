@@ -3,6 +3,7 @@
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.slf4j.LoggerFactory
 
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory
  * This will print the tree structure of the file to the log.
  */
 class PrintTreeAction : BaseAction() {
-
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(e: AnActionEvent) {
         log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e)!!))

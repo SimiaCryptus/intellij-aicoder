@@ -779,10 +779,10 @@ application contexts. It demonstrates good practices in Kotlin programming, thre
 some enhancements, especially in error recovery and configuration flexibility, it could be an even more robust solution
 for real-world applications.
 
-# actions\generic\AnalogueFileAction.kt
+# actions\generic\GenerateRelatedFileAction.kt
 
-This Kotlin code defines a class `AnalogueFileAction` that extends `FileContextAction` with a specific settings
-type, `AnalogueFileAction.Settings`. It is designed to work within an IntelliJ IDEA plugin, leveraging the IntelliJ
+This Kotlin code defines a class `CreateFileFromTemplateAction` that extends `FileContextAction` with a specific settings
+type, `CreateFileFromTemplateAction.Settings`. It is designed to work within an IntelliJ IDEA plugin, leveraging the IntelliJ
 Platform SDK to interact with the IDE's file system, UI, and project structure. The action appears to be aimed at
 generating new files based on a directive provided by the user, possibly using an AI model to generate the content of
 the new file. Below is a detailed review of the code, highlighting its structure, functionality, and areas for potential
@@ -790,7 +790,7 @@ improvement.
 
 #### Structure and Functionality
 
-- **Class Hierarchy and Data Classes**: The `AnalogueFileAction` class inherits from `FileContextAction`, indicating
+- **Class Hierarchy and Data Classes**: The `CreateFileFromTemplateAction` class inherits from `FileContextAction`, indicating
   it's an action related to file context within the IDE. It uses several data
   classes (`ProjectFile`, `SettingsUI`, `UserSettings`, `Settings`) for managing its configuration and UI.
 
@@ -834,13 +834,13 @@ improvement.
 
 #### Conclusion
 
-The `AnalogueFileAction` class is a sophisticated piece of an IntelliJ IDEA plugin that leverages AI to generate new
+The `CreateFileFromTemplateAction` class is a sophisticated piece of an IntelliJ IDEA plugin that leverages AI to generate new
 files based on user directives. While the functionality is promising, incorporating error handling, improving
 performance considerations, and enhancing code readability could make it more robust and user-friendly.
 
-# actions\generic\AppendAction.kt
+# actions\generic\AppendTextWithChatAction.kt
 
-This Kotlin class, `AppendAction`, is part of a package designed to work within an IntelliJ platform-based IDE,
+This Kotlin class, `AppendTextWithChatAction`, is part of a package designed to work within an IntelliJ platform-based IDE,
 leveraging the OpenAI API to enhance coding or text editing tasks. It extends `SelectionAction<String>`, indicating it
 operates on selections within the IDE, processing them, and returning a `String` result. Below is a detailed review of
 its components and functionality:
@@ -854,7 +854,7 @@ its components and functionality:
 
 #### Class Definition
 
-- `AppendAction` inherits from `SelectionAction<String>`, a generic type indicating this action works with text
+- `AppendTextWithChatAction` inherits from `SelectionAction<String>`, a generic type indicating this action works with text
   selections and returns a `String`.
 
 #### Overridden Methods
@@ -892,7 +892,7 @@ its components and functionality:
 - **User Feedback**: In its current form, the action does not provide feedback to the user if the API call fails or
   returns an empty response, which could be improved for a better user experience.
 
-Overall, `AppendAction` demonstrates a practical application of integrating AI-powered functionalities within
+Overall, `AppendTextWithChatAction` demonstrates a practical application of integrating AI-powered functionalities within
 development tools, with room for enhancements in configurability, robustness, and user interaction.
 
 # actions\generic\CodeChatAction.kt
@@ -966,10 +966,10 @@ structure, functionality, and some suggestions for improvement.
 Overall, the `CodeChatAction` class provides a solid foundation for the Code Chat feature, with room for enhancements in
 error handling, security, and code documentation.
 
-# actions\generic\CreateFileAction.kt
+# actions\generic\CreateFileFromDescriptionAction.kt
 
-This Kotlin code defines a class `CreateFileAction` that extends `FileContextAction` with a specific setting
-type `CreateFileAction.Settings`. The class is designed to automate the process of creating a new file within a project
+This Kotlin code defines a class `CreateFileFromDescriptionAction` that extends `FileContextAction` with a specific setting
+type `CreateFileFromDescriptionAction.Settings`. The class is designed to automate the process of creating a new file within a project
 based on a directive provided by the user. The directive is processed using an AI model to generate the content and name
 of the new file. Below is a detailed review of the code, highlighting its structure, functionality, and areas for
 potential improvement.
@@ -979,7 +979,7 @@ potential improvement.
 - `ProjectFile`: A simple data class holding the path and code of the generated file.
 - `SettingsUI`: A class that defines the UI component for inputting the directive. It uses a `JTextArea` to capture the
   directive from the user.
-- `Settings`: A class that holds the settings for the `CreateFileAction`, currently only containing a `directive`
+- `Settings`: A class that holds the settings for the `CreateFileFromDescriptionAction`, currently only containing a `directive`
   string.
 - `processSelection`: The main method that processes the user's selection and generates a new file based on the provided
   directive.
@@ -1025,13 +1025,13 @@ potential improvement.
 
 #### Conclusion
 
-The `CreateFileAction` class is a sophisticated piece of code designed to leverage AI for automating file creation based
+The `CreateFileFromDescriptionAction` class is a sophisticated piece of code designed to leverage AI for automating file creation based
 on natural language directives. While the core functionality is promising, attention to error handling, flexibility, and
 documentation could enhance its robustness, usability, and maintainability.
 
-# actions\generic\DictationAction.kt
+# actions\generic\VoiceToTextAction.kt
 
-This Kotlin code defines a class `DictationAction` that extends `BaseAction` and is designed to integrate with an
+This Kotlin code defines a class `VoiceToTextAction` that extends `BaseAction` and is designed to integrate with an
 IntelliJ platform-based IDE to provide a dictation feature. The action, when triggered, captures audio from the user's
 microphone, processes the audio to convert speech to text, and inserts the transcribed text into the IDE's active
 editor. The code is structured into several key components and utilizes multithreading to handle audio recording,
@@ -1040,7 +1040,7 @@ functionalities of the code:
 
 #### Main Components:
 
-1. **DictationAction Class:**
+1. **VoiceToTextAction Class:**
     - The `handle` method is the entry point for the action. It sets up threads for audio recording, audio processing,
       and speech-to-text conversion.
     - It uses a status dialog to allow the user to stop the dictation process by closing the window.
@@ -1086,7 +1086,7 @@ functionalities of the code:
 - **Documentation:** The code lacks comments and documentation. Adding comprehensive documentation and comments would
   make the code more maintainable and easier to understand for other developers.
 
-Overall, the `DictationAction` class provides a solid foundation for integrating dictation functionality into an IDE.
+Overall, the `VoiceToTextAction` class provides a solid foundation for integrating dictation functionality into an IDE.
 With some enhancements to error handling, resource management, and user feedback, it could be a very useful tool for
 developers.
 
@@ -1151,9 +1151,9 @@ Overall, `DiffChatAction` is an innovative feature that combines code review and
 enhancing collaboration among developers. However, attention to security, performance, and user experience is crucial
 for its successful implementation.
 
-# actions\generic\DocumentationCompilerAction.kt
+# actions\generic\GenerateDocumentationAction.kt
 
-This Kotlin code defines a class `DocumentationCompilerAction` that extends `FileContextAction` with a specific settings
+This Kotlin code defines a class `GenerateDocumentationAction` that extends `FileContextAction` with a specific settings
 class. The action is designed for use within an IntelliJ platform-based IDE, where it compiles documentation for
 selected files or directories by transforming their content using an AI model provided by the `com.simiacryptus.jopenai`
 package. Here's a detailed review of the code, highlighting its structure, functionality, and areas for potential
@@ -1212,7 +1212,7 @@ improvement.
    and functionality of key methods and decisions. Adding documentation comments would improve readability and
    maintainability.
 
-Overall, the `DocumentationCompilerAction` class demonstrates a sophisticated integration of AI-based content
+Overall, the `GenerateDocumentationAction` class demonstrates a sophisticated integration of AI-based content
 transformation within an IDE plugin. With enhancements in error handling, resource management, and user feedback, it
 could provide a powerful tool for automating documentation compilation.
 
@@ -1271,9 +1271,9 @@ Here's a breakdown and review of the key components of this code:
 Overall, the code is well-structured and serves a clear purpose within the context of an IntelliJ plugin. With minor
 improvements, especially related to null safety and error handling, it could be even more robust.
 
-# actions\generic\ReplaceOptionsAction.kt
+# actions\generic\ReplaceWithSuggestionsAction.kt
 
-This Kotlin code defines a class `ReplaceOptionsAction` that extends `SelectionAction<String>`. It's designed to work
+This Kotlin code defines a class `ReplaceWithSuggestionsAction` that extends `SelectionAction<String>`. It's designed to work
 within an IDE environment, likely as part of a plugin, where it interacts with a virtual API to suggest text
 replacements for a selected portion of text in the editor. The class and its components are structured to integrate with
 IntelliJ's action system and a custom virtual API for text suggestions. Below is a detailed review of its components and
@@ -1281,7 +1281,7 @@ functionality:
 
 #### Class Structure and Inheritance
 
-- `ReplaceOptionsAction` inherits from `SelectionAction<String>`, indicating it performs an action based on a text
+- `ReplaceWithSuggestionsAction` inherits from `SelectionAction<String>`, indicating it performs an action based on a text
   selection and returns a `String`.
 - It defines an internal interface `VirtualAPI` for interacting with a text suggestion service.
 
@@ -1327,7 +1327,7 @@ functionality:
   Ensuring that this utility handles various edge cases, like no available choices or user cancellation, is essential
   for a smooth user experience.
 
-Overall, the `ReplaceOptionsAction` class is a well-structured piece of code designed for extending IDE functionality
+Overall, the `ReplaceWithSuggestionsAction` class is a well-structured piece of code designed for extending IDE functionality
 with text suggestion capabilities. Enhancing it with comments, error handling, and possibly revisiting the `getConfig`
 method's purpose could make it more robust and maintainable.
 

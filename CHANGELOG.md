@@ -27,7 +27,7 @@
 - `DiffChatAction`: A new action for engaging in a chat session to generate and apply code diffs directly within the
   IDE.
 - `MultiDiffChatAction`: Allows for collaborative code review and diff generation across multiple files.
-- `AutoDevAction`: Automates development tasks by translating user directives into actionable development tasks and code
+- `MultiStepPatchAction`: Automates development tasks by translating user directives into actionable development tasks and code
   modifications.
 - Support for models from https://www.perplexity.ai/, https://console.groq.com/, and https://modelslab.com/dashboard/,
   enhancing the plugin's versatility and performance in code generation and analysis.

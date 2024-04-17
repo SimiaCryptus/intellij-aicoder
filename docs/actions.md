@@ -785,7 +785,7 @@ The server's running state is monitored in a separate thread, which allows for a
 
 The `AppServer` plugin provides a robust and flexible way to integrate web applications, including real-time WebSocket applications, into your development environment. By following the instructions outlined in this documentation, you can effectively manage and interact with web applications within your project.
 
-# generic\AnalogueFileAction.kt
+# generic\GenerateRelatedFileAction.kt
 
 
 ## Analogue File Action Plugin Documentation
@@ -968,17 +968,17 @@ Before you can use the Code Chat Plugin, ensure you have the following:
 
 The Code Chat Plugin offers a powerful way to enhance collaboration and streamline the code review process directly within your IDE. By following this guide, you should be well-equipped to start using the plugin to its full potential. Happy coding and collaborating!
 
-# generic\CreateFileAction.kt
+# generic\CreateFileFromDescriptionAction.kt
 
 
-## CreateFileAction Plugin Documentation
+## CreateFileFromDescriptionAction Plugin Documentation
 
-The `CreateFileAction` plugin is a powerful tool designed to automate the process of file creation within a project, leveraging natural language directives to generate the necessary code. This document provides a comprehensive guide on how to use the `CreateFileAction` plugin effectively.
+The `CreateFileFromDescriptionAction` plugin is a powerful tool designed to automate the process of file creation within a project, leveraging natural language directives to generate the necessary code. This document provides a comprehensive guide on how to use the `CreateFileFromDescriptionAction` plugin effectively.
 
 
 ### Overview
 
-The `CreateFileAction` plugin integrates with the project environment to interpret natural language instructions and generate files accordingly. It utilizes the OpenAI API to understand the directives and create files with the specified content and at the desired location within the project structure.
+The `CreateFileFromDescriptionAction` plugin integrates with the project environment to interpret natural language instructions and generate files accordingly. It utilizes the OpenAI API to understand the directives and create files with the specified content and at the desired location within the project structure.
 
 
 ### Key Components
@@ -999,7 +999,7 @@ The `CreateFileAction` plugin integrates with the project environment to interpr
 
 1. **Configure the Directive**: Access the `SettingsUI` component and input your directive in the provided text area. For example, "Create a default log4j configuration file".
 2. **Select the Target Location**: In your project, select the location where you want the new file to be created. This selection will determine the base path for the new file.
-3. **Execute the Action**: Run the `CreateFileAction` plugin. It will process your directive and the selected location to generate and create the new file accordingly.
+3. **Execute the Action**: Run the `CreateFileFromDescriptionAction` plugin. It will process your directive and the selected location to generate and create the new file accordingly.
 
 
 ### Example
@@ -1008,7 +1008,7 @@ Suppose you want to create a new log4j configuration file in your Java project. 
 
 1. Open the `SettingsUI` and input the directive: "Create a default log4j configuration file".
 2. Select the `src/main/resources` directory in your project as the target location.
-3. Execute the `CreateFileAction`. The plugin will then generate a log4j configuration file based on your directive and place it in the specified directory.
+3. Execute the `CreateFileFromDescriptionAction`. The plugin will then generate a log4j configuration file based on your directive and place it in the specified directory.
 
 
 ### Handling Existing Files
@@ -1018,17 +1018,17 @@ If the plugin detects that the generated file's intended path already exists, it
 
 ### Conclusion
 
-The `CreateFileAction` plugin offers a convenient and efficient way to automate file creation within your projects, leveraging natural language processing to interpret directives and generate the necessary files. By following the steps outlined in this document, you can harness the power of this plugin to streamline your development workflow.
+The `CreateFileFromDescriptionAction` plugin offers a convenient and efficient way to automate file creation within your projects, leveraging natural language processing to interpret directives and generate the necessary files. By following the steps outlined in this document, you can harness the power of this plugin to streamline your development workflow.
 
-# generic\AppendAction.kt
+# generic\AppendTextWithChatAction.kt
 
 
-## AppendAction Plugin Documentation
+## AppendTextWithChatAction Plugin Documentation
 
 
 ### Overview
 
-The `AppendAction` plugin is designed to enhance your coding experience by allowing you to automatically append generated text to a selected piece of text within your code editor. This functionality is particularly useful for developers looking for quick ways to extend their code snippets based on AI-generated suggestions.
+The `AppendTextWithChatAction` plugin is designed to enhance your coding experience by allowing you to automatically append generated text to a selected piece of text within your code editor. This functionality is particularly useful for developers looking for quick ways to extend their code snippets based on AI-generated suggestions.
 
 
 ### Features
@@ -1047,16 +1047,16 @@ The `AppendAction` plugin is designed to enhance your coding experience by allow
 
 ### Usage
 
-To use the `AppendAction` plugin, follow these steps:
+To use the `AppendTextWithChatAction` plugin, follow these steps:
 
 1. **Select Text**: Highlight the text in your code editor that you want to append generated text to.
-2. **Activate AppendAction**: Use the designated shortcut or menu option to activate the `AppendAction` plugin.
+2. **Activate AppendTextWithChatAction**: Use the designated shortcut or menu option to activate the `AppendTextWithChatAction` plugin.
 3. **Review and Accept**: The plugin will automatically append the AI-generated text to your selection. Review the appended text and make any necessary adjustments.
 
 
 ### Configuration
 
-The behavior of the `AppendAction` plugin can be customized through the `AppSettingsState`. Key settings include:
+The behavior of the `AppendTextWithChatAction` plugin can be customized through the `AppSettingsState`. Key settings include:
 
 - **Default Chat Model**: Specifies the AI model used for generating text. This can be adjusted to use different models based on your preference or the specific needs of your project.
 - **Temperature**: Controls the creativity of the generated text. A higher temperature results in more creative (but potentially less predictable) outputs, while a lower temperature produces more conservative and predictable text.
@@ -1070,19 +1070,19 @@ The behavior of the `AppendAction` plugin can be customized through the `AppSett
 
 ### Conclusion
 
-The `AppendAction` plugin offers a powerful way to extend your code with AI-generated text, streamlining your development process and sparking creativity. By customizing the plugin settings, you can tailor the text generation to meet your specific needs and preferences.
+The `AppendTextWithChatAction` plugin offers a powerful way to extend your code with AI-generated text, streamlining your development process and sparking creativity. By customizing the plugin settings, you can tailor the text generation to meet your specific needs and preferences.
 
-# generic\DictationAction.kt
+# generic\VoiceToTextAction.kt
 
 
-## DictationAction Plugin Documentation
+## VoiceToTextAction Plugin Documentation
 
-The `DictationAction` plugin is designed to enhance your coding experience by allowing you to dictate code and comments directly into your IDE. This document provides an overview of the plugin's functionality, setup instructions, and usage guidelines.
+The `VoiceToTextAction` plugin is designed to enhance your coding experience by allowing you to dictate code and comments directly into your IDE. This document provides an overview of the plugin's functionality, setup instructions, and usage guidelines.
 
 
 ### Overview
 
-The `DictationAction` plugin captures audio through your microphone, processes the audio to convert speech to text, and then inserts the transcribed text into your code editor at the current cursor position or replaces the selected text. It operates in the background, starting with a simple action trigger and stopping when you close a specific dialog window.
+The `VoiceToTextAction` plugin captures audio through your microphone, processes the audio to convert speech to text, and then inserts the transcribed text into your code editor at the current cursor position or replaces the selected text. It operates in the background, starting with a simple action trigger and stopping when you close a specific dialog window.
 
 
 ### Features
@@ -1095,7 +1095,7 @@ The `DictationAction` plugin captures audio through your microphone, processes t
 
 ### Prerequisites
 
-Before using the `DictationAction` plugin, ensure you have:
+Before using the `VoiceToTextAction` plugin, ensure you have:
 
 - A compatible IDE (IntelliJ-based IDEs).
 - A working microphone set up and configured on your system.
@@ -1104,7 +1104,7 @@ Before using the `DictationAction` plugin, ensure you have:
 
 ### Installation
 
-1. Download the `DictationAction` plugin from the plugin marketplace or the provided source.
+1. Download the `VoiceToTextAction` plugin from the plugin marketplace or the provided source.
 2. In your IDE, navigate to `Settings` > `Plugins`.
 3. Click on `Install Plugin from Disk...` and select the downloaded plugin file.
 4. Restart your IDE to activate the plugin.
@@ -1115,7 +1115,7 @@ Before using the `DictationAction` plugin, ensure you have:
 To start dictating:
 
 1. Ensure your microphone is on and properly configured.
-2. Trigger the `DictationAction` from the IDE's action menu or use the assigned shortcut.
+2. Trigger the `VoiceToTextAction` from the IDE's action menu or use the assigned shortcut.
 3. A dialog titled "Dictation" will appear, indicating that dictation is active. Keep this dialog open while dictating.
 4. Speak clearly into your microphone. Your spoken words will be transcribed and inserted into your editor in real-time.
 5. To stop dictation, simply close the "Dictation" dialog window.
@@ -1135,9 +1135,9 @@ For support, feature requests, or to report bugs, please visit the plugin's GitH
 
 ### Conclusion
 
-The `DictationAction` plugin offers a convenient way to enhance your coding efficiency through voice commands. By following the setup instructions and usage guidelines provided in this document, you can seamlessly integrate dictation into your development workflow.
+The `VoiceToTextAction` plugin offers a convenient way to enhance your coding efficiency through voice commands. By following the setup instructions and usage guidelines provided in this document, you can seamlessly integrate dictation into your development workflow.
 
-# generic\DocumentationCompilerAction.kt
+# generic\GenerateDocumentationAction.kt
 
 
 #### Documentation Compiler Action Plugin
@@ -1435,15 +1435,15 @@ For support, feature requests, or to report bugs, please visit the plugin's GitH
 
 This documentation aims to provide you with all the necessary information to get started with the Markdown List Action plugin. Enhance your Markdown editing experience by leveraging the power of AI to generate list items effortlessly.
 
-# generic\ReplaceOptionsAction.kt
+# generic\ReplaceWithSuggestionsAction.kt
 
 
-## ReplaceOptionsAction Plugin Documentation
+## ReplaceWithSuggestionsAction Plugin Documentation
 
 
 ### Overview
 
-The `ReplaceOptionsAction` plugin is designed to enhance your coding experience within the IntelliJ IDEA environment by providing smart text replacement suggestions. Leveraging advanced AI models, this plugin analyzes the context of your selected text and offers a list of suggestions to replace it, aiming to improve code quality, readability, or simply to offer creative alternatives.
+The `ReplaceWithSuggestionsAction` plugin is designed to enhance your coding experience within the IntelliJ IDEA environment by providing smart text replacement suggestions. Leveraging advanced AI models, this plugin analyzes the context of your selected text and offers a list of suggestions to replace it, aiming to improve code quality, readability, or simply to offer creative alternatives.
 
 
 ### Features
@@ -1457,7 +1457,7 @@ The `ReplaceOptionsAction` plugin is designed to enhance your coding experience 
 ### How to Use
 
 1. **Select Text:** Begin by selecting the text in your code that you wish to replace.
-2. **Activate Action:** Trigger the `ReplaceOptionsAction` by using its assigned shortcut or by finding it in the context menu.
+2. **Activate Action:** Trigger the `ReplaceWithSuggestionsAction` by using its assigned shortcut or by finding it in the context menu.
 3. **Choose Replacement:** A dialog will appear with a list of suggestions. Select the one that best fits your needs and confirm your choice.
 4. **Review Changes:** The selected text in your code will be replaced with your chosen suggestion. Review the change to ensure it meets your expectations.
 
@@ -1471,7 +1471,7 @@ The `ReplaceOptionsAction` plugin is designed to enhance your coding experience 
 
 ### Customization
 
-To tailor the behavior of the `ReplaceOptionsAction` plugin to your preferences, you can adjust the settings in `AppSettingsState`. This includes:
+To tailor the behavior of the `ReplaceWithSuggestionsAction` plugin to your preferences, you can adjust the settings in `AppSettingsState`. This includes:
 
 - **Default Chat Model:** Choose the AI model that best suits your coding style or the specific language/framework you are working with.
 - **Temperature:** Adjust the creativity level of the suggestions. A higher temperature results in more creative (but potentially less accurate) suggestions, while a lower temperature favors more conservative and contextually accurate options.
@@ -1485,7 +1485,7 @@ To tailor the behavior of the `ReplaceOptionsAction` plugin to your preferences,
 
 ### Conclusion
 
-The `ReplaceOptionsAction` plugin offers a powerful way to enhance your coding experience by integrating AI-powered text replacement suggestions directly into your workflow. By understanding and utilizing its features, you can significantly improve the efficiency and quality of your code writing process.
+The `ReplaceWithSuggestionsAction` plugin offers a powerful way to enhance your coding experience by integrating AI-powered text replacement suggestions directly into your workflow. By understanding and utilizing its features, you can significantly improve the efficiency and quality of your code writing process.
 
 # SelectionAction.kt
 

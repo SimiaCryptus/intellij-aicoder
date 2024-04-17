@@ -44,7 +44,7 @@ game-changing features via the context menu within your editor or project view:
 * 💬 **DiffChatAction & MultiDiffChatAction**: Collaborate effortlessly with AI-powered chat sessions that generate and
   apply code diffs across single or multiple files.
 
-* 🚀 **AutoDevAction**: Transform user directives into actionable development tasks and code modifications, automating
+* 🚀 **MultiStepPatchAction**: Transform user directives into actionable development tasks and code modifications, automating
   key aspects of your workflow.
 
 * 📊 **mermaid.js Integration**: Visualize your code and ideas with stunning diagrams generated using the mermaid.js

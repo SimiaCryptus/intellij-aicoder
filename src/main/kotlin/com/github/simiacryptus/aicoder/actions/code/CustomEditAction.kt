@@ -4,11 +4,13 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
 import javax.swing.JOptionPane
 
 open class CustomEditAction : SelectionAction<String>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     interface VirtualAPI {
         fun editCode(
@@ -24,31 +26,32 @@ open class CustomEditAction : SelectionAction<String>() {
         )
     }
 
-    val proxy: VirtualAPI get() {
-        val chatProxy = ChatProxy(
-          clazz = VirtualAPI::class.java,
-          api = api,
-          temperature = AppSettingsState.instance.temperature,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-        )
-        chatProxy.addExample(
-            VirtualAPI.EditedText(
-                """
+    val proxy: VirtualAPI
+        get() {
+            val chatProxy = ChatProxy(
+                clazz = VirtualAPI::class.java,
+                api = api,
+                temperature = AppSettingsState.instance.temperature,
+                model = AppSettingsState.instance.smartModel.chatModel(),
+            )
+            chatProxy.addExample(
+                VirtualAPI.EditedText(
+                    """
                 // Print Hello, World! to the console
                 println("Hello, World!")
                 """.trimIndent(),
-                "java"
-            )
-        ) {
-            it.editCode(
-                """println("Hello, World!")""",
-                "Add code comments",
-                "java",
-                "English"
-            )
+                    "java"
+                )
+            ) {
+                it.editCode(
+                    """println("Hello, World!")""",
+                    "Add code comments",
+                    "java",
+                    "English"
+                )
+            }
+            return chatProxy.create()
         }
-        return chatProxy.create()
-    }
 
     override fun getConfig(project: Project?): String {
         return UITools.showInputDialog(
@@ -64,7 +67,7 @@ open class CustomEditAction : SelectionAction<String>() {
         settings.getRecentCommands("customEdits").addInstructionToHistory(instruction)
         return proxy.editCode(
             state.selectedText ?: "",
-            instruction ?: "",
+            instruction,
             state.language?.name ?: "",
             outputHumanLanguage
         ).code ?: state.selectedText ?: ""

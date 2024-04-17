@@ -1,12 +1,13 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.diff.addApplyFileDiffLinks
 import com.github.simiacryptus.diff.addSaveLinks
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,7 +48,8 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
 
-class TaskRunnerAction : BaseAction() {
+class PlanAheadAction : BaseAction() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/taskDev"
     override fun handle(e: AnActionEvent) {
@@ -96,7 +98,7 @@ class TaskRunnerApp(
     override val settingsClass: Class<*> get() = Settings::class.java
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> initSettings(session: Session): T? = Settings() as T
+    override fun <T : Any> initSettings(session: Session): T = Settings() as T
 
     override fun userMessage(
         session: Session,
@@ -306,10 +308,10 @@ class TaskRunnerAgent(
         Note: This task is for running simple and safe commands. Avoid executing commands that can cause harm to the system or compromise security.
       """.trimIndent(),
             symbols = mapOf(
-                "env" to (env ?: mapOf()),
-                "workingDir" to File(workingDir ?: ".").absolutePath,
-                "language" to (language ?: "bash"),
-                "command" to (command ?: listOf("bash")),
+                "env" to env,
+                "workingDir" to File(workingDir).absolutePath,
+                "language" to language,
+                "command" to command,
             ),
             model = model,
             temperature = temperature,
@@ -380,16 +382,19 @@ class TaskRunnerAgent(
         }.toTypedArray()
     }
 
-    val codeFiles = mutableMapOf<String, String>().apply {
-        virtualFiles.filter { it.isFile }.forEach { file ->
-            val code = file.inputStream.bufferedReader().use { it.readText() }
-            this[root.relativize(file.toNioPath()).toString()] = code
+    private val codeFiles
+        get() = virtualFiles.filter { it.isFile }.associate { file ->
+            getKey(file) to getValue(file)
         }
-    }
+
+
+    private fun getValue(file: VirtualFile) = file.inputStream.bufferedReader().use { it.readText() }
+
+    private fun getKey(file: VirtualFile) = root.relativize(file.toNioPath())
 
     fun startProcess(userMessage: String) {
         val codeFiles = codeFiles
-        val eventStatus = if (!codeFiles.all { File(it.key).isFile } || codeFiles.size > 2) """
+        val eventStatus = if (!codeFiles.all { it.key.toFile().isFile } || codeFiles.size > 2) """
       |Files:
       |${codeFiles.keys.joinToString("\n") { "* ${it}" }}  
     """.trimMargin() else {
@@ -400,7 +405,7 @@ class TaskRunnerAgent(
                     """
               |## $path
               |
-              |${(codeFiles[path.toString()] ?: "").let { "```\n${it/*.indent("  ")*/}\n```" }}
+              |${(codeFiles[path] ?: "").let { "```\n${it/*.indent("  ")*/}\n```" }}
             """.trimMargin()
                 }
             }
@@ -573,7 +578,7 @@ class TaskRunnerAgent(
         |# $it
         |
         |```
-        |${codeFiles[it] ?: root.resolve(it).toFile().readText()}
+        |${codeFiles[File(it).toPath()] ?: root.resolve(it).toFile().readText()}
         |```
         """.trimMargin()
                 } catch (e: Throwable) {
@@ -838,7 +843,7 @@ class TaskRunnerAgent(
                 if (prev != newCode) {
 //          codeFiles[path] = newCode
                     val bytes = newCode.toByteArray(Charsets.UTF_8)
-                    val saveFile = task.saveFile(path, bytes)
+                    val saveFile = task.saveFile(path.toString(), bytes)
                     task.complete("<a href='$saveFile'>$path</a> Created")
                 } else {
                     task.complete("No changes to $path")
@@ -851,7 +856,7 @@ class TaskRunnerAgent(
         }
         object : Retryable(ui, task, process) {
             init {
-                set(label(size), process(container!!))
+                set(label(size), process(container))
             }
         }
     }
@@ -882,23 +887,11 @@ class TaskRunnerAgent(
             renderMarkdown(
                 ui.socketManager.addApplyFileDiffLinks(
                     root = root,
-                    code = codeFiles,
+                    code = { codeFiles },
                     response = codeResult,
                     handle = { newCodeMap ->
-                        val codeFiles = codeFiles
                         newCodeMap.forEach { (path, newCode) ->
-                            val prev = codeFiles[path]
-                            if (prev != newCode) {
-//            codeFiles[path] = newCode
-                                task.complete(
-                                    "<a href='${
-                                        task.saveFile(
-                                            path,
-                                            newCode.toByteArray(Charsets.UTF_8)
-                                        )
-                                    }'>$path</a> Updated"
-                                )
-                            }
+                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                         }
                     },
                     ui = ui
@@ -912,7 +905,7 @@ class TaskRunnerAgent(
         }
         object : Retryable(ui, task, process) {
             init {
-                set(label(size), process(container!!))
+                set(label(size), process(container))
             }
         }
     }
@@ -947,7 +940,7 @@ class TaskRunnerAgent(
         }
         object : Retryable(ui, task, process) {
             init {
-                set(label(size), process(container!!))
+                set(label(size), process(container))
             }
         }
     }

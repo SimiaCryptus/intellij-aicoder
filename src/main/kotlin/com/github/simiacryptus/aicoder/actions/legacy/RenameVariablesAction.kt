@@ -1,15 +1,17 @@
-package com.github.simiacryptus.aicoder.actions.code
+package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
 
 open class RenameVariablesAction : SelectionAction<String>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     interface RenameAPI {
         fun suggestRenames(
@@ -28,15 +30,16 @@ open class RenameVariablesAction : SelectionAction<String>() {
         }
     }
 
-    val proxy: RenameAPI get() {
-        return ChatProxy(
-          clazz = RenameAPI::class.java,
-          api = api,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          temperature = AppSettingsState.instance.temperature,
-          deserializerRetries = 5
-        ).create()
-    }
+    val proxy: RenameAPI
+        get() {
+            return ChatProxy(
+                clazz = RenameAPI::class.java,
+                api = api,
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                temperature = AppSettingsState.instance.temperature,
+                deserializerRetries = 5
+            ).create()
+        }
 
     override fun getConfig(project: Project?): String {
         return ""

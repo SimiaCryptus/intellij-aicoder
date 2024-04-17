@@ -4,11 +4,13 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.IndentedText
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
 import com.simiacryptus.jopenai.util.StringUtil
 
 class DescribeAction : SelectionAction<String>() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     interface DescribeAction_VirtualAPI {
         fun describeCode(
@@ -25,11 +27,11 @@ class DescribeAction : SelectionAction<String>() {
 
     private val proxy: DescribeAction_VirtualAPI
         get() = ChatProxy(
-          clazz = DescribeAction_VirtualAPI::class.java,
-          api = api,
-          temperature = AppSettingsState.instance.temperature,
-          model = AppSettingsState.instance.smartModel.chatModel(),
-          deserializerRetries = 5
+            clazz = DescribeAction_VirtualAPI::class.java,
+            api = api,
+            temperature = AppSettingsState.instance.temperature,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            deserializerRetries = 5
         ).create()
 
     override fun getConfig(project: Project?): String {

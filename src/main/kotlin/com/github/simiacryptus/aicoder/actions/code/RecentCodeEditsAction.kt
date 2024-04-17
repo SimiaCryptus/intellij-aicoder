@@ -4,11 +4,14 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 
 class RecentCodeEditsAction : ActionGroup() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
         super.update(e)

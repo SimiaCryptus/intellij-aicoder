@@ -1,14 +1,14 @@
-﻿package com.github.simiacryptus.aicoder.actions.generic
+﻿package com.github.simiacryptus.aicoder.actions.dev
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.dev.AppServer
+import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
@@ -24,6 +24,7 @@ import java.awt.Desktop
 import java.io.File
 
 class LineFilterChatAction : BaseAction() {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/codeChat"
 
@@ -44,7 +45,7 @@ class LineFilterChatAction : BaseAction() {
         |# `$filename`
         |
         |```$language
-        |${code?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+        |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
         |```
         """.trimMargin().trim(),
             systemPrompt = """
@@ -53,7 +54,7 @@ class LineFilterChatAction : BaseAction() {
         |You will be answering questions about the following code located in `$filename`:
         |
         |```$language
-        |${codelines?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+        |${codelines.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
         |```
         |
         |Responses may use markdown formatting. Lines from the prompt can be included by using the line number in a response line (e.g. `\nLINE\n`).

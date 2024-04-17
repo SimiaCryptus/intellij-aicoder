@@ -1,7 +1,7 @@
-﻿package com.github.simiacryptus.aicoder.actions.generic
+package com.github.simiacryptus.aicoder.actions.generic
 
-import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
@@ -16,30 +16,31 @@ import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
+import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
 
-class CodeChatAction : BaseAction() {
+class GenericChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/codeChat"
+    val systemPrompt = ""
+    val userInterfacePrompt = ""
+    val model = AppSettingsState.instance.smartModel.chatModel()
 
     override fun handle(e: AnActionEvent) {
-        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-
         val session = StorageInterface.newGlobalID()
-        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
-        val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
-        agents[session] = CodeChatSocketManager(
+        agents[session] = ChatSocketManager(
             session = session,
-            language = language,
-            codeSelection = editor.caretModel.primaryCaret.selectedText ?: editor.document.text,
-            filename = filename,
+            model = model,
+            initialAssistantPrompt = "",
+            userInterfacePrompt = userInterfacePrompt,
+            systemPrompt = systemPrompt,
             api = api,
-            model = AppSettingsState.instance.smartModel.chatModel(),
-            storage = ApplicationServices.dataStorageFactory(root)
+            storage = ApplicationServices.dataStorageFactory(root),
+            applicationClass = ApplicationServer::class.java,
         )
 
         val server = AppServer.getServer(e.project)

@@ -12,8 +12,9 @@ class LineComment(private val commentPrefix: CharSequence, indent: CharSequence?
         override fun fromString(text: String?): LineComment {
             var textVar = text
             textVar = textVar!!.replace(Regex("\t"), TextBlock.TAB_REPLACEMENT.toString())
-            val indent = getWhitespacePrefix(*textVar.split(TextBlock.DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }
-                .toTypedArray())
+            val indent =
+                getWhitespacePrefix(*textVar.split(TextBlock.DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }
+                    .toTypedArray())
             return LineComment(
                 commentPrefix,
                 indent,
