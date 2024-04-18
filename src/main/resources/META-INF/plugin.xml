@@ -23,7 +23,6 @@
 
 
     <actions>
-
         <group id="com.github.simiacryptus.aicoder.ui.MainMenu"
                class="com.github.simiacryptus.aicoder.ui.MainMenu"
                popup="true"
@@ -49,7 +48,7 @@
                icon="MyIcons.icon"
                text="_AI Coder"
                description="AI coding assistant tools">
-            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+               <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>
         <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu"
                class="com.github.simiacryptus.aicoder.ui.ProjectMenu"
