@@ -23,11 +23,23 @@
 
 
     <actions>
+        <group id="com.github.simiacryptus.aicoder.ui.MainMenu"
+               class="com.github.simiacryptus.aicoder.ui.MainMenu"
+               popup="true"
+               icon="MyIcons.icon"
+               text="_AI Coder"
+               description="AI coding assistant tools">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
         <action id="GenericChat" class="com.github.simiacryptus.aicoder.actions.generic.GenericChatAction"
-                icon="MyIcons.icon"
                 text="Chat with AI"
                 description="Start a chat session with an AI to discuss code or get assistance">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
+        </action>
+        <action id="DebugChat" class="com.github.simiacryptus.aicoder.actions.generic.DebugChatAction"
+                text="Discuss Debug Session"
+                description="Start a chat session with an AI to discuss code or get assistance">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
         </action>
 
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"

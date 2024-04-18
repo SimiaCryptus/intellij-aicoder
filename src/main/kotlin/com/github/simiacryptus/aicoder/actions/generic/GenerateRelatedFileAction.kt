@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -20,6 +21,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import javax.swing.JTextArea
 
 class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Settings>() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -33,7 +35,16 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
         val code: String = ""
     )
 
-    class SettingsUI
+    class SettingsUI {
+        @Name("Directive")
+        var directive: JTextArea = JTextArea(
+            """
+            Create test cases
+            """.trimIndent(),
+            3,
+            120
+        )
+    }
 
     class UserSettings(
         var directive: String = "",
