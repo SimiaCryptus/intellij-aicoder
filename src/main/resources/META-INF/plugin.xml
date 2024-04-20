@@ -5,6 +5,8 @@
     <category>AI-Powered</category>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="plugin-java.xml">com.intellij.java</depends>
+    <depends optional="true" config-file="plugin-kotlin.xml">org.jetbrains.kotlin</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="com.github.simiacryptus.aicoder.util.PluginStartupActivity" />
@@ -33,11 +35,6 @@
         </group>
         <action id="GenericChat" class="com.github.simiacryptus.aicoder.actions.generic.GenericChatAction"
                 text="Chat with AI"
-                description="Start a chat session with an AI to discuss code or get assistance">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
-        </action>
-        <action id="DebugChat" class="com.github.simiacryptus.aicoder.actions.generic.DebugChatAction"
-                text="Discuss Debug Session"
                 description="Start a chat session with an AI to discuss code or get assistance">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
         </action>

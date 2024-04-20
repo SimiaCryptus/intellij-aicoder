@@ -11,4 +11,3 @@ open class EditorMenu : com.intellij.openapi.actionSystem.DefaultActionGroup() {
     }
 }
 
-
