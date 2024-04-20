@@ -36,11 +36,6 @@
                 description="Start a chat session with an AI to discuss code or get assistance">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
         </action>
-        <action id="DebugChat" class="com.github.simiacryptus.aicoder.actions.generic.DebugChatAction"
-                text="Discuss Debug Session"
-                description="Start a chat session with an AI to discuss code or get assistance">
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
-        </action>
 
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"
                class="com.github.simiacryptus.aicoder.ui.EditorMenu"
