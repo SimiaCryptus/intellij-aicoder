@@ -61,9 +61,9 @@ class PlanAheadAction : BaseAction() {
             getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException(""))
         }
         DataStorage.sessionPaths[session] = root
-        TaskRunnerApp.agents[session] = TaskRunnerApp(event = e, root = root)
+        PlanAheadApp.agents[session] = PlanAheadApp(event = e, root = root)
         val server = AppServer.getServer(e.project)
-        val app = TaskRunnerApp.initApp(server, path)
+        val app = PlanAheadApp.initApp(server, path)
         app.sessions[session] = app.newSession(null, session)
         Thread {
             Thread.sleep(500)
@@ -76,7 +76,7 @@ class PlanAheadAction : BaseAction() {
     }
 }
 
-class TaskRunnerApp(
+class PlanAheadApp(
     applicationName: String = "Task Planning v1.0",
     path: String = "/taskDev",
     val event: AnActionEvent,
@@ -110,7 +110,7 @@ class TaskRunnerApp(
         try {
             val settings = getSettings<Settings>(session, user)
             if (api is ClientManager.MonitoredClient) api.budget = settings?.budget ?: 2.0
-            TaskRunnerAgent(
+            PlanAheadAgent(
                 user = user,
                 session = session,
                 dataStorage = dataStorage,
@@ -146,12 +146,12 @@ class TaskRunnerApp(
             return socketServer
         }
 
-        private val log = LoggerFactory.getLogger(TaskRunnerApp::class.java)
-        val agents = mutableMapOf<Session, TaskRunnerApp>()
+        val agents = mutableMapOf<Session, PlanAheadApp>()
+        private val log = LoggerFactory.getLogger(PlanAheadApp::class.java)
     }
 }
 
-class TaskRunnerAgent(
+class PlanAheadAgent(
     user: User?,
     session: Session,
     dataStorage: StorageInterface,
@@ -168,6 +168,7 @@ class TaskRunnerAgent(
     val command: List<String> = listOf(language),
     val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
         ActorTypes.TaskBreakdown to ParsedActor(
+            name = "TaskBreakdown",
             resultClass = TaskBreakdownResult::class.java,
             prompt = """
         |Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
@@ -320,7 +321,7 @@ class TaskRunnerAgent(
 
     val event: AnActionEvent,
     val root: Path
-) : ActorSystem<TaskRunnerAgent.Companion.ActorTypes>(
+) : ActorSystem<PlanAheadAgent.Companion.ActorTypes>(
     actorMap.map { it.key.name to it.value }.toMap(),
     dataStorage,
     user,
@@ -522,7 +523,9 @@ class TaskRunnerAgent(
                         userMessage = userMessage,
                         highLevelPlan = highLevelPlan,
                         genState = genState,
-                        task = genState.uitaskMap.get(taskId) ?: ui.newTask(false),
+                        task = genState.uitaskMap.get(taskId) ?: ui.newTask(false).apply {
+                            taskTabs[taskId] = placeholder
+                        },
                         taskTabs = taskTabs
                     )
                 }
@@ -1137,7 +1140,7 @@ class TaskRunnerAgent(
         .let { '"' + it + '"' }
 
     companion object {
-        private val log = LoggerFactory.getLogger(TaskRunnerAgent::class.java)
+        private val log = LoggerFactory.getLogger(PlanAheadAgent::class.java)
 
         enum class ActorTypes {
             TaskBreakdown,
