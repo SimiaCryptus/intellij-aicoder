@@ -69,7 +69,7 @@ abstract class FileContextAction<T : Any>(
 
     open fun getConfig(project: Project?, e: AnActionEvent): T? = null
 
-    private var isDevAction = false
+    var isDevAction = false
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
         if (isDevAction && !AppSettingsState.instance.devActions) return false

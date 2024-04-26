@@ -1,6 +1,7 @@
 ﻿package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -116,6 +117,7 @@ class VoiceToTextAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
+        if(!AppSettingsState.instance.enableLegacyActions) return false
         return try {
             null != targetDataLine.get(50, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
