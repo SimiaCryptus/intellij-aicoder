@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.JsonUtil
 import java.io.File
+ import java.util.Locale
 
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
@@ -35,12 +36,13 @@ data class AppSettingsState(
         if (logPath == null) {
             logPath = System.getProperty("user.home")
         }
+
         File(logPath, "AICodingAsst")
     },
     var showWelcomeScreen: Boolean = true,
     var greetedVersion: String = "",
+     var shellCommand: String = getDefaultShell(),
 ) : PersistentStateComponent<SimpleEnvelope> {
-
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
     private val recentCommands = mutableMapOf<String, MRUItems>()
 
@@ -143,6 +145,11 @@ data class AppSettingsState(
             return ChatModels.values().entries.firstOrNull {
                 it.value.modelName == this || it.key == this
             }?.value ?: ChatModels.GPT35Turbo
+        }
+
+        private fun getDefaultShell(): String {
+            val os = System.getProperty("os.name").toLowerCase(Locale.ROOT)
+            return if (os.contains("win")) "powershell" else "bash"
         }
     }
 }

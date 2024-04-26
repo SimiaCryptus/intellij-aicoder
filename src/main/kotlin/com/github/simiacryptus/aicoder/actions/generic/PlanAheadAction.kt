@@ -10,6 +10,9 @@ import com.github.simiacryptus.diff.addSaveLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.simiacryptus.jopenai.API
@@ -39,6 +42,7 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
+import java.awt.GridLayout
 import java.io.File
 import java.nio.file.Path
 import java.util.*
@@ -46,31 +50,95 @@ import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.*
 import kotlin.reflect.KClass
 
 class PlanAheadAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
+    data class PlanAheadSettings(
+        var model: String = AppSettingsState.instance.smartModel,
+        var temperature: Double = AppSettingsState.instance.temperature,
+        var enableTaskPlanning: Boolean = false,
+        var enableShellCommands: Boolean = true
+    )
+
+    class PlanAheadConfigDialog(
+        project: Project?,
+        private val settings: PlanAheadSettings
+    ) : DialogWrapper(project) {
+        private val items = ChatModels.values().toList().toTypedArray()
+        private val modelComboBox: ComboBox<String> = ComboBox(items.map { it.first }.toTypedArray())
+        // Replace JTextField with JSlider for temperature
+        private val temperatureSlider = JSlider(0, 100, (settings.temperature * 100).toInt())
+
+        private val taskPlanningCheckbox = JCheckBox("Enable Task Planning", settings.enableTaskPlanning)
+        private val shellCommandsCheckbox = JCheckBox("Enable Shell Commands", settings.enableShellCommands)
+
+        init {
+            init()
+            title = "Configure Plan Ahead Action"
+            // Add change listener to update the settings based on slider value
+            temperatureSlider.addChangeListener {
+                settings.temperature = temperatureSlider.value / 100.0
+            }
+        }
+
+        override fun createCenterPanel(): JComponent {
+            val panel = JPanel(GridLayout(0, 2))
+            panel.add(JLabel("Model:"))
+            panel.add(modelComboBox)
+            val indexOfFirst = items.indexOfFirst {
+                it.second.name == settings.model || it.second.modelName == settings.model || it.first == settings.model
+            }
+            modelComboBox.selectedIndex = indexOfFirst
+            panel.add(JLabel("Temperature:"))
+            panel.add(temperatureSlider)
+            panel.add(taskPlanningCheckbox)
+            panel.add(shellCommandsCheckbox)
+            return panel
+        }
+
+        override fun doOKAction() {
+            if (modelComboBox.selectedItem == null) {
+                JOptionPane.showMessageDialog(null, "Model selection cannot be empty", "Error", JOptionPane.ERROR_MESSAGE)
+                return
+            }
+            settings.model = modelComboBox.selectedItem as String
+            settings.enableTaskPlanning = taskPlanningCheckbox.isSelected
+            settings.enableShellCommands = shellCommandsCheckbox.isSelected
+            super.doOKAction()
+        }
+    }
+
     val path = "/taskDev"
     override fun handle(e: AnActionEvent) {
-        val session = StorageInterface.newGlobalID()
-        val folder = UITools.getSelectedFolder(e)
-        val root = if (null != folder) {
-            folder.toFile
-        } else {
-            getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException(""))
+        val project = e.project
+        val settings = PlanAheadSettings()
+
+        val dialog = PlanAheadConfigDialog(project, settings)
+        if (dialog.showAndGet()) {
+            // Settings are applied only if the user clicks OK
+            val session = StorageInterface.newGlobalID()
+            val folder = UITools.getSelectedFolder(e)
+            val root = folder?.toFile ?: getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException(""))
+
+            DataStorage.sessionPaths[session] = root
+            PlanAheadApp.agents[session] = PlanAheadApp(event = e, root = root, settings = settings)
+            val server = AppServer.getServer(project)
+            val app = PlanAheadApp.initApp(server, path)
+            app.sessions[session] = app.newSession(null, session)
+            openBrowser(server, session.toString())
         }
-        DataStorage.sessionPaths[session] = root
-        PlanAheadApp.agents[session] = PlanAheadApp(event = e, root = root)
-        val server = AppServer.getServer(e.project)
-        val app = PlanAheadApp.initApp(server, path)
-        app.sessions[session] = app.newSession(null, session)
+    }
+
+    private fun openBrowser(server: AppServer, session: String) {
         Thread {
             Thread.sleep(500)
             try {
                 Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
             } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
+                LoggerFactory.getLogger(PlanAheadAction::class.java).warn("Error opening browser", e)
             }
         }.start()
     }
@@ -81,6 +149,7 @@ class PlanAheadApp(
     path: String = "/taskDev",
     val event: AnActionEvent,
     override val root: File,
+    val settings: PlanAheadAction.PlanAheadSettings,
 ) : ApplicationServer(
     applicationName = applicationName,
     path = path,
@@ -98,7 +167,12 @@ class PlanAheadApp(
     override val settingsClass: Class<*> get() = Settings::class.java
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> initSettings(session: Session): T = Settings() as T
+    override fun <T : Any> initSettings(session: Session): T = Settings(
+        model = ChatModels.values().filter { settings.model == it.key || settings.model == it.value.name }.map { it.value }.first(), // Use the model from settings
+        temperature = settings.temperature, // Use the temperature from settings
+        taskPlanningEnabled = settings.enableTaskPlanning, // Use the task planning flag from settings
+        shellCommandTaskEnabled = settings.enableShellCommands // Use the shell command flag from settings
+    ) as T
 
     override fun userMessage(
         session: Session,
@@ -120,9 +194,10 @@ class PlanAheadApp(
                 parsingModel = settings?.parsingModel ?: AppSettingsState.instance.fastModel.chatModel(),
                 temperature = settings?.temperature ?: 0.3,
                 event = event,
+                workingDir = root.absolutePath,
                 root = root.toPath(),
-                taskPlanningEnabled = false,
-                shellCommandTaskEnabled = false,
+                taskPlanningEnabled = settings?.taskPlanningEnabled ?: false,
+                shellCommandTaskEnabled = settings?.shellCommandTaskEnabled ?: true,
             ).startProcess(userMessage = userMessage)
         } catch (e: Throwable) {
             ui.newTask().error(ui, e)
@@ -162,163 +237,30 @@ class PlanAheadAgent(
     temperature: Double = 0.3,
     val taskPlanningEnabled: Boolean,
     val shellCommandTaskEnabled: Boolean,
-    val env: Map<String, String> = mapOf(),
+    private val env: Map<String, String> = mapOf(),
     val workingDir: String = ".",
     val language: String = if (isWindows) "powershell" else "bash",
-    val command: List<String> = listOf(language),
-    val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
-        ActorTypes.TaskBreakdown to ParsedActor(
-            name = "TaskBreakdown",
-            resultClass = TaskBreakdownResult::class.java,
-            prompt = """
-        |Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
-        |Detail files input and output as well as task execution dependencies.
-        |Keep in mind that implementation details need to be shared between the file generation tasks.
-        |Creating directories and initializing source control are out of scope.
-        |
-        |Tasks can be of the following types: 
-        |${
-                if (!taskPlanningEnabled) "" else """
-          |* TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
-          |  ** Specify the prior tasks and the goal of the task
-        """.trimMargin().trim()
-            }
-        |${
-                if (!shellCommandTaskEnabled) "" else """
-          |* RunShellCommand - Execute shell commands and provide the output
-          |  ** Specify the command to be executed, or describe the task to be performed
-          |  ** List input files/tasks to be examined when writing the command
-          """.trimMargin().trim()
-            }
-        |* Inquiry - Answer questions by reading in files and providing a summary that can be discussed with and approved by the user
-        |  ** Specify the questions and the goal of the inquiry
-        |  ** List input files to be examined when answering the questions
-        |* NewFile - Create one or more new files, carefully considering how they fit into the existing project structure
-        |  ** For each file, specify the relative file path and the purpose of the file
-        |  ** List input files/tasks to be examined when authoring the new files
-        |* EditFile - Modify existing files
-        |  ** For each file, specify the relative file path and the goal of the modification
-        |  ** List input files/tasks to be examined when designing the modifications
-        |* Documentation - Generate documentation
-        |  ** List input files/tasks to be examined
-      """.trimMargin(),
-            model = model,
-            parsingModel = parsingModel,
-            temperature = temperature,
+    private val command: List<String> = listOf(AppSettingsState.instance.shellCommand),
+    private val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+        ActorTypes.TaskBreakdown to planningActor(
+            taskPlanningEnabled,
+            shellCommandTaskEnabled,
+            model,
+            parsingModel,
+            temperature
         ),
-        ActorTypes.DocumentationGenerator to SimpleActor(
-            name = "DocumentationGenerator",
-            prompt = """
-        Create detailed and clear documentation for the provided code, covering its purpose, functionality, inputs, outputs, and any assumptions or limitations.
-        Use a structured and consistent format that facilitates easy understanding and navigation. 
-        Include code examples where applicable, and explain the rationale behind key design decisions and algorithm choices.
-        Document any known issues or areas for improvement, providing guidance for future developers on how to extend or maintain the code.
-      """.trimIndent(),
-            model = model,
-            temperature = temperature,
-        ),
-        ActorTypes.NewFileCreator to SimpleActor(
-            name = "NewFileCreator",
-            prompt = """
-        Generate the necessary code for a new file based on the given requirements and context. 
-        Ensure the code is well-structured, follows best practices, and meets the specified functionality. 
-        Carefully consider how the new file fits into the existing project structure and architecture.
-        Avoid creating files that duplicate functionality or introduce inconsistencies.
-        Provide a clear file name suggestion based on the content and purpose of the file.
-          
-        Response should use one or more ``` code blocks to output file contents.
-        Triple backticks should be bracketed by newlines and an optional the language identifier.
-        Each file should be preceded by a header that identifies the file being modified.
-        
-        Example:
-        
-        Explanation text
-        
-        ### scripts/filename.js
-        ```js
-        
-        const b = 2;
-        function exampleFunction() {
-          return b + 1;
-        }
-        
-        ```
-        
-        Continued text
-      """.trimIndent(),
-            model = model,
-            temperature = temperature,
-        ),
-        ActorTypes.FilePatcher to SimpleActor(
-            name = "FilePatcher",
-            prompt = """
-        Generate a patch for an existing file to modify its functionality or fix issues based on the given requirements and context. 
-        Ensure the modifications are efficient, maintain readability, and adhere to coding standards. 
-        Carefully review the existing code and project structure to ensure the changes are consistent and do not introduce bugs.
-        Consider the impact of the modifications on other parts of the codebase.
-
-        Provide a summary of the changes made.
-          
-        Response should use one or more code patches in diff format within ```diff code blocks.
-        Each diff should be preceded by a header that identifies the file being modified.
-        The diff format should use + for line additions, - for line deletions.
-        The diff should include 2 lines of context before and after every change.
-        
-        Example:
-        
-        Explanation text
-        
-        ### scripts/filename.js
-        ```diff
-        - const b = 2;
-        + const a = 1;
-        ```
-
-        Continued text
-      """.trimIndent(),
-            model = model,
-            temperature = temperature,
-        ),
-        ActorTypes.Inquiry to SimpleActor(
-            name = "Inquiry",
-            prompt = """
-        Create code for a new file that fulfills the specified requirements and context.
-        Given a detailed user request, break it down into smaller, actionable tasks suitable for software development.
-        Compile comprehensive information and insights on the specified topic.
-        Provide a comprehensive overview, including key concepts, relevant technologies, best practices, and any potential challenges or considerations. 
-        Ensure the information is accurate, up-to-date, and well-organized to facilitate easy understanding.
-
-        When generating insights, consider the existing project context and focus on information that is directly relevant and applicable.
-        Focus on generating insights and information that support the task types available in the system (${
-                if (!taskPlanningEnabled) "" else "TaskPlanning, "
-            }${
-                if (!shellCommandTaskEnabled) "" else "RunShellCommand, "
-            }Requirements, NewFile, EditFile, Documentation).
-        This will ensure that the inquiries are tailored to assist in the planning and execution of tasks within the system's framework.
-     """.trimIndent(),
-            model = model,
-            temperature = temperature,
+        ActorTypes.DocumentationGenerator to documentActor(model, temperature),
+        ActorTypes.NewFileCreator to createFileActor(model, temperature),
+        ActorTypes.FilePatcher to patchActor(model, temperature),
+        ActorTypes.Inquiry to inquiryActor(
+            taskPlanningEnabled,
+            shellCommandTaskEnabled,
+            model,
+            temperature
         ),
     ) + (if (!shellCommandTaskEnabled) mapOf() else mapOf(
-        ActorTypes.RunShellCommand to CodingActor(
-            name = "RunShellCommand",
-            interpreterClass = ProcessInterpreter::class,
-            details = """
-        Execute the following shell command(s) and provide the output. Ensure to handle any errors or exceptions gracefully.
-    
-        Note: This task is for running simple and safe commands. Avoid executing commands that can cause harm to the system or compromise security.
-      """.trimIndent(),
-            symbols = mapOf(
-                "env" to env,
-                "workingDir" to File(workingDir).absolutePath,
-                "language" to language,
-                "command" to command,
-            ),
-            model = model,
-            temperature = temperature,
-        ),
+        ActorTypes.RunShellCommand to shellActor(env, workingDir, language, command, model, temperature),
     )),
-
     val event: AnActionEvent,
     val root: Path
 ) : ActorSystem<PlanAheadAgent.Companion.ActorTypes>(
@@ -327,11 +269,11 @@ class PlanAheadAgent(
     user,
     session
 ) {
-    val documentationGeneratorActor by lazy { actorMap[ActorTypes.DocumentationGenerator] as SimpleActor }
-    val taskBreakdownActor by lazy { actorMap[ActorTypes.TaskBreakdown] as ParsedActor<TaskBreakdownResult> }
-    val newFileCreatorActor by lazy { actorMap[ActorTypes.NewFileCreator] as SimpleActor }
-    val filePatcherActor by lazy { actorMap[ActorTypes.FilePatcher] as SimpleActor }
-    val inquiryActor by lazy { actorMap[ActorTypes.Inquiry] as SimpleActor }
+    private val documentationGeneratorActor by lazy { actorMap[ActorTypes.DocumentationGenerator] as SimpleActor }
+    private val taskBreakdownActor by lazy { actorMap[ActorTypes.TaskBreakdown] as ParsedActor<TaskBreakdownResult> }
+    private val newFileCreatorActor by lazy { actorMap[ActorTypes.NewFileCreator] as SimpleActor }
+    private val filePatcherActor by lazy { actorMap[ActorTypes.FilePatcher] as SimpleActor }
+    private val inquiryActor by lazy { actorMap[ActorTypes.Inquiry] as SimpleActor }
     val shellCommandActor by lazy { actorMap[ActorTypes.RunShellCommand] as CodingActor }
 
     data class TaskBreakdownResult(
@@ -363,7 +305,7 @@ class PlanAheadAgent(
         RunShellCommand,
     }
 
-    val virtualFiles by lazy {
+    private val virtualFiles by lazy {
         expandFileList(
             VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf()
         )
@@ -443,12 +385,20 @@ class PlanAheadAgent(
             },
         ).call()
 
+        initPlan(highLevelPlan, userMessage, task)
+    }
+
+    private fun initPlan(
+        plan: ParsedResponse<TaskBreakdownResult>,
+        userMessage: String,
+        task: SessionTask
+    ) {
         try {
             val tasksByID =
-                highLevelPlan.obj.tasksByID?.entries?.toTypedArray()?.associate { it.key to it.value } ?: mapOf()
+                plan.obj.tasksByID?.entries?.toTypedArray()?.associate { it.key to it.value } ?: mapOf()
             val pool: ThreadPoolExecutor = clientManager.getPool(session, user, dataStorage)
             val genState = GenState(tasksByID.toMutableMap())
-            val diagramTask = ui.newTask()
+            val diagramTask = ui.newTask(false).apply { task.add(placeholder) }
             val diagramBuffer =
                 diagramTask.add(
                     renderMarkdown(
@@ -456,7 +406,7 @@ class PlanAheadAgent(
                         ui = ui
                     )
                 )
-            val taskTabs = object : TabbedDisplay(ui.newTask()) {
+            val taskTabs = object : TabbedDisplay(ui.newTask(false).apply { task.add(placeholder) }) {
                 override fun renderTabButtons(): String {
                     diagramBuffer?.set(
                         renderMarkdown(
@@ -521,7 +471,7 @@ class PlanAheadAgent(
                         taskId = taskId,
                         subTask = subTask,
                         userMessage = userMessage,
-                        highLevelPlan = highLevelPlan,
+                        plan = plan,
                         genState = genState,
                         task = genState.uitaskMap.get(taskId) ?: ui.newTask(false).apply {
                             taskTabs[taskId] = placeholder
@@ -544,7 +494,7 @@ class PlanAheadAgent(
     }
 
     data class GenState(
-        val subTasks: MutableMap<String, Task>,
+        val subTasks: Map<String, Task>,
         val tasksByDescription: MutableMap<String?, Task> = subTasks.entries.toTypedArray()
             .associate { it.value.description to it.value }.toMutableMap(),
         val taskIdProcessingQueue: MutableList<String> = executionOrder(subTasks).toMutableList(),
@@ -558,7 +508,7 @@ class PlanAheadAgent(
         taskId: String,
         subTask: Task,
         userMessage: String,
-        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
+        plan: ParsedResponse<TaskBreakdownResult>,
         genState: GenState,
         task: SessionTask,
         taskTabs: TabbedDisplay,
@@ -578,12 +528,12 @@ class PlanAheadAgent(
             fun inputFileCode() = subTask.input_files?.joinToString("\n\n\n") {
                 try {
                     """
-        |# $it
-        |
-        |```
-        |${codeFiles[File(it).toPath()] ?: root.resolve(it).toFile().readText()}
-        |```
-        """.trimMargin()
+                    |# $it
+                    |
+                    |```
+                    |${codeFiles[File(it).toPath()] ?: root.resolve(it).toFile().readText()}
+                    |```
+                    """.trimMargin()
                 } catch (e: Throwable) {
                     log.warn("Error: root=$root    ", e)
                     ""
@@ -613,7 +563,7 @@ class PlanAheadAgent(
                     createFiles(
                         task = task,
                         userMessage = userMessage,
-                        highLevelPlan = highLevelPlan,
+                        highLevelPlan = plan,
                         priorCode = priorCode,
                         inputFileCode = ::inputFileCode,
                         subTask = subTask,
@@ -634,7 +584,7 @@ class PlanAheadAgent(
                     editFiles(
                         task = task,
                         userMessage = userMessage,
-                        highLevelPlan = highLevelPlan,
+                        highLevelPlan = plan,
                         priorCode = priorCode,
                         inputFileCode = ::inputFileCode,
                         subTask = subTask,
@@ -654,7 +604,7 @@ class PlanAheadAgent(
                     document(
                         task = task,
                         userMessage = userMessage,
-                        highLevelPlan = highLevelPlan,
+                        highLevelPlan = plan,
                         priorCode = priorCode,
                         inputFileCode = ::inputFileCode,
                         genState = genState,
@@ -674,7 +624,7 @@ class PlanAheadAgent(
                     inquiry(
                         subTask = subTask,
                         userMessage = userMessage,
-                        highLevelPlan = highLevelPlan,
+                        highLevelPlan = plan,
                         priorCode = priorCode,
                         inputFileCode = ::inputFileCode,
                         genState = genState,
@@ -685,10 +635,11 @@ class PlanAheadAgent(
                 }
 
                 TaskType.TaskPlanning -> {
-                    if (taskPlanningEnabled) taskPlanning(
+                    if (!taskPlanningEnabled) throw RuntimeException("Task planning is disabled")
+                    taskPlanning(
                         subTask = subTask,
                         userMessage = userMessage,
-                        highLevelPlan = highLevelPlan,
+                        highLevelPlan = plan,
                         priorCode = priorCode,
                         inputFileCode = ::inputFileCode,
                         genState = genState,
@@ -704,7 +655,7 @@ class PlanAheadAgent(
                         runShellCommand(
                             task = task,
                             userMessage = userMessage,
-                            highLevelPlan = highLevelPlan,
+                            highLevelPlan = plan,
                             priorCode = priorCode,
                             inputFileCode = ::inputFileCode,
                             genState = genState,
@@ -757,6 +708,7 @@ class PlanAheadAgent(
             temperature = shellCommandActor.temperature,
             details = shellCommandActor.details,
             model = shellCommandActor.model,
+            mainTask = task,
         ) {
             override fun displayFeedback(
                 task: SessionTask,
@@ -1028,7 +980,7 @@ class PlanAheadAgent(
             ).filter { it.isNotBlank() }
         }
         val input1 = "Expand ${subTask.description ?: ""}\n${toJson(subTask)}"
-        val subPlan = Acceptable(
+        val subPlan: ParsedResponse<TaskBreakdownResult> = Acceptable(
             task = task,
             userMessage = input1,
             heading = "",
@@ -1051,46 +1003,20 @@ class PlanAheadAgent(
                 )
             },
         ).call()
-        genState.taskResult[taskId] = subPlan.text
-        var newTasks = subPlan.obj.tasksByID
-        newTasks?.forEach {
-            val newTask = ui.newTask(false)
-            genState.uitaskMap[it.key] = newTask
-            genState.tasksByDescription[it.value.description] = it.value
-            taskTabs[it.value.description ?: it.key] = newTask.placeholder
-        }
-        val conflictingKeys = newTasks?.keys?.intersect(genState.subTasks.keys)
-        newTasks = newTasks?.entries?.associate { (key, value) ->
-            (when {
-                conflictingKeys?.contains(key) == true -> "${taskId}_${key}"
-                else -> key
-            }) to value.copy(task_dependencies = value.task_dependencies?.map { key ->
-                when {
-                    conflictingKeys?.contains(key) == true -> "${taskId}_${key}"
-                    else -> key
-                }
-            })
-        }
-        log.debug("New Tasks: ${newTasks?.keys}")
-        genState.subTasks.putAll(newTasks ?: emptyMap())
-        executionOrder(newTasks ?: emptyMap()).reversed().forEach { genState.taskIdProcessingQueue.add(0, it) }
-        genState.subTasks.values.forEach {
-            it.task_dependencies = it.task_dependencies?.map { dep ->
-                when {
-                    dep == taskId -> subPlan.obj.finalTaskID ?: dep
-                    else -> dep
-                }
-            }
-        }
+        initPlan(
+            plan = subPlan,
+            userMessage = userMessage,
+            task = task,
+        )
     }
 
-    private fun getAllDependencies(subTask: Task, subTasks: MutableMap<String, Task>): List<String> {
+    private fun getAllDependencies(subTask: Task, subTasks: Map<String, Task>): List<String> {
         return getAllDependenciesHelper(subTask, subTasks, mutableSetOf())
     }
 
     private fun getAllDependenciesHelper(
         subTask: Task,
-        subTasks: MutableMap<String, Task>,
+        subTasks: Map<String, Task>,
         visited: MutableSet<String>
     ): List<String> {
         val dependencies = subTask.task_dependencies?.toMutableList() ?: mutableListOf()
@@ -1169,3 +1095,186 @@ class PlanAheadAgent(
         val isWindows = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("windows")
     }
 }
+
+private fun documentActor(
+    model: ChatModels,
+    temperature: Double
+) = SimpleActor(
+    name = "DocumentationGenerator",
+    prompt = """
+        Create detailed and clear documentation for the provided code, covering its purpose, functionality, inputs, outputs, and any assumptions or limitations.
+        Use a structured and consistent format that facilitates easy understanding and navigation. 
+        Include code examples where applicable, and explain the rationale behind key design decisions and algorithm choices.
+        Document any known issues or areas for improvement, providing guidance for future developers on how to extend or maintain the code.
+      """.trimIndent(),
+    model = model,
+    temperature = temperature,
+)
+
+private fun planningActor(
+    taskPlanningEnabled: Boolean,
+    shellCommandTaskEnabled: Boolean,
+    model: ChatModels,
+    parsingModel: ChatModels,
+    temperature: Double
+): ParsedActor<PlanAheadAgent.TaskBreakdownResult> =
+    ParsedActor(
+        name = "TaskBreakdown",
+        resultClass = PlanAheadAgent.TaskBreakdownResult::class.java,
+        prompt = """
+        |Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
+        |Detail files input and output as well as task execution dependencies.
+        |Creating directories and initializing source control are out of scope.
+        |
+        |Tasks can be of the following types: 
+        |
+        |* Inquiry - Answer questions by reading in files and providing a summary that can be discussed with and approved by the user
+        |  ** Specify the questions and the goal of the inquiry
+        |  ** List input files to be examined when answering the questions
+        |* NewFile - Create one or more new files, carefully considering how they fit into the existing project structure
+        |  ** For each file, specify the relative file path and the purpose of the file
+        |  ** List input files/tasks to be examined when authoring the new files
+        |* EditFile - Modify existing files
+        |  ** For each file, specify the relative file path and the goal of the modification
+        |  ** List input files/tasks to be examined when designing the modifications
+        |* Documentation - Generate documentation
+        |  ** List input files/tasks to be examined
+        |${
+            if (!shellCommandTaskEnabled) "" else """
+        |* RunShellCommand - Execute shell commands and provide the output
+        |  ** Specify the command to be executed, or describe the task to be performed
+        |  ** List input files/tasks to be examined when writing the command
+        """.trimMargin().trim()
+        }
+        |${
+            if (!taskPlanningEnabled) "" else """
+        |* TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
+        |  ** Specify the prior tasks and the goal of the task
+        """.trimMargin().trim()
+        }
+      """.trimMargin(),
+        model = model,
+        parsingModel = parsingModel,
+        temperature = temperature,
+    )
+
+private fun createFileActor(
+    model: ChatModels,
+    temperature: Double
+) = SimpleActor(
+    name = "NewFileCreator",
+    prompt = """
+        Generate the necessary code for a new file based on the given requirements and context. 
+        Ensure the code is well-structured, follows best practices, and meets the specified functionality. 
+        Carefully consider how the new file fits into the existing project structure and architecture.
+        Avoid creating files that duplicate functionality or introduce inconsistencies.
+        Provide a clear file name suggestion based on the content and purpose of the file.
+          
+        Response should use one or more ``` code blocks to output file contents.
+        Triple backticks should be bracketed by newlines and an optional the language identifier.
+        Each file should be preceded by a header that identifies the file being modified.
+        
+        Example:
+        
+        Explanation text
+        
+        ### scripts/filename.js
+        ```js
+        
+        const b = 2;
+        function exampleFunction() {
+          return b + 1;
+        }
+        
+        ```
+        
+        Continued text
+      """.trimIndent(),
+    model = model,
+    temperature = temperature,
+)
+
+private fun patchActor(
+    model: ChatModels,
+    temperature: Double
+) = SimpleActor(
+    name = "FilePatcher",
+    prompt = """
+        Generate a patch for an existing file to modify its functionality or fix issues based on the given requirements and context. 
+        Ensure the modifications are efficient, maintain readability, and adhere to coding standards.
+        Carefully review the existing code and project structure to ensure the changes are consistent and do not introduce bugs.
+        Consider the impact of the modifications on other parts of the codebase.
+
+        Provide a summary of the changes made.
+          
+        Response should use one or more code patches in diff format within ```diff code blocks.
+        Each diff should be preceded by a header that identifies the file being modified.
+        The diff format should use + for line additions, - for line deletions.
+        The diff should include 2 lines of context before and after every change.
+        
+        Example:
+        
+        Explanation text
+        
+        ### scripts/filename.js
+        ```diff
+        - const b = 2;
+        + const a = 1;
+        ```
+
+        Continued text
+      """.trimIndent(),
+    model = model,
+    temperature = temperature,
+)
+
+private fun inquiryActor(
+    taskPlanningEnabled: Boolean,
+    shellCommandTaskEnabled: Boolean,
+    model: ChatModels,
+    temperature: Double
+) = SimpleActor(
+    name = "Inquiry",
+    prompt = """
+        Create code for a new file that fulfills the specified requirements and context.
+        Given a detailed user request, break it down into smaller, actionable tasks suitable for software development.
+        Compile comprehensive information and insights on the specified topic.
+        Provide a comprehensive overview, including key concepts, relevant technologies, best practices, and any potential challenges or considerations. 
+        Ensure the information is accurate, up-to-date, and well-organized to facilitate easy understanding.
+
+        When generating insights, consider the existing project context and focus on information that is directly relevant and applicable.
+        Focus on generating insights and information that support the task types available in the system (${
+        if (!taskPlanningEnabled) "" else "TaskPlanning, "
+    }${
+        if (!shellCommandTaskEnabled) "" else "RunShellCommand, "
+    }Requirements, NewFile, EditFile, Documentation).
+        This will ensure that the inquiries are tailored to assist in the planning and execution of tasks within the system's framework.
+     """.trimIndent(),
+    model = model,
+    temperature = temperature,
+)
+
+private fun shellActor(
+    env: Map<String, String>,
+    workingDir: String,
+    language: String,
+    command: List<String>,
+    model: ChatModels,
+    temperature: Double
+) = CodingActor(
+    name = "RunShellCommand",
+    interpreterClass = ProcessInterpreter::class,
+    details = """
+        Execute the following shell command(s) and provide the output. Ensure to handle any errors or exceptions gracefully.
+    
+        Note: This task is for running simple and safe commands. Avoid executing commands that can cause harm to the system or compromise security.
+      """.trimIndent(),
+    symbols = mapOf(
+        "env" to env,
+        "workingDir" to File(workingDir).absolutePath,
+        "language" to language,
+        "command" to command,
+    ),
+    model = model,
+    temperature = temperature,
+)
