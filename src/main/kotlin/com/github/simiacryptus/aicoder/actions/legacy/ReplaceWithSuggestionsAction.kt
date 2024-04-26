@@ -16,6 +16,8 @@ import kotlin.math.pow
 open class ReplaceWithSuggestionsAction : SelectionAction<String>() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
+    override fun isEnabled(event: AnActionEvent) = AppSettingsState.instance.enableLegacyActions
+
     interface VirtualAPI {
         fun suggestText(template: String, examples: List<String>): Suggestions
 

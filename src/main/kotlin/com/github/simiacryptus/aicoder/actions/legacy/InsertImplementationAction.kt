@@ -9,12 +9,15 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiClassContext
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
 
 class InsertImplementationAction : SelectionAction<String>() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+    override fun isEnabled(event: AnActionEvent) = AppSettingsState.instance.enableLegacyActions
 
     interface VirtualAPI {
         fun implementCode(

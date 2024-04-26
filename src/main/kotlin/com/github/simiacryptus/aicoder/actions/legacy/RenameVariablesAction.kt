@@ -13,6 +13,8 @@ import com.simiacryptus.jopenai.proxy.ChatProxy
 open class RenameVariablesAction : SelectionAction<String>() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
+    override fun isEnabled(event: AnActionEvent) = AppSettingsState.instance.enableLegacyActions
+
     interface RenameAPI {
         fun suggestRenames(
             code: String,

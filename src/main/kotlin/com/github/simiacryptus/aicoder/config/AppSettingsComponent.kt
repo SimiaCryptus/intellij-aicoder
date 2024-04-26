@@ -129,6 +129,10 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     val showWelcomeScreen = JBCheckBox("Show Welcome Screen", true)
 
     @Suppress("unused")
+    @Name("Enable Legacy Actions")
+    val enableLegacyActions = JBCheckBox()
+
+    @Suppress("unused")
     @Name("Temperature")
     val temperature = JBTextField()
 

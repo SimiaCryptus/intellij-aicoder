@@ -104,7 +104,7 @@ class LineFilterChatAction : BaseAction() {
         }.start()
     }
 
-    override fun isEnabled(event: AnActionEvent) = true
+    override fun isEnabled(event: AnActionEvent) = AppSettingsState.instance.devActions
 
     companion object {
         private val log = LoggerFactory.getLogger(LineFilterChatAction::class.java)

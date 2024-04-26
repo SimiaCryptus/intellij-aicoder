@@ -67,6 +67,10 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                     add(component.devActions)
                 })
                 add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                    add(JLabel("Enable Legacy Actions:"))
+                    add(component.enableLegacyActions)
+                })
+                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                     // Removed sections that reference non-existing components
                     add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                         add(JLabel("Ignore Errors:"))
@@ -136,6 +140,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                 model.addRow(arrayOf(key, settings.apiKey?.get(key) ?: "", settings.apiBase?.get(key) ?: value.base))
             }
             component.showWelcomeScreen.isSelected = settings.showWelcomeScreen
+            component.enableLegacyActions.isSelected = settings.enableLegacyActions
         } catch (e: Exception) {
             log.warn("Error setting UI", e)
         }
@@ -156,6 +161,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             settings.temperature = component.temperature.text.safeDouble()
             settings.pluginHome = File(component.pluginHome.text)
             settings.shellCommand = component.shellCommand.text
+            settings.enableLegacyActions = component.enableLegacyActions.isSelected
             val model = component.apis.model as DefaultTableModel
             for (row in 0 until model.rowCount) {
                 val provider = model.getValueAt(row, 0) as String
