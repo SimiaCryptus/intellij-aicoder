@@ -326,12 +326,18 @@ class PlanAheadAgent(
     }
 
     private val codeFiles
-        get() = virtualFiles.filter { it.isFile }.associate { file ->
-            getKey(file) to getValue(file)
-        }
+        get() = virtualFiles
+            .filter { it.exists() && it.isFile }
+            .filter { !it.name.startsWith(".") }
+            .associate { file -> getKey(file) to getValue(file) }
 
 
-    private fun getValue(file: VirtualFile) = file.inputStream.bufferedReader().use { it.readText() }
+    private fun getValue(file: VirtualFile) = try {
+        file.inputStream.bufferedReader().use { it.readText() }
+    } catch (e: Exception) {
+        log.warn("Error reading file", e)
+        ""
+    }
 
     private fun getKey(file: VirtualFile) = root.relativize(file.toNioPath())
 
