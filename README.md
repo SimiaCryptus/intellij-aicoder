@@ -41,20 +41,13 @@ Getting started with AI Coding Assistant is a breeze:
 AI Coding Assistant offers a suite of powerful actions designed to streamline your coding process. Access these
 game-changing features via the context menu within your editor or project view:
 
-* 💬 **DiffChatAction & MultiDiffChatAction**: Collaborate effortlessly with AI-powered chat sessions that generate and
-  apply code diffs across single or multiple files.
+* 💬 **Code & Patch Chat**: Discuss code, generate, and apply code patches.
 
-* 🚀 **MultiStepPatchAction**: Transform user directives into actionable development tasks and code modifications, automating
-  key aspects of your workflow.
+* 🚀 **Planning with AI Agents**: Transform user directives into complex sequences of actionable development tasks, executed by an AI agent system
 
-* 📊 **mermaid.js Integration**: Visualize your code and ideas with stunning diagrams generated using the mermaid.js
-  library.
+* 📊 **Markdown and Mermaid.js**: Visualize your code and ideas with stunning diagrams generated using markdown with the mermaid.js library.
 
-* 📝 **Plaintext, Code, and Markdown Actions**: From text processing and code editing to Markdown enhancements, AI Coding
-  Assistant has you covered.
-
-* 🛠️ **Developer-Mode Actions**: Access debugging tools, experimental features, and more with our developer-mode
-  actions.
+* 📝 **Plaintext, Coding, and Markdown Actions**: From text processing to code editing, AI Coding Assistant has you covered.
 
 ## **Join the AI Coding Revolution**
 

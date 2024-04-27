@@ -1,4 +1,4 @@
-# **AI Coding Assistant: The Ultimate LLM Plugin for IntelliJ**
+# **AI Coding Assistant 1.5: The Ultimate LLM Plugin for IntelliJ**
 
 ![Build](https://github.com/SimiaCryptus/intellij-aicoder/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
@@ -30,29 +30,18 @@ keys in the configuration panel under the appropriate API provider fields.
 
 Enhance your development workflow with AI Coding Assistant's diverse range of actions. Each action is designed to seamlessly integrate into your IntelliJ IDEA environment, boosting your productivity and coding efficiency.
 
-#### Code Editing and Review
+### Explore Key Actions
 
-- **DiffChatAction & MultiDiffChatAction**: Initiate AI-driven chat sessions to generate and apply code diffs. Perfect for collaborative code reviews and multi-file adjustments.
-- **MultiStepPatchAction**: Translate user directives into actionable development tasks and code modifications automatically, streamlining your project progress.
+Here are some of the powerful actions you can start using immediately:
 
-#### Documentation and Comments
+- **Patch Chat**: Open a chat session with file-patching features to discuss and apply changes directly.
+- **Code Chat**: Engage in a basic chat session about the selected code to gain insights and suggestions.
+- **Chat with AI**: Start a general chat session with AI to discuss code or get assistance on various topics.
+- **Task Runner**: Execute complex sequences of development tasks based on your directives.
+- **Multi-Step Patch**: Apply a series of patches across multiple files, enhancing your project incrementally.
+- **Generate Documentation**: Automatically create comprehensive documentation for your project files.
+- **Generate Related File**: Create new files related to your current work, suggested by AI based on context.
+- **Create File from Description**: Generate a new file entirely from a natural language description you provide.
+- **Web Dev**: Quickly scaffold files necessary for a new web application, all suggested by AI.
 
-- **Documentation Actions**: Automatically generate comprehensive documentation for your code blocks, saving time and improving code maintainability.
-- **CommentsAction**: Automatically insert insightful comments into your code, enhancing readability and understanding for future reference.
-
-#### Code Generation
-
-- **CodeChatAction**: Engage in real-time discussions about code snippets and receive AI-powered coding assistance directly within your IDE.
-- **WebDevelopmentAssistantAction**: Get AI-powered assistance with web development, including automatic code generation and architectural suggestions.
-
-#### Development Workflow Enhancement
-
-- **RecentCodeEditsAction**: Quickly access and reapply your most recent code edits, enhancing your workflow efficiency.
-- **RedoLast**: Instantly redo the last AI Coder action you executed, perfect for exploring alternative AI-generated solutions.
-
-#### Text Transformation
-
-- **AppendTextWithChatAction**: Expand on your initial text selection with AI-generated content, seamlessly integrating new ideas into your work.
-- **ReplaceWithSuggestionsAction**: Explore and select from AI-generated text options to replace your current selection, enhancing content quality and variety.
-
-Start exploring these actions from the context menu within your editor or project view to significantly enhance your development experience.
+These actions are accessible via the context menu within your editor or project view, making them easy to use as you develop.
