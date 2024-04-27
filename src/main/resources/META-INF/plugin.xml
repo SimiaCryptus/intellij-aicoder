@@ -13,8 +13,8 @@
                                  instance="com.github.simiacryptus.aicoder.config.StaticAppSettingsConfigurable"
                                  id="org.intellij.sdk.settings.AppSettingsConfigurable"
                                  displayName="AI Coder"/>
-        <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.ConsolidatedWidgetFactory"
-                                id="com.github.simiacryptus.aicoder.ui.ConsolidatedWidgetFactory"
+        <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.SettingsWidgetFactory"
+                                id="com.github.simiacryptus.aicoder.ui.SettingsWidgetFactory"
                                 order="first"/>
         <statusBarWidgetFactory implementation="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                                 id="com.github.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
@@ -48,7 +48,7 @@
         </group>
 
         <action class="com.github.simiacryptus.aicoder.actions.generic.DiffChatAction"
-                text="Diff Chat"
+                text="Patch Chat"
                 description="Open a chat session with file-patching features">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>

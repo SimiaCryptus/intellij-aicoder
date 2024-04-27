@@ -139,7 +139,7 @@ class MultiDiffChatAction : BaseAction() {
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(
-                applicationName = "Multi-file Diff Chat",
+                applicationName = "Multi-file Patch Chat",
                 path = path,
                 showMenubar = false,
             ) {

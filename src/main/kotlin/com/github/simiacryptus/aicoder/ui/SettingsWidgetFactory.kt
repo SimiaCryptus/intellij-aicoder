@@ -1,7 +1,6 @@
-﻿package com.github.simiacryptus.aicoder.ui
+package com.github.simiacryptus.aicoder.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -12,21 +11,35 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.simiacryptus.jopenai.models.ChatModels
+import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
+import java.awt.Cursor
+import java.awt.Desktop
+import java.awt.FlowLayout
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.net.URI
 import javax.swing.*
 
-class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
+class SettingsWidgetFactory : StatusBarWidgetFactory {
 
-    class ModelSelectionWidget : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
+    class SettingsWidget : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
 
         private var statusBar: StatusBar? = null
-        private var activeModel: String = AppSettingsState.instance.smartModel.chatModel().modelName
-        var models: List<ChatModels> = models()
+        private val temperatureSlider by lazy {
+            val slider = JSlider(0, 100, (AppSettingsState.instance.temperature * 100).toInt())
+            slider.addChangeListener { AppSettingsState.instance.temperature = slider.value / 100.0 }
+            val panel = JPanel(BorderLayout(5, 5)) // Add padding
+            panel.add(slider, BorderLayout.CENTER)
+            val label = JLabel(String.format("%.2f", AppSettingsState.instance.temperature))
+            slider.addChangeListener { label.text = String.format("%.2f", slider.value / 100.0) }
+            panel.add(label, BorderLayout.EAST)
+            panel
+        }
 
         init {
             AppSettingsState.instance.addOnSettingsLoadedListener {
-                models = models()
                 statusBar?.updateWidget(ID())
             }
         }
@@ -34,10 +47,10 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         fun models() = ChatModels.values().filter {
             AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name)
                 ?: false
-        }.map { it.value }.toList()
+        }.entries.sortedBy { "${it.value.provider.name} - ${it.value.modelName}" }.map { it.value }.toList()
 
         override fun ID(): String {
-            return "ModelSelectionComponent"
+            return "AICodingAssistant.SettingsWidget"
         }
 
         override fun getPresentation(): StatusBarWidget.WidgetPresentation {
@@ -53,11 +66,28 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
         }
 
         override fun getTooltipText(): String {
-            return "Current active model"
+            return "Current active model and temperature control"
+        }
+
+        private fun createHeader(): JPanel {
+            val appname = JPanel(FlowLayout(FlowLayout.LEFT, 10, 10))
+            appname.add(JLabel("AI Coding Assistant"), FlowLayout.LEFT)
+            appname.add(JLabel(MyIcons.icon), FlowLayout.LEFT)
+
+            val header = JPanel(BorderLayout())
+            header.add(appname, BorderLayout.WEST)
+            header.add(JLabel("<html><a href=\"\">Rate Us!</a></html>").apply {
+                cursor = Cursor(Cursor.HAND_CURSOR)
+                addMouseListener(object : MouseAdapter() {
+                    override fun mouseClicked(e: MouseEvent) = Desktop.getDesktop()
+                        .browse(URI("https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant/edit/reviews"))
+                })
+            }, BorderLayout.EAST)
+            return header
         }
 
         override fun getSelectedValue(): String {
-            return activeModel
+            return AppSettingsState.instance.smartModel
         }
 
         private fun getRenderer(): ListCellRenderer<in String> = object : SimpleListCellRenderer<String>() {
@@ -70,43 +100,33 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
             ) {
                 text = value // Here you can add more customization if needed
                 if (value != null) {
-                    val model = models.find { it.modelName == value }
-                    text = "${model?.provider?.name} - $value"
+                    val model = models().find { it.modelName == value }
+                    text = "<html><b>${model?.provider?.name}</b> - <i>$value</i></html>" // Enhance label formatting
                 }
             }
         }
 
         override fun getPopup(): JBPopup {
-            val inputField = JTextField()
-            val listModel = CollectionListModel(models.map { it.modelName })
+            val listModel = CollectionListModel(models().map { it.modelName })
             val list = JBList(listModel)
             list.cellRenderer = getRenderer()
+            list.visibleRowCount = 20
 
             val panel = JPanel(BorderLayout())
-            panel.add(inputField, BorderLayout.NORTH)
+            panel.add(createHeader(), BorderLayout.NORTH)
             panel.add(JScrollPane(list), BorderLayout.CENTER)
+            panel.add(temperatureSlider, BorderLayout.SOUTH)
 
-            val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, inputField)
+            val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
                 .setRequestFocus(true)
                 .setCancelOnClickOutside(true)
                 .createPopup()
 
             list.addListSelectionListener {
                 val selectedValue = list.selectedValue
-                activeModel = selectedValue
                 AppSettingsState.instance.smartModel = selectedValue
                 statusBar?.updateWidget(ID())
                 popup.closeOk(null)
-            }
-
-            inputField.addActionListener {
-                val inputValue = inputField.text
-                if (inputValue.isNotEmpty()) {
-                    activeModel = inputValue
-                    AppSettingsState.instance.smartModel = inputValue
-                    statusBar?.updateWidget(ID())
-                    popup.closeOk(null)
-                }
             }
 
             return popup
@@ -114,19 +134,19 @@ class ModelSelectionWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun getId(): String {
-        return "ModelSelectionComponent"
+        return "AICodingAssistant.SettingsWidgetFactory"
     }
 
     override fun getDisplayName(): String {
-        return "Model Selector"
+        return "AI Coding Assistant Settings"
     }
 
     override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
-        return ModelSelectionWidget()
+        return SettingsWidget()
     }
 
     override fun createWidget(project: Project): StatusBarWidget {
-        return ModelSelectionWidget()
+        return SettingsWidget()
     }
 
     override fun isAvailable(project: Project): Boolean {
