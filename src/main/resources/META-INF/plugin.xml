@@ -122,8 +122,7 @@
                 description="Add list items">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="L"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="L"/>
+            <!-- Keyboard shortcuts removed -->
         </action>
 
         <group id="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
@@ -139,16 +138,14 @@
                 description="Redo last">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="D"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="D"/>
+            <!-- Keyboard shortcuts removed -->
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.CustomEditAction"
                 text="_Edit Code..."
                 description="Edit code...">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="E"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="E"/>
+            <!-- Keyboard shortcuts removed -->
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
                 text="_Paste"
@@ -185,8 +182,7 @@
                 description="Rename variables">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="V"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="V"/>
+            <!-- Keyboard shortcuts removed -->
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.legacy.VoiceToTextAction"
                 text="Voice to Text"
@@ -199,16 +195,14 @@
                 description="Suggest replacements for selected text based on context.">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="N"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="N"/>
+            <!-- Keyboard shortcuts removed -->
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.legacy.AppendTextWithChatAction"
                 text="Append Text via Chat"
                 description="Append text to your current selection using AI-driven chat suggestions.">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="A"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="A"/>
+            <!-- Keyboard shortcuts removed -->
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.legacy.InsertImplementationAction"
                 text="Insert _Implementation"
@@ -223,8 +217,7 @@
                 description="Add code comments">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="C"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="C"/>
+            <!-- Keyboard shortcuts removed -->
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.legacy.DocAction"
                 text="Add D_oc Comments"
