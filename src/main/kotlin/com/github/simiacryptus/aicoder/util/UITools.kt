@@ -616,6 +616,20 @@ object UITools {
         return null
     }
 
+    fun getSelectedFiles(e: AnActionEvent): List<VirtualFile> {
+        val dataContext = e.dataContext
+        val data = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+        if(null != data) return data.toList()
+        val editor = PlatformDataKeys.EDITOR.getData(dataContext)
+        if (editor != null) {
+            val file = FileDocumentManager.getInstance().getFile(editor.document)
+            if (file != null) {
+                return listOf(file)
+            }
+        }
+        return emptyList()
+    }
+
     fun writeableFn(
         event: AnActionEvent,
         fn: () -> Runnable,

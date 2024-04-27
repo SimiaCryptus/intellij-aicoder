@@ -26,7 +26,7 @@ import javax.swing.JTextArea
 class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Settings>() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.getSelectedFile(event)?.isDirectory == true) return false
+        if (UITools.getSelectedFiles(event).size != 1) return false
         return super.isEnabled(event)
     }
 
