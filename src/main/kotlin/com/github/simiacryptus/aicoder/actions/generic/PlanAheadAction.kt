@@ -145,7 +145,7 @@ class PlanAheadAction : BaseAction() {
 }
 
 class PlanAheadApp(
-    applicationName: String = "Task Planning v1.0",
+    applicationName: String = "Task Planning v1.1",
     path: String = "/taskDev",
     val event: AnActionEvent,
     override val root: File,
@@ -209,7 +209,7 @@ class PlanAheadApp(
         fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(
-                applicationName = "Task Agent",
+                applicationName = "Task Planning Agent",
                 path = path,
                 showMenubar = false,
             ) {

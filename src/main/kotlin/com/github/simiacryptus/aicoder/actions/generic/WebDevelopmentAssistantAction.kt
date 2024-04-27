@@ -71,7 +71,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
     }
 
     open class WebDevApp(
-        applicationName: String = "Web Dev Assistant v1.1",
+        applicationName: String = "Web Development Agent",
         val temperature: Double = 0.1,
     ) : ApplicationServer(
         applicationName = applicationName,
@@ -453,7 +453,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(
-                applicationName = "Code Chat",
+                applicationName = "Web Development Agent",
                 path = path,
                 showMenubar = false,
             ) {

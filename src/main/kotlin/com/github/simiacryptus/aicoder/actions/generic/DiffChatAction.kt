@@ -126,7 +126,7 @@ class DiffChatAction : BaseAction() {
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(
-                applicationName = "Code Chat",
+                applicationName = "Patch Chat",
                 path = path,
                 showMenubar = false,
             ) {

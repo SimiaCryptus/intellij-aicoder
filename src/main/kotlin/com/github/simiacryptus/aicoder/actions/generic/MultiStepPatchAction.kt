@@ -59,7 +59,7 @@ class MultiStepPatchAction : BaseAction() {
     }
 
     open class AutoDevApp(
-        applicationName: String = "Auto Dev Assistant v1.1",
+        applicationName: String = "Auto Dev Assistant v1.2",
         val temperature: Double = 0.1,
         val event: AnActionEvent,
     ) : ApplicationServer(
@@ -263,7 +263,7 @@ import com.simiacryptus.skyenet.webui.components.CheckboxTab
         val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(applicationName = "Code Chat", path = path) {
+            val socketServer = object : ApplicationServer(applicationName = "Multi-Patch Chat", path = path) {
                 override val singleInput = true
                 override val stickyInput = false
                 override fun newSession(user: User?, session: Session) = agents[session]!!.newSession(user, session)
