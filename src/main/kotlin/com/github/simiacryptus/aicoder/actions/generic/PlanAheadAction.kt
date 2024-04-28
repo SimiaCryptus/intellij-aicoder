@@ -802,7 +802,6 @@ class PlanAheadAgent(
             renderMarkdown(ui.socketManager.addSaveLinks(codeResult, task, ui = ui) { path, newCode ->
                 val prev = codeFiles[path]
                 if (prev != newCode) {
-//          codeFiles[path] = newCode
                     val bytes = newCode.toByteArray(Charsets.UTF_8)
                     val saveFile = task.saveFile(path.toString(), bytes)
                     task.complete("<a href='$saveFile'>$path</a> Created")
@@ -1170,23 +1169,27 @@ private fun createFileActor(
 ) = SimpleActor(
     name = "NewFileCreator",
     prompt = """
-        Generate the necessary code for a new file based on the given requirements and context. 
-        Ensure the code is well-structured, follows best practices, and meets the specified functionality. 
-        Carefully consider how the new file fits into the existing project structure and architecture.
-        Avoid creating files that duplicate functionality or introduce inconsistencies.
-        Provide a clear file name suggestion based on the content and purpose of the file.
+        Generate the necessary code for new files based on the given requirements and context.
+        For each file:
+        - Provide a clear relative file path based on the content and purpose of the file.
+        - Ensure the code is well-structured, follows best practices, and meets the specified functionality.
+        - Carefully consider how the new file fits into the existing project structure and architecture.
+        - Avoid creating files that duplicate functionality or introduce inconsistencies.
           
-        Response should use one or more ``` code blocks to output file contents.
-        Triple backticks should be bracketed by newlines and an optional the language identifier.
-        Each file should be preceded by a header that identifies the file being modified.
+        The response format should be as follows:
+        - Use triple backticks to create code blocks for each file.
+        - Each code block should be preceded by a header specifying the file path.
+        - The file path should be a relative path from the project root.
+        - Separate code blocks with a single blank line.
+        - Specify the language for syntax highlighting after the opening triple backticks.
         
         Example:
         
-        Explanation text
+        Here are the new files:
         
-        ### scripts/filename.js
+        ### src/utils/exampleUtils.js
         ```js
-        
+        // Utility functions for example feature
         const b = 2;
         function exampleFunction() {
           return b + 1;
@@ -1194,7 +1197,18 @@ private fun createFileActor(
         
         ```
         
-        Continued text
+        ### tests/exampleUtils.test.js 
+        ```js
+        // Unit tests for exampleUtils
+        const assert = require('assert');
+        const { exampleFunction } = require('../src/utils/exampleUtils');
+        
+        describe('exampleFunction', () => {
+          it('should return 3', () => {
+            assert.equal(exampleFunction(), 3);
+          });
+        });
+        ```
       """.trimIndent(),
     model = model,
     temperature = temperature,

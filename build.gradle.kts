@@ -1,5 +1,4 @@
-﻿
-import org.jetbrains.changelog.Changelog
+﻿import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
 fun properties(key: String) = providers.gradleProperty(key).get()
@@ -76,11 +75,16 @@ dependencies {
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
-    testImplementation(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
+    runtimeOnly(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = remoterobot_version)
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = remoterobot_version)
-    testImplementation(group = "com.intellij.remoterobot", name = "robot-server-plugin", version = remoterobot_version, ext = "zip")
+    testImplementation(
+        group = "com.intellij.remoterobot",
+        name = "robot-server-plugin",
+        version = remoterobot_version,
+        ext = "zip"
+    )
 
     testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
 
@@ -179,10 +183,12 @@ intellij {
     pluginName.set(properties("pluginName"))
     version.set(properties("platformVersion"))
     type.set(properties("platformType"))
-    plugins.set(listOf(
-        "com.intellij.java",
-        "org.jetbrains.kotlin",
-    ))
+    plugins.set(
+        listOf(
+            "com.intellij.java",
+            "org.jetbrains.kotlin",
+        )
+    )
 }
 
 changelog {
@@ -200,4 +206,3 @@ qodana {
 //kover.xmlReport {
 //    onCheck.set(true)
 //}
-
