@@ -370,7 +370,7 @@ class PlanAheadAgent(
         val highLevelPlan = Discussable(
             task = task,
             heading = renderMarkdown(userMessage, ui = ui),
-            userMessage = userMessage,
+            userMessage = { userMessage },
             initialResponse = { it: String -> taskBreakdownActor.answer(toInput(it), api = api) },
             outputFn = { design: ParsedResponse<TaskBreakdownResult> ->
                 displayMapInTabs(
@@ -943,7 +943,7 @@ class PlanAheadAgent(
         }
         val inquiryResult = Discussable(
             task = task,
-            userMessage = "Expand ${subTask.description ?: ""}\n${toJson(subTask)}",
+            userMessage = { "Expand ${subTask.description ?: ""}\n${toJson(subTask)}" },
             heading = "",
             initialResponse = { it: String -> inquiryActor.answer(toInput(it), api = api) },
             outputFn = { design: String ->
@@ -987,7 +987,7 @@ class PlanAheadAgent(
         val input1 = "Expand ${subTask.description ?: ""}\n${toJson(subTask)}"
         val subPlan: ParsedResponse<TaskBreakdownResult> = Discussable(
             task = task,
-            userMessage = input1,
+            userMessage = { input1 },
             heading = "",
             initialResponse = { it: String -> taskBreakdownActor.answer(toInput(it), api = api) },
             outputFn = { design: ParsedResponse<TaskBreakdownResult> ->

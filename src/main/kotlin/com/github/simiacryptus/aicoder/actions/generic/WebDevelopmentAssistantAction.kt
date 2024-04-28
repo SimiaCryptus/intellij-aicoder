@@ -126,14 +126,17 @@ class WebDevelopmentAssistantAction : BaseAction() {
         val tools: List<String> = emptyList(),
         actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
             ActorTypes.ArchitectureDiscussionActor to ParsedActor(
-                resultClass = PageResourceList::class.java,
+                resultClass = ProjectSpec::class.java,
                 prompt = """
                   Translate the user's idea into a detailed architecture for a simple web application. 
-                  List all files to be created, and for each file, describe the public interface / purpose / content summary.
-                  Suggest specific frameworks/libraries to import and provide CDN links for them.
+                  
+                  List all files to be created, and for each file:
+                  1. Mark with <file>filename</file> tags.
+                  2. Describe the public interface / interaction with other components.
+                  3. Core functional requirements.
+                  
                   Specify user interactions and how the application will respond to them.
                   Identify key HTML classes and element IDs that will be used to bind the application to the HTML.
-                  Identify coding styles and patterns to be used.
                   """.trimIndent(),
                 model = model,
                 parsingModel = parsingModel,
@@ -220,7 +223,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             EtcCodingActor,
         }
 
-        private val architectureDiscussionActor by lazy { getActor(ActorTypes.ArchitectureDiscussionActor) as ParsedActor<PageResourceList> }
+        private val architectureDiscussionActor by lazy { getActor(ActorTypes.ArchitectureDiscussionActor) as ParsedActor<ProjectSpec> }
         private val htmlActor by lazy { getActor(ActorTypes.HtmlCodingActor) as SimpleActor }
         private val javascriptActor by lazy { getActor(ActorTypes.JavascriptCodingActor) as SimpleActor }
         private val cssActor by lazy { getActor(ActorTypes.CssCodingActor) as SimpleActor }
@@ -236,9 +239,9 @@ class WebDevelopmentAssistantAction : BaseAction() {
             val toInput = { it: String -> listOf(it) }
             val architectureResponse = Discussable(
                 task = task,
-                userMessage = userMessage,
+                userMessage = { userMessage },
                 initialResponse = { it: String -> architectureDiscussionActor.answer(toInput(it), api = api) },
-                outputFn = { design: ParsedResponse<PageResourceList> ->
+                outputFn = { design: ParsedResponse<ProjectSpec> ->
                     //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```")
                     AgentPatterns.displayMapInTabs(
                         mapOf(
@@ -277,8 +280,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
                     )
                 )
                 val fileTabs = TabbedDisplay(task)
-                architectureResponse.obj.resources.filter {
-                    !it.path!!.startsWith("http")
+                architectureResponse.obj.files.filter {
+                    !it.name!!.startsWith("http")
                 }.map { (path, description) ->
                     val task = ui.newTask(false).apply { fileTabs[path.toString()] = placeholder }
                     task.header("Drafting $path")
@@ -361,7 +364,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             Discussable(
                 task = task,
                 heading = "Code Refinement",
-                userMessage = codeSummary(),
+                userMessage = { codeSummary() },
                 initialResponse = {
                     codeReviewer.answer(listOf(it), api = api)
                 },
@@ -382,6 +385,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 },
                 ui = ui,
                 reviseResponse = { userMessages ->
+                    val userMessages = userMessages.toMutableList()
+                    userMessages.set(0, userMessages.get(0).copy(first = codeSummary()))
                     val combinedMessages =
                         userMessages.map { ApiModel.ChatMessage(Role.user, it.first.toContentList()) }
                     codeReviewer.respond(
@@ -403,7 +408,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             try {
                 var code = Discussable(
                     task = task,
-                    userMessage = "Drafting $path",
+                    userMessage = { "Drafting $path" },
                     heading = "",
                     initialResponse = {
                         actor.respond(
@@ -491,25 +496,27 @@ class WebDevelopmentAssistantAction : BaseAction() {
             return socketServer
         }
 
-        data class PageResourceList(
+        data class ProjectSpec(
             @Description("Files in the project design, including all local html, css, and js files.")
-            val resources: List<PageResource> = emptyList()
+            val files: List<ProjectFile> = emptyList()
         ) : ValidatedObject {
             override fun validate(): String? = when {
-                resources.isEmpty() -> "Resources are required"
-                resources.any { it.validate() != null } -> "Invalid resource"
+                files.isEmpty() -> "Resources are required"
+                files.any { it.validate() != null } -> "Invalid resource"
                 else -> null
             }
         }
 
-        data class PageResource(
-            val path: String? = "",
+        data class ProjectFile(
+            @Description("The path to the file, relative to the project root.")
+            val name: String? = "",
+            @Description("A brief description of the file's purpose and contents.")
             val description: String? = ""
         ) : ValidatedObject {
             override fun validate(): String? = when {
-                path.isNullOrBlank() -> "Path is required"
-                path.contains(" ") -> "Path cannot contain spaces"
-                !path.contains(".") -> "Path must contain a file extension"
+                name.isNullOrBlank() -> "Path is required"
+                name.contains(" ") -> "Path cannot contain spaces"
+                !name.contains(".") -> "Path must contain a file extension"
                 else -> null
             }
         }
