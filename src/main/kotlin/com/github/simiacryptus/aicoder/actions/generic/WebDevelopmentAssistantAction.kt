@@ -95,6 +95,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 ui = ui,
                 tools = settings.tools,
                 model = settings.model,
+                parsingModel = settings.parsingModel,
                 root = root,
             ).start(
                 userMessage = userMessage,
@@ -105,6 +106,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             val budget: Double? = 2.00,
             val tools: List<String> = emptyList(),
             val model: ChatModels = ChatModels.GPT4Turbo,
+            val parsingModel: ChatModels = ChatModels.GPT35Turbo,
         )
 
         override val settingsClass: Class<*> get() = Settings::class.java
@@ -120,8 +122,63 @@ class WebDevelopmentAssistantAction : BaseAction() {
         user: User?,
         val ui: ApplicationInterface,
         val model: ChatModels,
+        val parsingModel: ChatModels,
         val tools: List<String> = emptyList(),
-        private val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+        actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+            ActorTypes.ArchitectureDiscussionActor to ParsedActor(
+                resultClass = PageResourceList::class.java,
+                prompt = """
+                  Translate the user's idea into a detailed architecture for a simple web application. 
+                  List all files to be created, and for each file, describe the public interface / purpose / content summary.
+                  Suggest specific frameworks/libraries to import and provide CDN links for them.
+                  Specify user interactions and how the application will respond to them.
+                  Identify key HTML classes and element IDs that will be used to bind the application to the HTML.
+                  Identify coding styles and patterns to be used.
+                  """.trimIndent(),
+                model = model,
+                parsingModel = parsingModel,
+            ),
+            ActorTypes.CodeReviewer to SimpleActor(
+                prompt = """
+                  |Analyze the code summarized in the user's header-labeled code blocks.
+                  |Review, look for bugs, and provide fixes. 
+                  |Provide implementations for missing functions.
+                  |
+                  |Response should use one or more code patches in diff format within ```diff code blocks.
+                  |Each diff should be preceded by a header that identifies the file being modified.
+                  |The diff format should use + for line additions, - for line deletions.
+                  |The diff should include 2 lines of context before and after every change.
+                  |
+                  |Example:
+                  |
+                  |Here are the patches:
+                  |
+                  |### src/utils/exampleUtils.js
+                  |```diff
+                  | // Utility functions for example feature
+                  | const b = 2;
+                  | function exampleFunction() {
+                  |-   return b + 1;
+                  |+   return b + 2;
+                  | }
+                  |```
+                  |
+                  |### tests/exampleUtils.test.js
+                  |```diff
+                  | // Unit tests for exampleUtils
+                  | const assert = require('assert');
+                  | const { exampleFunction } = require('../src/utils/exampleUtils');
+                  | 
+                  | describe('exampleFunction', () => {
+                  |-   it('should return 3', () => {
+                  |+   it('should return 4', () => {
+                  |     assert.equal(exampleFunction(), 3);
+                  |   });
+                  | });
+                  |```
+                """.trimMargin(),
+                model = model,
+            ),
             ActorTypes.HtmlCodingActor to SimpleActor(
                 prompt = """
           You will translate the user request into a skeleton HTML file for a rich javascript application.
@@ -138,60 +195,6 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 prompt = """
           You will translate the user request into a CSS file for use in a rich javascript application.
         """.trimIndent(), model = model
-            ),
-            ActorTypes.ArchitectureDiscussionActor to ParsedActor(
-                resultClass = PageResourceList::class.java,
-                prompt = """
-              Translate the user's idea into a detailed architecture for a simple web application. 
-              Suggest specific frameworks/libraries to import and provide CDN links for them.
-              Specify user interactions and how the application will respond to them.
-              Identify key HTML classes and element IDs that will be used to bind the application to the HTML.
-              Identify coding styles and patterns to be used.
-              List all files to be created, and for each file, describe the public interface / purpose / content summary.
-            """.trimIndent(),
-                model = model,
-                parsingModel = model,
-            ),
-            ActorTypes.CodeReviewer to SimpleActor(
-                prompt = """
-              |Analyze the code summarized in the user's header-labeled code blocks.
-              |Review, look for bugs, and provide fixes. 
-              |Provide implementations for missing functions.
-              |
-              |Response should use one or more code patches in diff format within ```diff code blocks.
-              |Each diff should be preceded by a header that identifies the file being modified.
-              |The diff format should use + for line additions, - for line deletions.
-              |The diff should include 2 lines of context before and after every change.
-              |
-              |Example:
-              |
-              |Here are the patches:
-              |
-              |### src/utils/exampleUtils.js
-              |```diff
-              | // Utility functions for example feature
-              | const b = 2;
-              | function exampleFunction() {
-              |-   return b + 1;
-              |+   return b + 2;
-              | }
-              |```
-              |
-              |### tests/exampleUtils.test.js
-              |```diff
-              | // Unit tests for exampleUtils
-              | const assert = require('assert');
-              | const { exampleFunction } = require('../src/utils/exampleUtils');
-              | 
-              | describe('exampleFunction', () => {
-              |-   it('should return 3', () => {
-              |+   it('should return 4', () => {
-              |     assert.equal(exampleFunction(), 3);
-              |   });
-              | });
-              |```
-            """.trimMargin(),
-                model = model,
             ),
             ActorTypes.EtcCodingActor to SimpleActor(
                 prompt = """
@@ -224,7 +227,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
         private val codeReviewer by lazy { getActor(ActorTypes.CodeReviewer) as SimpleActor }
         private val etcActor by lazy { getActor(ActorTypes.EtcCodingActor) as SimpleActor }
 
-        private val codeFiles = mutableMapOf<Path, String>()
+        private val codeFiles = mutableSetOf<Path>()
 
         fun start(
             userMessage: String,
@@ -279,7 +282,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 }.map { (path, description) ->
                     val task = ui.newTask(false).apply { fileTabs[path.toString()] = placeholder }
                     task.header("Drafting $path")
-                    codeFiles[File(path).toPath()] = ""
+                    codeFiles.add(File(path).toPath())
                     pool.submit {
                         when (path!!.split(".").last().lowercase()) {
 
@@ -348,8 +351,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
             }
         }
 
-        fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
-            "# $path\n```${path.toString().split('.').last()}\n${code}\n```"
+        fun codeSummary() = codeFiles.joinToString("\n\n") { path ->
+            "# $path\n```${path.toString().split('.').last()}\n${root.resolve(path.toFile()).readText()}\n```"
         }
 
         private fun iterateCode(
@@ -360,13 +363,13 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 heading = "Code Refinement",
                 userMessage = codeSummary(),
                 initialResponse = {
-                    codeReviewer.answer(listOf(it), api = api,)
+                    codeReviewer.answer(listOf(it), api = api)
                 },
                 outputFn = { code ->
                     renderMarkdown(
                         ui.socketManager.addApplyFileDiffLinks(
                             root = root.toPath(),
-                            code = { codeFiles },
+                            code = { codeFiles.map { it to root.resolve(it.toFile()).readText() }.toMap() },
                             response = code,
                             handle = { newCodeMap ->
                                 newCodeMap.forEach { (path, newCode) ->
@@ -449,7 +452,6 @@ class WebDevelopmentAssistantAction : BaseAction() {
                         )
                     }'>$path</a> Updated"
                 )
-                codeFiles[path] = code
             } catch (e: Throwable) {
                 val error = task.error(ui, e)
                 task.complete(ui.hrefLink("♻", "href-link regen-button") {
@@ -490,7 +492,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
         }
 
         data class PageResourceList(
-            @Description("List of resources in this project; don't forget the index.html file!")
+            @Description("Files in the project design, including all local html, css, and js files.")
             val resources: List<PageResource> = emptyList()
         ) : ValidatedObject {
             override fun validate(): String? = when {
