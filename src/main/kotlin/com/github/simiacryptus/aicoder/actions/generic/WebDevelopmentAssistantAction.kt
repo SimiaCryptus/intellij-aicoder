@@ -16,9 +16,8 @@ import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil
-import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.AgentPatterns
-import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
@@ -34,7 +33,6 @@ import java.awt.Desktop
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 val VirtualFile.toFile: File get() = File(this.path)
@@ -51,7 +49,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
         if (null != storage && null != selectedFile) {
             DataStorage.sessionPaths[session] = selectedFile.toFile
         }
-        agents[session] = WebDevApp(root=selectedFile)
+        agents[session] = WebDevApp(root = selectedFile)
         val server = AppServer.getServer(e.project)
         val app = initApp(server, path)
         app.sessions[session] = app.newSession(null, session)
@@ -263,22 +261,6 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 heading = userMessage
             ).call()
 
-            fun outputFn(
-                task: SessionTask,
-                design: String,
-            ) = renderMarkdown(
-                ui.socketManager.addApplyFileDiffLinks(
-                    root = root.toPath(),
-                    code = { codeFiles },
-                    response = design,
-                    handle = { newCodeMap ->
-                        newCodeMap.forEach { (path, newCode) ->
-                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                        }
-                    },
-                    ui = ui
-                )
-            )
 
             try {
                 val toolSpecs = tools.map { ToolServlet.tools.find { t -> t.path == it } }
@@ -358,50 +340,54 @@ class WebDevelopmentAssistantAction : BaseAction() {
                     }
                 }.toTypedArray().forEach { it.get() }
                 // Apply codeReviewer
-                fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
-                    "# $path\n```${
-                        path.toString().split('.').last().let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-                    }\n${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}\n```"
-                }
 
-                try {
-                    var task = ui.newTask(false).apply { task.add(placeholder) }
-                    task.header("Code Iteration")
-                    task.verbose(message = renderMarkdown(codeSummary(), ui = ui))
-                    var design = codeReviewer.answer(listOf(element = codeSummary()), api = api)
-                    task.complete(outputFn(task, design))
-                    val feedbackGuard = AtomicBoolean(false)
-                    var textInputHandle: StringBuilder? = null
-                    textInputHandle = task.complete(ui.textInput { userResponse ->
-                        if (feedbackGuard.getAndSet(true)) return@textInput
-                        textInputHandle?.clear()
-                        task = ui.newTask(false).apply { task.complete(placeholder) }
-                        task.echo(renderMarkdown(userResponse, ui = ui))
-                        Retryable(ui, task) {
-                            val codeSummary = codeSummary()
-                            design = codeReviewer.respond(
-                                messages = codeReviewer.chatMessages(
-                                    listOf(
-                                        codeSummary,
-                                        userResponse,
-                                    )
-                                ),
-                                input = listOf(element = codeSummary),
-                                api = api
-                            )
-                            outputFn(task, design)
-                        }
-                        feedbackGuard.set(false)
-                    })
-                } catch (e: Throwable) {
-                    //val task = ui.newTask(false).apply { task.add(placeholder) }
-                    task.error(ui = ui, e = e)
-                    throw e
-                }
+                iterateCode(task)
             } catch (e: Throwable) {
                 log.warn("Error", e)
                 task.error(ui, e)
             }
+        }
+
+        fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
+            "# $path\n```${path.toString().split('.').last()}\n${code}\n```"
+        }
+
+        private fun iterateCode(
+            task: SessionTask
+        ) {
+            Discussable(
+                task = task,
+                heading = "Code Refinement",
+                userMessage = codeSummary(),
+                initialResponse = {
+                    codeReviewer.answer(listOf(it), api = api,)
+                },
+                outputFn = { code ->
+                    renderMarkdown(
+                        ui.socketManager.addApplyFileDiffLinks(
+                            root = root.toPath(),
+                            code = { codeFiles },
+                            response = code,
+                            handle = { newCodeMap ->
+                                newCodeMap.forEach { (path, newCode) ->
+                                    task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                }
+                            },
+                            ui = ui
+                        )
+                    )
+                },
+                ui = ui,
+                reviseResponse = { userMessages ->
+                    val combinedMessages =
+                        userMessages.map { ApiModel.ChatMessage(Role.user, it.first.toContentList()) }
+                    codeReviewer.respond(
+                        input = listOf(element = combinedMessages.joinToString("\n")),
+                        api = api,
+                        messages = combinedMessages.toTypedArray(),
+                    )
+                },
+            ).call()
         }
 
         private fun draftResourceCode(
