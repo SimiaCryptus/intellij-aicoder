@@ -131,14 +131,14 @@
             <!-- Keyboard shortcuts removed -->
         </action>
 
-        <group id="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
-               class="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
-               text="_Recent Code Edits"
-               description="Recent code edits"
-               popup="true">
+        <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
+                text="_Paste"
+                description="Paste">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-        </group>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.RedoLast"
                 text="Re_do Last"
                 description="Redo last">
@@ -153,14 +153,14 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <!-- Keyboard shortcuts removed -->
         </action>
-        <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
-                text="_Paste"
-                description="Paste">
+        <group id="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
+               class="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
+               text="_Recent Code Edits"
+               description="Recent code edits"
+               popup="true">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
-        </action>
+        </group>
         <action class="com.github.simiacryptus.aicoder.actions.code.DescribeAction"
                 text="Describe C_ode and Prepend Comment"
                 description="Add doc comments">

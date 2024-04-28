@@ -85,15 +85,31 @@ class MultiDiffChatAction : BaseAction() {
                 |
                 |Example:
                 |
-                |Explanation text
+                |Here are the patches:
                 |
-                |### scripts/filename.js
+                |### src/utils/exampleUtils.js
                 |```diff
-                |- const b = 2;
-                |+ const a = 1;
+                | // Utility functions for example feature
+                | const b = 2;
+                | function exampleFunction() {
+                |-   return b + 1;
+                |+   return b + 2;
+                | }
                 |```
                 |
-                |Continued text
+                |### tests/exampleUtils.test.js
+                |```diff
+                | // Unit tests for exampleUtils
+                | const assert = require('assert');
+                | const { exampleFunction } = require('../src/utils/exampleUtils');
+                | 
+                | describe('exampleFunction', () => {
+                |-   it('should return 3', () => {
+                |+   it('should return 4', () => {
+                |     assert.equal(exampleFunction(), 3);
+                |   });
+                | });
+                |```
                 """.trimMargin(),
             api = api,
             applicationClass = ApplicationServer::class.java,

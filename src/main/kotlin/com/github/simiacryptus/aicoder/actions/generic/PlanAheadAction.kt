@@ -21,7 +21,7 @@ import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
-import com.simiacryptus.skyenet.Acceptable
+import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.AgentPatterns.displayMapInTabs
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
@@ -367,7 +367,7 @@ class PlanAheadAgent(
                 it
             )
         }
-        val highLevelPlan = Acceptable(
+        val highLevelPlan = Discussable(
             task = task,
             heading = renderMarkdown(userMessage, ui = ui),
             userMessage = userMessage,
@@ -941,7 +941,7 @@ class PlanAheadAgent(
                 it,
             ).filter { it.isNotBlank() }
         }
-        val inquiryResult = Acceptable(
+        val inquiryResult = Discussable(
             task = task,
             userMessage = "Expand ${subTask.description ?: ""}\n${toJson(subTask)}",
             heading = "",
@@ -985,7 +985,7 @@ class PlanAheadAgent(
             ).filter { it.isNotBlank() }
         }
         val input1 = "Expand ${subTask.description ?: ""}\n${toJson(subTask)}"
-        val subPlan: ParsedResponse<TaskBreakdownResult> = Acceptable(
+        val subPlan: ParsedResponse<TaskBreakdownResult> = Discussable(
             task = task,
             userMessage = input1,
             heading = "",
@@ -1169,47 +1169,47 @@ private fun createFileActor(
 ) = SimpleActor(
     name = "NewFileCreator",
     prompt = """
-        Generate the necessary code for new files based on the given requirements and context.
-        For each file:
-        - Provide a clear relative file path based on the content and purpose of the file.
-        - Ensure the code is well-structured, follows best practices, and meets the specified functionality.
-        - Carefully consider how the new file fits into the existing project structure and architecture.
-        - Avoid creating files that duplicate functionality or introduce inconsistencies.
-          
-        The response format should be as follows:
-        - Use triple backticks to create code blocks for each file.
-        - Each code block should be preceded by a header specifying the file path.
-        - The file path should be a relative path from the project root.
-        - Separate code blocks with a single blank line.
-        - Specify the language for syntax highlighting after the opening triple backticks.
-        
-        Example:
-        
-        Here are the new files:
-        
-        ### src/utils/exampleUtils.js
-        ```js
-        // Utility functions for example feature
-        const b = 2;
-        function exampleFunction() {
-          return b + 1;
-        }
-        
-        ```
-        
-        ### tests/exampleUtils.test.js 
-        ```js
-        // Unit tests for exampleUtils
-        const assert = require('assert');
-        const { exampleFunction } = require('../src/utils/exampleUtils');
-        
-        describe('exampleFunction', () => {
-          it('should return 3', () => {
-            assert.equal(exampleFunction(), 3);
-          });
-        });
-        ```
-      """.trimIndent(),
+        |Generate the necessary code for new files based on the given requirements and context.
+        |For each file:
+        |- Provide a clear relative file path based on the content and purpose of the file.
+        |- Ensure the code is well-structured, follows best practices, and meets the specified functionality.
+        |- Carefully consider how the new file fits into the existing project structure and architecture.
+        |- Avoid creating files that duplicate functionality or introduce inconsistencies.
+        |  
+        |The response format should be as follows:
+        |- Use triple backticks to create code blocks for each file.
+        |- Each code block should be preceded by a header specifying the file path.
+        |- The file path should be a relative path from the project root.
+        |- Separate code blocks with a single blank line.
+        |- Specify the language for syntax highlighting after the opening triple backticks.
+        |
+        |Example:
+        |
+        |Here are the new files:
+        |
+        |### src/utils/exampleUtils.js
+        |```js
+        |// Utility functions for example feature
+        |const b = 2;
+        |function exampleFunction() {
+        |  return b + 1;
+        |}
+        |
+        |```
+        |
+        |### tests/exampleUtils.test.js 
+        |```js
+        |// Unit tests for exampleUtils
+        |const assert = require('assert');
+        |const { exampleFunction } = require('../src/utils/exampleUtils');
+        |
+        |describe('exampleFunction', () => {
+        |  it('should return 3', () => {
+        |    assert.equal(exampleFunction(), 3);
+        |  });
+        |});
+        |```
+      """.trimMargin(),
     model = model,
     temperature = temperature,
 )
@@ -1220,30 +1220,46 @@ private fun patchActor(
 ) = SimpleActor(
     name = "FilePatcher",
     prompt = """
-        Generate a patch for an existing file to modify its functionality or fix issues based on the given requirements and context. 
-        Ensure the modifications are efficient, maintain readability, and adhere to coding standards.
-        Carefully review the existing code and project structure to ensure the changes are consistent and do not introduce bugs.
-        Consider the impact of the modifications on other parts of the codebase.
-
-        Provide a summary of the changes made.
-          
-        Response should use one or more code patches in diff format within ```diff code blocks.
-        Each diff should be preceded by a header that identifies the file being modified.
-        The diff format should use + for line additions, - for line deletions.
-        The diff should include 2 lines of context before and after every change.
-        
-        Example:
-        
-        Explanation text
-        
-        ### scripts/filename.js
-        ```diff
-        - const b = 2;
-        + const a = 1;
-        ```
-
-        Continued text
-      """.trimIndent(),
+        |Generate a patch for an existing file to modify its functionality or fix issues based on the given requirements and context. 
+        |Ensure the modifications are efficient, maintain readability, and adhere to coding standards.
+        |Carefully review the existing code and project structure to ensure the changes are consistent and do not introduce bugs.
+        |Consider the impact of the modifications on other parts of the codebase.
+        |
+        |Provide a summary of the changes made.
+        |  
+        |Response should use one or more code patches in diff format within ```diff code blocks.
+        |Each diff should be preceded by a header that identifies the file being modified.
+        |The diff format should use + for line additions, - for line deletions.
+        |The diff should include 2 lines of context before and after every change.
+        |
+        |Example:
+        |
+        |Here are the patches:
+        |
+        |### src/utils/exampleUtils.js
+        |```diff
+        | // Utility functions for example feature
+        | const b = 2;
+        | function exampleFunction() {
+        |-   return b + 1;
+        |+   return b + 2;
+        | }
+        |```
+        |
+        |### tests/exampleUtils.test.js
+        |```diff
+        | // Unit tests for exampleUtils
+        | const assert = require('assert');
+        | const { exampleFunction } = require('../src/utils/exampleUtils');
+        | 
+        | describe('exampleFunction', () => {
+        |-   it('should return 3', () => {
+        |+   it('should return 4', () => {
+        |     assert.equal(exampleFunction(), 3);
+        |   });
+        | });
+        |```
+      """.trimMargin(),
     model = model,
     temperature = temperature,
 )
