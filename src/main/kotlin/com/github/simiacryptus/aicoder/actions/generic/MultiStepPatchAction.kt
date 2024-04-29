@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
+import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -18,6 +19,8 @@ import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.AgentPatterns
+import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
@@ -176,18 +179,18 @@ class MultiStepPatchAction : BaseAction() {
         fun start(
             userMessage: String,
         ) {
-            val codeFiles = mutableMapOf<Path, String>()
+            val codeFiles = mutableSetOf<Path>()
             val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
                 ?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
             PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
-                val code = file.inputStream.bufferedReader().use { it.readText() }
-                codeFiles[root.relativize(file.toNioPath())] = code
+                //
+                codeFiles.add(root.relativize(file.toNioPath()))
             }
             require(codeFiles.isNotEmpty()) { "No files selected" }
-            fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
+            fun codeSummary() = codeFiles.joinToString("\n\n") { path ->
                 "# $path\n```${
                     path.toString().split('.').last()
-                }\n${code/*.indent("  ")*/}\n```"
+                }\n${root.resolve(path).toFile().readText()}\n```"
             }
 
             val task = ui.newTask()
@@ -195,6 +198,7 @@ class MultiStepPatchAction : BaseAction() {
             val architectureResponse = Discussable(
                 task = task,
                 userMessage = { userMessage },
+                heading = userMessage,
                 initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
                 outputFn = { design: ParsedResponse<TaskList> ->
                     //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```")
@@ -216,57 +220,68 @@ class MultiStepPatchAction : BaseAction() {
                 },
                 atomicRef = AtomicReference(),
                 semaphore = Semaphore(0),
-                heading = userMessage
             ).call()
 
             try {
-                architectureResponse.obj.tasks.forEach { (paths, description) ->
-                    task.complete(ui.hrefLink(renderMarkdown("Task: $description", ui = ui)) {
-                        val task = ui.newTask()
+                val taskTabs = TabbedDisplay(task)
+                architectureResponse.obj.tasks.map { (paths, description) ->
+                    var description = (description ?: UUID.random().toString()).trim()
+                    // Strip `#` from the beginning of the description
+                    while (description.startsWith("#")) {
+                        description = description.substring(1)
+                    }
+                    description = renderMarkdown(description, ui = ui, tabs = false)
+                    val task = ui.newTask(false).apply { taskTabs[description] = placeholder }
+                    pool.submit {
                         task.header("Task: $description")
-                        val process = { it: StringBuilder ->
-                            val filter = codeFiles.filter { (path, _) ->
-                                paths?.find { path.toString().contains(it) }?.isNotEmpty() == true
-                            }
-                            require(filter.isNotEmpty()) {
-                                """
-                              |No files found for $paths
-                              |
-                              |Root:
-                              |$root
-                              |
-                              |Files:
-                              |${codeFiles.keys.joinToString("\n")}
-                              |
-                              |Paths:
-                              |${paths?.joinToString("\n") ?: ""}
-                              |
-                            """.trimMargin()
-                            }
-                            ui.socketManager.addApplyFileDiffLinks(
-                                root = root,
-                                code = { codeFiles },
-                                response = taskActor.answer(listOf(
-                                    codeSummary(),
-                                    userMessage,
-                                    filter.entries.joinToString("\n\n") {
-                                        "# ${it.key}\n```${
-                                            it.key.toString().split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
-                                        }\n${it.value/*.indent("  ")*/}\n```"
+                        Retryable(ui,task) {
+                            try {
+                                val filter = codeFiles.filter { path ->
+                                    paths?.find { path.toString().contains(it) }?.isNotEmpty() == true
+                                }
+                                require(filter.isNotEmpty()) {
+                                    """
+                                      |No files found for $paths
+                                      |
+                                      |Root:
+                                      |$root
+                                      |
+                                      |Files:
+                                      |${codeFiles.joinToString("\n")}
+                                      |
+                                      |Paths:
+                                      |${paths?.joinToString("\n") ?: ""}
+                                      |
+                                    """.trimMargin()
+                                }
+                                ui.socketManager.addApplyFileDiffLinks(
+                                    root = root,
+                                    code = { codeFiles.associateWith { root.resolve(it).toFile().readText() } },
+                                    response = taskActor.answer(listOf(
+                                        codeSummary(),
+                                        userMessage,
+                                        filter.joinToString("\n\n") {
+                                            "# ${it}\n```${
+                                                it.toString().split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
+                                            }\n${ it.toFile().readText() }\n```"
+                                        },
+                                        architectureResponse.text,
+                                        "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
+                                    ), api),
+                                    handle = { newCodeMap ->
+                                        newCodeMap.forEach { (path, newCode) ->
+                                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                        }
                                     },
-                                    architectureResponse.text,
-                                    "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                                ), api),
-                                handle = { newCodeMap ->
-                                    newCodeMap.forEach { (path, newCode) ->
-                                        task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                                    }
-                                },
-                                ui = ui
-                            )
-                        }
-                    })
-                }
+                                    ui = ui
+                                )
+                            } catch (e: Exception) {
+                                task.error(ui, e)
+                                ""
+                            }
+                        }.apply { set(label(size), process(container)) }
+                    }
+                }.toTypedArray().forEach { it.get() }
             } catch (e : Exception) {
                 log.warn("Error",e)
             }
