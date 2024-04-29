@@ -1,15 +1,15 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
-import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
-import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.diff.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.simiacryptus.jopenai.GPT4Tokenizer
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
@@ -63,12 +63,19 @@ class MultiDiffChatAction : BaseAction() {
         //DataStorage.sessionPaths[session] = root.toFile()
 
         val codeSummary = codeSummary()
+        val codex = GPT4Tokenizer(false)
         agents[session] = object : ChatSocketManager(
             session = session,
             model = AppSettingsState.instance.smartModel.chatModel(),
             userInterfacePrompt = """
                 |
-                |$codeSummary
+                |${
+                    codeFiles.entries.joinToString("\n\n") { (path, code) ->
+                        """
+                        |* $path - ${ codex.estimateTokenCount(code) } tokens
+                        """.trimMargin()
+                    }
+                }
                 |
                 """.trimMargin().trim(),
             systemPrompt = """
@@ -85,15 +92,31 @@ class MultiDiffChatAction : BaseAction() {
                 |
                 |Example:
                 |
-                |Explanation text
+                |Here are the patches:
                 |
-                |### scripts/filename.js
+                |### src/utils/exampleUtils.js
                 |```diff
-                |- const b = 2;
-                |+ const a = 1;
+                | // Utility functions for example feature
+                | const b = 2;
+                | function exampleFunction() {
+                |-   return b + 1;
+                |+   return b + 2;
+                | }
                 |```
                 |
-                |Continued text
+                |### tests/exampleUtils.test.js
+                |```diff
+                | // Unit tests for exampleUtils
+                | const assert = require('assert');
+                | const { exampleFunction } = require('../src/utils/exampleUtils');
+                | 
+                | describe('exampleFunction', () => {
+                |-   it('should return 3', () => {
+                |+   it('should return 4', () => {
+                |     assert.equal(exampleFunction(), 3);
+                |   });
+                | });
+                |```
                 """.trimMargin(),
             api = api,
             applicationClass = ApplicationServer::class.java,
@@ -139,7 +162,7 @@ class MultiDiffChatAction : BaseAction() {
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(
-                applicationName = "Multi-file Diff Chat",
+                applicationName = "Multi-file Patch Chat",
                 path = path,
                 showMenubar = false,
             ) {

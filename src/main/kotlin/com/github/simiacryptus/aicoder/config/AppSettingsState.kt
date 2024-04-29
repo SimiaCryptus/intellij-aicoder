@@ -137,7 +137,7 @@ data class AppSettingsState(
 
     companion object {
         var auxiliaryLog: File? = null
-        const val CURRENT_VERSION: String = "1.4.1"
+        const val WELCOME_VERSION: String = "1.5.0"
 
         @JvmStatic
         val instance: AppSettingsState by lazy {

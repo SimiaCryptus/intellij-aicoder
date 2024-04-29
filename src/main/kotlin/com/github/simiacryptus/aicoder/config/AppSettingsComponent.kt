@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.config
 
+
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.table.JBTable
@@ -18,20 +20,12 @@ import java.awt.event.ActionEvent
 import java.io.FileOutputStream
 import javax.swing.AbstractAction
 import javax.swing.JButton
+import javax.swing.JList
+import javax.swing.ListCellRenderer
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 
 class AppSettingsComponent : com.intellij.openapi.Disposable {
-
-//  @Name("Token Counter")
-//  val tokenCounter = JBTextField()
-
-//  @Suppress("unused")
-//  val clearCounter = JButton(object : AbstractAction("Clear Token Counter") {
-//    override fun actionPerformed(e: ActionEvent) {
-//      tokenCounter.text = "0"
-//    }
-//  })
 
     @Suppress("unused")
     @Name("Human Language")
@@ -155,22 +149,47 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     var usage = UsageTable(ApplicationServices.usageManager)
 
     init {
-//    tokenCounter.isEditable = false
-//    this.modelName.addItem(ChatModels.GPT35Turbo.modelName)
-//    this.modelName.addItem(ChatModels.GPT4.modelName)
-//    this.modelName.addItem(ChatModels.GPT4Turbo.modelName)
-        ChatModels.values().forEach {
-//      this.modelName.addItem(it.key)
-            this.smartModel.addItem(it.value.modelName)
-            this.fastModel.addItem(it.value.modelName)
-        }
-//    this.modelName.isEditable = true
+        ChatModels.values()
+            .filter { AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name) ?: false }
+            .forEach {
+                this.smartModel.addItem(it.value.modelName)
+                this.fastModel.addItem(it.value.modelName)
+            }
+        // Sort the items in the ComboBoxes
+        val smartModelItems = (0 until smartModel.itemCount).map { smartModel.getItemAt(it) }.sortedBy { modelItem ->
+            val model = ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
+            "${model.provider.name} - ${model.modelName}" }.toList()
+        val fastModelItems = (0 until fastModel.itemCount).map { fastModel.getItemAt(it) }.sortedBy { modelItem ->
+            val model = ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
+            "${model.provider.name} - ${model.modelName}" }.toList()
+        smartModel.removeAllItems()
+        fastModel.removeAllItems()
+        smartModelItems.forEach { smartModel.addItem(it) }
+        fastModelItems.forEach { fastModel.addItem(it) }
         this.smartModel.isEditable = true
         this.fastModel.isEditable = true
+        this.smartModel.renderer = getModelRenderer()
+        this.fastModel.renderer = getModelRenderer()
     }
 
     companion object;
 
     override fun dispose() {
+    }
+
+    private fun getModelRenderer(): ListCellRenderer<in String> = object : SimpleListCellRenderer<String>() {
+        override fun customize(
+            list: JList<out String>,
+            value: String?,
+            index: Int,
+            selected: Boolean,
+            hasFocus: Boolean
+        ) {
+            text = value // Here you can add more customization if needed
+            if (value != null) {
+                val model = ChatModels.values().entries.find { it.value.modelName == value }?.value
+                text = "${model?.provider?.name} - $value"
+            }
+        }
     }
 }
