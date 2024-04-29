@@ -254,7 +254,7 @@ class MultiStepPatchAction : BaseAction() {
                                       |
                                     """.trimMargin()
                                 }
-                                ui.socketManager.addApplyFileDiffLinks(
+                                renderMarkdown(ui.socketManager.addApplyFileDiffLinks(
                                     root = root,
                                     code = { codeFiles.associateWith { root.resolve(it).toFile().readText() } },
                                     response = taskActor.answer(listOf(
@@ -263,7 +263,7 @@ class MultiStepPatchAction : BaseAction() {
                                         filter.joinToString("\n\n") {
                                             "# ${it}\n```${
                                                 it.toString().split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
-                                            }\n${ it.toFile().readText() }\n```"
+                                            }\n${ root.resolve(it).toFile().readText() }\n```"
                                         },
                                         architectureResponse.text,
                                         "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
@@ -274,7 +274,7 @@ class MultiStepPatchAction : BaseAction() {
                                         }
                                     },
                                     ui = ui
-                                )
+                                ))
                             } catch (e: Exception) {
                                 task.error(ui, e)
                                 ""
