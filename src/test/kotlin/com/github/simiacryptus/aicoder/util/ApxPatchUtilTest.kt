@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.diff.PatchUtil
+import com.simiacryptus.diff.PatchUtil
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

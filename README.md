@@ -28,6 +28,13 @@ code!
 * 🔍 **API Request Management**: 🎛️ Intercept, edit, and log API requests with ease, giving you granular control over your
   plugin's behavior.
 
+## 🔒 Commitment to Security and Privacy
+
+We understand that the security of your source code is paramount. That's why AI Coding Assistant is designed to keep your
+code and data local, sending only the minimal context needed to the LLM APIs to fulfill a request. You have full control
+and visibility into exactly what data leaves your environment. With AI Coding Assistant, you can harness the power of
+cutting-edge AI while maintaining the security and integrity of your codebase.
+
 ## **Installation & Setup**
 
 Getting started with AI Coding Assistant is a breeze:
@@ -60,6 +67,7 @@ plugin for developers. 🌟
 
 *Please note that AI Coding Assistant is not affiliated with OpenAI, JetBrains, or any other corporation or
 organization. The plugin is provided free of charge, as-is, with no warranty or guarantee of any kind, and is the work
-of a sole developer working on a hobby project.*
+of a sole developer working on a hobby project. Furthermore, our use of the "AI Coding Assistant" name predates other
+similarly named tools, emphasizing our pioneering role in AI-assisted coding.*
 
 <!-- Plugin description end -->

@@ -4,15 +4,16 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.diff.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -30,10 +31,13 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
+import javax.imageio.ImageIO
+import kotlin.io.path.name
 
 val VirtualFile.toFile: File get() = File(this.path)
 
@@ -130,7 +134,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 prompt = """
                   Translate the user's idea into a detailed architecture for a simple web application. 
                   
-                  List all files to be created, and for each file:
+                  List all html, css, javascript, and image files to be created, and for each file:
                   1. Mark with <file>filename</file> tags.
                   2. Describe the public interface / interaction with other components.
                   3. Core functional requirements.
@@ -203,7 +207,14 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 prompt = """
               You will translate the user request into a file for use in a web application.
             """.trimIndent(),
-                model = model
+                model = model,
+            ),
+            ActorTypes.ImageActor to ImageActor(
+                prompt = """
+              You will translate the user request into an image file for use in a web application.
+            """.trimIndent(),
+                textModel = model,
+                imageModel = ImageModels.DallE3,
             ),
         ),
         val root: File,
@@ -221,10 +232,12 @@ class WebDevelopmentAssistantAction : BaseAction() {
             ArchitectureDiscussionActor,
             CodeReviewer,
             EtcCodingActor,
+            ImageActor,
         }
 
         private val architectureDiscussionActor by lazy { getActor(ActorTypes.ArchitectureDiscussionActor) as ParsedActor<ProjectSpec> }
         private val htmlActor by lazy { getActor(ActorTypes.HtmlCodingActor) as SimpleActor }
+        private val imageActor by lazy { getActor(ActorTypes.ImageActor) as ImageActor }
         private val javascriptActor by lazy { getActor(ActorTypes.JavascriptCodingActor) as SimpleActor }
         private val cssActor by lazy { getActor(ActorTypes.CssCodingActor) as SimpleActor }
         private val codeReviewer by lazy { getActor(ActorTypes.CodeReviewer) as SimpleActor }
@@ -329,6 +342,32 @@ class WebDevelopmentAssistantAction : BaseAction() {
                                 path = File(path).toPath()
                             )
 
+                            "png" -> draftImage(
+                                task = task,
+                                request = etcActor.chatMessages(
+                                    listOf(
+                                        messageWithTools,
+                                        architectureResponse.text,
+                                        "Render $path - $description"
+                                    )
+                                ),
+                                actor = imageActor,
+                                path = File(path).toPath()
+                            )
+
+                            "jpg" -> draftImage(
+                                task = task,
+                                request = etcActor.chatMessages(
+                                    listOf(
+                                        messageWithTools,
+                                        architectureResponse.text,
+                                        "Render $path - $description"
+                                    )
+                                ),
+                                actor = imageActor,
+                                path = File(path).toPath()
+                            )
+
                             else -> draftResourceCode(
                                 task = task,
                                 request = etcActor.chatMessages(
@@ -354,7 +393,11 @@ class WebDevelopmentAssistantAction : BaseAction() {
             }
         }
 
-        fun codeSummary() = codeFiles.joinToString("\n\n") { path ->
+        fun codeSummary() = codeFiles.filter {
+            if (it.name.lowercase().endsWith(".png")) return@filter false
+            if (it.name.lowercase().endsWith(".jpg")) return@filter false
+            true
+        }.joinToString("\n\n") { path ->
             "# $path\n```${path.toString().split('.').last()}\n${root.resolve(path.toFile()).readText()}\n```"
         }
 
@@ -372,7 +415,11 @@ class WebDevelopmentAssistantAction : BaseAction() {
                     renderMarkdown(
                         ui.socketManager.addApplyFileDiffLinks(
                             root = root.toPath(),
-                            code = { codeFiles.map { it to root.resolve(it.toFile()).readText() }.toMap() },
+                            code = { codeFiles.filter {
+                                if (it.name.lowercase().endsWith(".png")) return@filter false
+                                if (it.name.lowercase().endsWith(".jpg")) return@filter false
+                                true
+                            }.map { it to root.resolve(it.toFile()).readText() }.toMap() },
                             response = code,
                             handle = { newCodeMap ->
                                 newCodeMap.forEach { (path, newCode) ->
@@ -396,6 +443,91 @@ class WebDevelopmentAssistantAction : BaseAction() {
                     )
                 },
             ).call()
+        }
+
+        private fun draftImage(
+            task: SessionTask,
+            request: Array<ApiModel.ChatMessage>,
+            actor: ImageActor,
+            path: Path,
+        ) {
+            try {
+                var code = Discussable(
+                    task = task,
+                    userMessage = { "" },
+                    heading = "Drafting $path",
+                    initialResponse = {
+                        val messages = (request + ApiModel.ChatMessage(Role.user, "Draft $path".toContentList()))
+                            .toList().toTypedArray()
+                        actor.respond(
+                            listOf(request.joinToString("\n") { it.content?.joinToString() ?: "" }),
+                            api,
+                            *messages
+                        )
+
+                    },
+                    outputFn = { img ->
+                        renderMarkdown(
+                            "<img src='${
+                                task.saveFile(
+                                    path.toString(),
+                                    write(img, path)
+                                )
+                            }' style='max-width: 100%;'/>", ui = ui
+                        )
+                    },
+                    ui = ui,
+                    reviseResponse = { userMessages: List<Pair<String, Role>> ->
+                        actor.respond(
+                            messages = (request.toList() + userMessages.map {
+                                ApiModel.ChatMessage(
+                                    it.second,
+                                    it.first.toContentList()
+                                )
+                            })
+                                .toTypedArray<ApiModel.ChatMessage>(),
+                            input = listOf(element = (request.toList() + userMessages.map {
+                                ApiModel.ChatMessage(
+                                    it.second,
+                                    it.first.toContentList()
+                                )
+                            })
+                                .joinToString("\n") { it.content?.joinToString() ?: "" }),
+                            api = api,
+                        )
+                    },
+                ).call()
+                task.complete(
+                    renderMarkdown(
+                        "<img src='${
+                            task.saveFile(
+                                path.toString(),
+                                write(code, path)
+                            )
+                        }' style='max-width: 100%;'/>", ui = ui
+                    )
+                )
+            } catch (e: Throwable) {
+                val error = task.error(ui, e)
+                task.complete(ui.hrefLink("♻", "href-link regen-button") {
+                    error?.clear()
+                    draftImage(task, request, actor, path)
+                })
+            }
+        }
+
+        private fun write(
+            code: ImageResponse,
+            path: Path
+        ): ByteArray {
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            val data = ImageIO.write(
+                code.image,
+                path.toString().split(".").last(),
+                byteArrayOutputStream
+            )
+            val bytes = byteArrayOutputStream.toByteArray()
+            return bytes
         }
 
         private fun draftResourceCode(

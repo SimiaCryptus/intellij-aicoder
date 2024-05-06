@@ -5,10 +5,11 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
-import com.github.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.GPT4Tokenizer
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
@@ -35,7 +36,6 @@ class MultiDiffChatAction : BaseAction() {
 
         val dataContext = e.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-        val codeFiles = mutableMapOf<Path, String>()
         val folder = UITools.getSelectedFolder(e)
         val root = if (null != folder) {
             folder.toFile.toPath()
@@ -43,11 +43,7 @@ class MultiDiffChatAction : BaseAction() {
             getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")).toPath()
         }
 
-        virtualFiles?.forEach { file ->
-            val relative = root.relativize(file.toNioPath())
-            val path = relative
-            codeFiles[path] = file.contentsToByteArray().toString(Charsets.UTF_8)
-        }
+        val codeFiles = getFiles(virtualFiles, root)
 
         fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
             val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
@@ -151,6 +147,22 @@ class MultiDiffChatAction : BaseAction() {
                 log.warn("Error opening browser", e)
             }
         }.start()
+    }
+
+    private fun getFiles(
+        virtualFiles: Array<out VirtualFile>?,
+        root: Path
+    ): MutableMap<Path, String> {
+        val codeFiles = mutableMapOf<Path, String>()
+        virtualFiles?.forEach { file ->
+            if(file.isDirectory) {
+                getFiles(file.children, root)
+            } else {
+                val relative = root.relativize(file.toNioPath())
+                codeFiles[relative] = file.contentsToByteArray().toString(Charsets.UTF_8)
+            }
+        }
+        return codeFiles
     }
 
     override fun isEnabled(event: AnActionEvent) = true
