@@ -36,22 +36,22 @@ class MultiDiffChatAction : BaseAction() {
 
     val path = "/multiDiffChat"
 
-    var root: Path? = null
-    val codeFiles: MutableSet<Path> = mutableSetOf()
-    fun codeSummary() = codeFiles.filter {
-        root!!.resolve(it).toFile().exists()
-    }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
-        .entries.joinToString("\n\n") { (path, code) ->
-            val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-            """
+    override fun handle(event: AnActionEvent) {
+
+        var root: Path? = null
+        val codeFiles: MutableSet<Path> = mutableSetOf()
+        fun codeSummary() = codeFiles.filter {
+            root!!.resolve(it).toFile().exists()
+        }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
+            .entries.joinToString("\n\n") { (path, code) ->
+                val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+                """
             |# $path
             |```$extension
             |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
             |```
             """.trimMargin()
-        }
-
-    override fun handle(event: AnActionEvent) {
+            }
 
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
@@ -67,7 +67,7 @@ class MultiDiffChatAction : BaseAction() {
 
         val session = StorageInterface.newGlobalID()
 
-        agents[session] = PatchApp(event, root!!.toFile())
+        agents[session] = PatchApp(event, root!!.toFile(), { codeSummary() }, codeFiles)
 
         val server = AppServer.getServer(event.project)
         val app = initApp(server, path)
@@ -85,7 +85,9 @@ class MultiDiffChatAction : BaseAction() {
 
     inner class PatchApp(
         private val event: AnActionEvent,
-        override val root: File
+        override val root: File,
+        val codeSummary: () -> String,
+        val codeFiles: Set<Path> = setOf(),
     ) : ApplicationServer(
         applicationName = "Multi-file Patch Chat",
         path = path,
@@ -112,6 +114,8 @@ class MultiDiffChatAction : BaseAction() {
                 model = settings.model!!,
                 event = event,
                 root = root,
+                codeSummary = { codeSummary() },
+                codeFiles = { codeFiles },
             ).start(
                 userMessage = userMessage,
             )
@@ -129,6 +133,8 @@ class MultiDiffChatAction : BaseAction() {
         user: User?,
         val ui: ApplicationInterface,
         val model: ChatModels,
+        val codeSummary: () -> String,
+        val codeFiles: () -> Set<Path>,
         actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
             ActorTypes.MainActor to SimpleActor(
                 prompt = """
@@ -197,7 +203,7 @@ class MultiDiffChatAction : BaseAction() {
                 outputFn = { design: String ->
                     var markdown = ui.socketManager.addApplyFileDiffLinks(
                         root = root.toPath(),
-                        code = { codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
+                        code = { codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
                         response = design,
                         handle = { newCodeMap ->
                             newCodeMap.forEach { (path, newCode) ->

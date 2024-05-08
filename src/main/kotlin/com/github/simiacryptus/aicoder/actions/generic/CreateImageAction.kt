@@ -37,22 +37,21 @@ class CreateImageAction : BaseAction() {
 
     val path = "/imageCreator"
 
-    var root: Path? = null
-    val codeFiles: MutableSet<Path> = mutableSetOf()
-    fun codeSummary() = codeFiles.filter {
-        root!!.resolve(it).toFile().exists()
-    }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
-        .entries.joinToString("\n\n") { (path, code) ->
-            val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-            """
+    override fun handle(event: AnActionEvent) {
+        var root: Path? = null
+        val codeFiles: MutableSet<Path> = mutableSetOf()
+        fun codeSummary() = codeFiles.filter {
+            root!!.resolve(it).toFile().exists()
+        }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
+            .entries.joinToString("\n\n") { (path, code) ->
+                val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+                """
             |# $path
             |```$extension
             |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
             |```
             """.trimMargin()
-        }
-
-    override fun handle(event: AnActionEvent) {
+            }
 
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
@@ -75,7 +74,7 @@ class CreateImageAction : BaseAction() {
             DataStorage.sessionPaths[session] = root?.toFile()!!
         }
 
-        agents[session] = PatchApp(event, root!!.toFile())
+        agents[session] = PatchApp(event, root!!.toFile(), ::codeSummary)
 
         val server = AppServer.getServer(event.project)
         val app = initApp(server, path)
@@ -93,7 +92,8 @@ class CreateImageAction : BaseAction() {
 
     inner class PatchApp(
         private val event: AnActionEvent,
-        override val root: File
+        override val root: File,
+        val codeSummary: () -> String = { "" },
     ) : ApplicationServer(
         applicationName = "Multi-file Patch Chat",
         path = path,
@@ -118,6 +118,7 @@ class CreateImageAction : BaseAction() {
                 user = user,
                 ui = ui,
                 model = settings.model!!,
+                codeSummary = { codeSummary() },
                 event = event,
                 root = root,
             ).start(
@@ -137,6 +138,7 @@ class CreateImageAction : BaseAction() {
         user: User?,
         val ui: ApplicationInterface,
         val model: ChatModels,
+        val codeSummary: () -> String = { "" },
         actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
             ActorTypes.MainActor to ImageActor(
                 prompt = """
