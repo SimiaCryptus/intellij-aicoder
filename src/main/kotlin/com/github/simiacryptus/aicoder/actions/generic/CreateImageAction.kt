@@ -1,11 +1,10 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
+import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -14,30 +13,31 @@ import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
-import com.simiacryptus.skyenet.core.actors.ActorSystem
-import com.simiacryptus.skyenet.core.actors.BaseActor
-import com.simiacryptus.skyenet.core.actors.SimpleActor
+import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
+import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
+import javax.imageio.ImageIO
 
-class MultiDiffChatAction : BaseAction() {
+class CreateImageAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    val path = "/multiDiffChat"
+    val path = "/imageCreator"
 
     override fun handle(event: AnActionEvent) {
-
         var root: Path? = null
         val codeFiles: MutableSet<Path> = mutableSetOf()
         fun codeSummary() = codeFiles.filter {
@@ -58,6 +58,8 @@ class MultiDiffChatAction : BaseAction() {
         val folder = UITools.getSelectedFolder(event)
         root = if (null != folder) {
             folder.toFile.toPath()
+        } else if (1 == virtualFiles?.size){
+            UITools.getSelectedFile(event)?.parent?.toNioPath()
         } else {
             getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
         }
@@ -66,8 +68,13 @@ class MultiDiffChatAction : BaseAction() {
         codeFiles.addAll(files)
 
         val session = StorageInterface.newGlobalID()
+//        val storage = ApplicationServices.dataStorageFactory(root?.toFile()!!) as DataStorage?
+//        val selectedFile = UITools.getSelectedFolder(event)
+        if (/*null != storage &&*/ null != root) {
+            DataStorage.sessionPaths[session] = root?.toFile()!!
+        }
 
-        agents[session] = PatchApp(event, root!!.toFile(), { codeSummary() }, codeFiles)
+        agents[session] = PatchApp(event, root!!.toFile(), ::codeSummary)
 
         val server = AppServer.getServer(event.project)
         val app = initApp(server, path)
@@ -86,8 +93,7 @@ class MultiDiffChatAction : BaseAction() {
     inner class PatchApp(
         private val event: AnActionEvent,
         override val root: File,
-        val codeSummary: () -> String,
-        val codeFiles: Set<Path> = setOf(),
+        val codeSummary: () -> String = { "" },
     ) : ApplicationServer(
         applicationName = "Multi-file Patch Chat",
         path = path,
@@ -112,10 +118,9 @@ class MultiDiffChatAction : BaseAction() {
                 user = user,
                 ui = ui,
                 model = settings.model!!,
+                codeSummary = { codeSummary() },
                 event = event,
                 root = root,
-                codeSummary = { codeSummary() },
-                codeFiles = { codeFiles },
             ).start(
                 userMessage = userMessage,
             )
@@ -133,53 +138,19 @@ class MultiDiffChatAction : BaseAction() {
         user: User?,
         val ui: ApplicationInterface,
         val model: ChatModels,
-        val codeSummary: () -> String,
-        val codeFiles: () -> Set<Path>,
+        val codeSummary: () -> String = { "" },
         actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
-            ActorTypes.MainActor to SimpleActor(
+            ActorTypes.MainActor to ImageActor(
                 prompt = """
-                        |You are a helpful AI that helps people with coding.
+                        |You are a technical drawing assistant.
                         |
-                        |You will be answering questions about the following code:
+                        |You will be composing an image about the following code:
                         |
                         |${codeSummary()}
                         |
-                        |Response should use one or more code patches in diff format within ```diff code blocks.
-                        |Each diff should be preceded by a header that identifies the file being modified.
-                        |The diff format should use + for line additions, - for line deletions.
-                        |The diff should include 2 lines of context before and after every change.
-                        |
-                        |Example:
-                        |
-                        |Here are the patches:
-                        |
-                        |### src/utils/exampleUtils.js
-                        |```diff
-                        | // Utility functions for example feature
-                        | const b = 2;
-                        | function exampleFunction() {
-                        |-   return b + 1;
-                        |+   return b + 2;
-                        | }
-                        |```
-                        |
-                        |### tests/exampleUtils.test.js
-                        |```diff
-                        | // Unit tests for exampleUtils
-                        | const assert = require('assert');
-                        | const { exampleFunction } = require('../src/utils/exampleUtils');
-                        | 
-                        | describe('exampleFunction', () => {
-                        |-   it('should return 3', () => {
-                        |+   it('should return 4', () => {
-                        |     assert.equal(exampleFunction(), 3);
-                        |   });
-                        | });
-                        |```
-                        |
-                        |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
                         """.trimMargin(),
-                model = model
+                textModel = model,
+                imageModel = ImageModels.DallE3
             ),
         ),
         val event: AnActionEvent,
@@ -188,7 +159,7 @@ class MultiDiffChatAction : BaseAction() {
         actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session
     ) {
 
-        private val mainActor by lazy { getActor(ActorTypes.MainActor) as SimpleActor }
+        private val mainActor by lazy { getActor(ActorTypes.MainActor) as ImageActor }
 
         fun start(
             userMessage: String,
@@ -200,27 +171,21 @@ class MultiDiffChatAction : BaseAction() {
                 userMessage = { userMessage },
                 heading = userMessage,
                 initialResponse = { it: String -> mainActor.answer(toInput(it), api = api) },
-                outputFn = { design: String ->
-                    var markdown = ui.socketManager.addApplyFileDiffLinks(
-                        root = root.toPath(),
-                        code = { codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
-                        response = design,
-                        handle = { newCodeMap ->
-                            newCodeMap.forEach { (path, newCode) ->
-                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                            }
-                        },
-                        ui = ui,
+                outputFn = { img: ImageResponse ->
+                    val id = UUID.random().text
+                    renderMarkdown(
+                        "<img src='${
+                            task.saveFile(
+                                "$id.png",
+                                write(img, root.resolve("$id.png").toPath())
+                            )
+                        }' style='max-width: 100%;'/><img src='${
+                            task.saveFile(
+                                "$id.jpg",
+                                write(img, root.resolve("$id.jpg").toPath())
+                            )
+                        }' style='max-width: 100%;'/>", ui = ui
                     )
-                    markdown = ui.socketManager.addSaveLinks(
-                        response = markdown,
-                        task = task,
-                        ui = ui,
-                        handle = { path, newCode ->
-                            root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                        },
-                    )
-                    """<div>${renderMarkdown(markdown)}</div>"""
                 },
                 ui = ui,
                 reviseResponse = { userMessages: List<Pair<String, Role>> ->
@@ -235,6 +200,19 @@ class MultiDiffChatAction : BaseAction() {
                 semaphore = Semaphore(0),
             ).call()
         }
+    }
+    private fun write(
+        code: ImageResponse,
+        path: Path
+    ): ByteArray {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        val data = ImageIO.write(
+            code.image,
+            path.toString().split(".").last(),
+            byteArrayOutputStream
+        )
+        val bytes = byteArrayOutputStream.toByteArray()
+        return bytes
     }
 
     private fun getFiles(
@@ -256,7 +234,7 @@ class MultiDiffChatAction : BaseAction() {
     override fun isEnabled(event: AnActionEvent) = true
 
     companion object {
-        private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
+        private val log = LoggerFactory.getLogger(CreateImageAction::class.java)
         private val agents = mutableMapOf<Session, ApplicationServer>()
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
