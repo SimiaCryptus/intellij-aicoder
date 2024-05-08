@@ -1,8 +1,8 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.github.simiacryptus.diff.DiffMatchPatch
-import com.github.simiacryptus.diff.DiffMatchPatch.Diff
-import com.github.simiacryptus.diff.DiffMatchPatch.Operation.*
+import com.simiacryptus.diff.DiffMatchPatch
+import com.simiacryptus.diff.DiffMatchPatch.Diff
+import com.simiacryptus.diff.DiffMatchPatch.Operation.*
 import org.junit.Assert
 import org.junit.Test
 import java.util.*

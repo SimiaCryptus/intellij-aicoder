@@ -4,12 +4,12 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.util.UITools
+import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.addSaveLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
