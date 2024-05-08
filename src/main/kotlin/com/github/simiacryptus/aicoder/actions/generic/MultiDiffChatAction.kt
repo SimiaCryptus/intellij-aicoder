@@ -5,11 +5,11 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.GPT4Tokenizer
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
@@ -45,15 +45,16 @@ class MultiDiffChatAction : BaseAction() {
 
         val codeFiles = getFiles(virtualFiles, root)
 
-        fun codeSummary() = codeFiles.entries.joinToString("\n\n") { (path, code) ->
-            val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-            """
+        fun codeSummary() = codeFiles.associateWith { it.toFile().readText(Charsets.UTF_8) }
+            .entries.joinToString("\n\n") { (path, code) ->
+                val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+                """
             |# $path
             |```$extension
             |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
             |```
             """.trimMargin()
-        }
+            }
 
         val session = StorageInterface.newGlobalID()
         //DataStorage.sessionPaths[session] = root.toFile()
@@ -66,12 +67,13 @@ class MultiDiffChatAction : BaseAction() {
             userInterfacePrompt = """
                 |
                 |${
-                    codeFiles.entries.joinToString("\n\n") { (path, code) ->
+                codeFiles.associateWith { it.toFile().readText(Charsets.UTF_8) }
+                    .entries.joinToString("\n\n") { (path, code) ->
                         """
-                        |* $path - ${ codex.estimateTokenCount(code) } tokens
+                        |* $path - ${codex.estimateTokenCount(code)} tokens
                         """.trimMargin()
                     }
-                }
+            }
                 |
                 """.trimMargin().trim(),
             systemPrompt = """
@@ -122,7 +124,7 @@ class MultiDiffChatAction : BaseAction() {
             override fun renderResponse(response: String, task: SessionTask): String {
                 val html = addApplyFileDiffLinks(
                     root = root,
-                    code = { codeFiles },
+                    code = { codeFiles.associateWith { it.toFile().readText(Charsets.UTF_8) } },
                     response = response,
                     handle = { newCodeMap ->
                         newCodeMap.forEach { (path, newCode) ->
@@ -152,14 +154,14 @@ class MultiDiffChatAction : BaseAction() {
     private fun getFiles(
         virtualFiles: Array<out VirtualFile>?,
         root: Path
-    ): MutableMap<Path, String> {
-        val codeFiles = mutableMapOf<Path, String>()
+    ): MutableSet<Path> {
+        val codeFiles = mutableSetOf<Path>()
         virtualFiles?.forEach { file ->
-            if(file.isDirectory) {
+            if (file.isDirectory) {
                 getFiles(file.children, root)
             } else {
                 val relative = root.relativize(file.toNioPath())
-                codeFiles[relative] = file.contentsToByteArray().toString(Charsets.UTF_8)
+                codeFiles.add(relative) //[] = file.contentsToByteArray().toString(Charsets.UTF_8)
             }
         }
         return codeFiles
@@ -179,7 +181,7 @@ class MultiDiffChatAction : BaseAction() {
                 showMenubar = false,
             ) {
                 override val singleInput = false
-                override val stickyInput = false
+                override val stickyInput = true
                 override fun newSession(user: User?, session: Session) = agents[session]!!
             }
             server.addApp(path, socketServer)
