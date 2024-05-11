@@ -3,23 +3,25 @@
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.GPT4Tokenizer
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
-import com.simiacryptus.skyenet.core.actors.ActorSystem
-import com.simiacryptus.skyenet.core.actors.BaseActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
-import com.simiacryptus.skyenet.core.platform.*
+import com.simiacryptus.skyenet.core.platform.ClientManager
+import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
@@ -37,7 +39,6 @@ class MultiDiffChatAction : BaseAction() {
     val path = "/multiDiffChat"
 
     override fun handle(event: AnActionEvent) {
-
         var root: Path? = null
         val codeFiles: MutableSet<Path> = mutableSetOf()
         fun codeSummary() = codeFiles.filter {
@@ -64,11 +65,8 @@ class MultiDiffChatAction : BaseAction() {
 
         val files = getFiles(virtualFiles, root!!)
         codeFiles.addAll(files)
-
         val session = StorageInterface.newGlobalID()
-
         agents[session] = PatchApp(event, root!!.toFile(), { codeSummary() }, codeFiles)
-
         val server = AppServer.getServer(event.project)
         val app = initApp(server, path)
         app.sessions[session] = app.newSession(null, session)
@@ -95,48 +93,8 @@ class MultiDiffChatAction : BaseAction() {
     ) {
         override val singleInput = false
         override val stickyInput = true
-
-        override fun userMessage(
-            session: Session,
-            user: User?,
-            userMessage: String,
-            ui: ApplicationInterface,
-            api: API
-        ) {
-            val settings = getSettings(session, user) ?: Settings()
-            if (api is ClientManager.MonitoredClient) api.budget = settings.budget ?: 2.00
-            PatchAgent(
-                api = api,
-                dataStorage = dataStorage,
-                session = session,
-                user = user,
-                ui = ui,
-                model = settings.model!!,
-                event = event,
-                root = root,
-                codeSummary = { codeSummary() },
-                codeFiles = { codeFiles },
-            ).start(
-                userMessage = userMessage,
-            )
-        }
-    }
-
-    enum class ActorTypes {
-        MainActor,
-    }
-
-    inner class PatchAgent(
-        val api: API,
-        dataStorage: StorageInterface,
-        session: Session,
-        user: User?,
-        val ui: ApplicationInterface,
-        val model: ChatModels,
-        val codeSummary: () -> String,
-        val codeFiles: () -> Set<Path>,
-        actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
-            ActorTypes.MainActor to SimpleActor(
+        private val mainActor: SimpleActor
+            get() = SimpleActor(
                 prompt = """
                         |You are a helpful AI that helps people with coding.
                         |
@@ -179,31 +137,34 @@ class MultiDiffChatAction : BaseAction() {
                         |
                         |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
                         """.trimMargin(),
-                model = model
-            ),
-        ),
-        val event: AnActionEvent,
-        val root: File,
-    ) : ActorSystem<ActorTypes>(
-        actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session
-    ) {
+                model = AppSettingsState.instance.defaultSmartModel()
+            )
 
-        private val mainActor by lazy { getActor(ActorTypes.MainActor) as SimpleActor }
-
-        fun start(
+        override fun userMessage(
+            session: Session,
+            user: User?,
             userMessage: String,
+            ui: ApplicationInterface,
+            api: API
         ) {
+            val settings = getSettings(session, user) ?: Settings()
+            if (api is ClientManager.MonitoredClient) api.budget = settings.budget ?: 2.00
+
             val task = ui.newTask()
+            val codex = GPT4Tokenizer()
+            task.header(renderMarkdown(codeFiles.joinToString("\n") { path ->
+                "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
+            }))
             val toInput = { it: String -> listOf(codeSummary(), it) }
             Discussable(
                 task = task,
                 userMessage = { userMessage },
-                heading = userMessage,
+                heading = renderMarkdown(userMessage),
                 initialResponse = { it: String -> mainActor.answer(toInput(it), api = api) },
                 outputFn = { design: String ->
                     var markdown = ui.socketManager.addApplyFileDiffLinks(
                         root = root.toPath(),
-                        code = { codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
+                        code = { codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
                         response = design,
                         handle = { newCodeMap ->
                             newCodeMap.forEach { (path, newCode) ->
@@ -236,6 +197,7 @@ class MultiDiffChatAction : BaseAction() {
             ).call()
         }
     }
+
 
     private fun getFiles(
         virtualFiles: Array<out VirtualFile>?,
