@@ -741,7 +741,7 @@ object UITools {
         }
     }
 
-    fun checkApiKey(k: String = AppSettingsState.instance.apiKey?.values?.first() ?: ""): String {
+    fun checkApiKey(k: String = AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""): String {
 //    var key = k
 //    if (key.isEmpty() || key != AppSettingsState.instance.apiKey) {
 //      synchronized(OpenAIClient::class.java) {

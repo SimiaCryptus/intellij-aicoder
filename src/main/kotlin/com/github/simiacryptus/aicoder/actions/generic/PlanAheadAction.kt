@@ -232,7 +232,7 @@ class PlanAheadAgent(
     dataStorage: StorageInterface,
     val ui: ApplicationInterface,
     val api: API,
-    model: ChatModels = ChatModels.GPT4Turbo,
+    model: ChatModels = ChatModels.GPT4o,
     parsingModel: ChatModels = ChatModels.GPT35Turbo,
     temperature: Double = 0.3,
     val taskPlanningEnabled: Boolean,

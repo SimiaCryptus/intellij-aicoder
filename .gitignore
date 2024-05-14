@@ -16,3 +16,4 @@ settings.gradle.kts
 tokens
 
 html-games.iml
+*.iml

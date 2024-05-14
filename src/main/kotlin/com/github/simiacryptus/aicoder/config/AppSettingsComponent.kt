@@ -15,11 +15,13 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.table.JBTable
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import java.awt.event.ActionEvent
 import java.io.FileOutputStream
 import javax.swing.AbstractAction
 import javax.swing.JButton
+import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.table.DefaultTableCellRenderer
@@ -50,6 +52,10 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     @Suppress("unused")
     @Name("Model")
     val fastModel = ComboBox<String>()
+
+    @Suppress("unused")
+    @Name("Main Image Model")
+    val mainImageModel = ComboBox<String>()
 
     @Suppress("unused")
     @Name("Enable API Log")
@@ -155,6 +161,9 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
                 this.smartModel.addItem(it.value.modelName)
                 this.fastModel.addItem(it.value.modelName)
             }
+        ImageModels.values().forEach {
+            this.mainImageModel.addItem(it.name)
+        }
         // Sort the items in the ComboBoxes
         val smartModelItems = (0 until smartModel.itemCount).map { smartModel.getItemAt(it) }.sortedBy { modelItem ->
             val model = ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
@@ -170,9 +179,10 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         this.fastModel.isEditable = true
         this.smartModel.renderer = getModelRenderer()
         this.fastModel.renderer = getModelRenderer()
+        this.mainImageModel.isEditable = true
+        this.mainImageModel.renderer = getImageModelRenderer()
     }
 
-    companion object;
 
     override fun dispose() {
     }
@@ -190,6 +200,18 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
                 val model = ChatModels.values().entries.find { it.value.modelName == value }?.value
                 text = "${model?.provider?.name} - $value"
             }
+        }
+    }
+
+    private fun getImageModelRenderer(): ListCellRenderer<in String> = object : SimpleListCellRenderer<String>() {
+        override fun customize(
+            list: JList<out String>,
+            value: String?,
+            index: Int,
+            selected: Boolean,
+            hasFocus: Boolean
+        ) {
+            text = value // Here you can add more customization if needed
         }
     }
 }

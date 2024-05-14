@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.config
 
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.imageModel
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.simiacryptus.jopenai.models.APIProvider
 import java.awt.BorderLayout
@@ -42,6 +43,10 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                 add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                     add(JLabel("Fast Model:"))
                     add(component.fastModel)
+                })
+                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                    add(JLabel("Main Image Model:"))
+                    add(component.mainImageModel)
                 })
                 add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                     add(JLabel("Temperature:"))
@@ -130,6 +135,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             component.apiLog.isSelected = settings.apiLog
             component.devActions.isSelected = settings.devActions
             component.editRequests.isSelected = settings.editRequests
+            component.mainImageModel.selectedItem = settings.mainImageModel
             component.temperature.text = settings.temperature.toString()
             component.pluginHome.text = settings.pluginHome.absolutePath
             component.shellCommand.text = settings.shellCommand
@@ -159,6 +165,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             settings.devActions = component.devActions.isSelected
             settings.editRequests = component.editRequests.isSelected
             settings.temperature = component.temperature.text.safeDouble()
+            settings.mainImageModel = (component.mainImageModel.selectedItem as String)
             settings.pluginHome = File(component.pluginHome.text)
             settings.shellCommand = component.shellCommand.text
             settings.enableLegacyActions = component.enableLegacyActions.isSelected
