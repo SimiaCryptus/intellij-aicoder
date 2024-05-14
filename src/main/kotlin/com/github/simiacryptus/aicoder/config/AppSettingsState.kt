@@ -7,6 +7,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.util.JsonUtil
 import java.io.File
 import java.util.*
@@ -16,6 +17,7 @@ data class AppSettingsState(
     var temperature: Double = 0.1,
     var smartModel: String = ChatModels.GPT35Turbo.modelName,
     var fastModel: String = ChatModels.GPT35Turbo.modelName,
+    var mainImageModel: String = ImageModels.DallE3.modelName,
     var listeningPort: Int = 8081,
     var listeningEndpoint: String = "localhost",
     var humanLanguage: String = "English",
@@ -49,6 +51,7 @@ data class AppSettingsState(
 
     fun defaultSmartModel() = smartModel.chatModel()
     fun defaultFastModel() = fastModel.chatModel()
+    fun defaultMainImageModel() = mainImageModel.imageModel()
 
     @JsonIgnore
     override fun getState(): SimpleEnvelope {
@@ -93,6 +96,7 @@ data class AppSettingsState(
         if (temperature != other.temperature) return false
         if (smartModel != other.smartModel) return false
         if (fastModel != other.fastModel) return false
+        if (mainImageModel != other.mainImageModel) return false
         if (listeningPort != other.listeningPort) return false
         if (listeningEndpoint != other.listeningEndpoint) return false
         if (humanLanguage != other.humanLanguage) return false
@@ -108,6 +112,7 @@ data class AppSettingsState(
         if (recentCommands != other.recentCommands) return false
         if (showWelcomeScreen != other.showWelcomeScreen) return false
         if (greetedVersion != other.greetedVersion) return false
+        if (mainImageModel != other.mainImageModel) return false
         if (enableLegacyActions != other.enableLegacyActions) return false
         return true
     }
@@ -117,6 +122,7 @@ data class AppSettingsState(
         result = 31 * result + smartModel.hashCode()
         result = 31 * result + enableLegacyActions.hashCode()
         result = 31 * result + fastModel.hashCode()
+        result = 31 * result + mainImageModel.hashCode()
         result = 31 * result + listeningPort
         result = 31 * result + listeningEndpoint.hashCode()
         result = 31 * result + humanLanguage.hashCode()
@@ -132,6 +138,7 @@ data class AppSettingsState(
         result = 31 * result + recentCommands.hashCode()
         result = 31 * result + showWelcomeScreen.hashCode()
         result = 31 * result + greetedVersion.hashCode()
+        result = 31 * result + mainImageModel.hashCode()
         return result
     }
 
@@ -148,6 +155,12 @@ data class AppSettingsState(
             return ChatModels.values().entries.firstOrNull {
                 it.value.modelName == this || it.key == this
             }?.value ?: ChatModels.GPT35Turbo
+        }
+
+        fun String.imageModel(): ImageModels {
+            return ImageModels.values().firstOrNull {
+                it.modelName == this || it.name == this
+            } ?: ImageModels.DallE3
         }
 
         private fun getDefaultShell(): String {

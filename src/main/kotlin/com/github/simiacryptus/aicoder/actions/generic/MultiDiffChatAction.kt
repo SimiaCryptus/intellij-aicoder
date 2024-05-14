@@ -208,8 +208,7 @@ class MultiDiffChatAction : BaseAction() {
             if (file.isDirectory) {
                 getFiles(file.children, root)
             } else {
-                val relative = root.relativize(file.toNioPath())
-                codeFiles.add(relative) //[] = file.contentsToByteArray().toString(Charsets.UTF_8)
+                codeFiles.add(root.relativize(file.toNioPath()))
             }
         }
         return codeFiles

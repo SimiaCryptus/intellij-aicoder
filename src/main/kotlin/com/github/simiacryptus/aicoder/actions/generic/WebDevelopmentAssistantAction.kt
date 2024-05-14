@@ -111,7 +111,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
         data class Settings(
             val budget: Double? = 2.00,
             val tools: List<String> = emptyList(),
-            val model: ChatModels = ChatModels.GPT4Turbo,
+            val model: ChatModels = ChatModels.GPT4o,
             val parsingModel: ChatModels = ChatModels.GPT35Turbo,
         )
 
