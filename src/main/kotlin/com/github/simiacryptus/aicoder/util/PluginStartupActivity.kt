@@ -9,6 +9,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.*
+import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.file.UsageManager
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -101,6 +102,8 @@ class PluginStartupActivity : ProjectActivity {
             override fun logout(accessToken: String, user: User) {}
         }
         ApplicationServices.isLocked = true
+        val resolve = AppSettingsState.instance.pluginHome.resolve(".sys")
+        DataStorage.SYS_DIR = resolve.apply { mkdirs() }
     }
 
 
