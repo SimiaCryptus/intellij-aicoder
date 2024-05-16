@@ -27,7 +27,7 @@ import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
-import com.simiacryptus.skyenet.webui.servlet.ToolServlet
+//import com.simiacryptus.skyenet.webui.servlet.ToolServlet
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -284,10 +284,10 @@ class WebDevelopmentAssistantAction : BaseAction() {
 
 
             try {
-                val toolSpecs = tools.map { ToolServlet.tools.find { t -> t.path == it } }
-                    .joinToString("\n\n") { it?.let { JsonUtil.toJson(it.openApiDescription) } ?: "" }
+//                val toolSpecs = tools.map { ToolServlet.tools.find { t -> t.path == it } }
+//                    .joinToString("\n\n") { it?.let { JsonUtil.toJson(it.openApiDescription) } ?: "" }
                 var messageWithTools = userMessage
-                if (toolSpecs.isNotBlank()) messageWithTools += "\n\nThese services are available:\n$toolSpecs"
+//                if (toolSpecs.isNotBlank()) messageWithTools += "\n\nThese services are available:\n$toolSpecs"
                 task.echo(
                     renderMarkdown(
                         "```json\n${JsonUtil.toJson(architectureResponse.obj)/*.indent("  ")*/}\n```",
