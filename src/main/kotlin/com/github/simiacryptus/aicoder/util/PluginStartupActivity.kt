@@ -102,8 +102,7 @@ class PluginStartupActivity : ProjectActivity {
             override fun logout(accessToken: String, user: User) {}
         }
         ApplicationServices.isLocked = true
-        val resolve = AppSettingsState.instance.pluginHome.resolve(".sys")
-        DataStorage.SYS_DIR = resolve.apply { mkdirs() }
+        val resolve = AppSettingsState.instance.pluginHome.resolve(".skyenet")
     }
 
 
