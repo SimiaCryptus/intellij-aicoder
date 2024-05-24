@@ -21,7 +21,6 @@ import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
-import java.io.File
 
 class LineFilterChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -74,7 +73,7 @@ class LineFilterChatAction : BaseAction() {
         """.trimMargin(),
             api = api,
             applicationClass = ApplicationServer::class.java,
-            storage = ApplicationServices.dataStorageFactory(root),
+            storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
         ) {
             override fun canWrite(user: User?): Boolean = true
             override fun renderResponse(response: String, task: SessionTask): String {
@@ -109,7 +108,6 @@ class LineFilterChatAction : BaseAction() {
     companion object {
         private val log = LoggerFactory.getLogger(LineFilterChatAction::class.java)
         private val agents = mutableMapOf<Session, SocketManager>()
-        val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(

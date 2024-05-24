@@ -42,7 +42,7 @@ class MultiStepPatchAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         val session = StorageInterface.newGlobalID()
-        val storage = ApplicationServices.dataStorageFactory(DiffChatAction.root) as DataStorage?
+        val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
         val selectedFile = UITools.getSelectedFolder(e)
         if (null != storage && null != selectedFile) {
             DataStorage.sessionPaths[session] = selectedFile.toFile

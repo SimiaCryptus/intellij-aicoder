@@ -19,7 +19,6 @@ import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
-import java.io.File
 
 class CodeChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -39,7 +38,7 @@ class CodeChatAction : BaseAction() {
             filename = filename,
             api = api,
             model = AppSettingsState.instance.smartModel.chatModel(),
-            storage = ApplicationServices.dataStorageFactory(root)
+            storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
         )
 
         val server = AppServer.getServer(e.project)
@@ -61,7 +60,6 @@ class CodeChatAction : BaseAction() {
     companion object {
         private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
         private val agents = mutableMapOf<Session, SocketManager>()
-        val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(

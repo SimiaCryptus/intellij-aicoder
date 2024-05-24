@@ -26,7 +26,6 @@ import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
-import java.io.File
 
 class DiffChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -60,7 +59,7 @@ class DiffChatAction : BaseAction() {
             filename = filename,
             api = api,
             model = AppSettingsState.instance.smartModel.chatModel(),
-            storage = ApplicationServices.dataStorageFactory(root)
+            storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
         ) {
             override val systemPrompt: String
                 @Language("Markdown")
@@ -143,7 +142,6 @@ class DiffChatAction : BaseAction() {
     companion object {
         private val log = LoggerFactory.getLogger(DiffChatAction::class.java)
         private val agents = mutableMapOf<Session, SocketManager>()
-        val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(

@@ -4,12 +4,8 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
-import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
-import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
@@ -20,7 +16,6 @@ import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
-import java.io.File
 
 class GenericChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -39,7 +34,7 @@ class GenericChatAction : BaseAction() {
             userInterfacePrompt = userInterfacePrompt,
             systemPrompt = systemPrompt,
             api = api,
-            storage = ApplicationServices.dataStorageFactory(root),
+            storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
             applicationClass = ApplicationServer::class.java,
         )
 
@@ -62,7 +57,6 @@ class GenericChatAction : BaseAction() {
     companion object {
         private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
         private val agents = mutableMapOf<Session, SocketManager>()
-        val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
         private fun initApp(server: AppServer, path: String): ChatServer {
             server.appRegistry[path]?.let { return it }
             val socketServer = object : ApplicationServer(

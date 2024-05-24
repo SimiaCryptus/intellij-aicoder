@@ -25,7 +25,7 @@ repositories {
 val kotlin_version = "2.0.0-Beta5"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.72"
+val skyenet_version = "1.0.73"
 val remoterobot_version = "0.11.21"
 val jackson_version = "2.17.0"
 
@@ -40,7 +40,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.56")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.57")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
