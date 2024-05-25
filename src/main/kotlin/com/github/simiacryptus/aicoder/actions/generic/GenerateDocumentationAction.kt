@@ -226,7 +226,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
     }
 }
 
-private val <T> CheckBoxList<T>.items: List<T>
+val <T> CheckBoxList<T>.items: List<T>
     get() {
         val items = mutableListOf<T>()
         for (i in 0 until model.size) {

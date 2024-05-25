@@ -25,11 +25,13 @@ repositories {
 val kotlin_version = "2.0.0-Beta5"
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.71"
+val skyenet_version = "1.0.74"
 val remoterobot_version = "0.11.21"
 val jackson_version = "2.17.0"
 
 dependencies {
+    implementation("software.amazon.awssdk:bedrock:2.25.7")
+    implementation("software.amazon.awssdk:bedrockruntime:2.25.7")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 
@@ -40,7 +42,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.56")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.57")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }

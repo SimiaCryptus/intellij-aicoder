@@ -2,6 +2,7 @@
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
@@ -14,19 +15,13 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
-import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
-import java.io.File
 
 class DiffChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -53,14 +48,14 @@ class DiffChatAction : BaseAction() {
             selectionStart = 0
             selectionEnd = rawText.length
         }
-        agents[session] = object : CodeChatSocketManager(
+        SessionProxyServer.agents[session] = object : CodeChatSocketManager(
             session = session,
             language = language,
             codeSelection = rawText,
             filename = filename,
             api = api,
             model = AppSettingsState.instance.smartModel.chatModel(),
-            storage = ApplicationServices.dataStorageFactory(root)
+            storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
         ) {
             override val systemPrompt: String
                 @Language("Markdown")
@@ -117,21 +112,23 @@ class DiffChatAction : BaseAction() {
                                 selectionEnd = selectionStart + newCode.length
                                 document.replaceString(selectionStart, selectionStart + rawText.length, newCode)
                             }
-                        }, 
-                        task = task, 
+                        },
+                        task = task,
                         ui = ui
                     )
-                )}</div>"""
+                )
+            }</div>"""
         }
 
         val server = AppServer.getServer(e.project)
-        val app = initApp(server, path)
-        app.sessions[session] = app.newSession(null, session)
 
         Thread {
             Thread.sleep(500)
             try {
-                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+
+                val uri = server.server.uri.resolve("/#$session")
+                BaseAction.log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -142,22 +139,5 @@ class DiffChatAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(DiffChatAction::class.java)
-        private val agents = mutableMapOf<Session, SocketManager>()
-        val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
-        private fun initApp(server: AppServer, path: String): ChatServer {
-            server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(
-                applicationName = "Patch Chat",
-                path = path,
-                showMenubar = false,
-            ) {
-                override val singleInput = false
-                override val stickyInput = true
-                override fun newSession(user: User?, session: Session) = agents[session]!!
-            }
-            server.addApp(path, socketServer)
-            return socketServer
-        }
-
     }
 }

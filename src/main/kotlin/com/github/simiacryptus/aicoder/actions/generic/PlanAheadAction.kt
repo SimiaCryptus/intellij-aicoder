@@ -1,12 +1,10 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
-import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
@@ -15,14 +13,16 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
+import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
-import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.AgentPatterns.displayMapInTabs
+import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.apps.coding.CodingAgent
@@ -37,7 +37,6 @@ import com.simiacryptus.skyenet.interpreter.ProcessInterpreter
 import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -121,13 +120,14 @@ class PlanAheadAction : BaseAction() {
             // Settings are applied only if the user clicks OK
             val session = StorageInterface.newGlobalID()
             val folder = UITools.getSelectedFolder(e)
-            val root = folder?.toFile ?: getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException(""))
+            val root = folder?.toFile ?: getModuleRootForFile(
+                UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")
+            )
 
             DataStorage.sessionPaths[session] = root
-            PlanAheadApp.agents[session] = PlanAheadApp(event = e, root = root, settings = settings)
+            SessionProxyServer.chats[session] = PlanAheadApp(event = e, root = root, settings = settings)
             val server = AppServer.getServer(project)
-            val app = PlanAheadApp.initApp(server, path)
-            app.sessions[session] = app.newSession(null, session)
+
             openBrowser(server, session.toString())
         }
     }
@@ -136,7 +136,10 @@ class PlanAheadAction : BaseAction() {
         Thread {
             Thread.sleep(500)
             try {
-                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+
+                val uri = server.server.uri.resolve("/#$session")
+                log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 LoggerFactory.getLogger(PlanAheadAction::class.java).warn("Error opening browser", e)
             }
@@ -206,22 +209,6 @@ class PlanAheadApp(
     }
 
     companion object {
-        fun initApp(server: AppServer, path: String): ChatServer {
-            server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(
-                applicationName = "Task Planning Agent",
-                path = path,
-                showMenubar = false,
-            ) {
-                override val singleInput = true
-                override val stickyInput = false
-                override fun newSession(user: User?, session: Session) = agents[session]!!.newSession(user, session)
-            }
-            server.addApp(path, socketServer)
-            return socketServer
-        }
-
-        val agents = mutableMapOf<Session, PlanAheadApp>()
         private val log = LoggerFactory.getLogger(PlanAheadApp::class.java)
     }
 }
@@ -799,7 +786,7 @@ class PlanAheadAgent(
                 ).filter { it.isNotBlank() }, api
             )
             genState.taskResult[taskId] = codeResult
-            renderMarkdown(ui.socketManager.addSaveLinks(codeResult, task, ui = ui) { path, newCode ->
+            renderMarkdown(ui.socketManager!!.addSaveLinks(codeResult, task, ui = ui) { path, newCode ->
                 val prev = codeFiles[path]
                 if (prev != newCode) {
                     val bytes = newCode.toByteArray(Charsets.UTF_8)
@@ -845,7 +832,7 @@ class PlanAheadAgent(
             )
             genState.taskResult[taskId] = codeResult
             renderMarkdown(
-                ui.socketManager.addApplyFileDiffLinks(
+                ui.socketManager!!.addApplyFileDiffLinks(
                     root = root,
                     code = { codeFiles },
                     response = codeResult,

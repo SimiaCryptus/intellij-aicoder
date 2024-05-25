@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.config
 
 
+import com.github.simiacryptus.aicoder.ui.SettingsWidgetFactory.SettingsWidget.Companion.isVisible
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -21,7 +22,6 @@ import java.awt.event.ActionEvent
 import java.io.FileOutputStream
 import javax.swing.AbstractAction
 import javax.swing.JButton
-import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.table.DefaultTableCellRenderer
@@ -156,7 +156,10 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
 
     init {
         ChatModels.values()
-            .filter { AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name) ?: false }
+            .filter {
+                AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name)
+                    ?: false
+            }
             .forEach {
                 this.smartModel.addItem(it.value.modelName)
                 this.fastModel.addItem(it.value.modelName)
@@ -165,12 +168,24 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
             this.mainImageModel.addItem(it.name)
         }
         // Sort the items in the ComboBoxes
-        val smartModelItems = (0 until smartModel.itemCount).map { smartModel.getItemAt(it) }.sortedBy { modelItem ->
-            val model = ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
-            "${model.provider.name} - ${model.modelName}" }.toList()
-        val fastModelItems = (0 until fastModel.itemCount).map { fastModel.getItemAt(it) }.sortedBy { modelItem ->
-            val model = ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
-            "${model.provider.name} - ${model.modelName}" }.toList()
+        val smartModelItems = (0 until smartModel.itemCount).map { smartModel.getItemAt(it) }
+            .filter {  modelItem ->
+                isVisible(ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@filter false)
+            }
+            .sortedBy { modelItem ->
+                val model =
+                    ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
+                "${model.provider.name} - ${model.modelName}"
+            }.toList()
+        val fastModelItems = (0 until fastModel.itemCount).map { fastModel.getItemAt(it) }
+            .filter {  modelItem ->
+                isVisible(ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@filter false)
+            }
+            .sortedBy { modelItem ->
+                val model =
+                    ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
+                "${model.provider.name} - ${model.modelName}"
+            }.toList()
         smartModel.removeAllItems()
         fastModel.removeAllItems()
         smartModelItems.forEach { smartModel.addItem(it) }

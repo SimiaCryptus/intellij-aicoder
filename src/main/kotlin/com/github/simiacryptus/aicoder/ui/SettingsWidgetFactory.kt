@@ -10,9 +10,19 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
+import com.simiacryptus.jopenai.OpenAIClient.AWSAuth
+import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.util.JsonUtil
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.bedrock.BedrockClient
+import software.amazon.awssdk.services.bedrock.model.FoundationModelLifecycleStatus
+import software.amazon.awssdk.services.bedrock.model.GetFoundationModelRequest
+import software.amazon.awssdk.services.bedrock.model.GetProvisionedModelThroughputRequest
+import software.amazon.awssdk.services.bedrock.model.ListFoundationModelsRequest
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Desktop
@@ -44,10 +54,8 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
             }
         }
 
-        fun models() = ChatModels.values().filter {
-            AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name)
-                ?: false
-        }.entries.sortedBy { "${it.value.provider.name} - ${it.value.modelName}" }.map { it.value }.toList()
+        fun models() = ChatModels.values().filter { isVisible(it.value) }
+            .entries.sortedBy { "${it.value.provider.name} - ${it.value.modelName}" }.map { it.value }.toList()
 
         override fun ID(): String {
             return "AICodingAssistant.SettingsWidget"
@@ -130,6 +138,31 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
             }
 
             return popup
+        }
+
+        companion object {
+            fun isVisible(it: ChatModels): Boolean {
+                val hasApiKey =
+                    AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.provider.name)
+                if(false == hasApiKey) return false
+/*
+                if (it.provider == APIProvider.AWS) {
+                    val modelName = it.modelName
+                    val awsAuth = JsonUtil.fromJson<AWSAuth>(AppSettingsState.instance.apiKey?.get(it.provider.name)!!, AWSAuth::class.java)
+                    val bedrockClient = BedrockClient.builder()
+                        .credentialsProvider(ProfileCredentialsProvider.builder().profileName(awsAuth.profile).build())
+                        .region(Region.of(awsAuth.region))
+                        .build()
+                    val listFoundationModels =
+                        bedrockClient.listFoundationModels(ListFoundationModelsRequest.builder().build())
+                    val foundationModel = bedrockClient.getFoundationModel(
+                        GetFoundationModelRequest.builder().modelIdentifier(modelName).build()
+                    )
+                    foundationModel.modelDetails().modelLifecycle().status() == FoundationModelLifecycleStatus.ACTIVE
+                }
+*/
+                return true
+            }
         }
     }
 

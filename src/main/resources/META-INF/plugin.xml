@@ -101,6 +101,12 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.MassPatchAction"
+                text="Mass Patch"
+                description="Generate patches for all selected files">
+
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateRelatedFileAction"
                 text="Generate Related File"
                 description="Create a new file related to the selected one based on AI suggestions.">
