@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder
 
+import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,30 +27,14 @@ class AppServer(
         server
     }
 
-    private val handlers = arrayOf<WebAppContext>().toMutableList()
+    private val handlers = arrayOf<WebAppContext>(
+        newWebAppContext(SessionProxyServer(), "/")
+    ).toMutableList()
 
     private val contexts by lazy {
         val contexts = ContextHandlerCollection()
         contexts.handlers = handlers.toTypedArray()
         contexts
-    }
-
-    val appRegistry = mutableMapOf<String, ChatServer>()
-
-    @Synchronized
-    fun addApp(path: String, socketServer: ChatServer) {
-        try {
-            synchronized(serverLock) {
-                appRegistry[path] = socketServer
-                if (server.isRunning) server.stop() // Stop the server
-                handlers += newWebAppContext(socketServer, path)
-                contexts.handlers = handlers.toTypedArray()
-                server.handler = contexts
-                server.start() // Start the server again to reflect the new context
-            }
-        } catch (e: Exception) {
-            log.error("Error while restarting the server with new context", e)
-        }
     }
 
     private fun newWebAppContext(server: ChatServer, path: String): WebAppContext {

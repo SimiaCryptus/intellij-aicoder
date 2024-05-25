@@ -2,6 +2,8 @@
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
+import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
@@ -10,14 +12,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
@@ -37,7 +36,7 @@ class LineFilterChatAction : BaseAction() {
         val codelines = lines.withIndex().joinToString("\n") { (i, line) ->
             "${i.toString().padStart(3, '0')} $line"
         }
-        agents[session] = object : ChatSocketManager(
+        SessionProxyServer.agents[session] = object : ChatSocketManager(
             session = session,
             model = AppSettingsState.instance.smartModel.chatModel(),
             userInterfacePrompt = """
@@ -90,13 +89,13 @@ class LineFilterChatAction : BaseAction() {
         }
 
         val server = AppServer.getServer(e.project)
-        val app = initApp(server, path)
-        app.sessions[session] = app.newSession(null, session)
 
         Thread {
             Thread.sleep(500)
             try {
-                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+                val uri = server.server.uri.resolve("/#$session")
+                BaseAction.log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -107,21 +106,6 @@ class LineFilterChatAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(LineFilterChatAction::class.java)
-        private val agents = mutableMapOf<Session, SocketManager>()
-        private fun initApp(server: AppServer, path: String): ChatServer {
-            server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(
-                applicationName = "Code Chat",
-                path = path,
-                showMenubar = false,
-            ) {
-                override val singleInput = false
-                override val stickyInput = true
-                override fun newSession(user: User?, session: Session) = agents[session]!!
-            }
-            server.addApp(path, socketServer)
-            return socketServer
-        }
 
     }
 }

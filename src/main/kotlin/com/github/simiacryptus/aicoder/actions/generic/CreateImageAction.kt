@@ -3,6 +3,7 @@
 import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.imageModel
@@ -15,7 +16,6 @@ import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.models.ChatModels
-import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.core.actors.*
@@ -23,7 +23,6 @@ import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
@@ -60,7 +59,7 @@ class CreateImageAction : BaseAction() {
         val folder = UITools.getSelectedFolder(event)
         root = if (null != folder) {
             folder.toFile.toPath()
-        } else if (1 == virtualFiles?.size){
+        } else if (1 == virtualFiles?.size) {
             UITools.getSelectedFile(event)?.parent?.toNioPath()
         } else {
             getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
@@ -76,16 +75,17 @@ class CreateImageAction : BaseAction() {
             DataStorage.sessionPaths[session] = root?.toFile()!!
         }
 
-        agents[session] = PatchApp(event, root!!.toFile(), ::codeSummary)
+        SessionProxyServer.chats[session] = PatchApp(event, root!!.toFile(), ::codeSummary)
 
         val server = AppServer.getServer(event.project)
-        val app = initApp(server, path)
-        app.sessions[session] = app.newSession(null, session)
 
         Thread {
             Thread.sleep(500)
             try {
-                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+
+                val uri = server.server.uri.resolve("/#$session")
+                BaseAction.log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -237,21 +237,5 @@ class CreateImageAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(CreateImageAction::class.java)
-        private val agents = mutableMapOf<Session, ApplicationServer>()
-        private fun initApp(server: AppServer, path: String): ChatServer {
-            server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(
-                applicationName = "Multi-file Patch Chat",
-                path = path,
-                showMenubar = false,
-            ) {
-                override val singleInput = true
-                override val stickyInput = false
-                override fun newSession(user: User?, session: Session) = agents[session]!!.newSession(user, session)
-            }
-            server.addApp(path, socketServer)
-            return socketServer
-        }
-
     }
 }

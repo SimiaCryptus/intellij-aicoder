@@ -2,6 +2,7 @@
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
@@ -24,7 +25,6 @@ import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
@@ -35,8 +35,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 class MultiDiffChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-    val path = "/multiDiffChat"
 
     override fun handle(event: AnActionEvent) {
         var root: Path? = null
@@ -62,19 +60,20 @@ class MultiDiffChatAction : BaseAction() {
         } else {
             getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
         }
-
         val files = getFiles(virtualFiles, root!!)
         codeFiles.addAll(files)
+
         val session = StorageInterface.newGlobalID()
-        agents[session] = PatchApp(event, root!!.toFile(), { codeSummary() }, codeFiles)
+        SessionProxyServer.chats[session] = PatchApp(root!!.toFile(), { codeSummary() }, codeFiles)
         val server = AppServer.getServer(event.project)
-        val app = initApp(server, path)
-        app.sessions[session] = app.newSession(null, session)
 
         Thread {
             Thread.sleep(500)
             try {
-                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+
+                val uri = server.server.uri.resolve("/#$session")
+                BaseAction.log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -82,13 +81,12 @@ class MultiDiffChatAction : BaseAction() {
     }
 
     inner class PatchApp(
-        private val event: AnActionEvent,
         override val root: File,
         val codeSummary: () -> String,
         val codeFiles: Set<Path> = setOf(),
     ) : ApplicationServer(
         applicationName = "Multi-file Patch Chat",
-        path = path,
+        path = "/patchChat",
         showMenubar = false,
     ) {
         override val singleInput = false
@@ -162,7 +160,7 @@ class MultiDiffChatAction : BaseAction() {
                 heading = renderMarkdown(userMessage),
                 initialResponse = { it: String -> mainActor.answer(toInput(it), api = api) },
                 outputFn = { design: String ->
-                    var markdown = ui.socketManager.addApplyFileDiffLinks(
+                    var markdown = ui.socketManager?.addApplyFileDiffLinks(
                         root = root.toPath(),
                         code = { codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
                         response = design,
@@ -173,15 +171,15 @@ class MultiDiffChatAction : BaseAction() {
                         },
                         ui = ui,
                     )
-                    markdown = ui.socketManager.addSaveLinks(
-                        response = markdown,
+                    markdown = ui.socketManager?.addSaveLinks(
+                        response = markdown!!,
                         task = task,
                         ui = ui,
                         handle = { path, newCode ->
                             root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
                         },
                     )
-                    """<div>${renderMarkdown(markdown)}</div>"""
+                    """<div>${renderMarkdown(markdown!!)}</div>"""
                 },
                 ui = ui,
                 reviseResponse = { userMessages: List<Pair<String, Role>> ->
@@ -218,21 +216,7 @@ class MultiDiffChatAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
-        private val agents = mutableMapOf<Session, ApplicationServer>()
-        private fun initApp(server: AppServer, path: String): ChatServer {
-            server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(
-                applicationName = "Multi-file Patch Chat",
-                path = path,
-                showMenubar = false,
-            ) {
-                override val singleInput = true
-                override val stickyInput = false
-                override fun newSession(user: User?, session: Session) = agents[session]!!.newSession(user, session)
-            }
-            server.addApp(path, socketServer)
-            return socketServer
-        }
 
     }
 }
+

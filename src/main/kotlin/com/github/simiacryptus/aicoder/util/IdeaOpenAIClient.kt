@@ -33,7 +33,7 @@ class IdeaOpenAIClient : OpenAIClient(
 ) {
 
     init {
-        log.info("Initializing OpenAI Client", Throwable())
+        //log.info("Initializing OpenAI Client", Throwable())
         require(key.size == apiBase.size) {
             "API Key not configured for all providers: ${key.keys} != ${APIProvider.values().toList()}"
         }
@@ -162,7 +162,7 @@ class IdeaOpenAIClient : OpenAIClient(
     companion object {
 
         val instance by lazy {
-            log.info("Initializing OpenAI Client", Throwable())
+            //log.info("Initializing OpenAI Client", Throwable())
             val client = IdeaOpenAIClient()
             if (AppSettingsState.instance.apiLog) {
                 try {

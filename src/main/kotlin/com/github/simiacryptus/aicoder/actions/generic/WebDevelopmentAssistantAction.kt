@@ -2,9 +2,9 @@
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,12 +22,13 @@ import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
-import com.simiacryptus.skyenet.core.platform.*
+import com.simiacryptus.skyenet.core.platform.ClientManager
+import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.chat.ChatServer
-//import com.simiacryptus.skyenet.webui.servlet.ToolServlet
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -54,14 +55,16 @@ class WebDevelopmentAssistantAction : BaseAction() {
         if (/*null != storage &&*/ null != selectedFile) {
             DataStorage.sessionPaths[session] = selectedFile.toFile
         }
-        agents[session] = WebDevApp(root = selectedFile)
+        SessionProxyServer.chats[session] = WebDevApp(root = selectedFile)
         val server = AppServer.getServer(e.project)
-        val app = initApp(server, path)
-        app.sessions[session] = app.newSession(null, session)
+
         Thread {
             Thread.sleep(500)
             try {
-                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+
+                val uri = server.server.uri.resolve("/#$session")
+                BaseAction.log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -415,7 +418,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 },
                 outputFn = { code ->
                     renderMarkdown(
-                        ui.socketManager.addApplyFileDiffLinks(
+                        ui.socketManager!!.addApplyFileDiffLinks(
                             root = root.toPath(),
                             code = { codeFiles.filter {
                                 if (it.name.lowercase().endsWith(".png")) return@filter false
@@ -613,23 +616,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(WebDevelopmentAssistantAction::class.java)
-        private val agents = mutableMapOf<Session, WebDevApp>()
         val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
-        private fun initApp(server: AppServer, path: String): ChatServer {
-            server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(
-                applicationName = "Web Development Agent",
-                path = path,
-                showMenubar = false,
-            ) {
-                override val singleInput = true
-                override val stickyInput = false
-                override fun newSession(user: User?, session: Session) = agents[session]!!.newSession(user, session)
-            }
-            server.addApp(path, socketServer)
-            return socketServer
-        }
-
         data class ProjectSpec(
             @Description("Files in the project design, including all local html, css, and js files.")
             val files: List<ProjectFile> = emptyList()

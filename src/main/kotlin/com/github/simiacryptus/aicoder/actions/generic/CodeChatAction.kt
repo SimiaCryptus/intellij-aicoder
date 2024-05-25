@@ -2,6 +2,7 @@
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
@@ -11,12 +12,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.chat.ChatServer
-import com.simiacryptus.skyenet.webui.session.SocketManager
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 
@@ -31,7 +28,7 @@ class CodeChatAction : BaseAction() {
         val session = StorageInterface.newGlobalID()
         val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
         val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
-        agents[session] = CodeChatSocketManager(
+        SessionProxyServer.agents[session] = CodeChatSocketManager(
             session = session,
             language = language,
             codeSelection = editor.caretModel.primaryCaret.selectedText ?: editor.document.text,
@@ -40,15 +37,23 @@ class CodeChatAction : BaseAction() {
             model = AppSettingsState.instance.smartModel.chatModel(),
             storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
         )
+        ApplicationServer.sessionAppInfoMap[session.toString()] = mapOf(
+            "applicationName" to "Code Chat",
+            "singleInput" to false,
+            "stickyInput" to true,
+            "loadImages" to false,
+            "showMenubar" to false,
+        )
 
         val server = AppServer.getServer(e.project)
-        val app = initApp(server, path)
-        app.sessions[session] = app.newSession(null, session)
 
         Thread {
             Thread.sleep(500)
             try {
-                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+
+                val uri = server.server.uri.resolve("/#$session")
+                BaseAction.log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -59,22 +64,5 @@ class CodeChatAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
-        private val agents = mutableMapOf<Session, SocketManager>()
-        private fun initApp(server: AppServer, path: String): ChatServer {
-            server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(
-                applicationName = "Code Chat",
-                path = path,
-                showMenubar = false,
-            ) {
-                override val singleInput = false
-                override val stickyInput = true
-                override fun newSession(user: User?, session: Session) =
-                    agents[session] ?: throw IllegalArgumentException("Unknown session: $session")
-            }
-            server.addApp(path, socketServer)
-            return socketServer
-        }
-
     }
 }

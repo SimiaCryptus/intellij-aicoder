@@ -1,14 +1,15 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import ai.grazie.utils.mpp.UUID
-import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
@@ -17,8 +18,8 @@ import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
-import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.AgentPatterns
+import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
@@ -26,7 +27,6 @@ import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
@@ -47,14 +47,16 @@ class MultiStepPatchAction : BaseAction() {
         if (null != storage && null != selectedFile) {
             DataStorage.sessionPaths[session] = selectedFile.toFile
         }
-        agents[session] = AutoDevApp(event = e)
+        SessionProxyServer.chats[session] = AutoDevApp(event = e)
         val server = AppServer.getServer(e.project)
-        val app = initApp(server, path)
-        app.sessions[session] = app.newSession(null, session)
+
         Thread {
             Thread.sleep(500)
             try {
-                Desktop.getDesktop().browse(server.server.uri.resolve("$path/#$session"))
+
+                val uri = server.server.uri.resolve("/#$session")
+                BaseAction.log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -254,7 +256,7 @@ class MultiStepPatchAction : BaseAction() {
                                       |
                                     """.trimMargin()
                                 }
-                                renderMarkdown(ui.socketManager.addApplyFileDiffLinks(
+                                renderMarkdown(ui.socketManager!!.addApplyFileDiffLinks(
                                     root = root,
                                     code = { codeFiles.associateWith { root.resolve(it).toFile().readText() } },
                                     response = taskActor.answer(listOf(
@@ -289,18 +291,7 @@ class MultiStepPatchAction : BaseAction() {
     }
     companion object {
         private val log = LoggerFactory.getLogger(MultiStepPatchAction::class.java)
-        private val agents = mutableMapOf<Session, AutoDevApp>()
         val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
-        private fun initApp(server: AppServer, path: String): ChatServer {
-            server.appRegistry[path]?.let { return it }
-            val socketServer = object : ApplicationServer(applicationName = "Multi-Patch Chat", path = path) {
-                override val singleInput = true
-                override val stickyInput = false
-                override fun newSession(user: User?, session: Session) = agents[session]!!.newSession(user, session)
-            }
-            server.addApp(path, socketServer)
-            return socketServer
-        }
 
         data class TaskList(
             @Description("List of tasks to be performed in this project")
