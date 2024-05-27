@@ -9,7 +9,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.*
-import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.file.UsageManager
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -85,7 +84,7 @@ class PluginStartupActivity : ProjectActivity {
         if (isInitialized.getAndSet(true)) return
         OutputInterceptor.setupInterceptor()
         ApplicationServices.clientManager = object : ClientManager() {
-            override fun createClient(session: Session, user: User?, dataStorage: StorageInterface?) =
+            override fun createClient(session: Session, user: User?) =
                 IdeaOpenAIClient.instance
         }
         ApplicationServices.usageManager = UsageManager(File(AppSettingsState.instance.pluginHome, "usage"))
