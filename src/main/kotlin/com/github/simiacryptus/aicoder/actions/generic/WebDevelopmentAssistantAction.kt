@@ -50,9 +50,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         val session = StorageInterface.newGlobalID()
-//        val storage = ApplicationServices.dataStorageFactory(DiffChatAction.root) as DataStorage?
         val selectedFile = UITools.getSelectedFolder(e)
-        if (/*null != storage &&*/ null != selectedFile) {
+        if (null != selectedFile) {
             DataStorage.sessionPaths[session] = selectedFile.toFile
         }
         SessionProxyServer.chats[session] = WebDevApp(root = selectedFile)

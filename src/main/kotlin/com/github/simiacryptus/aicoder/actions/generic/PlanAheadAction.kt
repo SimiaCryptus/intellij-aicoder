@@ -389,7 +389,7 @@ class PlanAheadAgent(
         try {
             val tasksByID =
                 plan.obj.tasksByID?.entries?.toTypedArray()?.associate { it.key to it.value } ?: mapOf()
-            val pool: ThreadPoolExecutor = clientManager.getPool(session, user, dataStorage)
+            val pool: ThreadPoolExecutor = clientManager.getPool(session, user)
             val genState = GenState(tasksByID.toMutableMap())
             val diagramTask = ui.newTask(false).apply { task.add(placeholder) }
             val diagramBuffer =

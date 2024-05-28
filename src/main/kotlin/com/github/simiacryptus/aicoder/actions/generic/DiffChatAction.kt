@@ -17,6 +17,7 @@ import com.intellij.openapi.util.TextRange
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.intellij.lang.annotations.Language
@@ -48,6 +49,13 @@ class DiffChatAction : BaseAction() {
             selectionStart = 0
             selectionEnd = rawText.length
         }
+        ApplicationServer.sessionAppInfoMap[session.toString()] = mapOf(
+            "applicationName" to "Code Chat",
+            "singleInput" to false,
+            "stickyInput" to true,
+            "loadImages" to false,
+            "showMenubar" to false,
+        )
         SessionProxyServer.agents[session] = object : CodeChatSocketManager(
             session = session,
             language = language,

@@ -9,7 +9,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.*
-import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.core.platform.ApplicationServicesConfig.isLocked
 import com.simiacryptus.skyenet.core.platform.file.UsageManager
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -20,6 +20,7 @@ class PluginStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         // Check if this is the first run after installation
         try {
+            ApplicationServicesConfig.dataStorageRoot = ApplicationServicesConfig.dataStorageRoot.resolve("intellij")
             val currentThread = Thread.currentThread()
             val prevClassLoader = currentThread.contextClassLoader
             try {
@@ -85,7 +86,7 @@ class PluginStartupActivity : ProjectActivity {
         if (isInitialized.getAndSet(true)) return
         OutputInterceptor.setupInterceptor()
         ApplicationServices.clientManager = object : ClientManager() {
-            override fun createClient(session: Session, user: User?, dataStorage: StorageInterface?) =
+            override fun createClient(session: Session, user: User?) =
                 IdeaOpenAIClient.instance
         }
         ApplicationServices.usageManager = UsageManager(File(AppSettingsState.instance.pluginHome, "usage"))
@@ -101,7 +102,7 @@ class PluginStartupActivity : ProjectActivity {
             override fun putUser(accessToken: String, user: User) = user
             override fun logout(accessToken: String, user: User) {}
         }
-        ApplicationServices.isLocked = true
+        isLocked = true
         val resolve = AppSettingsState.instance.pluginHome.resolve(".skyenet")
     }
 

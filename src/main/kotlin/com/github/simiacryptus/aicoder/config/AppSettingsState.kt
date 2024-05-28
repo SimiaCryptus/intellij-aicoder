@@ -24,7 +24,6 @@ data class AppSettingsState(
     var apiThreads: Int = 4,
     var apiBase: Map<String, String>? = mapOf("OpenAI" to "https://api.openai.com/v1"),
     var apiKey: Map<String, String>? = mapOf("OpenAI" to ""),
-//    var tokenCounter: Int = 0,
     var modalTasks: Boolean = false,
     var suppressErrors: Boolean = false,
     var apiLog: Boolean = false,
@@ -38,7 +37,6 @@ data class AppSettingsState(
         if (logPath == null) {
             logPath = System.getProperty("user.home")
         }
-
         File(logPath, "AICodingAsst")
     },
     var showWelcomeScreen: Boolean = true,
@@ -72,10 +70,6 @@ data class AppSettingsState(
         XmlSerializerUtil.copyBean(fromJson, this)
         recentCommands.clear()
         recentCommands.putAll(fromJson.recentCommands)
-//    editorActions.actionSettings.clear();
-//    editorActions.actionSettings.putAll(fromJson.editorActions.actionSettings)
-//    fileActions.actionSettings.clear();
-//    fileActions.actionSettings.putAll(fromJson.fileActions.actionSettings)
         notifySettingsLoaded()
     }
 
