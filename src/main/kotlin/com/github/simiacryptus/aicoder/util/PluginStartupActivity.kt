@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.ApplicationServicesConfig.isLocked
+import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.file.UsageManager
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -84,6 +85,7 @@ class PluginStartupActivity : ProjectActivity {
 
     private fun init() {
         if (isInitialized.getAndSet(true)) return
+        ApplicationServicesConfig.dataStorageRoot = AppSettingsState.instance.pluginHome.resolve(".skyenet")
         OutputInterceptor.setupInterceptor()
         ApplicationServices.clientManager = object : ClientManager() {
             override fun createClient(session: Session, user: User?) =
@@ -103,7 +105,6 @@ class PluginStartupActivity : ProjectActivity {
             override fun logout(accessToken: String, user: User) {}
         }
         isLocked = true
-        val resolve = AppSettingsState.instance.pluginHome.resolve(".skyenet")
     }
 
 
