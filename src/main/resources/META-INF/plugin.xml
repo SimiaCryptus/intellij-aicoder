@@ -89,6 +89,12 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.MultiCodeChatAction"
+                text="Code Chat"
+                description="Open a chat session with multiple files">
+
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.CreateImageAction"
                 text="Create Image"
                 description="Create an image file based on the selected code">

@@ -1,8 +1,7 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
-import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
-import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
@@ -20,13 +19,11 @@ import java.awt.Desktop
 class CodeChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    val path = "/codeChat"
-
     override fun handle(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
         val session = StorageInterface.newGlobalID()
-        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
+        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: ""
         val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
         SessionProxyServer.agents[session] = CodeChatSocketManager(
             session = session,
@@ -50,7 +47,6 @@ class CodeChatAction : BaseAction() {
         Thread {
             Thread.sleep(500)
             try {
-
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
                 Desktop.getDesktop().browse(uri)
