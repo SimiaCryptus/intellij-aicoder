@@ -91,7 +91,7 @@ class PluginStartupActivity : ProjectActivity {
             override fun createClient(session: Session, user: User?) =
                 IdeaOpenAIClient.instance
         }
-        ApplicationServices.usageManager = UsageManager(File(AppSettingsState.instance.pluginHome, "usage"))
+        ApplicationServices.usageManager = HSQLUsageManager(ApplicationServicesConfig.dataStorageRoot.resolve("usage"))
         ApplicationServices.authorizationManager = object : AuthorizationInterface {
             override fun isAuthorized(
                 applicationClass: Class<*>?,
