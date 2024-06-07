@@ -32,92 +32,103 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
     override fun build(component: AppSettingsComponent): JComponent {
         val tabbedPane = com.intellij.ui.components.JBTabbedPane()
 
-        // Basic Settings Tab
-        val basicSettingsPanel = JPanel(BorderLayout()).apply {
-            add(JPanel(BorderLayout()).apply {
-                layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Smart Model:"))
-                    add(component.smartModel)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Fast Model:"))
-                    add(component.fastModel)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Main Image Model:"))
-                    add(component.mainImageModel)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Temperature:"))
-                    add(component.temperature)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Human Language:"))
-                    add(component.humanLanguage)
-                })
+        try {// Basic Settings Tab
+            val basicSettingsPanel = JPanel(BorderLayout()).apply {
                 add(JPanel(BorderLayout()).apply {
-                    add(JLabel("API Configurations:"), BorderLayout.NORTH)
-                    add(component.apis, BorderLayout.CENTER)
+                    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Smart Model:"))
+                        add(component.smartModel)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Fast Model:"))
+                        add(component.fastModel)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Main Image Model:"))
+                        add(component.mainImageModel)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Temperature:"))
+                        add(component.temperature)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Human Language:"))
+                        add(component.humanLanguage)
+                    })
+                    add(JPanel(BorderLayout()).apply {
+                        add(JLabel("API Configurations:"), BorderLayout.NORTH)
+                        add(component.apis, BorderLayout.CENTER)
+                    })
                 })
-            })
+            }
+            tabbedPane.addTab("Basic Settings", basicSettingsPanel)
+        } catch (e: Exception) {
+            log.warn("Error building Basic Settings", e)
         }
-        tabbedPane.addTab("Basic Settings", basicSettingsPanel)
 
         tabbedPane.addTab("Developer Tools", JPanel(BorderLayout()).apply {
-            add(JPanel().apply {
-                layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Developer Tools:"))
-                    add(component.devActions)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Enable Legacy Actions:"))
-                    add(component.enableLegacyActions)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    // Removed sections that reference non-existing components
+            try {
+                add(JPanel().apply {
+                    layout = BoxLayout(this, BoxLayout.Y_AXIS)
                     add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                        add(JLabel("Ignore Errors:"))
-                        add(component.suppressErrors)
+                        add(JLabel("Developer Tools:"))
+                        add(component.devActions)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Enable Legacy Actions:"))
+                        add(component.enableLegacyActions)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        // Removed sections that reference non-existing components
+                        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                            add(JLabel("Ignore Errors:"))
+                            add(component.suppressErrors)
+                        })
+                    }, BorderLayout.NORTH)
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Edit API Requests:"))
+                        add(component.editRequests)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Enable API Log:"))
+                        add(component.apiLog)
+                        add(component.openApiLog)
+                        add(component.clearApiLog)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Server Port:"))
+                        add(component.listeningPort)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Server Endpoint:"))
+                        add(component.listeningEndpoint)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Plugin Home:"))
+                        add(component.pluginHome)
+                        add(component.choosePluginHome)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Shell Command:"))
+                        add(component.shellCommand)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        //add(JLabel("Show Welcome Screen:"))
+                        add(component.showWelcomeScreen)
                     })
                 }, BorderLayout.NORTH)
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Edit API Requests:"))
-                    add(component.editRequests)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Enable API Log:"))
-                    add(component.apiLog)
-                    add(component.openApiLog)
-                    add(component.clearApiLog)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Server Port:"))
-                    add(component.listeningPort)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Server Endpoint:"))
-                    add(component.listeningEndpoint)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Plugin Home:"))
-                    add(component.pluginHome)
-                    add(component.choosePluginHome)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    add(JLabel("Shell Command:"))
-                    add(component.shellCommand)
-                })
-                add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                    //add(JLabel("Show Welcome Screen:"))
-                    add(component.showWelcomeScreen)
-                })
-            }, BorderLayout.NORTH)
+            } catch (e: Exception) {
+                log.warn("Error building Developer Tools", e)
+            }
         })
 
         tabbedPane.addTab("Usage", JPanel(BorderLayout()).apply {
-            add(component.usage, BorderLayout.CENTER)
+            try {
+                add(component.usage, BorderLayout.CENTER)
+            } catch (e: Exception) {
+                log.warn("Error building Usage", e)
+            }
         })
 
         return tabbedPane
