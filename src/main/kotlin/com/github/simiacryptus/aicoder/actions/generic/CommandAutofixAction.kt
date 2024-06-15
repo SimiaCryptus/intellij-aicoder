@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CheckBoxList
@@ -19,7 +20,6 @@ import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
-import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
@@ -42,19 +42,16 @@ class CommandAutofixAction : BaseAction() {
         val settings = getUserSettings(event) ?: return
         var root: Path? = null
         val codeFiles: MutableSet<Path> = mutableSetOf()
-        fun codeSummary() = codeFiles.filter {
-            root!!.resolve(it).toFile().exists()
-        }.associateWith {
-            root!!.resolve(it).toFile().readText(Charsets.UTF_8)
-        }.entries.joinToString("\n\n") { (path, code) ->
-            val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-            """
-			# $path
-			```$extension
-			${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
-			```
-			""".trimMargin()
-        }
+        fun codeSummary() = settings.filesToProcess
+            .filter { it.toFile().exists() }
+            .joinToString("\n\n") { path ->
+                """
+                |# ${settings.workingDirectory?.toPath()?.relativize(path)}
+                |```${path.toString().split('.').lastOrNull()}
+                |${path.toFile().readText(Charsets.UTF_8)}
+                |```
+                """.trimMargin()
+            }
 
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
@@ -80,9 +77,8 @@ class CommandAutofixAction : BaseAction() {
                 OutputResult(exitCode, output)
             }
 
-
         val session = StorageInterface.newGlobalID()
-        val patchApp = PatchApp(root!!.toFile(), ::codeSummary, codeFiles, ::output, session)
+        val patchApp = PatchApp(root.toFile(), ::codeSummary, codeFiles, ::output, session, settings)
         SessionProxyServer.chats[session] = patchApp
         val server = AppServer.getServer(event.project)
 
@@ -99,6 +95,7 @@ class CommandAutofixAction : BaseAction() {
 
 
     }
+
     data class OutputResult(val exitCode: Int, val output: String)
     inner class PatchApp(
         override val root: File,
@@ -106,6 +103,7 @@ class CommandAutofixAction : BaseAction() {
         val codeFiles: Set<Path> = setOf(),
         val output: () -> OutputResult,
         val session: Session,
+        val settings: Settings,
     ) : ApplicationServer(
         applicationName = "Magic Code Fixer",
         path = "/fixCmd",
@@ -117,7 +115,6 @@ class CommandAutofixAction : BaseAction() {
             val socketManager = super.newSession(user, session)
             val ui = (socketManager as ApplicationSocketManager).applicationInterface
             val task = ui.newTask()
-            val tripleTilde = "`"+"``" // This is a workaround for the markdown parser when editing this file
             Retryable(
                 ui = ui,
                 task = task,
@@ -125,7 +122,7 @@ class CommandAutofixAction : BaseAction() {
                     val newTask = ui.newTask(false)
                     newTask.add("Running Command")
                     Thread {
-                        run(content, tripleTilde, ui, newTask, session)
+                        run(ui, newTask, session, settings)
                     }.start()
                     newTask.placeholder
                 }
@@ -136,23 +133,43 @@ class CommandAutofixAction : BaseAction() {
         }
     }
 
+    val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
+
     private fun PatchApp.run(
-        content: StringBuilder,
-        tripleTilde: String,
         ui: ApplicationInterface,
         task: SessionTask,
-        session: Session
-    ): String {
+        session: Session,
+        settings: Settings
+    ) {
         val output = output()
-        content.set("""<div>${renderMarkdown("```\n${output}\n```")}</div>""")
-        if (output.exitCode == 0) {
-            return """
-                                |<div>
-                                |<div><b>Command executed successfully</b></div>
-                                |${renderMarkdown("```\n${output}\n```")}
-                                |</div>
-                                |""".trimMargin()
+        if (output.exitCode == 0 && settings.exitCodeOption == "nonzero") {
+            task.complete(
+                """
+                |<div>
+                |<div><b>Command executed successfully</b></div>
+                |${renderMarkdown("```\n${output.output}\n```")}
+                |</div>
+                |""".trimMargin()
+            )
+            return
         }
+        if (settings.exitCodeOption == "zero" && output.exitCode != 0) {
+            task.complete(
+                """
+                |<div>
+                |<div><b>Command failed</b></div>
+                |${renderMarkdown("```\n${output.output}\n```")}
+                |</div>
+                |""".trimMargin()
+            )
+            return
+        }
+        task.add("""
+            |<div>
+            |<div><b>Command exit code: ${output.exitCode}</b></div>
+            |${renderMarkdown("```\n${output.output}\n```")}
+            |</div>
+            """.trimMargin())
         val response = SimpleActor(
             prompt = """
                             |You are a helpful AI that helps people with coding.
@@ -201,17 +218,20 @@ class CommandAutofixAction : BaseAction() {
         ).answer(
             listOf(
                 """
-                            |The following command was run and produced an error:
-                            |
-                            |$tripleTilde
-                            |$output
-                            |${tripleTilde}
-                            |""".trimMargin()
+                |The following command was run and produced an error:
+                |
+                |$tripleTilde
+                |${output.output}
+                |${tripleTilde}
+                |""".trimMargin()
             ), api = api
         )
         var markdown = ui.socketManager?.addApplyFileDiffLinks(
             root = root.toPath(),
-            code = { codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
+            code = {
+                val map = codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
+                map
+            },
             response = response,
             handle = { newCodeMap ->
                 newCodeMap.forEach { (path, newCode) ->
@@ -228,17 +248,15 @@ class CommandAutofixAction : BaseAction() {
                 root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
             },
         )
-        return """
-                        |<div>${renderMarkdown("```\n${output}\n```")}</div>
-                        |<div>${renderMarkdown(markdown!!)}</div>
-                        |""".trimMargin()
+        task.complete("<div>${renderMarkdown(markdown!!)}</div>")
     }
 
     data class Settings(
         var executable: File,
         var arguments: String = "",
         var filesToProcess: List<Path> = listOf(),
-        var workingDirectory: File? = null
+        var workingDirectory: File? = null,
+        var exitCodeOption: String = "0"
     )
 
     private fun getFiles(
@@ -256,29 +274,35 @@ class CommandAutofixAction : BaseAction() {
     }
 
     private fun getUserSettings(event: AnActionEvent?): Settings? {
-        val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let { File(it).toPath() }
+        val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
+            File(
+                it
+            ).toPath()
+        }
         val files = UITools.getSelectedFiles(event).map { it.path.let { File(it).toPath() } }.toMutableSet()
-        if(files.isEmpty()) Files.walk(root)
+        if (files.isEmpty()) Files.walk(root)
             .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
             .toList().filterNotNull().forEach { files.add(it) }
         val settingsUI = SettingsUI(root!!.toFile()).apply {
             filesToProcess.setItems(files.toMutableList()) { path ->
-                root?.relativize(path)?.toString() ?: path.toString()
+                root.relativize(path).toString()
             }
             files.forEach { path ->
                 filesToProcess.setItemSelected(path, true)
             }
         }
-        val dialog = CommandSettingsDialog(event?.project, settingsUI)
+        val dialog = CommandSettingsDialog(event.project, settingsUI)
         dialog.show()
         return if (dialog.isOK) {
-            val executable = File(settingsUI.commandField.text)
-            AppSettingsState.instance.toolExecutable = executable.absolutePath
+            val executable = File(settingsUI.commandField.selectedItem?.toString() ?: return null)
+            AppSettingsState.instance.executables += executable.absolutePath
             Settings(
-                executable = File(settingsUI.commandField.text),
+                executable = executable,
                 arguments = settingsUI.argumentsField.text,
-                filesToProcess = files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.toList(),
-                workingDirectory = File(settingsUI.workingDirectoryField.text)
+                filesToProcess = files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }
+                    .map { root.resolve(it) }.toList(),
+                workingDirectory = File(settingsUI.workingDirectoryField.text),
+                exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero"
             )
         } else {
             null
@@ -288,38 +312,47 @@ class CommandAutofixAction : BaseAction() {
     class SettingsUI(root: File) {
         val argumentsField = JTextField("run build")
         val filesToProcess = CheckBoxList<Path>()
-        val commandField = JTextField(AppSettingsState.instance.toolExecutable).apply {
-            isEditable = false
+        val commandField = ComboBox<String>(AppSettingsState.instance.executables.toTypedArray()).apply {
+            isEditable = true
+            AppSettingsState.instance.executables.forEach { addItem(it) }
         }
         val commandButton = JButton("...").apply {
             addActionListener {
                 val fileChooser = JFileChooser().apply {
-            fileSelectionMode = JFileChooser.FILES_ONLY
-            isMultiSelectionEnabled = false
-        }
+                    fileSelectionMode = JFileChooser.FILES_ONLY
+                    isMultiSelectionEnabled = false
+                }
                 if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                    commandField.text = fileChooser.selectedFile.absolutePath
+                    commandField.selectedItem = fileChooser.selectedFile.absolutePath
                 }
             }
         }
         val workingDirectoryField = JTextField(root.absolutePath).apply {
-            isEditable = false
+            isEditable = true
         }
         val workingDirectoryButton = JButton("...").apply {
             addActionListener {
                 val fileChooser = JFileChooser().apply {
                     fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
                     isMultiSelectionEnabled = false
+                    this.selectedFile = File(workingDirectoryField.text)
                 }
                 if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                     workingDirectoryField.text = fileChooser.selectedFile.absolutePath
                 }
             }
         }
+        val exitCodeOptions = ButtonGroup()
+        val exitCodeNonZero = JRadioButton("Patch nonzero exit code", true)
+        val exitCodeZero = JRadioButton("Patch 0 exit code")
+        val exitCodeAny = JRadioButton("Patch any exit code")
     }
 
     class CommandSettingsDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
         init {
+            settingsUI.exitCodeOptions.add(settingsUI.exitCodeNonZero)
+            settingsUI.exitCodeOptions.add(settingsUI.exitCodeZero)
+            settingsUI.exitCodeOptions.add(settingsUI.exitCodeAny)
             title = "Command Autofix Settings"
             init()
         }
@@ -346,6 +379,10 @@ class CommandAutofixAction : BaseAction() {
                         add(settingsUI.workingDirectoryField, BorderLayout.CENTER)
                         add(settingsUI.workingDirectoryButton, BorderLayout.EAST)
                     })
+                    add(JLabel("Exit Code Options"))
+                    add(settingsUI.exitCodeNonZero)
+                    add(settingsUI.exitCodeAny)
+                    add(settingsUI.exitCodeZero)
                 }
                 add(optionsPanel, BorderLayout.SOUTH)
             }

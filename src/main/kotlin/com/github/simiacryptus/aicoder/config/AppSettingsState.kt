@@ -43,7 +43,7 @@ data class AppSettingsState(
     var greetedVersion: String = "",
     var shellCommand: String = getDefaultShell(),
     var enableLegacyActions: Boolean = false,
-    var toolExecutable: String = ""
+    var executables: MutableSet<String> = mutableSetOf()
 ) : PersistentStateComponent<SimpleEnvelope> {
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
     private val recentCommands = mutableMapOf<String, MRUItems>()
@@ -109,7 +109,7 @@ data class AppSettingsState(
         if (greetedVersion != other.greetedVersion) return false
         if (mainImageModel != other.mainImageModel) return false
         if (enableLegacyActions != other.enableLegacyActions) return false
-        if (toolExecutable != other.toolExecutable) return false
+        if (executables != other.executables) return false
         return true
     }
 
@@ -135,7 +135,8 @@ data class AppSettingsState(
         result = 31 * result + showWelcomeScreen.hashCode()
         result = 31 * result + greetedVersion.hashCode()
         result = 31 * result + mainImageModel.hashCode()
-        result = 31 * result + toolExecutable.hashCode()
+        result = 31 * result + enableLegacyActions.hashCode()
+        result = 31 * result + executables.hashCode()
         return result
     }
 
