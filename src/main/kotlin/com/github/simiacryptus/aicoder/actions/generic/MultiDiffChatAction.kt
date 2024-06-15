@@ -91,8 +91,14 @@ class MultiDiffChatAction : BaseAction() {
     ) {
         override val singleInput = false
         override val stickyInput = true
-        private val mainActor: SimpleActor
-            get() = SimpleActor(
+        override fun userMessage(
+            session: Session,
+            user: User?,
+            userMessage: String,
+            ui: ApplicationInterface,
+            api: API
+        ) {
+            val mainActor = SimpleActor(
                 prompt = """
                         |You are a helpful AI that helps people with coding.
                         |
@@ -138,13 +144,6 @@ class MultiDiffChatAction : BaseAction() {
                 model = AppSettingsState.instance.defaultSmartModel()
             )
 
-        override fun userMessage(
-            session: Session,
-            user: User?,
-            userMessage: String,
-            ui: ApplicationInterface,
-            api: API
-        ) {
             val settings = getSettings(session, user) ?: Settings()
             if (api is ClientManager.MonitoredClient) api.budget = settings.budget ?: 2.00
 
