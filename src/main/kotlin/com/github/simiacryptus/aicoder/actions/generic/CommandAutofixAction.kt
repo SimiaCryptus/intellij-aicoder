@@ -14,8 +14,6 @@ import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.diff.addSaveLinks
-import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
@@ -25,6 +23,7 @@ import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
@@ -114,8 +113,6 @@ class CommandAutofixAction : BaseAction() {
     ) {
         override val singleInput = true
         override val stickyInput = false
-
-
         override fun newSession(user: User?, session: Session): SocketManager {
             val socketManager = super.newSession(user, session)
             val ui = (socketManager as ApplicationSocketManager).applicationInterface
@@ -124,102 +121,117 @@ class CommandAutofixAction : BaseAction() {
             Retryable(
                 ui = ui,
                 task = task,
-                process =
-                { content ->
-
-                    val newCodeFiles =
-                        codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
-                    val output = output()
-                    content.set("""<div>${renderMarkdown("```\n${output}\n```")}</div>""")
-                    if (output.exitCode == 0) {
-                        return@Retryable """
-                            |<div>
-                            |<div><b>Command executed successfully</b></div>
-                            |${renderMarkdown("```\n${output}\n```")}
-                            |</div>
-                            |""".trimMargin()
-                    }
-                    val response = SimpleActor(
-                        prompt = """
-                        |You are a helpful AI that helps people with coding.
-                        |
-                        |You will be answering questions about the following code:
-                        |
-                        |${codeSummary()}
-                        |
-                        |
-                        |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
-                        |Each diff should be preceded by a header that identifies the file being modified.
-                        |The diff format should use + for line additions, - for line deletions.
-                        |The diff should include 2 lines of context before and after every change.
-                        |
-                        |Example:
-                        |
-                        |Here are the patches:
-                        |
-                        |### src/utils/exampleUtils.js
-                        |${tripleTilde}diff
-                        | // Utility functions for example feature
-                        | const b = 2;
-                        | function exampleFunction() {
-                        |-   return b + 1;
-                        |+   return b + 2;
-                        | }
-                        |${tripleTilde}
-                        |
-                        |### tests/exampleUtils.test.js
-                        |${tripleTilde}diff
-                        | // Unit tests for exampleUtils
-                        | const assert = require('assert');
-                        | const { exampleFunction } = require('../src/utils/exampleUtils');
-                        | 
-                        | describe('exampleFunction', () => {
-                        |-   it('should return 3', () => {
-                        |+   it('should return 4', () => {
-                        |     assert.equal(exampleFunction(), 3);
-                        |   });
-                        | });
-                        |${tripleTilde}
-                        |
-                        |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                        """.trimMargin(),
-                        model = AppSettingsState.instance.defaultSmartModel()
-                    ).answer(listOf("""
-                        |The following command was run and produced an error:
-                        |
-                        |$tripleTilde
-                        |$output
-                        |${tripleTilde}
-                        |""".trimMargin()), api = api)
-                    var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                        root = root.toPath(),
-                        code = { newCodeFiles },
-                        response = response,
-                        handle = { newCodeMap ->
-                            newCodeMap.forEach { (path, newCode) ->
-                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                            }
-                        },
-                        ui = ui,
-                    )
-                    markdown = ui.socketManager?.addSaveLinks(
-                        response = markdown!!,
-                        task = task,
-                        ui = ui,
-                        handle = { path, newCode ->
-                            root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                        },
-                    )
-                    """
-                    |<div>${renderMarkdown("```\n${output}\n```")}</div>
-                    |<div>${renderMarkdown(markdown!!)}</div>
-                    |""".trimMargin()
+                process = { content ->
+                    val newTask = ui.newTask(false)
+                    newTask.add("Running Command")
+                    Thread {
+                        run(content, tripleTilde, ui, newTask, session)
+                    }.start()
+                    newTask.placeholder
                 }
             ).apply {
                 set(label(size), process(container))
             }
             return socketManager
         }
+    }
+
+    private fun PatchApp.run(
+        content: StringBuilder,
+        tripleTilde: String,
+        ui: ApplicationInterface,
+        task: SessionTask,
+        session: Session
+    ): String {
+        val output = output()
+        content.set("""<div>${renderMarkdown("```\n${output}\n```")}</div>""")
+        if (output.exitCode == 0) {
+            return """
+                                |<div>
+                                |<div><b>Command executed successfully</b></div>
+                                |${renderMarkdown("```\n${output}\n```")}
+                                |</div>
+                                |""".trimMargin()
+        }
+        val response = SimpleActor(
+            prompt = """
+                            |You are a helpful AI that helps people with coding.
+                            |
+                            |You will be answering questions about the following code:
+                            |
+                            |${codeSummary()}
+                            |
+                            |
+                            |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
+                            |Each diff should be preceded by a header that identifies the file being modified.
+                            |The diff format should use + for line additions, - for line deletions.
+                            |The diff should include 2 lines of context before and after every change.
+                            |
+                            |Example:
+                            |
+                            |Here are the patches:
+                            |
+                            |### src/utils/exampleUtils.js
+                            |${tripleTilde}diff
+                            | // Utility functions for example feature
+                            | const b = 2;
+                            | function exampleFunction() {
+                            |-   return b + 1;
+                            |+   return b + 2;
+                            | }
+                            |${tripleTilde}
+                            |
+                            |### tests/exampleUtils.test.js
+                            |${tripleTilde}diff
+                            | // Unit tests for exampleUtils
+                            | const assert = require('assert');
+                            | const { exampleFunction } = require('../src/utils/exampleUtils');
+                            | 
+                            | describe('exampleFunction', () => {
+                            |-   it('should return 3', () => {
+                            |+   it('should return 4', () => {
+                            |     assert.equal(exampleFunction(), 3);
+                            |   });
+                            | });
+                            |${tripleTilde}
+                            |
+                            |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+                            """.trimMargin(),
+            model = AppSettingsState.instance.defaultSmartModel()
+        ).answer(
+            listOf(
+                """
+                            |The following command was run and produced an error:
+                            |
+                            |$tripleTilde
+                            |$output
+                            |${tripleTilde}
+                            |""".trimMargin()
+            ), api = api
+        )
+        var markdown = ui.socketManager?.addApplyFileDiffLinks(
+            root = root.toPath(),
+            code = { codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
+            response = response,
+            handle = { newCodeMap ->
+                newCodeMap.forEach { (path, newCode) ->
+                    task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                }
+            },
+            ui = ui,
+        )
+        markdown = ui.socketManager?.addSaveLinks(
+            response = markdown!!,
+            task = task,
+            ui = ui,
+            handle = { path, newCode ->
+                root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
+            },
+        )
+        return """
+                        |<div>${renderMarkdown("```\n${output}\n```")}</div>
+                        |<div>${renderMarkdown(markdown!!)}</div>
+                        |""".trimMargin()
     }
 
     data class Settings(
