@@ -164,91 +164,95 @@ class CommandAutofixAction : BaseAction() {
             )
             return
         }
-        task.add("""
+        try {
+            task.add("""
             |<div>
             |<div><b>Command exit code: ${output.exitCode}</b></div>
             |${renderMarkdown("```\n${output.output}\n```")}
             |</div>
             """.trimMargin())
-        val response = SimpleActor(
-            prompt = """
-                            |You are a helpful AI that helps people with coding.
-                            |
-                            |You will be answering questions about the following code:
-                            |
-                            |${codeSummary()}
-                            |
-                            |
-                            |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
-                            |Each diff should be preceded by a header that identifies the file being modified.
-                            |The diff format should use + for line additions, - for line deletions.
-                            |The diff should include 2 lines of context before and after every change.
-                            |
-                            |Example:
-                            |
-                            |Here are the patches:
-                            |
-                            |### src/utils/exampleUtils.js
-                            |${tripleTilde}diff
-                            | // Utility functions for example feature
-                            | const b = 2;
-                            | function exampleFunction() {
-                            |-   return b + 1;
-                            |+   return b + 2;
-                            | }
-                            |${tripleTilde}
-                            |
-                            |### tests/exampleUtils.test.js
-                            |${tripleTilde}diff
-                            | // Unit tests for exampleUtils
-                            | const assert = require('assert');
-                            | const { exampleFunction } = require('../src/utils/exampleUtils');
-                            | 
-                            | describe('exampleFunction', () => {
-                            |-   it('should return 3', () => {
-                            |+   it('should return 4', () => {
-                            |     assert.equal(exampleFunction(), 3);
-                            |   });
-                            | });
-                            |${tripleTilde}
-                            |
-                            |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                            """.trimMargin(),
-            model = AppSettingsState.instance.defaultSmartModel()
-        ).answer(
-            listOf(
-                """
-                |The following command was run and produced an error:
-                |
-                |$tripleTilde
-                |${output.output}
-                |${tripleTilde}
-                |""".trimMargin()
-            ), api = api
-        )
-        var markdown = ui.socketManager?.addApplyFileDiffLinks(
-            root = root.toPath(),
-            code = {
-                val map = codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
-                map
-            },
-            response = response,
-            handle = { newCodeMap ->
-                newCodeMap.forEach { (path, newCode) ->
-                    task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                }
-            },
-            ui = ui,
-        )
-        markdown = ui.socketManager?.addSaveLinks(
-            response = markdown!!,
-            task = task,
-            ui = ui,
-            handle = { path, newCode ->
-                root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-            },
-        )
-        task.complete("<div>${renderMarkdown(markdown!!)}</div>")
+            val response = SimpleActor(
+                prompt = """
+                                |You are a helpful AI that helps people with coding.
+                                |
+                                |You will be answering questions about the following code:
+                                |
+                                |${codeSummary()}
+                                |
+                                |
+                                |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
+                                |Each diff should be preceded by a header that identifies the file being modified.
+                                |The diff format should use + for line additions, - for line deletions.
+                                |The diff should include 2 lines of context before and after every change.
+                                |
+                                |Example:
+                                |
+                                |Here are the patches:
+                                |
+                                |### src/utils/exampleUtils.js
+                                |${tripleTilde}diff
+                                | // Utility functions for example feature
+                                | const b = 2;
+                                | function exampleFunction() {
+                                |-   return b + 1;
+                                |+   return b + 2;
+                                | }
+                                |${tripleTilde}
+                                |
+                                |### tests/exampleUtils.test.js
+                                |${tripleTilde}diff
+                                | // Unit tests for exampleUtils
+                                | const assert = require('assert');
+                                | const { exampleFunction } = require('../src/utils/exampleUtils');
+                                | 
+                                | describe('exampleFunction', () => {
+                                |-   it('should return 3', () => {
+                                |+   it('should return 4', () => {
+                                |     assert.equal(exampleFunction(), 3);
+                                |   });
+                                | });
+                                |${tripleTilde}
+                                |
+                                |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+                                """.trimMargin(),
+                model = AppSettingsState.instance.defaultSmartModel()
+            ).answer(
+                listOf(
+                    """
+                    |The following command was run and produced an error:
+                    |
+                    |$tripleTilde
+                    |${output.output}
+                    |${tripleTilde}
+                    |""".trimMargin()
+                ), api = api
+            )
+            var markdown = ui.socketManager?.addApplyFileDiffLinks(
+                root = root.toPath(),
+                code = {
+                    val map = codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
+                    map
+                },
+                response = response,
+                handle = { newCodeMap ->
+                    newCodeMap.forEach { (path, newCode) ->
+                        task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                    }
+                },
+                ui = ui,
+            )
+            markdown = ui.socketManager?.addSaveLinks(
+                response = markdown!!,
+                task = task,
+                ui = ui,
+                handle = { path, newCode ->
+                    root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
+                },
+            )
+            task.complete("<div>${renderMarkdown(markdown!!)}</div>")
+        } catch (e: Exception) {
+            task.error(ui, e)
+        }
     }
 
     data class Settings(
