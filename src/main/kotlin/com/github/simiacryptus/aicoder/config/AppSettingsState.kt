@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.config
+package com.github.simiacryptus.aicoder.config
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.intellij.openapi.application.ApplicationManager
@@ -43,6 +43,7 @@ data class AppSettingsState(
     var greetedVersion: String = "",
     var shellCommand: String = getDefaultShell(),
     var enableLegacyActions: Boolean = false,
+    var executables: MutableSet<String> = mutableSetOf()
 ) : PersistentStateComponent<SimpleEnvelope> {
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
     private val recentCommands = mutableMapOf<String, MRUItems>()
@@ -108,6 +109,7 @@ data class AppSettingsState(
         if (greetedVersion != other.greetedVersion) return false
         if (mainImageModel != other.mainImageModel) return false
         if (enableLegacyActions != other.enableLegacyActions) return false
+        if (executables != other.executables) return false
         return true
     }
 
@@ -133,6 +135,8 @@ data class AppSettingsState(
         result = 31 * result + showWelcomeScreen.hashCode()
         result = 31 * result + greetedVersion.hashCode()
         result = 31 * result + mainImageModel.hashCode()
+        result = 31 * result + enableLegacyActions.hashCode()
+        result = 31 * result + executables.hashCode()
         return result
     }
 

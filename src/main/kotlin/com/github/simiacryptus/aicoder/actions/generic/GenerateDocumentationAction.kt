@@ -28,10 +28,7 @@ import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import javax.swing.BoxLayout
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 
 
 class GenerateDocumentationAction : FileContextAction<GenerateDocumentationAction.Settings>() {
@@ -43,6 +40,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
     }
 
     class SettingsUI {
+        @Name("Single Output File")
+        val singleOutputFile = JCheckBox("Produce a single output file", true)
+
         @Name("Files to Process")
         val filesToProcess = CheckBoxList<Path>()
 
@@ -57,6 +57,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         var transformationMessage: String = "Create user documentation",
         var outputFilename: String = "compiled_documentation.md",
         var filesToProcess: List<Path> = listOf(),
+        var singleOutputFile: Boolean = true
     )
 
     class Settings(
@@ -79,8 +80,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         }
         val dialog = DocumentationCompilerDialog(project, settingsUI)
         dialog.show()
-        val result = dialog.isOK
         val settings: UserSettings = dialog.userSettings
+        settings.singleOutputFile = settingsUI.singleOutputFile.isSelected
+        val result = dialog.isOK
         settings.filesToProcess = when {
             result -> files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.toList()
             else -> listOf()
@@ -116,22 +118,32 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                         val fileContent =
                             IOUtils.toString(FileInputStream(path.toFile()), "UTF-8") ?: return@submit null
                         val transformContent = transformContent(fileContent, transformationMessage)
-                        markdownContent.append("# ${root.relativize(path)}\n\n")
-                        markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
-                        markdownContent.append("\n\n")
+                        if (config?.settings?.singleOutputFile == true) {
+                            markdownContent.append("# ${root.relativize(path)}\n\n")
+                            markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
+                        } else {
+                            root.relativize(path).let { it.parent.resolve(it.fileName.toString().split('.').dropLast(1).joinToString(".") + "_" + outputPath.fileName) }
+                            val individualOutputPath = root.resolve("${root.relativize(path)}.md")
+                            Files.write(individualOutputPath, transformContent.toByteArray())
+                        }
                         path
                     }
                 }.toTypedArray().map { future ->
                     try {
-                        future.get() ?: return@map null
+                        future.get()
                     } catch (e: Exception) {
                         log.warn("Error processing file", e)
                         return@map null
                     }
                 }.filterNotNull()
-            Files.write(outputPath, markdownContent.toString().toByteArray())
-            open(config?.project!!, outputPath)
-            return arrayOf(outputPath.toFile())
+            if (config?.settings?.singleOutputFile == true) {
+                Files.write(outputPath, markdownContent.toString().toByteArray())
+                open(config?.project!!, outputPath)
+                return arrayOf(outputPath.toFile())
+            } else {
+                open(config?.project!!, outputPath)
+                return pathList.toList().map { it.toFile() }.toTypedArray()
+            }
         } finally {
             executorService.shutdown()
         }
@@ -199,7 +211,6 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                 val filesScrollPane = JBScrollPane(settingsUI.filesToProcess).apply {
                     preferredSize = Dimension(400, 300) // Adjust the preferred size as needed
                 }
-                add(JLabel("Files to Process"), BorderLayout.NORTH)
                 add(filesScrollPane, BorderLayout.CENTER) // Make the files list the dominant element
 
                 val optionsPanel = JPanel().apply {
@@ -208,6 +219,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                     add(settingsUI.transformationMessage)
                     add(JLabel("Output File"))
                     add(settingsUI.outputFilename)
+                    add(settingsUI.singleOutputFile)
                 }
                 add(optionsPanel, BorderLayout.SOUTH)
             }
@@ -222,6 +234,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
 //          userSettings.filesToProcess = settingsUI.filesToProcess.selectedValuesList
             userSettings.filesToProcess =
                 settingsUI.filesToProcess.items.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }
+            userSettings.singleOutputFile = settingsUI.singleOutputFile.isSelected
         }
     }
 }
