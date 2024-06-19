@@ -281,7 +281,7 @@ class MultiStepPatchAction : BaseAction() {
                                 task.error(ui, e)
                                 ""
                             }
-                        }.apply { set(label(size), process(container)) }
+                        }
                     }
                 }.toTypedArray().forEach { it.get() }
             } catch (e : Exception) {
