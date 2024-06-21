@@ -46,7 +46,16 @@
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
         </group>
-       <action id="OpenWebPageAction"
+<!--        <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>-->
+        <group id="com.github.simiacryptus.aicoder.ui.VcsMenu"
+               class="com.github.simiacryptus.aicoder.ui.VcsMenu"
+               popup="true"
+               icon="MyIcons.icon"
+               text="_AI Coder"
+               description="AI coding assistant tools">
+            <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
+        </group>
+        <action id="OpenWebPageAction"
                class="com.github.simiacryptus.aicoder.actions.OpenWebPageAction"
                text="Open Simiacryptus Apps"
                description="Opens the Simiacryptus Apps web page in a browser">
@@ -284,6 +293,12 @@
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
         </action>
 
+        <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"
+                class="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"
+                text="Chat with Commit"
+                description="Chat with Commit">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
+        </action>
     </actions>
 
 </idea-plugin>
