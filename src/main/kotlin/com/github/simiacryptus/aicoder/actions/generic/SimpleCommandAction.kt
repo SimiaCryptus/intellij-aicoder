@@ -2,6 +2,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction.Companion.isGitignore
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -300,16 +301,6 @@ class SimpleCommandAction : BaseAction() {
             }
         }
         return codeFiles
-    }
-
-    private fun isGitignore(file: VirtualFile): Boolean {
-        file.toNioPath().toFile().parentFile.resolve(".gitignore").let {
-            if (it.exists()) {
-                val gitignore = it.readText()
-                if (gitignore.contains(file.name)) return true
-            }
-        }
-        return false
     }
 
     private fun getUserSettings(event: AnActionEvent?): Settings? {

@@ -1,5 +1,11 @@
 package com.github.simiacryptus.aicoder.actions.git
 
+import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
+import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -8,7 +14,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.DiffUtil
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
+import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
+import java.awt.Desktop
 
 val String.isBinary: Boolean
     get() {
@@ -34,9 +44,8 @@ class ChatWithCommitAction : AnAction() {
                 ?.joinToString("\n\n") { (file, change) ->
                     val before = change.beforeRevision?.content
                     val after = change.afterRevision?.content
-                    if ((before
-                            ?: after)!!.isBinary
-                    ) return@joinToString "# Binary: ${change.afterRevision?.file}".replace("\n", "\n  ")
+                    if ((before ?: after)!!.isBinary)
+                        return@joinToString "# Binary: ${change.afterRevision?.file}".replace("\n", "\n  ")
                     if (before == null) return@joinToString "# Deleted: ${change.afterRevision?.file}\n${after}".replace(
                         "\n",
                         "\n  "
@@ -48,10 +57,45 @@ class ChatWithCommitAction : AnAction() {
                     val diff = DiffUtil.formatDiff(DiffUtil.generateDiff(before.lines(), after.lines()))
                     "# Change: ${change.beforeRevision?.file}\n$diff".replace("\n", "\n  ")
                 }
-            logger.info(msg?.replace("\n", "\n  "))
+            
+            // Open chat with the diff information
+            openChatWithDiff(e, msg ?: "No changes found")
         } catch (e: Throwable) {
             logger.error("Error comparing changes", e)
         }
+    }
+
+    private fun openChatWithDiff(e: AnActionEvent, diffInfo: String) {
+        val session = StorageInterface.newGlobalID()
+        SessionProxyServer.agents[session] = CodeChatSocketManager(
+            session = session,
+            language = "diff",
+            codeSelection = diffInfo,
+            filename = "commit_changes.diff",
+            api = IdeaOpenAIClient.instance,
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
+        )
+        ApplicationServer.sessionAppInfoMap[session.toString()] = mapOf(
+            "applicationName" to "Commit Chat",
+            "singleInput" to false,
+            "stickyInput" to true,
+            "loadImages" to false,
+            "showMenubar" to false,
+        )
+
+        val server = AppServer.getServer(e.project)
+
+        Thread {
+            Thread.sleep(500)
+            try {
+                val uri = server.server.uri.resolve("/#$session")
+                logger.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
+            } catch (e: Throwable) {
+                logger.warn("Error opening browser", e)
+            }
+        }.start()
     }
 
     private fun expand(data: Array<VirtualFile>?): Array<VirtualFile>? {
@@ -67,4 +111,5 @@ class ChatWithCommitAction : AnAction() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = e.getData(DataKey.create<String>("VCS")) != "Git"
     }
+
 }

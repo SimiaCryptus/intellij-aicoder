@@ -100,18 +100,12 @@
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction"
                 text="Auto-Fix"
-                description="Automatically fix the selected code">
-
-            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
-        </action>
-        <action class="com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction2"
-                text="Auto-Fix (Beta)"
-                description="Automatically fix the selected code">
+                description="Automatically fix a build/test error">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction"
-                text="Do something (Beta)"
+                text="Do Something"
                 description="Do something">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
