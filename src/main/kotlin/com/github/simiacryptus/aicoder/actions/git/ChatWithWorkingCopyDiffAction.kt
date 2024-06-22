@@ -19,6 +19,7 @@ import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import java.awt.Desktop
+import javax.swing.JOptionPane
 
 class ChatWithWorkingCopyDiffAction : AnAction() {
     companion object {
@@ -28,7 +29,9 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         log.info("Comparing HEAD with the working copy")
         val project = e.project ?: return
-        val gitRepository = GitRepositoryManager.getInstance(project).repositories.firstOrNull() ?: return
+        val files = e.getData(VcsDataKeys.VIRTUAL_FILES)?.firstOrNull()
+        val repositories = GitRepositoryManager.getInstance(project).repositories
+        val gitRepository = repositories.find { it.root == files } ?: return
 
         Thread {
             try {
@@ -36,6 +39,7 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
                 openChatWithDiff(e, diffInfo)
             } catch (e: Throwable) {
                 log.error("Error comparing changes", e)
+                JOptionPane.showMessageDialog(null, e.message, "Error", JOptionPane.ERROR_MESSAGE)
             }
         }.start()
     }
@@ -74,17 +78,19 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
     }
 
     private fun getChangesBetweenHeadAndWorkingCopy(repository: GitRepository): String {
-        val changesIn = ChangeListManager.getInstance(repository.project).getChangesIn(repository.root)
-        changesIn.forEach {
-            log.info("Change: ${it.beforeRevision?.file} -> ${it.afterRevision?.file}")
-        }
         val diff = Git.getInstance().diff(repository, listOf(
             "-D", "--text", "--no-color", "--no-commit-id"
         ), "HEAD")
+        if (0 != diff.exitCode) {
+            throw RuntimeException("Error running git diff command: ${diff.errorOutput}")
+        }
         return diff.outputAsJoinedString
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = e.getData(VcsDataKeys.VCS) == GitVcs.getKey()
+        val project = e.project ?: return
+        val vcs = e.getData(VcsDataKeys.VCS)
+        val gitVcs = GitVcs.getInstance(project)
+        e.presentation.isEnabledAndVisible = project != null && (vcs!!.name == gitVcs.name)
     }
 }

@@ -21,6 +21,7 @@ import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import java.awt.Desktop
+import javax.swing.JOptionPane
 
 class ChatWithCommitDiffAction : AnAction() {
     companion object {
@@ -30,8 +31,11 @@ class ChatWithCommitDiffAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         log.info("Comparing selected commit with the current HEAD")
         val project = e.project ?: return
-        val gitRepository = GitRepositoryManager.getInstance(project).repositories.firstOrNull() ?: return
+        val files = e.getData(VcsDataKeys.VIRTUAL_FILES)?.firstOrNull()
+        val repositories = GitRepositoryManager.getInstance(project).repositories
+        val gitRepository = repositories.find { it.root == files } ?: return
         val selectedCommit = e.getData(VcsDataKeys.VCS_REVISION_NUMBER) ?: return
+        e.getData(VcsDataKeys.VCS)
 
         Thread {
             try {
@@ -39,6 +43,7 @@ class ChatWithCommitDiffAction : AnAction() {
                 openChatWithDiff(e, diffInfo)
             } catch (e: Throwable) {
                 log.error("Error comparing changes", e)
+                JOptionPane.showMessageDialog(null, e.message, "Error", JOptionPane.ERROR_MESSAGE)
             }
         }.start()
     }
@@ -81,7 +86,10 @@ class ChatWithCommitDiffAction : AnAction() {
         val commitID = (selectedCommit as TextRevisionNumber).asString()
         val diff = Git.getInstance().diff(repository, listOf(
             "-D", "--text", "--no-color", "--no-commit-id"
-        ), "$currentHead..$commitID")
+        ), "$commitID..HEAD")
+        if(0 != diff.exitCode) {
+            throw RuntimeException("Error running git diff command: ${diff.errorOutput}")
+        }
         return diff.outputAsJoinedString
     }
 
