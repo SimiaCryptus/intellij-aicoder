@@ -300,6 +300,12 @@
                 description="Chat with Commit Diff">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
         </action>
+        <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithWorkingCopyDiff"
+                class="com.github.simiacryptus.aicoder.actions.git.ChatWithWorkingCopyDiffAction"
+                text="Chat with Working Copy Diff"
+                description="Open a chat session with the diff between HEAD and the working copy">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
+        </action>
     </actions>
 
 </idea-plugin>
