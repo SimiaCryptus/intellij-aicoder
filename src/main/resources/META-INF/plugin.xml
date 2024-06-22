@@ -5,6 +5,7 @@
     <category>AI-Powered</category>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
+    <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="com.github.simiacryptus.aicoder.util.PluginStartupActivity"/>
@@ -291,6 +292,12 @@
                 class="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"
                 text="Chat with Commit"
                 description="Chat with Commit">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
+        </action>
+        <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitDiffAction"
+                class="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitDiffAction"
+                text="Chat with Diff (x..HEAD)"
+                description="Chat with Commit Diff">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
         </action>
     </actions>

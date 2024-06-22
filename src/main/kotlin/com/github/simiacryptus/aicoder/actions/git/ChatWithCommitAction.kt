@@ -33,36 +33,38 @@ class ChatWithCommitAction : AnAction() {
         logger.info("Comparing selected revision with the current working copy")
         val files = expand(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
         val changes = e.getData(VcsDataKeys.CHANGES)
-        try {
-            val map = changes?.toList()
-                ?.associateBy { (it.beforeRevision?.file ?: it.afterRevision?.file)!!.toString() }
-            val msg = map?.entries
-                ?.filter { (file, change) ->
-                    val find = files?.find { it.toNioPath().toFile().absolutePath == File(file).absolutePath }
-                    find != null
-                }
-                ?.joinToString("\n\n") { (file, change) ->
-                    val before = change.beforeRevision?.content
-                    val after = change.afterRevision?.content
-                    if ((before ?: after)!!.isBinary)
-                        return@joinToString "# Binary: ${change.afterRevision?.file}".replace("\n", "\n  ")
-                    if (before == null) return@joinToString "# Deleted: ${change.afterRevision?.file}\n${after}".replace(
-                        "\n",
-                        "\n  "
-                    )
-                    if (after == null) return@joinToString "# Added: ${change.beforeRevision?.file}\n${before}".replace(
-                        "\n",
-                        "\n  "
-                    )
-                    val diff = DiffUtil.formatDiff(DiffUtil.generateDiff(before.lines(), after.lines()))
-                    "# Change: ${change.beforeRevision?.file}\n$diff".replace("\n", "\n  ")
-                }
-            
-            // Open chat with the diff information
-            openChatWithDiff(e, msg ?: "No changes found")
-        } catch (e: Throwable) {
-            logger.error("Error comparing changes", e)
-        }
+        Thread {
+            try {
+                val map = changes?.toList()
+                    ?.associateBy { (it.beforeRevision?.file ?: it.afterRevision?.file)!!.toString() }
+                val msg = map?.entries
+                    ?.filter { (file, change) ->
+                        val find = files?.find { it.toNioPath().toFile().absolutePath == File(file).absolutePath }
+                        find != null
+                    }
+                    ?.joinToString("\n\n") { (file, change) ->
+                        val before = change.beforeRevision?.content
+                        val after = change.afterRevision?.content
+                        if ((before ?: after)!!.isBinary)
+                            return@joinToString "# Binary: ${change.afterRevision?.file}".replace("\n", "\n  ")
+                        if (before == null) return@joinToString "# Deleted: ${change.afterRevision?.file}\n${after}".replace(
+                            "\n",
+                            "\n  "
+                        )
+                        if (after == null) return@joinToString "# Added: ${change.beforeRevision?.file}\n${before}".replace(
+                            "\n",
+                            "\n  "
+                        )
+                        val diff = DiffUtil.formatDiff(DiffUtil.generateDiff(before.lines(), after.lines()))
+                        "# Change: ${change.beforeRevision?.file}\n$diff".replace("\n", "\n  ")
+                    }
+
+                // Open chat with the diff information
+                openChatWithDiff(e, msg ?: "No changes found")
+            } catch (e: Throwable) {
+                logger.error("Error comparing changes", e)
+            }
+        }.start()
     }
 
     private fun openChatWithDiff(e: AnActionEvent, diffInfo: String) {
