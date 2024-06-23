@@ -312,5 +312,11 @@
                 description="Open a chat session to analyze the selected test result">
             <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
         </action>
+        <action id="com.github.simiacryptus.aicoder.actions.problems.AnalyzeProblemAction"
+                class="com.github.simiacryptus.aicoder.actions.problems.AnalyzeProblemAction"
+                text="AI Analyze Problem"
+                description="Open a chat session to analyze and potentially fix the selected problem">
+            <add-to-group group-id="ProblemsView.ToolWindow.TreePopup" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>

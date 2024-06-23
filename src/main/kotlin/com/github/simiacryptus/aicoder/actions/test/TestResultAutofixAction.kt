@@ -37,7 +37,7 @@ import java.nio.file.Path
 class TestResultAutofixAction : BaseAction() {
     companion object {
         private val log = Logger.getInstance(TestResultAutofixAction::class.java)
-        private val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
+        val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
 
         fun getFiles(
             virtualFiles: Array<out VirtualFile>?
@@ -70,13 +70,24 @@ class TestResultAutofixAction : BaseAction() {
                 }
             return str
         }
+
+        fun findGitRoot(virtualFile: VirtualFile?): VirtualFile? {
+            var current: VirtualFile? = virtualFile
+            while (current != null) {
+                if (current.findChild(".git") != null) {
+                    return current
+                }
+                current = current.parent
+            }
+            return null
+        }
     }
 
     override fun handle(e: AnActionEvent) {
         val testProxy = e.getData(AbstractTestProxy.DATA_KEY) as? SMTestProxy ?: return
         val dataContext = e.dataContext
         val virtualFile = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)?.firstOrNull()
-        val root = findGitRoot(virtualFile)
+        val root = Companion.findGitRoot(virtualFile)
         Thread {
             try {
                 val testInfo = getTestInfo(testProxy)
@@ -87,17 +98,6 @@ class TestResultAutofixAction : BaseAction() {
                 JOptionPane.showMessageDialog(null, ex.message, "Error", JOptionPane.ERROR_MESSAGE)
             }
         }.start()
-    }
-
-    private fun findGitRoot(virtualFile: VirtualFile?): VirtualFile? {
-        var current: VirtualFile? = virtualFile
-        while (current != null) {
-            if (current.findChild(".git") != null) {
-                return current
-            }
-            current = current.parent
-        }
-        return null
     }
 
     override fun isEnabled(@NotNull e: AnActionEvent): Boolean {
