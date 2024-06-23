@@ -5,6 +5,7 @@
     <category>AI-Powered</category>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
+    <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="com.github.simiacryptus.aicoder.util.PluginStartupActivity"/>
@@ -46,7 +47,16 @@
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
         </group>
-       <action id="OpenWebPageAction"
+<!--        <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>-->
+        <group id="com.github.simiacryptus.aicoder.ui.VcsMenu"
+               class="com.github.simiacryptus.aicoder.ui.VcsMenu"
+               popup="true"
+               icon="MyIcons.icon"
+               text="_AI Coder"
+               description="AI coding assistant tools">
+            <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
+        </group>
+        <action id="OpenWebPageAction"
                class="com.github.simiacryptus.aicoder.actions.OpenWebPageAction"
                text="Open Simiacryptus Apps"
                description="Opens the Simiacryptus Apps web page in a browser">
@@ -89,10 +99,15 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
-        <!--CommandAutofixAction-->
         <action class="com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction"
                 text="Auto-Fix"
-                description="Automatically fix the selected code">
+                description="Automatically fix a build/test error">
+
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction"
+                text="Do Something"
+                description="Do something">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
@@ -273,6 +288,41 @@
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
         </action>
 
+        <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"
+                class="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"
+                text="Chat with Commit"
+                description="Chat with Commit">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
+        </action>
+        <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitDiffAction"
+                class="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitDiffAction"
+                text="Chat with Diff (x..HEAD)"
+                description="Chat with Commit Diff">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
+        </action>
+        <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithWorkingCopyDiff"
+                class="com.github.simiacryptus.aicoder.actions.git.ChatWithWorkingCopyDiffAction"
+                text="Chat with Working Copy Diff"
+                description="Open a chat session with the diff between HEAD and the working copy">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
+        </action>
+        <action id="com.github.simiacryptus.aicoder.actions.git.ReplicateCommitAction"
+                class="com.github.simiacryptus.aicoder.actions.git.ReplicateCommitAction"
+                text="Replicate Commit"
+                description="Replicate Commit">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
+        </action>
+        <action id="com.github.simiacryptus.aicoder.actions.test.ChatWithTestResultAction"
+                class="com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction"
+                text="AI Analyze Test Result"
+                description="Open a chat session to analyze the selected test result">
+            <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
+        </action>
+        <action id="com.github.simiacryptus.aicoder.actions.problems.AnalyzeProblemAction"
+                class="com.github.simiacryptus.aicoder.actions.problems.AnalyzeProblemAction"
+                text="AI Analyze Problem"
+                description="Open a chat session to analyze and potentially fix the selected problem">
+            <add-to-group group-id="ProblemsView.ToolWindow.TreePopup" anchor="last"/>
+        </action>
     </actions>
-
 </idea-plugin>

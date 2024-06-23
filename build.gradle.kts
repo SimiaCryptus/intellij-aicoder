@@ -1,10 +1,11 @@
 ﻿import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
+ // ... (rest of the file)
 fun properties(key: String) = providers.gradleProperty(key).get()
 fun environment(key: String) = providers.environmentVariable(key).get()
 
-plugins {
+ plugins {
     id("java") // Java support
     id("org.jetbrains.kotlin.jvm") version "2.0.0-Beta5"
     id("org.jetbrains.intellij") version "1.17.2"
@@ -16,24 +17,22 @@ plugins {
 group = "com.github.simiacryptus"
 version = properties("pluginVersion")
 
-repositories {
-    mavenCentral()
+ repositories {
+     mavenCentral()
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
 
-val kotlin_version = "2.0.0-Beta5"
+val kotlin_version = "2.0.0-Beta5" // This line can be removed if not used elsewhere
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.77"
+val skyenet_version = "1.0.79"
 val remoterobot_version = "0.11.21"
 val jackson_version = "2.17.0"
 
 dependencies {
     implementation("software.amazon.awssdk:bedrock:2.25.7")
     implementation("software.amazon.awssdk:bedrockruntime:2.25.7")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 
     implementation("org.apache.commons:commons-text:1.11.0")
 
@@ -42,7 +41,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.61")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.62")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
@@ -53,11 +52,6 @@ dependencies {
     }
 
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
-
-    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = "1.8.0-RC")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
@@ -108,10 +102,9 @@ tasks.named("processResources") {
 */
 
 
-kotlin {
-    jvmToolchain(17)
-}
-
+ kotlin {
+     jvmToolchain(17)
+ }
 tasks {
     compileKotlin {
         compilerOptions {
@@ -189,6 +182,8 @@ intellij {
         listOf(
             "com.intellij.java",
             "org.jetbrains.kotlin",
+            "Git4Idea",
+            "org.jetbrains.plugins.github"
         )
     )
 }
@@ -198,13 +193,16 @@ changelog {
     repositoryUrl.set(properties("pluginRepositoryUrl"))
 }
 
+tasks {
+    patchPluginXml {
+        sinceBuild.set(properties("pluginSinceBuild"))
+        untilBuild.set(properties("pluginUntilBuild"))
+    }
+}
+
 qodana {
     cachePath.set(file(".qodana").canonicalPath)
 //    reportPath.set(file("build/reports/inspections").canonicalPath)
 //    saveReport.set(true)
 //    showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
 }
-
-//kover.xmlReport {
-//    onCheck.set(true)
-//}

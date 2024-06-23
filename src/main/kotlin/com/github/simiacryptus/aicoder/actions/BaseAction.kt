@@ -44,6 +44,7 @@ abstract class BaseAction(
 
     open fun isEnabled(event: AnActionEvent): Boolean = true
 
+
     companion object {
         val log by lazy { LoggerFactory.getLogger(javaClass) }
         val scheduledPool = java.util.concurrent.Executors.newScheduledThreadPool(1)

@@ -11,15 +11,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.CheckBoxList
-import com.intellij.ui.components.JBScrollPane
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.diff.addSaveLinks
+import com.simiacryptus.jopenai.describe.Description
+import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
@@ -29,7 +32,6 @@ import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.Desktop
-import java.awt.Dimension
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -40,45 +42,65 @@ class CommandAutofixAction : BaseAction() {
 
     override fun handle(event: AnActionEvent) {
         val settings = getUserSettings(event) ?: return
-        var root: Path? = null
-        val codeFiles: MutableSet<Path> = mutableSetOf()
-        fun codeSummary() = settings.filesToProcess
-            .filter { it.toFile().exists() }
-            .joinToString("\n\n") { path ->
-                """
-                |# ${settings.workingDirectory?.toPath()?.relativize(path)}
-                |```${path.toString().split('.').lastOrNull()}
-                |${path.toFile().readText(Charsets.UTF_8)}
-                |```
-                """.trimMargin()
-            }
-
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
         val folder = UITools.getSelectedFolder(event)
-        root = if (null != folder) {
+        var root = if (null != folder) {
             folder.toFile.toPath()
         } else {
-            getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
-        }
-        val files = getFiles(virtualFiles, root!!)
-        codeFiles.addAll(files)
+            event.project?.basePath?.let { File(it).toPath() }
+        }!!
 
-        fun output(): OutputResult =
-            run {
+        val session = StorageInterface.newGlobalID()
+        val patchApp = object : PatchApp(root.toFile(), session, settings) {
+            override fun codeFiles() = getFiles(virtualFiles)
+                .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
+                .map { root.relativize(it) ?: it }.toSet()
+
+            override fun codeSummary(paths: List<Path>): String = paths
+                .filter { settings.workingDirectory?.resolve(it.toFile())?.exists() == true }
+                .joinToString("\n\n") { path ->
+                    """
+                    |# ${path}
+                    |$tripleTilde${path.toString().split('.').lastOrNull()}
+                    |${settings.workingDirectory?.resolve(path.toFile())?.readText(Charsets.UTF_8)}
+                    |$tripleTilde
+                    """.trimMargin()
+                }
+            override fun projectSummary(): String {
+                val codeFiles = codeFiles()
+                val str = codeFiles
+                    .asSequence()
+                    .filter { settings.workingDirectory?.toPath()?.resolve(it)?.toFile()?.exists() == true }
+                    .distinct().sorted()
+                    .joinToString("\n") { path ->
+                        "* ${path} - ${settings.workingDirectory?.toPath()?.resolve(path)?.toFile()?.length() ?: "?"} bytes".trim()
+                    }
+                return str
+            }
+
+            override fun output(task: SessionTask): OutputResult = run {
                 val command = listOf(settings.executable.absolutePath) + settings.arguments.split(" ")
                 val processBuilder = ProcessBuilder(command)
                 processBuilder.directory(settings.workingDirectory)
                 processBuilder.redirectErrorStream(true) // Merge standard error and standard output
-
+                val buffer = StringBuilder()
+                val taskOutput = task.add("")
                 val process = processBuilder.start()
+                val bufferedReader = process.inputStream.bufferedReader()
+                while (process.isAlive) {
+                    val line = bufferedReader.readLine()
+                    buffer.append(line + "\n")
+                    taskOutput?.set("<pre>\n$buffer\n</pre>")
+                    task.append("", true)
+                }
+                task.append("", false)
                 val exitCode = process.waitFor()
-                val output = process.inputStream.bufferedReader().readText()
+                val output = buffer.toString()
+                taskOutput?.clear()
                 OutputResult(exitCode, output)
             }
-
-        val session = StorageInterface.newGlobalID()
-        val patchApp = PatchApp(root.toFile(), ::codeSummary, codeFiles, ::output, session, settings)
+        }
         SessionProxyServer.chats[session] = patchApp
         val server = AppServer.getServer(event.project)
 
@@ -92,16 +114,11 @@ class CommandAutofixAction : BaseAction() {
                 log.warn("Error opening browser", e)
             }
         }.start()
-
-
     }
 
     data class OutputResult(val exitCode: Int, val output: String)
-    inner class PatchApp(
+    abstract inner class PatchApp(
         override val root: File,
-        val codeSummary: () -> String,
-        val codeFiles: Set<Path> = setOf(),
-        val output: () -> OutputResult,
         val session: Session,
         val settings: Settings,
     ) : ApplicationServer(
@@ -109,6 +126,9 @@ class CommandAutofixAction : BaseAction() {
         path = "/fixCmd",
         showMenubar = false,
     ) {
+        abstract fun codeFiles(): Set<Path>
+        abstract fun codeSummary(paths: List<Path>): String
+        abstract fun output(task: SessionTask): OutputResult
         override val singleInput = true
         override val stickyInput = false
         override fun newSession(user: User?, session: Session): SocketManager {
@@ -126,14 +146,12 @@ class CommandAutofixAction : BaseAction() {
                     }.start()
                     newTask.placeholder
                 }
-            ).apply {
-                set(label(size), process(container))
-            }
+            )
             return socketManager
         }
-    }
 
-    val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
+        abstract fun projectSummary(): String
+    }
 
     private fun PatchApp.run(
         ui: ApplicationInterface,
@@ -141,13 +159,13 @@ class CommandAutofixAction : BaseAction() {
         session: Session,
         settings: Settings
     ) {
-        val output = output()
+        val output = output(task)
         if (output.exitCode == 0 && settings.exitCodeOption == "nonzero") {
             task.complete(
                 """
                 |<div>
                 |<div><b>Command executed successfully</b></div>
-                |${renderMarkdown("```\n${output.output}\n```")}
+                |${renderMarkdown("${tripleTilde}\n${output.output}\n${tripleTilde}")}
                 |</div>
                 |""".trimMargin()
             )
@@ -158,120 +176,181 @@ class CommandAutofixAction : BaseAction() {
                 """
                 |<div>
                 |<div><b>Command failed</b></div>
-                |${renderMarkdown("```\n${output.output}\n```")}
+                |${renderMarkdown("${tripleTilde}\n${output.output}\n${tripleTilde}")}
                 |</div>
                 |""".trimMargin()
             )
             return
         }
         try {
-            task.add("""
+            task.add(
+                """
             |<div>
             |<div><b>Command exit code: ${output.exitCode}</b></div>
-            |${renderMarkdown("```\n${output.output}\n```")}
+            |${renderMarkdown("${tripleTilde}\n${output.output}\n${tripleTilde}")}
             |</div>
-            """.trimMargin())
-            val response = SimpleActor(
+            """.trimMargin()
+            )
+            val plan = ParsedActor(
+                resultClass = ParsedErrors::class.java,
                 prompt = """
-                                |You are a helpful AI that helps people with coding.
-                                |
-                                |You will be answering questions about the following code:
-                                |
-                                |${codeSummary()}
-                                |
-                                |
-                                |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
-                                |Each diff should be preceded by a header that identifies the file being modified.
-                                |The diff format should use + for line additions, - for line deletions.
-                                |The diff should include 2 lines of context before and after every change.
-                                |
-                                |Example:
-                                |
-                                |Here are the patches:
-                                |
-                                |### src/utils/exampleUtils.js
-                                |${tripleTilde}diff
-                                | // Utility functions for example feature
-                                | const b = 2;
-                                | function exampleFunction() {
-                                |-   return b + 1;
-                                |+   return b + 2;
-                                | }
-                                |${tripleTilde}
-                                |
-                                |### tests/exampleUtils.test.js
-                                |${tripleTilde}diff
-                                | // Unit tests for exampleUtils
-                                | const assert = require('assert');
-                                | const { exampleFunction } = require('../src/utils/exampleUtils');
-                                | 
-                                | describe('exampleFunction', () => {
-                                |-   it('should return 3', () => {
-                                |+   it('should return 4', () => {
-                                |     assert.equal(exampleFunction(), 3);
-                                |   });
-                                | });
-                                |${tripleTilde}
-                                |
-                                |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                                """.trimMargin(),
+                    |You are a helpful AI that helps people with coding.
+                    |
+                    |You will be answering questions about the following project:
+                    |
+                    |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
+                    |
+                    |Files:
+                    |${projectSummary()}
+                    |
+                    |Given the response of a build/test process, identify one or more distinct errors.
+                    |For each error:
+                    |   1) predict the files that need to be fixed
+                    |   2) predict related files that may be needed to debug the issue
+                    """.trimMargin(),
                 model = AppSettingsState.instance.defaultSmartModel()
             ).answer(
                 listOf(
                     """
-                    |The following command was run and produced an error:
-                    |
-                    |$tripleTilde
-                    |${output.output}
-                    |${tripleTilde}
-                    |""".trimMargin()
+                        |The following command was run and produced an error:
+                        |
+                        |$tripleTilde
+                        |${output.output}
+                        |$tripleTilde
+                        |""".trimMargin()
                 ), api = api
             )
-            var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                root = root.toPath(),
-                code = {
-                    val map = codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
-                    map
-                },
-                response = response,
-                handle = { newCodeMap ->
-                    newCodeMap.forEach { (path, newCode) ->
-                        task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                    }
-                },
-                ui = ui,
-            )
-            markdown = ui.socketManager?.addSaveLinks(
-                response = markdown!!,
-                task = task,
-                ui = ui,
-                handle = { path, newCode ->
-                    root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                },
-            )
-            task.complete("<div>${renderMarkdown(markdown!!)}</div>")
+            task.add(AgentPatterns.displayMapInTabs(
+                mapOf(
+                    "Text" to renderMarkdown(plan.text, ui = ui),
+                    "JSON" to renderMarkdown(
+                        "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
+                        ui = ui
+                    ),
+                )
+            ))
+            plan.obj.errors?.forEach { error ->
+                val summary = codeSummary(
+                    ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() })
+                val response = SimpleActor(
+                    prompt = """
+                    |You are a helpful AI that helps people with coding.
+                    |
+                    |You will be answering questions about the following code:
+                    |
+                    |$summary
+                    |
+                    |
+                    |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
+                    |Each diff should be preceded by a header that identifies the file being modified.
+                    |The diff format should use + for line additions, - for line deletions.
+                    |The diff should include 2 lines of context before and after every change.
+                    |
+                    |Example:
+                    |
+                    |Here are the patches:
+                    |
+                    |### src/utils/exampleUtils.js
+                    |${tripleTilde}diff
+                    | // Utility functions for example feature
+                    | const b = 2;
+                    | function exampleFunction() {
+                    |-   return b + 1;
+                    |+   return b + 2;
+                    | }
+                    |$tripleTilde
+                    |
+                    |### tests/exampleUtils.test.js
+                    |${tripleTilde}diff
+                    | // Unit tests for exampleUtils
+                    | const assert = require('assert');
+                    | const { exampleFunction } = require('../src/utils/exampleUtils');
+                    | 
+                    | describe('exampleFunction', () => {
+                    |-   it('should return 3', () => {
+                    |+   it('should return 4', () => {
+                    |     assert.equal(exampleFunction(), 3);
+                    |   });
+                    | });
+                    |$tripleTilde
+                    |
+                    |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+                    """.trimMargin(),
+                    model = AppSettingsState.instance.defaultSmartModel()
+                ).answer(
+                    listOf(
+                        """
+                        |The following command was run and produced an error:
+                        |
+                        |${tripleTilde}
+                        |${output.output}
+                        |${tripleTilde}
+                        |
+                        |Focus on and Fix the Error:
+                        |  ${error.message?.replace("\n", "\n  ") ?: ""}
+                        |""".trimMargin()
+                    ), api = api
+                )
+                var markdown = ui.socketManager?.addApplyFileDiffLinks(
+                    root = root.toPath(),
+                    code = {
+                        val map = codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
+                        map
+                    },
+                    response = response,
+                    handle = { newCodeMap ->
+                        newCodeMap.forEach { (path, newCode) ->
+                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                        }
+                    },
+                    ui = ui,
+                )
+                markdown = ui.socketManager?.addSaveLinks(
+                    response = markdown!!,
+                    task = task,
+                    ui = ui,
+                    handle = { path, newCode ->
+                        root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
+                    },
+                )
+                task.complete("<div>${renderMarkdown(markdown!!)}</div>")
+            }
         } catch (e: Exception) {
             task.error(ui, e)
         }
     }
 
+    data class ParsedErrors(
+        val errors: List<ParsedError>? = null
+    )
+    data class ParsedError(
+        @Description("The error message")
+        val message: String? = null,
+        @Description("Files identified as needing modification and issue-related files")
+        val relatedFiles: List<String>? = null,
+        @Description("Files identified as needing modification and issue-related files")
+        val fixFiles: List<String>? = null
+    )
+
+
     data class Settings(
         var executable: File,
         var arguments: String = "",
-        var filesToProcess: List<Path> = listOf(),
         var workingDirectory: File? = null,
         var exitCodeOption: String = "0"
     )
 
     private fun getFiles(
-        virtualFiles: Array<out VirtualFile>?, root: Path
+        virtualFiles: Array<out VirtualFile>?
     ): MutableSet<Path> {
         val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
         virtualFiles?.forEach { file ->
             if (file.isDirectory) {
-                codeFiles.addAll(getFiles(file.children, root))
+                if(file.name.startsWith(".")) return@forEach
+                if(Companion.isGitignore(file)) return@forEach
+                codeFiles.addAll(getFiles(file.children))
             } else {
-                codeFiles.add(root.relativize(file.toNioPath()))
+                codeFiles.add((file.toNioPath()))
             }
         }
         return codeFiles
@@ -287,14 +366,7 @@ class CommandAutofixAction : BaseAction() {
         if (files.isEmpty()) Files.walk(root)
             .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
             .toList().filterNotNull().forEach { files.add(it) }
-        val settingsUI = SettingsUI(root!!.toFile()).apply {
-            filesToProcess.setItems(files.toMutableList()) { path ->
-                root.relativize(path).toString()
-            }
-            files.forEach { path ->
-                filesToProcess.setItemSelected(path, true)
-            }
-        }
+        val settingsUI = SettingsUI(root!!.toFile())
         val dialog = CommandSettingsDialog(event.project, settingsUI)
         dialog.show()
         return if (dialog.isOK) {
@@ -303,8 +375,6 @@ class CommandAutofixAction : BaseAction() {
             Settings(
                 executable = executable,
                 arguments = settingsUI.argumentsField.text,
-                filesToProcess = files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }
-                    .map { root.resolve(it) }.toList(),
                 workingDirectory = File(settingsUI.workingDirectoryField.text),
                 exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero"
             )
@@ -315,7 +385,6 @@ class CommandAutofixAction : BaseAction() {
 
     class SettingsUI(root: File) {
         val argumentsField = JTextField("run build")
-        val filesToProcess = CheckBoxList<Path>()
         val commandField = ComboBox<String>(AppSettingsState.instance.executables.toTypedArray()).apply {
             isEditable = true
             AppSettingsState.instance.executables.forEach { addItem(it) }
@@ -363,11 +432,6 @@ class CommandAutofixAction : BaseAction() {
 
         override fun createCenterPanel(): JComponent {
             val panel = JPanel(BorderLayout()).apply {
-                val filesScrollPane = JBScrollPane(settingsUI.filesToProcess).apply {
-                    preferredSize = Dimension(400, 300) // Adjust the preferred size as needed
-                }
-                add(JLabel("Files to Process"), BorderLayout.NORTH)
-                add(filesScrollPane, BorderLayout.CENTER) // Make the files list the dominant element
 
                 val optionsPanel = JPanel().apply {
                     layout = BoxLayout(this, BoxLayout.Y_AXIS)
@@ -398,5 +462,42 @@ class CommandAutofixAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
+        val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
+        fun isGitignore(file: VirtualFile) = isGitignore(file.toNioPath())
+
+        fun isGitignore(path: Path): Boolean {
+            var currentDir = path.toFile().parentFile
+            currentDir ?: return false
+            while (!currentDir.resolve(".git").exists()) {
+                currentDir.resolve(".gitignore").let {
+                    if (it.exists()) {
+                        val gitignore = it.readText()
+                        if (gitignore.split("\n").any { line ->
+                                val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
+                                line.trim().isNotEmpty()
+                                        && !line.startsWith("#")
+                                        && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
+                            }) {
+                            return true
+                        }
+                    }
+                }
+                currentDir = currentDir.parentFile ?: return false
+            }
+            currentDir.resolve(".gitignore").let {
+                if (it.exists()) {
+                    val gitignore = it.readText()
+                    if (gitignore.split("\n").any { line ->
+                            val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
+                            line.trim().isNotEmpty()
+                                    && !line.startsWith("#")
+                                    && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
+                        }) {
+                        return true
+                    }
+                }
+            }
+            return false
+        }
     }
 }

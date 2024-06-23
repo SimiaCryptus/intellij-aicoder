@@ -801,11 +801,7 @@ class PlanAheadAgent(
                 onComplete()
             }
         }
-        object : Retryable(ui, task, process) {
-            init {
-                set(label(size), process(container))
-            }
-        }
+        Retryable(ui, task, process)
     }
 
     private fun editFiles(
@@ -850,11 +846,7 @@ class PlanAheadAgent(
                 }, ui = ui
             )
         }
-        object : Retryable(ui, task, process) {
-            init {
-                set(label(size), process(container))
-            }
-        }
+        Retryable(ui, task, process)
     }
 
     private fun document(
@@ -885,11 +877,7 @@ class PlanAheadAgent(
                 onComplete()
             }
         }
-        object : Retryable(ui, task, process) {
-            init {
-                set(label(size), process(container))
-            }
-        }
+        Retryable(ui, task, process)
     }
 
     private fun acceptButtonFooter(stringBuilder: StringBuilder, fn: () -> Unit): String {
