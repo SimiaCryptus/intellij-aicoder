@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
+import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.getProjectStructure
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
@@ -117,13 +118,21 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                     executorService.submit<Path?> {
                         val fileContent =
                             IOUtils.toString(FileInputStream(path.toFile()), "UTF-8") ?: return@submit null
-                        val transformContent = transformContent(fileContent, transformationMessage)
+                        val transformContent = transformContent(path, fileContent, transformationMessage)
                         if (config?.settings?.singleOutputFile == true) {
                             markdownContent.append("# ${root.relativize(path)}\n\n")
                             markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
                         } else {
-                            root.relativize(path).let { it.parent.resolve(it.fileName.toString().split('.').dropLast(1).joinToString(".") + "_" + outputPath.fileName) }
-                            val individualOutputPath = root.resolve("${root.relativize(path)}.md")
+                            val individualOutputPath = root.resolve(
+                                "${
+                                    root.relativize(
+                                        path.parent.resolve(
+                                            path.fileName.toString().split('.').dropLast(1)
+                                                .joinToString(".") + "." + outputPath.fileName
+                                        )
+                                    )
+                                }.md"
+                            )
                             Files.write(individualOutputPath, transformContent.toByteArray())
                         }
                         path
@@ -149,22 +158,45 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         }
     }
 
-    private fun transformContent(fileContent: String, transformationMessage: String) = api.chat(
+    private fun transformContent(path: Path, fileContent: String, transformationMessage: String) = api.chat(
         ApiModel.ChatRequest(
             model = AppSettingsState.instance.smartModel.chatModel().modelName,
             temperature = AppSettingsState.instance.temperature,
             messages = listOf(
                 ApiModel.ChatMessage(
                     ApiModel.Role.system, """
-            You will combine natural language instructions with a user provided code example to document code.
-            """.trimIndent().toContentList(), null
+                        You will combine natural language instructions with a user provided code example to document code.
+                        """.trimIndent().toContentList(), null
                 ),
-                ApiModel.ChatMessage(ApiModel.Role.user, fileContent.toContentList()),
-                ApiModel.ChatMessage(ApiModel.Role.user, transformationMessage.toContentList()),
+                ApiModel.ChatMessage(
+                    ApiModel.Role.user,
+                    """
+                    |## Project:
+                    |${findGitRoot(path)?.let { getProjectStructure(it) }}
+                    |
+                    |## $path:
+                    |```
+                    |$fileContent
+                    |```
+                    |
+                    |Instructions: $transformationMessage
+                    """.trimMargin().toContentList()
+                ),
             ),
         ),
         AppSettingsState.instance.smartModel.chatModel()
     ).choices.first().message?.content?.trim() ?: fileContent
+
+    fun findGitRoot(path: Path?): Path? {
+        var current: Path? = path
+        while (current != null) {
+            if (current.resolve(".git").toFile().exists()) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
 
     companion object {
         private val scheduledPool = Executors.newScheduledThreadPool(1)

@@ -54,11 +54,28 @@ class TestResultAutofixAction : BaseAction() {
             }
             return codeFiles
         }
-        fun getProjectStructure(projectPath: VirtualFile?): String {
-            if (projectPath == null) return "Project path is null"
-            val root = Path.of(projectPath!!.path)
+        fun getFiles(
+            virtualFiles: Array<out Path>?
+        ): MutableSet<Path> {
+            val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
+            virtualFiles?.forEach { file ->
+                if(file.fileName.startsWith(".")) return@forEach
+                if(CommandAutofixAction.isGitignore(file)) return@forEach
+                if (file.toFile().isDirectory) {
+                    codeFiles.addAll(getFiles(file.toFile().listFiles().map { it.toPath() }.toTypedArray()))
+                } else {
+                    codeFiles.add(file)
+                }
+            }
+            return codeFiles
+        }
 
-            val codeFiles = getFiles(arrayOf(projectPath!!))
+        fun getProjectStructure(projectPath: VirtualFile?): String {
+            return getProjectStructure(Path.of((projectPath?: return "Project path is null").path))
+        }
+
+        fun getProjectStructure(root: Path): String {
+            val codeFiles = getFiles(arrayOf(root))
                 .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
                 .map { root.relativize(it) ?: it }.toSet()
             val str = codeFiles
@@ -69,6 +86,17 @@ class TestResultAutofixAction : BaseAction() {
                     "* ${path} - ${root?.resolve(path)?.toFile()?.length() ?: "?"} bytes".trim()
                 }
             return str
+        }
+
+        fun findGitRoot(path: Path?): Path? {
+            var current: Path? = path
+            while (current != null) {
+                if (current.resolve(".git").toFile().exists()) {
+                    return current
+                }
+                current = current.parent
+            }
+            return null
         }
 
         fun findGitRoot(virtualFile: VirtualFile?): VirtualFile? {

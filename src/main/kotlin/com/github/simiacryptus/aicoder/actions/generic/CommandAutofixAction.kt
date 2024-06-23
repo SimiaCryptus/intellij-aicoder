@@ -463,19 +463,21 @@ class CommandAutofixAction : BaseAction() {
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
         val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
-        fun isGitignore(file: VirtualFile): Boolean {
-            var currentDir = file.toNioPath().toFile().parentFile
+        fun isGitignore(file: VirtualFile) = isGitignore(file.toNioPath())
+
+        fun isGitignore(path: Path): Boolean {
+            var currentDir = path.toFile().parentFile
             currentDir ?: return false
             while (!currentDir.resolve(".git").exists()) {
                 currentDir.resolve(".gitignore").let {
                     if (it.exists()) {
                         val gitignore = it.readText()
                         if (gitignore.split("\n").any { line ->
-                            val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
-                            line.trim().isNotEmpty()
-                                    && !line.startsWith("#")
-                                    && file.name.trimEnd('/').matches(Regex(pattern))
-                        }) {
+                                val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
+                                line.trim().isNotEmpty()
+                                        && !line.startsWith("#")
+                                        && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
+                            }) {
                             return true
                         }
                     }
@@ -489,7 +491,7 @@ class CommandAutofixAction : BaseAction() {
                             val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
                             line.trim().isNotEmpty()
                                     && !line.startsWith("#")
-                                    && file.name.trimEnd('/').matches(Regex(pattern))
+                                    && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
                         }) {
                         return true
                     }
