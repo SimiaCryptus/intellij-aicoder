@@ -123,15 +123,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                             markdownContent.append("# ${root.relativize(path)}\n\n")
                             markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
                         } else {
-                            val individualOutputPath = root.resolve(
-                                "${
-                                    root.relativize(
-                                        path.parent.resolve(
-                                            path.fileName.toString().split('.').dropLast(1)
-                                                .joinToString(".") + "." + outputPath.fileName
-                                        )
-                                    )
-                                }.md"
+                            val individualOutputPath = path.parent.resolve(
+                                path.fileName.toString().split('.').dropLast(1)
+                                    .joinToString(".") + "." + outputPath.fileName
                             )
                             Files.write(individualOutputPath, transformContent.toByteArray())
                         }
