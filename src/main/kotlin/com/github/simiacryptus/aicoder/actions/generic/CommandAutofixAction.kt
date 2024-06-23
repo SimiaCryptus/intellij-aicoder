@@ -465,20 +465,35 @@ class CommandAutofixAction : BaseAction() {
         val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
         fun isGitignore(file: VirtualFile): Boolean {
             var currentDir = file.toNioPath().toFile().parentFile
-            while (currentDir != null && !currentDir.resolve(".git").exists()) {
+            currentDir ?: return false
+            while (!currentDir.resolve(".git").exists()) {
                 currentDir.resolve(".gitignore").let {
                     if (it.exists()) {
                         val gitignore = it.readText()
                         if (gitignore.split("\n").any { line ->
-                            line.trim().isNotEmpty() &&
-                            !line.startsWith("#") &&
-                            file.name.matches(Regex(line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")))
+                            val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
+                            line.trim().isNotEmpty()
+                                    && !line.startsWith("#")
+                                    && file.name.trimEnd('/').matches(Regex(pattern))
                         }) {
                             return true
                         }
                     }
                 }
-                currentDir = currentDir.parentFile
+                currentDir = currentDir.parentFile ?: return false
+            }
+            currentDir.resolve(".gitignore").let {
+                if (it.exists()) {
+                    val gitignore = it.readText()
+                    if (gitignore.split("\n").any { line ->
+                            val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
+                            line.trim().isNotEmpty()
+                                    && !line.startsWith("#")
+                                    && file.name.trimEnd('/').matches(Regex(pattern))
+                        }) {
+                        return true
+                    }
+                }
             }
             return false
         }
