@@ -1,6 +1,9 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
+import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction
+import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion
+import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.findGitRoot
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.getProjectStructure
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
@@ -52,13 +55,17 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
 
         @Name("Output File")
         val outputFilename = JBTextField()
+
+        @Name("Output Directory")
+        val outputDirectory = JBTextField()
     }
 
     class UserSettings(
         var transformationMessage: String = "Create user documentation",
         var outputFilename: String = "compiled_documentation.md",
         var filesToProcess: List<Path> = listOf(),
-        var singleOutputFile: Boolean = true
+        var singleOutputFile: Boolean = true,
+        var outputDirectory: String = "docs/"
     )
 
     class Settings(
@@ -78,11 +85,13 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             files.forEach { path ->
                 filesToProcess.setItemSelected(path, true)
             }
+            outputDirectory.text = "docs/"
         }
         val dialog = DocumentationCompilerDialog(project, settingsUI)
         dialog.show()
         val settings: UserSettings = dialog.userSettings
         settings.singleOutputFile = settingsUI.singleOutputFile.isSelected
+        settings.outputDirectory = settingsUI.outputDirectory.text
         val result = dialog.isOK
         settings.filesToProcess = when {
             result -> files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.toList()
@@ -93,15 +102,19 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
     }
 
     override fun processSelection(state: SelectionState, config: Settings?): Array<File> {
-        val root = state.selectedFile.toPath()
-        var outputPath = root.resolve(config?.settings?.outputFilename ?: "compiled_documentation.md")
+        val selectedFolder = state.selectedFile.toPath()
+        val gitRoot = TestResultAutofixAction.findGitRoot(selectedFolder) ?: selectedFolder
+        val outputDirectory = config?.settings?.outputDirectory ?: "docs/"
+        var outputPath =
+            selectedFolder.resolve(config?.settings?.outputFilename ?: "compiled_documentation.md")
+        outputPath =  gitRoot.resolve(outputDirectory).resolve(gitRoot.relativize(outputPath))
         if (outputPath.toFile().exists()) {
             val extension = outputPath.toString().split(".").last()
             val name = outputPath.toString().split(".").dropLast(1).joinToString(".")
             val fileIndex = (1..Int.MAX_VALUE).find {
-                !root.resolve("$name.$it.$extension").toFile().exists()
+                !selectedFolder.resolve("$name.$it.$extension").toFile().exists()
             }
-            outputPath = root.resolve("$name.$fileIndex.$extension")
+            outputPath = selectedFolder.resolve("$name.$fileIndex.$extension")
         }
         val executorService = Executors.newFixedThreadPool(4)
         outputPath.parent.toFile().mkdirs()
@@ -109,7 +122,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         val markdownContent = StringBuilder()
         try {
             val selectedPaths = config?.settings?.filesToProcess ?: listOf()
-            val partitionedPaths = Files.walk(root)
+            val partitionedPaths = Files.walk(selectedFolder)
                 .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
                 .toList().groupBy { selectedPaths.contains(it) }
             val pathList = partitionedPaths[true]!!
@@ -120,13 +133,15 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                             IOUtils.toString(FileInputStream(path.toFile()), "UTF-8") ?: return@submit null
                         val transformContent = transformContent(path, fileContent, transformationMessage)
                         if (config?.settings?.singleOutputFile == true) {
-                            markdownContent.append("# ${root.relativize(path)}\n\n")
+                            markdownContent.append("# ${selectedFolder.relativize(path)}\n\n")
                             markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
                         } else {
-                            val individualOutputPath = path.parent.resolve(
+                            var individualOutputPath = selectedFolder.resolve(
                                 path.fileName.toString().split('.').dropLast(1)
                                     .joinToString(".") + "." + outputPath.fileName
                             )
+                            individualOutputPath =  gitRoot.resolve(outputDirectory).resolve(gitRoot.relativize(individualOutputPath))
+                            individualOutputPath.parent.toFile().mkdirs()
                             Files.write(individualOutputPath, transformContent.toByteArray())
                         }
                         path
@@ -144,7 +159,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                 open(config?.project!!, outputPath)
                 return arrayOf(outputPath.toFile())
             } else {
-                open(config?.project!!, outputPath)
+                open(config?.project!!, selectedFolder.resolve(outputDirectory))
                 return pathList.toList().map { it.toFile() }.toTypedArray()
             }
         } finally {
@@ -229,6 +244,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             // Set the default values for the UI elements from userSettings
             settingsUI.transformationMessage.text = userSettings.transformationMessage
             settingsUI.outputFilename.text = userSettings.outputFilename
+            settingsUI.outputDirectory.text = userSettings.outputDirectory
             init()
         }
 
@@ -245,6 +261,8 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                     add(settingsUI.transformationMessage)
                     add(JLabel("Output File"))
                     add(settingsUI.outputFilename)
+                    add(JLabel("Output Directory"))
+                    add(settingsUI.outputDirectory)
                     add(settingsUI.singleOutputFile)
                 }
                 add(optionsPanel, BorderLayout.SOUTH)
@@ -256,6 +274,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             super.doOKAction()
             userSettings.transformationMessage = settingsUI.transformationMessage.text
             userSettings.outputFilename = settingsUI.outputFilename.text
+            userSettings.outputDirectory = settingsUI.outputDirectory.text
             // Assuming filesToProcess already reflects the user's selection
 //          userSettings.filesToProcess = settingsUI.filesToProcess.selectedValuesList
             userSettings.filesToProcess =
