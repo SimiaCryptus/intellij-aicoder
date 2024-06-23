@@ -306,6 +306,12 @@
                 description="Open a chat session with the diff between HEAD and the working copy">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
         </action>
+        <action id="com.github.simiacryptus.aicoder.actions.git.ReplicateCommitAction"
+                class="com.github.simiacryptus.aicoder.actions.git.ReplicateCommitAction"
+                text="Replicate Commit"
+                description="Replicate Commit">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.VcsMenu" anchor="last"/>
+        </action>
         <action id="com.github.simiacryptus.aicoder.actions.test.ChatWithTestResultAction"
                 class="com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction"
                 text="AI Analyze Test Result"
