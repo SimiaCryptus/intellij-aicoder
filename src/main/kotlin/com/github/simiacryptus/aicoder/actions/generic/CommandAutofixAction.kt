@@ -248,6 +248,8 @@ class CommandAutofixAction : BaseAction() {
                     )
                 )
             )
+            val progress = ui.newTask()
+            val progressHeader = progress.header("Processing tasks")
             plan.obj.errors?.forEach { error ->
                 val summary = codeSummary(
                     ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() })
@@ -332,6 +334,8 @@ class CommandAutofixAction : BaseAction() {
                 )
                 task.complete("<div>${renderMarkdown(markdown!!)}</div>")
             }
+            progressHeader?.clear()
+            progress.append("", false)
         } catch (e: Exception) {
             task.error(ui, e)
         }

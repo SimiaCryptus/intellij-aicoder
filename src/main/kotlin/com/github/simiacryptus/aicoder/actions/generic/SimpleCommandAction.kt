@@ -176,15 +176,24 @@ class SimpleCommandAction : BaseAction() {
                         )
                     )
                 )
-                plan.obj.errors?.map { planTask ->
-                    Retryable(ui,task) {
+                val progress = ui.newTask()
+                val progressHeader = progress.header("Processing tasks")
+                val errors = plan.obj.errors?.map { planTask ->
+                    Retryable(ui, task) {
                         val response = SimpleActor(
                             prompt = """
                             |You are a helpful AI that helps people with coding.
                             |
                             |You will be answering questions about the following code:
                             |
-                            |${codeSummary(((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap { toPaths(settings.workingDirectory.toPath(), it) })}
+                            |${
+                                codeSummary(((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap {
+                                    toPaths(
+                                        settings.workingDirectory.toPath(),
+                                        it
+                                    )
+                                })
+                            }
                             |
                             |
                             |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
@@ -240,7 +249,8 @@ class SimpleCommandAction : BaseAction() {
                         var markdown = ui.socketManager?.addApplyFileDiffLinks(
                             root = root.toPath(),
                             code = {
-                                val map = codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
+                                val map =
+                                    codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
                                 map
                             },
                             response = response,
@@ -261,6 +271,9 @@ class SimpleCommandAction : BaseAction() {
                     }
                     ""
                 }?.joinToString { it } ?: ""
+                progressHeader?.clear()
+                progress.append("", false)
+                ""
             }
         } catch (e: Exception) {
             task.error(ui, e)
