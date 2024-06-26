@@ -235,12 +235,10 @@ class AnalyzeProblemAction : AnAction() {
                 ui = ui,
             )
             markdown = ui.socketManager?.addSaveLinks(
+                root = root.toPath(),
                 response = markdown!!,
                 task = task,
                 ui = ui,
-                handle = { path, newCode ->
-                    root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                },
             )
             val msg = "<div>${renderMarkdown(markdown!!)}</div>"
             return msg

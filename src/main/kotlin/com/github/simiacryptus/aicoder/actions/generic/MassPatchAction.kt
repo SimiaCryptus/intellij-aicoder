@@ -258,12 +258,10 @@ class MassPatchServer(
                                     ui = ui,
                                 )
                                 markdown = ui.socketManager?.addSaveLinks(
+                                    root = root.toPath(),
                                     response = markdown!!,
                                     task = fileTask,
                                     ui = ui,
-                                    handle = { path, newCode ->
-                                        root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                                    },
                                 )
                                 """<div>${renderMarkdown(markdown!!)}</div>"""
                             },

@@ -36,6 +36,9 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -67,6 +70,7 @@ class CommandAutofixAction : BaseAction() {
                     |$tripleTilde
                     """.trimMargin()
                 }
+
             override fun projectSummary(): String {
                 val codeFiles = codeFiles()
                 val str = codeFiles
@@ -74,7 +78,9 @@ class CommandAutofixAction : BaseAction() {
                     .filter { settings.workingDirectory?.toPath()?.resolve(it)?.toFile()?.exists() == true }
                     .distinct().sorted()
                     .joinToString("\n") { path ->
-                        "* ${path} - ${settings.workingDirectory?.toPath()?.resolve(path)?.toFile()?.length() ?: "?"} bytes".trim()
+                        "* ${path} - ${
+                            settings.workingDirectory?.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
+                        } bytes".trim()
                     }
                 return str
             }
@@ -83,20 +89,31 @@ class CommandAutofixAction : BaseAction() {
                 val command = listOf(settings.executable.absolutePath) + settings.arguments.split(" ")
                 val processBuilder = ProcessBuilder(command)
                 processBuilder.directory(settings.workingDirectory)
-                processBuilder.redirectErrorStream(true) // Merge standard error and standard output
                 val buffer = StringBuilder()
                 val taskOutput = task.add("")
                 val process = processBuilder.start()
-                val bufferedReader = process.inputStream.bufferedReader()
-                while (process.isAlive) {
-                    val line = bufferedReader.readLine()
-                    buffer.append(line + "\n")
-                    taskOutput?.set("<pre>\n$buffer\n</pre>")
-                    task.append("", true)
+                val errorBuffer = StringBuilder()
+                Thread {
+                    process.errorStream.bufferedReader().use { reader ->
+                        var line: String?
+                        while (reader.readLine().also { line = it } != null) {
+                            errorBuffer.append(line).append("\n")
+                            taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
+                            task.append("", true)
+                        }
+                    }
+                }.start()
+                process.inputStream.bufferedReader().use { reader ->
+                    var line: String?
+                    while (reader.readLine().also { line = it } != null) {
+                        buffer.append(line).append("\n")
+                        taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
+                        task.append("", true)
+                    }
                 }
                 task.append("", false)
                 val exitCode = process.waitFor()
-                val output = buffer.toString()
+                val output = buffer.toString() + errorBuffer.toString()
                 taskOutput?.clear()
                 OutputResult(exitCode, output)
             }
@@ -220,15 +237,17 @@ class CommandAutofixAction : BaseAction() {
                         |""".trimMargin()
                 ), api = api
             )
-            task.add(AgentPatterns.displayMapInTabs(
-                mapOf(
-                    "Text" to renderMarkdown(plan.text, ui = ui),
-                    "JSON" to renderMarkdown(
-                        "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
-                        ui = ui
-                    ),
+            task.add(
+                AgentPatterns.displayMapInTabs(
+                    mapOf(
+                        "Text" to renderMarkdown(plan.text, ui = ui),
+                        "JSON" to renderMarkdown(
+                            "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
+                            ui = ui
+                        ),
+                    )
                 )
-            ))
+            )
             plan.obj.errors?.forEach { error ->
                 val summary = codeSummary(
                     ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() })
@@ -306,12 +325,10 @@ class CommandAutofixAction : BaseAction() {
                     ui = ui,
                 )
                 markdown = ui.socketManager?.addSaveLinks(
+                    root = root.toPath(),
                     response = markdown!!,
                     task = task,
                     ui = ui,
-                    handle = { path, newCode ->
-                        root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                    },
                 )
                 task.complete("<div>${renderMarkdown(markdown!!)}</div>")
             }
@@ -323,6 +340,7 @@ class CommandAutofixAction : BaseAction() {
     data class ParsedErrors(
         val errors: List<ParsedError>? = null
     )
+
     data class ParsedError(
         @Description("The error message")
         val message: String? = null,
@@ -346,8 +364,8 @@ class CommandAutofixAction : BaseAction() {
         val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
         virtualFiles?.forEach { file ->
             if (file.isDirectory) {
-                if(file.name.startsWith(".")) return@forEach
-                if(Companion.isGitignore(file)) return@forEach
+                if (file.name.startsWith(".")) return@forEach
+                if (Companion.isGitignore(file)) return@forEach
                 codeFiles.addAll(getFiles(file.children))
             } else {
                 codeFiles.add((file.toNioPath()))
@@ -358,9 +376,7 @@ class CommandAutofixAction : BaseAction() {
 
     private fun getUserSettings(event: AnActionEvent?): Settings? {
         val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
-            File(
-                it
-            ).toPath()
+            File(it).toPath()
         }
         val files = UITools.getSelectedFiles(event).map { it.path.let { File(it).toPath() } }.toMutableSet()
         if (files.isEmpty()) Files.walk(root)
@@ -499,5 +515,12 @@ class CommandAutofixAction : BaseAction() {
             }
             return false
         }
+
+        val StringBuilder.htmlEscape: String
+            get() = this.toString().replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;")
     }
 }
