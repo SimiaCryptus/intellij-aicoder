@@ -251,8 +251,8 @@ class CommandAutofixAction : BaseAction() {
             val progress = ui.newTask()
             val progressHeader = progress.header("Processing tasks")
             plan.obj.errors?.forEach { error ->
-                val summary = codeSummary(
-                    ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() })
+                val paths = ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
+                val summary = codeSummary(paths)
                 val response = SimpleActor(
                     prompt = """
                     |You are a helpful AI that helps people with coding.

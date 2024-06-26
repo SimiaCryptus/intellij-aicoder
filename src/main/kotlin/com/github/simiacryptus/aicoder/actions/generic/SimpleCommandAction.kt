@@ -157,7 +157,7 @@ class SimpleCommandAction : BaseAction() {
                 ).answer(
                     listOf(
                         """
-                            |The following command was run and produced an error:
+                            |Execute the following directive:
                             |
                             |$tripleTilde
                             |$userMessage
@@ -180,20 +180,18 @@ class SimpleCommandAction : BaseAction() {
                 val progressHeader = progress.header("Processing tasks")
                 val errors = plan.obj.errors?.map { planTask ->
                     Retryable(ui, task) {
+                        val paths =
+                            ((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap {
+                                toPaths(settings.workingDirectory.toPath(), it)
+                            }
+                        val codeSummary = codeSummary(paths.map { settings.workingDirectory.toPath().resolve(it) })
                         val response = SimpleActor(
                             prompt = """
                             |You are a helpful AI that helps people with coding.
                             |
                             |You will be answering questions about the following code:
                             |
-                            |${
-                                codeSummary(((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap {
-                                    toPaths(
-                                        settings.workingDirectory.toPath(),
-                                        it
-                                    )
-                                })
-                            }
+                            |$codeSummary
                             |
                             |
                             |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
