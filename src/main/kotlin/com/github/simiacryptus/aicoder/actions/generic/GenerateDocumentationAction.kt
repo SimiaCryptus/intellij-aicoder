@@ -107,7 +107,8 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         val outputDirectory = config?.settings?.outputDirectory ?: "docs/"
         var outputPath =
             selectedFolder.resolve(config?.settings?.outputFilename ?: "compiled_documentation.md")
-        outputPath =  gitRoot.resolve(outputDirectory).resolve(gitRoot.relativize(outputPath))
+        val relativePath = gitRoot.relativize(outputPath)
+        outputPath =  gitRoot.resolve(outputDirectory).resolve(relativePath)
         if (outputPath.toFile().exists()) {
             val extension = outputPath.toString().split(".").last()
             val name = outputPath.toString().split(".").dropLast(1).joinToString(".")
@@ -136,10 +137,10 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                             markdownContent.append("# ${selectedFolder.relativize(path)}\n\n")
                             markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
                         } else {
-                            var individualOutputPath = selectedFolder.resolve(
+                            var individualOutputPath = /*selectedFolder*/ selectedFolder.relativize(path.parent.resolve(
                                 path.fileName.toString().split('.').dropLast(1)
                                     .joinToString(".") + "." + outputPath.fileName
-                            )
+                            ))
                             individualOutputPath =  gitRoot.resolve(outputDirectory).resolve(gitRoot.relativize(individualOutputPath))
                             individualOutputPath.parent.toFile().mkdirs()
                             Files.write(individualOutputPath, transformContent.toByteArray())

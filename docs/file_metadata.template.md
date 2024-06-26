@@ -1,7 +1,5 @@
 # File Metadata Template
 
-- **Filename:**
-
 ## Code Overview
 - **Language & Frameworks:**
 - **Primary Purpose:**
@@ -18,26 +16,16 @@
 
 ## Architecture
 - **Sequence or Flow Diagrams:** Using Mermaid syntax, include sequence or flow diagram(s) to illustrate important or complex logic. (if applicable)
-- **Class Diagrams:** If applicable, describe (do not create) class diagrams needed to illustrate the context of the code
+- **Class Diagrams:** If applicable, describe (do not create) class / component / architecture diagrams needed to illustrate the context of the code
 
 ## Example Usage
 
 ## Code Analysis
 - **Code Style Observations:**
 - **Code Review Feedback:**
-- **Potential Improvements:**
-
-## Features
-- **Key Functionalities:**
-- **Algorithms Used:**
-- **Data Structures:**
+- **Features:**
 - **Potential Improvements:**
 
 ## Tags
-- **Categories:**
-- **Keywords:**
-
-## Additional Notes
-- **TODO Items:**
-- **Known Issues:**
-- **Future Enhancements:**
+- **Keyword Tags:**
+- **Key-Value Tags:**

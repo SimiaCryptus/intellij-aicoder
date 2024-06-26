@@ -291,26 +291,9 @@ class SimpleCommandAction : BaseAction() {
         val fixFiles: List<String>? = null
     )
 
-
     data class Settings(
         var workingDirectory: File,
     )
-
-    private fun getFiles(
-        virtualFiles: Array<out VirtualFile>?
-    ): MutableSet<Path> {
-        val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
-        virtualFiles?.forEach { file ->
-            if (file.isDirectory) {
-                if (file.name.startsWith(".")) return@forEach
-                if (isGitignore(file)) return@forEach
-                codeFiles.addAll(getFiles(file.children))
-            } else {
-                codeFiles.add((file.toNioPath()))
-            }
-        }
-        return codeFiles
-    }
 
     private fun getUserSettings(event: AnActionEvent?): Settings? {
         val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
@@ -347,6 +330,24 @@ class SimpleCommandAction : BaseAction() {
             } else {
                 return listOf(Path.of(it))
             }
+        }
+
+        fun getFiles(
+            virtualFiles: Array<out VirtualFile>?
+        ): MutableSet<Path> {
+            val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
+            virtualFiles?.forEach { file ->
+                if (file.isDirectory) {
+                    if (file.name.startsWith(".")) return@forEach
+                    if (isGitignore(file)) return@forEach
+                    if (file.name.endsWith(".png")) return@forEach
+                    if (file.length > 1024 * 256) return@forEach
+                    codeFiles.addAll(getFiles(file.children))
+                } else {
+                    codeFiles.add((file.toNioPath()))
+                }
+            }
+            return codeFiles
         }
     }
 }
