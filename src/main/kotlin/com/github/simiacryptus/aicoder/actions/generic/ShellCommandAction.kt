@@ -1,8 +1,11 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
+import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction.Companion
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,101 +15,132 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.skyenet.apps.coding.CodingAgent
 import com.simiacryptus.skyenet.core.actors.CodingActor
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
+import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.interpreter.ProcessInterpreter
+import com.simiacryptus.skyenet.webui.application.ApplicationInterface
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
+import com.simiacryptus.skyenet.webui.session.SessionTask
+import com.simiacryptus.skyenet.webui.session.SocketManager
+import java.awt.Desktop
 import java.awt.GridLayout
 import java.io.File
 import javax.swing.*
+import kotlin.reflect.KClass
 
 class ShellCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
-/*
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = UITools.getSelectedFolder(e) != null
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        return UITools.getSelectedFolder(event) != null
     }
-*/
 
     override fun handle(e: AnActionEvent) {
         val project = e.project
         val selectedFolder = UITools.getSelectedFolder(e)?.toFile
-        
         if (selectedFolder == null) {
             Messages.showErrorDialog(project, "Please select a directory", "Error")
             return
         }
+        val session = StorageInterface.newGlobalID()
+        SessionProxyServer.chats[session] = object : ApplicationServer(
+            applicationName = "Shell Agent",
+            path = "/shellAgent",
+            showMenubar = false,
+        ) {
+            override val singleInput = true
+            override val stickyInput = false
 
-        val settings = ShellCommandSettings()
-        val dialog = ShellCommandConfigDialog(project, settings)
 
-        if (dialog.showAndGet()) {
-            executeShellCommand(project, selectedFolder, settings)
-        }
-    }
+            override fun userMessage(
+                session: Session,
+                user: User?,
+                userMessage: String,
+                ui: ApplicationInterface,
+                api: API
+            ) {
+                val task = ui.newTask()
+                val agent = object : CodingAgent<ProcessInterpreter>(
+                    api = api,
+                    dataStorage = dataStorage,
+                    session = session,
+                    user = user,
+                    ui = ui,
+                    interpreter = ProcessInterpreter::class,
+                    symbols = mapOf(
+                        "workingDir" to selectedFolder.absolutePath,
+                        "language" to if (isWindows) "powershell" else "bash",
+                        "command" to listOf(AppSettingsState.instance.shellCommand)
+                    ),
+                    temperature = AppSettingsState.instance.temperature,
+                    details = """
+                        Execute the following shell command(s) in the specified directory and provide the output.
+                        Ensure to handle any errors or exceptions gracefully.
+                    """.trimIndent(),
+                    model = AppSettingsState.instance.smartModel.chatModel(),
+                    mainTask = task,
+                ) {
+                    override fun displayFeedback(
+                        task: SessionTask,
+                        request: CodingActor.CodeRequest,
+                        response: CodingActor.CodeResult
+                    ) {
+                        val formText = StringBuilder()
+                        var formHandle: StringBuilder? = null
+                        formHandle = task.add(
+                            """
+                      |<div style="display: flex;flex-direction: column;">
+                      |${
+                                if (!super.canPlay) "" else super.playButton(
+                                    task,
+                                    request,
+                                    response,
+                                    formText
+                                ) { formHandle!! }
+                            }
+                      |${acceptButton(task, request, response, formText) { formHandle!! }}
+                      |</div>
+                      |${super.reviseMsg(task, request, response, formText) { formHandle!! }}
+                      """.trimMargin(), className = "reply-message"
+                        )
+                        formText.append(formHandle.toString())
+                        formHandle.toString()
+                        task.complete()
+                    }
 
-    private fun executeShellCommand(project: Project?, selectedFolder: File, settings: ShellCommandSettings) {
-        val api = API()
-        val shellActor = CodingActor(
-            name = "ShellCommandExecutor",
-            interpreterClass = ProcessInterpreter::class,
-            details = """
-                Execute the following shell command(s) in the specified directory and provide the output.
-                Ensure to handle any errors or exceptions gracefully.
-                
-                Note: This task is for running simple and safe commands. Avoid executing commands that can cause harm to the system or compromise security.
-            """.trimIndent(),
-            symbols = mapOf(
-                "workingDir" to selectedFolder.absolutePath,
-                "language" to if (isWindows) "powershell" else "bash",
-                "command" to listOf(AppSettingsState.instance.shellCommand)
-            ),
-            model = settings.model,
-            temperature = settings.temperature
-        )
-
-        //val result = shellActor.answer(CodingActor.CodeRequest(messages = settings.command), api)
-        
-        //Messages.showInfoMessage(project, result, "Shell Command Output")
-    }
-
-    data class ShellCommandSettings(
-        var model: ChatModels = AppSettingsState.instance.smartModel.chatModel(),
-        var temperature: Double = AppSettingsState.instance.temperature,
-        var command: String = ""
-    )
-
-    class ShellCommandConfigDialog(
-        project: Project?,
-        private val settings: ShellCommandSettings
-    ) : DialogWrapper(project) {
-        private val modelComboBox = ComboBox(ChatModels.values().values.toTypedArray())
-        private val temperatureSlider = JSlider(0, 100, (settings.temperature * 100).toInt())
-        private val commandField = JTextField(settings.command)
-
-        init {
-            init()
-            title = "Configure Shell Command"
-            temperatureSlider.addChangeListener {
-                settings.temperature = temperatureSlider.value / 100.0
+                    fun acceptButton(
+                        task: SessionTask,
+                        request: CodingActor.CodeRequest,
+                        response: CodingActor.CodeResult,
+                        formText: StringBuilder,
+                        formHandle: () -> StringBuilder
+                    ): String {
+                        return ui.hrefLink("Accept", "href-link play-button") {
+                        }
+                    }
+                }.apply {
+                    this.start(userMessage)
+                }
             }
         }
 
-        override fun createCenterPanel(): JComponent {
-            val panel = JPanel(GridLayout(0, 2))
-            panel.add(JLabel("Model:"))
-            panel.add(modelComboBox)
-            panel.add(JLabel("Temperature:"))
-            panel.add(temperatureSlider)
-            panel.add(JLabel("Command:"))
-            panel.add(commandField)
-            return panel
-        }
+        val server = AppServer.getServer(e.project)
 
-        override fun doOKAction() {
-            settings.model = modelComboBox.selectedItem as ChatModels
-            settings.command = commandField.text
-            super.doOKAction()
-        }
+        Thread {
+            Thread.sleep(500)
+            try {
+                val uri = server.server.uri.resolve("/#$session")
+                log.info("Opening browser to $uri")
+                Desktop.getDesktop().browse(uri)
+            } catch (e: Throwable) {
+                log.warn("Error opening browser", e)
+            }
+        }.start()
     }
 
     companion object {

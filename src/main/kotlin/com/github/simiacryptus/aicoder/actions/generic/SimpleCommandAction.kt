@@ -85,7 +85,7 @@ class SimpleCommandAction : BaseAction() {
             Thread.sleep(500)
             try {
                 val uri = server.server.uri.resolve("/#$session")
-                BaseAction.log.info("Opening browser to $uri")
+                log.info("Opening browser to $uri")
                 Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)

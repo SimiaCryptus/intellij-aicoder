@@ -326,8 +326,9 @@
             <add-to-group group-id="ProblemsView.ToolWindow.TreePopup" anchor="last"/>
         </action>
         <action id="AICoderShellCommand" class="com.github.simiacryptus.aicoder.actions.generic.ShellCommandAction"
-                text="Execute Shell Command" description="Execute a shell command in the selected directory">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+                text="Shell Agent"
+                description="Execute shell commands in the selected directory via a coding agent">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>
