@@ -141,7 +141,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                                 path.fileName.toString().split('.').dropLast(1)
                                     .joinToString(".") + "." + outputPath.fileName
                             ))
-                            individualOutputPath =  gitRoot.resolve(outputDirectory).resolve(gitRoot.relativize(individualOutputPath))
+                            individualOutputPath = selectedFolder.resolve(individualOutputPath)
+                            individualOutputPath = gitRoot.relativize(individualOutputPath)
+                            individualOutputPath = gitRoot.resolve(outputDirectory).resolve(individualOutputPath)
                             individualOutputPath.parent.toFile().mkdirs()
                             Files.write(individualOutputPath, transformContent.toByteArray())
                         }
