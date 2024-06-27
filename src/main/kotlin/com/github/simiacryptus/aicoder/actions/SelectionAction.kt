@@ -2,6 +2,7 @@
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.LanguageUtils
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -73,7 +74,7 @@ abstract class SelectionAction<T : Any>(
                         selectionOffset = selectionStart,
                         selectionLength = selectionEnd - selectionStart,
                         entireDocument = editor.document.text,
-                        language = ComputerLanguage.getComputerLanguage(e),
+                       language = LanguageUtils.getComputerLanguage(e),
                         indent = indent,
                         contextRanges = editorState.contextRanges,
                         psiFile = editorState.psiFile,
@@ -159,7 +160,7 @@ abstract class SelectionAction<T : Any>(
                 if (start >= end) return false
             }
         }
-        val computerLanguage = ComputerLanguage.getComputerLanguage(event)
+       val computerLanguage = LanguageUtils.getComputerLanguage(event)
         return isLanguageSupported(computerLanguage)
     }
 
@@ -176,8 +177,7 @@ abstract class SelectionAction<T : Any>(
     )
 
     open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        computerLanguage ?: return false
-        return true
+       return LanguageUtils.isLanguageSupported(computerLanguage)
     }
 
     open fun defaultSelection(editorState: EditorState, offset: Int) = editorState.line

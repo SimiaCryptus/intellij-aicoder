@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.LanguageUtils
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -79,6 +80,6 @@ open class RenameVariablesAction : SelectionAction<String>() {
     }
 
     override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        return computerLanguage != ComputerLanguage.Text
+        return LanguageUtils.isLanguageSupported(computerLanguage)
     }
 }

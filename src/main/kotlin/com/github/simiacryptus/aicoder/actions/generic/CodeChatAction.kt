@@ -6,6 +6,8 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.LanguageUtils
+import com.github.simiacryptus.aicoder.util.FileSystemUtils
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,6 +17,7 @@ import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
+import java.nio.file.Path
 
 class CodeChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -23,8 +26,9 @@ class CodeChatAction : BaseAction() {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
         val session = StorageInterface.newGlobalID()
-        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: ""
+        val language = LanguageUtils.getComputerLanguage(e)?.name ?: ""
         val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
+
         SessionProxyServer.agents[session] = CodeChatSocketManager(
             session = session,
             language = language,

@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -369,7 +370,7 @@ class CommandAutofixAction : BaseAction() {
         virtualFiles?.forEach { file ->
             if (file.isDirectory) {
                 if (file.name.startsWith(".")) return@forEach
-                if (Companion.isGitignore(file)) return@forEach
+                if (isGitignore(file)) return@forEach
                 codeFiles.addAll(getFiles(file.children))
             } else {
                 codeFiles.add((file.toNioPath()))
@@ -483,42 +484,7 @@ class CommandAutofixAction : BaseAction() {
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
         val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
-        fun isGitignore(file: VirtualFile) = isGitignore(file.toNioPath())
 
-        fun isGitignore(path: Path): Boolean {
-            var currentDir = path.toFile().parentFile
-            currentDir ?: return false
-            while (!currentDir.resolve(".git").exists()) {
-                currentDir.resolve(".gitignore").let {
-                    if (it.exists()) {
-                        val gitignore = it.readText()
-                        if (gitignore.split("\n").any { line ->
-                                val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
-                                line.trim().isNotEmpty()
-                                        && !line.startsWith("#")
-                                        && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
-                            }) {
-                            return true
-                        }
-                    }
-                }
-                currentDir = currentDir.parentFile ?: return false
-            }
-            currentDir.resolve(".gitignore").let {
-                if (it.exists()) {
-                    val gitignore = it.readText()
-                    if (gitignore.split("\n").any { line ->
-                            val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
-                            line.trim().isNotEmpty()
-                                    && !line.startsWith("#")
-                                    && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
-                        }) {
-                        return true
-                    }
-                }
-            }
-            return false
-        }
 
         val StringBuilder.htmlEscape: String
             get() = this.toString().replace("&", "&amp;")

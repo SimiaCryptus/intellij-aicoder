@@ -41,6 +41,7 @@ class CreateImageAction : BaseAction() {
     override fun handle(event: AnActionEvent) {
         var root: Path? = null
         val codeFiles: MutableSet<Path> = mutableSetOf()
+
         fun codeSummary() = codeFiles.filter {
             root!!.resolve(it).toFile().exists()
         }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
