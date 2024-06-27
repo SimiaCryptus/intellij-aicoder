@@ -19,7 +19,7 @@ to ensure consistency, readability, and maintainability of the codebase.
 
 ## Formatting
 
-- **Indentation**: Use 4 spaces for indentation, not tabs.
+- **Indentation**: Use 2 spaces for indentation, not tabs.
 - **Braces**: Place opening braces on the same line as the statement and closing braces on their own line.
 - **Line Length**: Aim to keep lines under 120 characters for better readability.
 - **Spacing**: Use spaces after commas, colons, and semicolons. Avoid spaces before commas.

@@ -21,9 +21,9 @@
 ## Example Usage
 
 ## Code Analysis
+- **Features:**
 - **Code Style Observations:**
 - **Code Review Feedback:**
-- **Features:**
 - **Potential Improvements:**
 
 ## Tags
