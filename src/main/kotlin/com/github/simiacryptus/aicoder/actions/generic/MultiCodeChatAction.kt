@@ -127,7 +127,6 @@ class MultiCodeChatAction : BaseAction() {
                 outputFn = { design: String ->
                     var markdown = ui.socketManager?.addApplyFileDiffLinks(
                         root = root.toPath(),
-                        code = { codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
                         response = design,
                         handle = { newCodeMap ->
                             newCodeMap.forEach { (path, newCode) ->
@@ -135,6 +134,7 @@ class MultiCodeChatAction : BaseAction() {
                             }
                         },
                         ui = ui,
+                        api = api,
                     )
                     markdown = ui.socketManager?.addSaveLinks(
                         root = root.toPath(),

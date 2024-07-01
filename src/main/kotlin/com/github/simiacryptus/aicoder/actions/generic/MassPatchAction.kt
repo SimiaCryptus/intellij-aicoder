@@ -6,6 +6,7 @@ import com.github.simiacryptus.aicoder.actions.generic.MassPatchAction.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isLLMIncludable
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -71,7 +72,7 @@ class MassPatchAction : BaseAction() {
     /*override*/ fun getConfig(project: Project?, e: AnActionEvent): Settings {
         val root = UITools.getSelectedFolder(e)?.toNioPath()
         val files = Files.walk(root)
-            .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
+            .filter { isLLMIncludable(it.toFile()) }
             .toList().filterNotNull().toTypedArray()
         val settingsUI = SettingsUI().apply {
             filesToProcess.setItems(files.toMutableList()) { path ->
@@ -96,22 +97,8 @@ class MassPatchAction : BaseAction() {
         val project = e.project
         val config = getConfig(project, e)
 
-        val codeSummary = config?.settings?.filesToProcess?.filter {
-            it.toFile().exists()
-        }?.associateWith { it.toFile().readText(Charsets.UTF_8) }
-            ?.entries?.joinToString("\n\n") { (path, code) ->
-                val extension = path.toString().split('.').lastOrNull()
-                """
-                |# $path
-                |```$extension
-                |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
-                |```
-                """.trimMargin()
-            }
-
-
         val session = StorageInterface.newGlobalID()
-        SessionProxyServer.chats[session] = MassPatchServer(codeSummary=codeSummary, config=config, api=api)
+        SessionProxyServer.chats[session] = MassPatchServer(config=config, api=api)
 
         val server = AppServer.getServer(e.project)
         Thread {
@@ -165,7 +152,6 @@ class MassPatchAction : BaseAction() {
 }
 
 class MassPatchServer(
-    val codeSummary: String?,
     val config: Settings,
     val api: OpenAIClient
 ) : ApplicationServer(
@@ -173,55 +159,56 @@ class MassPatchServer(
     path = "/patchChat",
     showMenubar = false,
 ) {
+
+
     override val singleInput = false
     override val stickyInput = true
     private val mainActor: SimpleActor
-        get() = SimpleActor(
-            prompt = """
-                    |You are a helpful AI that helps people with coding.
-                    |
-                    |You will be answering questions about the following code:
-                    |
-                    |${codeSummary ?: ""}
-                    |
-                    |Response should use one or more code patches in diff format within ```diff code blocks.
-                    |Each diff should be preceded by a header that identifies the file being modified.
-                    |The diff format should use + for line additions, - for line deletions.
-                    |The diff should include 2 lines of context before and after every change.
-                    |
-                    |Example:
-                    |
-                    |Here are the patches:
-                    |
-                    |### src/utils/exampleUtils.js
-                    |```diff
-                    | // Utility functions for example feature
-                    | const b = 2;
-                    | function exampleFunction() {
-                    |-   return b + 1;
-                    |+   return b + 2;
-                    | }
-                    |```
-                    |
-                    |### tests/exampleUtils.test.js
-                    |```diff
-                    | // Unit tests for exampleUtils
-                    | const assert = require('assert');
-                    | const { exampleFunction } = require('../src/utils/exampleUtils');
-                    | 
-                    | describe('exampleFunction', () => {
-                    |-   it('should return 3', () => {
-                    |+   it('should return 4', () => {
-                    |     assert.equal(exampleFunction(), 3);
-                    |   });
-                    | });
-                    |```
-                    |
-                    |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                    """.trimMargin(),
-            model = AppSettingsState.instance.smartModel.chatModel(),
-            temperature = AppSettingsState.instance.temperature,
-        )
+        get() {
+
+            return SimpleActor(
+                prompt = """
+                            |You are a helpful AI that helps people with coding.
+                            |
+                            |Response should use one or more code patches in diff format within ```diff code blocks.
+                            |Each diff should be preceded by a header that identifies the file being modified.
+                            |The diff format should use + for line additions, - for line deletions.
+                            |The diff should include 2 lines of context before and after every change.
+                            |
+                            |Example:
+                            |
+                            |Here are the patches:
+                            |
+                            |### src/utils/exampleUtils.js
+                            |```diff
+                            | // Utility functions for example feature
+                            | const b = 2;
+                            | function exampleFunction() {
+                            |-   return b + 1;
+                            |+   return b + 2;
+                            | }
+                            |```
+                            |
+                            |### tests/exampleUtils.test.js
+                            |```diff
+                            | // Unit tests for exampleUtils
+                            | const assert = require('assert');
+                            | const { exampleFunction } = require('../src/utils/exampleUtils');
+                            | 
+                            | describe('exampleFunction', () => {
+                            |-   it('should return 3', () => {
+                            |+   it('should return 4', () => {
+                            |     assert.equal(exampleFunction(), 3);
+                            |   });
+                            | });
+                            |```
+                            |
+                            |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+                            """.trimMargin(),
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                temperature = AppSettingsState.instance.temperature,
+            )
+        }
 
     override fun newSession(user: User?, session: Session): SocketManager {
         val socketManager = super.newSession(user, session)
@@ -234,6 +221,18 @@ class MassPatchServer(
             socketManager.scheduledThreadPoolExecutor.schedule({
                 socketManager.pool.submit {
                     try {
+                        val codeSummary = listOf(path)
+                            ?.filter { isLLMIncludable(it.toFile()) }
+                            ?.associateWith { it.toFile().readText(Charsets.UTF_8) }
+                            ?.entries?.joinToString("\n\n") { (path, code) ->
+                                val extension = path.toString().split('.').lastOrNull()
+                                """
+                            |# $path
+                            |```$extension
+                            |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+                            |```
+                            """.trimMargin()
+                            }
                         val fileTask = ui.newTask(false).apply {
                             tabs[path.toString()] = placeholder
                         }
@@ -248,7 +247,6 @@ class MassPatchServer(
                             outputFn = { design: String ->
                                 var markdown = ui.socketManager?.addApplyFileDiffLinks(
                                     root = root.toPath(),
-                                    code = { codeFiles.associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) } },
                                     response = design,
                                     handle = { newCodeMap ->
                                         newCodeMap.forEach { (path, newCode) ->
@@ -256,6 +254,7 @@ class MassPatchServer(
                                         }
                                     },
                                     ui = ui,
+                                    api = api,
                                 )
                                 markdown = ui.socketManager?.addSaveLinks(
                                     root = root.toPath(),

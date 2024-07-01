@@ -1,9 +1,11 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.intellij.openapi.vfs.VirtualFile
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 
 object FileSystemUtils {
 
@@ -111,6 +113,43 @@ object FileSystemUtils {
                 }
             }
         }
+    }
+
+    fun isLLMIncludable(file: File) : Boolean {
+        return when {
+            !file.exists() -> false
+            file.isDirectory -> false
+            file.name.startsWith(".") -> false
+            isGitignore(file.toPath()) -> false
+            file.length() > (256 * 1024) -> false
+            file.extension?.lowercase(Locale.getDefault()) in setOf(
+                "jar",
+                "zip",
+                "class",
+                "png",
+                "jpg",
+                "jpeg",
+                "gif",
+                "ico",
+                "stl"
+            ) -> false
+            else -> true
+        }
+    }
+
+    fun expandFileList(data: Array<VirtualFile>): Array<VirtualFile> {
+        return data.flatMap {
+            (when {
+                it.name.startsWith(".") -> arrayOf()
+                isGitignore(it) -> arrayOf()
+                it.length > 1e6 -> arrayOf()
+                it.extension?.lowercase(Locale.getDefault()) in
+                        setOf("jar", "zip", "class", "png", "jpg", "jpeg", "gif", "ico") -> arrayOf()
+
+                it.isDirectory -> expandFileList(it.children)
+                else -> arrayOf(it)
+            }).toList()
+        }.toTypedArray()
     }
 
     fun isGitignore(file: VirtualFile) = isGitignore(file.toNioPath())

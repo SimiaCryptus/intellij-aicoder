@@ -4,7 +4,8 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
-import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.expandFileList
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isLLMIncludable
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -508,7 +509,8 @@ class PlanAheadAgent(
           """.trimMargin()
                 }
             val codeFiles = codeFiles
-            fun inputFileCode() = subTask.input_files?.joinToString("\n\n\n") {
+            fun inputFileCode() = ((subTask.input_files ?: listOf()) + (subTask.output_files ?: listOf()))
+                .filter { isLLMIncludable(root.toFile().resolve(it)) }.joinToString("\n\n") {
                 try {
                     """
                     |# $it
@@ -521,7 +523,7 @@ class PlanAheadAgent(
                     log.warn("Error: root=$root    ", e)
                     ""
                 }
-            } ?: ""
+            }
             task.add(
                 renderMarkdown(
                     """
@@ -777,7 +779,7 @@ class PlanAheadAgent(
             )
             genState.taskResult[taskId] = codeResult
             renderMarkdown(ui.socketManager!!.addSaveLinks(root, codeResult, task, ui = ui), ui = ui) + acceptButtonFooter(sb) {
-                taskTabs.selectedTab = taskTabs.selectedTab + 1
+                taskTabs.selectedTab += 1
                 taskTabs.update()
                 onComplete()
             }
@@ -811,14 +813,14 @@ class PlanAheadAgent(
             renderMarkdown(
                 ui.socketManager!!.addApplyFileDiffLinks(
                     root = root,
-                    code = { codeFiles },
                     response = codeResult,
                     handle = { newCodeMap ->
                         newCodeMap.forEach { (path, newCode) ->
                             task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                         }
                     },
-                    ui = ui
+                    ui = ui,
+                    api = api
                 ) + acceptButtonFooter(sb) {
                     taskTabs.selectedTab += 1
                     taskTabs.update()
@@ -852,7 +854,7 @@ class PlanAheadAgent(
             )
             genState.taskResult[taskId] = docResult
             renderMarkdown("## Generated Documentation\n$docResult", ui = ui) + acceptButtonFooter(sb) {
-                taskTabs.selectedTab = taskTabs.selectedTab + 1
+                taskTabs.selectedTab += 1
                 taskTabs.update()
                 task.complete()
                 onComplete()
@@ -1054,20 +1056,7 @@ class PlanAheadAgent(
         }
 
         val isWindows = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("windows")
-        fun expandFileList(data: Array<VirtualFile>): Array<VirtualFile> {
-            return data.flatMap {
-                (when {
-                    it.name.startsWith(".") -> arrayOf()
-                    isGitignore(it) -> arrayOf()
-                    it.length > 1e6 -> arrayOf()
-                    it.extension?.lowercase(Locale.getDefault()) in
-                            setOf("jar", "zip", "class", "png", "jpg", "jpeg", "gif", "ico") -> arrayOf()
 
-                    it.isDirectory -> expandFileList(it.children)
-                    else -> arrayOf(it)
-                }).toList()
-            }.toTypedArray()
-        }
     }
 }
 

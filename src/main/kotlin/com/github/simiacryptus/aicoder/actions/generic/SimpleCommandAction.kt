@@ -115,7 +115,7 @@ class SimpleCommandAction : BaseAction() {
             api: API
         ) {
             val task = ui.newTask()
-            task.echo(userMessage)
+            task.echo(renderMarkdown(userMessage))
             Thread {
                 run(ui, task, session, settings, userMessage)
             }.start()
@@ -246,11 +246,6 @@ class SimpleCommandAction : BaseAction() {
                         )
                         var markdown = ui.socketManager?.addApplyFileDiffLinks(
                             root = root.toPath(),
-                            code = {
-                                val map =
-                                    codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
-                                map
-                            },
                             response = response,
                             handle = { newCodeMap ->
                                 newCodeMap.forEach { (path, newCode) ->
@@ -258,6 +253,7 @@ class SimpleCommandAction : BaseAction() {
                                 }
                             },
                             ui = ui,
+                            api = api,
                         )
                         markdown = ui.socketManager?.addSaveLinks(
                             root = root.toPath(),

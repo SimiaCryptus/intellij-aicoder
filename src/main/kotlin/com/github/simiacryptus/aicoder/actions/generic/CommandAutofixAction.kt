@@ -62,14 +62,22 @@ class CommandAutofixAction : BaseAction() {
                 .map { root.relativize(it) ?: it }.toSet()
 
             override fun codeSummary(paths: List<Path>): String = paths
-                .filter { settings.workingDirectory?.resolve(it.toFile())?.exists() == true }
+                .filter {
+                    val file = settings.workingDirectory?.resolve(it.toFile())
+                    file?.exists() == true && !file.isDirectory && file.length() < (256 * 1024)
+                }
                 .joinToString("\n\n") { path ->
-                    """
-                    |# ${path}
-                    |$tripleTilde${path.toString().split('.').lastOrNull()}
-                    |${settings.workingDirectory?.resolve(path.toFile())?.readText(Charsets.UTF_8)}
-                    |$tripleTilde
-                    """.trimMargin()
+                    try {
+                        """
+                        |# ${path}
+                        |$tripleTilde${path.toString().split('.').lastOrNull()}
+                        |${settings.workingDirectory?.resolve(path.toFile())?.readText(Charsets.UTF_8)}
+                        |$tripleTilde
+                        """.trimMargin()
+                    } catch (e: Exception) {
+                        log.warn("Error reading file", e)
+                        "Error reading file `${path}` - ${e.message}"
+                    }
                 }
 
             override fun projectSummary(): String {
@@ -315,10 +323,6 @@ class CommandAutofixAction : BaseAction() {
                 )
                 var markdown = ui.socketManager?.addApplyFileDiffLinks(
                     root = root.toPath(),
-                    code = {
-                        val map = codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
-                        map
-                    },
                     response = response,
                     handle = { newCodeMap ->
                         newCodeMap.forEach { (path, newCode) ->
@@ -326,6 +330,7 @@ class CommandAutofixAction : BaseAction() {
                         }
                     },
                     ui = ui,
+                    api=api,
                 )
                 markdown = ui.socketManager?.addSaveLinks(
                     root = root.toPath(),
