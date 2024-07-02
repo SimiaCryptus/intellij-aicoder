@@ -2,10 +2,10 @@ package com.github.simiacryptus.aicoder.actions.git
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction.Companion.isGitignore
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -303,11 +303,6 @@ class ReplicateCommitAction : BaseAction() {
                         )
                         var markdown = ui.socketManager?.addApplyFileDiffLinks(
                             root = root.toPath(),
-                            code = {
-                                val map =
-                                    codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
-                                map
-                            },
                             response = response,
                             handle = { newCodeMap ->
                                 newCodeMap.forEach { (path, newCode) ->
@@ -315,14 +310,13 @@ class ReplicateCommitAction : BaseAction() {
                                 }
                             },
                             ui = ui,
+                            api = api,
                         )
                         markdown = ui.socketManager?.addSaveLinks(
+                            root = root.toPath(),
                             response = markdown!!,
                             task = task,
                             ui = ui,
-                            handle = { path, newCode ->
-                                root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                            },
                         )
                         "<div>${renderMarkdown(markdown!!)}</div>"
                     }

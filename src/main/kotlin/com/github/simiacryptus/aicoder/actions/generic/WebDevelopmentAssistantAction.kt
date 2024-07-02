@@ -2,7 +2,6 @@
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -419,18 +418,14 @@ class WebDevelopmentAssistantAction : BaseAction() {
                     renderMarkdown(
                         ui.socketManager!!.addApplyFileDiffLinks(
                             root = root.toPath(),
-                            code = { codeFiles.filter {
-                                if (it.name.lowercase().endsWith(".png")) return@filter false
-                                if (it.name.lowercase().endsWith(".jpg")) return@filter false
-                                true
-                            }.map { it to root.resolve(it.toFile()).readText() }.toMap() },
                             response = code,
                             handle = { newCodeMap ->
                                 newCodeMap.forEach { (path, newCode) ->
                                     task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                                 }
                             },
-                            ui = ui
+                            ui = ui,
+                            api = api
                         )
                     )
                 },

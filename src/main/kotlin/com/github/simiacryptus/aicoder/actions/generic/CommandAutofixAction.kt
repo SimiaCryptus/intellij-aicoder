@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -36,6 +37,9 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -58,15 +62,24 @@ class CommandAutofixAction : BaseAction() {
                 .map { root.relativize(it) ?: it }.toSet()
 
             override fun codeSummary(paths: List<Path>): String = paths
-                .filter { settings.workingDirectory?.resolve(it.toFile())?.exists() == true }
-                .joinToString("\n\n") { path ->
-                    """
-                    |# ${path}
-                    |$tripleTilde${path.toString().split('.').lastOrNull()}
-                    |${settings.workingDirectory?.resolve(path.toFile())?.readText(Charsets.UTF_8)}
-                    |$tripleTilde
-                    """.trimMargin()
+                .filter {
+                    val file = settings.workingDirectory?.resolve(it.toFile())
+                    file?.exists() == true && !file.isDirectory && file.length() < (256 * 1024)
                 }
+                .joinToString("\n\n") { path ->
+                    try {
+                        """
+                        |# ${path}
+                        |$tripleTilde${path.toString().split('.').lastOrNull()}
+                        |${settings.workingDirectory?.resolve(path.toFile())?.readText(Charsets.UTF_8)}
+                        |$tripleTilde
+                        """.trimMargin()
+                    } catch (e: Exception) {
+                        log.warn("Error reading file", e)
+                        "Error reading file `${path}` - ${e.message}"
+                    }
+                }
+
             override fun projectSummary(): String {
                 val codeFiles = codeFiles()
                 val str = codeFiles
@@ -74,7 +87,9 @@ class CommandAutofixAction : BaseAction() {
                     .filter { settings.workingDirectory?.toPath()?.resolve(it)?.toFile()?.exists() == true }
                     .distinct().sorted()
                     .joinToString("\n") { path ->
-                        "* ${path} - ${settings.workingDirectory?.toPath()?.resolve(path)?.toFile()?.length() ?: "?"} bytes".trim()
+                        "* ${path} - ${
+                            settings.workingDirectory?.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
+                        } bytes".trim()
                     }
                 return str
             }
@@ -83,20 +98,31 @@ class CommandAutofixAction : BaseAction() {
                 val command = listOf(settings.executable.absolutePath) + settings.arguments.split(" ")
                 val processBuilder = ProcessBuilder(command)
                 processBuilder.directory(settings.workingDirectory)
-                processBuilder.redirectErrorStream(true) // Merge standard error and standard output
                 val buffer = StringBuilder()
                 val taskOutput = task.add("")
                 val process = processBuilder.start()
-                val bufferedReader = process.inputStream.bufferedReader()
-                while (process.isAlive) {
-                    val line = bufferedReader.readLine()
-                    buffer.append(line + "\n")
-                    taskOutput?.set("<pre>\n$buffer\n</pre>")
-                    task.append("", true)
+                val errorBuffer = StringBuilder()
+                Thread {
+                    process.errorStream.bufferedReader().use { reader ->
+                        var line: String?
+                        while (reader.readLine().also { line = it } != null) {
+                            errorBuffer.append(line).append("\n")
+                            taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
+                            task.append("", true)
+                        }
+                    }
+                }.start()
+                process.inputStream.bufferedReader().use { reader ->
+                    var line: String?
+                    while (reader.readLine().also { line = it } != null) {
+                        buffer.append(line).append("\n")
+                        taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
+                        task.append("", true)
+                    }
                 }
                 task.append("", false)
                 val exitCode = process.waitFor()
-                val output = buffer.toString()
+                val output = buffer.toString() + errorBuffer.toString()
                 taskOutput?.clear()
                 OutputResult(exitCode, output)
             }
@@ -220,18 +246,22 @@ class CommandAutofixAction : BaseAction() {
                         |""".trimMargin()
                 ), api = api
             )
-            task.add(AgentPatterns.displayMapInTabs(
-                mapOf(
-                    "Text" to renderMarkdown(plan.text, ui = ui),
-                    "JSON" to renderMarkdown(
-                        "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
-                        ui = ui
-                    ),
+            task.add(
+                AgentPatterns.displayMapInTabs(
+                    mapOf(
+                        "Text" to renderMarkdown(plan.text, ui = ui),
+                        "JSON" to renderMarkdown(
+                            "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
+                            ui = ui
+                        ),
+                    )
                 )
-            ))
+            )
+            val progress = ui.newTask()
+            val progressHeader = progress.header("Processing tasks")
             plan.obj.errors?.forEach { error ->
-                val summary = codeSummary(
-                    ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() })
+                val paths = ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
+                val summary = codeSummary(paths)
                 val response = SimpleActor(
                     prompt = """
                     |You are a helpful AI that helps people with coding.
@@ -293,10 +323,6 @@ class CommandAutofixAction : BaseAction() {
                 )
                 var markdown = ui.socketManager?.addApplyFileDiffLinks(
                     root = root.toPath(),
-                    code = {
-                        val map = codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
-                        map
-                    },
                     response = response,
                     handle = { newCodeMap ->
                         newCodeMap.forEach { (path, newCode) ->
@@ -304,17 +330,18 @@ class CommandAutofixAction : BaseAction() {
                         }
                     },
                     ui = ui,
+                    api=api,
                 )
                 markdown = ui.socketManager?.addSaveLinks(
+                    root = root.toPath(),
                     response = markdown!!,
                     task = task,
                     ui = ui,
-                    handle = { path, newCode ->
-                        root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                    },
                 )
                 task.complete("<div>${renderMarkdown(markdown!!)}</div>")
             }
+            progressHeader?.clear()
+            progress.append("", false)
         } catch (e: Exception) {
             task.error(ui, e)
         }
@@ -323,6 +350,7 @@ class CommandAutofixAction : BaseAction() {
     data class ParsedErrors(
         val errors: List<ParsedError>? = null
     )
+
     data class ParsedError(
         @Description("The error message")
         val message: String? = null,
@@ -346,8 +374,8 @@ class CommandAutofixAction : BaseAction() {
         val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
         virtualFiles?.forEach { file ->
             if (file.isDirectory) {
-                if(file.name.startsWith(".")) return@forEach
-                if(Companion.isGitignore(file)) return@forEach
+                if (file.name.startsWith(".")) return@forEach
+                if (isGitignore(file)) return@forEach
                 codeFiles.addAll(getFiles(file.children))
             } else {
                 codeFiles.add((file.toNioPath()))
@@ -358,9 +386,7 @@ class CommandAutofixAction : BaseAction() {
 
     private fun getUserSettings(event: AnActionEvent?): Settings? {
         val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
-            File(
-                it
-            ).toPath()
+            File(it).toPath()
         }
         val files = UITools.getSelectedFiles(event).map { it.path.let { File(it).toPath() } }.toMutableSet()
         if (files.isEmpty()) Files.walk(root)
@@ -463,41 +489,13 @@ class CommandAutofixAction : BaseAction() {
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
         val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
-        fun isGitignore(file: VirtualFile) = isGitignore(file.toNioPath())
 
-        fun isGitignore(path: Path): Boolean {
-            var currentDir = path.toFile().parentFile
-            currentDir ?: return false
-            while (!currentDir.resolve(".git").exists()) {
-                currentDir.resolve(".gitignore").let {
-                    if (it.exists()) {
-                        val gitignore = it.readText()
-                        if (gitignore.split("\n").any { line ->
-                                val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
-                                line.trim().isNotEmpty()
-                                        && !line.startsWith("#")
-                                        && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
-                            }) {
-                            return true
-                        }
-                    }
-                }
-                currentDir = currentDir.parentFile ?: return false
-            }
-            currentDir.resolve(".gitignore").let {
-                if (it.exists()) {
-                    val gitignore = it.readText()
-                    if (gitignore.split("\n").any { line ->
-                            val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
-                            line.trim().isNotEmpty()
-                                    && !line.startsWith("#")
-                                    && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
-                        }) {
-                        return true
-                    }
-                }
-            }
-            return false
-        }
+
+        val StringBuilder.htmlEscape: String
+            get() = this.toString().replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;")
     }
 }

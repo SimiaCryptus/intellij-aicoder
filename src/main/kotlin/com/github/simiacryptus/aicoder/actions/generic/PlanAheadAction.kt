@@ -4,6 +4,8 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.expandFileList
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isLLMIncludable
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -144,6 +146,11 @@ class PlanAheadAction : BaseAction() {
                 LoggerFactory.getLogger(PlanAheadAction::class.java).warn("Error opening browser", e)
             }
         }.start()
+    }
+ 
+    companion object {
+        private val log = LoggerFactory.getLogger(PlanAheadAction::class.java)
+
     }
 }
 
@@ -293,23 +300,7 @@ class PlanAheadAgent(
     }
 
     private val virtualFiles by lazy {
-        expandFileList(
-            VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf()
-        )
-    }
-
-    private fun expandFileList(data: Array<VirtualFile>): Array<VirtualFile> {
-        return data.flatMap {
-            (when {
-                it.name.startsWith(".") -> arrayOf()
-                it.length > 1e6 -> arrayOf()
-                it.extension?.lowercase(Locale.getDefault()) in
-                        setOf("jar", "zip", "class", "png", "jpg", "jpeg", "gif", "ico") -> arrayOf()
-
-                it.isDirectory -> expandFileList(it.children)
-                else -> arrayOf(it)
-            }).toList()
-        }.toTypedArray()
+        expandFileList(VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf())
     }
 
     private val codeFiles
@@ -518,7 +509,8 @@ class PlanAheadAgent(
           """.trimMargin()
                 }
             val codeFiles = codeFiles
-            fun inputFileCode() = subTask.input_files?.joinToString("\n\n\n") {
+            fun inputFileCode() = ((subTask.input_files ?: listOf()) + (subTask.output_files ?: listOf()))
+                .filter { isLLMIncludable(root.toFile().resolve(it)) }.joinToString("\n\n") {
                 try {
                     """
                     |# $it
@@ -531,7 +523,7 @@ class PlanAheadAgent(
                     log.warn("Error: root=$root    ", e)
                     ""
                 }
-            } ?: ""
+            }
             task.add(
                 renderMarkdown(
                     """
@@ -786,17 +778,8 @@ class PlanAheadAgent(
                 ).filter { it.isNotBlank() }, api
             )
             genState.taskResult[taskId] = codeResult
-            renderMarkdown(ui.socketManager!!.addSaveLinks(codeResult, task, ui = ui) { path, newCode ->
-                val prev = codeFiles[path]
-                if (prev != newCode) {
-                    val bytes = newCode.toByteArray(Charsets.UTF_8)
-                    val saveFile = task.saveFile(path.toString(), bytes)
-                    task.complete("<a href='$saveFile'>$path</a> Created")
-                } else {
-                    task.complete("No changes to $path")
-                }
-            }, ui = ui) + acceptButtonFooter(sb) {
-                taskTabs.selectedTab = taskTabs.selectedTab + 1
+            renderMarkdown(ui.socketManager!!.addSaveLinks(root, codeResult, task, ui = ui), ui = ui) + acceptButtonFooter(sb) {
+                taskTabs.selectedTab += 1
                 taskTabs.update()
                 onComplete()
             }
@@ -830,14 +813,14 @@ class PlanAheadAgent(
             renderMarkdown(
                 ui.socketManager!!.addApplyFileDiffLinks(
                     root = root,
-                    code = { codeFiles },
                     response = codeResult,
                     handle = { newCodeMap ->
                         newCodeMap.forEach { (path, newCode) ->
                             task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                         }
                     },
-                    ui = ui
+                    ui = ui,
+                    api = api
                 ) + acceptButtonFooter(sb) {
                     taskTabs.selectedTab += 1
                     taskTabs.update()
@@ -871,7 +854,7 @@ class PlanAheadAgent(
             )
             genState.taskResult[taskId] = docResult
             renderMarkdown("## Generated Documentation\n$docResult", ui = ui) + acceptButtonFooter(sb) {
-                taskTabs.selectedTab = taskTabs.selectedTab + 1
+                taskTabs.selectedTab += 1
                 taskTabs.update()
                 task.complete()
                 onComplete()
@@ -1073,6 +1056,7 @@ class PlanAheadAgent(
         }
 
         val isWindows = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("windows")
+
     }
 }
 

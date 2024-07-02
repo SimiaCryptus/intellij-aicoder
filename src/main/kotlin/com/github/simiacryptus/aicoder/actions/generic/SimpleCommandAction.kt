@@ -2,8 +2,8 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction.Companion.isGitignore
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -85,7 +85,7 @@ class SimpleCommandAction : BaseAction() {
             Thread.sleep(500)
             try {
                 val uri = server.server.uri.resolve("/#$session")
-                BaseAction.log.info("Opening browser to $uri")
+                log.info("Opening browser to $uri")
                 Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
@@ -115,7 +115,7 @@ class SimpleCommandAction : BaseAction() {
             api: API
         ) {
             val task = ui.newTask()
-            task.echo(userMessage)
+            task.echo(renderMarkdown(userMessage))
             Thread {
                 run(ui, task, session, settings, userMessage)
             }.start()
@@ -157,7 +157,7 @@ class SimpleCommandAction : BaseAction() {
                 ).answer(
                     listOf(
                         """
-                            |The following command was run and produced an error:
+                            |Execute the following directive:
                             |
                             |$tripleTilde
                             |$userMessage
@@ -176,15 +176,22 @@ class SimpleCommandAction : BaseAction() {
                         )
                     )
                 )
-                plan.obj.errors?.map { planTask ->
-                    Retryable(ui,task) {
+                val progress = ui.newTask()
+                val progressHeader = progress.header("Processing tasks")
+                val errors = plan.obj.errors?.map { planTask ->
+                    Retryable(ui, task) {
+                        val paths =
+                            ((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap {
+                                toPaths(settings.workingDirectory.toPath(), it)
+                            }
+                        val codeSummary = codeSummary(paths.map { settings.workingDirectory.toPath().resolve(it) })
                         val response = SimpleActor(
                             prompt = """
                             |You are a helpful AI that helps people with coding.
                             |
                             |You will be answering questions about the following code:
                             |
-                            |${codeSummary(((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap { toPaths(settings.workingDirectory.toPath(), it) })}
+                            |$codeSummary
                             |
                             |
                             |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
@@ -239,10 +246,6 @@ class SimpleCommandAction : BaseAction() {
                         )
                         var markdown = ui.socketManager?.addApplyFileDiffLinks(
                             root = root.toPath(),
-                            code = {
-                                val map = codeFiles().associateWith { root.resolve(it.toFile()).readText(Charsets.UTF_8) }
-                                map
-                            },
                             response = response,
                             handle = { newCodeMap ->
                                 newCodeMap.forEach { (path, newCode) ->
@@ -250,19 +253,21 @@ class SimpleCommandAction : BaseAction() {
                                 }
                             },
                             ui = ui,
+                            api = api,
                         )
                         markdown = ui.socketManager?.addSaveLinks(
+                            root = root.toPath(),
                             response = markdown!!,
                             task = task,
                             ui = ui,
-                            handle = { path, newCode ->
-                                root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                            },
                         )
                         "<div>${renderMarkdown(markdown!!)}</div>"
                     }
                     ""
                 }?.joinToString { it } ?: ""
+                progressHeader?.clear()
+                progress.append("", false)
+                ""
             }
         } catch (e: Exception) {
             task.error(ui, e)
@@ -282,26 +287,9 @@ class SimpleCommandAction : BaseAction() {
         val fixFiles: List<String>? = null
     )
 
-
     data class Settings(
         var workingDirectory: File,
     )
-
-    private fun getFiles(
-        virtualFiles: Array<out VirtualFile>?
-    ): MutableSet<Path> {
-        val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
-        virtualFiles?.forEach { file ->
-            if (file.isDirectory) {
-                if (file.name.startsWith(".")) return@forEach
-                if (isGitignore(file)) return@forEach
-                codeFiles.addAll(getFiles(file.children))
-            } else {
-                codeFiles.add((file.toNioPath()))
-            }
-        }
-        return codeFiles
-    }
 
     private fun getUserSettings(event: AnActionEvent?): Settings? {
         val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
@@ -338,6 +326,24 @@ class SimpleCommandAction : BaseAction() {
             } else {
                 return listOf(Path.of(it))
             }
+        }
+
+        fun getFiles(
+            virtualFiles: Array<out VirtualFile>?
+        ): MutableSet<Path> {
+            val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
+            virtualFiles?.forEach { file ->
+                if (file.isDirectory) {
+                    if (file.name.startsWith(".")) return@forEach
+                    if (isGitignore(file)) return@forEach
+                    if (file.name.endsWith(".png")) return@forEach
+                    if (file.length > 1024 * 256) return@forEach
+                    codeFiles.addAll(getFiles(file.children))
+                } else {
+                    codeFiles.add((file.toNioPath()))
+                }
+            }
+            return codeFiles
         }
     }
 }

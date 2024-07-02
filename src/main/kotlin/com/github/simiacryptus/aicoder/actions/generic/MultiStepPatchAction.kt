@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.actions.generic
 import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -258,7 +257,6 @@ class MultiStepPatchAction : BaseAction() {
                                 }
                                 renderMarkdown(ui.socketManager!!.addApplyFileDiffLinks(
                                     root = root,
-                                    code = { codeFiles.associateWith { root.resolve(it).toFile().readText() } },
                                     response = taskActor.answer(listOf(
                                         codeSummary(),
                                         userMessage,
@@ -275,7 +273,8 @@ class MultiStepPatchAction : BaseAction() {
                                             task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                                         }
                                     },
-                                    ui = ui
+                                    ui = ui,
+                                    api = api
                                 ))
                             } catch (e: Exception) {
                                 task.error(ui, e)

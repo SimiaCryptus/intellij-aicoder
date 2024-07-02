@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.diff.addSaveLinks
+import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
@@ -36,7 +37,6 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import java.awt.Desktop
-import java.io.File
 import javax.swing.JOptionPane
 
 class AnalyzeProblemAction : AnAction() {
@@ -139,12 +139,12 @@ class AnalyzeProblemAction : AnAction() {
             val task = ui.newTask()
             task.add("Analyzing problem and suggesting fixes...")
             Thread {
-                analyzeProblem(ui, task)
+                analyzeProblem(ui, task, api = IdeaOpenAIClient.instance)
             }.start()
             return socketManager
         }
 
-        private fun analyzeProblem(ui: ApplicationInterface, task: SessionTask) {
+        private fun analyzeProblem(ui: ApplicationInterface, task: SessionTask, api: API) {
             try {
                 Retryable(ui, task) {
                     val plan = ParsedActor(
@@ -187,7 +187,7 @@ class AnalyzeProblemAction : AnAction() {
                                 }
                             }
 
-                            generateAndAddResponse(ui, task, error, summary, filesToFix)
+                            generateAndAddResponse(ui, task, error, summary, filesToFix, api)
                         }
                     }
                     ""
@@ -201,7 +201,8 @@ class AnalyzeProblemAction : AnAction() {
             task: SessionTask,
             error: ParsedError,
             summary: String,
-            filesToFix: List<String>
+            filesToFix: List<String>,
+            api: API
         ) : String {
             val response = SimpleActor(
                 prompt = """
@@ -222,10 +223,6 @@ class AnalyzeProblemAction : AnAction() {
 
             var markdown = ui.socketManager?.addApplyFileDiffLinks(
                 root = root.toPath(),
-                code = {
-                    val map = filesToFix.map { File(it) }.associate { it.toPath() to root.resolve((it)).readText(Charsets.UTF_8) }
-                    map
-                },
                 response = response,
                 handle = { newCodeMap ->
                     newCodeMap.forEach { (path, newCode) ->
@@ -233,14 +230,13 @@ class AnalyzeProblemAction : AnAction() {
                     }
                 },
                 ui = ui,
+                api = api,
             )
             markdown = ui.socketManager?.addSaveLinks(
+                root = root.toPath(),
                 response = markdown!!,
                 task = task,
                 ui = ui,
-                handle = { path, newCode ->
-                    root.resolve(path.toFile()).writeText(newCode, Charsets.UTF_8)
-                },
             )
             val msg = "<div>${renderMarkdown(markdown!!)}</div>"
             return msg

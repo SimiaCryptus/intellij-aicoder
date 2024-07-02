@@ -12,7 +12,7 @@
 - VCS menu integration with AI Coder options in the VCS log context menu
 
 ### Changed
-- Updated dependencies: skyenet_version to 1.0.79 and jo-penai to 1.0.62
+- Updated dependencies: skyenet_version to 1.0.80 and jo-penai to 1.0.63
 - Removed kotlinx-coroutines-core dependency
 - Added Git4Idea and GitHub plugins to the intellij block
 - Refactored CommandAutofixAction for more modular and extensible code
