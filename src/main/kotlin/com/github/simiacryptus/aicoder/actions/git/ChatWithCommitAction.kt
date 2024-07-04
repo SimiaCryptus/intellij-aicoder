@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.DiffUtil
+import com.simiacryptus.diff.IterativePatchUtil
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
@@ -55,7 +56,7 @@ class ChatWithCommitAction : AnAction() {
                             "\n",
                             "\n  "
                         )
-                        val diff = DiffUtil.formatDiff(DiffUtil.generateDiff(before.lines(), after.lines()))
+                        val diff = IterativePatchUtil.generatePatch(before, after)
                         "# Change: ${change.beforeRevision?.file}\n$diff".replace("\n", "\n  ")
                     }
 

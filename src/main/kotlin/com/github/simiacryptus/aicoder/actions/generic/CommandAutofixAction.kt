@@ -36,6 +36,7 @@ import java.awt.Desktop
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import javax.swing.*
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -103,22 +104,32 @@ class CommandAutofixAction : BaseAction() {
                 val process = processBuilder.start()
                 val errorBuffer = StringBuilder()
                 Thread {
+                    var lastUpdate = 0L;
                     process.errorStream.bufferedReader().use { reader ->
                         var line: String?
                         while (reader.readLine().also { line = it } != null) {
                             errorBuffer.append(line).append("\n")
                             taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
-                            task.append("", true)
+                            if(lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+                                task.append("", true)
+                                lastUpdate = System.currentTimeMillis()
+                            }
                         }
+                        task.append("", true)
                     }
                 }.start()
                 process.inputStream.bufferedReader().use { reader ->
                     var line: String?
+                    var lastUpdate = 0L;
                     while (reader.readLine().also { line = it } != null) {
                         buffer.append(line).append("\n")
                         taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
-                        task.append("", true)
+                        if(lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+                            task.append("", true)
+                            lastUpdate = System.currentTimeMillis()
+                        }
                     }
+                    task.append("", true)
                 }
                 task.append("", false)
                 val exitCode = process.waitFor()
