@@ -33,7 +33,7 @@ class ApplyPatchAction : BaseAction(
     private fun applyPatch(file: VirtualFile, patchContent: String, project: com.intellij.openapi.project.Project) {
         WriteCommandAction.runWriteCommandAction(project) {
             val psiFile = PsiManager.getInstance(project).findFile(file) ?: return@runWriteCommandAction
-            val newContent = IterativePatchUtil.patch(psiFile.text, patchContent)
+            val newContent = IterativePatchUtil.applyPatch(psiFile.text, patchContent)
             psiFile.virtualFile.setBinaryContent(newContent.toByteArray())
         }
     }
