@@ -110,7 +110,7 @@ class CommandAutofixAction : BaseAction() {
                         while (reader.readLine().also { line = it } != null) {
                             errorBuffer.append(line).append("\n")
                             taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
-                            if(lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+                            if (lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
                                 task.append("", true)
                                 lastUpdate = System.currentTimeMillis()
                             }
@@ -124,7 +124,7 @@ class CommandAutofixAction : BaseAction() {
                     while (reader.readLine().also { line = it } != null) {
                         buffer.append(line).append("\n")
                         taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
-                        if(lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+                        if (lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
                             task.append("", true)
                             lastUpdate = System.currentTimeMillis()
                         }
@@ -271,7 +271,8 @@ class CommandAutofixAction : BaseAction() {
             val progress = ui.newTask()
             val progressHeader = progress.header("Processing tasks")
             plan.obj.errors?.forEach { error ->
-                val paths = ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
+                val paths =
+                    ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
                 val summary = codeSummary(paths)
                 val response = SimpleActor(
                     prompt = """
@@ -341,7 +342,7 @@ class CommandAutofixAction : BaseAction() {
                         }
                     },
                     ui = ui,
-                    api=api,
+                    api = api,
                 )
                 markdown = ui.socketManager?.addSaveLinks(
                     root = root.toPath(),
@@ -409,9 +410,14 @@ class CommandAutofixAction : BaseAction() {
         return if (dialog.isOK) {
             val executable = File(settingsUI.commandField.selectedItem?.toString() ?: return null)
             AppSettingsState.instance.executables += executable.absolutePath
+            val argument = settingsUI.argumentsField.selectedItem?.toString() ?: ""
+            AppSettingsState.instance.recentArguments.remove(argument)
+            AppSettingsState.instance.recentArguments.add(0, argument)
+            AppSettingsState.instance.recentArguments =
+                AppSettingsState.instance.recentArguments.take(10).toMutableList()
             Settings(
                 executable = executable,
-                arguments = settingsUI.argumentsField.text,
+                arguments = argument,
                 workingDirectory = File(settingsUI.workingDirectoryField.text),
                 exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero"
             )
@@ -421,7 +427,13 @@ class CommandAutofixAction : BaseAction() {
     }
 
     class SettingsUI(root: File) {
-        val argumentsField = JTextField("run build")
+        val argumentsField = JComboBox<String>().apply {
+            isEditable = true
+            AppSettingsState.instance.recentArguments.forEach { addItem(it) }
+            if (AppSettingsState.instance.recentArguments.isEmpty()) {
+                addItem("run build")
+            }
+        }
         val commandField = ComboBox<String>(AppSettingsState.instance.executables.toTypedArray()).apply {
             isEditable = true
             AppSettingsState.instance.executables.forEach { addItem(it) }
