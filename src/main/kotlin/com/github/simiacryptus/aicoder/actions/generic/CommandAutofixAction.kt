@@ -228,135 +228,155 @@ class CommandAutofixAction : BaseAction() {
             |</div>
             """.trimMargin()
             )
-            val plan = ParsedActor(
-                resultClass = ParsedErrors::class.java,
-                prompt = """
-                    |You are a helpful AI that helps people with coding.
-                    |
-                    |You will be answering questions about the following project:
-                    |
-                    |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
-                    |
-                    |Files:
-                    |${projectSummary()}
-                    |
-                    |Given the response of a build/test process, identify one or more distinct errors.
-                    |For each error:
-                    |   1) predict the files that need to be fixed
-                    |   2) predict related files that may be needed to debug the issue
-                    """.trimMargin(),
-                model = AppSettingsState.instance.defaultSmartModel()
-            ).answer(
-                listOf(
-                    """
-                        |The following command was run and produced an error:
-                        |
-                        |$tripleTilde
-                        |${output.output}
-                        |$tripleTilde
-                        |""".trimMargin()
-                ), api = api
-            )
-            task.add(
-                AgentPatterns.displayMapInTabs(
-                    mapOf(
-                        "Text" to renderMarkdown(plan.text, ui = ui),
-                        "JSON" to renderMarkdown(
-                            "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
-                            ui = ui
-                        ),
-                    )
-                )
-            )
-            val progress = ui.newTask()
-            val progressHeader = progress.header("Processing tasks")
-            plan.obj.errors?.forEach { error ->
-                val paths =
-                    ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
-                val summary = codeSummary(paths)
-                val response = SimpleActor(
-                    prompt = """
-                    |You are a helpful AI that helps people with coding.
-                    |
-                    |You will be answering questions about the following code:
-                    |
-                    |$summary
-                    |
-                    |
-                    |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
-                    |Each diff should be preceded by a header that identifies the file being modified.
-                    |The diff format should use + for line additions, - for line deletions.
-                    |The diff should include 2 lines of context before and after every change.
-                    |
-                    |Example:
-                    |
-                    |Here are the patches:
-                    |
-                    |### src/utils/exampleUtils.js
-                    |${tripleTilde}diff
-                    | // Utility functions for example feature
-                    | const b = 2;
-                    | function exampleFunction() {
-                    |-   return b + 1;
-                    |+   return b + 2;
-                    | }
-                    |$tripleTilde
-                    |
-                    |### tests/exampleUtils.test.js
-                    |${tripleTilde}diff
-                    | // Unit tests for exampleUtils
-                    | const assert = require('assert');
-                    | const { exampleFunction } = require('../src/utils/exampleUtils');
-                    | 
-                    | describe('exampleFunction', () => {
-                    |-   it('should return 3', () => {
-                    |+   it('should return 4', () => {
-                    |     assert.equal(exampleFunction(), 3);
-                    |   });
-                    | });
-                    |$tripleTilde
-                    |
-                    |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                    """.trimMargin(),
-                    model = AppSettingsState.instance.defaultSmartModel()
-                ).answer(
-                    listOf(
-                        """
-                        |The following command was run and produced an error:
-                        |
-                        |${tripleTilde}
-                        |${output.output}
-                        |${tripleTilde}
-                        |
-                        |Focus on and Fix the Error:
-                        |  ${error.message?.replace("\n", "\n  ") ?: ""}
-                        |""".trimMargin()
-                    ), api = api
-                )
-                var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                    root = root.toPath(),
-                    response = response,
-                    handle = { newCodeMap ->
-                        newCodeMap.forEach { (path, newCode) ->
-                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                        }
-                    },
-                    ui = ui,
-                    api = api,
-                )
-                markdown = ui.socketManager?.addSaveLinks(
-                    root = root.toPath(),
-                    response = markdown!!,
-                    task = task,
-                    ui = ui,
-                )
-                task.complete("<div>${renderMarkdown(markdown!!)}</div>")
-            }
-            progressHeader?.clear()
-            progress.append("", false)
+            fixAll(settings, output, task, ui, session)
         } catch (e: Exception) {
             task.error(ui, e)
         }
+    }
+
+    private fun PatchApp.fixAll(
+        settings: Settings,
+        output: OutputResult,
+        task: SessionTask,
+        ui: ApplicationInterface,
+        session: Session
+    ) {
+        val plan = ParsedActor(
+            resultClass = ParsedErrors::class.java,
+            prompt = """
+                        |You are a helpful AI that helps people with coding.
+                        |
+                        |You will be answering questions about the following project:
+                        |
+                        |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
+                        |
+                        |Files:
+                        |${projectSummary()}
+                        |
+                        |Given the response of a build/test process, identify one or more distinct errors.
+                        |For each error:
+                        |   1) predict the files that need to be fixed
+                        |   2) predict related files that may be needed to debug the issue
+                        """.trimMargin(),
+            model = AppSettingsState.instance.defaultSmartModel()
+        ).answer(
+            listOf(
+                """
+                            |The following command was run and produced an error:
+                            |
+                            |$tripleTilde
+                            |${output.output}
+                            |$tripleTilde
+                            |""".trimMargin()
+            ), api = api
+        )
+        task.add(
+            AgentPatterns.displayMapInTabs(
+                mapOf(
+                    "Text" to renderMarkdown(plan.text, ui = ui),
+                    "JSON" to renderMarkdown(
+                        "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
+                        ui = ui
+                    ),
+                )
+            )
+        )
+        val progress = ui.newTask()
+        val progressHeader = progress.header("Processing tasks")
+        plan.obj.errors?.forEach { error ->
+            fix(error, output, ui, task, session)
+        }
+        progressHeader?.clear()
+        progress.append("", false)
+    }
+
+    private fun PatchApp.fix(
+        error: ParsedError,
+        output: OutputResult,
+        ui: ApplicationInterface,
+        task: SessionTask,
+        session: Session
+    ) {
+        val paths =
+            ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
+        val summary = codeSummary(paths)
+        val response = SimpleActor(
+            prompt = """
+                            |You are a helpful AI that helps people with coding.
+                            |
+                            |You will be answering questions about the following code:
+                            |
+                            |$summary
+                            |
+                            |
+                            |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
+                            |Each diff should be preceded by a header that identifies the file being modified.
+                            |The diff format should use + for line additions, - for line deletions.
+                            |The diff should include 2 lines of context before and after every change.
+                            |
+                            |Example:
+                            |
+                            |Here are the patches:
+                            |
+                            |### src/utils/exampleUtils.js
+                            |${tripleTilde}diff
+                            | // Utility functions for example feature
+                            | const b = 2;
+                            | function exampleFunction() {
+                            |-   return b + 1;
+                            |+   return b + 2;
+                            | }
+                            |$tripleTilde
+                            |
+                            |### tests/exampleUtils.test.js
+                            |${tripleTilde}diff
+                            | // Unit tests for exampleUtils
+                            | const assert = require('assert');
+                            | const { exampleFunction } = require('../src/utils/exampleUtils');
+                            | 
+                            | describe('exampleFunction', () => {
+                            |-   it('should return 3', () => {
+                            |+   it('should return 4', () => {
+                            |     assert.equal(exampleFunction(), 3);
+                            |   });
+                            | });
+                            |$tripleTilde
+                            |
+                            |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+                            """.trimMargin(),
+            model = AppSettingsState.instance.defaultSmartModel()
+        ).answer(
+            listOf(
+                """
+                                |The following command was run and produced an error:
+                                |
+                                |${tripleTilde}
+                                |${output.output}
+                                |${tripleTilde}
+                                |
+                                |Focus on and Fix the Error:
+                                |  ${error.message?.replace("\n", "\n  ") ?: ""}
+                                |""".trimMargin()
+            ), api = api
+        )
+        var markdown = ui.socketManager?.addApplyFileDiffLinks(
+            root = root.toPath(),
+            response = response,
+            handle = { newCodeMap ->
+                newCodeMap.forEach { (path, newCode) ->
+                    task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                }
+            },
+            ui = ui,
+            api = api,
+        )
+        markdown = ui.socketManager?.addSaveLinks(
+            root = root.toPath(),
+            response = markdown!!,
+            task = task,
+            ui = ui,
+        )
+        task.complete("<div>${renderMarkdown(markdown!!)}</div>")
     }
 
     data class ParsedErrors(
