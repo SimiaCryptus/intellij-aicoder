@@ -241,7 +241,21 @@ class CommandAutofixAction : BaseAction() {
         ui: ApplicationInterface,
         session: Session
     ) {
-        val plan = ParsedActor(
+        Retryable(ui, task) { content ->
+            fixAllInternal(settings, output, task, ui, session, content)
+            content.toString()
+        }
+    }
+
+    private fun PatchApp.fixAllInternal(
+        settings: Settings,
+        output: OutputResult,
+        task: SessionTask,
+        ui: ApplicationInterface,
+        session: Session,
+        content: StringBuilder
+    ) {
+        val plan = ParsedActor<ParsedErrors>(
             resultClass = ParsedErrors::class.java,
             prompt = """
                         |You are a helpful AI that helps people with coding.
@@ -262,12 +276,12 @@ class CommandAutofixAction : BaseAction() {
         ).answer(
             listOf(
                 """
-                            |The following command was run and produced an error:
-                            |
-                            |$tripleTilde
-                            |${output.output}
-                            |$tripleTilde
-                            |""".trimMargin()
+                |The following command was run and produced an error:
+                |
+                |$tripleTilde
+                |${output.output}
+                |$tripleTilde
+                |""".trimMargin()
             ), api = api
         )
         task.add(
@@ -297,66 +311,79 @@ class CommandAutofixAction : BaseAction() {
         task: SessionTask,
         session: Session
     ) {
+        Retryable(ui, task) { content ->
+            fixInternal(error, output, ui, session, content)
+            content.toString()
+        }
+    }
+
+    private fun PatchApp.fixInternal(
+        error: ParsedError,
+        output: OutputResult,
+        ui: ApplicationInterface,
+        session: Session,
+        content: StringBuilder
+    ) {
         val paths =
             ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
         val summary = codeSummary(paths)
         val response = SimpleActor(
             prompt = """
-                            |You are a helpful AI that helps people with coding.
-                            |
-                            |You will be answering questions about the following code:
-                            |
-                            |$summary
-                            |
-                            |
-                            |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
-                            |Each diff should be preceded by a header that identifies the file being modified.
-                            |The diff format should use + for line additions, - for line deletions.
-                            |The diff should include 2 lines of context before and after every change.
-                            |
-                            |Example:
-                            |
-                            |Here are the patches:
-                            |
-                            |### src/utils/exampleUtils.js
-                            |${tripleTilde}diff
-                            | // Utility functions for example feature
-                            | const b = 2;
-                            | function exampleFunction() {
-                            |-   return b + 1;
-                            |+   return b + 2;
-                            | }
-                            |$tripleTilde
-                            |
-                            |### tests/exampleUtils.test.js
-                            |${tripleTilde}diff
-                            | // Unit tests for exampleUtils
-                            | const assert = require('assert');
-                            | const { exampleFunction } = require('../src/utils/exampleUtils');
-                            | 
-                            | describe('exampleFunction', () => {
-                            |-   it('should return 3', () => {
-                            |+   it('should return 4', () => {
-                            |     assert.equal(exampleFunction(), 3);
-                            |   });
-                            | });
-                            |$tripleTilde
-                            |
-                            |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                            """.trimMargin(),
+                    |You are a helpful AI that helps people with coding.
+                    |
+                    |You will be answering questions about the following code:
+                    |
+                    |$summary
+                    |
+                    |
+                    |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
+                    |Each diff should be preceded by a header that identifies the file being modified.
+                    |The diff format should use + for line additions, - for line deletions.
+                    |The diff should include 2 lines of context before and after every change.
+                    |
+                    |Example:
+                    |
+                    |Here are the patches:
+                    |
+                    |### src/utils/exampleUtils.js
+                    |${tripleTilde}diff
+                    | // Utility functions for example feature
+                    | const b = 2;
+                    | function exampleFunction() {
+                    |-   return b + 1;
+                    |+   return b + 2;
+                    | }
+                    |$tripleTilde
+                    |
+                    |### tests/exampleUtils.test.js
+                    |${tripleTilde}diff
+                    | // Unit tests for exampleUtils
+                    | const assert = require('assert');
+                    | const { exampleFunction } = require('../src/utils/exampleUtils');
+                    | 
+                    | describe('exampleFunction', () => {
+                    |-   it('should return 3', () => {
+                    |+   it('should return 4', () => {
+                    |     assert.equal(exampleFunction(), 3);
+                    |   });
+                    | });
+                    |$tripleTilde
+                    |
+                    |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+                    """.trimMargin(),
             model = AppSettingsState.instance.defaultSmartModel()
         ).answer(
             listOf(
                 """
-                                |The following command was run and produced an error:
-                                |
-                                |${tripleTilde}
-                                |${output.output}
-                                |${tripleTilde}
-                                |
-                                |Focus on and Fix the Error:
-                                |  ${error.message?.replace("\n", "\n  ") ?: ""}
-                                |""".trimMargin()
+                |The following command was run and produced an error:
+                |
+                |${tripleTilde}
+                |${output.output}
+                |${tripleTilde}
+                |
+                |Focus on and Fix the Error:
+                |  ${error.message?.replace("\n", "\n  ") ?: ""}
+                |""".trimMargin()
             ), api = api
         )
         var markdown = ui.socketManager?.addApplyFileDiffLinks(
@@ -364,7 +391,7 @@ class CommandAutofixAction : BaseAction() {
             response = response,
             handle = { newCodeMap ->
                 newCodeMap.forEach { (path, newCode) ->
-                    task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                    content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated\n")
                 }
             },
             ui = ui,
@@ -373,10 +400,10 @@ class CommandAutofixAction : BaseAction() {
         markdown = ui.socketManager?.addSaveLinks(
             root = root.toPath(),
             response = markdown!!,
-            task = task,
+            task = ui.newTask(),
             ui = ui,
         )
-        task.complete("<div>${renderMarkdown(markdown!!)}</div>")
+        content.append("<div>${renderMarkdown(markdown!!)}</div>")
     }
 
     data class ParsedErrors(
@@ -531,8 +558,7 @@ class CommandAutofixAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
-        val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
-
+        const val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
 
         val StringBuilder.htmlEscape: String
             get() = this.toString().replace("&", "&amp;")
