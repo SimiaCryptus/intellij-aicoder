@@ -102,15 +102,14 @@ class CommandAutofixAction : BaseAction() {
                 val buffer = StringBuilder()
                 val taskOutput = task.add("")
                 val process = processBuilder.start()
-                val errorBuffer = StringBuilder()
                 Thread {
                     var lastUpdate = 0L;
                     process.errorStream.bufferedReader().use { reader ->
                         var line: String?
                         while (reader.readLine().also { line = it } != null) {
-                            errorBuffer.append(line).append("\n")
-                            taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
+                            buffer.append(line).append("\n")
                             if (lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+                                taskOutput?.set("<pre>\n${truncate(buffer.toString()).htmlEscape}\n</pre>")
                                 task.append("", true)
                                 lastUpdate = System.currentTimeMillis()
                             }
@@ -123,8 +122,8 @@ class CommandAutofixAction : BaseAction() {
                     var lastUpdate = 0L;
                     while (reader.readLine().also { line = it } != null) {
                         buffer.append(line).append("\n")
-                        taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
                         if (lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+                            taskOutput?.set("<pre>\n${truncate(buffer.toString()).htmlEscape}\n</pre>")
                             task.append("", true)
                             lastUpdate = System.currentTimeMillis()
                         }
@@ -133,7 +132,10 @@ class CommandAutofixAction : BaseAction() {
                 }
                 task.append("", false)
                 val exitCode = process.waitFor()
-                val output = buffer.toString() + errorBuffer.toString()
+                var output = buffer.toString()
+
+                output = truncate(output)
+
                 taskOutput?.clear()
                 OutputResult(exitCode, output)
             }
@@ -560,11 +562,21 @@ class CommandAutofixAction : BaseAction() {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
         const val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
 
-        val StringBuilder.htmlEscape: String
-            get() = this.toString().replace("&", "&amp;")
+        val String.htmlEscape: String
+            get() = this.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;")
+
+        fun truncate(output: String, kb: Int = 32): String {
+            var returnVal = output
+            if (returnVal.length > 1024 * 2 * kb) {
+                returnVal = returnVal.substring(0, 1024 * kb) +
+                        "\n\n... Output truncated ...\n\n" +
+                        returnVal.substring(returnVal.length - 1024 * kb)
+            }
+            return returnVal
+        }
     }
 }
