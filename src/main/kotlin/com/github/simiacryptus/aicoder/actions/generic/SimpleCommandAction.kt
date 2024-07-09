@@ -176,9 +176,8 @@ class SimpleCommandAction : BaseAction() {
                         )
                     )
                 )
-                val progress = ui.newTask()
-                val progressHeader = progress.header("Processing tasks")
-                val errors = plan.obj.errors?.map { planTask ->
+                val progressHeader = task.header("Processing tasks")
+                plan.obj.errors?.forEach { planTask ->
                     Retryable(ui, task) {
                         val paths =
                             ((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap {
@@ -264,9 +263,9 @@ class SimpleCommandAction : BaseAction() {
                         "<div>${renderMarkdown(markdown!!)}</div>"
                     }
                     ""
-                }?.joinToString { it } ?: ""
+                }
                 progressHeader?.clear()
-                progress.append("", false)
+                task.append("", false)
                 ""
             }
         } catch (e: Exception) {

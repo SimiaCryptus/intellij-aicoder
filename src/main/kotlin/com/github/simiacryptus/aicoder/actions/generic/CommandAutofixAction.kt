@@ -181,7 +181,7 @@ class CommandAutofixAction : BaseAction() {
                     val newTask = ui.newTask(false)
                     newTask.add("Running Command")
                     Thread {
-                        run(ui, newTask, session, settings)
+                        run(ui, newTask, session, settings, task)
                     }.start()
                     newTask.placeholder
                 }
@@ -196,7 +196,8 @@ class CommandAutofixAction : BaseAction() {
         ui: ApplicationInterface,
         task: SessionTask,
         session: Session,
-        settings: Settings
+        settings: Settings,
+        mainTask: SessionTask
     ) {
         val output = output(task)
         if (output.exitCode == 0 && settings.exitCodeOption == "nonzero") {
@@ -230,7 +231,7 @@ class CommandAutofixAction : BaseAction() {
             |</div>
             """.trimMargin()
             )
-            fixAll(settings, output, task, ui, session)
+            fixAll(settings, output, task, ui, session, mainTask)
         } catch (e: Exception) {
             task.error(ui, e)
         }
@@ -241,10 +242,11 @@ class CommandAutofixAction : BaseAction() {
         output: OutputResult,
         task: SessionTask,
         ui: ApplicationInterface,
-        session: Session
+        session: Session,
+        mainTask: SessionTask
     ) {
         Retryable(ui, task) { content ->
-            fixAllInternal(settings, output, task, ui, session, content)
+            fixAllInternal(settings, output, task, ui, session, content, mainTask)
             content.toString()
         }
     }
@@ -255,7 +257,8 @@ class CommandAutofixAction : BaseAction() {
         task: SessionTask,
         ui: ApplicationInterface,
         session: Session,
-        content: StringBuilder
+        content: StringBuilder,
+        mainTask: SessionTask
     ) {
         val plan = ParsedActor<ParsedErrors>(
             resultClass = ParsedErrors::class.java,
@@ -297,13 +300,12 @@ class CommandAutofixAction : BaseAction() {
                 )
             )
         )
-        val progress = ui.newTask()
-        val progressHeader = progress.header("Processing tasks")
+        val progressHeader = mainTask.header("Processing tasks")
         plan.obj.errors?.forEach { error ->
             fix(error, output, ui, task, session)
         }
         progressHeader?.clear()
-        progress.append("", false)
+        mainTask.append("", false)
     }
 
     private fun PatchApp.fix(
@@ -314,7 +316,7 @@ class CommandAutofixAction : BaseAction() {
         session: Session
     ) {
         Retryable(ui, task) { content ->
-            fixInternal(error, output, ui, session, content)
+            fixInternal(error, output, ui, session, content, task)
             content.toString()
         }
     }
@@ -324,7 +326,8 @@ class CommandAutofixAction : BaseAction() {
         output: OutputResult,
         ui: ApplicationInterface,
         session: Session,
-        content: StringBuilder
+        content: StringBuilder,
+        task: SessionTask,
     ) {
         val paths =
             ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
@@ -402,7 +405,7 @@ class CommandAutofixAction : BaseAction() {
         markdown = ui.socketManager?.addSaveLinks(
             root = root.toPath(),
             response = markdown!!,
-            task = ui.newTask(),
+            task = task,
             ui = ui,
         )
         content.append("<div>${renderMarkdown(markdown!!)}</div>")

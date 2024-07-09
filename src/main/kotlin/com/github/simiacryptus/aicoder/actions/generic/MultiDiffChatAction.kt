@@ -69,7 +69,6 @@ class MultiDiffChatAction : BaseAction() {
         Thread {
             Thread.sleep(500)
             try {
-
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
                 Desktop.getDesktop().browse(uri)
