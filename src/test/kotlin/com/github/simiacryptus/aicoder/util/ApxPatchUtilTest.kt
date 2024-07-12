@@ -70,7 +70,7 @@ class ApxPatchUtilTest {
 
     @Test
     fun testPatch() {
-        val result = PatchUtil.patch(source, patch)
+        val result = PatchUtil.applyPatch(source, patch)
         println(result)
         assertTrue(result.contains("for (value in values"))
     }

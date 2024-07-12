@@ -43,7 +43,8 @@ data class AppSettingsState(
     var greetedVersion: String = "",
     var shellCommand: String = getDefaultShell(),
     var enableLegacyActions: Boolean = false,
-    var executables: MutableSet<String> = mutableSetOf()
+    var executables: MutableSet<String> = mutableSetOf(),
+    var recentArguments: MutableList<String> = mutableListOf()
 ) : PersistentStateComponent<SimpleEnvelope> {
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
     private val recentCommands = mutableMapOf<String, MRUItems>()

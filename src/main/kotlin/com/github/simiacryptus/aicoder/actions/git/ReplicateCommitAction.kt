@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.DiffUtil
+import com.simiacryptus.diff.IterativePatchUtil
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
@@ -139,7 +140,7 @@ class ReplicateCommitAction : BaseAction() {
                     "\n",
                     "\n  "
                 )
-                val diff = DiffUtil.formatDiff(DiffUtil.generateDiff(before.lines(), after.lines()))
+                val diff = IterativePatchUtil.generatePatch(before, after)
                 "# Change: ${change.beforeRevision?.file}\n$diff".replace("\n", "\n  ")
             } ?: "No changes found"
     }

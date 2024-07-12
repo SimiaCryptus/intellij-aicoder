@@ -3,7 +3,9 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.filteredWalk
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isLLMIncludable
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -36,9 +38,8 @@ import java.awt.Desktop
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import javax.swing.*
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
@@ -49,7 +50,7 @@ class CommandAutofixAction : BaseAction() {
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
         val folder = UITools.getSelectedFolder(event)
-        var root = if (null != folder) {
+        val root = if (null != folder) {
             folder.toFile.toPath()
         } else {
             event.project?.basePath?.let { File(it).toPath() }
@@ -101,30 +102,46 @@ class CommandAutofixAction : BaseAction() {
                 val buffer = StringBuilder()
                 val taskOutput = task.add("")
                 val process = processBuilder.start()
-                val errorBuffer = StringBuilder()
                 Thread {
+                    var lastUpdate = 0L;
                     process.errorStream.bufferedReader().use { reader ->
                         var line: String?
                         while (reader.readLine().also { line = it } != null) {
-                            errorBuffer.append(line).append("\n")
-                            taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
-                            task.append("", true)
+                            buffer.append(line).append("\n")
+                            if (lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+                                taskOutput?.set("<pre>\n${truncate(buffer.toString()).htmlEscape}\n</pre>")
+                                task.append("", true)
+                                lastUpdate = System.currentTimeMillis()
+                            }
                         }
+                        task.append("", true)
                     }
                 }.start()
                 process.inputStream.bufferedReader().use { reader ->
                     var line: String?
+                    var lastUpdate = 0L;
                     while (reader.readLine().also { line = it } != null) {
                         buffer.append(line).append("\n")
-                        taskOutput?.set("<pre>\n${buffer}${errorBuffer.htmlEscape}\n</pre>")
-                        task.append("", true)
+                        if (lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+                            taskOutput?.set("<pre>\n${outputString(buffer).htmlEscape}\n</pre>")
+                            task.append("", true)
+                            lastUpdate = System.currentTimeMillis()
+                        }
                     }
+                    task.append("", true)
                 }
                 task.append("", false)
                 val exitCode = process.waitFor()
-                val output = buffer.toString() + errorBuffer.toString()
+                var output = outputString(buffer)
                 taskOutput?.clear()
                 OutputResult(exitCode, output)
+            }
+
+            private fun outputString(buffer: StringBuilder): String {
+                var output = buffer.toString()
+                output = output.replace(Regex("\\x1B\\[[0-?]*[ -/]*[@-~]"), "") // Remove terminal escape codes
+                output = truncate(output)
+                return output
             }
         }
         SessionProxyServer.chats[session] = patchApp
@@ -168,7 +185,7 @@ class CommandAutofixAction : BaseAction() {
                     val newTask = ui.newTask(false)
                     newTask.add("Running Command")
                     Thread {
-                        run(ui, newTask, session, settings)
+                        run(ui, newTask, session, settings, task)
                     }.start()
                     newTask.placeholder
                 }
@@ -183,7 +200,8 @@ class CommandAutofixAction : BaseAction() {
         ui: ApplicationInterface,
         task: SessionTask,
         session: Session,
-        settings: Settings
+        settings: Settings,
+        mainTask: SessionTask
     ) {
         val output = output(task)
         if (output.exitCode == 0 && settings.exitCodeOption == "nonzero") {
@@ -217,53 +235,132 @@ class CommandAutofixAction : BaseAction() {
             |</div>
             """.trimMargin()
             )
-            val plan = ParsedActor(
-                resultClass = ParsedErrors::class.java,
-                prompt = """
-                    |You are a helpful AI that helps people with coding.
-                    |
-                    |You will be answering questions about the following project:
-                    |
-                    |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
-                    |
-                    |Files:
-                    |${projectSummary()}
-                    |
-                    |Given the response of a build/test process, identify one or more distinct errors.
-                    |For each error:
-                    |   1) predict the files that need to be fixed
-                    |   2) predict related files that may be needed to debug the issue
-                    """.trimMargin(),
-                model = AppSettingsState.instance.defaultSmartModel()
-            ).answer(
-                listOf(
-                    """
-                        |The following command was run and produced an error:
+            fixAll(settings, output, task, ui, session, mainTask)
+        } catch (e: Exception) {
+            task.error(ui, e)
+        }
+    }
+
+    private fun PatchApp.fixAll(
+        settings: Settings,
+        output: OutputResult,
+        task: SessionTask,
+        ui: ApplicationInterface,
+        session: Session,
+        mainTask: SessionTask
+    ) {
+        Retryable(ui, task) { content ->
+            fixAllInternal(settings, output, task, ui, session, mainTask)
+            content.clear()
+            ""
+        }
+    }
+
+    private fun PatchApp.fixAllInternal(
+        settings: Settings,
+        output: OutputResult,
+        task: SessionTask,
+        ui: ApplicationInterface,
+        session: Session,
+        mainTask: SessionTask
+    ) {
+        val plan = ParsedActor(
+            resultClass = ParsedErrors::class.java,
+            prompt = """
+                |You are a helpful AI that helps people with coding.
                         |
-                        |$tripleTilde
-                        |${output.output}
-                        |$tripleTilde
-                        |""".trimMargin()
-                ), api = api
-            )
-            task.add(
-                AgentPatterns.displayMapInTabs(
-                    mapOf(
-                        "Text" to renderMarkdown(plan.text, ui = ui),
-                        "JSON" to renderMarkdown(
-                            "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
-                            ui = ui
-                        ),
-                    )
+                        |You will be answering questions about the following project:
+                        |
+                        |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
+                        |
+                        |Files:
+                        |${projectSummary()}
+                        |
+                        |Given the response of a build/test process, identify one or more distinct errors.
+                        |For each error:
+                        |   1) predict the files that need to be fixed
+                        |   2) predict related files that may be needed to debug the issue
+                        |   3) specify a search string to find relevant files - be as specific as possible
+                        """.trimMargin(),
+            model = AppSettingsState.instance.defaultSmartModel()
+        ).answer(
+            listOf(
+                """
+                |The following command was run and produced an error:
+                |
+                |$tripleTilde
+                |${output.output}
+                |$tripleTilde
+                """.trimMargin()
+            ), api = api
+        )
+        task.add(
+            AgentPatterns.displayMapInTabs(
+                mapOf(
+                    "Text" to renderMarkdown(plan.text, ui = ui),
+                    "JSON" to renderMarkdown(
+                        "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
+                        ui = ui
+                    ),
                 )
             )
-            val progress = ui.newTask()
-            val progressHeader = progress.header("Processing tasks")
-            plan.obj.errors?.forEach { error ->
-                val paths = ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
-                val summary = codeSummary(paths)
-                val response = SimpleActor(
-                    prompt = """
+        )
+        val progressHeader = mainTask.header("Processing tasks")
+        plan.obj.errors?.forEach { error ->
+            task.header("Processing error: ${error.message}")
+            task.verbose(renderMarkdown("```json\n${JsonUtil.toJson(error)}\n```", tabs = false, ui = ui))
+            // Search for files using the provided search strings
+            val searchResults = error.searchStrings?.flatMap { searchString ->
+                filteredWalk(settings.workingDirectory!!) { !isGitignore(it.toPath()) }
+                    .filter { isLLMIncludable(it) }
+                    .filter { it.readText().contains(searchString, ignoreCase = true) }
+                    .map { it.toPath() }
+                    .toList()
+            }?.toSet() ?: emptySet()
+            task.verbose(renderMarkdown("""
+                Search results:
+                ${searchResults.joinToString("\n") { "* `$it`" }}
+                """.trimIndent(), tabs = false, ui = ui))
+            // Combine the search results with the existing fixFiles and relatedFiles
+            val combinedFiles = ((error.fixFiles ?: emptyList()) +
+                    (error.relatedFiles ?: emptyList()) +
+                    searchResults.map { it.toString() }).distinct()
+            // Update the error object with the combined file list
+            val updatedError = error.copy(
+                fixFiles = combinedFiles,
+                relatedFiles = combinedFiles
+            )
+            fix(updatedError, output, ui, task, session)
+        }
+        progressHeader?.clear()
+        mainTask.append("", false)
+    }
+
+    private fun PatchApp.fix(
+        error: ParsedError,
+        output: OutputResult,
+        ui: ApplicationInterface,
+        task: SessionTask,
+        session: Session
+    ) {
+        Retryable(ui, task) { content ->
+            fixInternal(error, output, ui, content, task)
+            content.toString()
+        }
+    }
+
+    private fun PatchApp.fixInternal(
+        error: ParsedError,
+        output: OutputResult,
+        ui: ApplicationInterface,
+        content: StringBuilder,
+        task: SessionTask,
+    ) {
+        val paths =
+            ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
+        val summary = codeSummary(paths)
+        val response = SimpleActor(
+            prompt = """
                     |You are a helpful AI that helps people with coding.
                     |
                     |You will be answering questions about the following code:
@@ -306,45 +403,35 @@ class CommandAutofixAction : BaseAction() {
                     |
                     |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
                     """.trimMargin(),
-                    model = AppSettingsState.instance.defaultSmartModel()
-                ).answer(
-                    listOf(
-                        """
-                        |The following command was run and produced an error:
-                        |
-                        |${tripleTilde}
-                        |${output.output}
-                        |${tripleTilde}
-                        |
-                        |Focus on and Fix the Error:
-                        |  ${error.message?.replace("\n", "\n  ") ?: ""}
-                        |""".trimMargin()
-                    ), api = api
-                )
-                var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                    root = root.toPath(),
-                    response = response,
-                    handle = { newCodeMap ->
-                        newCodeMap.forEach { (path, newCode) ->
-                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                        }
-                    },
-                    ui = ui,
-                    api=api,
-                )
-                markdown = ui.socketManager?.addSaveLinks(
-                    root = root.toPath(),
-                    response = markdown!!,
-                    task = task,
-                    ui = ui,
-                )
-                task.complete("<div>${renderMarkdown(markdown!!)}</div>")
-            }
-            progressHeader?.clear()
-            progress.append("", false)
-        } catch (e: Exception) {
-            task.error(ui, e)
-        }
+            model = AppSettingsState.instance.defaultSmartModel()
+        ).answer(
+            listOf(
+                """
+                |The following command was run and produced an error:
+                |
+                |${tripleTilde}
+                |${output.output}
+                |${tripleTilde}
+                |
+                |Focus on and Fix the Error:
+                |  ${error.message?.replace("\n", "\n  ") ?: ""}
+                """.trimMargin()
+            ), api = api
+        )
+        var markdown = ui.socketManager?.addApplyFileDiffLinks(
+            root = root.toPath(),
+            response = response,
+            ui = ui,
+            api = api,
+        )
+        markdown = ui.socketManager?.addSaveLinks(
+            root = root.toPath(),
+            response = markdown!!,
+            task = task,
+            ui = ui,
+        )
+        content.clear()
+        content.append("<div>${renderMarkdown(markdown!!)}</div>")
     }
 
     data class ParsedErrors(
@@ -357,7 +444,9 @@ class CommandAutofixAction : BaseAction() {
         @Description("Files identified as needing modification and issue-related files")
         val relatedFiles: List<String>? = null,
         @Description("Files identified as needing modification and issue-related files")
-        val fixFiles: List<String>? = null
+        val fixFiles: List<String>? = null,
+        @Description("Search strings to find relevant files")
+        val searchStrings: List<String>? = null
     )
 
 
@@ -398,9 +487,14 @@ class CommandAutofixAction : BaseAction() {
         return if (dialog.isOK) {
             val executable = File(settingsUI.commandField.selectedItem?.toString() ?: return null)
             AppSettingsState.instance.executables += executable.absolutePath
+            val argument = settingsUI.argumentsField.selectedItem?.toString() ?: ""
+            AppSettingsState.instance.recentArguments.remove(argument)
+            AppSettingsState.instance.recentArguments.add(0, argument)
+            AppSettingsState.instance.recentArguments =
+                AppSettingsState.instance.recentArguments.take(10).toMutableList()
             Settings(
                 executable = executable,
-                arguments = settingsUI.argumentsField.text,
+                arguments = argument,
                 workingDirectory = File(settingsUI.workingDirectoryField.text),
                 exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero"
             )
@@ -410,7 +504,13 @@ class CommandAutofixAction : BaseAction() {
     }
 
     class SettingsUI(root: File) {
-        val argumentsField = JTextField("run build")
+        val argumentsField = JComboBox<String>().apply {
+            isEditable = true
+            AppSettingsState.instance.recentArguments.forEach { addItem(it) }
+            if (AppSettingsState.instance.recentArguments.isEmpty()) {
+                addItem("run build")
+            }
+        }
         val commandField = ComboBox<String>(AppSettingsState.instance.executables.toTypedArray()).apply {
             isEditable = true
             AppSettingsState.instance.executables.forEach { addItem(it) }
@@ -488,14 +588,23 @@ class CommandAutofixAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
-        val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
+        const val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
 
-
-        val StringBuilder.htmlEscape: String
-            get() = this.toString().replace("&", "&amp;")
+        val String.htmlEscape: String
+            get() = this.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;")
+
+        fun truncate(output: String, kb: Int = 32): String {
+            var returnVal = output
+            if (returnVal.length > 1024 * 2 * kb) {
+                returnVal = returnVal.substring(0, 1024 * kb) +
+                        "\n\n... Output truncated ...\n\n" +
+                        returnVal.substring(returnVal.length - 1024 * kb)
+            }
+            return returnVal
+        }
     }
 }
