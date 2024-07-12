@@ -115,13 +115,27 @@ object FileSystemUtils {
         }
     }
 
+    fun filteredWalk(file: File, fn: (File) -> Boolean) : List<File> {
+        val result = mutableListOf<File>()
+        if (fn(file)) {
+            if (file.isDirectory) {
+                file.listFiles()?.forEach { child ->
+                    result.addAll(filteredWalk(child, fn))
+                }
+            } else {
+                result.add(file)
+            }
+        }
+        return result
+    }
+
     fun isLLMIncludable(file: File) : Boolean {
         return when {
             !file.exists() -> false
             file.isDirectory -> false
             file.name.startsWith(".") -> false
-            isGitignore(file.toPath()) -> false
             file.length() > (256 * 1024) -> false
+            isGitignore(file.toPath()) -> false
             file.extension?.lowercase(Locale.getDefault()) in setOf(
                 "jar",
                 "zip",

@@ -3,7 +3,9 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.filteredWalk
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isLLMIncludable
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -38,8 +40,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import javax.swing.*
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
@@ -50,7 +50,7 @@ class CommandAutofixAction : BaseAction() {
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
         val folder = UITools.getSelectedFolder(event)
-        var root = if (null != folder) {
+        val root = if (null != folder) {
             folder.toFile.toPath()
         } else {
             event.project?.basePath?.let { File(it).toPath() }
@@ -123,7 +123,7 @@ class CommandAutofixAction : BaseAction() {
                     while (reader.readLine().also { line = it } != null) {
                         buffer.append(line).append("\n")
                         if (lastUpdate + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
-                            taskOutput?.set("<pre>\n${truncate(buffer.toString()).htmlEscape}\n</pre>")
+                            taskOutput?.set("<pre>\n${outputString(buffer).htmlEscape}\n</pre>")
                             task.append("", true)
                             lastUpdate = System.currentTimeMillis()
                         }
@@ -132,12 +132,16 @@ class CommandAutofixAction : BaseAction() {
                 }
                 task.append("", false)
                 val exitCode = process.waitFor()
-                var output = buffer.toString()
-
-                output = truncate(output)
-
+                var output = outputString(buffer)
                 taskOutput?.clear()
                 OutputResult(exitCode, output)
+            }
+
+            private fun outputString(buffer: StringBuilder): String {
+                var output = buffer.toString()
+                output = output.replace(Regex("\\x1B\\[[0-?]*[ -/]*[@-~]"), "") // Remove terminal escape codes
+                output = truncate(output)
+                return output
             }
         }
         SessionProxyServer.chats[session] = patchApp
@@ -246,8 +250,9 @@ class CommandAutofixAction : BaseAction() {
         mainTask: SessionTask
     ) {
         Retryable(ui, task) { content ->
-            fixAllInternal(settings, output, task, ui, session, content, mainTask)
-            content.toString()
+            fixAllInternal(settings, output, task, ui, session, mainTask)
+            content.clear()
+            ""
         }
     }
 
@@ -257,13 +262,12 @@ class CommandAutofixAction : BaseAction() {
         task: SessionTask,
         ui: ApplicationInterface,
         session: Session,
-        content: StringBuilder,
         mainTask: SessionTask
     ) {
-        val plan = ParsedActor<ParsedErrors>(
+        val plan = ParsedActor(
             resultClass = ParsedErrors::class.java,
             prompt = """
-                        |You are a helpful AI that helps people with coding.
+                |You are a helpful AI that helps people with coding.
                         |
                         |You will be answering questions about the following project:
                         |
@@ -276,6 +280,7 @@ class CommandAutofixAction : BaseAction() {
                         |For each error:
                         |   1) predict the files that need to be fixed
                         |   2) predict related files that may be needed to debug the issue
+                        |   3) specify a search string to find relevant files - be as specific as possible
                         """.trimMargin(),
             model = AppSettingsState.instance.defaultSmartModel()
         ).answer(
@@ -286,7 +291,7 @@ class CommandAutofixAction : BaseAction() {
                 |$tripleTilde
                 |${output.output}
                 |$tripleTilde
-                |""".trimMargin()
+                """.trimMargin()
             ), api = api
         )
         task.add(
@@ -302,7 +307,30 @@ class CommandAutofixAction : BaseAction() {
         )
         val progressHeader = mainTask.header("Processing tasks")
         plan.obj.errors?.forEach { error ->
-            fix(error, output, ui, task, session)
+            task.header("Processing error: ${error.message}")
+            task.verbose(renderMarkdown("```json\n${JsonUtil.toJson(error)}\n```", tabs = false, ui = ui))
+            // Search for files using the provided search strings
+            val searchResults = error.searchStrings?.flatMap { searchString ->
+                filteredWalk(settings.workingDirectory!!) { !isGitignore(it.toPath()) }
+                    .filter { isLLMIncludable(it) }
+                    .filter { it.readText().contains(searchString, ignoreCase = true) }
+                    .map { it.toPath() }
+                    .toList()
+            }?.toSet() ?: emptySet()
+            task.verbose(renderMarkdown("""
+                Search results:
+                ${searchResults.joinToString("\n") { "* `$it`" }}
+                """.trimIndent(), tabs = false, ui = ui))
+            // Combine the search results with the existing fixFiles and relatedFiles
+            val combinedFiles = ((error.fixFiles ?: emptyList()) +
+                    (error.relatedFiles ?: emptyList()) +
+                    searchResults.map { it.toString() }).distinct()
+            // Update the error object with the combined file list
+            val updatedError = error.copy(
+                fixFiles = combinedFiles,
+                relatedFiles = combinedFiles
+            )
+            fix(updatedError, output, ui, task, session)
         }
         progressHeader?.clear()
         mainTask.append("", false)
@@ -316,7 +344,7 @@ class CommandAutofixAction : BaseAction() {
         session: Session
     ) {
         Retryable(ui, task) { content ->
-            fixInternal(error, output, ui, session, content, task)
+            fixInternal(error, output, ui, content, task)
             content.toString()
         }
     }
@@ -325,7 +353,6 @@ class CommandAutofixAction : BaseAction() {
         error: ParsedError,
         output: OutputResult,
         ui: ApplicationInterface,
-        session: Session,
         content: StringBuilder,
         task: SessionTask,
     ) {
@@ -388,17 +415,12 @@ class CommandAutofixAction : BaseAction() {
                 |
                 |Focus on and Fix the Error:
                 |  ${error.message?.replace("\n", "\n  ") ?: ""}
-                |""".trimMargin()
+                """.trimMargin()
             ), api = api
         )
         var markdown = ui.socketManager?.addApplyFileDiffLinks(
             root = root.toPath(),
             response = response,
-            handle = { newCodeMap ->
-                newCodeMap.forEach { (path, newCode) ->
-                    content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated\n")
-                }
-            },
             ui = ui,
             api = api,
         )
@@ -408,6 +430,7 @@ class CommandAutofixAction : BaseAction() {
             task = task,
             ui = ui,
         )
+        content.clear()
         content.append("<div>${renderMarkdown(markdown!!)}</div>")
     }
 
@@ -421,7 +444,9 @@ class CommandAutofixAction : BaseAction() {
         @Description("Files identified as needing modification and issue-related files")
         val relatedFiles: List<String>? = null,
         @Description("Files identified as needing modification and issue-related files")
-        val fixFiles: List<String>? = null
+        val fixFiles: List<String>? = null,
+        @Description("Search strings to find relevant files")
+        val searchStrings: List<String>? = null
     )
 
 
