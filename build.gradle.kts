@@ -1,7 +1,6 @@
 ﻿import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
- // ... (rest of the file)
 fun properties(key: String) = providers.gradleProperty(key).get()
 fun environment(key: String) = providers.environmentVariable(key).get()
 
