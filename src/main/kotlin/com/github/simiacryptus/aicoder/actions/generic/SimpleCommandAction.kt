@@ -1,9 +1,12 @@
+
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.filteredWalk
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
+import com.github.simiacryptus.aicoder.util.FileSystemUtils.isLLMIncludable
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -37,21 +40,36 @@ class SimpleCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(event: AnActionEvent) {
-        val settings = getUserSettings(event) ?: return
+        val settings = getUserSettings(event) ?: run {
+            log.error("Failed to retrieve user settings.")
+            return
+        }
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
         val folder = UITools.getSelectedFolder(event)
-        var root = if (null != folder) {
-            folder.toFile.toPath()
-        } else {
-            event.project?.basePath?.let { File(it).toPath() }
-        }!!
+        val root = folder?.toFile?.toPath() ?: event.project?.basePath?.let { File(it).toPath() } ?: run {
+            log.error("Failed to determine project root.")
+            return
+        }
 
         val session = StorageInterface.newGlobalID()
-        val patchApp = object : PatchApp(root.toFile(), session, settings) {
+        val patchApp = createPatchApp(root.toFile(), session, settings, virtualFiles)
+        SessionProxyServer.chats[session] = patchApp
+        val server = AppServer.getServer(event.project)
+
+        openBrowserWithDelay(server.server.uri.resolve("/#$session"))
+    }
+
+    private fun createPatchApp(
+        root: File,
+        session: Session,
+        settings: Settings,
+        virtualFiles: Array<out VirtualFile>?
+    ): PatchApp {
+        return object : PatchApp(root, session, settings) {
             override fun codeFiles() = getFiles(virtualFiles)
                 .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
-                .map { root.relativize(it) ?: it }.toSet()
+                .map { root.toPath().relativize(it) ?: it }.toSet()
 
             override fun codeSummary(paths: List<Path>): String = paths
                 .filter { it.toFile().exists() }
@@ -61,12 +79,12 @@ class SimpleCommandAction : BaseAction() {
                         |$tripleTilde${path.toString().split('.').lastOrNull()}
                         |${path.toFile().readText(Charsets.UTF_8)}
                         |$tripleTilde
-                        """.trimMargin()
+                    """.trimMargin()
                 }
 
             override fun projectSummary(): String {
                 val codeFiles = codeFiles()
-                val str = codeFiles
+                return codeFiles
                     .asSequence()
                     .filter { settings.workingDirectory?.toPath()?.resolve(it)?.toFile()?.exists() == true }
                     .distinct().sorted()
@@ -75,16 +93,24 @@ class SimpleCommandAction : BaseAction() {
                             settings.workingDirectory?.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
                         } bytes".trim()
                     }
-                return str
+            }
+
+            override fun searchFiles(searchStrings: List<String>): Set<Path> {
+                return searchStrings.flatMap { searchString ->
+                    filteredWalk(settings.workingDirectory!!) { !isGitignore(it.toPath()) }
+                        .filter { isLLMIncludable(it) }
+                        .filter { it.readText().contains(searchString, ignoreCase = true) }
+                        .map { it.toPath() }
+                        .toList()
+                }.toSet()
             }
         }
-        SessionProxyServer.chats[session] = patchApp
-        val server = AppServer.getServer(event.project)
+    }
 
+    private fun openBrowserWithDelay(uri: java.net.URI) {
         Thread {
             Thread.sleep(500)
             try {
-                val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
                 Desktop.getDesktop().browse(uri)
             } catch (e: Throwable) {
@@ -104,6 +130,7 @@ class SimpleCommandAction : BaseAction() {
     ) {
         abstract fun codeFiles(): Set<Path>
         abstract fun codeSummary(paths: List<Path>): String
+        abstract fun searchFiles(searchStrings: List<String>): Set<Path>
         override val singleInput = true
         override val stickyInput = false
 
@@ -135,7 +162,7 @@ class SimpleCommandAction : BaseAction() {
         try {
             val planTxt = projectSummary()
             task.add(renderMarkdown(planTxt))
-            Retryable(ui,task) {
+            Retryable(ui, task) {
                 val plan = ParsedActor(
                     resultClass = ParsedTasks::class.java,
                     prompt = """
@@ -152,17 +179,17 @@ class SimpleCommandAction : BaseAction() {
                         |For each task:
                         |   1) predict the files that need to be fixed
                         |   2) predict related files that may be needed to debug the issue
-                        """.trimMargin(),
+                    """.trimMargin(),
                     model = AppSettingsState.instance.defaultSmartModel()
                 ).answer(
                     listOf(
                         """
-                            |Execute the following directive:
-                            |
-                            |$tripleTilde
-                            |$userMessage
-                            |$tripleTilde
-                            |""".trimMargin()
+Execute the following directive:
+
+$tripleTilde
+$userMessage
+$tripleTilde
+                        """.trimMargin()
                     ), api = api
                 )
                 task.add(
@@ -183,7 +210,11 @@ class SimpleCommandAction : BaseAction() {
                             ((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap {
                                 toPaths(settings.workingDirectory.toPath(), it)
                             }
-                        val codeSummary = codeSummary(paths.map { settings.workingDirectory.toPath().resolve(it) })
+                        val searchResults = searchFiles(planTask.searchStrings ?: emptyList())
+                        val combinedPaths = (paths + searchResults).distinct()
+                        val prunedPaths = prunePaths(combinedPaths, 50 * 1024)
+                        val codeSummary =
+                            codeSummary(prunedPaths.map { settings.workingDirectory.toPath().resolve(it) })
                         val response = SimpleActor(
                             prompt = """
                             |You are a helpful AI that helps people with coding.
@@ -269,8 +300,22 @@ class SimpleCommandAction : BaseAction() {
                 ""
             }
         } catch (e: Exception) {
+            log.error("Error during task execution", e)
             task.error(ui, e)
         }
+    }
+
+    private fun prunePaths(paths: List<Path>, maxSize: Int): List<Path> {
+        val sortedPaths = paths.sortedByDescending { it.toFile().length() }
+        var totalSize = 0
+        val prunedPaths = mutableListOf<Path>()
+        for (path in sortedPaths) {
+            val fileSize = path.toFile().length().toInt()
+            if (totalSize + fileSize > maxSize) break
+            prunedPaths.add(path)
+            totalSize += fileSize
+        }
+        return prunedPaths
     }
 
     data class ParsedTasks(
@@ -280,10 +325,12 @@ class SimpleCommandAction : BaseAction() {
     data class ParsedTask(
         @Description("The task to be performed")
         val message: String? = null,
-        @Description("Files identified as needing modification and issue-related files")
+        @Description("Files identified as needing modification and issue-related files, in order of descending relevance")
         val relatedFiles: List<String>? = null,
-        @Description("Files identified as needing modification and issue-related files")
-        val fixFiles: List<String>? = null
+        @Description("Files identified as needing modification and issue-related files, in order of descending relevance")
+        val fixFiles: List<String>? = null,
+        @Description("Search strings to find relevant files, in order of descending relevance")
+        val searchStrings: List<String>? = null
     )
 
     data class Settings(
@@ -292,18 +339,14 @@ class SimpleCommandAction : BaseAction() {
 
     private fun getUserSettings(event: AnActionEvent?): Settings? {
         val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
-            File(
-                it
-            ).toPath()
+            File(it).toPath()
         }
         val files = UITools.getSelectedFiles(event).map { it.path.let { File(it).toPath() } }.toMutableSet()
         if (files.isEmpty()) Files.walk(root)
             .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
             .toList().filterNotNull().forEach { files.add(it) }
-        return Settings(root?.toFile() ?: return null)
+        return root?.toFile()?.let { Settings(it) }
     }
-
-
 
     override fun isEnabled(event: AnActionEvent) = true
 
@@ -314,16 +357,15 @@ class SimpleCommandAction : BaseAction() {
         @OptIn(ExperimentalPathApi::class)
         fun toPaths(root: Path, it: String): Iterable<Path> {
             // Expand any wildcards
-            if (it.contains("*")) {
+            return if (it.contains("*")) {
                 val prefix = it.substringBefore("*")
                 val suffix = it.substringAfter("*")
                 val files = root.walk().toList()
-                val pathList = files.filter {
+                files.filter {
                     it.toString().startsWith(prefix) && it.toString().endsWith(suffix)
-                }.toList()
-                return pathList
+                }
             } else {
-                return listOf(Path.of(it))
+                listOf(Path.of(it))
             }
         }
 
@@ -346,3 +388,4 @@ class SimpleCommandAction : BaseAction() {
         }
     }
 }
+

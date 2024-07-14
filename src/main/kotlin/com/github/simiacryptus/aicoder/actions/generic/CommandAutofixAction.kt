@@ -143,6 +143,16 @@ class CommandAutofixAction : BaseAction() {
                 output = truncate(output)
                 return output
             }
+
+            override fun searchFiles(searchStrings: List<String>): Set<Path> {
+                return searchStrings.flatMap { searchString ->
+                    filteredWalk(settings.workingDirectory!!) { !isGitignore(it.toPath()) }
+                        .filter { isLLMIncludable(it) }
+                        .filter { it.readText().contains(searchString, ignoreCase = true) }
+                        .map { it.toPath() }
+                        .toList()
+                }.toSet()
+            }
         }
         SessionProxyServer.chats[session] = patchApp
         val server = AppServer.getServer(event.project)
@@ -172,6 +182,7 @@ class CommandAutofixAction : BaseAction() {
         abstract fun codeFiles(): Set<Path>
         abstract fun codeSummary(paths: List<Path>): String
         abstract fun output(task: SessionTask): OutputResult
+        abstract fun searchFiles(searchStrings: List<String>): Set<Path>
         override val singleInput = true
         override val stickyInput = false
         override fun newSession(user: User?, session: Session): SocketManager {
@@ -268,20 +279,21 @@ class CommandAutofixAction : BaseAction() {
             resultClass = ParsedErrors::class.java,
             prompt = """
                 |You are a helpful AI that helps people with coding.
-                        |
-                        |You will be answering questions about the following project:
-                        |
-                        |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
-                        |
-                        |Files:
-                        |${projectSummary()}
-                        |
-                        |Given the response of a build/test process, identify one or more distinct errors.
-                        |For each error:
-                        |   1) predict the files that need to be fixed
-                        |   2) predict related files that may be needed to debug the issue
-                        |   3) specify a search string to find relevant files - be as specific as possible
-                        """.trimMargin(),
+                |
+                |You will be answering questions about the following project:
+                |
+                |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
+                |
+                |Files:
+                |${projectSummary()}
+                |
+                |Given the response of a build/test process, identify one or more distinct errors.
+                |For each error:
+                |   1) predict the files that need to be fixed
+                |   2) predict related files that may be needed to debug the issue
+                |   3) specify a search string to find relevant files - be as specific as possible
+                |${if (settings.additionalInstructions.isNotBlank()) "Additional Instructions:\n  ${settings.additionalInstructions}\n" else ""}
+                """.trimMargin(),
             model = AppSettingsState.instance.defaultSmartModel()
         ).answer(
             listOf(
@@ -317,20 +329,19 @@ class CommandAutofixAction : BaseAction() {
                     .map { it.toPath() }
                     .toList()
             }?.toSet() ?: emptySet()
-            task.verbose(renderMarkdown("""
-                Search results:
-                ${searchResults.joinToString("\n") { "* `$it`" }}
-                """.trimIndent(), tabs = false, ui = ui))
-            // Combine the search results with the existing fixFiles and relatedFiles
-            val combinedFiles = ((error.fixFiles ?: emptyList()) +
-                    (error.relatedFiles ?: emptyList()) +
-                    searchResults.map { it.toString() }).distinct()
-            // Update the error object with the combined file list
-            val updatedError = error.copy(
-                fixFiles = combinedFiles,
-                relatedFiles = combinedFiles
+            task.verbose(
+                renderMarkdown(
+                    """
+                    |Search results:
+                    |
+                    |${searchResults.joinToString("\n") { "* `$it`" }}
+                    """.trimMargin(), tabs = false, ui = ui
+                )
             )
-            fix(updatedError, output, ui, task, session)
+            Retryable(ui, task) { content ->
+                fix(error, searchResults.toList().map { it.toFile().absolutePath }, output, ui, content, task)
+                content.toString()
+            }
         }
         progressHeader?.clear()
         mainTask.append("", false)
@@ -338,27 +349,20 @@ class CommandAutofixAction : BaseAction() {
 
     private fun PatchApp.fix(
         error: ParsedError,
-        output: OutputResult,
-        ui: ApplicationInterface,
-        task: SessionTask,
-        session: Session
-    ) {
-        Retryable(ui, task) { content ->
-            fixInternal(error, output, ui, content, task)
-            content.toString()
-        }
-    }
-
-    private fun PatchApp.fixInternal(
-        error: ParsedError,
+        additionalFiles: List<String>? = null,
         output: OutputResult,
         ui: ApplicationInterface,
         content: StringBuilder,
         task: SessionTask,
     ) {
         val paths =
-            ((error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())).map { File(it).toPath() }
-        val summary = codeSummary(paths)
+            (
+                (error.fixFiles ?: emptyList()) +
+                (error.relatedFiles ?: emptyList()) +
+                (additionalFiles ?: emptyList())
+            ).map { File(it).toPath() }
+        val prunedPaths = prunePaths(paths, 50 * 1024)
+        val summary = codeSummary(prunedPaths)
         val response = SimpleActor(
             prompt = """
                     |You are a helpful AI that helps people with coding.
@@ -415,6 +419,7 @@ class CommandAutofixAction : BaseAction() {
                 |
                 |Focus on and Fix the Error:
                 |  ${error.message?.replace("\n", "\n  ") ?: ""}
+                |${if (settings.additionalInstructions.isNotBlank()) "Additional Instructions:\n  ${settings.additionalInstructions}\n" else ""}
                 """.trimMargin()
             ), api = api
         )
@@ -432,6 +437,19 @@ class CommandAutofixAction : BaseAction() {
         )
         content.clear()
         content.append("<div>${renderMarkdown(markdown!!)}</div>")
+    }
+
+    private fun prunePaths(paths: List<Path>, maxSize: Int): List<Path> {
+        val sortedPaths = paths.sortedByDescending { it.toFile().length() }
+        var totalSize = 0
+        val prunedPaths = mutableListOf<Path>()
+        for (path in sortedPaths) {
+            val fileSize = path.toFile().length().toInt()
+            if (totalSize + fileSize > maxSize) break
+            prunedPaths.add(path)
+            totalSize += fileSize
+        }
+        return prunedPaths
     }
 
     data class ParsedErrors(
@@ -454,7 +472,8 @@ class CommandAutofixAction : BaseAction() {
         var executable: File,
         var arguments: String = "",
         var workingDirectory: File? = null,
-        var exitCodeOption: String = "0"
+        var exitCodeOption: String = "0",
+        var additionalInstructions: String = "" // New field for additional instructions
     )
 
     private fun getFiles(
