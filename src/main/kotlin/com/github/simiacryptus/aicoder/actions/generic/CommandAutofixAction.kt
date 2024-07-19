@@ -261,7 +261,7 @@ class CommandAutofixAction : BaseAction() {
         mainTask: SessionTask
     ) {
         Retryable(ui, task) { content ->
-            fixAllInternal(settings, output, task, ui, session, mainTask)
+            fixAllInternal(settings, output, task, ui, mainTask, mutableSetOf())
             content.clear()
             ""
         }
@@ -272,8 +272,8 @@ class CommandAutofixAction : BaseAction() {
         output: OutputResult,
         task: SessionTask,
         ui: ApplicationInterface,
-        session: Session,
-        mainTask: SessionTask
+        mainTask: SessionTask,
+        changed: MutableSet<Path>
     ) {
         val plan = ParsedActor(
             resultClass = ParsedErrors::class.java,
@@ -339,7 +339,10 @@ class CommandAutofixAction : BaseAction() {
                 )
             )
             Retryable(ui, task) { content ->
-                fix(error, searchResults.toList().map { it.toFile().absolutePath }, output, ui, content, task)
+                fix(
+                    error, searchResults.toList().map { it.toFile().absolutePath },
+                    output, ui, content, task, settings.autoFix, changed
+                )
                 content.toString()
             }
         }
@@ -354,6 +357,9 @@ class CommandAutofixAction : BaseAction() {
         ui: ApplicationInterface,
         content: StringBuilder,
         task: SessionTask,
+        autoFix: Boolean,
+        changed: MutableSet<Path>,
+
     ) {
         val paths =
             (
@@ -428,6 +434,14 @@ class CommandAutofixAction : BaseAction() {
             response = response,
             ui = ui,
             api = api,
+            shouldAutoApply = { path ->
+                if (autoFix && !changed.contains(path)) {
+                    changed.add(path)
+                    true
+                } else {
+                    false
+                }
+            }
         )
         markdown = ui.socketManager?.addSaveLinks(
             root = root.toPath(),
@@ -473,7 +487,8 @@ class CommandAutofixAction : BaseAction() {
         var arguments: String = "",
         var workingDirectory: File? = null,
         var exitCodeOption: String = "0",
-        var additionalInstructions: String = "" // New field for additional instructions
+        var additionalInstructions: String = "",
+        val autoFix: Boolean,
     )
 
     private fun getFiles(
@@ -515,7 +530,9 @@ class CommandAutofixAction : BaseAction() {
                 executable = executable,
                 arguments = argument,
                 workingDirectory = File(settingsUI.workingDirectoryField.text),
-                exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero"
+                exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero",
+                additionalInstructions = settingsUI.additionalInstructionsField.text,
+                autoFix = settingsUI.autoFixCheckBox.isSelected
             )
         } else {
             null
@@ -523,7 +540,7 @@ class CommandAutofixAction : BaseAction() {
     }
 
     class SettingsUI(root: File) {
-        val argumentsField = JComboBox<String>().apply {
+        val argumentsField = ComboBox<String>().apply {
             isEditable = true
             AppSettingsState.instance.recentArguments.forEach { addItem(it) }
             if (AppSettingsState.instance.recentArguments.isEmpty()) {
@@ -564,6 +581,14 @@ class CommandAutofixAction : BaseAction() {
         val exitCodeNonZero = JRadioButton("Patch nonzero exit code", true)
         val exitCodeZero = JRadioButton("Patch 0 exit code")
         val exitCodeAny = JRadioButton("Patch any exit code")
+        val additionalInstructionsField = JTextArea().apply {
+            rows = 3
+            lineWrap = true
+            wrapStyleWord = true
+        }
+        val autoFixCheckBox = JCheckBox("Auto-apply fixes").apply {
+            isSelected = false
+        }
     }
 
     class CommandSettingsDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
@@ -596,6 +621,9 @@ class CommandAutofixAction : BaseAction() {
                     add(settingsUI.exitCodeNonZero)
                     add(settingsUI.exitCodeAny)
                     add(settingsUI.exitCodeZero)
+                    add(JLabel("Additional Instructions"))
+                    add(JScrollPane(settingsUI.additionalInstructionsField))
+                    add(settingsUI.autoFixCheckBox)
                 }
                 add(optionsPanel, BorderLayout.SOUTH)
             }
