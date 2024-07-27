@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
@@ -61,7 +60,8 @@ class PlanAheadAction : BaseAction() {
         var model: String = AppSettingsState.instance.smartModel,
         var temperature: Double = AppSettingsState.instance.temperature,
         var enableTaskPlanning: Boolean = false,
-        var enableShellCommands: Boolean = true
+        var enableShellCommands: Boolean = true,
+        var autoFix: Boolean = false
     )
 
     class PlanAheadConfigDialog(
@@ -70,11 +70,13 @@ class PlanAheadAction : BaseAction() {
     ) : DialogWrapper(project) {
         private val items = ChatModels.values().toList().toTypedArray()
         private val modelComboBox: ComboBox<String> = ComboBox(items.map { it.first }.toTypedArray())
+
         // Replace JTextField with JSlider for temperature
         private val temperatureSlider = JSlider(0, 100, (settings.temperature * 100).toInt())
 
         private val taskPlanningCheckbox = JCheckBox("Enable Task Planning", settings.enableTaskPlanning)
         private val shellCommandsCheckbox = JCheckBox("Enable Shell Commands", settings.enableShellCommands)
+        private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
 
         init {
             init()
@@ -97,17 +99,24 @@ class PlanAheadAction : BaseAction() {
             panel.add(temperatureSlider)
             panel.add(taskPlanningCheckbox)
             panel.add(shellCommandsCheckbox)
+            panel.add(autoFixCheckbox)
             return panel
         }
 
         override fun doOKAction() {
             if (modelComboBox.selectedItem == null) {
-                JOptionPane.showMessageDialog(null, "Model selection cannot be empty", "Error", JOptionPane.ERROR_MESSAGE)
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Model selection cannot be empty",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                )
                 return
             }
             settings.model = modelComboBox.selectedItem as String
             settings.enableTaskPlanning = taskPlanningCheckbox.isSelected
             settings.enableShellCommands = shellCommandsCheckbox.isSelected
+            settings.autoFix = autoFixCheckbox.isSelected
             super.doOKAction()
         }
     }
@@ -147,7 +156,7 @@ class PlanAheadAction : BaseAction() {
             }
         }.start()
     }
- 
+
     companion object {
         private val log = LoggerFactory.getLogger(PlanAheadAction::class.java)
 
@@ -172,16 +181,19 @@ class PlanAheadApp(
         val budget: Double = 2.0,
         val taskPlanningEnabled: Boolean = false,
         val shellCommandTaskEnabled: Boolean = true,
+        val autoFix: Boolean = false,
     )
 
     override val settingsClass: Class<*> get() = Settings::class.java
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> initSettings(session: Session): T = Settings(
-        model = ChatModels.values().filter { settings.model == it.key || settings.model == it.value.name }.map { it.value }.first(), // Use the model from settings
+        model = ChatModels.values().filter { settings.model == it.key || settings.model == it.value.name }
+            .map { it.value }.first(), // Use the model from settings
         temperature = settings.temperature, // Use the temperature from settings
         taskPlanningEnabled = settings.enableTaskPlanning, // Use the task planning flag from settings
-        shellCommandTaskEnabled = settings.enableShellCommands // Use the shell command flag from settings
+        shellCommandTaskEnabled = settings.enableShellCommands, // Use the shell command flag from settings
+        autoFix = settings.autoFix // Use the autoFix flag from settings
     ) as T
 
     override fun userMessage(
@@ -208,6 +220,7 @@ class PlanAheadApp(
                 root = root.toPath(),
                 taskPlanningEnabled = settings?.taskPlanningEnabled ?: false,
                 shellCommandTaskEnabled = settings?.shellCommandTaskEnabled ?: true,
+                autoFix = settings?.autoFix ?: false,
             ).startProcess(userMessage = userMessage)
         } catch (e: Throwable) {
             ui.newTask().error(ui, e)
@@ -220,6 +233,8 @@ class PlanAheadApp(
     }
 }
 
+private const val tripleTilde = "```"
+
 class PlanAheadAgent(
     user: User?,
     session: Session,
@@ -231,6 +246,7 @@ class PlanAheadAgent(
     temperature: Double = 0.3,
     val taskPlanningEnabled: Boolean,
     val shellCommandTaskEnabled: Boolean,
+    private val autoFix: Boolean,
     private val env: Map<String, String> = mapOf(),
     val workingDir: String = ".",
     val language: String = if (isWindows) "powershell" else "bash",
@@ -322,21 +338,21 @@ class PlanAheadAgent(
     fun startProcess(userMessage: String) {
         val codeFiles = codeFiles
         val eventStatus = if (!codeFiles.all { it.key.toFile().isFile } || codeFiles.size > 2) """
-      |Files:
-      |${codeFiles.keys.joinToString("\n") { "* ${it}" }}  
-    """.trimMargin() else {
+ Files:
+ ${codeFiles.keys.joinToString("\n") { "* ${it}" }}  
+     """.trimMargin() else {
             """
             |${
                 virtualFiles.joinToString("\n\n") {
                     val path = root.relativize(it.toNioPath())
                     """
-              |## $path
+ ## $path
               |
-              |${(codeFiles[path] ?: "").let { "```\n${it/*.indent("  ")*/}\n```" }}
-            """.trimMargin()
+ ${(codeFiles[path] ?: "").let { "$tripleTilde\n${it/*.indent("  ")*/}\n$tripleTilde" }}
+             """.trimMargin()
                 }
             }
-          """.trimMargin()
+           """.trimMargin()
         }
         val task = ui.newTask()
         val toInput = { it: String ->
@@ -354,7 +370,10 @@ class PlanAheadAgent(
                 displayMapInTabs(
                     mapOf(
                         "Text" to renderMarkdown(design.text, ui = ui),
-                        "JSON" to renderMarkdown("```json\n${toJson(design.obj)/*.indent("  ")*/}\n```", ui = ui),
+                        "JSON" to renderMarkdown(
+                            "${tripleTilde}json\n${toJson(design.obj)/*.indent("  ")*/}\n$tripleTilde",
+                            ui = ui
+                        ),
                     )
                 )
             },
@@ -386,7 +405,7 @@ class PlanAheadAgent(
             val diagramBuffer =
                 diagramTask.add(
                     renderMarkdown(
-                        "## Task Dependency Graph\n```mermaid\n${buildMermaidGraph(genState.subTasks)}\n```",
+                        "## Task Dependency Graph\n${tripleTilde}mermaid\n${buildMermaidGraph(genState.subTasks)}\n$tripleTilde",
                         ui = ui
                     )
                 )
@@ -394,11 +413,11 @@ class PlanAheadAgent(
                 override fun renderTabButtons(): String {
                     diagramBuffer?.set(
                         renderMarkdown(
-                            "## Task Dependency Graph\n```mermaid\n${
+                            "## Task Dependency Graph\n${tripleTilde}mermaid\n${
                                 buildMermaidGraph(
                                     genState.subTasks
                                 )
-                            }\n```", ui = ui
+                            }\n$tripleTilde", ui = ui
                         )
                     )
                     diagramTask.complete()
@@ -515,9 +534,9 @@ class PlanAheadAgent(
                     """
                     |# $it
                     |
-                    |```
+                    |$tripleTilde
                     |${codeFiles[File(it).toPath()] ?: root.resolve(it).toFile().readText()}
-                    |```
+                    |$tripleTilde
                     """.trimMargin()
                 } catch (e: Throwable) {
                     log.warn("Error: root=$root    ", e)
@@ -530,9 +549,9 @@ class PlanAheadAgent(
           |## Task `${taskId}`
           |${subTask.description ?: ""}
           |
-          |```json
+          |${tripleTilde}json
           |${toJson(subTask)/*.indent("  ")*/}
-          |```
+          |$tripleTilde
           |
           |### Dependencies:
           |${dependencies.joinToString("\n") { "- $it" }}
@@ -728,13 +747,13 @@ class PlanAheadAgent(
                         """
                   |## Shell Command Output
                   |
-                  |```
+                  |$tripleTilde
                   |${response.code}
-                  |```
+                  |$tripleTilde
                   |
-                  |```
+                  |$tripleTilde
                   |${response.renderedResponse}
-                  |```
+                  |$tripleTilde
                   """.trimMargin()
                     }
                     function()
@@ -778,10 +797,26 @@ class PlanAheadAgent(
                 ).filter { it.isNotBlank() }, api
             )
             genState.taskResult[taskId] = codeResult
-            renderMarkdown(ui.socketManager!!.addSaveLinks(root, codeResult, task, ui = ui), ui = ui) + acceptButtonFooter(sb) {
+            if (autoFix) {
+                val diffLinks = ui.socketManager!!.addApplyFileDiffLinks(
+                    root,
+                    codeResult,
+                    api = api,
+                    ui = ui,
+                    shouldAutoApply = { true })
                 taskTabs.selectedTab += 1
                 taskTabs.update()
                 onComplete()
+                renderMarkdown(diffLinks + "\n\n## Auto-applied changes", ui = ui)
+            } else {
+                renderMarkdown(
+                    ui.socketManager!!.addApplyFileDiffLinks(root, codeResult, api = api, ui = ui),
+                    ui = ui
+                ) + acceptButtonFooter(sb) {
+                    taskTabs.selectedTab += 1
+                    taskTabs.update()
+                    onComplete()
+                }
             }
         }
         Retryable(ui, task, process)
@@ -810,8 +845,8 @@ class PlanAheadAgent(
                 ).filter { it.isNotBlank() }, api
             )
             genState.taskResult[taskId] = codeResult
-            renderMarkdown(
-                ui.socketManager!!.addApplyFileDiffLinks(
+            if (autoFix) {
+                val diffLinks = ui.socketManager!!.addApplyFileDiffLinks(
                     root = root,
                     response = codeResult,
                     handle = { newCodeMap ->
@@ -820,14 +855,34 @@ class PlanAheadAgent(
                         }
                     },
                     ui = ui,
-                    api = api
-                ) + acceptButtonFooter(sb) {
-                    taskTabs.selectedTab += 1
-                    taskTabs.update()
-                    task.complete()
-                    onComplete()
-                }, ui = ui
-            )
+                    api = api,
+                    shouldAutoApply = { true }
+                )
+                taskTabs.selectedTab += 1
+                taskTabs.update()
+                task.complete()
+                onComplete()
+                renderMarkdown(diffLinks + "\n\n## Auto-applied changes", ui = ui)
+            } else {
+                renderMarkdown(
+                    ui.socketManager!!.addApplyFileDiffLinks(
+                        root = root,
+                        response = codeResult,
+                        handle = { newCodeMap ->
+                            newCodeMap.forEach { (path, newCode) ->
+                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                            }
+                        },
+                        ui = ui,
+                        api = api
+                    ) + acceptButtonFooter(sb) {
+                        taskTabs.selectedTab += 1
+                        taskTabs.update()
+                        task.complete()
+                        onComplete()
+                    }, ui = ui
+                )
+            }
         }
         Retryable(ui, task, process)
     }
@@ -853,11 +908,19 @@ class PlanAheadAgent(
                 ).filter { it.isNotBlank() }, api
             )
             genState.taskResult[taskId] = docResult
-            renderMarkdown("## Generated Documentation\n$docResult", ui = ui) + acceptButtonFooter(sb) {
+            if (autoFix) {
                 taskTabs.selectedTab += 1
                 taskTabs.update()
                 task.complete()
                 onComplete()
+                renderMarkdown("## Generated Documentation\n$docResult\nAuto-accepted", ui = ui)
+            } else {
+                renderMarkdown("## Generated Documentation\n$docResult", ui = ui) + acceptButtonFooter(sb) {
+                    taskTabs.selectedTab += 1
+                    taskTabs.update()
+                    task.complete()
+                    onComplete()
+                }
             }
         }
         Retryable(ui, task, process)
@@ -952,7 +1015,10 @@ class PlanAheadAgent(
                 displayMapInTabs(
                     mapOf(
                         "Text" to renderMarkdown(design.text, ui = ui),
-                        "JSON" to renderMarkdown("```json\n${toJson(design.obj)/*.indent("  ")*/}\n```", ui = ui),
+                        "JSON" to renderMarkdown(
+                            "${tripleTilde}json\n${toJson(design.obj)/*.indent("  ")*/}\n$tripleTilde",
+                            ui = ui
+                        ),
                     )
                 )
             },
@@ -1147,17 +1213,17 @@ private fun createFileActor(
         |Here are the new files:
         |
         |### src/utils/exampleUtils.js
-        |```js
+        |${tripleTilde}js
         |// Utility functions for example feature
         |const b = 2;
         |function exampleFunction() {
         |  return b + 1;
         |}
         |
-        |```
+        |$tripleTilde
         |
         |### tests/exampleUtils.test.js 
-        |```js
+        |${tripleTilde}js
         |// Unit tests for exampleUtils
         |const assert = require('assert');
         |const { exampleFunction } = require('../src/utils/exampleUtils');
@@ -1167,7 +1233,7 @@ private fun createFileActor(
         |    assert.equal(exampleFunction(), 3);
         |  });
         |});
-        |```
+        |$tripleTilde
       """.trimMargin(),
     model = model,
     temperature = temperature,
@@ -1186,7 +1252,7 @@ private fun patchActor(
         |
         |Provide a summary of the changes made.
         |  
-        |Response should use one or more code patches in diff format within ```diff code blocks.
+        |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
         |Each diff should be preceded by a header that identifies the file being modified.
         |The diff format should use + for line additions, - for line deletions.
         |The diff should include 2 lines of context before and after every change.
@@ -1196,17 +1262,17 @@ private fun patchActor(
         |Here are the patches:
         |
         |### src/utils/exampleUtils.js
-        |```diff
+        |${tripleTilde}diff
         | // Utility functions for example feature
         | const b = 2;
         | function exampleFunction() {
         |-   return b + 1;
         |+   return b + 2;
         | }
-        |```
+        |$tripleTilde
         |
         |### tests/exampleUtils.test.js
-        |```diff
+        |${tripleTilde}diff
         | // Unit tests for exampleUtils
         | const assert = require('assert');
         | const { exampleFunction } = require('../src/utils/exampleUtils');
@@ -1217,7 +1283,7 @@ private fun patchActor(
         |     assert.equal(exampleFunction(), 3);
         |   });
         | });
-        |```
+        |$tripleTilde
       """.trimMargin(),
     model = model,
     temperature = temperature,
@@ -1238,11 +1304,11 @@ private fun inquiryActor(
         Ensure the information is accurate, up-to-date, and well-organized to facilitate easy understanding.
 
         When generating insights, consider the existing project context and focus on information that is directly relevant and applicable.
-        Focus on generating insights and information that support the task types available in the system (${
+        Focus on generating insights and information that support the task types available in the system (Requirements, NewFile, EditFile, ${
         if (!taskPlanningEnabled) "" else "TaskPlanning, "
     }${
         if (!shellCommandTaskEnabled) "" else "RunShellCommand, "
-    }Requirements, NewFile, EditFile, Documentation).
+    }Documentation).
         This will ensure that the inquiries are tailored to assist in the planning and execution of tasks within the system's framework.
      """.trimIndent(),
     model = model,

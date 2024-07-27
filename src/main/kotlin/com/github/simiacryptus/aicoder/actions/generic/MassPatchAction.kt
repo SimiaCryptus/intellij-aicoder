@@ -16,7 +16,6 @@ import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.OpenAIClient
@@ -255,12 +254,6 @@ class MassPatchServer(
                                     },
                                     ui = ui,
                                     api = api,
-                                )
-                                markdown = ui.socketManager?.addSaveLinks(
-                                    root = root.toPath(),
-                                    response = markdown!!,
-                                    task = fileTask,
-                                    ui = ui,
                                 )
                                 """<div>${renderMarkdown(markdown!!)}</div>"""
                             },

@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -274,7 +273,7 @@ $tripleTilde
                                 |""".trimMargin()
                             ), api = api
                         )
-                        var markdown = ui.socketManager?.addApplyFileDiffLinks(
+                        val markdown = ui.socketManager?.addApplyFileDiffLinks(
                             root = root.toPath(),
                             response = response,
                             handle = { newCodeMap ->
@@ -284,12 +283,6 @@ $tripleTilde
                             },
                             ui = ui,
                             api = api,
-                        )
-                        markdown = ui.socketManager?.addSaveLinks(
-                            root = root.toPath(),
-                            response = markdown!!,
-                            task = task,
-                            ui = ui,
                         )
                         "<div>${renderMarkdown(markdown!!)}</div>"
                     }

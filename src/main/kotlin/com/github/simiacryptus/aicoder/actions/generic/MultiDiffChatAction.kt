@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
@@ -36,20 +35,7 @@ class MultiDiffChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(event: AnActionEvent) {
-        var root: Path? = null
-        val codeFiles: MutableSet<Path> = mutableSetOf()
-        fun codeSummary() = codeFiles.filter {
-            root!!.resolve(it).toFile().exists()
-        }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
-            .entries.joinToString("\n\n") { (path, code) ->
-                val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-                """
-            |# $path
-            |```$extension
-            |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
-            |```
-            """.trimMargin()
-            }
+        val root: Path
 
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
@@ -59,11 +45,10 @@ class MultiDiffChatAction : BaseAction() {
         } else {
             getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
         }
-        val files = getFiles(virtualFiles, root!!)
-        codeFiles.addAll(files)
+        val initialFiles = getFiles(virtualFiles, root)
 
         val session = StorageInterface.newGlobalID()
-        SessionProxyServer.chats[session] = PatchApp(root!!.toFile(), { codeSummary() }, codeFiles)
+        SessionProxyServer.chats[session] = PatchApp(root.toFile(), initialFiles)
         val server = AppServer.getServer(event.project)
 
         Thread {
@@ -80,8 +65,7 @@ class MultiDiffChatAction : BaseAction() {
 
     inner class PatchApp(
         override val root: File,
-        val codeSummary: () -> String,
-        val codeFiles: Set<Path> = setOf(),
+        private val initialFiles: Set<Path>,
     ) : ApplicationServer(
         applicationName = "Multi-file Patch Chat",
         path = "/patchChat",
@@ -89,6 +73,25 @@ class MultiDiffChatAction : BaseAction() {
     ) {
         override val singleInput = false
         override val stickyInput = true
+        private fun getCodeFiles(): Set<Path> {
+            return initialFiles.filter { root.toPath().resolve(it).toFile().exists() }.toSet()
+        }
+
+        private fun codeSummary(): String {
+            return getCodeFiles().associateWith { root.toPath().resolve(it).toFile().readText(Charsets.UTF_8) }
+                .entries.joinToString("\n\n") { (path, code) ->
+                    val extension =
+                        path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+                    """
+                    # $path
+                    ```$extension
+                    ${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+                    ```
+                    """.trimMargin()
+                }
+        }
+
+
         override fun userMessage(
             session: Session,
             user: User?,
@@ -96,58 +99,57 @@ class MultiDiffChatAction : BaseAction() {
             ui: ApplicationInterface,
             api: API
         ) {
-            val mainActor = SimpleActor(
+            fun mainActor() = SimpleActor(
                 prompt = """
-                        |You are a helpful AI that helps people with coding.
-                        |
-                        |You will be answering questions about the following code:
-                        |
-                        |${codeSummary()}
-                        |
-                        |Response should use one or more code patches in diff format within ```diff code blocks.
-                        |Each diff should be preceded by a header that identifies the file being modified.
-                        |The diff format should use + for line additions, - for line deletions.
-                        |The diff should include 2 lines of context before and after every change.
-                        |
-                        |Example:
-                        |
-                        |Here are the patches:
-                        |
-                        |### src/utils/exampleUtils.js
-                        |```diff
-                        | // Utility functions for example feature
-                        | const b = 2;
-                        | function exampleFunction() {
-                        |-   return b + 1;
-                        |+   return b + 2;
-                        | }
-                        |```
-                        |
-                        |### tests/exampleUtils.test.js
-                        |```diff
-                        | // Unit tests for exampleUtils
-                        | const assert = require('assert');
-                        | const { exampleFunction } = require('../src/utils/exampleUtils');
-                        | 
-                        | describe('exampleFunction', () => {
-                        |-   it('should return 3', () => {
-                        |+   it('should return 4', () => {
-                        |     assert.equal(exampleFunction(), 3);
-                        |   });
-                        | });
-                        |```
-                        |
-                        |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                        """.trimMargin(),
+                    |You are a helpful AI that helps people with coding.
+                    |
+                    |You will be answering questions about the following code:
+                    |
+                    |${codeSummary()}
+                    |
+                    |Response should use one or more code patches in diff format within ```diff code blocks.
+                    |Each diff should be preceded by a header that identifies the file being modified.
+                    |The diff format should use + for line additions, - for line deletions.
+                    |The diff should include 2 lines of context before and after every change.
+                    |
+                    |Example:
+                    |
+                    |Here are the patches:
+                    |
+                    |### src/utils/exampleUtils.js
+                    |```diff
+                    | // Utility functions for example feature
+                    | const b = 2;
+                    | function exampleFunction() {
+                    |-   return b + 1;
+                    |+   return b + 2;
+                    | }
+                    |```
+                    |
+                    |### tests/exampleUtils.test.js
+                    |```diff
+                    | // Unit tests for exampleUtils
+                    | const assert = require('assert');
+                    | const { exampleFunction } = require('../src/utils/exampleUtils');
+                    | 
+                    | describe('exampleFunction', () => {
+                    |-   it('should return 3', () => {
+                    |+   it('should return 4', () => {
+                    |     assert.equal(exampleFunction(), 3);
+                    |   });
+                    | });
+                    |```
+                    |
+                    |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+                    """.trimMargin(),
                 model = AppSettingsState.instance.defaultSmartModel()
             )
-
             val settings = getSettings(session, user) ?: Settings()
             if (api is ClientManager.MonitoredClient) api.budget = settings.budget ?: 2.00
 
             val task = ui.newTask()
             val codex = GPT4Tokenizer()
-            task.header(renderMarkdown(codeFiles.joinToString("\n") { path ->
+            task.header(renderMarkdown(getCodeFiles().joinToString("\n") { path ->
                 "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
             }))
             val toInput = { it: String -> listOf(codeSummary(), it) }
@@ -155,7 +157,7 @@ class MultiDiffChatAction : BaseAction() {
                 task = task,
                 userMessage = { userMessage },
                 heading = renderMarkdown(userMessage),
-                initialResponse = { it: String -> mainActor.answer(toInput(it), api = api) },
+                initialResponse = { it: String -> mainActor().answer(toInput(it), api = api) },
                 outputFn = { design: String ->
                     var markdown = ui.socketManager?.addApplyFileDiffLinks(
                         root = root.toPath(),
@@ -168,17 +170,11 @@ class MultiDiffChatAction : BaseAction() {
                         ui = ui,
                         api = api,
                     )
-                    markdown = ui.socketManager?.addSaveLinks(
-                        root = root.toPath(),
-                        response = markdown!!,
-                        task = task,
-                        ui = ui,
-                    )
                     """<div>${renderMarkdown(markdown!!)}</div>"""
                 },
                 ui = ui,
                 reviseResponse = { userMessages: List<Pair<String, Role>> ->
-                    mainActor.respond(
+                    mainActor().respond(
                         messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
                             .toTypedArray<ApiModel.ChatMessage>()),
                         input = toInput(userMessage),
@@ -214,4 +210,3 @@ class MultiDiffChatAction : BaseAction() {
 
     }
 }
-

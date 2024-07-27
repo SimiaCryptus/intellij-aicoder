@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.AgentPatterns
@@ -442,12 +441,6 @@ class CommandAutofixAction : BaseAction() {
                     false
                 }
             }
-        )
-        markdown = ui.socketManager?.addSaveLinks(
-            root = root.toPath(),
-            response = markdown!!,
-            task = task,
-            ui = ui,
         )
         content.clear()
         content.append("<div>${renderMarkdown(markdown!!)}</div>")
