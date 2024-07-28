@@ -40,7 +40,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.65")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.66")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
