@@ -12,27 +12,28 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.FileValidationUtils
+import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.webui.application.ApplicationInterface
-import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
+import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.skyenet.AgentPatterns
+import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
-import com.simiacryptus.skyenet.AgentPatterns
-import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.webui.application.ApplicationInterface
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
-import com.simiacryptus.skyenet.Retryable
 import org.jetbrains.annotations.NotNull
 import java.awt.Desktop
-import javax.swing.JOptionPane
 import java.io.File
 import java.nio.file.Path
+import javax.swing.JOptionPane
 
 class TestResultAutofixAction : BaseAction() {
     companion object {
@@ -293,12 +294,6 @@ $projectStructure
                 },
                 ui = ui,
                 api = api,
-            )
-            markdown = ui.socketManager?.addSaveLinks(
-                root = root.toPath(),
-                response = markdown!!,
-                task = task,
-                ui = ui,
             )
             val msg = "<div>${renderMarkdown(markdown!!)}</div>"
             return msg

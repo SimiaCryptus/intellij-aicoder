@@ -1,7 +1,6 @@
 ﻿import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
- // ... (rest of the file)
 fun properties(key: String) = providers.gradleProperty(key).get()
 fun environment(key: String) = providers.environmentVariable(key).get()
 
@@ -26,7 +25,7 @@ version = properties("pluginVersion")
 val kotlin_version = "2.0.0-Beta5" // This line can be removed if not used elsewhere
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.84"
+val skyenet_version = "1.0.85"
 val remoterobot_version = "0.11.21"
 val jackson_version = "2.17.0"
 
@@ -41,7 +40,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.64")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.0.66")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }

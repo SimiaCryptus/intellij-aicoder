@@ -1,6 +1,8 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.FileValidationUtils
+import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -115,42 +117,6 @@ object FileSystemUtils {
         }
     }
 
-    fun filteredWalk(file: File, fn: (File) -> Boolean) : List<File> {
-        val result = mutableListOf<File>()
-        if (fn(file)) {
-            if (file.isDirectory) {
-                file.listFiles()?.forEach { child ->
-                    result.addAll(filteredWalk(child, fn))
-                }
-            } else {
-                result.add(file)
-            }
-        }
-        return result
-    }
-
-    fun isLLMIncludable(file: File) : Boolean {
-        return when {
-            !file.exists() -> false
-            file.isDirectory -> false
-            file.name.startsWith(".") -> false
-            file.length() > (256 * 1024) -> false
-            isGitignore(file.toPath()) -> false
-            file.extension?.lowercase(Locale.getDefault()) in setOf(
-                "jar",
-                "zip",
-                "class",
-                "png",
-                "jpg",
-                "jpeg",
-                "gif",
-                "ico",
-                "stl"
-            ) -> false
-            else -> true
-        }
-    }
-
     fun expandFileList(data: Array<VirtualFile>): Array<VirtualFile> {
         return data.flatMap {
             (when {
@@ -167,44 +133,4 @@ object FileSystemUtils {
     }
 
     fun isGitignore(file: VirtualFile) = isGitignore(file.toNioPath())
-
-    fun isGitignore(path: Path): Boolean {
-        var currentDir = path.toFile().parentFile
-        currentDir ?: return false
-        while (!currentDir.resolve(".git").exists()) {
-            currentDir.resolve(".gitignore").let {
-                if (it.exists()) {
-                    val gitignore = it.readText()
-                    if (gitignore.split("\n").any { line ->
-                            val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
-                            line.trim().isNotEmpty()
-                                    && !line.startsWith("#")
-                                    && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
-                        }) {
-                        return true
-                    }
-                }
-            }
-            currentDir = currentDir.parentFile ?: return false
-        }
-        currentDir.resolve(".gitignore").let {
-            if (it.exists()) {
-                val gitignore = it.readText()
-                if (gitignore.split("\n").any { line ->
-                        val pattern = line.trim().trimEnd('/').replace(".", "\\.").replace("*", ".*")
-                        line.trim().isNotEmpty()
-                                && !line.startsWith("#")
-                                && path.fileName.toString().trimEnd('/').matches(Regex(pattern))
-                    }) {
-                    return true
-                }
-            }
-        }
-        return false
-    }
-
-    fun toPaths(root: Path, it: String): Iterable<Path> {
-        // Implement logic to handle wildcard expansion and resolve relative paths against the root
-        return listOf()
-    }
 }

@@ -3,10 +3,11 @@ package com.github.simiacryptus.aicoder.actions.problems
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.actions.generic.toFile
-import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.*
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.findGitRoot
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.getProjectStructure
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.tripleTilde
+import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.ParsedError
+import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.ParsedErrors
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.intellij.analysis.problemsView.toolWindow.ProblemNode
@@ -15,12 +16,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.AgentPatterns
@@ -231,12 +231,6 @@ class AnalyzeProblemAction : AnAction() {
                 },
                 ui = ui,
                 api = api,
-            )
-            markdown = ui.socketManager?.addSaveLinks(
-                root = root.toPath(),
-                response = markdown!!,
-                task = task,
-                ui = ui,
             )
             val msg = "<div>${renderMarkdown(markdown!!)}</div>"
             return msg

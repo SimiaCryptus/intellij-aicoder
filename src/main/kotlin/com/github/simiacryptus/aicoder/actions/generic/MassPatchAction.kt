@@ -6,7 +6,6 @@ import com.github.simiacryptus.aicoder.actions.generic.MassPatchAction.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
-import com.github.simiacryptus.aicoder.util.FileSystemUtils.isLLMIncludable
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,8 +14,8 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
 import com.simiacryptus.jopenai.OpenAIClient
@@ -255,12 +254,6 @@ class MassPatchServer(
                                     },
                                     ui = ui,
                                     api = api,
-                                )
-                                markdown = ui.socketManager?.addSaveLinks(
-                                    root = root.toPath(),
-                                    response = markdown!!,
-                                    task = fileTask,
-                                    ui = ui,
                                 )
                                 """<div>${renderMarkdown(markdown!!)}</div>"""
                             },

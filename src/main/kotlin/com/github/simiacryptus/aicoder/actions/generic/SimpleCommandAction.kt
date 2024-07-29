@@ -4,16 +4,17 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.FileSystemUtils.filteredWalk
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
-import com.github.simiacryptus.aicoder.util.FileSystemUtils.isLLMIncludable
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.FileValidationUtils
+import com.simiacryptus.diff.FileValidationUtils.Companion.filteredWalk
+import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
+import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.diff.addSaveLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -192,17 +193,6 @@ $tripleTilde
                         """.trimMargin()
                     ), api = api
                 )
-                task.add(
-                    AgentPatterns.displayMapInTabs(
-                        mapOf(
-                            "Text" to renderMarkdown(plan.text, ui = ui),
-                            "JSON" to renderMarkdown(
-                                "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
-                                ui = ui
-                            ),
-                        )
-                    )
-                )
                 val progressHeader = task.header("Processing tasks")
                 plan.obj.errors?.forEach { planTask ->
                     Retryable(ui, task) {
@@ -274,7 +264,7 @@ $tripleTilde
                                 |""".trimMargin()
                             ), api = api
                         )
-                        var markdown = ui.socketManager?.addApplyFileDiffLinks(
+                        val markdown = ui.socketManager?.addApplyFileDiffLinks(
                             root = root.toPath(),
                             response = response,
                             handle = { newCodeMap ->
@@ -285,19 +275,21 @@ $tripleTilde
                             ui = ui,
                             api = api,
                         )
-                        markdown = ui.socketManager?.addSaveLinks(
-                            root = root.toPath(),
-                            response = markdown!!,
-                            task = task,
-                            ui = ui,
-                        )
                         "<div>${renderMarkdown(markdown!!)}</div>"
                     }
                     ""
                 }
                 progressHeader?.clear()
-                task.append("", false)
-                ""
+                //task.append("", false)
+                AgentPatterns.displayMapInTabs(
+                    mapOf(
+                        "Text" to renderMarkdown(plan.text, ui = ui),
+                        "JSON" to renderMarkdown(
+                            "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
+                            ui = ui
+                        ),
+                    )
+                )
             }
         } catch (e: Exception) {
             log.error("Error during task execution", e)
