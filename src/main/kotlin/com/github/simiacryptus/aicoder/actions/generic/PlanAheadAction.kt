@@ -19,6 +19,7 @@ import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
+import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil.toJson
@@ -41,6 +42,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
+import java.awt.BorderLayout
 import java.awt.Desktop
 import java.awt.GridLayout
 import java.io.File
@@ -61,7 +63,9 @@ class PlanAheadAction : BaseAction() {
         var temperature: Double = AppSettingsState.instance.temperature,
         var enableTaskPlanning: Boolean = false,
         var enableShellCommands: Boolean = true,
-        var autoFix: Boolean = false
+        var autoFix: Boolean = false,
+        var enableCommandAutoFix: Boolean = false,
+        var commandAutoFixCommand: String = ""
     )
 
     class PlanAheadConfigDialog(
@@ -77,6 +81,9 @@ class PlanAheadAction : BaseAction() {
         private val taskPlanningCheckbox = JCheckBox("Enable Task Planning", settings.enableTaskPlanning)
         private val shellCommandsCheckbox = JCheckBox("Enable Shell Commands", settings.enableShellCommands)
         private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
+        private val commandAutoFixCheckbox = JCheckBox("Enable Command Auto Fix", settings.enableCommandAutoFix)
+        private val commandAutoFixTextField = JTextField(settings.commandAutoFixCommand)
+        private val commandAutoFixButton = JButton("Configure")
 
         init {
             init()
@@ -85,10 +92,20 @@ class PlanAheadAction : BaseAction() {
             temperatureSlider.addChangeListener {
                 settings.temperature = temperatureSlider.value / 100.0
             }
+            commandAutoFixCheckbox.addChangeListener {
+                commandAutoFixTextField.isEnabled = commandAutoFixCheckbox.isSelected
+                commandAutoFixButton.isEnabled = commandAutoFixCheckbox.isSelected
+            }
+            commandAutoFixButton.addActionListener {
+                val commandAutoFixDialog = CommandAutoFixConfigDialog(project, settings)
+                if (commandAutoFixDialog.showAndGet()) {
+                    commandAutoFixTextField.text = settings.commandAutoFixCommand
+                }
+            }
         }
 
         override fun createCenterPanel(): JComponent {
-            val panel = JPanel(GridLayout(0, 2))
+            val panel = JPanel(GridLayout(0, 1))
             panel.add(JLabel("Model:"))
             panel.add(modelComboBox)
             val indexOfFirst = items.indexOfFirst {
@@ -100,6 +117,14 @@ class PlanAheadAction : BaseAction() {
             panel.add(taskPlanningCheckbox)
             panel.add(shellCommandsCheckbox)
             panel.add(autoFixCheckbox)
+            panel.add(commandAutoFixCheckbox)
+            val commandAutoFixPanel = JPanel(BorderLayout())
+            commandAutoFixPanel.add(JLabel("Command Auto Fix Command:"), BorderLayout.WEST)
+            commandAutoFixPanel.add(commandAutoFixTextField, BorderLayout.CENTER)
+            commandAutoFixPanel.add(commandAutoFixButton, BorderLayout.EAST)
+            panel.add(commandAutoFixPanel)
+            commandAutoFixTextField.isEnabled = commandAutoFixCheckbox.isSelected
+            commandAutoFixButton.isEnabled = commandAutoFixCheckbox.isSelected
             return panel
         }
 
@@ -117,6 +142,54 @@ class PlanAheadAction : BaseAction() {
             settings.enableTaskPlanning = taskPlanningCheckbox.isSelected
             settings.enableShellCommands = shellCommandsCheckbox.isSelected
             settings.autoFix = autoFixCheckbox.isSelected
+            settings.enableCommandAutoFix = commandAutoFixCheckbox.isSelected
+            settings.commandAutoFixCommand = commandAutoFixTextField.text
+            super.doOKAction()
+        }
+    }
+
+    class CommandAutoFixConfigDialog(
+        project: Project?,
+        private val settings: PlanAheadSettings
+    ) : DialogWrapper(project) {
+        private val commandField = ComboBox(AppSettingsState.instance.executables.toTypedArray()).apply {
+            isEditable = true
+            selectedItem = settings.commandAutoFixCommand.split(" ").firstOrNull() ?: ""
+        }
+        private val argumentsField = JTextField(settings.commandAutoFixCommand.split(" ").drop(1).joinToString(" "))
+        private val workingDirectoryField = JTextField(project?.basePath ?: "")
+        private val exitCodeOptions = ButtonGroup()
+        private val exitCodeNonZero = JRadioButton("Patch nonzero exit code", true)
+        private val exitCodeZero = JRadioButton("Patch 0 exit code")
+        private val exitCodeAny = JRadioButton("Patch any exit code")
+
+        init {
+            init()
+            title = "Configure Command Auto Fix"
+            exitCodeOptions.add(exitCodeNonZero)
+            exitCodeOptions.add(exitCodeZero)
+            exitCodeOptions.add(exitCodeAny)
+        }
+
+        override fun createCenterPanel(): JComponent {
+            val panel = JPanel(GridLayout(0, 1))
+            panel.add(JLabel("Executable:"))
+            panel.add(commandField)
+            panel.add(JLabel("Arguments:"))
+            panel.add(argumentsField)
+            panel.add(JLabel("Working Directory:"))
+            panel.add(workingDirectoryField)
+            panel.add(JLabel("Exit Code Options:"))
+            panel.add(exitCodeNonZero)
+            panel.add(exitCodeZero)
+            panel.add(exitCodeAny)
+            return panel
+        }
+
+        override fun doOKAction() {
+            val executable = commandField.selectedItem?.toString() ?: ""
+            val arguments = argumentsField.text
+            settings.commandAutoFixCommand = "$executable $arguments".trim()
             super.doOKAction()
         }
     }
@@ -182,6 +255,8 @@ class PlanAheadApp(
         val taskPlanningEnabled: Boolean = false,
         val shellCommandTaskEnabled: Boolean = true,
         val autoFix: Boolean = false,
+        val enableCommandAutoFix: Boolean = false,
+        val commandAutoFixCommand: String = ""
     )
 
     override val settingsClass: Class<*> get() = Settings::class.java
@@ -193,7 +268,9 @@ class PlanAheadApp(
         temperature = settings.temperature, // Use the temperature from settings
         taskPlanningEnabled = settings.enableTaskPlanning, // Use the task planning flag from settings
         shellCommandTaskEnabled = settings.enableShellCommands, // Use the shell command flag from settings
-        autoFix = settings.autoFix // Use the autoFix flag from settings
+        autoFix = settings.autoFix, // Use the autoFix flag from settings
+        enableCommandAutoFix = settings.enableCommandAutoFix, // Use the enableCommandAutoFix flag from settings
+        commandAutoFixCommand = settings.commandAutoFixCommand // Use the commandAutoFixCommand from settings
     ) as T
 
     override fun userMessage(
@@ -221,6 +298,8 @@ class PlanAheadApp(
                 taskPlanningEnabled = settings?.taskPlanningEnabled ?: false,
                 shellCommandTaskEnabled = settings?.shellCommandTaskEnabled ?: true,
                 autoFix = settings?.autoFix ?: false,
+                commandAutoFixEnabled = settings?.enableCommandAutoFix ?: false,
+                commandAutoFixCommand = settings?.commandAutoFixCommand ?: "",
             ).startProcess(userMessage = userMessage)
         } catch (e: Throwable) {
             ui.newTask().error(ui, e)
@@ -247,6 +326,8 @@ class PlanAheadAgent(
     val taskPlanningEnabled: Boolean,
     val shellCommandTaskEnabled: Boolean,
     private val autoFix: Boolean,
+    private val commandAutoFixEnabled: Boolean,
+    private val commandAutoFixCommand: String,
     private val env: Map<String, String> = mapOf(),
     val workingDir: String = ".",
     val language: String = if (isWindows) "powershell" else "bash",
@@ -298,6 +379,7 @@ class PlanAheadAgent(
         val input_files: List<String>? = null,
         val output_files: List<String>? = null,
         var state: TaskState? = null,
+        val commandArguments: String? = null
     )
 
     enum class TaskState {
@@ -313,6 +395,7 @@ class PlanAheadAgent(
         EditFile,
         Documentation,
         RunShellCommand,
+        CommandAutoFix,
     }
 
     private val virtualFiles by lazy {
@@ -561,6 +644,28 @@ class PlanAheadAgent(
             )
 
             when (subTask.taskType) {
+                TaskType.CommandAutoFix -> {
+                    val semaphore = Semaphore(0)
+                    runCommandAutoFix(
+                        task = task,
+                        userMessage = userMessage,
+                        highLevelPlan = plan,
+                        priorCode = priorCode,
+                        inputFileCode = ::inputFileCode,
+                        genState = genState,
+                        taskId = taskId,
+                        taskTabs = taskTabs,
+                        subTask = subTask
+                    ) {
+                        semaphore.release()
+                    }
+                    try {
+                        semaphore.acquire()
+                    } catch (e: Throwable) {
+                        log.warn("Error", e)
+                    }
+                    log.debug("Completed command auto fix: $taskId")
+                }
 
                 TaskType.NewFile -> {
                     val semaphore = Semaphore(0)
@@ -688,6 +793,37 @@ class PlanAheadAgent(
             log.debug("Completed task: $taskId ${System.identityHashCode(subTask)}")
             taskTabs.update()
         }
+    }
+
+    private fun runCommandAutoFix(
+        task: SessionTask,
+        userMessage: String,
+        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
+        priorCode: String,
+        inputFileCode: () -> String,
+        genState: GenState,
+        taskId: String,
+        taskTabs: TabbedDisplay,
+        subTask: Task,
+        onComplete: () -> Unit
+    ) {
+        if (!commandAutoFixEnabled) {
+            task.add("Command Auto Fix is disabled")
+            onComplete()
+            return
+        }
+        val commandSettings = PatchApp.Settings(
+            executable = File(commandAutoFixCommand.split(" ").firstOrNull() ?: ""),
+            arguments = commandAutoFixCommand.split(" ").drop(1).joinToString(" "),
+            workingDirectory = root.toFile(),
+            exitCodeOption = "any",
+            additionalInstructions = "",
+            autoFix = autoFix
+        )
+        val cmdPatchApp = CmdPatchApp(root, session, commandSettings, api as OpenAIClient, virtualFiles)
+        cmdPatchApp.run(ui, task, commandSettings, api = api)
+        genState.taskResult[taskId] = "Command Auto Fix completed"
+        onComplete()
     }
 
     private fun runShellCommand(
@@ -1104,6 +1240,7 @@ class PlanAheadAgent(
             FilePatcher,
             Inquiry,
             RunShellCommand,
+            CommandAutoFix,
         }
 
         fun executionOrder(tasks: Map<String, Task>): List<String> {
@@ -1152,9 +1289,9 @@ private fun planningActor(
         name = "TaskBreakdown",
         resultClass = PlanAheadAgent.TaskBreakdownResult::class.java,
         prompt = """
-        |Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
-        |Detail files input and output as well as task execution dependencies.
-        |Creating directories and initializing source control are out of scope.
+ Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
+ Detail files input and output as well as task execution dependencies.
+ Creating directories and initializing source control are out of scope.
         |
         |Tasks can be of the following types: 
         |
@@ -1171,17 +1308,21 @@ private fun planningActor(
         |  ** List input files/tasks to be examined
         |${
             if (!shellCommandTaskEnabled) "" else """
-        |* RunShellCommand - Execute shell commands and provide the output
-        |  ** Specify the command to be executed, or describe the task to be performed
-        |  ** List input files/tasks to be examined when writing the command
+ * RunShellCommand - Execute shell commands and provide the output
+   ** Specify the command to be executed, or describe the task to be performed
+   ** List input files/tasks to be examined when writing the command
         """.trimMargin().trim()
         }
         |${
             if (!taskPlanningEnabled) "" else """
-        |* TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
-        |  ** Specify the prior tasks and the goal of the task
+ * TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
+   ** Specify the prior tasks and the goal of the task
         """.trimMargin().trim()
         }
+ * CommandAutoFix - Run a command and automatically fix any issues that arise
+   ** Specify the command to be executed and any additional instructions
+   ** Provide the command arguments in the 'commandArguments' field
+   ** List input files/tasks to be examined when fixing issues
       """.trimMargin(),
         model = model,
         parsingModel = parsingModel,
