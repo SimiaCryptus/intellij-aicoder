@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.ui.SettingsWidgetFactory.SettingsWidget.C
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
@@ -13,21 +14,85 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.table.JBTable
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
+import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.io.FileOutputStream
-import javax.swing.AbstractAction
-import javax.swing.JButton
-import javax.swing.JList
-import javax.swing.ListCellRenderer
+import javax.swing.*
+import javax.swing.event.ListSelectionEvent
+import javax.swing.event.ListSelectionListener
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 
 class AppSettingsComponent : com.intellij.openapi.Disposable {
+    val executablesModel = DefaultListModel<String>().apply {
+        AppSettingsState.instance.executables.forEach { addElement(it) }
+    }
+    val executablesList = JBList(executablesModel)
+
+    @Suppress("unused")
+    @Name("Executables")
+    val executablesPanel = JPanel(BorderLayout()).apply {
+        val scrollPane = JScrollPane(executablesList)
+        scrollPane.preferredSize = Dimension(300, 200)
+        add(scrollPane, BorderLayout.CENTER)
+        val buttonPanel = JPanel()
+        val addButton = JButton("Add")
+        val removeButton = JButton("Remove")
+        val editButton = JButton("Edit")
+        removeButton.isEnabled = false
+        editButton.isEnabled = false
+
+        addButton.addActionListener {
+            val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+            descriptor.title = "Select Executable"
+            FileChooser.chooseFile(descriptor, null, null) { file ->
+                val executablePath = file.path
+                if (executablePath.isNotBlank() && !executablesModel.contains(executablePath)) {
+                    executablesModel.addElement(executablePath)
+                    AppSettingsState.instance.executables.add(executablePath)
+                }
+            }
+        }
+        removeButton.addActionListener {
+            val selectedIndices = executablesList.selectedIndices
+            for (i in selectedIndices.reversed()) {
+                val removed = executablesModel.remove(i)
+                AppSettingsState.instance.executables.remove(removed)
+            }
+        }
+        editButton.addActionListener {
+            val selectedIndex = executablesList.selectedIndex
+            if (selectedIndex != -1) {
+                val currentValue = executablesModel.get(selectedIndex)
+                val newValue = JOptionPane.showInputDialog(this, "Edit executable path:", currentValue)
+                if (newValue != null && newValue.isNotBlank()) {
+                    executablesModel.set(selectedIndex, newValue)
+                    AppSettingsState.instance.executables.remove(currentValue)
+                    AppSettingsState.instance.executables.add(newValue)
+                }
+            }
+        }
+        executablesList.addListSelectionListener(object : ListSelectionListener {
+            override fun valueChanged(e: ListSelectionEvent?) {
+                val hasSelection = executablesList.selectedIndex != -1
+                removeButton.isEnabled = hasSelection
+                editButton.isEnabled = hasSelection
+            }
+        })
+        buttonPanel.add(addButton)
+        buttonPanel.add(removeButton)
+        buttonPanel.add(editButton)
+        add(buttonPanel, BorderLayout.SOUTH)
+        // Enable multiple selection for the list
+        executablesList.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+    }
 
     @Suppress("unused")
     @Name("Human Language")
@@ -155,6 +220,20 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     var usage = UsageTable(ApplicationServices.usageManager)
 
     init {
+        // Initialize executables list
+        setExecutables(AppSettingsState.instance.executables)
+        fun getExecutables(): Set<String> {
+            fun setExecutables(executables: Set<String>) {
+                val model =
+                    ((executablesPanel.getComponent(0) as? JScrollPane)?.viewport?.view as? JList<String>)?.model as? DefaultListModel<String>
+                model?.clear()
+                executables.forEach { model?.addElement(it) }
+            }
+
+            val model =
+                ((executablesPanel.getComponent(0) as? JScrollPane)?.viewport?.view as? JList<String>)?.model as? DefaultListModel<String>
+            return model?.elements()?.toList()?.toSet() ?: emptySet()
+        }
         ChatModels.values()
             .filter {
                 AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name)
@@ -228,5 +307,18 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         ) {
             text = value // Here you can add more customization if needed
         }
+    }
+
+    fun getExecutables(): Set<String> {
+        val model =
+            ((executablesPanel.getComponent(0) as? JScrollPane)?.viewport?.view as? JList<String>)?.model as? DefaultListModel<String>
+        return model?.elements()?.toList()?.toSet() ?: emptySet()
+    }
+
+    fun setExecutables(executables: Set<String>) {
+        val model =
+            ((executablesPanel.getComponent(0) as? JScrollPane)?.viewport?.view as? JList<String>)?.model as? DefaultListModel<String>
+        model?.clear()
+        executables.forEach { model?.addElement(it) }
     }
 }
