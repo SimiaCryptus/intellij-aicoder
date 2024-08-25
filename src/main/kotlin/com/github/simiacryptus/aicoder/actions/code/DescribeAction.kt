@@ -53,7 +53,7 @@ class DescribeAction : SelectionAction<String>() {
         }
         return buildString {
             append(state.indent)
-            append(commentStyle?.fromString(wrapping)?.withIndent(state.indent) ?: wrapping)
+            append(commentStyle?.fromString(wrapping)?.withIndent(state.indent!!) ?: wrapping)
             append("\n")
             append(state.indent)
             append(state.selectedText)

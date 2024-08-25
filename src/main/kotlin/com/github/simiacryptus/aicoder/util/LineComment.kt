@@ -50,7 +50,7 @@ class LineComment(private val commentPrefix: CharSequence, indent: CharSequence?
             .collect(Collectors.joining(TextBlock.DELIMITER + indent + commentPrefix + " "))
     }
 
-    override fun withIndent(indent: CharSequence?): LineComment {
+    override fun withIndent(indent: CharSequence): LineComment {
         return LineComment(commentPrefix, indent, *lines)
     }
 }
