@@ -47,7 +47,7 @@ class IdeaOpenAIClient : OpenAIClient(
     }
 
     override fun authorize(request: HttpRequest, apiProvider: APIProvider) {
-        val checkApiKey = UITools.checkApiKey(key.get(apiProvider)!!)
+        val checkApiKey = UITools.checkApiKey(key.get(apiProvider) ?: throw IllegalArgumentException("No API Key for $apiProvider"))
         key = key.toMutableMap().let {
             it[apiProvider] = checkApiKey
             it
