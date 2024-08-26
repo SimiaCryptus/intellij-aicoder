@@ -424,7 +424,7 @@ abstract class PatchApp(
         var executable: File,
         var arguments: String = "",
         var workingDirectory: File? = null,
-        var exitCodeOption: String = "0",
+        var exitCodeOption: String = "nonzero",
         var additionalInstructions: String = "",
         val autoFix: Boolean,
     )

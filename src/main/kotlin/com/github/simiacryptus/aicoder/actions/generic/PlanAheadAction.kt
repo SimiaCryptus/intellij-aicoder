@@ -300,6 +300,7 @@ class PlanAheadApp(
                 autoFix = settings?.autoFix ?: false,
                 commandAutoFixEnabled = settings?.enableCommandAutoFix ?: false,
                 commandAutoFixCommand = settings?.commandAutoFixCommand ?: "",
+                settings = settings
             ).startProcess(userMessage = userMessage)
         } catch (e: Throwable) {
             ui.newTask().error(ui, e)
@@ -353,7 +354,8 @@ class PlanAheadAgent(
         ActorTypes.RunShellCommand to shellActor(env, workingDir, language, command, model, temperature),
     )),
     val event: AnActionEvent,
-    val root: Path
+    val root: Path,
+    val settings: PlanAheadApp.Settings?
 ) : ActorSystem<PlanAheadAgent.Companion.ActorTypes>(
     actorMap.map { it.key.name to it.value }.toMap(),
     dataStorage,
@@ -379,7 +381,7 @@ class PlanAheadAgent(
         val input_files: List<String>? = null,
         val output_files: List<String>? = null,
         var state: TaskState? = null,
-        val commandArguments: String? = null
+        val commandArguments: List<String>? = null,
     )
 
     enum class TaskState {
@@ -812,18 +814,32 @@ class PlanAheadAgent(
             onComplete()
             return
         }
-        val commandSettings = PatchApp.Settings(
-            executable = File(commandAutoFixCommand.split(" ").firstOrNull() ?: ""),
-            arguments = commandAutoFixCommand.split(" ").drop(1).joinToString(" "),
-            workingDirectory = root.toFile(),
-            exitCodeOption = "any",
-            additionalInstructions = "",
-            autoFix = autoFix
-        )
-        val cmdPatchApp = CmdPatchApp(root, session, commandSettings, api as OpenAIClient, virtualFiles)
-        cmdPatchApp.run(ui, task, commandSettings, api = api)
-        genState.taskResult[taskId] = "Command Auto Fix completed"
-        onComplete()
+        val process = { sb: StringBuilder ->
+            val commandSettings = PatchApp.Settings(
+                executable = settings?.commandAutoFixCommand?.let { File(it) } ?: throw RuntimeException("Command not set"),
+                arguments = subTask.commandArguments?.drop(1)?.joinToString(" ") ?: "",
+                workingDirectory = root.toFile(),
+                exitCodeOption = "nonzero",
+                additionalInstructions = "",
+                autoFix = autoFix
+            )
+            CmdPatchApp(root, session, commandSettings, api as OpenAIClient, virtualFiles)
+                .run(ui, task, commandSettings, api)
+            genState.taskResult[taskId] = "Command Auto Fix completed"
+            if (autoFix) {
+                taskTabs.selectedTab += 1
+                taskTabs.update()
+                onComplete()
+                renderMarkdown("## Auto-applied Command Auto Fix\n", ui = ui)
+            } else {
+                renderMarkdown("## Command Auto Fix Result\n", ui = ui) + acceptButtonFooter(sb) {
+                    taskTabs.selectedTab += 1
+                    taskTabs.update()
+                    onComplete()
+                }
+            }
+        }
+        Retryable(ui, task, process)
     }
 
     private fun runShellCommand(
