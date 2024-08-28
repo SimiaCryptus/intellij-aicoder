@@ -58,7 +58,7 @@ class IdeaOpenAIClient : OpenAIClient(
     @Suppress("NAME_SHADOWING")
     override fun chat(
         chatRequest: ChatRequest,
-        model: ChatModels
+        model: OpenAITextModel
     ): ChatResponse {
         lastEvent ?: return super.chat(chatRequest, model)
         if (isInRequest.getAndSet(true)) {

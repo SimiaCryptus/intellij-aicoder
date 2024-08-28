@@ -6,6 +6,7 @@ import com.simiacryptus.skyenet.apps.plan.PlanCoordinator
 import com.simiacryptus.skyenet.apps.plan.PlanCoordinator.Companion.isWindows
 import com.simiacryptus.skyenet.apps.plan.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -312,7 +313,8 @@ class PlanAheadAction : BaseAction() {
             env = mapOf(),
             workingDir = root.absolutePath,
             language = if (isWindows) "powershell" else "bash",
-            command = listOf(AppSettingsState.instance.shellCommand)
+            command = listOf(AppSettingsState.instance.shellCommand),
+            parsingModel = AppSettingsState.instance.fastModel.chatModel(),
         ) as T
 
         override fun userMessage(
@@ -331,7 +333,6 @@ class PlanAheadAction : BaseAction() {
                     dataStorage = dataStorage,
                     api = api,
                     ui = ui,
-                    event = event,
                     root = root.toPath(),
                     settings = settings!!
                 ).startProcess(userMessage = userMessage)
