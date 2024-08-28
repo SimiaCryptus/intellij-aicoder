@@ -2,58 +2,40 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.simiacryptus.skyenet.apps.plan.PlanCoordinator
+import com.simiacryptus.skyenet.apps.plan.PlanCoordinator.Companion.isWindows
+import com.simiacryptus.skyenet.apps.plan.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
-import com.github.simiacryptus.aicoder.util.FileSystemUtils.expandFileList
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys.VIRTUAL_FILE_ARRAY
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.isFile
-import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.table.JBTable
 import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.ApiModel
-import com.simiacryptus.jopenai.ApiModel.Role
-import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.ChatModels
-import com.simiacryptus.jopenai.util.ClientUtil.toContentList
-import com.simiacryptus.jopenai.util.JsonUtil.toJson
-import com.simiacryptus.skyenet.AgentPatterns.displayMapInTabs
-import com.simiacryptus.skyenet.Discussable
-import com.simiacryptus.skyenet.Retryable
-import com.simiacryptus.skyenet.TabbedDisplay
-import com.simiacryptus.skyenet.apps.coding.CodingAgent
-import com.simiacryptus.skyenet.core.actors.*
-import com.simiacryptus.skyenet.core.platform.ApplicationServices.clientManager
 import com.simiacryptus.skyenet.core.platform.ClientManager
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import com.simiacryptus.skyenet.interpreter.ProcessInterpreter
-import com.simiacryptus.skyenet.set
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.Desktop
+import java.awt.Dimension
 import java.awt.GridLayout
 import java.io.File
-import java.nio.file.Path
-import java.util.*
-import java.util.concurrent.Future
-import java.util.concurrent.Semaphore
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
-import kotlin.reflect.KClass
+import javax.swing.table.DefaultTableCellRenderer
+import javax.swing.table.DefaultTableModel
+import kotlin.collections.set
+
 
 class PlanAheadAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -65,7 +47,7 @@ class PlanAheadAction : BaseAction() {
         var enableShellCommands: Boolean = true,
         var autoFix: Boolean = false,
         var enableCommandAutoFix: Boolean = false,
-        var commandAutoFixCommand: String = ""
+        var commandAutoFixCommands: List<String> = listOf()
     )
 
     class PlanAheadConfigDialog(
@@ -81,9 +63,39 @@ class PlanAheadAction : BaseAction() {
         private val taskPlanningCheckbox = JCheckBox("Enable Task Planning", settings.enableTaskPlanning)
         private val shellCommandsCheckbox = JCheckBox("Enable Shell Commands", settings.enableShellCommands)
         private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
-        private val commandAutoFixCheckbox = JCheckBox("Enable Command Auto Fix", settings.enableCommandAutoFix)
-        private val commandAutoFixTextField = JTextField(settings.commandAutoFixCommand)
-        private val commandAutoFixButton = JButton("Configure")
+        private val checkboxStates = AppSettingsState.instance.executables.map { true }.toMutableList()
+        private val tableModel = object : DefaultTableModel(arrayOf("Enabled", "Command"), 0) {
+
+            init {
+                AppSettingsState.instance.executables.forEach { command ->
+                    addRow(arrayOf(true, command))
+                }
+            }
+
+            override fun getColumnClass(columnIndex: Int) = when (columnIndex) {
+                0 -> java.lang.Boolean::class.java
+                else -> super.getColumnClass(columnIndex)
+            }
+
+            override fun isCellEditable(row: Int, column: Int) = column == 0
+
+            override fun setValueAt(aValue: Any?, row: Int, column: Int) {
+                super.setValueAt(aValue, row, column)
+                if (column == 0 && aValue is Boolean) {
+                    checkboxStates[row] = aValue
+                } else {
+                    throw IllegalArgumentException("Invalid column index: $column")
+                }
+            }
+
+            override fun getValueAt(row: Int, column: Int): Any =
+                if (column == 0) {
+                    checkboxStates[row]
+                } else super.getValueAt(row, column)
+        }
+        private val commandTable = JBTable(tableModel).apply { putClientProperty("terminateEditOnFocusLost", true) }
+        private val addCommandButton = JButton("Add Command")
+        private val editCommandButton = JButton("Edit Command")
 
         init {
             init()
@@ -92,20 +104,99 @@ class PlanAheadAction : BaseAction() {
             temperatureSlider.addChangeListener {
                 settings.temperature = temperatureSlider.value / 100.0
             }
-            commandAutoFixCheckbox.addChangeListener {
-                commandAutoFixTextField.isEnabled = commandAutoFixCheckbox.isSelected
-                commandAutoFixButton.isEnabled = commandAutoFixCheckbox.isSelected
-            }
-            commandAutoFixButton.addActionListener {
-                val commandAutoFixDialog = CommandAutoFixConfigDialog(project, settings)
-                if (commandAutoFixDialog.showAndGet()) {
-                    commandAutoFixTextField.text = settings.commandAutoFixCommand
+            val fileChooserDescriptor = FileChooserDescriptor(true, false, false, false, false, false)
+                .withTitle("Select Command")
+                .withDescription("Choose an executable file for the auto-fix command")
+            addCommandButton.addActionListener {
+                val chosenFile = FileChooser.chooseFile(fileChooserDescriptor, project, null)
+                if (chosenFile != null) {
+                    val newCommand = chosenFile.path
+                    val confirmResult = JOptionPane.showConfirmDialog(
+                        null,
+                        "Add command: $newCommand?",
+                        "Confirm Command",
+                        JOptionPane.YES_NO_OPTION
+                    )
+                    if (confirmResult == JOptionPane.YES_OPTION) {
+                        tableModel.addRow(arrayOf(false, newCommand))
+                        checkboxStates.add(true)
+                        AppSettingsState.instance.executables.add(newCommand)
+                    }
                 }
             }
+            editCommandButton.addActionListener {
+                val selectedRow = commandTable.selectedRow
+                if (selectedRow != -1) {
+                    val currentCommand = tableModel.getValueAt(selectedRow, 1) as String
+                    val newCommand = JOptionPane.showInputDialog(
+                        null,
+                        "Edit command:",
+                        currentCommand
+                    )
+                    if (newCommand != null && newCommand.isNotEmpty()) {
+                        val confirmResult = JOptionPane.showConfirmDialog(
+                            null,
+                            "Update command to: $newCommand?",
+                            "Confirm Edit",
+                            JOptionPane.YES_NO_OPTION
+                        )
+                        if (confirmResult == JOptionPane.YES_OPTION) {
+                            tableModel.setValueAt(newCommand, selectedRow, 1)
+                            AppSettingsState.instance.executables.remove(currentCommand)
+                            AppSettingsState.instance.executables.add(newCommand)
+                        }
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Please select a command to edit.")
+                }
+            }
+            commandTable.columnModel.getColumn(0).apply {
+                val checkBoxes = mutableMapOf<Int, JBCheckBox>()
+                fun jbCheckBox(
+                    row: Int,
+                    value: Any,
+                    column: Int
+                ) = checkBoxes.getOrPut(row) {
+                    JBCheckBox().apply {
+                        this.isSelected = value as Boolean
+                        this.addActionListener {
+                            tableModel.setValueAt(this.isSelected, row, column)
+                        }
+                    }
+                }
+
+                cellRenderer = object : DefaultTableCellRenderer() {
+                    override fun getTableCellRendererComponent(
+                        table: JTable,
+                        value: Any,
+                        isSelected: Boolean,
+                        hasFocus: Boolean,
+                        row: Int,
+                        column: Int
+                    ) = jbCheckBox(row, value, column)
+                }
+                cellEditor = object : DefaultCellEditor(JBCheckBox()) {
+                    override fun getTableCellEditorComponent(
+                        table: JTable,
+                        value: Any,
+                        isSelected: Boolean,
+                        row: Int,
+                        column: Int
+                    ) = jbCheckBox(row, value, column)
+                }
+                preferredWidth = 60
+                maxWidth = 60
+            }
+            commandTable.selectionModel.addListSelectionListener {
+                editCommandButton.isEnabled = commandTable.selectedRow != -1
+            }
+            editCommandButton.isEnabled = false
         }
 
+
         override fun createCenterPanel(): JComponent {
-            val panel = JPanel(GridLayout(0, 1))
+            val panel = JPanel()
+            panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
             panel.add(JLabel("Model:"))
             panel.add(modelComboBox)
             val indexOfFirst = items.indexOfFirst {
@@ -117,16 +208,20 @@ class PlanAheadAction : BaseAction() {
             panel.add(taskPlanningCheckbox)
             panel.add(shellCommandsCheckbox)
             panel.add(autoFixCheckbox)
-            panel.add(commandAutoFixCheckbox)
-            val commandAutoFixPanel = JPanel(BorderLayout())
-            commandAutoFixPanel.add(JLabel("Command Auto Fix Command:"), BorderLayout.WEST)
-            commandAutoFixPanel.add(commandAutoFixTextField, BorderLayout.CENTER)
-            commandAutoFixPanel.add(commandAutoFixButton, BorderLayout.EAST)
-            panel.add(commandAutoFixPanel)
-            commandAutoFixTextField.isEnabled = commandAutoFixCheckbox.isSelected
-            commandAutoFixButton.isEnabled = commandAutoFixCheckbox.isSelected
+            panel.add(JLabel("Auto-Fix Commands:"))
+            val scrollPane = JScrollPane(commandTable)
+            scrollPane.preferredSize = Dimension(350, 100)
+            val tablePanel = JPanel(BorderLayout())
+            tablePanel.add(scrollPane, BorderLayout.CENTER)
+            panel.add(tablePanel)
+            val buttonPanel = JPanel(GridLayout(1, 3))
+            buttonPanel.add(addCommandButton)
+            panel.add(buttonPanel)
+            commandTable.isEnabled = true
+            addCommandButton.isEnabled = true
             return panel
         }
+
 
         override fun doOKAction() {
             if (modelComboBox.selectedItem == null) {
@@ -142,57 +237,19 @@ class PlanAheadAction : BaseAction() {
             settings.enableTaskPlanning = taskPlanningCheckbox.isSelected
             settings.enableShellCommands = shellCommandsCheckbox.isSelected
             settings.autoFix = autoFixCheckbox.isSelected
-            settings.enableCommandAutoFix = commandAutoFixCheckbox.isSelected
-            settings.commandAutoFixCommand = commandAutoFixTextField.text
+            settings.commandAutoFixCommands = (0 until tableModel.rowCount)
+                .filter { tableModel.getValueAt(it, 0) as Boolean }
+                .map { tableModel.getValueAt(it, 1) as String }
+            settings.enableCommandAutoFix = settings.commandAutoFixCommands.isNotEmpty()
+            // Update the global tool collection
+            AppSettingsState.instance.executables.clear()
+            AppSettingsState.instance.executables.addAll((0 until tableModel.rowCount).map {
+                tableModel.getValueAt(it, 1) as String
+            })
             super.doOKAction()
         }
     }
 
-    class CommandAutoFixConfigDialog(
-        project: Project?,
-        private val settings: PlanAheadSettings
-    ) : DialogWrapper(project) {
-        private val commandField = ComboBox(AppSettingsState.instance.executables.toTypedArray()).apply {
-            isEditable = true
-            selectedItem = settings.commandAutoFixCommand.split(" ").firstOrNull() ?: ""
-        }
-        private val argumentsField = JTextField(settings.commandAutoFixCommand.split(" ").drop(1).joinToString(" "))
-        private val workingDirectoryField = JTextField(project?.basePath ?: "")
-        private val exitCodeOptions = ButtonGroup()
-        private val exitCodeNonZero = JRadioButton("Patch nonzero exit code", true)
-        private val exitCodeZero = JRadioButton("Patch 0 exit code")
-        private val exitCodeAny = JRadioButton("Patch any exit code")
-
-        init {
-            init()
-            title = "Configure Command Auto Fix"
-            exitCodeOptions.add(exitCodeNonZero)
-            exitCodeOptions.add(exitCodeZero)
-            exitCodeOptions.add(exitCodeAny)
-        }
-
-        override fun createCenterPanel(): JComponent {
-            val panel = JPanel(GridLayout(0, 1))
-            panel.add(JLabel("Executable:"))
-            panel.add(commandField)
-            panel.add(JLabel("Arguments:"))
-            panel.add(argumentsField)
-            panel.add(JLabel("Working Directory:"))
-            panel.add(workingDirectoryField)
-            panel.add(JLabel("Exit Code Options:"))
-            panel.add(exitCodeNonZero)
-            panel.add(exitCodeZero)
-            panel.add(exitCodeAny)
-            return panel
-        }
-
-        override fun doOKAction() {
-            val executable = commandField.selectedItem?.toString() ?: ""
-            val arguments = argumentsField.text
-            settings.commandAutoFixCommand = "$executable $arguments".trim()
-            super.doOKAction()
-        }
-    }
 
     val path = "/taskDev"
     override fun handle(e: AnActionEvent) {
@@ -220,7 +277,6 @@ class PlanAheadAction : BaseAction() {
         Thread {
             Thread.sleep(500)
             try {
-
                 val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
                 Desktop.getDesktop().browse(uri)
@@ -230,1269 +286,68 @@ class PlanAheadAction : BaseAction() {
         }.start()
     }
 
+    class PlanAheadApp(
+        applicationName: String = "Task Planning v1.1",
+        path: String = "/taskDev",
+        val event: AnActionEvent,
+        override val root: File,
+        val settings: PlanAheadSettings,
+    ) : ApplicationServer(
+        applicationName = applicationName,
+        path = path,
+        showMenubar = false,
+    ) {
+        override val settingsClass: Class<*> get() = Settings::class.java
+
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : Any> initSettings(session: Session): T = Settings(
+            model = ChatModels.values().filter { settings.model == it.key || settings.model == it.value.name }
+                .map { it.value }.first(), // Use the model from settings
+            temperature = settings.temperature, // Use the temperature from settings
+            taskPlanningEnabled = settings.enableTaskPlanning, // Use the task planning flag from settings
+            shellCommandTaskEnabled = settings.enableShellCommands, // Use the shell command flag from settings
+            autoFix = settings.autoFix, // Use the autoFix flag from settings
+            enableCommandAutoFix = settings.enableCommandAutoFix, // Use the enableCommandAutoFix flag from settings
+            commandAutoFixCommands = settings.commandAutoFixCommands, // Use the commandAutoFixCommands from settings
+            env = mapOf(),
+            workingDir = root.absolutePath,
+            language = if (isWindows) "powershell" else "bash",
+            command = listOf(AppSettingsState.instance.shellCommand)
+        ) as T
+
+        override fun userMessage(
+            session: Session,
+            user: User?,
+            userMessage: String,
+            ui: ApplicationInterface,
+            api: API
+        ) {
+            try {
+                val settings = getSettings<Settings>(session, user)
+                if (api is ClientManager.MonitoredClient) api.budget = settings?.budget ?: 2.0
+                PlanCoordinator(
+                    user = user,
+                    session = session,
+                    dataStorage = dataStorage,
+                    api = api,
+                    ui = ui,
+                    event = event,
+                    root = root.toPath(),
+                    settings = settings!!
+                ).startProcess(userMessage = userMessage)
+            } catch (e: Throwable) {
+                ui.newTask().error(ui, e)
+                log.warn("Error", e)
+            }
+        }
+
+        companion object {
+            private val log = LoggerFactory.getLogger(PlanAheadApp::class.java)
+        }
+    }
+
     companion object {
         private val log = LoggerFactory.getLogger(PlanAheadAction::class.java)
 
     }
 }
-
-class PlanAheadApp(
-    applicationName: String = "Task Planning v1.1",
-    path: String = "/taskDev",
-    val event: AnActionEvent,
-    override val root: File,
-    val settings: PlanAheadAction.PlanAheadSettings,
-) : ApplicationServer(
-    applicationName = applicationName,
-    path = path,
-    showMenubar = false,
-) {
-    data class Settings(
-        val model: ChatModels = AppSettingsState.instance.smartModel.chatModel(),
-        val parsingModel: ChatModels = AppSettingsState.instance.fastModel.chatModel(),
-        val temperature: Double = 0.2,
-        val budget: Double = 2.0,
-        val taskPlanningEnabled: Boolean = false,
-        val shellCommandTaskEnabled: Boolean = true,
-        val autoFix: Boolean = false,
-        val enableCommandAutoFix: Boolean = false,
-        val commandAutoFixCommand: String = ""
-    )
-
-    override val settingsClass: Class<*> get() = Settings::class.java
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> initSettings(session: Session): T = Settings(
-        model = ChatModels.values().filter { settings.model == it.key || settings.model == it.value.name }
-            .map { it.value }.first(), // Use the model from settings
-        temperature = settings.temperature, // Use the temperature from settings
-        taskPlanningEnabled = settings.enableTaskPlanning, // Use the task planning flag from settings
-        shellCommandTaskEnabled = settings.enableShellCommands, // Use the shell command flag from settings
-        autoFix = settings.autoFix, // Use the autoFix flag from settings
-        enableCommandAutoFix = settings.enableCommandAutoFix, // Use the enableCommandAutoFix flag from settings
-        commandAutoFixCommand = settings.commandAutoFixCommand // Use the commandAutoFixCommand from settings
-    ) as T
-
-    override fun userMessage(
-        session: Session,
-        user: User?,
-        userMessage: String,
-        ui: ApplicationInterface,
-        api: API
-    ) {
-        try {
-            val settings = getSettings<Settings>(session, user)
-            if (api is ClientManager.MonitoredClient) api.budget = settings?.budget ?: 2.0
-            PlanAheadAgent(
-                user = user,
-                session = session,
-                dataStorage = dataStorage,
-                api = api,
-                ui = ui,
-                model = settings?.model ?: AppSettingsState.instance.smartModel.chatModel(),
-                parsingModel = settings?.parsingModel ?: AppSettingsState.instance.fastModel.chatModel(),
-                temperature = settings?.temperature ?: 0.3,
-                event = event,
-                workingDir = root.absolutePath,
-                root = root.toPath(),
-                taskPlanningEnabled = settings?.taskPlanningEnabled ?: false,
-                shellCommandTaskEnabled = settings?.shellCommandTaskEnabled ?: true,
-                autoFix = settings?.autoFix ?: false,
-                commandAutoFixEnabled = settings?.enableCommandAutoFix ?: false,
-                commandAutoFixCommand = settings?.commandAutoFixCommand ?: "",
-                settings = settings
-            ).startProcess(userMessage = userMessage)
-        } catch (e: Throwable) {
-            ui.newTask().error(ui, e)
-            log.warn("Error", e)
-        }
-    }
-
-    companion object {
-        private val log = LoggerFactory.getLogger(PlanAheadApp::class.java)
-    }
-}
-
-private const val tripleTilde = "```"
-
-class PlanAheadAgent(
-    user: User?,
-    session: Session,
-    dataStorage: StorageInterface,
-    val ui: ApplicationInterface,
-    val api: API,
-    model: ChatModels = ChatModels.GPT4o,
-    parsingModel: ChatModels = ChatModels.GPT35Turbo,
-    temperature: Double = 0.3,
-    val taskPlanningEnabled: Boolean,
-    val shellCommandTaskEnabled: Boolean,
-    private val autoFix: Boolean,
-    private val commandAutoFixEnabled: Boolean,
-    private val commandAutoFixCommand: String,
-    private val env: Map<String, String> = mapOf(),
-    val workingDir: String = ".",
-    val language: String = if (isWindows) "powershell" else "bash",
-    private val command: List<String> = listOf(AppSettingsState.instance.shellCommand),
-    private val actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
-        ActorTypes.TaskBreakdown to planningActor(
-            taskPlanningEnabled,
-            shellCommandTaskEnabled,
-            model,
-            parsingModel,
-            temperature
-        ),
-        ActorTypes.DocumentationGenerator to documentActor(model, temperature),
-        ActorTypes.NewFileCreator to createFileActor(model, temperature),
-        ActorTypes.FilePatcher to patchActor(model, temperature),
-        ActorTypes.Inquiry to inquiryActor(
-            taskPlanningEnabled,
-            shellCommandTaskEnabled,
-            model,
-            temperature
-        ),
-    ) + (if (!shellCommandTaskEnabled) mapOf() else mapOf(
-        ActorTypes.RunShellCommand to shellActor(env, workingDir, language, command, model, temperature),
-    )),
-    val event: AnActionEvent,
-    val root: Path,
-    val settings: PlanAheadApp.Settings?
-) : ActorSystem<PlanAheadAgent.Companion.ActorTypes>(
-    actorMap.map { it.key.name to it.value }.toMap(),
-    dataStorage,
-    user,
-    session
-) {
-    private val documentationGeneratorActor by lazy { actorMap[ActorTypes.DocumentationGenerator] as SimpleActor }
-    private val taskBreakdownActor by lazy { actorMap[ActorTypes.TaskBreakdown] as ParsedActor<TaskBreakdownResult> }
-    private val newFileCreatorActor by lazy { actorMap[ActorTypes.NewFileCreator] as SimpleActor }
-    private val filePatcherActor by lazy { actorMap[ActorTypes.FilePatcher] as SimpleActor }
-    private val inquiryActor by lazy { actorMap[ActorTypes.Inquiry] as SimpleActor }
-    val shellCommandActor by lazy { actorMap[ActorTypes.RunShellCommand] as CodingActor }
-
-    data class TaskBreakdownResult(
-        val tasksByID: Map<String, Task>? = null,
-        val finalTaskID: String? = null,
-    )
-
-    data class Task(
-        val description: String? = null,
-        val taskType: TaskType? = null,
-        var task_dependencies: List<String>? = null,
-        val input_files: List<String>? = null,
-        val output_files: List<String>? = null,
-        var state: TaskState? = null,
-        val commandArguments: List<String>? = null,
-    )
-
-    enum class TaskState {
-        Pending,
-        InProgress,
-        Completed,
-    }
-
-    enum class TaskType {
-        TaskPlanning,
-        Inquiry,
-        NewFile,
-        EditFile,
-        Documentation,
-        RunShellCommand,
-        CommandAutoFix,
-    }
-
-    private val virtualFiles by lazy {
-        expandFileList(VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf())
-    }
-
-    private val codeFiles
-        get() = virtualFiles
-            .filter { it.exists() && it.isFile }
-            .filter { !it.name.startsWith(".") }
-            .associate { file -> getKey(file) to getValue(file) }
-
-
-    private fun getValue(file: VirtualFile) = try {
-        file.inputStream.bufferedReader().use { it.readText() }
-    } catch (e: Exception) {
-        log.warn("Error reading file", e)
-        ""
-    }
-
-    private fun getKey(file: VirtualFile) = root.relativize(file.toNioPath())
-
-    fun startProcess(userMessage: String) {
-        val codeFiles = codeFiles
-        val eventStatus = if (!codeFiles.all { it.key.toFile().isFile } || codeFiles.size > 2) """
- Files:
- ${codeFiles.keys.joinToString("\n") { "* ${it}" }}  
-     """.trimMargin() else {
-            """
-            |${
-                virtualFiles.joinToString("\n\n") {
-                    val path = root.relativize(it.toNioPath())
-                    """
- ## $path
-              |
- ${(codeFiles[path] ?: "").let { "$tripleTilde\n${it/*.indent("  ")*/}\n$tripleTilde" }}
-             """.trimMargin()
-                }
-            }
-           """.trimMargin()
-        }
-        val task = ui.newTask()
-        val toInput = { it: String ->
-            listOf(
-                eventStatus,
-                it
-            )
-        }
-        val highLevelPlan = Discussable(
-            task = task,
-            heading = renderMarkdown(userMessage, ui = ui),
-            userMessage = { userMessage },
-            initialResponse = { it: String -> taskBreakdownActor.answer(toInput(it), api = api) },
-            outputFn = { design: ParsedResponse<TaskBreakdownResult> ->
-                displayMapInTabs(
-                    mapOf(
-                        "Text" to renderMarkdown(design.text, ui = ui),
-                        "JSON" to renderMarkdown(
-                            "${tripleTilde}json\n${toJson(design.obj)/*.indent("  ")*/}\n$tripleTilde",
-                            ui = ui
-                        ),
-                    )
-                )
-            },
-            ui = ui,
-            reviseResponse = { userMessages: List<Pair<String, Role>> ->
-                taskBreakdownActor.respond(
-                    messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
-                        .toTypedArray<ApiModel.ChatMessage>()),
-                    input = toInput(userMessage),
-                    api = api
-                )
-            },
-        ).call()
-
-        initPlan(highLevelPlan, userMessage, task)
-    }
-
-    private fun initPlan(
-        plan: ParsedResponse<TaskBreakdownResult>,
-        userMessage: String,
-        task: SessionTask
-    ) {
-        try {
-            val tasksByID =
-                plan.obj.tasksByID?.entries?.toTypedArray()?.associate { it.key to it.value } ?: mapOf()
-            val pool: ThreadPoolExecutor = clientManager.getPool(session, user)
-            val genState = GenState(tasksByID.toMutableMap())
-            val diagramTask = ui.newTask(false).apply { task.add(placeholder) }
-            val diagramBuffer =
-                diagramTask.add(
-                    renderMarkdown(
-                        "## Task Dependency Graph\n${tripleTilde}mermaid\n${buildMermaidGraph(genState.subTasks)}\n$tripleTilde",
-                        ui = ui
-                    )
-                )
-            val taskTabs = object : TabbedDisplay(ui.newTask(false).apply { task.add(placeholder) }) {
-                override fun renderTabButtons(): String {
-                    diagramBuffer?.set(
-                        renderMarkdown(
-                            "## Task Dependency Graph\n${tripleTilde}mermaid\n${
-                                buildMermaidGraph(
-                                    genState.subTasks
-                                )
-                            }\n$tripleTilde", ui = ui
-                        )
-                    )
-                    diagramTask.complete()
-                    return buildString {
-                        append("<div class='tabs'>\n")
-                        super.tabs.withIndex().forEach { (idx, t) ->
-                            val (taskId, taskV) = t
-                            val subTask = genState.tasksByDescription[taskId]
-                            if (null == subTask) {
-                                log.warn("Task tab not found: $taskId")
-                            }
-                            val isChecked = if (taskId in genState.taskIdProcessingQueue) "checked" else ""
-                            val style = when (subTask?.state) {
-                                TaskState.Completed -> " style='text-decoration: line-through;'"
-                                null -> " style='opacity: 20%;'"
-                                TaskState.Pending -> " style='opacity: 30%;'"
-                                else -> ""
-                            }
-                            append("<label class='tab-button' data-for-tab='${idx}'$style><input type='checkbox' $isChecked disabled /> $taskId</label><br/>\n")
-                        }
-                        append("</div>")
-                    }
-                }
-            }
-            genState.taskIdProcessingQueue.forEach { taskId ->
-                val newTask = ui.newTask(false)
-                genState.uitaskMap[taskId] = newTask
-                val subtask = genState.subTasks[taskId]
-                val description = subtask?.description
-                log.debug("Creating task tab: $taskId ${System.identityHashCode(subtask)} $description")
-                taskTabs[description ?: taskId] = newTask.placeholder
-            }
-            Thread.sleep(100)
-            while (genState.taskIdProcessingQueue.isNotEmpty()) {
-                val taskId = genState.taskIdProcessingQueue.removeAt(0)
-                val subTask = genState.subTasks[taskId] ?: throw RuntimeException("Task not found: $taskId")
-                genState.taskFutures[taskId] = pool.submit {
-                    subTask.state = TaskState.Pending
-                    taskTabs.update()
-                    log.debug("Awaiting dependencies: ${subTask.task_dependencies?.joinToString(", ") ?: ""}")
-                    subTask.task_dependencies
-                        ?.associate { it to genState.taskFutures[it] }
-                        ?.forEach { (id, future) ->
-                            try {
-                                future?.get() ?: log.warn("Dependency not found: $id")
-                            } catch (e: Throwable) {
-                                log.warn("Error", e)
-                            }
-                        }
-                    subTask.state = TaskState.InProgress
-                    taskTabs.update()
-                    log.debug("Running task: ${System.identityHashCode(subTask)} ${subTask.description}")
-                    runTask(
-                        taskId = taskId,
-                        subTask = subTask,
-                        userMessage = userMessage,
-                        plan = plan,
-                        genState = genState,
-                        task = genState.uitaskMap.get(taskId) ?: ui.newTask(false).apply {
-                            taskTabs[taskId] = placeholder
-                        },
-                        taskTabs = taskTabs
-                    )
-                }
-            }
-            genState.taskFutures.forEach { (id, future) ->
-                try {
-                    future.get() ?: log.warn("Dependency not found: $id")
-                } catch (e: Throwable) {
-                    log.warn("Error", e)
-                }
-            }
-        } catch (e: Throwable) {
-            log.warn("Error during incremental code generation process", e)
-            task.error(ui, e)
-        }
-    }
-
-    data class GenState(
-        val subTasks: Map<String, Task>,
-        val tasksByDescription: MutableMap<String?, Task> = subTasks.entries.toTypedArray()
-            .associate { it.value.description to it.value }.toMutableMap(),
-        val taskIdProcessingQueue: MutableList<String> = executionOrder(subTasks).toMutableList(),
-        val taskResult: MutableMap<String, String> = mutableMapOf(),
-        val completedTasks: MutableList<String> = mutableListOf(),
-        val taskFutures: MutableMap<String, Future<*>> = mutableMapOf(),
-        val uitaskMap: MutableMap<String, SessionTask> = mutableMapOf(),
-    )
-
-    private fun runTask(
-        taskId: String,
-        subTask: Task,
-        userMessage: String,
-        plan: ParsedResponse<TaskBreakdownResult>,
-        genState: GenState,
-        task: SessionTask,
-        taskTabs: TabbedDisplay,
-    ) {
-        try {
-            val dependencies = subTask.task_dependencies?.toMutableSet() ?: mutableSetOf()
-            dependencies += getAllDependencies(subTask, genState.subTasks)
-            val priorCode = dependencies
-                .joinToString("\n\n\n") { dependency ->
-                    """
-          |# $dependency
-          |
-          |${genState.taskResult[dependency] ?: ""}
-          """.trimMargin()
-                }
-            val codeFiles = codeFiles
-            fun inputFileCode() = ((subTask.input_files ?: listOf()) + (subTask.output_files ?: listOf()))
-                .filter { isLLMIncludable(root.toFile().resolve(it)) }.joinToString("\n\n") {
-                try {
-                    """
-                    |# $it
-                    |
-                    |$tripleTilde
-                    |${codeFiles[File(it).toPath()] ?: root.resolve(it).toFile().readText()}
-                    |$tripleTilde
-                    """.trimMargin()
-                } catch (e: Throwable) {
-                    log.warn("Error: root=$root    ", e)
-                    ""
-                }
-            }
-            task.add(
-                renderMarkdown(
-                    """
-          |## Task `${taskId}`
-          |${subTask.description ?: ""}
-          |
-          |${tripleTilde}json
-          |${toJson(subTask)/*.indent("  ")*/}
-          |$tripleTilde
-          |
-          |### Dependencies:
-          |${dependencies.joinToString("\n") { "- $it" }}
-          |
-          """.trimMargin(), ui = ui
-                )
-            )
-
-            when (subTask.taskType) {
-                TaskType.CommandAutoFix -> {
-                    val semaphore = Semaphore(0)
-                    runCommandAutoFix(
-                        task = task,
-                        userMessage = userMessage,
-                        highLevelPlan = plan,
-                        priorCode = priorCode,
-                        inputFileCode = ::inputFileCode,
-                        genState = genState,
-                        taskId = taskId,
-                        taskTabs = taskTabs,
-                        subTask = subTask
-                    ) {
-                        semaphore.release()
-                    }
-                    try {
-                        semaphore.acquire()
-                    } catch (e: Throwable) {
-                        log.warn("Error", e)
-                    }
-                    log.debug("Completed command auto fix: $taskId")
-                }
-
-                TaskType.NewFile -> {
-                    val semaphore = Semaphore(0)
-                    createFiles(
-                        task = task,
-                        userMessage = userMessage,
-                        highLevelPlan = plan,
-                        priorCode = priorCode,
-                        inputFileCode = ::inputFileCode,
-                        subTask = subTask,
-                        genState = genState,
-                        taskId = taskId,
-                        taskTabs = taskTabs,
-                    ) { semaphore.release() }
-                    try {
-                        semaphore.acquire()
-                    } catch (e: Throwable) {
-                        log.warn("Error", e)
-                    }
-
-                }
-
-                TaskType.EditFile -> {
-                    val semaphore = Semaphore(0)
-                    editFiles(
-                        task = task,
-                        userMessage = userMessage,
-                        highLevelPlan = plan,
-                        priorCode = priorCode,
-                        inputFileCode = ::inputFileCode,
-                        subTask = subTask,
-                        genState = genState,
-                        taskId = taskId,
-                        taskTabs = taskTabs,
-                    ) { semaphore.release() }
-                    try {
-                        semaphore.acquire()
-                    } catch (e: Throwable) {
-                        log.warn("Error", e)
-                    }
-                }
-
-                TaskType.Documentation -> {
-                    val semaphore = Semaphore(0)
-                    document(
-                        task = task,
-                        userMessage = userMessage,
-                        highLevelPlan = plan,
-                        priorCode = priorCode,
-                        inputFileCode = ::inputFileCode,
-                        genState = genState,
-                        taskId = taskId,
-                        taskTabs = taskTabs,
-                    ) {
-                        semaphore.release()
-                    }
-                    try {
-                        semaphore.acquire()
-                    } catch (e: Throwable) {
-                        log.warn("Error", e)
-                    }
-                }
-
-                TaskType.Inquiry -> {
-                    inquiry(
-                        subTask = subTask,
-                        userMessage = userMessage,
-                        highLevelPlan = plan,
-                        priorCode = priorCode,
-                        inputFileCode = ::inputFileCode,
-                        genState = genState,
-                        taskId = taskId,
-                        task = task,
-                        taskTabs = taskTabs,
-                    )
-                }
-
-                TaskType.TaskPlanning -> {
-                    if (!taskPlanningEnabled) throw RuntimeException("Task planning is disabled")
-                    taskPlanning(
-                        subTask = subTask,
-                        userMessage = userMessage,
-                        highLevelPlan = plan,
-                        priorCode = priorCode,
-                        inputFileCode = ::inputFileCode,
-                        genState = genState,
-                        taskId = taskId,
-                        task = task,
-                        taskTabs = taskTabs,
-                    )
-                }
-
-                TaskType.RunShellCommand -> {
-                    if (shellCommandTaskEnabled) {
-                        val semaphore = Semaphore(0)
-                        runShellCommand(
-                            task = task,
-                            userMessage = userMessage,
-                            highLevelPlan = plan,
-                            priorCode = priorCode,
-                            inputFileCode = ::inputFileCode,
-                            genState = genState,
-                            taskId = taskId,
-                            taskTabs = taskTabs,
-                        ) {
-                            semaphore.release()
-                        }
-                        try {
-                            semaphore.acquire()
-                        } catch (e: Throwable) {
-                            log.warn("Error", e)
-                        }
-                        log.debug("Completed shell command: $taskId")
-                    }
-                }
-
-                else -> null
-            }
-        } catch (e: Exception) {
-            log.warn("Error during task execution", e)
-            task.error(ui, e)
-        } finally {
-            genState.completedTasks.add(taskId)
-            subTask.state = TaskState.Completed
-            log.debug("Completed task: $taskId ${System.identityHashCode(subTask)}")
-            taskTabs.update()
-        }
-    }
-
-    private fun runCommandAutoFix(
-        task: SessionTask,
-        userMessage: String,
-        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
-        priorCode: String,
-        inputFileCode: () -> String,
-        genState: GenState,
-        taskId: String,
-        taskTabs: TabbedDisplay,
-        subTask: Task,
-        onComplete: () -> Unit
-    ) {
-        if (!commandAutoFixEnabled) {
-            task.add("Command Auto Fix is disabled")
-            onComplete()
-            return
-        }
-        val process = { sb: StringBuilder ->
-            val commandSettings = PatchApp.Settings(
-                executable = settings?.commandAutoFixCommand?.let { File(it) } ?: throw RuntimeException("Command not set"),
-                arguments = subTask.commandArguments?.drop(1)?.joinToString(" ") ?: "",
-                workingDirectory = root.toFile(),
-                exitCodeOption = "nonzero",
-                additionalInstructions = "",
-                autoFix = autoFix
-            )
-            CmdPatchApp(root, session, commandSettings, api as OpenAIClient, virtualFiles)
-                .run(ui, task, commandSettings, api)
-            genState.taskResult[taskId] = "Command Auto Fix completed"
-            if (autoFix) {
-                taskTabs.selectedTab += 1
-                taskTabs.update()
-                onComplete()
-                renderMarkdown("## Auto-applied Command Auto Fix\n", ui = ui)
-            } else {
-                renderMarkdown("## Command Auto Fix Result\n", ui = ui) + acceptButtonFooter(sb) {
-                    taskTabs.selectedTab += 1
-                    taskTabs.update()
-                    onComplete()
-                }
-            }
-        }
-        Retryable(ui, task, process)
-    }
-
-    private fun runShellCommand(
-        task: SessionTask,
-        userMessage: String,
-        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
-        priorCode: String,
-        inputFileCode: () -> String,
-        genState: GenState,
-        taskId: String,
-        taskTabs: TabbedDisplay,
-        function: () -> Unit
-    ) {
-        object : CodingAgent<ProcessInterpreter>(
-            api = api,
-            dataStorage = dataStorage,
-            session = session,
-            user = user,
-            ui = ui,
-            interpreter = shellCommandActor.interpreterClass as KClass<ProcessInterpreter>,
-            symbols = shellCommandActor.symbols,
-            temperature = shellCommandActor.temperature,
-            details = shellCommandActor.details,
-            model = shellCommandActor.model,
-            mainTask = task,
-        ) {
-            override fun displayFeedback(
-                task: SessionTask,
-                request: CodingActor.CodeRequest,
-                response: CodingActor.CodeResult
-            ) {
-                val formText = StringBuilder()
-                var formHandle: StringBuilder? = null
-                formHandle = task.add(
-                    """
-          |<div style="display: flex;flex-direction: column;">
-          |${if (!super.canPlay) "" else super.playButton(task, request, response, formText) { formHandle!! }}
-          |${acceptButton(task, request, response, formText) { formHandle!! }}
-          |</div>
-          |${super.reviseMsg(task, request, response, formText) { formHandle!! }}
-          """.trimMargin(), className = "reply-message"
-                )
-                formText.append(formHandle.toString())
-                formHandle.toString()
-                task.complete()
-            }
-
-            fun acceptButton(
-                task: SessionTask,
-                request: CodingActor.CodeRequest,
-                response: CodingActor.CodeResult,
-                formText: StringBuilder,
-                formHandle: () -> StringBuilder
-            ): String {
-                return ui.hrefLink("Accept", "href-link play-button") {
-                    genState.taskResult[taskId] = response.let {
-                        """
-                  |## Shell Command Output
-                  |
-                  |$tripleTilde
-                  |${response.code}
-                  |$tripleTilde
-                  |
-                  |$tripleTilde
-                  |${response.renderedResponse}
-                  |$tripleTilde
-                  """.trimMargin()
-                    }
-                    function()
-                }
-            }
-        }.apply {
-            start(
-                codeRequest(
-                    listOf(
-                        userMessage to Role.user,
-                        highLevelPlan.text to Role.assistant,
-                        priorCode to Role.assistant,
-                        inputFileCode() to Role.assistant,
-                    )
-                )
-            )
-        }
-    }
-
-    private fun createFiles(
-        task: SessionTask,
-        userMessage: String,
-        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
-        priorCode: String,
-        inputFileCode: () -> String,
-        subTask: Task,
-        genState: GenState,
-        taskId: String,
-        taskTabs: TabbedDisplay,
-        onComplete: () -> Unit
-    ) {
-
-        val process = { sb: StringBuilder ->
-            val codeResult = newFileCreatorActor.answer(
-                listOf(
-                    userMessage,
-                    highLevelPlan.text,
-                    priorCode,
-                    inputFileCode(),
-                    subTask.description ?: "",
-                ).filter { it.isNotBlank() }, api
-            )
-            genState.taskResult[taskId] = codeResult
-            if (autoFix) {
-                val diffLinks = ui.socketManager!!.addApplyFileDiffLinks(
-                    root,
-                    codeResult,
-                    api = api,
-                    ui = ui,
-                    shouldAutoApply = { true })
-                taskTabs.selectedTab += 1
-                taskTabs.update()
-                onComplete()
-                renderMarkdown(diffLinks + "\n\n## Auto-applied changes", ui = ui)
-            } else {
-                renderMarkdown(
-                    ui.socketManager!!.addApplyFileDiffLinks(root, codeResult, api = api, ui = ui),
-                    ui = ui
-                ) + acceptButtonFooter(sb) {
-                    taskTabs.selectedTab += 1
-                    taskTabs.update()
-                    onComplete()
-                }
-            }
-        }
-        Retryable(ui, task, process)
-    }
-
-    private fun editFiles(
-        task: SessionTask,
-        userMessage: String,
-        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
-        priorCode: String,
-        inputFileCode: () -> String,
-        subTask: Task,
-        genState: GenState,
-        taskId: String,
-        taskTabs: TabbedDisplay,
-        onComplete: () -> Unit,
-    ) {
-        val process = { sb: StringBuilder ->
-            val codeResult = filePatcherActor.answer(
-                listOf(
-                    userMessage,
-                    highLevelPlan.text,
-                    priorCode,
-                    inputFileCode(),
-                    subTask.description ?: "",
-                ).filter { it.isNotBlank() }, api
-            )
-            genState.taskResult[taskId] = codeResult
-            if (autoFix) {
-                val diffLinks = ui.socketManager!!.addApplyFileDiffLinks(
-                    root = root,
-                    response = codeResult,
-                    handle = { newCodeMap ->
-                        newCodeMap.forEach { (path, newCode) ->
-                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                        }
-                    },
-                    ui = ui,
-                    api = api,
-                    shouldAutoApply = { true }
-                )
-                taskTabs.selectedTab += 1
-                taskTabs.update()
-                task.complete()
-                onComplete()
-                renderMarkdown(diffLinks + "\n\n## Auto-applied changes", ui = ui)
-            } else {
-                renderMarkdown(
-                    ui.socketManager!!.addApplyFileDiffLinks(
-                        root = root,
-                        response = codeResult,
-                        handle = { newCodeMap ->
-                            newCodeMap.forEach { (path, newCode) ->
-                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                            }
-                        },
-                        ui = ui,
-                        api = api
-                    ) + acceptButtonFooter(sb) {
-                        taskTabs.selectedTab += 1
-                        taskTabs.update()
-                        task.complete()
-                        onComplete()
-                    }, ui = ui
-                )
-            }
-        }
-        Retryable(ui, task, process)
-    }
-
-    private fun document(
-        task: SessionTask,
-        userMessage: String,
-        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
-        priorCode: String,
-        inputFileCode: () -> String,
-        genState: GenState,
-        taskId: String,
-        taskTabs: TabbedDisplay,
-        onComplete: () -> Unit
-    ) {
-        val process = { sb: StringBuilder ->
-            val docResult = documentationGeneratorActor.answer(
-                listOf(
-                    userMessage,
-                    highLevelPlan.text,
-                    priorCode,
-                    inputFileCode(),
-                ).filter { it.isNotBlank() }, api
-            )
-            genState.taskResult[taskId] = docResult
-            if (autoFix) {
-                taskTabs.selectedTab += 1
-                taskTabs.update()
-                task.complete()
-                onComplete()
-                renderMarkdown("## Generated Documentation\n$docResult\nAuto-accepted", ui = ui)
-            } else {
-                renderMarkdown("## Generated Documentation\n$docResult", ui = ui) + acceptButtonFooter(sb) {
-                    taskTabs.selectedTab += 1
-                    taskTabs.update()
-                    task.complete()
-                    onComplete()
-                }
-            }
-        }
-        Retryable(ui, task, process)
-    }
-
-    private fun acceptButtonFooter(stringBuilder: StringBuilder, fn: () -> Unit): String {
-        val footerTask = ui.newTask(false)
-        lateinit var textHandle: StringBuilder
-        textHandle = footerTask.complete(ui.hrefLink("Accept", classname = "href-link cmd-button") {
-            try {
-                textHandle.set("""<div class="cmd-button">Accepted</div>""")
-                footerTask.complete()
-            } catch (e: Throwable) {
-                log.warn("Error", e)
-            }
-            fn()
-        })!!
-        return footerTask.placeholder
-    }
-
-    private fun inquiry(
-        subTask: Task,
-        userMessage: String,
-        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
-        priorCode: String,
-        inputFileCode: () -> String,
-        genState: GenState,
-        taskId: String,
-        task: SessionTask,
-        taskTabs: TabbedDisplay
-    ) {
-        val input1 = "Expand ${subTask.description ?: ""}"
-        val toInput = { it: String ->
-            listOf(
-                userMessage,
-                highLevelPlan.text,
-                priorCode,
-                inputFileCode(),
-                it,
-            ).filter { it.isNotBlank() }
-        }
-        val inquiryResult = Discussable(
-            task = task,
-            userMessage = { "Expand ${subTask.description ?: ""}\n${toJson(subTask)}" },
-            heading = "",
-            initialResponse = { it: String -> inquiryActor.answer(toInput(it), api = api) },
-            outputFn = { design: String ->
-                renderMarkdown(design, ui = ui)
-            },
-            ui = ui,
-            reviseResponse = { userMessages: List<Pair<String, Role>> ->
-                inquiryActor.respond(
-                    messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
-                        .toTypedArray<ApiModel.ChatMessage>()),
-                    input = toInput("Expand ${subTask.description ?: ""}\n${toJson(subTask)}"),
-                    api = api
-                )
-            },
-            atomicRef = AtomicReference(),
-            semaphore = Semaphore(0),
-        ).call()
-        genState.taskResult[taskId] = inquiryResult
-    }
-
-    private fun taskPlanning(
-        subTask: Task,
-        userMessage: String,
-        highLevelPlan: ParsedResponse<TaskBreakdownResult>,
-        priorCode: String,
-        inputFileCode: () -> String,
-        genState: GenState,
-        taskId: String,
-        task: SessionTask,
-        taskTabs: TabbedDisplay
-    ) {
-        val toInput = { it: String ->
-            listOf(
-                userMessage,
-                highLevelPlan.text,
-                priorCode,
-                inputFileCode(),
-                it
-            ).filter { it.isNotBlank() }
-        }
-        val input1 = "Expand ${subTask.description ?: ""}\n${toJson(subTask)}"
-        val subPlan: ParsedResponse<TaskBreakdownResult> = Discussable(
-            task = task,
-            userMessage = { input1 },
-            heading = "",
-            initialResponse = { it: String -> taskBreakdownActor.answer(toInput(it), api = api) },
-            outputFn = { design: ParsedResponse<TaskBreakdownResult> ->
-                displayMapInTabs(
-                    mapOf(
-                        "Text" to renderMarkdown(design.text, ui = ui),
-                        "JSON" to renderMarkdown(
-                            "${tripleTilde}json\n${toJson(design.obj)/*.indent("  ")*/}\n$tripleTilde",
-                            ui = ui
-                        ),
-                    )
-                )
-            },
-            ui = ui,
-            reviseResponse = { userMessages: List<Pair<String, Role>> ->
-                taskBreakdownActor.respond(
-                    messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
-                        .toTypedArray<ApiModel.ChatMessage>()),
-                    input = toInput(input1),
-                    api = api
-                )
-            },
-        ).call()
-        initPlan(
-            plan = subPlan,
-            userMessage = userMessage,
-            task = task,
-        )
-    }
-
-    private fun getAllDependencies(subTask: Task, subTasks: Map<String, Task>): List<String> {
-        return getAllDependenciesHelper(subTask, subTasks, mutableSetOf())
-    }
-
-    private fun getAllDependenciesHelper(
-        subTask: Task,
-        subTasks: Map<String, Task>,
-        visited: MutableSet<String>
-    ): List<String> {
-        val dependencies = subTask.task_dependencies?.toMutableList() ?: mutableListOf()
-        subTask.task_dependencies?.forEach { dep ->
-            if (dep in visited) return@forEach
-            val subTask = subTasks[dep]
-            if (subTask != null) {
-                visited.add(dep)
-                dependencies.addAll(getAllDependenciesHelper(subTask, subTasks, visited))
-            }
-        }
-        return dependencies
-    }
-
-    private fun buildMermaidGraph(subTasks: Map<String, Task>): String {
-        val graphBuilder = StringBuilder("graph TD;\n")
-        subTasks.forEach { (taskId, task) ->
-            val sanitizedTaskId = sanitizeForMermaid(taskId)
-            val taskType = task.taskType?.name ?: "Unknown"
-            val escapedDescription = escapeMermaidCharacters(task.description ?: "")
-            graphBuilder.append("    ${sanitizedTaskId}[$escapedDescription]:::$taskType;\n")
-            task.task_dependencies?.forEach { dependency ->
-                val sanitizedDependency = sanitizeForMermaid(dependency)
-                graphBuilder.append("    ${sanitizedDependency} --> ${sanitizedTaskId};\n")
-            }
-        }
-        graphBuilder.append("    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;\n")
-        graphBuilder.append("    classDef NewFile fill:lightblue,stroke:#333,stroke-width:2px;\n")
-        graphBuilder.append("    classDef EditFile fill:lightgreen,stroke:#333,stroke-width:2px;\n")
-        graphBuilder.append("    classDef Documentation fill:lightyellow,stroke:#333,stroke-width:2px;\n")
-        graphBuilder.append("    classDef Inquiry fill:orange,stroke:#333,stroke-width:2px;\n")
-        graphBuilder.append("    classDef TaskPlanning fill:lightgrey,stroke:#333,stroke-width:2px;\n")
-        return graphBuilder.toString()
-    }
-
-    private fun sanitizeForMermaid(input: String) = input
-        .replace(" ", "_")
-        .replace("\"", "\\\"")
-        .replace("[", "\\[")
-        .replace("]", "\\]")
-        .replace("(", "\\(")
-        .replace(")", "\\)")
-        .let { "`$it`" }
-
-    private fun escapeMermaidCharacters(input: String) = input
-        .replace("\"", "\\\"")
-        .let { '"' + it + '"' }
-
-    companion object {
-        private val log = LoggerFactory.getLogger(PlanAheadAgent::class.java)
-
-        enum class ActorTypes {
-            TaskBreakdown,
-            DocumentationGenerator,
-            NewFileCreator,
-            FilePatcher,
-            Inquiry,
-            RunShellCommand,
-            CommandAutoFix,
-        }
-
-        fun executionOrder(tasks: Map<String, Task>): List<String> {
-            val taskIds: MutableList<String> = mutableListOf()
-            val taskMap = tasks.toMutableMap()
-            while (taskMap.isNotEmpty()) {
-                val nextTasks =
-                    taskMap.filter { (_, task) -> task.task_dependencies?.all { taskIds.contains(it) } ?: true }
-                if (nextTasks.isEmpty()) {
-                    throw RuntimeException("Circular dependency detected in task breakdown")
-                }
-                taskIds.addAll(nextTasks.keys)
-                nextTasks.keys.forEach { taskMap.remove(it) }
-            }
-            return taskIds
-        }
-
-        val isWindows = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("windows")
-
-    }
-}
-
-private fun documentActor(
-    model: ChatModels,
-    temperature: Double
-) = SimpleActor(
-    name = "DocumentationGenerator",
-    prompt = """
-        Create detailed and clear documentation for the provided code, covering its purpose, functionality, inputs, outputs, and any assumptions or limitations.
-        Use a structured and consistent format that facilitates easy understanding and navigation. 
-        Include code examples where applicable, and explain the rationale behind key design decisions and algorithm choices.
-        Document any known issues or areas for improvement, providing guidance for future developers on how to extend or maintain the code.
-      """.trimIndent(),
-    model = model,
-    temperature = temperature,
-)
-
-private fun planningActor(
-    taskPlanningEnabled: Boolean,
-    shellCommandTaskEnabled: Boolean,
-    model: ChatModels,
-    parsingModel: ChatModels,
-    temperature: Double
-): ParsedActor<PlanAheadAgent.TaskBreakdownResult> =
-    ParsedActor(
-        name = "TaskBreakdown",
-        resultClass = PlanAheadAgent.TaskBreakdownResult::class.java,
-        prompt = """
- Given a user request, identify and list smaller, actionable tasks that can be directly implemented in code.
- Detail files input and output as well as task execution dependencies.
- Creating directories and initializing source control are out of scope.
-        |
-        |Tasks can be of the following types: 
-        |
-        |* Inquiry - Answer questions by reading in files and providing a summary that can be discussed with and approved by the user
-        |  ** Specify the questions and the goal of the inquiry
-        |  ** List input files to be examined when answering the questions
-        |* NewFile - Create one or more new files, carefully considering how they fit into the existing project structure
-        |  ** For each file, specify the relative file path and the purpose of the file
-        |  ** List input files/tasks to be examined when authoring the new files
-        |* EditFile - Modify existing files
-        |  ** For each file, specify the relative file path and the goal of the modification
-        |  ** List input files/tasks to be examined when designing the modifications
-        |* Documentation - Generate documentation
-        |  ** List input files/tasks to be examined
-        |${
-            if (!shellCommandTaskEnabled) "" else """
- * RunShellCommand - Execute shell commands and provide the output
-   ** Specify the command to be executed, or describe the task to be performed
-   ** List input files/tasks to be examined when writing the command
-        """.trimMargin().trim()
-        }
-        |${
-            if (!taskPlanningEnabled) "" else """
- * TaskPlanning - High-level planning and organization of tasks - identify smaller, actionable tasks based on the information available at task execution time.
-   ** Specify the prior tasks and the goal of the task
-        """.trimMargin().trim()
-        }
- * CommandAutoFix - Run a command and automatically fix any issues that arise
-   ** Specify the command to be executed and any additional instructions
-   ** Provide the command arguments in the 'commandArguments' field
-   ** List input files/tasks to be examined when fixing issues
-      """.trimMargin(),
-        model = model,
-        parsingModel = parsingModel,
-        temperature = temperature,
-    )
-
-private fun createFileActor(
-    model: ChatModels,
-    temperature: Double
-) = SimpleActor(
-    name = "NewFileCreator",
-    prompt = """
-        |Generate the necessary code for new files based on the given requirements and context.
-        |For each file:
-        |- Provide a clear relative file path based on the content and purpose of the file.
-        |- Ensure the code is well-structured, follows best practices, and meets the specified functionality.
-        |- Carefully consider how the new file fits into the existing project structure and architecture.
-        |- Avoid creating files that duplicate functionality or introduce inconsistencies.
-        |  
-        |The response format should be as follows:
-        |- Use triple backticks to create code blocks for each file.
-        |- Each code block should be preceded by a header specifying the file path.
-        |- The file path should be a relative path from the project root.
-        |- Separate code blocks with a single blank line.
-        |- Specify the language for syntax highlighting after the opening triple backticks.
-        |
-        |Example:
-        |
-        |Here are the new files:
-        |
-        |### src/utils/exampleUtils.js
-        |${tripleTilde}js
-        |// Utility functions for example feature
-        |const b = 2;
-        |function exampleFunction() {
-        |  return b + 1;
-        |}
-        |
-        |$tripleTilde
-        |
-        |### tests/exampleUtils.test.js 
-        |${tripleTilde}js
-        |// Unit tests for exampleUtils
-        |const assert = require('assert');
-        |const { exampleFunction } = require('../src/utils/exampleUtils');
-        |
-        |describe('exampleFunction', () => {
-        |  it('should return 3', () => {
-        |    assert.equal(exampleFunction(), 3);
-        |  });
-        |});
-        |$tripleTilde
-      """.trimMargin(),
-    model = model,
-    temperature = temperature,
-)
-
-private fun patchActor(
-    model: ChatModels,
-    temperature: Double
-) = SimpleActor(
-    name = "FilePatcher",
-    prompt = """
-        |Generate a patch for an existing file to modify its functionality or fix issues based on the given requirements and context. 
-        |Ensure the modifications are efficient, maintain readability, and adhere to coding standards.
-        |Carefully review the existing code and project structure to ensure the changes are consistent and do not introduce bugs.
-        |Consider the impact of the modifications on other parts of the codebase.
-        |
-        |Provide a summary of the changes made.
-        |  
-        |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
-        |Each diff should be preceded by a header that identifies the file being modified.
-        |The diff format should use + for line additions, - for line deletions.
-        |The diff should include 2 lines of context before and after every change.
-        |
-        |Example:
-        |
-        |Here are the patches:
-        |
-        |### src/utils/exampleUtils.js
-        |${tripleTilde}diff
-        | // Utility functions for example feature
-        | const b = 2;
-        | function exampleFunction() {
-        |-   return b + 1;
-        |+   return b + 2;
-        | }
-        |$tripleTilde
-        |
-        |### tests/exampleUtils.test.js
-        |${tripleTilde}diff
-        | // Unit tests for exampleUtils
-        | const assert = require('assert');
-        | const { exampleFunction } = require('../src/utils/exampleUtils');
-        | 
-        | describe('exampleFunction', () => {
-        |-   it('should return 3', () => {
-        |+   it('should return 4', () => {
-        |     assert.equal(exampleFunction(), 3);
-        |   });
-        | });
-        |$tripleTilde
-      """.trimMargin(),
-    model = model,
-    temperature = temperature,
-)
-
-private fun inquiryActor(
-    taskPlanningEnabled: Boolean,
-    shellCommandTaskEnabled: Boolean,
-    model: ChatModels,
-    temperature: Double
-) = SimpleActor(
-    name = "Inquiry",
-    prompt = """
-        Create code for a new file that fulfills the specified requirements and context.
-        Given a detailed user request, break it down into smaller, actionable tasks suitable for software development.
-        Compile comprehensive information and insights on the specified topic.
-        Provide a comprehensive overview, including key concepts, relevant technologies, best practices, and any potential challenges or considerations. 
-        Ensure the information is accurate, up-to-date, and well-organized to facilitate easy understanding.
-
-        When generating insights, consider the existing project context and focus on information that is directly relevant and applicable.
-        Focus on generating insights and information that support the task types available in the system (Requirements, NewFile, EditFile, ${
-        if (!taskPlanningEnabled) "" else "TaskPlanning, "
-    }${
-        if (!shellCommandTaskEnabled) "" else "RunShellCommand, "
-    }Documentation).
-        This will ensure that the inquiries are tailored to assist in the planning and execution of tasks within the system's framework.
-     """.trimIndent(),
-    model = model,
-    temperature = temperature,
-)
-
-private fun shellActor(
-    env: Map<String, String>,
-    workingDir: String,
-    language: String,
-    command: List<String>,
-    model: ChatModels,
-    temperature: Double
-) = CodingActor(
-    name = "RunShellCommand",
-    interpreterClass = ProcessInterpreter::class,
-    details = """
-        Execute the following shell command(s) and provide the output. Ensure to handle any errors or exceptions gracefully.
-    
-        Note: This task is for running simple and safe commands. Avoid executing commands that can cause harm to the system or compromise security.
-      """.trimIndent(),
-    symbols = mapOf(
-        "env" to env,
-        "workingDir" to File(workingDir).absolutePath,
-        "language" to language,
-        "command" to command,
-    ),
-    model = model,
-    temperature = temperature,
-)
