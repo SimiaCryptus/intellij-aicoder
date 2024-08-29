@@ -2,9 +2,6 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.simiacryptus.skyenet.apps.plan.PlanCoordinator
-import com.simiacryptus.skyenet.apps.plan.PlanCoordinator.Companion.isWindows
-import com.simiacryptus.skyenet.apps.plan.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
@@ -17,21 +14,17 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.table.JBTable
-import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.ChatModels
-import com.simiacryptus.skyenet.core.platform.ClientManager
-import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.apps.general.PlanAheadApp
+import com.simiacryptus.skyenet.apps.plan.PlanCoordinator
+import com.simiacryptus.skyenet.apps.plan.Settings
 import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import com.simiacryptus.skyenet.webui.application.ApplicationInterface
-import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.Desktop
 import java.awt.Dimension
 import java.awt.GridLayout
-import java.io.File
 import javax.swing.*
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
@@ -267,7 +260,26 @@ class PlanAheadAction : BaseAction() {
             )
 
             DataStorage.sessionPaths[session] = root
-            SessionProxyServer.chats[session] = PlanAheadApp(event = e, root = root, settings = settings)
+            SessionProxyServer.chats[session] = PlanAheadApp(
+                rootFile = root,
+                settings = Settings(
+                    model = settings.model.chatModel(), // Use the model from settings
+                    temperature = settings.temperature, // Use the temperature from settings
+                    taskPlanningEnabled = settings.enableTaskPlanning, // Use the task planning flag from settings
+                    shellCommandTaskEnabled = settings.enableShellCommands, // Use the shell command flag from settings
+                    autoFix = settings.autoFix, // Use the autoFix flag from settings
+                    enableCommandAutoFix = settings.enableCommandAutoFix, // Use the enableCommandAutoFix flag from settings
+                    commandAutoFixCommands = settings.commandAutoFixCommands, // Use the commandAutoFixCommands from settings
+                    env = mapOf(),
+                    workingDir = root.absolutePath,
+                    language = if (PlanCoordinator.isWindows) "powershell" else "bash",
+                    command = listOf(if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"),
+                    parsingModel = AppSettingsState.instance.defaultFastModel(),
+                ),
+                model = AppSettingsState.instance.defaultSmartModel(),
+                parsingModel = AppSettingsState.instance.defaultFastModel(),
+                showMenubar = false
+            )
             val server = AppServer.getServer(project)
 
             openBrowser(server, session.toString())
@@ -287,68 +299,8 @@ class PlanAheadAction : BaseAction() {
         }.start()
     }
 
-    class PlanAheadApp(
-        applicationName: String = "Task Planning v1.1",
-        path: String = "/taskDev",
-        val event: AnActionEvent,
-        override val root: File,
-        val settings: PlanAheadSettings,
-    ) : ApplicationServer(
-        applicationName = applicationName,
-        path = path,
-        showMenubar = false,
-    ) {
-        override val settingsClass: Class<*> get() = Settings::class.java
-
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : Any> initSettings(session: Session): T = Settings(
-            model = ChatModels.values().filter { settings.model == it.key || settings.model == it.value.name }
-                .map { it.value }.first(), // Use the model from settings
-            temperature = settings.temperature, // Use the temperature from settings
-            taskPlanningEnabled = settings.enableTaskPlanning, // Use the task planning flag from settings
-            shellCommandTaskEnabled = settings.enableShellCommands, // Use the shell command flag from settings
-            autoFix = settings.autoFix, // Use the autoFix flag from settings
-            enableCommandAutoFix = settings.enableCommandAutoFix, // Use the enableCommandAutoFix flag from settings
-            commandAutoFixCommands = settings.commandAutoFixCommands, // Use the commandAutoFixCommands from settings
-            env = mapOf(),
-            workingDir = root.absolutePath,
-            language = if (isWindows) "powershell" else "bash",
-            command = listOf(AppSettingsState.instance.shellCommand),
-            parsingModel = AppSettingsState.instance.fastModel.chatModel(),
-        ) as T
-
-        override fun userMessage(
-            session: Session,
-            user: User?,
-            userMessage: String,
-            ui: ApplicationInterface,
-            api: API
-        ) {
-            try {
-                val settings = getSettings<Settings>(session, user)
-                if (api is ClientManager.MonitoredClient) api.budget = settings?.budget ?: 2.0
-                PlanCoordinator(
-                    user = user,
-                    session = session,
-                    dataStorage = dataStorage,
-                    api = api,
-                    ui = ui,
-                    root = root.toPath(),
-                    settings = settings!!
-                ).startProcess(userMessage = userMessage)
-            } catch (e: Throwable) {
-                ui.newTask().error(ui, e)
-                log.warn("Error", e)
-            }
-        }
-
-        companion object {
-            private val log = LoggerFactory.getLogger(PlanAheadApp::class.java)
-        }
-    }
 
     companion object {
         private val log = LoggerFactory.getLogger(PlanAheadAction::class.java)
-
     }
 }
