@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.skyenet.apps.general.PlanAheadApp
@@ -38,7 +39,17 @@ class PlanAheadAction : BaseAction() {
         var model: String = AppSettingsState.instance.smartModel,
         var temperature: Double = AppSettingsState.instance.temperature,
         var enableTaskPlanning: Boolean = false,
-        var enableShellCommands: Boolean = true,
+        var enableShellCommands: Boolean = false,
+        var enableDocumentation: Boolean = false,
+        var enableFileModification: Boolean = true,
+        var enableInquiry: Boolean = true,
+        var enableCodeReview: Boolean = false,
+        var enableTestGeneration: Boolean = false,
+        var enableOptimization: Boolean = false,
+        var enableSecurityAudit: Boolean = false,
+        var enablePerformanceAnalysis: Boolean = false,
+        var enableRefactorTask: Boolean = false,
+        var enableForeachTask: Boolean = false,
         var autoFix: Boolean = false,
         var enableCommandAutoFix: Boolean = false,
         var commandAutoFixCommands: List<String> = listOf()
@@ -48,6 +59,7 @@ class PlanAheadAction : BaseAction() {
         project: Project?,
         private val settings: PlanAheadSettings
     ) : DialogWrapper(project) {
+        private val foreachTaskCheckbox = JCheckBox("Enable Foreach Task", settings.enableForeachTask)
         private val items = ChatModels.values().toList().toTypedArray()
         private val modelComboBox: ComboBox<String> = ComboBox(items.map { it.first }.toTypedArray())
 
@@ -56,6 +68,16 @@ class PlanAheadAction : BaseAction() {
 
         private val taskPlanningCheckbox = JCheckBox("Enable Task Planning", settings.enableTaskPlanning)
         private val shellCommandsCheckbox = JCheckBox("Enable Shell Commands", settings.enableShellCommands)
+        private val documentationCheckbox = JCheckBox("Enable Documentation", settings.enableDocumentation)
+        private val fileModificationCheckbox = JCheckBox("Enable File Modification", settings.enableFileModification)
+        private val inquiryCheckbox = JCheckBox("Enable Inquiry", settings.enableInquiry)
+        private val codeReviewCheckbox = JCheckBox("Enable Code Review", settings.enableCodeReview)
+        private val testGenerationCheckbox = JCheckBox("Enable Test Generation", settings.enableTestGeneration)
+        private val optimizationCheckbox = JCheckBox("Enable Optimization", settings.enableOptimization)
+        private val securityAuditCheckbox = JCheckBox("Enable Security Audit", settings.enableSecurityAudit)
+        private val performanceAnalysisCheckbox =
+            JCheckBox("Enable Performance Analysis", settings.enablePerformanceAnalysis)
+        private val refactorTaskCheckbox = JCheckBox("Enable Refactor Task", settings.enableRefactorTask)
         private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
         private val checkboxStates = AppSettingsState.instance.executables.map { true }.toMutableList()
         private val tableModel = object : DefaultTableModel(arrayOf("Enabled", "Command"), 0) {
@@ -201,9 +223,19 @@ class PlanAheadAction : BaseAction() {
             panel.add(temperatureSlider)
             panel.add(taskPlanningCheckbox)
             panel.add(shellCommandsCheckbox)
+            panel.add(documentationCheckbox)
+            panel.add(fileModificationCheckbox)
+            panel.add(inquiryCheckbox)
+            panel.add(codeReviewCheckbox)
+            panel.add(testGenerationCheckbox)
+            panel.add(optimizationCheckbox)
+            panel.add(securityAuditCheckbox)
+            panel.add(performanceAnalysisCheckbox)
+            panel.add(refactorTaskCheckbox)
+            panel.add(foreachTaskCheckbox)
             panel.add(autoFixCheckbox)
             panel.add(JLabel("Auto-Fix Commands:"))
-            val scrollPane = JScrollPane(commandTable)
+            val scrollPane = JBScrollPane(commandTable)
             scrollPane.preferredSize = Dimension(350, 100)
             val tablePanel = JPanel(BorderLayout())
             tablePanel.add(scrollPane, BorderLayout.CENTER)
@@ -230,6 +262,16 @@ class PlanAheadAction : BaseAction() {
             settings.model = modelComboBox.selectedItem as String
             settings.enableTaskPlanning = taskPlanningCheckbox.isSelected
             settings.enableShellCommands = shellCommandsCheckbox.isSelected
+            settings.enableDocumentation = documentationCheckbox.isSelected
+            settings.enableFileModification = fileModificationCheckbox.isSelected
+            settings.enableInquiry = inquiryCheckbox.isSelected
+            settings.enableCodeReview = codeReviewCheckbox.isSelected
+            settings.enableTestGeneration = testGenerationCheckbox.isSelected
+            settings.enableOptimization = optimizationCheckbox.isSelected
+            settings.enableSecurityAudit = securityAuditCheckbox.isSelected
+            settings.enablePerformanceAnalysis = performanceAnalysisCheckbox.isSelected
+            settings.enableRefactorTask = refactorTaskCheckbox.isSelected
+            settings.enableForeachTask = foreachTaskCheckbox.isSelected
             settings.autoFix = autoFixCheckbox.isSelected
             settings.commandAutoFixCommands = (0 until tableModel.rowCount)
                 .filter { tableModel.getValueAt(it, 0) as Boolean }
@@ -263,6 +305,16 @@ class PlanAheadAction : BaseAction() {
             SessionProxyServer.chats[session] = PlanAheadApp(
                 rootFile = root,
                 settings = Settings(
+                    documentationEnabled = settings.enableDocumentation,
+                    fileModificationEnabled = settings.enableFileModification,
+                    inquiryEnabled = settings.enableInquiry,
+                    codeReviewEnabled = settings.enableCodeReview,
+                    testGenerationEnabled = settings.enableTestGeneration,
+                    optimizationEnabled = settings.enableOptimization,
+                    securityAuditEnabled = settings.enableSecurityAudit,
+                    performanceAnalysisEnabled = settings.enablePerformanceAnalysis,
+                    refactorTaskEnabled = settings.enableRefactorTask,
+                    foreachTaskEnabled = settings.enableForeachTask,
                     model = settings.model.chatModel(), // Use the model from settings
                     temperature = settings.temperature, // Use the temperature from settings
                     taskPlanningEnabled = settings.enableTaskPlanning, // Use the task planning flag from settings

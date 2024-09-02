@@ -25,7 +25,7 @@ version = properties("pluginVersion")
 val kotlin_version = "2.0.0-Beta5" // This line can be removed if not used elsewhere
 val jetty_version = "11.0.18"
 val slf4j_version = "2.0.9"
-val skyenet_version = "1.0.89"
+val skyenet_version = "1.0.90"
 val remoterobot_version = "0.11.21"
 val jackson_version = "2.17.0"
 
