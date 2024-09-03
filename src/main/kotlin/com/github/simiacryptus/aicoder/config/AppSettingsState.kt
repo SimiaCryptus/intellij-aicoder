@@ -162,9 +162,6 @@ data class AppSettingsState(
             } ?: ImageModels.DallE3
         }
 
-        private fun getDefaultShell(): String {
-            val os = System.getProperty("os.name").toLowerCase(Locale.ROOT)
-            return if (os.contains("win")) "powershell" else "bash"
-        }
+        fun getDefaultShell() = if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
     }
 }

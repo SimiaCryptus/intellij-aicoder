@@ -1,6 +1,5 @@
 package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.imageModel
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.simiacryptus.jopenai.models.APIProvider
 import java.awt.BorderLayout
@@ -59,6 +58,10 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                     add(JPanel(BorderLayout()).apply {
                         add(JLabel("API Configurations:"), BorderLayout.NORTH)
                         add(component.apis, BorderLayout.CENTER)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Executables:"))
+                        add(component.executablesPanel)
                     })
                 })
             }
@@ -136,6 +139,8 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
     override fun write(settings: AppSettingsState, component: AppSettingsComponent) {
         try {
+            // Update the executables in the settings
+            settings.executables = component.getExecutables().toMutableSet()
             component.humanLanguage.text = settings.humanLanguage
             component.listeningPort.text = settings.listeningPort.toString()
             component.listeningEndpoint.text = settings.listeningEndpoint
@@ -158,6 +163,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             }
             component.showWelcomeScreen.isSelected = settings.showWelcomeScreen
             component.enableLegacyActions.isSelected = settings.enableLegacyActions
+            component.setExecutables(settings.executables)
         } catch (e: Exception) {
             log.warn("Error setting UI", e)
         }
@@ -165,11 +171,14 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
     override fun read(component: AppSettingsComponent, settings: AppSettingsState) {
         try {
+            //      settings.modelName = component.modelName.selectedItem as String
+            // Update the UI with the executables from the settings
+            settings.executables = component.getExecutables().toMutableSet()
             settings.humanLanguage = component.humanLanguage.text
             settings.listeningPort = component.listeningPort.text.safeInt()
             settings.listeningEndpoint = component.listeningEndpoint.text
             settings.suppressErrors = component.suppressErrors.isSelected
-//      settings.modelName = component.modelName.selectedItem as String
+            //      settings.modelName = component.modelName.selectedItem as String
             settings.fastModel = component.fastModel.selectedItem as String
             settings.smartModel = component.smartModel.selectedItem as String
             settings.apiLog = component.apiLog.isSelected
@@ -179,12 +188,14 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             settings.mainImageModel = (component.mainImageModel.selectedItem as String)
             settings.pluginHome = File(component.pluginHome.text)
             settings.shellCommand = component.shellCommand.text
+            //      settings.modelName = component.modelName.selectedItem as String
             settings.enableLegacyActions = component.enableLegacyActions.isSelected
-            val model = component.apis.model as DefaultTableModel
-            for (row in 0 until model.rowCount) {
-                val provider = model.getValueAt(row, 0) as String
-                val key = model.getValueAt(row, 1) as String
-                val base = model.getValueAt(row, 2) as String
+
+            val tableModel = component.apis.model as DefaultTableModel
+            for (row in 0 until tableModel.rowCount) {
+                val provider = tableModel.getValueAt(row, 0) as String
+                val key = tableModel.getValueAt(row, 1) as String
+                val base = tableModel.getValueAt(row, 2) as String
                 if (key.isNotBlank()) {
 //          settings.apiKey?.put(provider, key)
                     settings.apiKey = settings.apiKey?.toMutableMap()?.apply { put(provider, key) }

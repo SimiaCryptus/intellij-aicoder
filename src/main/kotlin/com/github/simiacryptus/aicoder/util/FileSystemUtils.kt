@@ -117,20 +117,5 @@ object FileSystemUtils {
         }
     }
 
-    fun expandFileList(data: Array<VirtualFile>): Array<VirtualFile> {
-        return data.flatMap {
-            (when {
-                it.name.startsWith(".") -> arrayOf()
-                isGitignore(it) -> arrayOf()
-                it.length > 1e6 -> arrayOf()
-                it.extension?.lowercase(Locale.getDefault()) in
-                        setOf("jar", "zip", "class", "png", "jpg", "jpeg", "gif", "ico") -> arrayOf()
-
-                it.isDirectory -> expandFileList(it.children)
-                else -> arrayOf(it)
-            }).toList()
-        }.toTypedArray()
-    }
-
     fun isGitignore(file: VirtualFile) = isGitignore(file.toNioPath())
 }

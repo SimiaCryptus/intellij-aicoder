@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.actions
 
 import com.github.simiacryptus.aicoder.util.UITools
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.ui.Messages
@@ -12,6 +13,7 @@ class ApplyPatchAction : BaseAction(
     name = "Apply Patch",
     description = "Applies a patch to the current file"
 ) {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(event: AnActionEvent) {
         val project = event.project ?: return

@@ -2,6 +2,8 @@
 
 package com.github.simiacryptus.aicoder.util
 
+import com.github.simiacryptus.aicoder.util.TextBlock.Companion.DELIMITER
+import com.github.simiacryptus.aicoder.util.TextBlock.Companion.TAB_REPLACEMENT
 import com.simiacryptus.jopenai.util.StringUtil
 import java.util.*
 import java.util.stream.Collectors
@@ -48,7 +50,7 @@ class BlockComment(
         return blockPrefix.toString() + delimiter + joined + delimiter + blockSuffix
     }
 
-    override fun withIndent(indent: CharSequence?): BlockComment {
+    override fun withIndent(indent: CharSequence): IndentedText {
         return BlockComment(blockPrefix, linePrefix, blockSuffix, indent!!, *lines)
     }
 }
