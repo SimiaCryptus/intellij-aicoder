@@ -2,7 +2,7 @@ package com.github.simiacryptus.aicoder.config
 
 
 import com.github.simiacryptus.aicoder.ui.SettingsWidgetFactory.SettingsWidget.Companion.isVisible
-import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -151,7 +151,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     @Suppress("unused")
     val clearApiLog = JButton(object : AbstractAction("Clear API Log") {
         override fun actionPerformed(e: ActionEvent) {
-            val openAIClient = IdeaOpenAIClient.instance
+            val openAIClient = IdeaChatClient.instance
             openAIClient.logStreams.retainAll { it.close(); false }
             AppSettingsState.auxiliaryLog?.let {
                 if (it.exists()) {

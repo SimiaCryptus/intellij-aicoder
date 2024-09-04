@@ -1,6 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.simiacryptus.skyenet.core.platform.UsageInterface
@@ -22,7 +22,7 @@ class UsageTable(
     val columnNames = arrayOf("Model", "Prompt", "Completion", "Cost")
 
     val rowData by lazy {
-        usage.getUserUsageSummary(IdeaOpenAIClient.localUser).map { entry ->
+        usage.getUserUsageSummary(IdeaChatClient.localUser).map { entry ->
             listOf(
                 entry.key.modelName,
                 entry.value.prompt_tokens.toString(),

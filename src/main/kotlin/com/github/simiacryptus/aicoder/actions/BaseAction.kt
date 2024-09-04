@@ -1,9 +1,11 @@
 ﻿package com.github.simiacryptus.aicoder.actions
 
+import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.OpenAIClient
 import org.slf4j.LoggerFactory
 import javax.swing.Icon
@@ -17,8 +19,9 @@ abstract class BaseAction(
     private val log by lazy { LoggerFactory.getLogger(javaClass) }
     //override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-    val api: OpenAIClient
-        get() = IdeaOpenAIClient.instance
+    val api: ChatClient
+        get() = IdeaChatClient.instance
+    val api2 = IdeaOpenAIClient.instance
 
     final override fun update(event: AnActionEvent) {
         event.presentation.isEnabledAndVisible = isEnabled(event)
@@ -34,7 +37,7 @@ abstract class BaseAction(
             |Action: ${javaClass.simpleName}
         """.trimMargin().trim()
         )
-        IdeaOpenAIClient.lastEvent = e
+        IdeaChatClient.lastEvent = e
         try {
             handle(e)
         } catch (e: Throwable) {

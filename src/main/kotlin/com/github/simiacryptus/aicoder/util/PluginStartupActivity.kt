@@ -10,8 +10,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.ApplicationServicesConfig.isLocked
-import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import com.simiacryptus.skyenet.core.platform.file.UsageManager
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.full.declaredMembers
@@ -89,7 +87,7 @@ class PluginStartupActivity : ProjectActivity {
         OutputInterceptor.setupInterceptor()
         ApplicationServices.clientManager = object : ClientManager() {
             override fun createClient(session: Session, user: User?) =
-                IdeaOpenAIClient.instance
+                IdeaChatClient.instance
         }
         ApplicationServices.usageManager = HSQLUsageManager(ApplicationServicesConfig.dataStorageRoot.resolve("usage"))
         ApplicationServices.authorizationManager = object : AuthorizationInterface {

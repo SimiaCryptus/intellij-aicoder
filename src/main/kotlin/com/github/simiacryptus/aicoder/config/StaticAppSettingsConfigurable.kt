@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.config
 
-import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.simiacryptus.jopenai.models.APIProvider
 import java.awt.BorderLayout
 import java.awt.FlowLayout
@@ -20,11 +20,11 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             if (AppSettingsState.auxiliaryLog?.absolutePath?.lowercase() != file.absolutePath.lowercase()) {
                 file.deleteOnExit()
                 AppSettingsState.auxiliaryLog = file
-                IdeaOpenAIClient.instance.logStreams.add(FileOutputStream(file, true).buffered())
+                IdeaChatClient.instance.logStreams.add(FileOutputStream(file, true).buffered())
             }
         } else {
             AppSettingsState.auxiliaryLog = null
-            IdeaOpenAIClient.instance.logStreams.retainAll { it.close(); false }
+            IdeaChatClient.instance.logStreams.retainAll { it.close(); false }
         }
     }
 

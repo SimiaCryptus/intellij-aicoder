@@ -5,14 +5,13 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
-import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -218,7 +217,7 @@ class TestResultAutofixAction : BaseAction() {
                            2) predict related files that may be needed to debug the issue
                         """.trimIndent(),
                         model = AppSettingsState.instance.defaultSmartModel()
-                    ).answer(listOf(testInfo), api = IdeaOpenAIClient.instance)
+                    ).answer(listOf(testInfo), api = IdeaChatClient.instance)
 
                     task.add(AgentPatterns.displayMapInTabs(
                         mapOf(
@@ -282,7 +281,7 @@ $projectStructure
                 The diff should include 2 lines of context before and after every change.
                 """.trimIndent(),
                 model = AppSettingsState.instance.defaultSmartModel()
-            ).answer(listOf(error.message ?: ""), api = IdeaOpenAIClient.instance)
+            ).answer(listOf(error.message ?: ""), api = IdeaChatClient.instance)
 
             var markdown = ui.socketManager?.addApplyFileDiffLinks(
                 root = root.toPath(),

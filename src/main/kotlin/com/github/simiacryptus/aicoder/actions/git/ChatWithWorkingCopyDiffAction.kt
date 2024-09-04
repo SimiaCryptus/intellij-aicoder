@@ -5,7 +5,7 @@ import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
-import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -50,7 +50,7 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
             language = "diff",
             codeSelection = diffInfo,
             filename = "working_copy_changes.diff",
-            api = IdeaOpenAIClient.instance,
+            api = IdeaChatClient.instance,
             model = AppSettingsState.instance.smartModel.chatModel(),
             storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
         )

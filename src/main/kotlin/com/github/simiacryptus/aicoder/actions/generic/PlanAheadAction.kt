@@ -17,8 +17,8 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.skyenet.apps.general.PlanAheadApp
-import com.simiacryptus.skyenet.apps.plan.PlanCoordinator
-import com.simiacryptus.skyenet.apps.plan.Settings
+import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
+import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import org.slf4j.LoggerFactory
@@ -304,7 +304,7 @@ class PlanAheadAction : BaseAction() {
             DataStorage.sessionPaths[session] = root
             SessionProxyServer.chats[session] = PlanAheadApp(
                 rootFile = root,
-                settings = Settings(
+                planSettings = PlanSettings(
                     documentationEnabled = settings.enableDocumentation,
                     fileModificationEnabled = settings.enableFileModification,
                     inquiryEnabled = settings.enableInquiry,
@@ -324,7 +324,7 @@ class PlanAheadAction : BaseAction() {
                     commandAutoFixCommands = settings.commandAutoFixCommands, // Use the commandAutoFixCommands from settings
                     env = mapOf(),
                     workingDir = root.absolutePath,
-                    language = if (PlanCoordinator.isWindows) "powershell" else "bash",
+                    language = if (isWindows) "powershell" else "bash",
                     command = listOf(if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"),
                     parsingModel = AppSettingsState.instance.defaultFastModel(),
                 ),
