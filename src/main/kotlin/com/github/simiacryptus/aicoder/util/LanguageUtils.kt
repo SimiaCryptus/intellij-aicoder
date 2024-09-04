@@ -18,7 +18,7 @@ object LanguageUtils {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return null
         val virtualFile: VirtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
         val file = PsiManager.getInstance(e.project!!).findFile(virtualFile)?.virtualFile?.toFile ?: return null
-        val extension = if (file.extension != null) file.extension!!.lowercase(Locale.getDefault()) else ""
+        val extension = if (file.extension != null) file.extension.lowercase(Locale.getDefault()) else ""
         return ComputerLanguage.findByExtension(extension)
     }
 }

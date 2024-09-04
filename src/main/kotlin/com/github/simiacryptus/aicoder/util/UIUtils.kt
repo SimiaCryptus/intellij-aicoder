@@ -8,6 +8,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.actionSystem.AnActionEvent
+import java.util.*
 
 object UIUtils {
 
@@ -15,7 +16,7 @@ object UIUtils {
         if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
             Desktop.getDesktop().browse(uri)
         } else {
-            val os = System.getProperty("os.name").toLowerCase()
+            val os = System.getProperty("os.name").lowercase(Locale.getDefault())
             val command = when {
                 os.contains("win") -> "rundll32 url.dll,FileProtocolHandler $uri"
                 os.contains("mac") -> "open $uri"
@@ -41,7 +42,7 @@ object UIUtils {
         val frame = JFrame()
         frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
         frame.setSize(300, 100)
-        frame.setLocation(location)
+        frame.location = location
         frame.add(JLabel(message, SwingConstants.CENTER))
         frame.isVisible = true
         return frame

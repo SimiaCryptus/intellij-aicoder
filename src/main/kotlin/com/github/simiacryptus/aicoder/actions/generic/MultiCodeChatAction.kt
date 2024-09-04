@@ -62,7 +62,7 @@ class MultiCodeChatAction : BaseAction() {
         codeFiles.addAll(files)
 
         val session = StorageInterface.newGlobalID()
-        SessionProxyServer.chats[session] = PatchApp(root!!.toFile(), { codeSummary() }, codeFiles)
+        SessionProxyServer.chats[session] = PatchApp(root.toFile(), { codeSummary() }, codeFiles)
         val server = AppServer.getServer(event.project)
 
         Thread {

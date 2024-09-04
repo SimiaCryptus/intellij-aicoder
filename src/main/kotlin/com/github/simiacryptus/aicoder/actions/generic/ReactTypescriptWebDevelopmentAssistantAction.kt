@@ -435,8 +435,7 @@ Here are the patches:
                     task.header("Drafting $path")
                     codeFiles.add(File(path).toPath())
                     pool.submit {
-                        val extension = path!!.split(".").last().lowercase()
-                        when (extension) {
+                        when (val extension = path!!.split(".").last().lowercase()) {
 
                             "ts", "tsx", "js" -> draftResourceCode(
                                 task = task,

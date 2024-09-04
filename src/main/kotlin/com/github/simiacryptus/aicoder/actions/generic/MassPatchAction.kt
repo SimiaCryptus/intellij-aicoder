@@ -222,7 +222,7 @@ class MassPatchServer(
                 socketManager.pool.submit {
                     try {
                         val codeSummary = listOf(path)
-                            ?.filter { isLLMIncludable(it.toFile()) }
+                            .filter { isLLMIncludable(it.toFile()) }
                             ?.associateWith { it.toFile().readText(Charsets.UTF_8) }
                             ?.entries?.joinToString("\n\n") { (path, code) ->
                                 val extension = path.toString().split('.').lastOrNull()

@@ -76,7 +76,7 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         val response = api.chat(
             chatRequest,
             AppSettingsState.instance.smartModel.chatModel()
-        ).choices.first()?.message?.content?.trim() ?: ""
+        ).choices.first().message?.content?.trim() ?: ""
         var outputPath = basePath
         val header = response.lines().first()
         var body = response.lines().drop(1).joinToString("\n").trim()

@@ -80,10 +80,10 @@ class TestResultAutofixAction : BaseAction() {
                 .map { root.relativize(it) ?: it }.toSet()
             val str = codeFiles
                 .asSequence()
-                .filter { root?.resolve(it)?.toFile()?.exists() == true }
+                .filter { root.resolve(it)?.toFile()?.exists() == true }
                 .distinct().sorted()
                 .joinToString("\n") { path ->
-                    "* ${path} - ${root?.resolve(path)?.toFile()?.length() ?: "?"} bytes".trim()
+                    "* ${path} - ${root.resolve(path)?.toFile()?.length() ?: "?"} bytes".trim()
                 }
             return str
         }

@@ -262,7 +262,7 @@ class MultiStepPatchAction : BaseAction() {
                                         userMessage,
                                         filter.joinToString("\n\n") {
                                             "# ${it}\n```${
-                                                it.toString().split('.').last()?.let { /*escapeHtml4*/it/*.indent("  ")*/ }
+                                                it.toString().split('.').last().let { /*escapeHtml4*/it/*.indent("  ")*/ }
                                             }\n${ root.resolve(it).toFile().readText() }\n```"
                                         },
                                         architectureResponse.text,

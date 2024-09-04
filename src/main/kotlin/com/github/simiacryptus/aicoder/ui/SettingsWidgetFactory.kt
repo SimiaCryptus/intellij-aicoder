@@ -134,7 +134,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
             fun isVisible(it: ChatModels): Boolean {
                 val hasApiKey =
                     AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.provider.name)
-                if(false == hasApiKey) return false
+                return false != hasApiKey
 /*
                 if (it.provider == APIProvider.AWS) {
                     val modelName = it.modelName
@@ -151,7 +151,6 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
                     foundationModel.modelDetails().modelLifecycle().status() == FoundationModelLifecycleStatus.ACTIVE
                 }
 */
-                return true
             }
         }
     }

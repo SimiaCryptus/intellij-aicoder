@@ -75,7 +75,7 @@ class SimpleCommandAction : BaseAction() {
                 .filter { it.toFile().exists() }
                 .joinToString("\n\n") { path ->
                     """
-                        |# ${settings.workingDirectory?.toPath()?.relativize(path)}
+                        |# ${settings.workingDirectory.toPath()?.relativize(path)}
                         |$tripleTilde${path.toString().split('.').lastOrNull()}
                         |${path.toFile().readText(Charsets.UTF_8)}
                         |$tripleTilde
@@ -86,18 +86,18 @@ class SimpleCommandAction : BaseAction() {
                 val codeFiles = codeFiles()
                 return codeFiles
                     .asSequence()
-                    .filter { settings.workingDirectory?.toPath()?.resolve(it)?.toFile()?.exists() == true }
+                    .filter { settings.workingDirectory.toPath()?.resolve(it)?.toFile()?.exists() == true }
                     .distinct().sorted()
                     .joinToString("\n") { path ->
                         "* ${path} - ${
-                            settings.workingDirectory?.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
+                            settings.workingDirectory.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
                         } bytes".trim()
                     }
             }
 
             override fun searchFiles(searchStrings: List<String>): Set<Path> {
                 return searchStrings.flatMap { searchString ->
-                    filteredWalk(settings.workingDirectory!!) { !isGitignore(it.toPath()) }
+                    filteredWalk(settings.workingDirectory) { !isGitignore(it.toPath()) }
                         .filter { isLLMIncludable(it) }
                         .filter { it.readText().contains(searchString, ignoreCase = true) }
                         .map { it.toPath() }
@@ -170,7 +170,7 @@ class SimpleCommandAction : BaseAction() {
                         |
                         |You will be answering questions about the following project:
                         |
-                        |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
+                        |Project Root: ${settings.workingDirectory.absolutePath ?: ""}
                         |
                         |Files:
                         |$planTxt

@@ -73,10 +73,10 @@ class CreateImageAction : BaseAction() {
 //        val storage = ApplicationServices.dataStorageFactory(root?.toFile()!!) as DataStorage?
 //        val selectedFile = UITools.getSelectedFolder(event)
         if (/*null != storage &&*/ null != root) {
-            DataStorage.sessionPaths[session] = root?.toFile()!!
+            DataStorage.sessionPaths[session] = root.toFile()!!
         }
 
-        SessionProxyServer.chats[session] = PatchApp(event, root!!.toFile(), ::codeSummary)
+        SessionProxyServer.chats[session] = PatchApp(event, root.toFile(), ::codeSummary)
 
         val server = AppServer.getServer(event.project)
 
