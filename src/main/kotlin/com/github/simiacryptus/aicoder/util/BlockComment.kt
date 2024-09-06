@@ -51,6 +51,6 @@ class BlockComment(
     }
 
     override fun withIndent(indent: CharSequence): IndentedText {
-        return BlockComment(blockPrefix, linePrefix, blockSuffix, indent!!, *lines)
+        return BlockComment(blockPrefix, linePrefix, blockSuffix, indent, *lines)
     }
 }

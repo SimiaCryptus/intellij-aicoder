@@ -159,7 +159,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                 }.filterNotNull()
             if (config?.settings?.singleOutputFile == true) {
                 Files.write(outputPath, markdownContent.toString().toByteArray())
-                open(config?.project!!, outputPath)
+                open(config.project!!, outputPath)
                 return arrayOf(outputPath.toFile())
             } else {
                 open(config?.project!!, selectedFolder.resolve(outputDirectory))

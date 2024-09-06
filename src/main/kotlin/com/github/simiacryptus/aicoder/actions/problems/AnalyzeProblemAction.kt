@@ -9,7 +9,7 @@ import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Comp
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.ParsedError
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.ParsedErrors
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.analysis.problemsView.toolWindow.ProblemNode
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -139,7 +139,7 @@ class AnalyzeProblemAction : AnAction() {
             val task = ui.newTask()
             task.add("Analyzing problem and suggesting fixes...")
             Thread {
-                analyzeProblem(ui, task, api = IdeaOpenAIClient.instance)
+                analyzeProblem(ui, task, api = IdeaChatClient.instance)
             }.start()
             return socketManager
         }
@@ -157,7 +157,7 @@ class AnalyzeProblemAction : AnAction() {
                            2) predict related files that may be needed to debug the issue
                         """.trimIndent(),
                         model = AppSettingsState.instance.defaultSmartModel()
-                    ).answer(listOf(problemInfo), api = IdeaOpenAIClient.instance)
+                    ).answer(listOf(problemInfo), api = IdeaChatClient.instance)
 
                     task.add(
                         AgentPatterns.displayMapInTabs(
@@ -219,7 +219,7 @@ class AnalyzeProblemAction : AnAction() {
                 |The diff should include 2 lines of context before and after every change.
                 """.trimMargin(),
                 model = AppSettingsState.instance.defaultSmartModel()
-            ).answer(listOf(error.message ?: ""), api = IdeaOpenAIClient.instance)
+            ).answer(listOf(error.message ?: ""), api = IdeaChatClient.instance)
 
             var markdown = ui.socketManager?.addApplyFileDiffLinks(
                 root = root.toPath(),

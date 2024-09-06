@@ -85,7 +85,7 @@ class VoiceToTextAction : BaseAction() {
                     Thread.sleep(1)
                 } else {
                     log.warn("Speech-To-Text Starting...")
-                    var text = api.transcription(recordAudio, prompt)
+                    var text = api2.transcription(recordAudio, prompt)
                     if (prompt.isNotEmpty()) text = " $text"
                     val newPrompt = (prompt + text).split(" ").takeLast(32).joinToString(" ")
                     log.warn(

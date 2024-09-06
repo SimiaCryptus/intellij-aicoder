@@ -18,6 +18,7 @@ import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
+import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
@@ -152,7 +153,7 @@ class MassPatchAction : BaseAction() {
 
 class MassPatchServer(
     val config: Settings,
-    val api: OpenAIClient
+    val api: ChatClient
 ) : ApplicationServer(
     applicationName = "Multi-file Patch Chat",
     path = "/patchChat",
@@ -221,7 +222,7 @@ class MassPatchServer(
                 socketManager.pool.submit {
                     try {
                         val codeSummary = listOf(path)
-                            ?.filter { isLLMIncludable(it.toFile()) }
+                            .filter { isLLMIncludable(it.toFile()) }
                             ?.associateWith { it.toFile().readText(Charsets.UTF_8) }
                             ?.entries?.joinToString("\n\n") { (path, code) ->
                                 val extension = path.toString().split('.').lastOrNull()

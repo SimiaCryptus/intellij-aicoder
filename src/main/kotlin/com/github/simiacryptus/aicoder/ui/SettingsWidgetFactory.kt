@@ -10,19 +10,9 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
-import com.simiacryptus.jopenai.OpenAIClient.AWSAuth
-import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ChatModels
-import com.simiacryptus.jopenai.util.JsonUtil
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.bedrock.BedrockClient
-import software.amazon.awssdk.services.bedrock.model.FoundationModelLifecycleStatus
-import software.amazon.awssdk.services.bedrock.model.GetFoundationModelRequest
-import software.amazon.awssdk.services.bedrock.model.GetProvisionedModelThroughputRequest
-import software.amazon.awssdk.services.bedrock.model.ListFoundationModelsRequest
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Desktop
@@ -144,7 +134,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
             fun isVisible(it: ChatModels): Boolean {
                 val hasApiKey =
                     AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.provider.name)
-                if(false == hasApiKey) return false
+                return false != hasApiKey
 /*
                 if (it.provider == APIProvider.AWS) {
                     val modelName = it.modelName
@@ -161,7 +151,6 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
                     foundationModel.modelDetails().modelLifecycle().status() == FoundationModelLifecycleStatus.ACTIVE
                 }
 */
-                return true
             }
         }
     }

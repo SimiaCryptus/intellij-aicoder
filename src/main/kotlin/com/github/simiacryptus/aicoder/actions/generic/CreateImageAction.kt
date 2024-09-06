@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
+import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
@@ -73,10 +74,10 @@ class CreateImageAction : BaseAction() {
 //        val storage = ApplicationServices.dataStorageFactory(root?.toFile()!!) as DataStorage?
 //        val selectedFile = UITools.getSelectedFolder(event)
         if (/*null != storage &&*/ null != root) {
-            DataStorage.sessionPaths[session] = root?.toFile()!!
+            DataStorage.sessionPaths[session] = root.toFile()!!
         }
 
-        SessionProxyServer.chats[session] = PatchApp(event, root!!.toFile(), ::codeSummary)
+        SessionProxyServer.chats[session] = PatchApp(event, root.toFile(), ::codeSummary)
 
         val server = AppServer.getServer(event.project)
 
@@ -113,7 +114,7 @@ class CreateImageAction : BaseAction() {
             api: API
         ) {
             val settings = getSettings(session, user) ?: Settings()
-            if (api is ClientManager.MonitoredClient) api.budget = settings.budget ?: 2.00
+            if (api is ChatClient) api.budget = settings.budget ?: 2.00
             PatchAgent(
                 api = api,
                 dataStorage = dataStorage,

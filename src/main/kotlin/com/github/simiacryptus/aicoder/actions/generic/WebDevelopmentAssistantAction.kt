@@ -11,6 +11,7 @@ import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ApiModel
 import com.simiacryptus.jopenai.ApiModel.Role
+import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.ImageModels
@@ -93,7 +94,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             api: API
         ) {
             val settings = getSettings(session, user) ?: Settings()
-            if (api is ClientManager.MonitoredClient) api.budget = settings.budget ?: 2.00
+            if (api is ChatClient) api.budget = settings.budget ?: 2.00
             WebDevAgent(
                 api = api,
                 dataStorage = dataStorage,

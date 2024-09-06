@@ -5,7 +5,7 @@ import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
-import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
+import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.diff.DiffUtil
 import com.simiacryptus.diff.IterativePatchUtil
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
@@ -75,7 +74,7 @@ class ChatWithCommitAction : AnAction() {
             language = "diff",
             codeSelection = diffInfo,
             filename = "commit_changes.diff",
-            api = IdeaOpenAIClient.instance,
+            api = IdeaChatClient.instance,
             model = AppSettingsState.instance.smartModel.chatModel(),
             storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
         )

@@ -51,7 +51,7 @@ object FileSystemUtils {
         }
     }
 
-    fun expand(data: Array<VirtualFile>?): Array<VirtualFile>? {
+    fun expand(data: Array<VirtualFile>?): Array<VirtualFile> {
         val result = mutableListOf<VirtualFile>()
         data?.forEach { virtualFile ->
             expandVirtualFile(virtualFile, result)

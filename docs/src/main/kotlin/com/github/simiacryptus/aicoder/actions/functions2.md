@@ -727,9 +727,9 @@ While the PrintTreeAction class itself doesn't provide directly shareable functi
 - **Description:** Handles the execution of the action
 - **Functionality:** Processes the selected file/folder and performs the action
 - **Location and Accessibility:** Already final override from BaseAction, can be made protected
-- **Signature:** 
+- **Signature:**
   ```kotlin
-  final override fun handle(e: AnActionEvent)
+ override fun handle(e: AnActionEvent)
   ```
 - **Dependencies:** UITools, LocalFileSystem
 

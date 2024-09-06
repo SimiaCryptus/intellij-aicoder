@@ -72,7 +72,7 @@ class ReplicateCommitAction : BaseAction() {
                         .filter { it.toFile().exists() }
                         .joinToString("\n\n") { path ->
                             """
-                            |# ${settings.workingDirectory?.toPath()?.relativize(path)}
+                            |# ${settings.workingDirectory.toPath()?.relativize(path)}
                             |$tripleTilde${path.toString().split('.').lastOrNull()}
                             |${path.toFile().readText(Charsets.UTF_8)}
                             |$tripleTilde
@@ -83,11 +83,11 @@ class ReplicateCommitAction : BaseAction() {
                         val codeFiles = codeFiles()
                         val str = codeFiles
                             .asSequence()
-                            .filter { settings.workingDirectory?.toPath()?.resolve(it)?.toFile()?.exists() == true }
+                            .filter { settings.workingDirectory.toPath()?.resolve(it)?.toFile()?.exists() == true }
                             .distinct().sorted()
                             .joinToString("\n") { path ->
                                 "* ${path} - ${
-                                    settings.workingDirectory?.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
+                                    settings.workingDirectory.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
                                 } bytes".trim()
                             }
                         return str
@@ -195,7 +195,7 @@ class ReplicateCommitAction : BaseAction() {
                         
                         |You will be answering questions about the following project:
                         
-                        |Project Root: ${settings.workingDirectory?.absolutePath ?: ""}
+                        |Project Root: ${settings.workingDirectory.absolutePath ?: ""}
                         
                         |Files:
                         |$planTxt
