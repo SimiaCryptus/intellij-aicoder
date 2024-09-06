@@ -240,7 +240,7 @@ class PlanAheadConfigDialog(
         settings.commandAutoFixCommands = (0 until tableModel.rowCount)
             .filter { tableModel.getValueAt(it, 0) as Boolean }
             .map { tableModel.getValueAt(it, 1) as String }
-        settings.enableCommandAutoFix = settings.commandAutoFixCommands.isNotEmpty()
+        settings.enableCommandAutoFix = settings.commandAutoFixCommands?.isNotEmpty() ?: false
         // Update the global tool collection
         AppSettingsState.instance.executables.clear()
         AppSettingsState.instance.executables.addAll((0 until tableModel.rowCount).map {

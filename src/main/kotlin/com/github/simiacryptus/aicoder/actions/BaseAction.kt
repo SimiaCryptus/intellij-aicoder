@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.NlsSafe
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.OpenAIClient
 import org.slf4j.LoggerFactory

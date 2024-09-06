@@ -7,16 +7,22 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatMod
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
+import com.intellij.ui.components.JBTextField
+import com.simiacryptus.jopenai.util.JsonUtil
 import com.simiacryptus.skyenet.apps.general.PlanAheadApp
-import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
+import com.simiacryptus.skyenet.apps.plan.PlanUtil
+import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
-import com.intellij.openapi.ui.Messages
-import com.simiacryptus.jopenai.util.JsonUtil
-import com.simiacryptus.skyenet.apps.plan.PlanUtil
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 class PrePlanAction : BaseAction() {
     val path = "/prePlanTaskDev"
@@ -24,12 +30,15 @@ class PrePlanAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(e: AnActionEvent) {
-        val jsonInput = Messages.showInputDialog(
+        var jsonInput = Messages.showMultilineInputDialog(
             e.project,
             "Enter TaskBreakdownWithPrompt JSON:",
             "Pre-Plan Task",
-            Messages.getQuestionIcon()
+            "",
+            Messages.getQuestionIcon(),
+            null,
         ) ?: return
+        jsonInput = fillInTemplate(jsonInput)
 
         try {
             val taskBreakdownWithPrompt = JsonUtil.fromJson<PlanUtil.TaskBreakdownWithPrompt>(jsonInput, PlanUtil.TaskBreakdownWithPrompt::class.java)
@@ -40,24 +49,30 @@ class PrePlanAction : BaseAction() {
                 UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("No file selected")
             )
             DataStorage.sessionPaths[session] = root
-            
+
+            var planSettings = PlanSettings(
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                parsingModel = AppSettingsState.instance.defaultFastModel(),
+                command = listOf(
+                    if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
+                ),
+                temperature = AppSettingsState.instance.temperature,
+                workingDir = root.absolutePath,
+                env = mapOf(),
+                language = if (isWindows) "powershell" else "bash",
+            )
+            planSettings = PlanAheadConfigDialog(e.project, planSettings).let {
+                if (!it.showAndGet()) throw RuntimeException("User cancelled")
+                it.settings
+            }
             SessionProxyServer.chats[session] = PlanAheadApp(
                 rootFile = root,
-                planSettings = PlanSettings(
-                    model = AppSettingsState.instance.smartModel.chatModel(),
-                    parsingModel = AppSettingsState.instance.defaultFastModel(),
-                    command = listOf(
-                        if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
-                    ),
-                    temperature = AppSettingsState.instance.temperature,
-                    workingDir = root.absolutePath,
-                    env = mapOf(),
-                    language = if (isWindows) "powershell" else "bash",
-                ),
+                planSettings = planSettings,
                 model = AppSettingsState.instance.defaultSmartModel(),
                 parsingModel = AppSettingsState.instance.defaultFastModel(),
                 showMenubar = false,
-                initialPlan = taskBreakdownWithPrompt
+                initialPlan = taskBreakdownWithPrompt,
+                api = api,
             )
             
             val server = AppServer.getServer(e.project)
@@ -82,5 +97,50 @@ class PrePlanAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(PrePlanAction::class.java)
+
+        fun fillInTemplate(jsonInput: String): String {
+            val variables = Regex("\\{\\{(\\w+)}}").findAll(jsonInput).map { it.groupValues[1] }.toSet()
+            if (variables.isEmpty()) return jsonInput
+            val formValues = showFormDialog(variables)
+            return variables.fold(jsonInput) { acc, variable ->
+                acc.replace("{{$variable}}", formValues[variable] ?: "")
+            }
+        }
+
+        private fun showFormDialog(variables: Set<String>): Map<String, String> {
+            val dialog = object : DialogWrapper(true) {
+                val fields = variables.associateWith { JBTextField() }
+
+                init {
+                    init()
+                    title = "Fill in Template Variables"
+                }
+
+                override fun createCenterPanel(): JComponent {
+                    val panel = JPanel(GridBagLayout())
+                    val gbc = GridBagConstraints().apply {
+                        fill = GridBagConstraints.HORIZONTAL
+                        weightx = 1.0
+                    }
+                    variables.forEach { variable ->
+                        gbc.gridy++
+                        gbc.gridx = 0
+                        panel.add(com.intellij.ui.components.JBLabel(variable), gbc)
+                        gbc.gridx = 1
+                        panel.add(fields[variable], gbc)
+                    }
+                    return panel
+                }
+
+                fun getValues(): Map<String, String> {
+                    return fields.mapValues { (_, field) -> field.text }
+                }
+            }
+            return if (dialog.showAndGet()) {
+                dialog.getValues()
+            } else {
+                mapOf()
+            }
+        }
     }
 }

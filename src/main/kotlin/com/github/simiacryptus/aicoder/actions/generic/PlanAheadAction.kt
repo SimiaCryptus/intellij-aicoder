@@ -56,7 +56,8 @@ class PlanAheadAction : BaseAction() {
                 ),
                 model = AppSettingsState.instance.defaultSmartModel(),
                 parsingModel = AppSettingsState.instance.defaultFastModel(),
-                showMenubar = false
+                showMenubar = false,
+                api = api,
             )
             val server = AppServer.getServer(e.project)
 
