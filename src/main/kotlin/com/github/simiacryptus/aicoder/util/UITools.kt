@@ -979,5 +979,12 @@ object UITools {
         return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
     }
 
+    fun showErrorDialog(project: Project?, errorMessage: String, subMessage: String) {
+        val formBuilder = FormBuilder.createFormBuilder()
+        formBuilder.addLabeledComponent("Error", JLabel(errorMessage))
+        formBuilder.addLabeledComponent("Details", JLabel(subMessage))
+        showOptionDialog(formBuilder.panel, "Dismiss", title = "Error", modal = true)
+    }
+
 }
 
