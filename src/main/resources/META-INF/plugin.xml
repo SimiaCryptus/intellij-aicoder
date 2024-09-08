@@ -112,10 +112,10 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
-        <action id="com.github.simiacryptus.aicoder.actions.generic.PDFExtractorAction"
-                class="com.github.simiacryptus.aicoder.actions.generic.PDFExtractorAction"
-                text="Extract PDF"
-                description="Extract text and images from a PDF file">
+        <action id="com.github.simiacryptus.aicoder.actions.generic.DocumentDataExtractorAction"
+                class="com.github.simiacryptus.aicoder.actions.generic.DocumentDataExtractorAction"
+                text="Extract Document Data"
+                description="Extract text and images from a document">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction"

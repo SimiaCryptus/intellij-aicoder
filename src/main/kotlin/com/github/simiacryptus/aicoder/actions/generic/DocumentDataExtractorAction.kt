@@ -5,13 +5,13 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.simiacryptus.skyenet.apps.general.PDFExtractorApp
+import com.simiacryptus.skyenet.apps.general.DocumentParserApp
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 
-class PDFExtractorAction : BaseAction() {
+class DocumentDataExtractorAction : BaseAction() {
     val path = "/pdfExtractor"
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -19,13 +19,22 @@ class PDFExtractorAction : BaseAction() {
     override fun isEnabled(event: AnActionEvent): Boolean {
         if(!super.isEnabled(event)) return false
         val selectedFile = UITools.getSelectedFile(event)
-        return selectedFile != null && selectedFile.name.endsWith(".pdf", ignoreCase = true)
+        return selectedFile != null && (
+            selectedFile.name.endsWith(".pdf", ignoreCase = true) ||
+            selectedFile.name.endsWith(".txt", ignoreCase = true) ||
+            selectedFile.name.endsWith(".md", ignoreCase = true) ||
+            selectedFile.name.endsWith(".html", ignoreCase = true)
+        )
     }
 
     override fun handle(e: AnActionEvent) {
         val selectedFile = UITools.getSelectedFile(e)
-        if (selectedFile == null || !selectedFile.name.endsWith(".pdf", ignoreCase = true)) {
-            UITools.showErrorDialog(e.project, "Please select a PDF file.", "Invalid Selection")
+        if (selectedFile == null || (!selectedFile.name.endsWith(
+                ".pdf",
+                ignoreCase = true
+            ) && !selectedFile.name.endsWith(".txt", ignoreCase = true))
+        ) {
+            UITools.showErrorDialog(e.project, "Please select a PDF or text file.", "Invalid Selection")
             return
         }
 
@@ -33,14 +42,14 @@ class PDFExtractorAction : BaseAction() {
         val pdfFile = selectedFile.toFile
         DataStorage.sessionPaths[session] = pdfFile.parentFile
 
-        val pdfExtractorApp = PDFExtractorApp(
-            applicationName = "PDF Extractor",
+        val documentParserApp = DocumentParserApp(
+            applicationName = "Document Extractor",
             path = path,
+            api = api,
             fileInput = pdfFile.toPath(),
-            api = api
         )
 
-        SessionProxyServer.chats[session] = pdfExtractorApp
+        SessionProxyServer.chats[session] = documentParserApp
         val server = AppServer.getServer(e.project)
         Thread {
             Thread.sleep(500)
@@ -55,6 +64,6 @@ class PDFExtractorAction : BaseAction() {
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(PDFExtractorAction::class.java)
+        private val log = LoggerFactory.getLogger(DocumentDataExtractorAction::class.java)
     }
 }
