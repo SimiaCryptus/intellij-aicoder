@@ -36,7 +36,8 @@ class PDFExtractorAction : BaseAction() {
         val pdfExtractorApp = PDFExtractorApp(
             applicationName = "PDF Extractor",
             path = path,
-            fileInput = pdfFile.toPath()
+            fileInput = pdfFile.toPath(),
+            api = api
         )
 
         SessionProxyServer.chats[session] = pdfExtractorApp
