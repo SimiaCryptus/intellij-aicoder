@@ -12,35 +12,28 @@ This code defines a Kotlin class `MarkdownImplementActionGroup` which extends `A
 
 ## Specific Issues and Recommendations
 
-1. Unused Import
-   - Severity: 😊 Minor
-   - Type: 🧹 Cleanup
-   - Description: The import `com.simiacryptus.jopenai.exceptions.CustomException` is not used in the code.
-   - Recommendation: Remove the unused import to keep the code clean.
-   - File: MarkdownImplementActionGroup.kt, line 1-25 (import section)
-
-2. Hardcoded Language List
+1. Hardcoded Language List
    - Severity: 😐 Moderate
    - Type: 💡 Idea
    - Description: The list of supported languages is hardcoded in the `markdownLanguages` property.
    - Recommendation: Consider moving this list to a configuration file or a separate object to make it more maintainable and easily extensible.
    - File: MarkdownImplementActionGroup.kt, lines 27-31
 
-3. Commented Out Code
+2. Commented Out Code
    - Severity: 😊 Minor
    - Type: 🧹 Cleanup
    - Description: There is commented out code in the `processSelection` method.
    - Recommendation: Remove the commented out code (`/*escapeHtml4*/` and `/*.indent("  ")*/`) if it's no longer needed.
    - File: MarkdownImplementActionGroup.kt, line 93
 
-4. Error Handling
+3. Error Handling
    - Severity: 😐 Moderate
    - Type: 🐛 Bug
    - Description: There's no explicit error handling for the API call in the `processSelection` method.
    - Recommendation: Add try-catch blocks to handle potential exceptions from the API call and provide appropriate error messages to the user.
    - File: MarkdownImplementActionGroup.kt, line 89
 
-5. Magic Numbers
+4. Magic Numbers
    - Severity: 😊 Minor
    - Type: 🧹 Cleanup
    - Description: The `deserializerRetries` parameter in the `getProxy` method is set to a magic number (5).
