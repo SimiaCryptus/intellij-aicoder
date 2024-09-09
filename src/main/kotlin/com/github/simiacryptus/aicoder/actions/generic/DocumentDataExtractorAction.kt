@@ -10,9 +10,13 @@ import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
+import com.intellij.openapi.ui.DialogWrapper
+import com.simiacryptus.skyenet.core.platform.Session
+import java.io.File
 
 class DocumentDataExtractorAction : BaseAction() {
     val path = "/pdfExtractor"
+    private var settings = DocumentParserApp.Settings()
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -37,17 +41,24 @@ class DocumentDataExtractorAction : BaseAction() {
             UITools.showErrorDialog(e.project, "Please select a PDF or text file.", "Invalid Selection")
             return
         }
+        val configDialog = DocumentDataExtractorConfigDialog(e.project, settings)
+        if (!configDialog.showAndGet()) return
+        settings = configDialog.settings
+
 
         val session = StorageInterface.newGlobalID()
         val pdfFile = selectedFile.toFile
         DataStorage.sessionPaths[session] = pdfFile.parentFile
 
-        val documentParserApp = DocumentParserApp(
+        val documentParserApp = object : DocumentParserApp(
             applicationName = "Document Extractor",
             path = path,
             api = api,
             fileInput = pdfFile.toPath(),
-        )
+        ) {
+            override fun <T : Any> initSettings(session: Session): T = settings as T
+            override val root: File get() = selectedFile.parent.toFile
+        }
 
         SessionProxyServer.chats[session] = documentParserApp
         val server = AppServer.getServer(e.project)
