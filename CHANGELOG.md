@@ -158,7 +158,7 @@
 - Fixed bug preventing custom actions from being loaded
 - Fixed paste action when no text is selected
 
-## [1.2.1]
+## [1.2.2]
 
 ### Improved
 
@@ -495,7 +495,7 @@
 
 [1.2.2]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.1...v1.2.2
 
-[1.2.1]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.0...v1.2.1
+[1.2.2]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.0...v1.2.1
 
 [1.2.0]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.4...v1.2.0
 
