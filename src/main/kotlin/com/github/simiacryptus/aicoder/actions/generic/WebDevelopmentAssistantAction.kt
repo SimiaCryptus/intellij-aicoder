@@ -114,7 +114,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             val budget: Double? = 2.00,
             val tools: List<String> = emptyList(),
             val model: ChatModels = ChatModels.GPT4o,
-            val parsingModel: ChatModels = ChatModels.GPT35Turbo,
+            val parsingModel: ChatModels = ChatModels.GPT4oMini,
         )
 
         override val settingsClass: Class<*> get() = Settings::class.java
