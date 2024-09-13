@@ -6,7 +6,7 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 
  plugins {
     id("java") // Java support
-    id("org.jetbrains.kotlin.jvm") version "2.0.0-Beta5"
+    id("org.jetbrains.kotlin.jvm") version "2.0.20"
     id("org.jetbrains.intellij") version "1.17.2"
     id("org.jetbrains.changelog") version "2.2.0"
     id("org.jetbrains.qodana") version "2023.2.1"
@@ -22,12 +22,13 @@ version = properties("pluginVersion")
     maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
 
-val kotlin_version = "2.0.0-Beta5" // This line can be removed if not used elsewhere
-val jetty_version = "11.0.18"
-val slf4j_version = "2.0.9"
-val skyenet_version = "1.2.1"
+
+val kotlin_version = "2.0.20" // This line can be removed if not used elsewhere
+val jetty_version = "11.0.24"
+val slf4j_version = "2.0.16"
+val skyenet_version = "1.2.2"
 val remoterobot_version = "0.11.21"
-val jackson_version = "2.17.0"
+val jackson_version = "2.17.2"
 
 dependencies {
     implementation("software.amazon.awssdk:bedrock:2.25.7")
@@ -40,7 +41,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.1")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.2")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }

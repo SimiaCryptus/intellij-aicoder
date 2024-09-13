@@ -11,7 +11,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
+import com.simiacryptus.skyenet.apps.plan.TaskType
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.skyenet.apps.plan.TaskSettings
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridLayout
@@ -23,26 +25,21 @@ class PlanAheadConfigDialog(
     project: Project?,
     val settings: PlanSettings,
 ) : DialogWrapper(project) {
-    private val foreachTaskCheckbox = JCheckBox("Enable Foreach Task", settings.foreachTaskEnabled)
     private val modelComboBox: ComboBox<String> = ComboBox(
         ChatModels.values().toList().toTypedArray<Pair<String, ChatModels>>().map { it.first }.toTypedArray())
 
-    // Replace JTextField with JSlider for temperature
     private val temperatureSlider = JSlider(0, 100, (settings.temperature * 100).toInt())
 
-    private val taskPlanningCheckbox = JCheckBox("Enable Task Planning", settings.taskPlanningEnabled)
-    private val shellCommandsCheckbox = JCheckBox("Enable Shell Commands", settings.shellCommandTaskEnabled)
-    private val documentationCheckbox = JCheckBox("Enable Documentation", settings.documentationEnabled)
-    private val fileModificationCheckbox = JCheckBox("Enable File Modification", settings.fileModificationEnabled)
-    private val inquiryCheckbox = JCheckBox("Enable Inquiry", settings.inquiryEnabled)
-    private val codeReviewCheckbox = JCheckBox("Enable Code Review", settings.codeReviewEnabled)
-    private val testGenerationCheckbox = JCheckBox("Enable Test Generation", settings.testGenerationEnabled)
-    private val optimizationCheckbox = JCheckBox("Enable Optimization", settings.optimizationEnabled)
-    private val securityAuditCheckbox = JCheckBox("Enable Security Audit", settings.securityAuditEnabled)
-    private val performanceAnalysisCheckbox =
-        JCheckBox("Enable Performance Analysis", settings.performanceAnalysisEnabled)
-    private val refactorTaskCheckbox = JCheckBox("Enable Refactor Task", settings.refactorTaskEnabled)
     private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
+    private val taskTableModel = object : DefaultTableModel(arrayOf("Enabled", "Task Type"), 0) {
+        override fun getColumnClass(columnIndex: Int) = when (columnIndex) {
+            0 -> java.lang.Boolean::class.java
+            else -> super.getColumnClass(columnIndex)
+        }
+        override fun isCellEditable(row: Int, column: Int) = column == 0
+    }
+    private val taskTable = JBTable(taskTableModel).apply { putClientProperty("terminateEditOnFocusLost", true) }
+
     private val checkboxStates = AppSettingsState.instance.executables.map { true }.toMutableList()
     private val tableModel = object : DefaultTableModel(arrayOf("Enabled", "Command"), 0) {
 
@@ -171,6 +168,14 @@ class PlanAheadConfigDialog(
             editCommandButton.isEnabled = commandTable.selectedRow != -1
         }
         editCommandButton.isEnabled = false
+        // Initialize task table
+        TaskType.values().forEach { taskType ->
+            val taskSettings = settings.getTaskSettings(taskType)
+            taskTableModel.addRow(arrayOf(taskSettings.enabled, taskType.name))
+        }
+        taskTable.columnModel.getColumn(0).preferredWidth = 60
+        taskTable.columnModel.getColumn(0).maxWidth = 60
+        taskTable.columnModel.getColumn(1).preferredWidth = 200
     }
 
 
@@ -185,18 +190,13 @@ class PlanAheadConfigDialog(
         modelComboBox.selectedIndex = indexOfFirst
         panel.add(JLabel("Temperature:"))
         panel.add(temperatureSlider)
-        panel.add(taskPlanningCheckbox)
-        panel.add(shellCommandsCheckbox)
-        panel.add(documentationCheckbox)
-        panel.add(fileModificationCheckbox)
-        panel.add(inquiryCheckbox)
-        panel.add(codeReviewCheckbox)
-        panel.add(testGenerationCheckbox)
-        panel.add(optimizationCheckbox)
-        panel.add(securityAuditCheckbox)
-        panel.add(performanceAnalysisCheckbox)
-        panel.add(refactorTaskCheckbox)
-        panel.add(foreachTaskCheckbox)
+        panel.add(JLabel("Task Types:"))
+        val taskScrollPane = JBScrollPane(taskTable)
+        taskScrollPane.preferredSize = Dimension(350, 150)
+        val taskTablePanel = JPanel(BorderLayout())
+        taskTablePanel.add(taskScrollPane, BorderLayout.CENTER)
+        panel.add(taskTablePanel)
+        
         panel.add(autoFixCheckbox)
         panel.add(JLabel("Auto-Fix Commands:"))
         val scrollPane = JBScrollPane(commandTable)
@@ -224,18 +224,11 @@ class PlanAheadConfigDialog(
             return
         }
         settings.model = (modelComboBox.selectedItem as String).chatModel()
-        settings.taskPlanningEnabled = taskPlanningCheckbox.isSelected
-        settings.shellCommandTaskEnabled = shellCommandsCheckbox.isSelected
-        settings.documentationEnabled = documentationCheckbox.isSelected
-        settings.fileModificationEnabled = fileModificationCheckbox.isSelected
-        settings.inquiryEnabled = inquiryCheckbox.isSelected
-        settings.codeReviewEnabled = codeReviewCheckbox.isSelected
-        settings.testGenerationEnabled = testGenerationCheckbox.isSelected
-        settings.optimizationEnabled = optimizationCheckbox.isSelected
-        settings.securityAuditEnabled = securityAuditCheckbox.isSelected
-        settings.performanceAnalysisEnabled = performanceAnalysisCheckbox.isSelected
-        settings.refactorTaskEnabled = refactorTaskCheckbox.isSelected
-        settings.foreachTaskEnabled = foreachTaskCheckbox.isSelected
+        // Update task settings
+        for (i in 0 until taskTableModel.rowCount) {
+            settings.setTaskSettings(TaskType.valueOf(taskTableModel.getValueAt(i, 1) as String), TaskSettings(taskTableModel.getValueAt(i, 0) as Boolean))
+        }
+        
         settings.autoFix = autoFixCheckbox.isSelected
         settings.commandAutoFixCommands = (0 until tableModel.rowCount)
             .filter { tableModel.getValueAt(it, 0) as Boolean }

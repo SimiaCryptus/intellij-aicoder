@@ -88,6 +88,18 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.PlanChatAction"
+                text="Plan Chat"
+                description="Open a chat session with task planning features">
+
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.SaveAsQueryIndexAction"
+                text="Save as Query DB"
+                description="Save the selected data as a Parquet file">
+
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.PrePlanAction"
                 text="Pre-Plan"
                 description="Pre-Plan a task">
