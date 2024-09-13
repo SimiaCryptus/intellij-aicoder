@@ -22,6 +22,7 @@ version = properties("pluginVersion")
     maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
 
+
 val kotlin_version = "2.0.20" // This line can be removed if not used elsewhere
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
