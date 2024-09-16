@@ -135,22 +135,6 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
                 val hasApiKey =
                     AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.provider.name)
                 return false != hasApiKey
-/*
-                if (it.provider == APIProvider.AWS) {
-                    val modelName = it.modelName
-                    val awsAuth = JsonUtil.fromJson<AWSAuth>(AppSettingsState.instance.apiKey?.get(it.provider.name)!!, AWSAuth::class.java)
-                    val bedrockClient = BedrockClient.builder()
-                        .credentialsProvider(ProfileCredentialsProvider.builder().profileName(awsAuth.profile).build())
-                        .region(Region.of(awsAuth.region))
-                        .build()
-                    val listFoundationModels =
-                        bedrockClient.listFoundationModels(ListFoundationModelsRequest.builder().build())
-                    val foundationModel = bedrockClient.getFoundationModel(
-                        GetFoundationModelRequest.builder().modelIdentifier(modelName).build()
-                    )
-                    foundationModel.modelDetails().modelLifecycle().status() == FoundationModelLifecycleStatus.ACTIVE
-                }
-*/
             }
         }
     }

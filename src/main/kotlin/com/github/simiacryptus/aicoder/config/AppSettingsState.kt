@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.ImageModels
+import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.jopenai.util.JsonUtil
 import java.io.File
 import java.util.*
@@ -15,8 +16,8 @@ import java.util.*
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
     var temperature: Double = 0.1,
-    var smartModel: String = ChatModels.GPT4o.modelName,
-    var fastModel: String = ChatModels.GPT4oMini.modelName,
+    var smartModel: String = OpenAIModels.GPT4o.modelName,
+    var fastModel: String = OpenAIModels.GPT4oMini.modelName,
     var mainImageModel: String = ImageModels.DallE3.modelName,
     var listeningPort: Int = 8081,
     var listeningEndpoint: String = "localhost",
@@ -153,7 +154,7 @@ data class AppSettingsState(
         fun String.chatModel(): ChatModels {
             return ChatModels.values().entries.firstOrNull {
                 it.value.modelName == this || it.key == this
-            }?.value ?: ChatModels.GPT4oMini
+            }?.value ?: OpenAIModels.GPT4oMini
         }
 
         fun String.imageModel(): ImageModels {

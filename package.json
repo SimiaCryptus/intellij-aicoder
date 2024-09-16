@@ -1,0 +1,19 @@
+{
+    "name": "your-project-name",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+     "start": "node index.js",
+    "deploy-forum": "your-deployment-command --env=production"
+    },
+  "engines": {
+     "node": "^18.18.0 || ^20.9.0 || >=21.1.0",
+     "npm": ">=9.0.0"
+   }
+        ,
+  ,
+    "dependencies": {
+      {}
+    }
+  }
