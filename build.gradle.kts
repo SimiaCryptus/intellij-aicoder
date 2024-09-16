@@ -26,7 +26,7 @@ version = properties("pluginVersion")
 val kotlin_version = "2.0.20" // This line can be removed if not used elsewhere
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.2"
+val skyenet_version = "1.2.3"
 val remoterobot_version = "0.11.21"
 val jackson_version = "2.17.2"
 
@@ -41,7 +41,7 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.2")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.4")
     {
         exclude(group = "org.jetbrains.kotlin", module = "")
     }

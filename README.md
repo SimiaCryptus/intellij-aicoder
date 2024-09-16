@@ -63,3 +63,5 @@ organization. The plugin is provided free of charge, as-is, with no warranty or 
 of a sole developer working on a hobby project.*
 
 <!-- Plugin description end -->
+ npm start
+ To set up the project, run `npm install`.

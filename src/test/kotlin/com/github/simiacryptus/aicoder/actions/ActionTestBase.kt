@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.MarkdownProcessor
 import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.jopenai.util.ClientUtil
 import com.simiacryptus.jopenai.util.JsonUtil
 import org.junit.jupiter.api.Assertions
@@ -16,7 +17,7 @@ open class ActionTestBase {
         fun <T : Any> testScript_SelectionAction(selectionAction: SelectionAction<T>, scriptPath: String) {
             AppSettingsState.instance.apiKey = ClientUtil.keyMap.mapKeys { it.key }.toMutableMap()
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.smartModel = ChatModels.GPT4oMini.name
+            AppSettingsState.instance.smartModel = OpenAIModels.GPT4oMini.name
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""
@@ -64,7 +65,7 @@ open class ActionTestBase {
         ) {
             AppSettingsState.instance.apiKey = ClientUtil.keyMap.mapKeys { it.key }.toMutableMap()
             AppSettingsState.instance.temperature = 0.0
-            AppSettingsState.instance.smartModel = ChatModels.GPT4oMini.name
+            AppSettingsState.instance.smartModel = OpenAIModels.GPT4oMini.name
             val input =
                 selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
                     ?: ""

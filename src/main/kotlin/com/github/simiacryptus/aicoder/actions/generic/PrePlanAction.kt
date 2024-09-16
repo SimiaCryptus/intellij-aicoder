@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -51,7 +50,7 @@ class PrePlanAction : BaseAction() {
             DataStorage.sessionPaths[session] = root
 
             var planSettings = PlanSettings(
-                model = AppSettingsState.instance.smartModel.chatModel(),
+                defaultModel = AppSettingsState.instance.defaultSmartModel(),
                 parsingModel = AppSettingsState.instance.defaultFastModel(),
                 command = listOf(
                     if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"

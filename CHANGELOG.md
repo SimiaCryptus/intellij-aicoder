@@ -194,7 +194,7 @@
 - GPT4 enabled by default
 - Fixed bug to allow selected model (GPT4/3.5Turbo) for all actions
 
-## [1.1.2]
+## [1.1.3]
 
 ### Improved
 
@@ -503,7 +503,7 @@
 
 [1.1.3]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.2...v1.1.3
 
-[1.1.2]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.1...v1.1.2
+[1.1.3]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.1...v1.1.2
 
 [1.1.1]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.0...v1.1.1
 

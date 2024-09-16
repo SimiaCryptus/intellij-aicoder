@@ -15,6 +15,7 @@ import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.ImageModels
+import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.JsonUtil
@@ -113,8 +114,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
         data class Settings(
             val budget: Double? = 2.00,
             val tools: List<String> = emptyList(),
-            val model: ChatModels = ChatModels.GPT4o,
-            val parsingModel: ChatModels = ChatModels.GPT4oMini,
+            val model: ChatModels = OpenAIModels.GPT4o,
+            val parsingModel: ChatModels = OpenAIModels.GPT4oMini,
         )
 
         override val settingsClass: Class<*> get() = Settings::class.java
