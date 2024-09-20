@@ -86,7 +86,7 @@ class PluginStartupActivity : ProjectActivity {
         ApplicationServicesConfig.dataStorageRoot = AppSettingsState.instance.pluginHome.resolve(".skyenet")
         OutputInterceptor.setupInterceptor()
         ApplicationServices.clientManager = object : ClientManager() {
-            override fun createClient(session: Session, user: User?) =
+            override fun createChatClient(session: Session, user: User?) =
                 IdeaChatClient.instance
         }
         ApplicationServices.usageManager = HSQLUsageManager(ApplicationServicesConfig.dataStorageRoot.resolve("usage"))
