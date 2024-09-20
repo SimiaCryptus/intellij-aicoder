@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.simiacryptus.jopenai.GPT4Tokenizer
+import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import kotlinx.coroutines.CoroutineScope
 import java.awt.event.MouseEvent
 import java.util.concurrent.LinkedBlockingDeque
