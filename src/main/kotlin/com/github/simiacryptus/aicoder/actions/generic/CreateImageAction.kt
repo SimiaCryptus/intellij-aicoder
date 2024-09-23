@@ -3,7 +3,6 @@
 import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.BaseAction.Companion
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.imageModel
@@ -13,8 +12,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.ApiModel
-import com.simiacryptus.jopenai.ApiModel.Role
+import com.simiacryptus.jopenai.models.ApiModel
+import com.simiacryptus.jopenai.models.ApiModel.Role
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
@@ -22,9 +21,10 @@ import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.ByteArrayOutputStream

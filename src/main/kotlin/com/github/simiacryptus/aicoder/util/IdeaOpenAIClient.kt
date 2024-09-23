@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.ApiModel
+import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.OpenAIModel

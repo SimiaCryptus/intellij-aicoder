@@ -1,6 +1,6 @@
 package com.github.simiacryptus.aicoder.util
 
-import com.simiacryptus.jopenai.util.StringUtil
+import com.simiacryptus.util.StringUtil
 
 /**
  * This class provides a way to store and manipulate indented text blocks.

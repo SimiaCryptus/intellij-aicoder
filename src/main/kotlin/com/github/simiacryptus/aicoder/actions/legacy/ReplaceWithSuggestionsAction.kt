@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.proxy.ChatProxy
-import com.simiacryptus.jopenai.util.StringUtil
+import com.simiacryptus.util.StringUtil
 import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.pow

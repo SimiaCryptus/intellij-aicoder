@@ -16,10 +16,9 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.jopenai.ApiModel
-import com.simiacryptus.jopenai.ApiModel.Role
+import com.simiacryptus.jopenai.models.ApiModel
+import com.simiacryptus.jopenai.models.ApiModel.Role
 import com.simiacryptus.jopenai.ChatClient
-import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.TabbedDisplay
@@ -30,7 +29,7 @@ import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
-import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import java.awt.BorderLayout
 import java.awt.Desktop
 import java.awt.Dimension

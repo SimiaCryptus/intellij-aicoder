@@ -9,13 +9,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.components.JBTextField
-import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.util.JsonUtil
 import com.simiacryptus.skyenet.apps.general.PlanAheadApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.awt.GridBagConstraints

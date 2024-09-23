@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
-import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.util.JsonUtil
 import java.io.File
 import java.util.*
 

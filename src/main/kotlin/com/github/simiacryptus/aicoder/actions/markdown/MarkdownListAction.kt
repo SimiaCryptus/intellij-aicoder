@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.simiacryptus.jopenai.proxy.ChatProxy
-import com.simiacryptus.jopenai.util.StringUtil
+import com.simiacryptus.util.StringUtil
 
 class MarkdownListAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT

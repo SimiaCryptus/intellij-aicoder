@@ -2,8 +2,6 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction
-import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion
-import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.findGitRoot
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.getProjectStructure
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
@@ -20,7 +18,7 @@ import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
-import com.simiacryptus.jopenai.ApiModel
+import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import org.apache.commons.io.IOUtils
 import java.awt.BorderLayout

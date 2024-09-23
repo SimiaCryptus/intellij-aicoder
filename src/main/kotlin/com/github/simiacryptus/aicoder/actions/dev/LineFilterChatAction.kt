@@ -17,7 +17,7 @@ import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 

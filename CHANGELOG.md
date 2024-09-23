@@ -177,7 +177,7 @@
 
 - Token count handling
 
-## [1.1.4]
+## [1.1.5]
 
 ### Added
 
@@ -499,7 +499,7 @@
 
 [1.2.0]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.4...v1.2.0
 
-[1.1.4]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.3...v1.1.4
+[1.1.5]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.3...v1.1.4
 
 [1.1.3]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.1.2...v1.1.3
 

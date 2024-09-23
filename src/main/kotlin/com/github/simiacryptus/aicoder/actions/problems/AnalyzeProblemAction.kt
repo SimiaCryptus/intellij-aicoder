@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.util.JsonUtil
+import com.simiacryptus.util.JsonUtil
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.ParsedActor
@@ -35,7 +35,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
-import com.simiacryptus.skyenet.webui.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import java.awt.Desktop
 import javax.swing.JOptionPane
 
