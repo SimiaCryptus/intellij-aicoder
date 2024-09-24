@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coding Assistant: Revolutionizing Developer Workflows</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/black.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        :root {
+            --main-color: #00bcd4;
+            --highlight-color: #00acc1;
+        }
+        .reveal .slides section {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .reveal .slides section:hover {
+            transform: scale(1.02);
+        }
+        .reveal .slides .highlight {
+            color: var(--main-color);
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+            transition: color 0.3s ease;
+        }
+        .reveal .slides .highlight:hover {
+            color: var(--highlight-color);
+        }
+        .feature-icon {
+            margin-right: 10px;
+            color: var(--main-color);
+            transition: transform 0.3s ease;
+        }
+        .feature-icon:hover {
+            transform: scale(1.2);
+        }
+        .controls button {
+            transition: all 0.3s ease;
+        }
+        .controls button:active {
+            transform: scale(0.95);
+        }
+        .controls button {
+            background-color: var(--main-color);
+            box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+        }
+        .controls button:hover {
+            background-color: var(--highlight-color);
+            transform: scale(1.05);
+        }
+        .progress-bar {
+            box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+        }
+        .reveal .slides {
+            text-align: left;
+        }
+        .reveal h1, .reveal h2 {
+            text-transform: none;
+        }
+        .reveal ul, .reveal ol {
+            display: block;
+            margin-left: 1em;
+        }
+        .feature-icon {
+            margin-right: 10px;
+            color: var(--main-color);
+        }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .controls button {
+            background-color: var(--main-color);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .controls button:hover {
+            background-color: var(--highlight-color);
+        }
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 5px;
+            background-color: var(--main-color);
+            transition: width 0.3s ease-in-out;
+        }
+        .reveal .slides section {
+            padding: 20px;
+        }
+        .reveal .slides h1, .reveal .slides h2, .reveal .slides h3 {
+            margin-bottom: 20px;
+        }
+        .reveal .slides p, .reveal .slides ul, .reveal .slides ol {
+            margin-bottom: 15px;
+        }
+        .reveal .slides li {
+            margin-bottom: 10px;
+        }
+        .reveal .slides .highlight {
+            color: var(--main-color);
+            font-weight: bold;
+        }
+        .reveal .slides {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="reveal">
+        <div class="slides">
+            <section>
+                <h1><i class="fas fa-robot feature-icon"></i>AI Coding Assistant: <span class="highlight">Revolutionizing Developer Workflows</span></h1>
+                <p>Good morning, everyone! Today, I'm thrilled to introduce you to AI Coding Assistant, an innovative IntelliJ plugin that's set to transform the way we approach software development. Let's dive into what makes this tool so special.</p>
+            </section>
+
+            <section>
+                <h2>Introduction</h2>
+                <p>AI Coding Assistant is not just another coding tool. It's a <span class="highlight">game-changer</span> that harnesses the power of cutting-edge Language Model APIs to supercharge your coding workflow. Whether you're a seasoned developer or just starting out, this plugin is designed to enhance your productivity and creativity in ways you've never imagined.</p>
+            </section>
+
+            <section>
+                <h2>Key Features</h2>
+                <p>Let's start by exploring the key features that set AI Coding Assistant apart:</p>
+                <ul>
+                    <li><i class="fas fa-code-branch feature-icon"></i>Open source, released under the Apache 2.0 license</li>
+                    <li><i class="fas fa-globe feature-icon"></i>Independent web interface lightly bound to IDEA</li>
+                    <li><i class="fas fa-brain feature-icon"></i>Multi-model and multi-provider support</li>
+                    <li><i class="fas fa-keyboard feature-icon"></i>Based on explicit calls, not autocomplete</li>
+                    <li><i class="fas fa-robot feature-icon"></i>Interactive AI agents for complex coding tasks</li>
+                    <li><i class="fas fa-code feature-icon"></i>Strong emphasis on patching support</li>
+                    <li><i class="fas fa-eye feature-icon"></i>Transparency and user control</li>
+                    <li><i class="fas fa-dollar-sign feature-icon"></i>Pay-per-API-call model, no membership fees</li>
+                    <li><i class="fas fa-sliders-h feature-icon"></i>Intuitive toolbar UI for easy configuration</li>
+                    <li><i class="fas fa-cogs feature-icon"></i>Robust API request management</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Configuration</h2>
+                <ol>
+                    <li>Quick installation through IntelliJ plugin marketplace</li>
+                    <li>Set up API keys for Language Model providers</li>
+                    <li>Web UI, verbose and API sub-logs for debugging</li>
+                    <li>Diff windows for code change review</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Unleash Your Coding Potential</h2>
+                <h3>Simple Actions</h3>
+                <ol>
+                    <li>Code Chat</li>
+                    <li>Edit Selection</li>
+                    <li>Apply Patch</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Unleash Your Coding Potential</h2>
+                <h3>Intermediate Complexity</h3>
+                <ol>
+                    <li>Patch Files</li>
+                    <li>Multi-step Patch</li>
+                    <li>Auto-fix</li>
+                    <li>Do Something</li>
+                    <li>Shell Agent</li>
+                    <li>Git History</li>
+                    <li>Test Results</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Unleash Your Coding Potential</h2>
+                <h3>Complex Planning</h3>
+                <ol>
+                    <li>Task Planning</li>
+                    <li>Pre-plans</li>
+                    <li>Plan Chat</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Concepts and Design</h2>
+                <h3>AI Actors and Applications</h3>
+                <ul>
+                    <li>Actor: purpose-specific configuration wrapping a Language Model</li>
+                    <li>Application: collection of actors and their interactions</li>
+                </ul>
+                <p>Four types of actors:</p>
+                <ol>
+                    <li>Simple</li>
+                    <li>Parsed</li>
+                    <li>Coding</li>
+                    <li>Media</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Concepts and Design</h2>
+                <h3>Hierarchical Design and Task Management</h3>
+                <ol>
+                    <li>Determine high-level requirements</li>
+                    <li>Break down into smaller components</li>
+                    <li>Repeat for each component</li>
+                    <li>DAG organization for task management</li>
+                    <li>Information passed down the DAG</li>
+                    <li>Feedback loops for iterative refinement</li>
+                    <li>Type systems and validation for code quality</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Concepts and Design</h2>
+                <h3>Task Types</h3>
+                <ol>
+                    <li>Gathering information</li>
+                    <li>Creating files</li>
+                    <li>Reviewing and updating code</li>
+                    <li>Running tools and fixing errors</li>
+                    <li>Further planning</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Plan-based Execution Patterns</h2>
+                <ol>
+                    <li>Simple Directive Execution</li>
+                    <li>Plan-Supplemented Chat Assistant</li>
+                    <li>Objective-Based Cyclic Execution (coming soon)</li>
+                    <li>Event-Driven Triggers (coming soon)</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Conclusion</h2>
+                <p>AI Coding Assistant is more than just a plugin - it's a <span class="highlight">revolution</span> in how we approach software development. By leveraging the power of AI in a thoughtful, controlled manner, we're opening up new possibilities for creativity, efficiency, and problem-solving in coding.</p>
+                <p>We invite you to join us on this exciting journey. Install AI Coding Assistant today and experience the future of software development. With our powerful features, extensive API support, and user-friendly interface, you'll wonder how you ever coded without it.</p>
+                <p>Thank you for your attention. Are there any questions?</p>
+            </section>
+        </div>
+    </div>
+    <div class="controls">
+        <button id="toggleSpeech">Start Speech</button>
+        <button id="previousSlide">Previous</button>
+        <button id="nextSlide">Next</button>
+        <button id="toggleAutoPlay">Enable Auto-Play</button>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            center: false,
+            slideNumber: 'c/t',
+            transition: 'fade',
+            controls: false,
+            progress: false,
+            autoSlide: 5000,
+            loop: true
+        });
+
+        // Web Speech API implementation
+        const synth = window.speechSynthesis;
+        let currentSlide = 0;
+        let currentUtterance = null;
+        let autoPlayEnabled = false;
+        let isSpeaking = false;
+
+        Reveal.on('slidechanged', event => {
+            currentSlide = event.indexh;
+            if (autoPlayEnabled) {
+                speakSlideContent();
+            }
+            updateProgressBar();
+            updateButtonStates();
+        });
+
+        function speakSlideContent() {
+            if (isSpeaking) {
+                synth.cancel();
+                isSpeaking = false;
+                return;
+            }
+            const slideContent = document.querySelector('.present').textContent;
+            const utterance = new SpeechSynthesisUtterance(slideContent);
+            utterance.rate = 0.9; // Slightly slower speech rate
+            utterance.pitch = 1.1; // Slightly higher pitch
+            utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === 'Google UK English Male') || speechSynthesis.getVoices()[0];
+            currentUtterance = utterance;
+            utterance.onend = () => {
+                isSpeaking = false;
+                updateButtonStates();
+            };
+            utterance.onstart = () => {
+                isSpeaking = true;
+                updateButtonStates();
+            };
+            synth.speak(utterance);
+        }
+        function toggleAutoPlay() {
+            autoPlayEnabled = !autoPlayEnabled;
+            if (autoPlayEnabled) {
+                speakSlideContent();
+            } else {
+                synth.cancel();
+            }
+            updateButtonStates();
+        }
+        function updateProgressBar() {
+            const totalSlides = Reveal.getTotalSlides();
+            const progress = (currentSlide + 1) / totalSlides * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+
+        document.getElementById('toggleSpeech').addEventListener('click', () => {
+            speakSlideContent();
+        });
+
+        document.getElementById('previousSlide').addEventListener('click', () => {
+            Reveal.prev();
+        });
+
+        document.getElementById('nextSlide').addEventListener('click', () => {
+            Reveal.next();
+        });
+        document.getElementById('toggleAutoPlay').addEventListener('click', toggleAutoPlay);
+        function updateButtonStates() {
+            document.getElementById('toggleSpeech').textContent = isSpeaking ? 'Stop Speech' : 'Start Speech';
+            document.getElementById('toggleAutoPlay').textContent = autoPlayEnabled ? 'Disable Auto-Play' : 'Enable Auto-Play';
+            document.getElementById('toggleSpeech').classList.toggle('pulse', !isSpeaking);
+            document.getElementById('toggleAutoPlay').classList.toggle('pulse', !autoPlayEnabled);
+        }
+
+        Reveal.configure({
+            keyboard: {
+                83: speakSlideContent, // 's' key
+                65: toggleAutoPlay // 'a' key
+            }
+        });
+
+        updateProgressBar();
+        updateButtonStates();
+
+        // Preload voices
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    </script>
+</body>
+</html>

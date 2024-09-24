@@ -10,23 +10,31 @@ Are you a developer looking to supercharge your coding workflow? Look no further
 game-changing IntelliJ plugin that harnesses the power of cutting-edge Language Model APIs to revolutionize the way you
 code!
 
+
 ## 🌟 Key Features
 
-* 🌐 **Extensive API Support**: AI Coding Assistant seamlessly integrates with a wide range of leading LLM APIs,
-  including [OpenAI](https://platform.openai.com/), [AWS Bedrock](https://console.aws.amazon.com/bedrock/), [Anthropic](https://api.anthropic.com/v1), [Google](https://generativelanguage.googleapis.com/), [Groq](https://console.groq.com/), [Perplexity AI](https://www.perplexity.ai/),
-  and [ModelsLab](https://modelslab.com/dashboard/). 🔑 Get your API keys and unlock a world of possibilities!
-
+* 🔓 **Open Source**: AI Coding Assistant is released under the Apache 2.0 license, allowing for transparency and community contributions.
+* 🌐 **Independent Web Interface**: Utilizes a web interface that's lightly bound to IDEA, providing flexibility and ease of use.
+* 🔀 **Multi-Model and Multi-Provider Support**: Seamlessly integrates with various models and providers, giving you the freedom to choose.
+* 🎯 **Explicit Calls**: Based on explicit calls rather than autocomplete, providing you with more control over AI interactions.
+* 🤖 **Interactive AI Agents**: Focused on interactive AI agents that can assist with complex coding tasks.
+* 🔧 **Patching Support**: Emphasizes patching support, allowing LLMs to work on software changes rather than full rewrites.
+* 🔍 **Transparency and User Control**: Puts emphasis on transparency and user control over AI interactions.
 * 💸 **No Membership Fees**: While API access is typically paid, AI Coding Assistant charges no base fee. You only pay
   for what you use, giving you complete control over your expenses.
-
-* 🌟 **Free and Open Source**: AI Coding Assistant is a free, open-source tool designed with a focus on utility. No hype,
-  no gimmicks – just a powerful, user-friendly plugin that enhances your coding experience.
-
 * 🎛️ **Intuitive Toolbar UI**: Easily configure temperature/model settings and monitor your current token count with AI
   Coding Assistant's sleek, intuitive toolbar UI.
-
 * 🔍 **API Request Management**: 🎛️ Intercept, edit, and log API requests with ease, giving you granular control over your
   plugin's behavior.
+
+
+## 🛠️ Configuration
+
+* 🔑 **API Keys**: Securely set up your API keys for various providers.
+* 🌐 **Web UI**: Access a user-friendly web interface for enhanced interaction.
+* 📊 **Verbose & API Sub-logs**: Get detailed logs for debugging and monitoring.
+* 🔄 **Diff Windows**: Easily compare and review code changes.
+
 
 ## **Installation & Setup**
 
@@ -38,16 +46,47 @@ Getting started with AI Coding Assistant is a breeze:
 
 ## 🚀 Unleash Your Coding Potential
 
-AI Coding Assistant offers a suite of powerful actions designed to streamline your coding process. Access these
-game-changing features via the context menu within your editor or project view:
+AI Coding Assistant offers a suite of powerful actions designed to streamline your coding process:
 
-* 💬 **Code & Patch Chat**: Discuss code, generate, and apply code patches.
+### 📝 Editor Actions
+* 💬 **Code Chat**: Discuss and analyze code directly in your editor.
+* ✏️ **Edit Selection**: Make targeted edits to your code with AI assistance.
+* 🔄 **Apply Patch**: Seamlessly apply AI-generated code patches.
 
-* 🚀 **Planning with AI Agents**: Transform user directives into complex sequences of actionable development tasks, executed by an AI agent system
+### 📁 File and Folder Actions
+* 📄 **File Actions**: Perform AI-assisted operations on individual files.
+* 📂 **Folder Actions**: Execute AI-powered tasks across entire folders.
+* 🕰️ **Git History**: Analyze and work with your project's Git history.
+* 🧪 **Test Results**: Get AI insights on your test results.
 
-* 📊 **Markdown and Mermaid.js**: Visualize your code and ideas with stunning diagrams generated using markdown with the mermaid.js library.
+### 🔬 Advanced Features
+* 🔧 **Patch Files**: Apply complex patches across multiple files.
+* 🔄 **Multi-step Patch**: Execute multi-step patching processes.
+* 🛠️ **Auto-fix**: Automatically fix common coding issues.
+* 🚀 **Do Something**: General-purpose AI-assisted coding tasks.
+* 🐚 **Shell Agent**: Interact with your development environment through an AI-powered shell.
 
-* 📝 **Plaintext, Coding, and Markdown Actions**: 💪 From text processing to code editing, AI Coding Assistant has you covered.
+### 📊 Planning and Organization
+* 📅 **Task Planning**: Break down complex coding tasks into manageable steps.
+* 🗺️ **Pre-plans**: Create and manage coding project plans.
+* 💬 **Plan Chat**: Discuss and refine your coding plans with AI assistance.
+
+### 🧠 AI Actors and Applications
+* 🎭 **Actors**: Utilize purpose-specific AI configurations for various coding tasks.
+* 🏗️ **Applications**: Leverage collections of actors for complex coding scenarios.
+* 🔍 **Actor Types**: Choose from Simple, Parsed, Coding, and Media actors to suit your needs.
+
+### 📊 Hierarchical Design and Task Management
+* 📈 **DAG Organization**: Benefit from a Directed Acyclic Graph structure for efficient task management.
+* 🔄 **Feedback Loops**: Enjoy iterative refinement of your coding projects.
+* ✅ **Type Systems and Validation**: Ensure code quality with built-in type checking and validation.
+
+## 🚀 Advanced Execution Patterns
+
+* 🎯 **Simple Directive Execution**: Execute straightforward coding tasks with ease.
+* 💬 **Plan-Supplemented Chat Assistant**: Get AI assistance with context-aware planning capabilities.
+* 🔄 **Objective-Based Cyclic Execution**: (Coming Soon) Achieve complex coding goals through iterative AI-driven processes.
+* ⚡ **Event-Driven Triggers**: (Coming Soon) Set up automated AI responses to specific coding events.
 
 ## **Join the AI Coding Revolution**
 
@@ -63,5 +102,3 @@ organization. The plugin is provided free of charge, as-is, with no warranty or 
 of a sole developer working on a hobby project.*
 
 <!-- Plugin description end -->
- npm start
- To set up the project, run `npm install`.
