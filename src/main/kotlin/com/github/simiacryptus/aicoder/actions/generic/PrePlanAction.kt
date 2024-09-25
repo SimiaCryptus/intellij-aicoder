@@ -17,6 +17,8 @@ import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
+import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.awt.GridBagConstraints
@@ -72,6 +74,13 @@ class PrePlanAction : BaseAction() {
                 showMenubar = false,
                 initialPlan = taskBreakdownWithPrompt,
                 api = api,
+            )
+            ApplicationServer.appInfoMap[session] = AppInfoData(
+                applicationName = "Code Chat",
+                singleInput = true,
+                stickyInput = false,
+                loadImages = false,
+                showMenubar = false
             )
             
             val server = AppServer.getServer(e.project)

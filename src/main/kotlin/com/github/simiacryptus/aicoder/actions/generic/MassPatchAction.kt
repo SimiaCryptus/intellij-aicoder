@@ -30,6 +30,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import java.awt.BorderLayout
 import java.awt.Desktop
 import java.awt.Dimension
@@ -98,6 +99,13 @@ class MassPatchAction : BaseAction() {
 
         val session = StorageInterface.newGlobalID()
         SessionProxyServer.chats[session] = MassPatchServer(config=config, api=api)
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = true,
+            stickyInput = false,
+            loadImages = false,
+            showMenubar = false
+        )
 
         val server = AppServer.getServer(e.project)
         Thread {

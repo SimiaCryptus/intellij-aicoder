@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import git4idea.GitVcs
 import git4idea.commands.Git
@@ -54,12 +55,12 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
             model = AppSettingsState.instance.smartModel.chatModel(),
             storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
         )
-        ApplicationServer.sessionAppInfoMap[session.toString()] = mapOf(
-            "applicationName" to "Working Copy Diff Chat",
-            "singleInput" to false,
-            "stickyInput" to true,
-            "loadImages" to false,
-            "showMenubar" to false,
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = false,
+            stickyInput = true,
+            loadImages = false,
+            showMenubar = false
         )
 
         val server = AppServer.getServer(e.project)

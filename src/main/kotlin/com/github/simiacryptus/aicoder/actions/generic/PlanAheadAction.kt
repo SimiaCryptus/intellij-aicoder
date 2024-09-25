@@ -12,6 +12,8 @@ import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
+import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import kotlin.collections.set
@@ -58,6 +60,13 @@ class PlanAheadAction : BaseAction() {
                 parsingModel = AppSettingsState.instance.defaultFastModel(),
                 showMenubar = false,
                 api = api,
+            )
+            ApplicationServer.appInfoMap[session] = AppInfoData(
+                applicationName = "Code Chat",
+                singleInput = true,
+                stickyInput = false,
+                loadImages = false,
+                showMenubar = false
             )
             val server = AppServer.getServer(e.project)
 

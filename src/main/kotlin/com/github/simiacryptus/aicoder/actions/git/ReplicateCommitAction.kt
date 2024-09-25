@@ -31,6 +31,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
@@ -94,6 +95,13 @@ class ReplicateCommitAction : BaseAction() {
                     }
                 }
                 SessionProxyServer.chats[session] = patchApp
+                ApplicationServer.appInfoMap[session] = AppInfoData(
+                    applicationName = "Code Chat",
+                    singleInput = true,
+                    stickyInput = false,
+                    loadImages = false,
+                    showMenubar = false
+                )
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }

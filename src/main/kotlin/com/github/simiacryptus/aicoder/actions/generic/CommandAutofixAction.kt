@@ -13,6 +13,8 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.simiacryptus.skyenet.apps.general.CmdPatchApp
 import com.simiacryptus.skyenet.apps.general.PatchApp
 import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.Desktop
@@ -37,6 +39,13 @@ class CommandAutofixAction : BaseAction() {
         val session = StorageInterface.newGlobalID()
         val patchApp = CmdPatchApp(root, session, settings, api, virtualFiles?.map { it.toFile }?.toTypedArray(), AppSettingsState.instance.defaultSmartModel())
         SessionProxyServer.chats[session] = patchApp
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = true,
+            stickyInput = false,
+            loadImages = false,
+            showMenubar = false
+        )
         val server = AppServer.getServer(event.project)
         Thread {
             Thread.sleep(500)

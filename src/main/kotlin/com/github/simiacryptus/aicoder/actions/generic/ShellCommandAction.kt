@@ -22,6 +22,7 @@ import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.interpreter.ProcessInterpreter
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
@@ -48,6 +49,13 @@ class ShellCommandAction : BaseAction() {
             return
         }
         val session = StorageInterface.newGlobalID()
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = true,
+            stickyInput = false,
+            loadImages = false,
+            showMenubar = false
+        )
         SessionProxyServer.chats[session] = object : ApplicationServer(
             applicationName = "Shell Agent",
             path = "/shellAgent",
