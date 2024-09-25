@@ -5,12 +5,11 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.simiacryptus.skyenet.apps.general.DocumentParserApp
+import com.simiacryptus.skyenet.apps.parsers.DocumentParserApp
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
-import com.intellij.openapi.ui.DialogWrapper
 import com.simiacryptus.skyenet.core.platform.Session
 import java.io.File
 

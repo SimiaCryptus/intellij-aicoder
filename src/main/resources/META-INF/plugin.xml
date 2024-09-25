@@ -3,7 +3,7 @@
     <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
     <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
-    <category>AI-Powered</category>
+    <category>Code Tools</category>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
@@ -24,6 +24,7 @@
     </extensions>
 
     <actions>
+        <!-- Improved Shortcut for PasteAction -->
         <group id="com.github.simiacryptus.aicoder.ui.MainMenu"
                class="com.github.simiacryptus.aicoder.ui.MainMenu"
                popup="true"
@@ -60,127 +61,127 @@
         <action id="OpenWebPageAction"
                class="com.github.simiacryptus.aicoder.actions.OpenWebPageAction"
                text="Open Simiacryptus Apps"
-               description="Opens the Simiacryptus Apps web page in a browser">
+                description="Opens the Simiacryptus Apps web page in your default browser, providing access to additional resources and documentation">
            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
        </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.generic.DiffChatAction"
                 text="Patch Chat"
-                description="Open a chat session with file-patching features">
+                description="Initiate an interactive session to discuss and apply patches to your code, with intelligent suggestions for modifications">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.CodeChatAction"
                 text="Code Chat"
-                description="Open a basic chat session with information about the selected code">
+                description="Start an interactive dialogue about your selected code, offering insights, explanations, and suggestions for improvements">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.GenericChatAction"
                 id="GenericChat"
-                text="Chat with AI"
-                description="Start a chat session with an AI to discuss code or get assistance">
+                text="Coding Assistant Chat"
+                description="Initiate a general-purpose chat session to discuss coding concepts, get assistance with programming tasks, or explore software development ideas">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.PlanAheadAction"
                 text="Task Runner"
-                description="Advanced task expansion">
+                description="Intelligent task planning and execution tool for breaking down complex coding tasks into manageable steps">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.PlanChatAction"
                 text="Plan Chat"
-                description="Open a chat session with task planning features">
+                description="Interactive session for project planning, task breakdown, and development strategy discussions">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.SaveAsQueryIndexAction"
                 text="Save as Query DB"
-                description="Save the selected data as a Parquet file">
+                description="Convert selected parsed JSON files into an optimized binary index for efficient querying and data retrieval">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.PrePlanAction"
                 text="Pre-Plan"
-                description="Pre-Plan a task">
+                description="Set up a structured task planning session with customizable parameters and execution environment">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction"
                 text="Multi-Step Patch"
-                description="Simple task expansion">
+                description="Break down complex code modifications into a series of manageable steps, with intelligent suggestions for each stage">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.MultiDiffChatAction"
                 text="Patch Files"
-                description="Generate patch(es) for a multi-file context">
+                description="Analyze and generate patches for multiple files simultaneously, considering the broader project context">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction"
                 text="Auto-Fix"
-                description="Automatically fix a build/test error">
+                description="Intelligent analysis and automatic resolution of build or test errors, with customizable fix suggestions">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action id="com.github.simiacryptus.aicoder.actions.generic.DocumentDataExtractorAction"
                 class="com.github.simiacryptus.aicoder.actions.generic.DocumentDataExtractorAction"
                 text="Extract Document Data"
-                description="Extract text and images from a document">
+                description="Comprehensive tool for extracting and analyzing text and images from various document formats (PDF, TXT, MD, HTML)">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction"
                 text="Do Something"
-                description="Do something">
+                description="Execute custom coding tasks with intelligent assistance, analyzing project structure and context">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.ApplyPatchAction"
                 text="Apply Patch"
-                description="Apply a patch to the selected file">
+                description="Intelligently apply a provided patch to the selected file, with automatic conflict resolution and error handling">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.MultiCodeChatAction"
                 text="Code Chat"
-                description="Open a chat session with multiple files">
+                description="Initiate an interactive dialogue session to discuss and analyze multiple code files simultaneously">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.CreateImageAction"
                 text="Create Image"
-                description="Create an image file based on the selected code">
+                description="Generate visual representations of code structure, algorithms, or data flow based on selected code or project files">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateDocumentationAction"
                 text="Generate Documentation"
-                description="Scan over each file and compile the results into a single document">
+                description="Automatically generate comprehensive documentation for selected files or entire project, with customizable output formats">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.MassPatchAction"
                 text="Mass Patch"
-                description="Generate patches for all selected files">
+                description="Analyze and generate patches for multiple selected files, with intelligent suggestions for code modifications">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateRelatedFileAction"
                 text="Generate Related File"
-                description="Create a new file related to the selected one based on AI suggestions.">
+                description="Intelligently create a new file related to the selected one, suggesting appropriate content and file location">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.CreateFileFromDescriptionAction"
                 text="Create File from Description"
-                description="Generate a new file based on a natural language description.">
+                description="Create a new file with appropriate content based on a natural language description, intelligently determining file type and location">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.WebDevelopmentAssistantAction"
                 text="Web Dev"
-                description="Generate files for a web application">
+                description="Comprehensive tool for web application development, assisting with file generation, code writing, and project structure">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
@@ -188,7 +189,7 @@
         <group id="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
                class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
                text="Imple_ment As..."
-               description="Implement as..."
+               description="Convert selected Markdown text into executable code snippets in various programming languages"
                popup="true"
         >
 
@@ -196,7 +197,7 @@
         </group>
         <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownListAction"
                 text="Add _List Items"
-                description="Add list items">
+                description="Intelligently extend Markdown lists by generating contextually relevant new items">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <!-- Keyboard shortcuts removed -->
@@ -204,19 +205,22 @@
 
         <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
                 text="_Paste"
-                description="Paste">
+                description="Smart paste functionality that automatically detects and converts clipboard content to match the current file's programming language">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="P"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="P"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift V"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift V"/>
         </action>
+        <!-- Improved Shortcut for RedoLast Action -->
         <action class="com.github.simiacryptus.aicoder.actions.code.RedoLast"
                 text="Re_do Last"
-                description="Redo last">
+                description="Quickly repeat the most recent intelligent coding operation in the current editor">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <!-- Keyboard shortcuts removed -->
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift Z"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift Z"/>
         </action>
+        <!-- Improved Shortcut for DescribeAction -->
         <action class="com.github.simiacryptus.aicoder.actions.code.CustomEditAction"
                 text="_Edit Code..."
                 description="Edit code...">
@@ -237,9 +241,10 @@
                 description="Add doc comments">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift D"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift D"/>
         </action>
+        <!-- Improved Shortcut for InsertImplementationAction -->
 
         <action class="com.github.simiacryptus.aicoder.actions.dev.LineFilterChatAction"
                 text="Filter Lines"
@@ -252,65 +257,78 @@
                 description="Print PSI Tree">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt A"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option A"/>
         </action>
+        <!-- Improved Shortcut for RenameVariablesAction -->
 
         <action class="com.github.simiacryptus.aicoder.actions.legacy.RenameVariablesAction"
                 text="Rename _Variables"
                 description="Rename variables">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <!-- Keyboard shortcuts removed -->
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt R"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option R"/>
         </action>
+        <!-- Improved Shortcut for VoiceToTextAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.VoiceToTextAction"
                 text="Voice to Text"
                 description="Convert spoken language into text using AI.">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt V"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option V"/>
         </action>
+        <!-- Improved Shortcut for ReplaceWithSuggestionsAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.ReplaceWithSuggestionsAction"
                 text="Replace with Suggestions"
                 description="Suggest replacements for selected text based on context.">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <!-- Keyboard shortcuts removed -->
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt R"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option R"/>
         </action>
+        <!-- Improved Shortcut for AppendTextWithChatAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.AppendTextWithChatAction"
                 text="Append Text via Chat"
                 description="Append text to your current selection using AI-driven chat suggestions.">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <!-- Keyboard shortcuts removed -->
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.legacy.InsertImplementationAction"
                 text="Insert _Implementation"
                 description="Insert implementation">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt I"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option I"/>
         </action>
+        <!-- Improved Shortcut for CommentsAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.CommentsAction"
                 text="Add Code _Comments"
                 description="Add code comments">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <!-- Keyboard shortcuts removed -->
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt C"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option C"/>
         </action>
+        <!-- Improved Shortcut for DocAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.DocAction"
                 text="Add D_oc Comments"
                 description="Add code comments">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="O"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="O"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt D"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option D"/>
         </action>
+        <!-- Improved Shortcut for ImplementStubAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.ImplementStubAction"
                 text="_Implement Stub"
                 description="Implement stub">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift control Q" second-keystroke="I"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta I" second-keystroke="I"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt S"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option S"/>
         </action>
 
         <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"

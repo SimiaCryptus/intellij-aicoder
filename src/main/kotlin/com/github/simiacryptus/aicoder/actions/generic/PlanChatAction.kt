@@ -42,7 +42,6 @@ class PlanChatAction : BaseAction() {
             )
             DataStorage.sessionPaths[session] = root
             SessionProxyServer.chats[session] = PlanChatApp(
-                rootFile = root,
                 planSettings = dialog.settings.copy(
                     env = mapOf(),
                     workingDir = root.absolutePath,

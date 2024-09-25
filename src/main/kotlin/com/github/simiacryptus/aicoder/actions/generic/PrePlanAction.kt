@@ -66,7 +66,6 @@ class PrePlanAction : BaseAction() {
                 it.settings
             }
             SessionProxyServer.chats[session] = PlanAheadApp(
-                rootFile = root,
                 planSettings = planSettings,
                 model = AppSettingsState.instance.defaultSmartModel(),
                 parsingModel = AppSettingsState.instance.defaultFastModel(),
