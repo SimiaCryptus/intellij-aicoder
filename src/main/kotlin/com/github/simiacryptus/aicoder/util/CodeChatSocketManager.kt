@@ -24,7 +24,7 @@ open class CodeChatSocketManager(
         |# `$filename`
         |
         |```$language
-        |${/*StringEscapeUtils.escapeHtml4*/(codeSelection)/*.indent("  ")*/}
+        |$codeSelection
         |```
         """.trimMargin().trim(),
     systemPrompt = """
@@ -33,9 +33,7 @@ open class CodeChatSocketManager(
         |You will be answering questions about the following code located in `$filename`:
         |
         |```$language
-        |${
-        codeSelection/*.indent("  ")*/
-    }}
+        |$codeSelection
         |```
         |
         |Responses may use markdown formatting, including code blocks.

@@ -1,5 +1,7 @@
-﻿import org.jetbrains.changelog.Changelog
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = providers.gradleProperty(key).get()
 fun environment(key: String) = providers.environmentVariable(key).get()
@@ -11,6 +13,7 @@ fun environment(key: String) = providers.environmentVariable(key).get()
     id("org.jetbrains.changelog") version "2.2.0"
     id("org.jetbrains.qodana") version "2023.2.1"
     id("org.jetbrains.kotlinx.kover") version "0.7.4"
+    id("org.jetbrains.dokka") version "1.9.10"
 }
 
 group = "com.github.simiacryptus"
@@ -26,7 +29,7 @@ version = properties("pluginVersion")
 val kotlin_version = "2.0.20" // This line can be removed if not used elsewhere
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.4"
+val skyenet_version = "1.2.5"
 val remoterobot_version = "0.11.21"
 val jackson_version = "2.17.2"
 
@@ -106,6 +109,57 @@ tasks.named("processResources") {
      jvmToolchain(17)
  }
 tasks {
+    val dokkaHtml by getting(DokkaTask::class) {
+        outputDirectory.set(file("docs/api"))
+    }
+
+    register<Copy>("copyReadmeToSite") {
+        from("README.md")
+        into("docs")
+    }
+    register<Copy>("copyChangelogToSite") {
+        from("CHANGELOG.md")
+        into("docs")
+    }
+
+    register<Task>("generateProjectInfo") {
+        doLast {
+            file("docs/project-info.md").writeText("""
+                # Project Information
+                - Group: $group
+                - Version: $version
+                - Kotlin Version: $kotlin_version
+                - Jetty Version: $jetty_version
+                - SLF4J Version: $slf4j_version
+                For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG.md).
+            """.trimIndent())
+        }
+    }
+    register<Task>("generateIndex") {
+        doLast {
+            file("docs/index.md").writeText("""
+                # ${properties("pluginName")}
+                Welcome to the documentation site for ${properties("pluginName")}.
+                ## Quick Links
+                - [Project Information](project-info.md)
+                - [README](README.md)
+                - [Changelog](CHANGELOG.md)
+                - [API Documentation](api/index.html)
+                For more details about the project, please explore the links above.
+            """.trimIndent())
+        }
+    }
+
+    register<Task>("buildProjectWebsite") {
+        dependsOn(dokkaHtml, "copyReadmeToSite", "copyChangelogToSite", "generateProjectInfo", "generateIndex")
+        doLast {
+            println("Project website built in the 'docs' directory.")
+        }
+    }
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "17"
+    }
+
     compileKotlin {
         compilerOptions {
             javaParameters = true

@@ -36,6 +36,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import java.awt.Desktop
 import javax.swing.JOptionPane
 
@@ -93,12 +94,12 @@ class AnalyzeProblemAction : AnAction() {
     private fun openAnalysisSession(project: Project, problemInfo: String, gitRoot: VirtualFile?) {
         val session = StorageInterface.newGlobalID()
         SessionProxyServer.chats[session] = ProblemAnalysisApp(session, problemInfo, gitRoot)
-        ApplicationServer.sessionAppInfoMap[session.toString()] = mapOf(
-            "applicationName" to "Problem Analysis",
-            "singleInput" to false,
-            "stickyInput" to true,
-            "loadImages" to false,
-            "showMenubar" to false,
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = false,
+            stickyInput = true,
+            loadImages = false,
+            showMenubar = false
         )
 
         val server = AppServer.getServer(project)

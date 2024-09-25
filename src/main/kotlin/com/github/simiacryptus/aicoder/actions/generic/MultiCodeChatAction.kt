@@ -11,26 +11,22 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.models.ApiModel
-import com.simiacryptus.jopenai.models.ApiModel.Role
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.util.GPT4Tokenizer
-import com.simiacryptus.jopenai.util.ClientUtil.toContentList
-import com.simiacryptus.skyenet.Discussable
+import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.File
 import java.nio.file.Path
-import java.util.concurrent.Semaphore
-import java.util.concurrent.atomic.AtomicReference
 
 class MultiCodeChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -64,6 +60,13 @@ class MultiCodeChatAction : BaseAction() {
 
         val session = StorageInterface.newGlobalID()
         SessionProxyServer.chats[session] = PatchApp(root.toFile(), { codeSummary() }, codeFiles)
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = false,
+            stickyInput = true,
+            loadImages = false,
+            showMenubar = false
+        )
         val server = AppServer.getServer(event.project)
 
         Thread {
@@ -119,37 +122,33 @@ class MultiCodeChatAction : BaseAction() {
                 "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
             }))
             val toInput = { it: String -> listOf(codeSummary(), it) }
-            Discussable(
-                task = task,
-                userMessage = { userMessage },
-                heading = renderMarkdown(userMessage),
-                initialResponse = { it: String -> mainActor.answer(toInput(it), api = api) },
-                outputFn = { design: String ->
-                    var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                        root = root.toPath(),
-                        response = design,
-                        handle = { newCodeMap ->
-                            newCodeMap.forEach { (path, newCode) ->
-                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                            }
-                        },
-                        ui = ui,
-                        api = api,
-                    )
-                    """<div>${renderMarkdown(markdown!!)}</div>"""
-                },
+            Retryable(
                 ui = ui,
-                reviseResponse = { userMessages: List<Pair<String, Role>> ->
-                    mainActor.respond(
-                        messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
-                            .toTypedArray<ApiModel.ChatMessage>()),
-                        input = toInput(userMessage),
-                        api = api
-                    )
+                task = task,
+                process = { content ->
+                    val design = mainActor.answer(toInput(userMessage), api = api)
+                    """
+                        |<div>
+                        |${renderMarkdown(codeSummary())}
+                        |</div>
+                        |
+                        |<div>${renderMarkdown(
+                        ui.socketManager?.addApplyFileDiffLinks(
+                            root = root.toPath(),
+                            response = design,
+                            handle = { newCodeMap ->
+                                newCodeMap.forEach { (path, newCode) ->
+                                    content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                }
+                            },
+                            ui = ui,
+                            api = api,
+                        )!!
+                    )}</div>
+                    """.trimMargin()
+
                 },
-                atomicRef = AtomicReference(),
-                semaphore = Semaphore(0),
-            ).call()
+            )
         }
     }
 

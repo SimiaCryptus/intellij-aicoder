@@ -25,6 +25,7 @@ import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.io.ByteArrayOutputStream
@@ -78,6 +79,13 @@ class CreateImageAction : BaseAction() {
         }
 
         SessionProxyServer.chats[session] = PatchApp(event, root.toFile(), ::codeSummary)
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = true,
+            stickyInput = false,
+            loadImages = false,
+            showMenubar = false
+        )
 
         val server = AppServer.getServer(event.project)
 

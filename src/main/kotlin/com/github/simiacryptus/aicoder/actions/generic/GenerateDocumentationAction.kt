@@ -30,6 +30,7 @@ import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import javax.swing.*
 
 
@@ -128,31 +129,45 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                 .toList().filterNotNull()
                 .map<Path, Future<Path>> { path ->
                     executorService.submit<Path?> {
-                        val fileContent =
-                            IOUtils.toString(FileInputStream(path.toFile()), "UTF-8") ?: return@submit null
-                        val transformContent = transformContent(path, fileContent, transformationMessage)
-                        if (config?.settings?.singleOutputFile == true) {
-                            markdownContent.append("# ${selectedFolder.relativize(path)}\n\n")
-                            markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
-                        } else {
-                            var individualOutputPath = /*selectedFolder*/ selectedFolder.relativize(path.parent.resolve(
-                                path.fileName.toString().split('.').dropLast(1)
-                                    .joinToString(".") + "." + outputPath.fileName
-                            ))
-                            individualOutputPath = selectedFolder.resolve(individualOutputPath)
-                            individualOutputPath = gitRoot.relativize(individualOutputPath)
-                            individualOutputPath = gitRoot.resolve(outputDirectory).resolve(individualOutputPath)
-                            individualOutputPath.parent.toFile().mkdirs()
-                            Files.write(individualOutputPath, transformContent.toByteArray())
+                        var retries = 0
+                        val maxRetries = 3
+                        while (retries < maxRetries) {
+                            try {
+                                val fileContent =
+                                    IOUtils.toString(FileInputStream(path.toFile()), "UTF-8") ?: return@submit null
+                                val transformContent = transformContent(path, fileContent, transformationMessage)
+                                processTransformedContent(
+                                    path,
+                                    transformContent,
+                                    config,
+                                    selectedFolder,
+                                    gitRoot,
+                                    outputDirectory,
+                                    outputPath,
+                                    markdownContent
+                                )
+                                return@submit path
+                            } catch (e: Exception) {
+                                retries++
+                                if (retries >= maxRetries) {
+                                    log.error("Failed to process file after $maxRetries attempts: $path", e)
+                                    return@submit null
+                                }
+                                log.warn("Error processing file: $path. Retrying (attempt $retries)", e)
+                                Thread.sleep(1000L * retries) // Exponential backoff
+                            }
                         }
-                        path
+                        null
                     }
                 }.toTypedArray().map { future ->
                     try {
-                        future.get()
+                        future.get(2, TimeUnit.MINUTES) // Set a timeout for each file processing
                     } catch (e: Exception) {
-                        log.warn("Error processing file", e)
-                        return@map null
+                        when (e) {
+                            is TimeoutException -> log.error("File processing timed out", e)
+                            else -> log.error("Error processing file", e)
+                        }
+                        null
                     }
                 }.filterNotNull()
             if (config?.settings?.singleOutputFile == true) {
@@ -165,6 +180,34 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             }
         } finally {
             executorService.shutdown()
+        }
+    }
+
+    private fun processTransformedContent(
+        path: Path,
+        transformContent: String,
+        config: Settings?,
+        selectedFolder: Path,
+        gitRoot: Path,
+        outputDirectory: String,
+        outputPath: Path,
+        markdownContent: StringBuilder
+    ) {
+        if (config?.settings?.singleOutputFile == true) {
+            markdownContent.append("# ${selectedFolder.relativize(path)}\n\n")
+            markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
+        } else {
+            var individualOutputPath = /*selectedFolder*/ selectedFolder.relativize(
+                path.parent.resolve(
+                    path.fileName.toString().split('.').dropLast(1)
+                        .joinToString(".") + "." + outputPath.fileName
+                )
+            )
+            individualOutputPath = selectedFolder.resolve(individualOutputPath)
+            individualOutputPath = gitRoot.relativize(individualOutputPath)
+            individualOutputPath = gitRoot.resolve(outputDirectory).resolve(individualOutputPath)
+            individualOutputPath.parent.toFile().mkdirs()
+            Files.write(individualOutputPath, transformContent.toByteArray())
         }
     }
 

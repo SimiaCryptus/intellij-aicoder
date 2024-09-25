@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.IterativePatchUtil
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
 import java.awt.Desktop
@@ -78,12 +79,12 @@ class ChatWithCommitAction : AnAction() {
             model = AppSettingsState.instance.smartModel.chatModel(),
             storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
         )
-        ApplicationServer.sessionAppInfoMap[session.toString()] = mapOf(
-            "applicationName" to "Commit Chat",
-            "singleInput" to false,
-            "stickyInput" to true,
-            "loadImages" to false,
-            "showMenubar" to false,
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = false,
+            stickyInput = true,
+            loadImages = false,
+            showMenubar = false
         )
 
         val server = AppServer.getServer(e.project)

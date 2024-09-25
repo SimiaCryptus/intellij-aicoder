@@ -28,6 +28,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import org.jetbrains.annotations.NotNull
 import java.awt.Desktop
 import java.io.File
@@ -154,12 +155,12 @@ class TestResultAutofixAction : BaseAction() {
     private fun openAutofixWithTestResult(e: AnActionEvent, testInfo: String, projectStructure: String) {
         val session = StorageInterface.newGlobalID()
         SessionProxyServer.chats[session] = TestResultAutofixApp(session, testInfo, e.project?.basePath, projectStructure)
-        ApplicationServer.sessionAppInfoMap[session.toString()] = mapOf(
-            "applicationName" to "Test Result Autofix",
-            "singleInput" to false,
-            "stickyInput" to true,
-            "loadImages" to false,
-            "showMenubar" to false,
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+            applicationName = "Code Chat",
+            singleInput = false,
+            stickyInput = true,
+            loadImages = false,
+            showMenubar = false
         )
 
         val server = AppServer.getServer(e.project)
