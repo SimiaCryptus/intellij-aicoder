@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 fun properties(key: String) = providers.gradleProperty(key).get()
 fun environment(key: String) = providers.environmentVariable(key).get()
 
- plugins {
+plugins {
     id("java") // Java support
     id("org.jetbrains.kotlin.jvm") version "2.0.20"
     id("org.jetbrains.intellij") version "1.17.2"
@@ -19,8 +19,8 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 group = "com.github.simiacryptus"
 version = properties("pluginVersion")
 
- repositories {
-     mavenCentral()
+repositories {
+    mavenCentral()
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
@@ -29,7 +29,7 @@ version = properties("pluginVersion")
 val kotlin_version = "2.0.20" // This line can be removed if not used elsewhere
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.5"
+val skyenet_version = "1.2.6"
 val remoterobot_version = "0.11.21"
 val jackson_version = "2.17.2"
 
@@ -94,20 +94,10 @@ dependencies {
 }
 
 
-/*
-tasks.register<Copy>("copySourcesToResources") {
-    from("src/main/kotlin")
-    into("src/main/resources/sources/kt")
+kotlin {
+    jvmToolchain(17)
 }
-tasks.named("processResources") {
-    dependsOn("copySourcesToResources")
-}
-*/
 
-
- kotlin {
-     jvmToolchain(17)
- }
 tasks {
     val dokkaHtml by getting(DokkaTask::class) {
         outputDirectory.set(file("docs/api"))
@@ -124,36 +114,17 @@ tasks {
 
     register<Task>("generateProjectInfo") {
         doLast {
-            file("docs/project-info.md").writeText("""
-                # Project Information
-                - Group: $group
-                - Version: $version
-                - Kotlin Version: $kotlin_version
-                - Jetty Version: $jetty_version
-                - SLF4J Version: $slf4j_version
-                For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG.md).
-            """.trimIndent())
-        }
-    }
-    register<Task>("generateIndex") {
-        doLast {
-            file("docs/index.md").writeText("""
-                # ${properties("pluginName")}
-                Welcome to the documentation site for ${properties("pluginName")}.
-                ## Quick Links
-                - [Project Information](project-info.md)
-                - [README](README.md)
-                - [Changelog](CHANGELOG.md)
-                - [API Documentation](api/index.html)
-                For more details about the project, please explore the links above.
-            """.trimIndent())
-        }
-    }
-
-    register<Task>("buildProjectWebsite") {
-        dependsOn(dokkaHtml, "copyReadmeToSite", "copyChangelogToSite", "generateProjectInfo", "generateIndex")
-        doLast {
-            println("Project website built in the 'docs' directory.")
+            file("docs/project-info.md").writeText(
+                """
+# Project Information
+- Group: $group
+- Version: $version
+- Kotlin Version: $kotlin_version
+- Jetty Version: $jetty_version
+- SLF4J Version: $slf4j_version
+For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG.md).
+""".trimIndent()
+            )
         }
     }
     withType<KotlinCompile> {
@@ -256,7 +227,4 @@ tasks {
 
 qodana {
     cachePath.set(file(".qodana").canonicalPath)
-//    reportPath.set(file("build/reports/inspections").canonicalPath)
-//    saveReport.set(true)
-//    showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
 }
