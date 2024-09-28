@@ -2,7 +2,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.simiacryptus.jopenai.models.ApiModel.*
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList

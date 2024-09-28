@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.CmdPatchApp
 import com.simiacryptus.skyenet.apps.general.PatchApp
 import com.simiacryptus.skyenet.core.platform.StorageInterface
@@ -22,6 +23,7 @@ import java.io.File
 import java.nio.file.Files
 import javax.swing.*
 import kotlin.collections.set
+import kotlin.streams.toList
 
 class CommandAutofixAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -37,7 +39,14 @@ class CommandAutofixAction : BaseAction() {
             event.project?.basePath?.let { File(it).toPath() }
         }!!
         val session = StorageInterface.newGlobalID()
-        val patchApp = CmdPatchApp(root, session, settings, api, virtualFiles?.map { it.toFile }?.toTypedArray(), AppSettingsState.instance.defaultSmartModel())
+        val patchApp = CmdPatchApp(
+            root,
+            session,
+            settings,
+            api,
+            virtualFiles?.map { it.toFile }?.toTypedArray(),
+            AppSettingsState.instance.smartModel.chatModel()
+        )
         SessionProxyServer.chats[session] = patchApp
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",

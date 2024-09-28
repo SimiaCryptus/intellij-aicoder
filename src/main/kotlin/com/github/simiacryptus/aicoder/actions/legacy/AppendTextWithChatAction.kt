@@ -2,7 +2,7 @@ package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -21,7 +21,7 @@ class AppendTextWithChatAction : SelectionAction<String>() {
     override fun processSelection(state: SelectionState, config: String?): String {
         val settings = AppSettingsState.instance
         val request = ChatRequest(
-            model = settings.smartModel.chatModel().modelName,
+            model = settings.smartModel,
             temperature = settings.temperature
         ).copy(
             temperature = settings.temperature,

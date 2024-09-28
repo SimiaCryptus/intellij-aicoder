@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>AI Coding Assistant: Empowering Developers with AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/black.min.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/monokai.min.css">
+    <style>
+        .reveal .slides {
+            text-align: left;
+            font-size: 1em;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3 {
+            text-transform: none;
+            margin-bottom: 0.5em;
+            color: #42affa;
+        }
+
+        .reveal .slides section {
+            height: 100%;
+        }
+
+        .reveal .progress {
+            color: #42affa;
+        }
+
+        .reveal ul, .reveal ol {
+            margin-left: 1em;
+        }
+
+        .reveal li {
+            margin-bottom: 0.5em;
+        }
+
+        .reveal .columns {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .reveal .column {
+            flex: 1;
+            padding: 0 1em;
+        }
+
+        .reveal .highlight {
+            color: #42affa;
+            font-weight: bold;
+        }
+
+        .reveal .footer {
+            position: absolute;
+            bottom: 1em;
+            left: 1em;
+            font-size: 0.5em;
+            color: #888;
+        }
+
+        .reveal .code-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reveal pre {
+            width: 100%;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .reveal pre code {
+            padding: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h1>AI Coding Assistant: Empowering Developers</h1>
+            <h3>Enhancing Productivity and Creativity with AI</h3>
+            <p>An Open Source Project</p>
+            <br>
+            <p><small>Press 'Space' or 'Arrow Right' to navigate</small></p>
+        </section>
+        <section>
+            <h2>Agenda</h2>
+            <ol>
+                <li>Background: LLM Capabilities</li>
+                <li>Best Practices for AI Coding</li>
+                <li>AI Coding Assistant Overview</li>
+                <li>Document Generation Methods</li>
+                <li>Project Generation and Code Modification</li>
+                <li>Creating New AI Applications</li>
+                <li>Q&A Session</li>
+            </ol>
+        </section>
+
+
+        <section>
+            <h2>Background: LLM Capabilities</h2>
+            <p>Let's explore what LLMs are good at and where they struggle.</p>
+        </section>
+        <section>
+            <h2>LLMs are Good at:</h2>
+            <div class="columns">
+                <div class="column">
+                    <ul>
+                        <li><span class="highlight">24/7 availability</span> and scalability</li>
+                        <li><span class="highlight">Summarizing</span> code, text, and data</li>
+                        <li><span class="highlight">Translating</span> between languages</li>
+                        <li><span class="highlight">Pattern recognition</span> and error fixing</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <ul>
+                        <li>Answering questions based on <span class="highlight">context</span></li>
+                        <li><span class="highlight">Fuzzy logic</span> and probabilistic reasoning</li>
+                        <li><span class="highlight">Inference</span> and Few-shot learning</li>
+                        <li>Reasoning by <span class="highlight">analogy</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>LLMs are Bad at:</h2>
+            <ul>
+                <li>Understanding context <span class="highlight">outside of training data</span></li>
+                <li>Generating <span class="highlight">creative or novel</span> content</li>
+                <li><span class="highlight">Deterministic logic</span> and reasoning</li>
+                <li>Handling <span class="highlight">ambiguous instructions</span></li>
+                <li>Maintaining <span class="highlight">consistent behavior</span> over long interactions</li>
+            </ul>
+        </section>
+
+        <section>
+            <section>
+                <h2>Best Practices for AI Coding</h2>
+                <p>Maximize the potential of AI in your workflow:</p>
+                <ul>
+                    <li><span class="highlight">Utilize Markdown</span> for documentation</li>
+                    <li><span class="highlight">Leverage AI capabilities</span> effectively</li>
+                    <li>Follow <span class="highlight">conventional coding best practices</span></li>
+                    <li><span class="highlight">Break down</span> complex problems</li>
+                    <li>Use effective <span class="highlight">prompting techniques</span></li>
+                </ul>
+            </section>
+        </section>
+
+        <section>
+            <h2>Future of Human Developers</h2>
+            <p>As AI coding evolves, human developers will concentrate on:</p>
+            <div class="columns">
+                <div class="column">
+                    <ul>
+                        <li><span class="highlight">Creativity</span> and innovation</li>
+                        <li><span class="highlight">User experience</span> and design</li>
+                        <li>Addressing AI logic <span class="highlight">"blind spots"</span></li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <ul>
+                        <li><span class="highlight">Interacting</span> with and testing products</li>
+                        <li>Providing <span class="highlight">domain-specific expertise</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>AI Coding Assistant: An Overview</h2>
+            <ul>
+                <li><span class="highlight">Free and open-source</span></li>
+                <li>Independent project (not endorsed by Grubhub)</li>
+                <li>Case study for AI coding capabilities</li>
+            </ul>
+        </section>
+
+        <section>
+            <section>
+                <h2>What is AI Coding Assistant?</h2>
+                <ul>
+                    <li><span class="highlight">IntelliJ plugin</span> integrating AI capabilities</li>
+                    <li>Features: <span class="highlight">code generation, documentation, task planning</span></li>
+                    <li>Uses <span class="highlight">Skyenet-based Apps</span> (web UI)</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Key Features</h2>
+                <ul>
+                    <li>Open-source and transparent (Apache 2.0 license)</li>
+                    <li>Multi-model and multi-provider support</li>
+                    <li>Based on explicit calls, not autocomplete</li>
+                    <li>Focus on interactive AI agents for complex tasks</li>
+                    <li>Strong emphasis on patching support</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>What is Skyenet?</h2>
+                <ul>
+                    <li><span class="highlight">Websocket-based</span> AI agent platform</li>
+                    <li>Creates and manages <span class="highlight">AI-powered applications</span></li>
+                    <li>Facilitates <span class="highlight">interaction</span> between AI actors, users, and environment
+                    </li>
+                    <li>Integrates with <span class="highlight">various AI models</span> and data sources</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>One of Many AI Tools</h2>
+                <div class="columns">
+                    <div class="column">
+                        <ul style="list-style-type: none;">
+                            <li>🚀 <strong>GitHub Copilot:</strong> Code completion focus</li>
+                            <li>☁️ <strong>Amazon Q:</strong> Cloud-based AI assistance</li>
+                            <li>🛠️ <strong>JetBrains AI Assistant:</strong> IDE-integrated</li>
+                        </ul>
+                    </div>
+                    <div class="column" style="border-left: 1px solid #42affa; padding-left: 2em;">
+                        <ul>
+                            <li><strong>Microsoft AutoGen:</strong> AI agent framework</li>
+                            <li><strong>LangChain:</strong> AI application framework</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <section>
+            <section>
+                <h2>Generation Methods</h2>
+                <ol>
+                    <li><span class="highlight">Basic Generation</span> (Code Chat)</li>
+                    <li><span class="highlight">Editing Files</span> with Patches</li>
+                    <li><span class="highlight">Mermaid Diagrams</span> in Markdown</li>
+                    <li><span class="highlight">Reveal.js Presentations</span></li>
+                    <li><span class="highlight">Mass Actions</span></li>
+                </ol>
+            </section>
+            <section>
+                <h2>Coding Chat</h2>
+                <ul>
+                    <li>Use <span class="highlight">natural language</span> to generate code</li>
+                    <li>Supports <span class="highlight">Markdown</span> and code formatting</li>
+                    <li>Interactive <span class="highlight">code generation</span> and editing</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Editing Files with Patches</h2>
+                <ul>
+                    <li>Apply <span class="highlight">patch files</span> to codebase</li>
+                    <li>Supports <span class="highlight">diff</span> and <span class="highlight">patch</span> formats
+                    </li>
+                    <li>Automatically <span class="highlight">resolve conflicts</span></li>
+                </ul>
+            </section>
+            <section>
+                <h2>Mermaid Diagrams in Markdown</h2>
+                <ul>
+                    <li>Add <span class="highlight">Mermaid syntax</span> to Markdown files</li>
+                    <li>Use <span class="highlight">Patch Files</span> to insert diagram code</li>
+                    <li>Visualize <span class="highlight">code structure</span> and <span class="highlight">workflows</span></li>
+                    <li>Distinct from the <span class="highlight">CreateImageAction</span> for general images</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Reveal.js Presentations</h2>
+                <ul>
+                    <li>Generate <span class="highlight">presentation outlines</span> with AI</li>
+                    <li>Use <span class="highlight">CreateFileFromDescriptionAction</span> for initial structure</li>
+                    <li>Customize and refine slides with <span class="highlight">Patch Chat</span></li>
+                </ul>
+            </section>
+            <section>
+                <h2>Mass Actions</h2>
+                <ul>
+                    <li>Use <span class="highlight">GenerateDocumentationAction</span> for multiple files</li>
+                    <li>Apply <span class="highlight">MassPatchAction</span> for consistent changes</li>
+                    <li>Streamline <span class="highlight">large-scale documentation</span> efforts</li>
+                </ul>
+            </section>
+        </section>
+
+        <section>
+            <section data-auto-animate>
+                <h3>Project Generation Tools</h3>
+                <ul>
+                    <li><span class="highlight">Plan-Ahead action</span>
+                        <ul>
+                            <li>Create multi-tier applications</li>
+                            <li>Generate project structures</li>
+                        </ul>
+                    </li>
+                    <li><span class="highlight">Iterative Auto-fixing</span>
+                        <ul>
+                            <li>Use CommandAutofixAction for build/test commands</li>
+                            <li>Automatically fix issues based on command output</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section data-auto-animate>
+                <h3>Plan-Ahead Action</h3>
+                <ul>
+                    <li>Define complex tasks or project goals</li>
+                    <li>Generate step-by-step plans using AI</li>
+                    <li>Execute commands in your project's environment</li>
+                    <li>Analyze results and adjust plans dynamically</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Iterative Auto-fixing</h3>
+                <ul>
+                    <li>Run system commands and automatically fix issues</li>
+                    <li>Customize command execution and working directory</li>
+                    <li>Intelligent error handling based on exit codes</li>
+                    <li>AI-driven problem-solving for development workflow</li>
+                </ul>
+            </section>
+        </section>
+
+        <section>
+            <section>
+                <h2>Making Changes to Code</h2>
+                <ul>
+                    <li><span class="highlight">Patch Chat:</span> Interactive code modification</li>
+                    <li><span class="highlight">"Do Something" action:</span> Natural language-based code changes</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Patch Chat Example</h3>
+                <div class="code-wrapper">
+                   <pre><code class="language-diff">
+--- old.py
+@@ -1,5 +1,6 @@
+ def greet(name):
+-    print("Hello, " + name)
++    print(f"Hello, {name}!")
++    return f"Greeted {name}"
+ greet("World")
+                   </code></pre>
+                </div>
+            </section>
+            <section>
+                <h3>"Do Something" Action</h3>
+                <ul>
+                    <li>Natural language interface for code changes</li>
+                    <li>Describe desired modifications in plain English</li>
+                    <li>AI interprets and applies changes to codebase</li>
+                    <li>Useful for quick tweaks and feature additions</li>
+                </ul>
+                <div class="code-wrapper">
+                    <pre><code class="language-plaintext">
+Example: "Add error handling to the greet function"
+AI generates and applies appropriate changes
+                    </code></pre>
+                </div>
+            </section>
+        </section>
+
+        <section>
+            <h2>Troubleshooting Tips</h2>
+            <ul>
+                <li>Adjust temperature setting for creativity/randomness</li>
+                <li>Check selected model for task alignment</li>
+                <li>Provide clear, specific instructions</li>
+                <li>Break down complex tasks into smaller steps</li>
+                <li>Provide an example of your desired output</li>
+            </ul>
+        </section>
+
+        <section data-auto-animate>
+
+            <section>
+                <h2>Creating New AI Applications</h2>
+                <p>Leverage the flexibility of AI Coding Assistant to create custom AI applications:</p>
+            </section>
+            <section>
+                <h3>Actors and Actor Apps</h3>
+                <ul>
+                    <li>Define <span class="highlight">AI</span>
+                        <ul>
+                            <li>SimpleActor, CodingActor, ImageActor, etc.</li>
+                        </ul>
+                    </li>
+                    <li>Use MetaAgentApp for rapid prototyping</li>
+                </ul>
+            </section>
+            <section data-auto-animate>
+                <h3>Plan Tasks and Extensibility</h3>
+                <ul>
+                    <li>Integrate new task types for added functionality</li>
+                    <li>Develop applications with plan-based task execution</li>
+                    <li>Extend BaseActor class for custom AI actors</li>
+                </ul>
+            </section>
+        </section>
+
+        <section>
+            <h2>Q&A Session</h2>
+            <p>We'll now open the floor for questions and discussions.</p>
+            <p>Feel free to ask about:</p>
+            <ul>
+                <li>Specific features of AI Coding Assistant</li>
+                <li>Integration with existing workflows</li>
+                <li>Future developments and roadmap</li>
+            </ul>
+        </section>
+        <section>
+            <h2>Thank You!</h2>
+            <p>Explore AI Coding Assistant and enhance your development workflow</p>
+            <p>Questions? Comments? Let's discuss!</p>
+            <p><small>For more information, visit our <a href="https://github.com/SimiaCryptus/intellij-aicoder"
+                                                         target="_blank">GitHub repository</a></small></p>
+        </section>
+    </div>
+    <div class="footer">
+        AI Coding Assistant - An Open Source Project
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/zoom/zoom.min.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Plugins configuration
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes, RevealZoom],
+            navigationMode: 'linear',
+        // Additional configuration options
+        slideNumber: true,
+        progress: true,
+        transition: 'slide',
+        transitionSpeed: 'fast',
+        autoPlayMedia: true,
+        autoSlide: 0,
+        center: false,
+        controlsTutorial: true,
+        zoom: {
+                maxScale: 2.0,
+            pan: false
+        }
+    });
+</script>
+</body>
+</html>

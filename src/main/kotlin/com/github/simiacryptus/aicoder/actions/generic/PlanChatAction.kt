@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -25,8 +26,8 @@ class PlanChatAction : BaseAction() {
     override fun handle(e: AnActionEvent) {
         val dialog = PlanAheadConfigDialog(
             e.project, PlanSettings(
-                defaultModel = AppSettingsState.instance.defaultSmartModel(),
-                parsingModel = AppSettingsState.instance.defaultFastModel(),
+                defaultModel = AppSettingsState.instance.smartModel.chatModel(),
+                parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 command = listOf(
                     if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
                 ),
@@ -51,10 +52,10 @@ class PlanChatAction : BaseAction() {
                     command = listOf(
                         if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
                     ),
-                    parsingModel = AppSettingsState.instance.defaultFastModel(),
+                    parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 ),
-                model = AppSettingsState.instance.defaultSmartModel(),
-                parsingModel = AppSettingsState.instance.defaultFastModel(),
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 showMenubar = false,
                 api = api,
             )

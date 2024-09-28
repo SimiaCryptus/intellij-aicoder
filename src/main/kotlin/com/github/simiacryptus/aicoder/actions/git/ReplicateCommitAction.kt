@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -213,7 +214,7 @@ class ReplicateCommitAction : BaseAction() {
                         |   1) predict the files that need to be fixed
                         |   2) predict related files that may be needed to debug the issue
                         """.trimMargin(),
-                    model = AppSettingsState.instance.defaultSmartModel()
+                    model = AppSettingsState.instance.smartModel.chatModel()
                 ).answer(
                     listOf(
                         """
@@ -293,7 +294,7 @@ class ReplicateCommitAction : BaseAction() {
                                 
                                 |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
                             """.trimMargin(),
-                            model = AppSettingsState.instance.defaultSmartModel()
+                            model = AppSettingsState.instance.smartModel.chatModel()
                         ).answer(
                             listOf(
                                 """

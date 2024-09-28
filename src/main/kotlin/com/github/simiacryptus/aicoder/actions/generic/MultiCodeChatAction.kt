@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -103,7 +104,7 @@ class MultiCodeChatAction : BaseAction() {
                         |${codeSummary()}
                         |
                         """.trimMargin(),
-                model = AppSettingsState.instance.defaultSmartModel()
+                model = AppSettingsState.instance.smartModel.chatModel()
             )
 
         override fun userMessage(
