@@ -29,35 +29,35 @@ class GenerateRelatedFileActionTest {
 
     @Test
     fun testGenerateRelatedFile() = with(remoteRobot) {
-        speak("Welcome to the AI Coder demo. We'll convert the readme.md file into a reveal.js HTML presentation.")
+    speak("Welcome to the AI Coder demo. Today, we'll demonstrate the Generate Related File feature by converting a readme.md file into a reveal.js HTML presentation.")
         log.info("Starting testGenerateRelatedFile")
-        Thread.sleep(1000)
+        Thread.sleep(3000)
 
         step("Open project view") {
-            speak("First, let's open the project view.")
+        speak("To begin, we'll open the project view to access our files.")
             find(CommonContainerFixture::class.java, byXpath("//div[@class='ProjectViewTree']")).click()
             log.info("Project view opened")
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Select readme.md file") {
-            speak("Now, we'll select the readme.md file.")
+        speak("Next, we'll locate and select the readme.md file in our project structure.")
             val projectTree = find(JTreeFixture::class.java, byXpath("//div[@class='ProjectViewTree']"))
             projectTree.clickPath(*arrayOf("TestProject", "readme.md"), fullMatch = false)
             log.info("readme.md file selected")
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Open context menu") {
-            speak("Let's open the context menu to access the AI Coder option.")
+        speak("Now, we'll right-click to open the context menu, which contains our AI Coder options.")
             val projectTree = find(JTreeFixture::class.java, byXpath("//div[@class='ProjectViewTree']"))
             projectTree.rightClick()
             log.info("Context menu opened via right-click")
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Select 'AI Coder' menu") {
-            speak("From the context menu, we'll select the AI Coder option.")
+        speak("In the context menu, we'll navigate to and select the AI Coder option to access its features.")
             waitFor(Duration.ofSeconds(10)) {
                 try {
                     val aiCoderMenu = find(CommonContainerFixture::class.java, byXpath("//div[contains(@class, 'ActionMenu') and contains(@text, 'AI Coder')]"))
@@ -69,11 +69,11 @@ class GenerateRelatedFileActionTest {
                     false
                 }
             }
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Click 'Generate Related File' action") {
-            speak("Now, we'll choose the 'Generate Related File' action.")
+        speak("From the AI Coder menu, we'll select the 'Generate Related File' action. This powerful feature allows us to create associated files based on existing content.")
             waitFor(Duration.ofSeconds(10)) {
                 try {
                     findAll(CommonContainerFixture::class.java, byXpath("//div[contains(@class, 'ActionMenuItem') and contains(@text, 'Generate Related File')]"))
@@ -85,11 +85,11 @@ class GenerateRelatedFileActionTest {
                     false
                 }
             }
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Enter file generation directive") {
-            speak("Let's enter a directive to convert the readme into a reveal.js presentation.")
+        speak("Now, we'll provide a directive to the AI, instructing it to convert our readme into a reveal.js presentation. This showcases the AI's ability to understand complex instructions and generate appropriate content.")
             waitFor(Duration.ofSeconds(10)) {
                 try {
                     val textField = find(JTextAreaFixture::class.java, byXpath("//div[@class='JTextArea']"))
@@ -100,37 +100,39 @@ class GenerateRelatedFileActionTest {
                         }
                         enterText("Convert this readme.md into a reveal.js HTML presentation")
                     }
-                    speak("Directive entered: Convert this readme.md into a reveal.js HTML presentation")
+                speak("We've entered the following directive: Convert this readme.md into a reveal.js HTML presentation. This instructs the AI to transform our markdown content into an interactive slideshow.")
                     log.info("File generation directive entered")
-                    Thread.sleep(1000)
+                    Thread.sleep(3000)
                     val okButton = find(CommonContainerFixture::class.java, byXpath("//div[@class='JButton' and @text='Generate']"))
                     okButton.click()
                     log.info("Generate button clicked")
-                    speak("Generating the presentation file now.")
+                speak("We've initiated the generation process. The AI will now create our presentation file based on the readme content.")
                     true
                 } catch (e: Exception) {
                     log.warn("Failed to enter directive or click Generate: ${e.message}")
                     false
                 }
             }
-            Thread.sleep(2000)
+        speak("While we wait for the AI to generate our presentation, it's worth noting how this feature can save significant time in creating associated documents or code files.")
+        Thread.sleep(5000)
         }
 
         step("Verify file creation") {
-            speak("Let's verify that the presentation file has been created.")
+        speak("Finally, let's verify that our new presentation file has been successfully created.")
             waitFor(Duration.ofSeconds(20)) {
                 val projectTree = find(JTreeFixture::class.java, byXpath("//div[@class='ProjectViewTree']"))
                 projectTree.clickPath(*arrayOf("TestProject"), fullMatch = false)
                 remoteRobot.keyboard { key(KeyEvent.VK_RIGHT) }
                 val fileCreated = projectTree.hasText("presentation.html")
                 if (fileCreated) {
-                    speak("The presentation.html file has been successfully created.")
+                speak("Great! We can see that the presentation.html file has been successfully created in our project structure. This demonstrates the AI's ability to generate complex, related files from existing content.")
                 }
                 fileCreated
             }
-            Thread.sleep(1000)
+            Thread.sleep(3000)
         }
 
-        speak("This concludes our AI Coder demo. We've successfully converted the readme.md file into a reveal.js HTML presentation.")
+    speak("This concludes our AI Coder Generate Related File demo. We've successfully converted a readme.md file into a reveal.js HTML presentation, showcasing the power and flexibility of this feature. Thank you for watching, and we hope you're excited about the possibilities this opens up for your development workflow.")
+    Thread.sleep(10000)
     }
 }

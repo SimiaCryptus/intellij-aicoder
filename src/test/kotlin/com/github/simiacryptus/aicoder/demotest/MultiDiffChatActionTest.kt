@@ -48,34 +48,36 @@ class MultiDiffChatActionTest {
 
     @Test
     fun testMultiDiffChatAction() = with(remoteRobot) {
-        speak("Welcome to the AI Coder demo. We'll demonstrate the Multi-Diff Chat feature for editing files with patches.")
+    speak("Welcome to the AI Coder demo. Today, we'll be exploring the Multi-Diff Chat feature, which empowers developers to effortlessly edit files using AI-generated patches. This powerful tool streamlines the process of code modification and documentation updates.")
         log.info("Starting testMultiDiffChatAction")
-        Thread.sleep(1000)
+        Thread.sleep(2000)
 
         step("Open project view") {
+        speak("Let's begin by opening the project view to access our files. This is where we'll select the file we want to modify using the Multi-Diff Chat feature.")
             find(CommonContainerFixture::class.java, byXpath("//div[@class='ProjectViewTree']")).click()
             log.info("Project view opened")
+            Thread.sleep(2000)
         }
 
         step("Select readme.md file") {
-            speak("Now, we'll select the readme.md file to start a multi-diff chat.")
+        speak("Now, we'll select the readme.md file. We're choosing this file because it's a perfect candidate for demonstrating how AI can assist in improving project documentation.")
             val projectTree = find(JTreeFixture::class.java, byXpath("//div[@class='ProjectViewTree']"))
             projectTree.clickPath(*arrayOf("TestProject", "readme.md"), fullMatch = false)
             log.info("readme.md file selected")
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Open context menu") {
-            speak("Now, we'll open the context menu to access the AI Coder option.")
+        speak("To access the AI Coder options, we'll open the context menu by right-clicking on the selected file. Notice how easily we can integrate AI capabilities into our existing workflow.")
             val projectTree = find(JTreeFixture::class.java, byXpath("//div[@class='ProjectViewTree']"))
             projectTree.rightClick()
             log.info("Context menu opened via right-click")
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Select 'AI Coder' menu") {
-            speak("From the context menu, we'll select the AI Coder option.")
-            waitFor(Duration.ofSeconds(10)) {
+        speak("In the context menu, we'll locate and select the AI Coder option. This will reveal additional AI-powered features that can significantly enhance our productivity.")
+            waitFor(Duration.ofSeconds(15)) {
                 try {
                     val aiCoderMenu = find(CommonContainerFixture::class.java, byXpath("//div[contains(@class, 'ActionMenu') and contains(@text, 'AI Coder')]"))
                     aiCoderMenu.click()
@@ -83,15 +85,16 @@ class MultiDiffChatActionTest {
                     true
                 } catch (e: Exception) {
                     log.warn("Failed to find or click 'AI Coder' menu: ${e.message}")
+                speak("We've encountered a small hiccup in locating the AI Coder menu. Don't worry, this can happen occasionally. Let's give it another try.")
                     false
                 }
             }
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Click 'Patch Files' action") {
-            speak("Now, we'll choose the 'Patch Files' action to start editing with patches.")
-            waitFor(Duration.ofSeconds(10)) {
+        speak("From the AI Coder submenu, we'll choose the 'Patch Files' action. This powerful tool allows us to initiate the Multi-Diff Chat feature for editing our readme.md file, demonstrating how AI can assist in code and documentation improvements.")
+            waitFor(Duration.ofSeconds(15)) {
                 try {
                     findAll(CommonContainerFixture::class.java, byXpath("//div[contains(@class, 'ActionMenuItem') and contains(@text, 'Patch Files')]"))
                         .firstOrNull()?.click()
@@ -99,26 +102,31 @@ class MultiDiffChatActionTest {
                     true
                 } catch (e: Exception) {
                     log.warn("Failed to find 'Patch Files' action: ${e.message}")
+                speak("We're encountering a minor issue finding the 'Patch Files' action. In a real-world scenario, we might check our plugin installation or refresh the IDE. Let's give it another moment.")
                     false
                 }
             }
-            Thread.sleep(1000)
+            Thread.sleep(2000)
         }
 
         step("Get URL from UDP messages") {
+        speak("The Multi-Diff Chat interface is now opening in a new browser window. Let's switch our attention to that window, where we'll interact with the AI to improve our readme file.")
             val messages = getReceivedMessages()
             val url = messages.firstOrNull { it.startsWith("http") }
             if (url != null) {
                 log.info("Retrieved URL: $url")
+            speak("Excellent! We've successfully retrieved the URL for the Multi-Diff Chat interface. This demonstrates the seamless integration between our IDE and the AI-powered chat interface.")
                 val options = ChromeOptions()
                 options.addArguments("--start-fullscreen")
                 driver = ChromeDriver(options)
                 (driver as JavascriptExecutor).executeScript("document.body.style.zoom='150%'")
                 driver.get(url)
+            speak("The browser window has opened, and we're now viewing the Multi-Diff Chat interface.")
                 val wait = WebDriverWait(this@MultiDiffChatActionTest.driver, Duration.ofSeconds(10))
                 val chatInput = wait.until<WebElement>(ExpectedConditions.elementToBeClickable(By.id("chat-input")))
                 chatInput.click()
-                speak("Now, let's type our request to add Mermaid syntax to the readme.md file.")
+            speak("Now, let's type our request to add a Mermaid diagram to the readme.md file. Mermaid is a markdown-based syntax for creating diagrams, which can greatly enhance our project documentation. Watch how easily we can instruct the AI to make this improvement.")
+                Thread.sleep(2000)
                 val request = "Add a Mermaid diagram to the readme.md file showing the basic structure of this project"
                 request.forEach { char ->
                     chatInput.sendKeys(char.toString())
@@ -126,50 +134,52 @@ class MultiDiffChatActionTest {
                 }
                 Thread.sleep(2000) // Pause after typing the full request
                 val submitButton = wait.until<WebElement>(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']")))
-                speak("Submitting our request to the AI.")
+            speak("Now that we've typed our request, let's submit it to the AI by clicking the submit button. This will initiate the AI's analysis and generation of the appropriate patch.")
                 log.info("Submitting request to AI")
                 submitButton.click()
-                Thread.sleep(2000) // Short pause after clicking submit
-                speak("Waiting for the AI to generate a patch.")
+                Thread.sleep(3000) // Longer pause after clicking submit
+            speak("We've submitted our request. Now, we'll wait for the AI to generate a patch. This process typically takes just a few moments. While we wait, it's worth noting how this feature can significantly speed up the process of adding complex elements like diagrams to our documentation.")
                 // Wait for the response to be generated with a longer timeout
                 val longWait = WebDriverWait(this@MultiDiffChatActionTest.driver, Duration.ofSeconds(60))
                 try {
                     val patchContent = longWait.until<WebElement>(ExpectedConditions.presenceOfElementLocated(By.xpath("//pre[contains(@class, 'language-diff')]")))
-                    speak("The AI has generated a patch. Let's review it.")
+                speak("Great! The AI has generated a patch. Let's take a moment to review the proposed changes.")
                     log.info("Patch generated: ${patchContent.text}")
+                    Thread.sleep(3000)
                     
                     // Simulate clicking the "Apply Diff" button
                     val applyButton = longWait.until<WebElement>(ExpectedConditions.elementToBeClickable(By.xpath("//a[contains(@class, 'cmd-button') and contains(text(), 'Apply Diff')]")))
-                    speak("Now, we'll apply the diff to our readme.md file.")
+                speak("The patch looks good. Now, let's apply this diff to our readme.md file by clicking the 'Apply Diff' button. This action will automatically update our file with the new Mermaid diagram.")
                     applyButton.click()
-                    Thread.sleep(2000) // Wait for the apply action to complete
+                    Thread.sleep(3000) // Wait for the apply action to complete
                     
-                    speak("The diff has been applied. Let's verify the changes.")
+                speak("The diff has been applied successfully. To confirm the changes and demonstrate the immediate impact of our AI-assisted edit, let's switch back to our IDE and verify the contents of the readme.md file.")
                     // Close the browser window
                     this@MultiDiffChatActionTest.driver.close()
-                    speak("We've closed the browser window.")
+                speak("We've closed the Multi-Diff Chat browser window and returned to our IDE. Notice how seamlessly we transition between the AI interface and our development environment.")
                     // Verify that the file was changed
                     val projectViewTree = find(JTreeFixture::class.java, byXpath("//div[@class='ProjectViewTree']"))
                     projectViewTree.doubleClickPath(*arrayOf("TestProject", "readme.md"), fullMatch = false)
                     val editor = find<CommonContainerFixture>(byXpath("//div[@class='EditorComponentImpl']"))
                     val fileContent = editor.findAllText().joinToString("") { it.text }
                     assertTrue(fileContent.contains("```mermaid"), "The readme.md file should contain a Mermaid diagram")
-                    speak("We've verified that the readme.md file now contains a Mermaid diagram.")
+                speak("Excellent! We've verified that the readme.md file now contains a Mermaid diagram. The Multi-Diff Chat feature has successfully added the requested content to our file.")
+                    Thread.sleep(3000)
                 } catch (e: Exception) {
                     log.warn("Failed to generate or apply patch: ${e.message}")
-                    speak("There was an issue generating or applying the patch. Please check the logs for more information.")
+                speak("We've encountered an unexpected issue while generating or applying the patch. Don't worry, this can happen occasionally. In a real-world scenario, we might try the process again or check the logs for more detailed information. This demonstrates the importance of error handling in AI-assisted workflows.")
                 }
 
-                Thread.sleep(2000) // Wait for the final actions to complete
-                speak("We've successfully demonstrated how to use the Multi-Diff Chat feature to add a Mermaid diagram to our readme.md file and verified the changes.")
+            speak("This concludes our demonstration of the Multi-Diff Chat feature. We've successfully used AI to add a Mermaid diagram to our readme.md file, showcasing how this powerful tool can streamline documentation updates and code modifications. The ability to quickly generate and apply complex changes like this can significantly enhance productivity and code quality in your development workflow.")
                 this@MultiDiffChatActionTest.driver.quit()
             } else {
                 log.error("No URL found in UDP messages")
-                speak("Failed to retrieve the URL.")
+            speak("We've encountered an issue retrieving the URL for the Multi-Diff Chat interface. This is an unexpected error that would require further investigation in a real-world scenario. It's a good reminder of the importance of robust error handling and logging in AI-integrated development tools.")
             }
             clearMessageBuffer()
         }
 
-        speak("This concludes our AI Coder Multi-Diff Chat demo. We've shown how to apply patches to the codebase and add Mermaid syntax to Markdown files.")
+    speak("Thank you for joining us for this AI Coder Multi-Diff Chat demo. We've demonstrated how to efficiently apply AI-generated patches to our codebase and enhance our documentation with Mermaid diagrams. This feature exemplifies how AI can be seamlessly integrated into the development process, significantly improving productivity and code quality. By automating complex tasks like diagram creation, developers can focus more on core functionality and creative problem-solving. We hope this demonstration has shown the potential of AI-assisted coding in revolutionizing your development workflow.")
+    Thread.sleep(10000) // Final sleep of 10 seconds
     }
 }
