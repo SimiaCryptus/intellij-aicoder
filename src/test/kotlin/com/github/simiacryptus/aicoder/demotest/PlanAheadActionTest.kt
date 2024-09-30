@@ -24,6 +24,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 
@@ -128,9 +129,12 @@ class PlanAheadActionTest {
             val url = messages.firstOrNull { it.startsWith("http") }
             if (url != null) {
                 log.info("Retrieved URL: $url")
-                this@PlanAheadActionTest.driver = ChromeDriver()
-                this@PlanAheadActionTest.driver.get(url)
-                val wait = WebDriverWait(this@PlanAheadActionTest.driver, Duration.ofSeconds(10))
+                val options = ChromeOptions()
+                options.addArguments("--start-fullscreen")
+                driver = ChromeDriver(options)
+                (driver as JavascriptExecutor).executeScript("document.body.style.zoom='150%'")
+                driver.get(url)
+                val wait = WebDriverWait(this@PlanAheadActionTest.driver, Duration.ofSeconds(90))
                 val chatInput = wait.until<WebElement>(ExpectedConditions.elementToBeClickable(By.id("chat-input")))
                 speak("Now, let's interact with the Task Runner interface.")
                 Thread.sleep(2000)

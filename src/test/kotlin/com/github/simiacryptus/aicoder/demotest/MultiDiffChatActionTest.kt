@@ -24,6 +24,8 @@ import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.chrome.ChromeOptions
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MultiDiffChatActionTest {
@@ -108,8 +110,11 @@ class MultiDiffChatActionTest {
             val url = messages.firstOrNull { it.startsWith("http") }
             if (url != null) {
                 log.info("Retrieved URL: $url")
-                this@MultiDiffChatActionTest.driver = ChromeDriver()
-                this@MultiDiffChatActionTest.driver.get(url)
+                val options = ChromeOptions()
+                options.addArguments("--start-fullscreen")
+                driver = ChromeDriver(options)
+                (driver as JavascriptExecutor).executeScript("document.body.style.zoom='150%'")
+                driver.get(url)
                 val wait = WebDriverWait(this@MultiDiffChatActionTest.driver, Duration.ofSeconds(10))
                 val chatInput = wait.until<WebElement>(ExpectedConditions.elementToBeClickable(By.id("chat-input")))
                 chatInput.click()

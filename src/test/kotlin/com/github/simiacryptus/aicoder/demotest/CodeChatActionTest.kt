@@ -1,5 +1,6 @@
 package com.github.simiacryptus.aicoder.demotest
 
+import com.github.simiacryptus.aicoder.demotest.CommandAutofixActionTest
 import com.github.simiacryptus.aicoder.demotest.TestUtil.speak
 import com.github.simiacryptus.aicoder.demotest.TestUtil.startUdpServer
 import com.github.simiacryptus.aicoder.demotest.TestUtil.stopUdpServer
@@ -28,6 +29,8 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.testng.asserts.SoftAssert
 import org.junit.jupiter.api.Assertions
+import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.chrome.ChromeOptions
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CodeChatActionTest {
@@ -125,8 +128,11 @@ class CodeChatActionTest {
             val url = messages.firstOrNull { it.startsWith("http") }
             if (url != null) {
                 log.info("Retrieved URL: $url")
-                this@CodeChatActionTest.driver = ChromeDriver()
-                this@CodeChatActionTest.driver.get(url)
+                val options = ChromeOptions()
+                options.addArguments("--start-fullscreen")
+                driver = ChromeDriver(options)
+                (driver as JavascriptExecutor).executeScript("document.body.style.zoom='150%'")
+                driver.get(url)
                 val wait = WebDriverWait(this@CodeChatActionTest.driver, Duration.ofSeconds(10))
                 val chatInput = wait.until<WebElement>(ExpectedConditions.elementToBeClickable(By.id("chat-input")))
                 val longWait = WebDriverWait(this@CodeChatActionTest.driver, Duration.ofSeconds(60))

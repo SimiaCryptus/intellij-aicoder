@@ -23,7 +23,6 @@ import java.io.File
 import java.nio.file.Files
 import javax.swing.*
 import kotlin.collections.set
-import kotlin.streams.toList
 
 class CommandAutofixAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT

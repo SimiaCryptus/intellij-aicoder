@@ -33,7 +33,6 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.*
-import kotlin.streams.toList
 
 
 class GenerateDocumentationAction : FileContextAction<GenerateDocumentationAction.Settings>() {

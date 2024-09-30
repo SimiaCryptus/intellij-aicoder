@@ -3,13 +3,13 @@ package com.github.simiacryptus.aicoder.actions.generic
 import ai.grazie.utils.dropPrefix
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.config.Name
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.ApiModel.*
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import java.io.File
 import javax.swing.JTextArea

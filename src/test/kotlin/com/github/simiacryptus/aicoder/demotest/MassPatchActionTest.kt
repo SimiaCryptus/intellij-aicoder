@@ -23,6 +23,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 
@@ -125,8 +126,11 @@ class MassPatchActionTest {
             val url = messages.firstOrNull { it.startsWith("http") }
             if (url != null) {
                 log.info("Retrieved URL: $url")
-                this@MassPatchActionTest.driver = ChromeDriver()
-                this@MassPatchActionTest.driver.get(url)
+                val options = ChromeOptions()
+                options.addArguments("--start-fullscreen")
+                driver = ChromeDriver(options)
+                (driver as JavascriptExecutor).executeScript("document.body.style.zoom='150%'")
+                driver.get(url)
                 val wait = WebDriverWait(this@MassPatchActionTest.driver, Duration.ofSeconds(10))
                 wait.until<Boolean> {
                     val loadingElements = it.findElements(By.xpath("//span[contains(@class, 'sr-only') and contains(text(), 'Loading')]"))

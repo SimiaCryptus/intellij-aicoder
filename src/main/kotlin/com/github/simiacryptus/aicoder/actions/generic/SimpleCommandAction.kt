@@ -37,7 +37,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.walk
-import kotlin.streams.toList
 
 class SimpleCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
