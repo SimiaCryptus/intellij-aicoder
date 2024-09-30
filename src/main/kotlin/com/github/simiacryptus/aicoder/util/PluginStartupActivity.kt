@@ -19,7 +19,7 @@ class PluginStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         // Check if this is the first run after installation
         try {
-            ApplicationServicesConfig.dataStorageRoot = ApplicationServicesConfig.dataStorageRoot.resolve("intellij")
+            //ApplicationServicesConfig.dataStorageRoot = ApplicationServicesConfig.dataStorageRoot.resolve("intellij")
             val currentThread = Thread.currentThread()
             val prevClassLoader = currentThread.contextClassLoader
             try {

@@ -7,6 +7,7 @@ import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -33,7 +34,6 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import org.slf4j.LoggerFactory
-import java.awt.Desktop
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -112,7 +112,7 @@ class ReplicateCommitAction : BaseAction() {
                 val server = AppServer.getServer(event.project)
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }

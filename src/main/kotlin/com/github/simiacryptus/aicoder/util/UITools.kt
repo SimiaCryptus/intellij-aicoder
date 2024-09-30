@@ -4,6 +4,7 @@
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.google.common.util.concurrent.*
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -805,7 +806,7 @@ object UITools {
 
                 val openAccountButton = JXButton("Open Account Page")
                 openAccountButton.addActionListener {
-                    Desktop.getDesktop().browse(URI("https://platform.openai.com/account/api-keys"))
+                    browse(URI("https://platform.openai.com/account/api-keys"))
                 }
                 formBuilder.addLabeledComponent("OpenAI Account", openAccountButton)
 
@@ -920,7 +921,7 @@ object UITools {
 
                 val openButton = JXButton("Open New Issue on our Github page")
                 openButton.addActionListener {
-                    Desktop.getDesktop().browse(URI("https://github.com/SimiaCryptus/intellij-aicoder/issues/new"))
+                    browse(URI("https://github.com/SimiaCryptus/intellij-aicoder/issues/new"))
                 }
                 formBuilder.addLabeledComponent("Report Issue/Request Help", openButton)
 

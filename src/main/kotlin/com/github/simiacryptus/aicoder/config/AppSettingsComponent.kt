@@ -170,6 +170,10 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     @Suppress("unused")
     @Name("Edit API Requests")
     val editRequests = JBCheckBox()
+    @Suppress("unused")
+    @Name("Disable Auto-Open URLs")
+    val disableAutoOpenUrls = JBCheckBox()
+
 
     @Suppress("unused")
     @Name("Plugin Home")

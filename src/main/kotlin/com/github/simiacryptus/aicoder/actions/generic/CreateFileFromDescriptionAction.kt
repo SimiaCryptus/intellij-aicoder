@@ -1,19 +1,47 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
+import ai.grazie.utils.dropPrefix
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.config.Name
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.ApiModel.*
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import java.io.File
+import javax.swing.JTextArea
 
 class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescriptionAction.Settings>(false, true) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     class ProjectFile(var path: String = "", var code: String = "")
 
-    class Settings(var directive: String = "")
+    class SettingsUI {
+        @Name("Directive")
+        var directive: JTextArea = JTextArea(
+            """
+            Create a new file
+            """.trimIndent(),
+            3,
+            120
+        )
+    }
+    class Settings(
+        var directive: String = "",
+        val project: Project? = null
+    )
+    override fun getConfig(project: Project?, e: AnActionEvent): Settings {
+        val userSettings = UITools.showDialog(
+            project,
+            SettingsUI::class.java,
+            Settings::class.java,
+            "Create File From Description"
+        )
+        return Settings(userSettings?.directive ?: "", project)
+    }
 
     override fun processSelection(
         state: SelectionState,
@@ -26,7 +54,7 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         val moduleRoot = projectRoot.resolve(pathSegments.take(updirSegments.size * 2).joinToString("/"))
         val filePath = pathSegments.drop(updirSegments.size * 2).joinToString("/")
 
-        val generatedFile = generateFile(filePath, config?.directive ?: "")
+        val generatedFile = generateFile(filePath, config?.directive ?: "Create a new file")
 
         var path = generatedFile.path
         var outputPath = moduleRoot.resolve(path)
@@ -37,7 +65,9 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
                 !File("$name.$it.$extension").exists()
             }
             path = "$name.$fileIndex.$extension"
-            outputPath = projectRoot.resolve(path)
+            outputPath = moduleRoot.resolve(path)
+        } else {
+            outputPath = moduleRoot.resolve(path)
         }
         outputPath.parent.toFile().mkdirs()
         outputPath.toFile().writeText(generatedFile.code)
@@ -79,11 +109,7 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         ).choices.first().message?.content?.trim() ?: ""
         var outputPath = basePath
         val header = response.lines().first()
-        var body = response.lines().drop(1).joinToString("\n").trim()
-        if (body.startsWith("```")) {
-            // Remove beginning ``` (optionally ```language) and ending ```
-            body = body.split("\n").drop(1).joinToString("\n").trim()
-        }
+        var body = response.lines().drop(1).joinToString("\n").trim().lines().dropWhile { it.startsWith("```") }.dropLastWhile { it.startsWith("```") }.joinToString("\n")
         val pathPattern = """File(?:name)?: ['`"]?([^'`"]+)['`"]?""".toRegex()
         if (pathPattern.matches(header)) {
             val match = pathPattern.matchEntire(header)!!

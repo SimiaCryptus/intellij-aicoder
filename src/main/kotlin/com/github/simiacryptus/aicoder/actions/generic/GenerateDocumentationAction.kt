@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
@@ -289,24 +290,29 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             settingsUI.transformationMessage.text = userSettings.transformationMessage
             settingsUI.outputFilename.text = userSettings.outputFilename
             settingsUI.outputDirectory.text = userSettings.outputDirectory
+       settingsUI.singleOutputFile.isSelected = userSettings.singleOutputFile
             init()
         }
 
         override fun createCenterPanel(): JComponent {
             val panel = JPanel(BorderLayout()).apply {
                 val filesScrollPane = JBScrollPane(settingsUI.filesToProcess).apply {
-                    preferredSize = Dimension(400, 300) // Adjust the preferred size as needed
+               preferredSize = Dimension(600, 400) // Increase the size for better visibility
                 }
                 add(filesScrollPane, BorderLayout.CENTER) // Make the files list the dominant element
 
                 val optionsPanel = JPanel().apply {
                     layout = BoxLayout(this, BoxLayout.Y_AXIS)
+               border = BorderFactory.createEmptyBorder(10, 10, 10, 10) // Add some padding
                     add(JLabel("AI Instruction"))
                     add(settingsUI.transformationMessage)
+               add(Box.createVerticalStrut(10)) // Add some vertical spacing
                     add(JLabel("Output File"))
                     add(settingsUI.outputFilename)
+               add(Box.createVerticalStrut(10))
                     add(JLabel("Output Directory"))
                     add(settingsUI.outputDirectory)
+               add(Box.createVerticalStrut(10))
                     add(settingsUI.singleOutputFile)
                 }
                 add(optionsPanel, BorderLayout.SOUTH)
@@ -315,6 +321,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         }
 
         override fun doOKAction() {
+       if (!validateInput()) {
+           return
+       }
             super.doOKAction()
             userSettings.transformationMessage = settingsUI.transformationMessage.text
             userSettings.outputFilename = settingsUI.outputFilename.text
@@ -325,6 +334,21 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                 settingsUI.filesToProcess.items.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }
             userSettings.singleOutputFile = settingsUI.singleOutputFile.isSelected
         }
+   private fun validateInput(): Boolean {
+       if (settingsUI.transformationMessage.text.isBlank()) {
+           Messages.showErrorDialog("AI Instruction cannot be empty", "Input Error")
+           return false
+       }
+       if (settingsUI.outputFilename.text.isBlank()) {
+           Messages.showErrorDialog("Output File cannot be empty", "Input Error")
+           return false
+       }
+       if (settingsUI.outputDirectory.text.isBlank()) {
+           Messages.showErrorDialog("Output Directory cannot be empty", "Input Error")
+           return false
+       }
+       return true
+   }
     }
 }
 

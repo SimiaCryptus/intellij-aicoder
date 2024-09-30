@@ -8,13 +8,16 @@ fun environment(key: String) = providers.environmentVariable(key).get()
 
 plugins {
     id("java") // Java support
-    id("org.jetbrains.kotlin.jvm") version "2.0.20"
+    kotlin("jvm") version "2.0.20"
     id("org.jetbrains.intellij") version "1.17.2"
     id("org.jetbrains.changelog") version "2.2.0"
     id("org.jetbrains.qodana") version "2023.2.1"
     id("org.jetbrains.kotlinx.kover") version "0.7.4"
     id("org.jetbrains.dokka") version "1.9.10"
+    kotlin("plugin.jpa") version "2.0.20"
+    kotlin("plugin.allopen") version "2.0.20"
 }
+
 
 group = "com.github.simiacryptus"
 version = properties("pluginVersion")
@@ -30,42 +33,29 @@ val kotlin_version = "2.0.20" // This line can be removed if not used elsewhere
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
 val skyenet_version = "1.2.6"
-val remoterobot_version = "0.11.21"
+val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
 dependencies {
+    testImplementation("org.seleniumhq.selenium:selenium-java:4.15.0")
+    testImplementation("org.testng:testng:7.8.0")
     implementation("software.amazon.awssdk:bedrock:2.25.7")
     implementation("software.amazon.awssdk:bedrockruntime:2.25.7")
 
     implementation("org.apache.commons:commons-text:1.11.0")
-
-    implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
+    implementation(group = "com.vladsch.flexmark", name = "flexmark-all", version = "0.64.8")
+    implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
+    implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
     implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.5")
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
-
+    implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
-
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
 
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jackson_version)
 
-    implementation(group = "com.vladsch.flexmark", name = "flexmark-all", version = "0.64.8")
-    implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
-    implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-annotations", version = jetty_version)
@@ -74,7 +64,6 @@ dependencies {
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
-    runtimeOnly(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = remoterobot_version)
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = remoterobot_version)
@@ -87,18 +76,28 @@ dependencies {
 
     testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
 
-    testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = "5.10.1")
-    testRuntimeOnly(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = "5.10.1")
-
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
 
 }
 
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 tasks {
+    buildSearchableOptions {
+        enabled = false
+    }
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+    }
     val dokkaHtml by getting(DokkaTask::class) {
         outputDirectory.set(file("docs/api"))
     }
@@ -128,20 +127,18 @@ For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG
         }
     }
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
-
-    compileKotlin {
         compilerOptions {
-            javaParameters = true
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 
-    compileTestKotlin {
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         compilerOptions {
-            javaParameters = true
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            javaParameters.set(true)
         }
     }
+
 
     wrapper {
         gradleVersion = properties("gradleVersion")
@@ -195,7 +192,6 @@ For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG
     publishPlugin {
         dependsOn("patchChangelog")
         token.set(System.getenv("PUBLISH_TOKEN"))
-//        channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
     }
 }
 

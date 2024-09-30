@@ -7,6 +7,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -32,7 +33,6 @@ import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import java.awt.BorderLayout
-import java.awt.Desktop
 import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
@@ -113,7 +113,7 @@ class MassPatchAction : BaseAction() {
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }

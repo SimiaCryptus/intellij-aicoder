@@ -2,22 +2,16 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction.Companion
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
-import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.skyenet.apps.coding.CodingAgent
 import com.simiacryptus.skyenet.core.actors.CodingActor
-import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.User
@@ -25,14 +19,7 @@ import com.simiacryptus.skyenet.interpreter.ProcessInterpreter
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.webui.session.SocketManager
-import java.awt.Desktop
-import java.awt.GridLayout
-import java.io.File
-import javax.swing.*
-import kotlin.reflect.KClass
 
 class ShellCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -144,7 +131,7 @@ class ShellCommandAction : BaseAction() {
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }

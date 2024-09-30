@@ -11,6 +11,7 @@ import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Pars
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.analysis.problemsView.toolWindow.ProblemNode
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -37,7 +38,6 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
-import java.awt.Desktop
 import javax.swing.JOptionPane
 
 class AnalyzeProblemAction : AnAction() {
@@ -109,7 +109,7 @@ class AnalyzeProblemAction : AnAction() {
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }

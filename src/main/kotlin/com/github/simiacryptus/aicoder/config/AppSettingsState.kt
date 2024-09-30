@@ -30,6 +30,7 @@ data class AppSettingsState(
     var apiLog: Boolean = false,
     var devActions: Boolean = false,
     var editRequests: Boolean = false,
+    var disableAutoOpenUrls: Boolean = false,
     var pluginHome: File = run {
         var logPath = System.getProperty("idea.plugins.path")
         if (logPath == null) {

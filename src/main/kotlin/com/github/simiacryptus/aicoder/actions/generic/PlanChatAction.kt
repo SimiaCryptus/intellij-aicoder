@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.skyenet.apps.general.PlanChatApp
@@ -15,7 +16,6 @@ import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
-import java.awt.Desktop
 import kotlin.collections.set
 
 class PlanChatAction : BaseAction() {
@@ -77,7 +77,7 @@ class PlanChatAction : BaseAction() {
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 LoggerFactory.getLogger(PlanChatAction::class.java).warn("Error opening browser", e)
             }

@@ -65,9 +65,7 @@ open class ActionTestBase {
             AppSettingsState.instance.apiKey = ClientUtil.keyMap.mapKeys { it.key }.toMutableMap()
             AppSettingsState.instance.temperature = 0.0
             AppSettingsState.instance.smartModel = OpenAIModels.GPT4oMini.name
-            val input =
-                selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8)
-                    ?: ""
+            val input = selectionAction.javaClass.getResourceAsStream(scriptPath)?.readAllBytes()?.toString(Charsets.UTF_8) ?: ""
             var lastException: Throwable? = null
             MarkdownProcessor.parse(input).forEach { markdownData ->
                 val configSection = markdownData.sections.find { it.title.lowercase() == "config" }
