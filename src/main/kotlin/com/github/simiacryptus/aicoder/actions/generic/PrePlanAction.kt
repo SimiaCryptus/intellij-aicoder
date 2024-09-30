@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -53,8 +54,8 @@ class PrePlanAction : BaseAction() {
             DataStorage.sessionPaths[session] = root
 
             var planSettings = PlanSettings(
-                defaultModel = AppSettingsState.instance.defaultSmartModel(),
-                parsingModel = AppSettingsState.instance.defaultFastModel(),
+                defaultModel = AppSettingsState.instance.smartModel.chatModel(),
+                parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 command = listOf(
                     if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
                 ),
@@ -69,8 +70,8 @@ class PrePlanAction : BaseAction() {
             }
             SessionProxyServer.chats[session] = PlanAheadApp(
                 planSettings = planSettings,
-                model = AppSettingsState.instance.defaultSmartModel(),
-                parsingModel = AppSettingsState.instance.defaultFastModel(),
+                model = AppSettingsState.instance.smartModel.chatModel(),
+                parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 showMenubar = false,
                 initialPlan = taskBreakdownWithPrompt,
                 api = api,

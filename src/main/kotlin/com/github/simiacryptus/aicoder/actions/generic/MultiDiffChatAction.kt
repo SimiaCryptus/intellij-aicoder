@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -151,7 +152,7 @@ class MultiDiffChatAction : BaseAction() {
                     |
                     |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
                     """.trimMargin(),
-                model = AppSettingsState.instance.defaultSmartModel()
+                model = AppSettingsState.instance.smartModel.chatModel()
             )
             val settings = getSettings(session, user) ?: Settings()
             if (api is ChatClient) api.budget = settings.budget ?: 2.00

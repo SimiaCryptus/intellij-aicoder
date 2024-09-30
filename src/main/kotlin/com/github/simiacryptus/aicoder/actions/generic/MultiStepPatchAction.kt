@@ -4,6 +4,7 @@ import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -97,7 +98,7 @@ class MultiStepPatchAction : BaseAction() {
                 user = user,
                 ui = ui,
                 model = settings.model!!,
-                parsingModel = AppSettingsState.instance.defaultFastModel(),
+                parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 event = event,
             ).start(
                 userMessage = userMessage,
@@ -107,7 +108,7 @@ class MultiStepPatchAction : BaseAction() {
         data class Settings(
             val budget: Double? = 2.00,
             val tools: List<String> = emptyList(),
-            val model: ChatModels? = AppSettingsState.instance.defaultSmartModel(),
+            val model: ChatModels? = AppSettingsState.instance.smartModel.chatModel(),
         )
 
         override val settingsClass: Class<*> get() = Settings::class.java

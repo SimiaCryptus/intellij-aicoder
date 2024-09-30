@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.execution.testframework.AbstractTestProxy
@@ -217,7 +218,7 @@ class TestResultAutofixAction : BaseAction() {
                            1) predict the files that need to be fixed
                            2) predict related files that may be needed to debug the issue
                         """.trimIndent(),
-                        model = AppSettingsState.instance.defaultSmartModel()
+                        model = AppSettingsState.instance.smartModel.chatModel()
                     ).answer(listOf(testInfo), api = IdeaChatClient.instance)
 
                     task.add(AgentPatterns.displayMapInTabs(
@@ -281,7 +282,7 @@ $projectStructure
                 The diff format should use + for line additions, - for line deletions.
                 The diff should include 2 lines of context before and after every change.
                 """.trimIndent(),
-                model = AppSettingsState.instance.defaultSmartModel()
+                model = AppSettingsState.instance.smartModel.chatModel()
             ).answer(listOf(error.message ?: ""), api = IdeaChatClient.instance)
 
             var markdown = ui.socketManager?.addApplyFileDiffLinks(

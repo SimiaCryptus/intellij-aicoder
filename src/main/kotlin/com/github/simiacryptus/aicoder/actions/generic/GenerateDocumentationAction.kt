@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.getProjectStructure
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -33,6 +33,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.*
+import kotlin.streams.toList
 
 
 class GenerateDocumentationAction : FileContextAction<GenerateDocumentationAction.Settings>() {
@@ -214,7 +215,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
 
     private fun transformContent(path: Path, fileContent: String, transformationMessage: String) = api.chat(
         ApiModel.ChatRequest(
-            model = AppSettingsState.instance.smartModel.chatModel().modelName,
+            model = AppSettingsState.instance.smartModel,
             temperature = AppSettingsState.instance.temperature,
             messages = listOf(
                 ApiModel.ChatMessage(
