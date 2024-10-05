@@ -2,9 +2,9 @@ import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinTest
 
 fun properties(key: String) = providers.gradleProperty(key).get()
-fun environment(key: String) = providers.environmentVariable(key).get()
 
 plugins {
     id("java") // Java support
@@ -14,8 +14,6 @@ plugins {
     id("org.jetbrains.qodana") version "2023.2.1"
     id("org.jetbrains.kotlinx.kover") version "0.7.4"
     id("org.jetbrains.dokka") version "1.9.10"
-    kotlin("plugin.jpa") version "2.0.20"
-    kotlin("plugin.allopen") version "2.0.20"
 }
 
 
@@ -29,7 +27,7 @@ repositories {
 }
 
 
-val kotlin_version = "2.0.20" // This line can be removed if not used elsewhere
+val kotlin_version = "2.0.20" // This is now defined in the plugins block
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
 val skyenet_version = "1.2.7"
@@ -37,6 +35,8 @@ val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
 dependencies {
+    testImplementation(sourceSets.main.get().output)
+    implementation("ch.randelshofer:org.monte.media.screenrecorder:17.1")
     testImplementation("org.seleniumhq.selenium:selenium-java:4.15.0")
     testImplementation("org.testng:testng:7.8.0")
     implementation("software.amazon.awssdk:bedrock:2.25.7")
@@ -47,7 +47,7 @@ dependencies {
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.6")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.7")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
@@ -83,12 +83,65 @@ dependencies {
 
 
 kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+    jvmToolchain(17)
+}
+sourceSets {
+    main {
+        kotlin {
+            srcDirs("src/main/kotlin")
+        }
+    }
+    test {
+        kotlin {
+            srcDirs("src/test/kotlin")
+        }
+    }
+}
+tasks.named("compileKotlin", KotlinCompile::class) {
+    compilerOptions {
+        moduleName.set("com.github.simiacryptus.aicoder")
+    }
+}
+tasks.named("compileTestKotlin", KotlinCompile::class) {
+    compilerOptions {
+        moduleName.set("com.github.simiacryptus.aicoder.test")
+    }
+}
+
+java {
+    sourceSets {
+        main {
+            java {
+                srcDirs("src/main/java")
+            }
+        }
+        test {
+            java {
+                srcDirs("src/test/java")
+            }
+        }
+
     }
 }
 
 tasks {
+    compileJava {
+        dependsOn(compileKotlin)
+        doFirst {
+            options.compilerArgs = listOf(
+                "--module-path", classpath.asPath
+            )
+        }
+    }
+
+    compileKotlin {
+        destinationDirectory.set(compileJava.get().destinationDirectory)
+    }
+
+    jar {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
     buildSearchableOptions {
         enabled = false
     }
@@ -97,9 +150,7 @@ tasks {
         testLogging {
             events("passed", "skipped", "failed")
         }
-    }
-    val dokkaHtml by getting(DokkaTask::class) {
-        outputDirectory.set(file("docs/api"))
+        classpath = sourceSets.test.get().runtimeClasspath
     }
 
     register<Copy>("copyReadmeToSite") {
@@ -129,16 +180,10 @@ For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG
     withType<KotlinCompile> {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
-    }
-
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             javaParameters.set(true)
+            moduleName.set("com.github.simiacryptus.aicoder.test")
         }
     }
-
 
     wrapper {
         gradleVersion = properties("gradleVersion")

@@ -46,7 +46,6 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
-import javax.script.ScriptException
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.max
@@ -838,42 +837,6 @@ object UITools {
                     formBuilder.panel, "Dismiss", title = "Error", modal = true
                 )
                 log.info("showOptionDialog = $showOptionDialog")
-            } else if (e.matches { ScriptException::class.java.isAssignableFrom(it.javaClass) }) {
-                val scriptException =
-                    e.get { ScriptException::class.java.isAssignableFrom(it.javaClass) } as ScriptException?
-//        val dynamicActionException =
-//          e.get { ActionSettingsRegistry.DynamicActionException::class.java.isAssignableFrom(it.javaClass) } as ActionSettingsRegistry.DynamicActionException?
-                val formBuilder = FormBuilder.createFormBuilder()
-
-                formBuilder.addLabeledComponent(
-                    "Error", JLabel("An error occurred while executing the dynamic action.")
-                )
-
-                val bugReportTextArea = JBTextArea()
-                bugReportTextArea.rows = 40
-                bugReportTextArea.columns = 80
-                bugReportTextArea.isEditable = false
-                bugReportTextArea.text = """
-                |Script Error: ${scriptException?.message}
-                |
-                |Error Details:
-                |```
-                |${toString(e)/*.indent("  ")*/}
-                |```
-                |""".trimMargin()
-                formBuilder.addLabeledComponent("Error Report", wrapScrollPane(bugReportTextArea))
-
-                val supressFutureErrors = JCheckBox("Suppress Future Error Popups")
-                supressFutureErrors.isSelected = false
-                formBuilder.addComponent(supressFutureErrors)
-
-                val showOptionDialog = showOptionDialog(
-                    formBuilder.panel, "Dismiss", title = "Error", modal = true
-                )
-                log.info("showOptionDialog = $showOptionDialog")
-                if (supressFutureErrors.isSelected) {
-                    AppSettingsState.instance.suppressErrors = true
-                }
             } else {
                 val formBuilder = FormBuilder.createFormBuilder()
 
