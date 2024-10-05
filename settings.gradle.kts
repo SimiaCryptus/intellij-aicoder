@@ -6,4 +6,3 @@ plugins {
 
 includeBuild("../jo-penai/")
 includeBuild("../SkyeNet/")
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

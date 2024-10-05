@@ -1,8 +1,6 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.tasks.KotlinTest
 
 fun properties(key: String) = providers.gradleProperty(key).get()
 
@@ -81,62 +79,11 @@ dependencies {
 
 }
 
-
 kotlin {
     jvmToolchain(17)
 }
-sourceSets {
-    main {
-        kotlin {
-            srcDirs("src/main/kotlin")
-        }
-    }
-    test {
-        kotlin {
-            srcDirs("src/test/kotlin")
-        }
-    }
-}
-tasks.named("compileKotlin", KotlinCompile::class) {
-    compilerOptions {
-        moduleName.set("com.github.simiacryptus.aicoder")
-    }
-}
-tasks.named("compileTestKotlin", KotlinCompile::class) {
-    compilerOptions {
-        moduleName.set("com.github.simiacryptus.aicoder.test")
-    }
-}
-
-java {
-    sourceSets {
-        main {
-            java {
-                srcDirs("src/main/java")
-            }
-        }
-        test {
-            java {
-                srcDirs("src/test/java")
-            }
-        }
-
-    }
-}
 
 tasks {
-    compileJava {
-        dependsOn(compileKotlin)
-        doFirst {
-            options.compilerArgs = listOf(
-                "--module-path", classpath.asPath
-            )
-        }
-    }
-
-    compileKotlin {
-        destinationDirectory.set(compileJava.get().destinationDirectory)
-    }
 
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -181,12 +128,7 @@ For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             javaParameters.set(true)
-            moduleName.set("com.github.simiacryptus.aicoder.test")
         }
-    }
-
-    wrapper {
-        gradleVersion = properties("gradleVersion")
     }
 
     patchPluginXml {
