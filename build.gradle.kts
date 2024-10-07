@@ -45,7 +45,7 @@ dependencies {
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.7")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.6")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)

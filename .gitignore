@@ -14,7 +14,7 @@ api.*
 .skynet.bak
 settings.gradle.kts
 tokens
-
+settings.gradle.kts
 html-games.iml
 *.iml
 test-recordings/
