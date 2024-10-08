@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.ImageModels
@@ -30,6 +31,7 @@ data class AppSettingsState(
     var apiLog: Boolean = false,
     var devActions: Boolean = false,
     var editRequests: Boolean = false,
+    var disableAutoOpenUrls: Boolean = false,
     var pluginHome: File = run {
         var logPath = System.getProperty("idea.plugins.path")
         if (logPath == null) {
@@ -49,10 +51,6 @@ data class AppSettingsState(
 ) : PersistentStateComponent<SimpleEnvelope> {
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
     private val recentCommands = mutableMapOf<String, MRUItems>()
-
-    fun defaultSmartModel() = smartModel.chatModel()
-    fun defaultFastModel() = fastModel.chatModel()
-    fun defaultMainImageModel() = mainImageModel.imageModel()
 
     @JsonIgnore
     override fun getState(): SimpleEnvelope {
@@ -87,9 +85,7 @@ data class AppSettingsState(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
         other as AppSettingsState
-
         if (temperature != other.temperature) return false
         if (smartModel != other.smartModel) return false
         if (fastModel != other.fastModel) return false
@@ -105,7 +101,7 @@ data class AppSettingsState(
         if (apiLog != other.apiLog) return false
         if (devActions != other.devActions) return false
         if (editRequests != other.editRequests) return false
-        if (pluginHome != other.pluginHome) return false
+        if (FileUtil.filesEqual(pluginHome, other.pluginHome)) return false
         if (recentCommands != other.recentCommands) return false
         if (showWelcomeScreen != other.showWelcomeScreen) return false
         if (greetedVersion != other.greetedVersion) return false
@@ -118,8 +114,8 @@ data class AppSettingsState(
     override fun hashCode(): Int {
         var result = temperature.hashCode()
         result = 31 * result + smartModel.hashCode()
-        result = 31 * result + enableLegacyActions.hashCode()
         result = 31 * result + fastModel.hashCode()
+        result = 31 * result + enableLegacyActions.hashCode()
         result = 31 * result + mainImageModel.hashCode()
         result = 31 * result + listeningPort
         result = 31 * result + listeningEndpoint.hashCode()
@@ -132,7 +128,7 @@ data class AppSettingsState(
         result = 31 * result + apiLog.hashCode()
         result = 31 * result + devActions.hashCode()
         result = 31 * result + editRequests.hashCode()
-        result = 31 * result + pluginHome.hashCode()
+        result = 31 * result + FileUtil.fileHashCode(pluginHome)
         result = 31 * result + recentCommands.hashCode()
         result = 31 * result + showWelcomeScreen.hashCode()
         result = 31 * result + greetedVersion.hashCode()
@@ -149,12 +145,6 @@ data class AppSettingsState(
         @JvmStatic
         val instance: AppSettingsState by lazy {
             ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
-        }
-
-        fun String.chatModel(): ChatModels {
-            return ChatModels.values().entries.firstOrNull {
-                it.value.modelName == this || it.key == this
-            }?.value ?: OpenAIModels.GPT4oMini
         }
 
         fun String.imageModel(): ImageModels {

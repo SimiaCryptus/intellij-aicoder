@@ -4,6 +4,7 @@
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.google.common.util.concurrent.*
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -45,7 +46,6 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
-import javax.script.ScriptException
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.max
@@ -805,7 +805,7 @@ object UITools {
 
                 val openAccountButton = JXButton("Open Account Page")
                 openAccountButton.addActionListener {
-                    Desktop.getDesktop().browse(URI("https://platform.openai.com/account/api-keys"))
+                    browse(URI("https://platform.openai.com/account/api-keys"))
                 }
                 formBuilder.addLabeledComponent("OpenAI Account", openAccountButton)
 
@@ -837,42 +837,6 @@ object UITools {
                     formBuilder.panel, "Dismiss", title = "Error", modal = true
                 )
                 log.info("showOptionDialog = $showOptionDialog")
-            } else if (e.matches { ScriptException::class.java.isAssignableFrom(it.javaClass) }) {
-                val scriptException =
-                    e.get { ScriptException::class.java.isAssignableFrom(it.javaClass) } as ScriptException?
-//        val dynamicActionException =
-//          e.get { ActionSettingsRegistry.DynamicActionException::class.java.isAssignableFrom(it.javaClass) } as ActionSettingsRegistry.DynamicActionException?
-                val formBuilder = FormBuilder.createFormBuilder()
-
-                formBuilder.addLabeledComponent(
-                    "Error", JLabel("An error occurred while executing the dynamic action.")
-                )
-
-                val bugReportTextArea = JBTextArea()
-                bugReportTextArea.rows = 40
-                bugReportTextArea.columns = 80
-                bugReportTextArea.isEditable = false
-                bugReportTextArea.text = """
-                |Script Error: ${scriptException?.message}
-                |
-                |Error Details:
-                |```
-                |${toString(e)/*.indent("  ")*/}
-                |```
-                |""".trimMargin()
-                formBuilder.addLabeledComponent("Error Report", wrapScrollPane(bugReportTextArea))
-
-                val supressFutureErrors = JCheckBox("Suppress Future Error Popups")
-                supressFutureErrors.isSelected = false
-                formBuilder.addComponent(supressFutureErrors)
-
-                val showOptionDialog = showOptionDialog(
-                    formBuilder.panel, "Dismiss", title = "Error", modal = true
-                )
-                log.info("showOptionDialog = $showOptionDialog")
-                if (supressFutureErrors.isSelected) {
-                    AppSettingsState.instance.suppressErrors = true
-                }
             } else {
                 val formBuilder = FormBuilder.createFormBuilder()
 
@@ -920,7 +884,7 @@ object UITools {
 
                 val openButton = JXButton("Open New Issue on our Github page")
                 openButton.addActionListener {
-                    Desktop.getDesktop().browse(URI("https://github.com/SimiaCryptus/intellij-aicoder/issues/new"))
+                    browse(URI("https://github.com/SimiaCryptus/intellij-aicoder/issues/new"))
                 }
                 formBuilder.addLabeledComponent("Report Issue/Request Help", openButton)
 

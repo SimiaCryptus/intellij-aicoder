@@ -4,12 +4,14 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.CmdPatchApp
 import com.simiacryptus.skyenet.apps.general.PatchApp
 import com.simiacryptus.skyenet.core.platform.StorageInterface
@@ -17,7 +19,6 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
-import java.awt.Desktop
 import java.io.File
 import java.nio.file.Files
 import javax.swing.*
@@ -37,7 +38,14 @@ class CommandAutofixAction : BaseAction() {
             event.project?.basePath?.let { File(it).toPath() }
         }!!
         val session = StorageInterface.newGlobalID()
-        val patchApp = CmdPatchApp(root, session, settings, api, virtualFiles?.map { it.toFile }?.toTypedArray(), AppSettingsState.instance.defaultSmartModel())
+        val patchApp = CmdPatchApp(
+            root,
+            session,
+            settings,
+            api,
+            virtualFiles?.map { it.toFile }?.toTypedArray(),
+            AppSettingsState.instance.smartModel.chatModel()
+        )
         SessionProxyServer.chats[session] = patchApp
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
@@ -52,7 +60,7 @@ class CommandAutofixAction : BaseAction() {
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }

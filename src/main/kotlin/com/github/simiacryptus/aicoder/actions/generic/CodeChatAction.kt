@@ -3,11 +3,10 @@
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
-import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.LanguageUtils
-import com.github.simiacryptus.aicoder.util.FileSystemUtils
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -17,8 +16,6 @@ import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
-import java.awt.Desktop
-import java.nio.file.Path
 
 class CodeChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -54,7 +51,7 @@ class CodeChatAction : BaseAction() {
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }

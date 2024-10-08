@@ -3,9 +3,10 @@ package com.github.simiacryptus.aicoder.actions.git
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -19,7 +20,6 @@ import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
-import java.awt.Desktop
 
 val String.isBinary: Boolean
     get() {
@@ -94,7 +94,7 @@ class ChatWithCommitAction : AnAction() {
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 logger.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 logger.warn("Error opening browser", e)
             }

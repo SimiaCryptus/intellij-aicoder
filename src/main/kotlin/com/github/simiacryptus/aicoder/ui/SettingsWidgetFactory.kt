@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.ui
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -15,7 +16,6 @@ import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
 import java.awt.Cursor
-import java.awt.Desktop
 import java.awt.FlowLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -77,8 +77,8 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
             header.add(JLabel("<html><a href=\"\">Rate Us!</a></html>").apply {
                 cursor = Cursor(Cursor.HAND_CURSOR)
                 addMouseListener(object : MouseAdapter() {
-                    override fun mouseClicked(e: MouseEvent) = Desktop.getDesktop()
-                        .browse(URI("https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant/edit/reviews"))
+                    override fun mouseClicked(e: MouseEvent) = browse(
+                        URI("https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant/edit/reviews"))
                 })
             }, BorderLayout.EAST)
             return header

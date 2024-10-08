@@ -4,8 +4,10 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -30,7 +32,6 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import org.slf4j.LoggerFactory
-import java.awt.Desktop
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -120,7 +121,7 @@ class SimpleCommandAction : BaseAction() {
             Thread.sleep(500)
             try {
                 log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -188,7 +189,7 @@ class SimpleCommandAction : BaseAction() {
                         |   1) predict the files that need to be fixed
                         |   2) predict related files that may be needed to debug the issue
                     """.trimMargin(),
-                    model = AppSettingsState.instance.defaultSmartModel()
+                    model = AppSettingsState.instance.smartModel.chatModel()
                 ).answer(
                     listOf(
                         """
@@ -256,7 +257,7 @@ $tripleTilde
                             |
                             |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
                             """.trimMargin(),
-                            model = AppSettingsState.instance.defaultSmartModel()
+                            model = AppSettingsState.instance.smartModel.chatModel()
                         ).answer(
                             listOf(
                                 """

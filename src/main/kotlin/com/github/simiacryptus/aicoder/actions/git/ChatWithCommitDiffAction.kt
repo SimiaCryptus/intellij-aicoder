@@ -3,9 +3,10 @@ package com.github.simiacryptus.aicoder.actions.git
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.chatModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -20,7 +21,6 @@ import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import java.awt.Desktop
 import javax.swing.JOptionPane
 
 class ChatWithCommitDiffAction : AnAction() {
@@ -74,7 +74,7 @@ class ChatWithCommitDiffAction : AnAction() {
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }

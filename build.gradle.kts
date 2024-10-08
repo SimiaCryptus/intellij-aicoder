@@ -1,14 +1,12 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = providers.gradleProperty(key).get()
-fun environment(key: String) = providers.environmentVariable(key).get()
 
- plugins {
+plugins {
     id("java") // Java support
-    id("org.jetbrains.kotlin.jvm") version "2.0.20"
+    kotlin("jvm") version "2.0.20"
     id("org.jetbrains.intellij") version "1.17.2"
     id("org.jetbrains.changelog") version "2.2.0"
     id("org.jetbrains.qodana") version "2023.2.1"
@@ -16,56 +14,46 @@ fun environment(key: String) = providers.environmentVariable(key).get()
     id("org.jetbrains.dokka") version "1.9.10"
 }
 
+
 group = "com.github.simiacryptus"
 version = properties("pluginVersion")
 
- repositories {
-     mavenCentral()
+repositories {
+    mavenCentral()
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
 
 
-val kotlin_version = "2.0.20" // This line can be removed if not used elsewhere
+val kotlin_version = "2.0.20" // This is now defined in the plugins block
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.5"
-val remoterobot_version = "0.11.21"
+val skyenet_version = "1.2.7"
+val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
 dependencies {
+    testImplementation(sourceSets.main.get().output)
+    implementation("ch.randelshofer:org.monte.media.screenrecorder:17.1")
+    testImplementation("org.seleniumhq.selenium:selenium-java:4.15.0")
+    testImplementation("org.testng:testng:7.8.0")
     implementation("software.amazon.awssdk:bedrock:2.25.7")
     implementation("software.amazon.awssdk:bedrockruntime:2.25.7")
 
     implementation("org.apache.commons:commons-text:1.11.0")
+    implementation(group = "com.vladsch.flexmark", name = "flexmark-all", version = "0.64.8")
+    implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
+    implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.6")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
-
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.5")
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
-
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
-
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
-    {
-        exclude(group = "org.jetbrains.kotlin", module = "")
-    }
 
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jackson_version)
 
-    implementation(group = "com.vladsch.flexmark", name = "flexmark-all", version = "0.64.8")
-    implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
-    implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-annotations", version = jetty_version)
@@ -74,7 +62,6 @@ dependencies {
     implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
-    runtimeOnly(group = "org.slf4j", name = "slf4j-simple", version = slf4j_version)
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = remoterobot_version)
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = remoterobot_version)
@@ -87,30 +74,30 @@ dependencies {
 
     testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
 
-    testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = "5.10.1")
-    testRuntimeOnly(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = "5.10.1")
-
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
 
 }
 
-
-/*
-tasks.register<Copy>("copySourcesToResources") {
-    from("src/main/kotlin")
-    into("src/main/resources/sources/kt")
+kotlin {
+    jvmToolchain(17)
 }
-tasks.named("processResources") {
-    dependsOn("copySourcesToResources")
-}
-*/
 
-
- kotlin {
-     jvmToolchain(17)
- }
 tasks {
-    val dokkaHtml by getting(DokkaTask::class) {
-        outputDirectory.set(file("docs/api"))
+
+    jar {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
+    buildSearchableOptions {
+        enabled = false
+    }
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+        classpath = sourceSets.test.get().runtimeClasspath
     }
 
     register<Copy>("copyReadmeToSite") {
@@ -124,56 +111,24 @@ tasks {
 
     register<Task>("generateProjectInfo") {
         doLast {
-            file("docs/project-info.md").writeText("""
-                # Project Information
-                - Group: $group
-                - Version: $version
-                - Kotlin Version: $kotlin_version
-                - Jetty Version: $jetty_version
-                - SLF4J Version: $slf4j_version
-                For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG.md).
-            """.trimIndent())
-        }
-    }
-    register<Task>("generateIndex") {
-        doLast {
-            file("docs/index.md").writeText("""
-                # ${properties("pluginName")}
-                Welcome to the documentation site for ${properties("pluginName")}.
-                ## Quick Links
-                - [Project Information](project-info.md)
-                - [README](README.md)
-                - [Changelog](CHANGELOG.md)
-                - [API Documentation](api/index.html)
-                For more details about the project, please explore the links above.
-            """.trimIndent())
-        }
-    }
-
-    register<Task>("buildProjectWebsite") {
-        dependsOn(dokkaHtml, "copyReadmeToSite", "copyChangelogToSite", "generateProjectInfo", "generateIndex")
-        doLast {
-            println("Project website built in the 'docs' directory.")
+            file("docs/project-info.md").writeText(
+                """
+# Project Information
+- Group: $group
+- Version: $version
+- Kotlin Version: $kotlin_version
+- Jetty Version: $jetty_version
+- SLF4J Version: $slf4j_version
+For more details, please check the [README](README.md) and [CHANGELOG](CHANGELOG.md).
+""".trimIndent()
+            )
         }
     }
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
-
-    compileKotlin {
         compilerOptions {
-            javaParameters = true
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            javaParameters.set(true)
         }
-    }
-
-    compileTestKotlin {
-        compilerOptions {
-            javaParameters = true
-        }
-    }
-
-    wrapper {
-        gradleVersion = properties("gradleVersion")
     }
 
     patchPluginXml {
@@ -224,7 +179,6 @@ tasks {
     publishPlugin {
         dependsOn("patchChangelog")
         token.set(System.getenv("PUBLISH_TOKEN"))
-//        channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
     }
 }
 
@@ -256,7 +210,4 @@ tasks {
 
 qodana {
     cachePath.set(file(".qodana").canonicalPath)
-//    reportPath.set(file("build/reports/inspections").canonicalPath)
-//    saveReport.set(true)
-//    showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
 }

@@ -94,6 +94,10 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                         add(component.editRequests)
                     })
                     add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Disable Auto-Open URLs:"))
+                        add(component.disableAutoOpenUrls)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                         add(JLabel("Enable API Log:"))
                         add(component.apiLog)
                         add(component.openApiLog)
@@ -184,6 +188,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             settings.apiLog = component.apiLog.isSelected
             settings.devActions = component.devActions.isSelected
             settings.editRequests = component.editRequests.isSelected
+            settings.disableAutoOpenUrls = component.disableAutoOpenUrls.isSelected
             settings.temperature = component.temperature.text.safeDouble()
             settings.mainImageModel = (component.mainImageModel.selectedItem as String)
             settings.pluginHome = File(component.pluginHome.text)

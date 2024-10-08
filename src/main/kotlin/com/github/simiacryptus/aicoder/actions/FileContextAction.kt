@@ -44,10 +44,17 @@ abstract class FileContextAction<T : Any>(
                         } finally {
                             if (it.isCanceled) throw InterruptedException()
                         }
+                        val start = System.currentTimeMillis()
+                        val fileSystem = LocalFileSystem.getInstance()
+                        while(null == fileSystem.refreshAndFindFileByIoFile(newFiles.firstOrNull() ?: throw IllegalStateException())) {
+                            if (System.currentTimeMillis() - start > 10000) {
+                                throw IllegalStateException("File not found: ${newFiles.firstOrNull()}")
+                            }
+                            Thread.sleep(500)
+                        }
                         UITools.writeableFn(e) {
                             val files = newFiles.mapNotNull { file ->
-                                val localFileSystem = LocalFileSystem.getInstance()
-                                val generatedFile = localFileSystem.findFileByIoFile(file)
+                                val generatedFile = fileSystem.refreshAndFindFileByIoFile(file)
                                 if (generatedFile == null) {
                                     log.warn("Generated file not found: ${file.path}")
                                 } else {
@@ -81,6 +88,7 @@ abstract class FileContextAction<T : Any>(
         private val log = LoggerFactory.getLogger(FileContextAction::class.java)
 
         fun open(project: Project, outputPath: Path) {
+            log.info("Opening file: $outputPath")
             lateinit var function: () -> Unit
             function = {
                 val file = outputPath.toFile()

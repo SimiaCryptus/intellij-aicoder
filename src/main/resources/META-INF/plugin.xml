@@ -1,5 +1,5 @@
 <idea-plugin>
-     <!-- ... other plugin configurations ... -->
+    <!-- ... other plugin configurations ... -->
     <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
     <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
@@ -49,7 +49,7 @@
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
         </group>
-<!--        <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>-->
+        <!--        <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>-->
         <group id="com.github.simiacryptus.aicoder.ui.VcsMenu"
                class="com.github.simiacryptus.aicoder.ui.VcsMenu"
                popup="true"
@@ -59,11 +59,11 @@
             <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
         </group>
         <action id="OpenWebPageAction"
-               class="com.github.simiacryptus.aicoder.actions.OpenWebPageAction"
-               text="Open Simiacryptus Apps"
+                class="com.github.simiacryptus.aicoder.actions.OpenWebPageAction"
+                text="Open Simiacryptus Apps"
                 description="Opens the Simiacryptus Apps web page in your default browser, providing access to additional resources and documentation">
-           <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
-       </action>
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.MainMenu" anchor="last"/>
+        </action>
 
         <action class="com.github.simiacryptus.aicoder.actions.generic.DiffChatAction"
                 text="Patch Chat"
@@ -203,13 +203,20 @@
             <!-- Keyboard shortcuts removed -->
         </action>
 
-        <action class="com.github.simiacryptus.aicoder.actions.code.PasteAction"
+        <action class="com.github.simiacryptus.aicoder.actions.code.SmartPasteAction"
                 text="_Paste"
                 description="Smart paste functionality that automatically detects and converts clipboard content to match the current file's programming language">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="control shift V"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift V"/>
+        </action>
+        <action class="com.github.simiacryptus.aicoder.actions.code.FastPasteAction"
+                text="_Fast Paste"
+                description="Fast paste functionality using a less resource-intensive model for quick conversions.">
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt V"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt V"/>
         </action>
         <!-- Improved Shortcut for RedoLast Action -->
         <action class="com.github.simiacryptus.aicoder.actions.code.RedoLast"

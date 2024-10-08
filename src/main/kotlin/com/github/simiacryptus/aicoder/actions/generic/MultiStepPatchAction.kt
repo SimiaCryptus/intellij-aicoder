@@ -4,7 +4,9 @@ import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.UITools
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -31,7 +33,6 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import org.slf4j.LoggerFactory
-import java.awt.Desktop
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
@@ -65,7 +66,7 @@ class MultiStepPatchAction : BaseAction() {
 
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
-                Desktop.getDesktop().browse(uri)
+                browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
@@ -97,7 +98,7 @@ class MultiStepPatchAction : BaseAction() {
                 user = user,
                 ui = ui,
                 model = settings.model!!,
-                parsingModel = AppSettingsState.instance.defaultFastModel(),
+                parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 event = event,
             ).start(
                 userMessage = userMessage,
@@ -107,7 +108,7 @@ class MultiStepPatchAction : BaseAction() {
         data class Settings(
             val budget: Double? = 2.00,
             val tools: List<String> = emptyList(),
-            val model: ChatModels? = AppSettingsState.instance.defaultSmartModel(),
+            val model: ChatModels? = AppSettingsState.instance.smartModel.chatModel(),
         )
 
         override val settingsClass: Class<*> get() = Settings::class.java

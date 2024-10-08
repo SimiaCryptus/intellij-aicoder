@@ -178,7 +178,7 @@ class PlanAheadConfigDialog(
                 arrayOf(
                     taskSettings.enabled,
                     taskType.name,
-                    taskSettings.model?.modelName ?: AppSettingsState.instance.defaultSmartModel().modelName,
+                    taskSettings.model?.modelName ?: AppSettingsState.instance.smartModel,
                 )
             )
         }
