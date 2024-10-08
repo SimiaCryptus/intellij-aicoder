@@ -2,10 +2,13 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.simiacryptus.jopenai.models.chatModel
+import com.simiacryptus.skyenet.apps.parsers.DefaultParsingModel
 import com.simiacryptus.skyenet.apps.parsers.DocumentParserApp
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
@@ -46,7 +49,6 @@ class DocumentDataExtractorAction : BaseAction() {
         if (!configDialog.showAndGet()) return
         settings = configDialog.settings
 
-
         val session = StorageInterface.newGlobalID()
         val pdfFile = selectedFile.toFile
         DataStorage.sessionPaths[session] = pdfFile.parentFile
@@ -56,6 +58,7 @@ class DocumentDataExtractorAction : BaseAction() {
             path = path,
             api = api,
             fileInput = pdfFile.toPath(),
+            parsingModel = DefaultParsingModel(AppSettingsState.instance.smartModel.chatModel(), 0.1),
         ) {
             override fun <T : Any> initSettings(session: Session): T = settings as T
             override val root: File get() = selectedFile.parent.toFile
