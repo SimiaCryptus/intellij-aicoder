@@ -232,9 +232,12 @@ class PlanAheadConfigDialog(
         settings.commandAutoFixCommands = (0 until tableModel.rowCount)
             .filter { tableModel.getValueAt(it, 0) as Boolean }
             .map { tableModel.getValueAt(it, 1) as String }
-        // Update the global tool collection
-        AppSettingsState.instance.executables.clear()
-        AppSettingsState.instance.executables.addAll(settings.commandAutoFixCommands!!)
+        // Update the global tool collection without removing deselected commands
+        settings.commandAutoFixCommands!!.forEach { command ->
+            if (!AppSettingsState.instance.executables.contains(command)) {
+                AppSettingsState.instance.executables.add(command)
+            }
+        }
         super.doOKAction()
     }
 

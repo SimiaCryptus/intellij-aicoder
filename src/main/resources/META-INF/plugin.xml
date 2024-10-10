@@ -208,14 +208,14 @@
                 description="Smart paste functionality that automatically detects and converts clipboard content to match the current file's programming language">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="control shift V"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift V"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift V"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.code.FastPasteAction"
                 text="_Fast Paste"
                 description="Fast paste functionality using a less resource-intensive model for quick conversions.">
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="control alt V"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt V"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt V"/>
         </action>
         <!-- Improved Shortcut for RedoLast Action -->
@@ -224,7 +224,7 @@
                 description="Quickly repeat the most recent intelligent coding operation in the current editor">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="control shift Z"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift Z"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift Z"/>
         </action>
         <!-- Improved Shortcut for DescribeAction -->
@@ -248,7 +248,7 @@
                 description="Add doc comments">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="control shift D"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift D"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift D"/>
         </action>
         <!-- Improved Shortcut for InsertImplementationAction -->
@@ -265,7 +265,7 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="control alt A"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option A"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt A"/>
         </action>
         <!-- Improved Shortcut for RenameVariablesAction -->
 
@@ -275,7 +275,7 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="control alt R"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option R"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt R"/>
         </action>
         <!-- Improved Shortcut for VoiceToTextAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.VoiceToTextAction"
@@ -283,8 +283,7 @@
                 description="Convert spoken language into text using AI.">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="control alt V"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option V"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt V"/>
         </action>
         <!-- Improved Shortcut for ReplaceWithSuggestionsAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.ReplaceWithSuggestionsAction"
@@ -293,7 +292,7 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="control alt R"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option R"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt R"/>
         </action>
         <!-- Improved Shortcut for AppendTextWithChatAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.AppendTextWithChatAction"
@@ -308,7 +307,7 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="control alt I"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option I"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt I"/>
         </action>
         <!-- Improved Shortcut for CommentsAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.CommentsAction"
@@ -317,7 +316,7 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="control alt C"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option C"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt C"/>
         </action>
         <!-- Improved Shortcut for DocAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.DocAction"
@@ -326,7 +325,7 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="control alt D"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option D"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt D"/>
         </action>
         <!-- Improved Shortcut for ImplementStubAction -->
         <action class="com.github.simiacryptus.aicoder.actions.legacy.ImplementStubAction"
@@ -335,7 +334,7 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.EditorMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="control alt S"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta option S"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt S"/>
         </action>
 
         <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"

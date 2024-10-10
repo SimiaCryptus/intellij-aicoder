@@ -126,9 +126,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             val partitionedPaths = Files.walk(selectedFolder)
                 .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
                 .toList().groupBy { selectedPaths.contains(it) }
-            val pathList = partitionedPaths[true]!!
-                .toList().filterNotNull()
-                .map<Path, Future<Path>> { path ->
+            val pathList = partitionedPaths[true]
+                ?.toList()?.filterNotNull()
+                ?.map<Path, Future<Path>> { path ->
                     executorService.submit<Path?> {
                         var retries = 0
                         val maxRetries = 3
@@ -160,7 +160,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                         }
                         null
                     }
-                }.toTypedArray().map { future ->
+                }?.toTypedArray()?.map { future ->
                     try {
                         future.get(2, TimeUnit.MINUTES) // Set a timeout for each file processing
                     } catch (e: Exception) {
@@ -170,7 +170,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                         }
                         null
                     }
-                }.filterNotNull()
+                }?.filterNotNull() ?: listOf()
             if (config?.settings?.singleOutputFile == true) {
                 Files.write(outputPath, markdownContent.toString().toByteArray())
                 open(config.project!!, outputPath)
