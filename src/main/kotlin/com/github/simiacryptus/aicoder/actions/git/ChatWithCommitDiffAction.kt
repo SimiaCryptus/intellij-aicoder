@@ -10,17 +10,20 @@ import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.TextRevisionNumber
-import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import git4idea.GitVcs
-import git4idea.commands.Git
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import javax.swing.JOptionPane
 
 class ChatWithCommitDiffAction : AnAction() {
@@ -31,15 +34,16 @@ class ChatWithCommitDiffAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         log.info("Comparing selected commit with the current HEAD")
         val project = e.project ?: return
-        val files = e.getData(VcsDataKeys.VIRTUAL_FILES)?.firstOrNull()
-        val repositories = GitRepositoryManager.getInstance(project).repositories
-        val gitRepository = repositories.find { it.root == files } ?: return
         val selectedCommit = e.getData(VcsDataKeys.VCS_REVISION_NUMBER) ?: return
-        e.getData(VcsDataKeys.VCS)
+        val vcsManager = ProjectLevelVcsManager.getInstance(project)
+        val vcs = vcsManager.allActiveVcss.firstOrNull() ?: run {
+            JOptionPane.showMessageDialog(null, "No active VCS found", "Error", JOptionPane.ERROR_MESSAGE)
+            return
+        }
 
         Thread {
             try {
-                val diffInfo = getChangesBetweenCommits(gitRepository, selectedCommit).ifEmpty { "No changes found" }
+                val diffInfo = getChangesBetweenCommits(project, selectedCommit).ifEmpty { "No changes found" }
                 openChatWithDiff(e, diffInfo)
             } catch (e: Throwable) {
                 log.error("Error comparing changes", e)
@@ -81,20 +85,60 @@ class ChatWithCommitDiffAction : AnAction() {
         }.start()
     }
 
-    private fun getChangesBetweenCommits(repository: GitRepository, selectedCommit: VcsRevisionNumber): String {
-        val currentHead = repository.currentRevision ?: return ""
+    private fun getChangesBetweenCommits(project: Project, selectedCommit: VcsRevisionNumber): String {
         val commitID = (selectedCommit as TextRevisionNumber).asString()
-        val diff = Git.getInstance().diff(repository, listOf(
-            "-D", "--text", "--no-color", "--no-commit-id"
-        ), "$commitID..HEAD")
-        if(0 != diff.exitCode) {
-            throw RuntimeException("Error running git diff command: ${diff.errorOutput}")
+        val changeListManager = ChangeListManager.getInstance(project)
+        val changes = changeListManager.allChanges
+        return changes.joinToString("\n") { change: Change ->
+            buildString {
+                appendLine("File: ${change.virtualFile?.path ?: "Unknown"}")
+                appendLine("Type: ${change.type}")
+                appendLine(getDiffForChange(project, change, selectedCommit) ?: "No diff available")
+            }
         }
-        return diff.outputAsJoinedString
+    }
+    private fun getDiffForChange(project: Project, change: Change, selectedCommit: VcsRevisionNumber): String? {
+        val file = change.virtualFile ?: return null
+        val currentContent = change.afterRevision?.content ?: return null
+        val selectedContent = getContentForRevision(project, file, selectedCommit) ?: return null
+        return createSimpleDiff(currentContent, selectedContent)
+    }
+    private fun getContentForRevision(project: Project, file: VirtualFile, revisionNumber: VcsRevisionNumber): String? {
+        try {
+            val contentRevision = CurrentContentRevision(LocalFilePath(file.path, file.isDirectory))
+            return contentRevision.content
+        } catch (e: Exception) {
+            log.error("Error getting content for revision", e)
+            return null
+        }
+    }
+    private fun createSimpleDiff(currentContent: String, selectedContent: String): String {
+        val currentLines = currentContent.lines()
+        val selectedLines = selectedContent.lines()
+        val diff = StringBuilder()
+        for ((index, line) in currentLines.withIndex()) {
+            if (index >= selectedLines.size) {
+                diff.appendLine("+ $line")
+            } else if (line != selectedLines[index]) {
+                diff.appendLine("- ${selectedLines[index]}")
+                diff.appendLine("+ $line")
+            }
+        }
+        if (selectedLines.size > currentLines.size) {
+            for (i in currentLines.size until selectedLines.size) {
+                diff.appendLine("- ${selectedLines[i]}")
+            }
+        }
+        return diff.toString()
     }
 
+
+
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = e.getData(VcsDataKeys.VCS) == GitVcs.getKey()
+        val project = e.project
+        e.presentation.isEnabledAndVisible = project != null && 
+            ProjectLevelVcsManager.getInstance(project).allActiveVcss.isNotEmpty()
     }
 
 }
+

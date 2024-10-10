@@ -4,7 +4,7 @@ import com.github.simiacryptus.aicoder.test.actions.ActionTestBase
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.actions.legacy.AppendTextWithChatAction
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions
 
 class AppendActionTest : ActionTestBase() {

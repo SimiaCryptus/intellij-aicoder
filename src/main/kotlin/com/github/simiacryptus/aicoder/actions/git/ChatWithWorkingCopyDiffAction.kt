@@ -11,14 +11,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.project.Project
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import git4idea.GitVcs
-import git4idea.commands.Git
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import javax.swing.JOptionPane
 
 class ChatWithWorkingCopyDiffAction : AnAction() {
@@ -30,12 +29,11 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
         log.info("Comparing HEAD with the working copy")
         val project = e.project ?: return
         val files = e.getData(VcsDataKeys.VIRTUAL_FILES)?.firstOrNull()
-        val repositories = GitRepositoryManager.getInstance(project).repositories
-        val gitRepository = repositories.find { it.root == files } ?: return
+        val changeListManager = ChangeListManager.getInstance(project)
 
         Thread {
             try {
-                val diffInfo = getChangesBetweenHeadAndWorkingCopy(gitRepository).ifEmpty { "No changes found" }
+                val diffInfo = getWorkingCopyDiff(project, changeListManager)
                 openChatWithDiff(e, diffInfo)
             } catch (e: Throwable) {
                 log.error("Error comparing changes", e)
@@ -77,20 +75,57 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
         }.start()
     }
 
-    private fun getChangesBetweenHeadAndWorkingCopy(repository: GitRepository): String {
-        val diff = Git.getInstance().diff(repository, listOf(
-            "-D", "--text", "--no-color", "--no-commit-id"
-        ), "HEAD")
-        if (0 != diff.exitCode) {
-            throw RuntimeException("Error running git diff command: ${diff.errorOutput}")
+
+
+    private fun getWorkingCopyDiff(project: Project, changeListManager: ChangeListManager): String {
+        val changes = changeListManager.allChanges
+        return changes.joinToString("\n\n") { change ->
+            val diffForChange = getDiffForChange(change)
+            "File: ${change.virtualFile?.path ?: "Unknown"}\n" +
+            "Type: ${change.type}\n" +
+            (diffForChange ?: "No diff available")
+        }.ifEmpty { "No changes found" }
+    }
+    private fun getDiffForChange(change: com.intellij.openapi.vcs.changes.Change): String? {
+        val beforeRevision = change.beforeRevision
+        val afterRevision = change.afterRevision
+
+        if (beforeRevision == null && afterRevision == null) {
+            return null
         }
-        return diff.outputAsJoinedString
+
+        val beforeContent = beforeRevision?.content ?: ""
+        val afterContent = afterRevision?.content ?: ""
+
+        return createSimpleDiff(beforeContent, afterContent)
+    }
+
+    private fun createSimpleDiff(beforeContent: String, afterContent: String): String {
+        val beforeLines = beforeContent.lines()
+        val afterLines = afterContent.lines()
+        val diff = StringBuilder()
+
+        for ((index, line) in afterLines.withIndex()) {
+            if (index >= beforeLines.size) {
+                diff.appendLine("+ $line")
+            } else if (line != beforeLines[index]) {
+                diff.appendLine("- ${beforeLines[index]}")
+                diff.appendLine("+ $line")
+            }
+        }
+
+        if (beforeLines.size > afterLines.size) {
+            for (i in afterLines.size until beforeLines.size) {
+                diff.appendLine("- ${beforeLines[i]}")
+            }
+        }
+
+        return diff.toString()
     }
 
     override fun update(e: AnActionEvent) {
         val project = e.project ?: return
         val vcs = e.getData(VcsDataKeys.VCS)
-        val gitVcs = GitVcs.getInstance(project)
-        e.presentation.isEnabledAndVisible = project != null && (vcs!!.name == gitVcs.name)
+        e.presentation.isEnabledAndVisible = project != null && vcs != null
     }
 }

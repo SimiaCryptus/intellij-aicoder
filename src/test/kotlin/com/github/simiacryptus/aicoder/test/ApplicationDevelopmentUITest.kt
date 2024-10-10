@@ -14,7 +14,7 @@ import com.github.simiacryptus.aicoder.test.UITestUtil.Companion.selectText
 import com.github.simiacryptus.aicoder.test.UITestUtil.Companion.testProjectPath
 import com.github.simiacryptus.aicoder.test.UITestUtil.Companion.writeImage
 import org.apache.commons.io.FileUtils
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.awt.event.KeyEvent
 import java.io.File
 import java.io.FileOutputStream

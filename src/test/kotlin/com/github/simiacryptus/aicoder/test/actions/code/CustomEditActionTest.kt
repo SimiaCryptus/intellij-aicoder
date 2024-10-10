@@ -5,7 +5,7 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.actions.code.CustomEditAction
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.project.Project
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions
 
 class CustomEditActionTest : ActionTestBase() {

@@ -4,8 +4,8 @@ import com.github.simiacryptus.aicoder.test.actions.ActionTestBase
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import org.junit.Test
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
 class MarkdownImplementActionTest : ActionTestBase() {
 

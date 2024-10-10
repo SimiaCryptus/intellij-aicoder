@@ -7,7 +7,7 @@ import com.github.simiacryptus.aicoder.test.UITestUtil.Companion.documentJavaImp
 import com.github.simiacryptus.aicoder.test.UITestUtil.Companion.documentMarkdownListAppend
 import com.github.simiacryptus.aicoder.test.UITestUtil.Companion.documentTextAppend
 import com.github.simiacryptus.aicoder.test.UITestUtil.Companion.outputDir
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintWriter

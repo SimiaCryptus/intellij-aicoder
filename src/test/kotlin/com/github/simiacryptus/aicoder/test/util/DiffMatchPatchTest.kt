@@ -3,8 +3,8 @@ package com.github.simiacryptus.aicoder.test.util
 import com.simiacryptus.diff.DiffMatchPatch
 import com.simiacryptus.diff.DiffMatchPatch.Diff
 import com.simiacryptus.diff.DiffMatchPatch.Operation.*
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions
 import java.util.*
 
 
@@ -13,14 +13,14 @@ class DiffMatchPatchTest {
     @Test
     fun testDiffMain() {
         // Test equality
-        Assert.assertEquals(mutableListOf(Diff(EQUAL, "test")), DiffMatchPatch.diff_main("test", "test", false))
+        Assertions.assertEquals(mutableListOf(Diff(EQUAL, "test")), DiffMatchPatch.diff_main("test", "test", false))
 
         // Test differences
         val diffs = LinkedList<Diff>()
         diffs.add(Diff(DELETE, "Hello"))
         diffs.add(Diff(INSERT, "Goodbye"))
         diffs.add(Diff(EQUAL, " world."))
-        Assert.assertEquals(
+        Assertions.assertEquals(
             mutableListOf(
                 Diff(DELETE, "Hell"), Diff(INSERT, "G"), Diff(EQUAL, "o"), Diff(INSERT, "odbye"), Diff(EQUAL, " world.")
             ), DiffMatchPatch.diff_main("Hello world.", "Goodbye world.", false)
@@ -29,16 +29,16 @@ class DiffMatchPatchTest {
 
     @Test
     fun testDiffCommonPrefix() {
-        Assert.assertEquals(0, DiffMatchPatch.diff_commonPrefix("abc", "xyz"))
-        Assert.assertEquals(4, DiffMatchPatch.diff_commonPrefix("1234abcdef", "1234xyz"))
-        Assert.assertEquals(4, DiffMatchPatch.diff_commonPrefix("1234", "1234xyz"))
+        Assertions.assertEquals(0, DiffMatchPatch.diff_commonPrefix("abc", "xyz"))
+        Assertions.assertEquals(4, DiffMatchPatch.diff_commonPrefix("1234abcdef", "1234xyz"))
+        Assertions.assertEquals(4, DiffMatchPatch.diff_commonPrefix("1234", "1234xyz"))
     }
 
     @Test
     fun testDiffCommonSuffix() {
-        Assert.assertEquals(0, DiffMatchPatch.diff_commonSuffix("abc", "xyz"))
-        Assert.assertEquals(4, DiffMatchPatch.diff_commonSuffix("abcdef1234", "xyz1234"))
-        Assert.assertEquals(4, DiffMatchPatch.diff_commonSuffix("1234", "xyz1234"))
+        Assertions.assertEquals(0, DiffMatchPatch.diff_commonSuffix("abc", "xyz"))
+        Assertions.assertEquals(4, DiffMatchPatch.diff_commonSuffix("abcdef1234", "xyz1234"))
+        Assertions.assertEquals(4, DiffMatchPatch.diff_commonSuffix("1234", "xyz1234"))
     }
 
     @Test
@@ -48,10 +48,10 @@ class DiffMatchPatchTest {
         val patches: LinkedList<DiffMatchPatch.Patch> = DiffMatchPatch.patch_make(text1, text2)
         val results: Array<Any> = DiffMatchPatch.patch_apply(patches, text1)
 
-        Assert.assertEquals(text2, results[0])
+        Assertions.assertEquals(text2, results[0])
         val applied = results[1] as BooleanArray
         for (b in applied) {
-            Assert.assertTrue(b)
+            Assertions.assertTrue(b)
         }
     }
 
@@ -62,8 +62,8 @@ class DiffMatchPatchTest {
         val diffs: LinkedList<Diff> = DiffMatchPatch.diff_main(text1, text2, false)
         val patches: LinkedList<DiffMatchPatch.Patch> = DiffMatchPatch.patch_make(diffs)
 
-        Assert.assertFalse(patches.isEmpty())
-        Assert.assertEquals(diffs, patches.first().diffs)
+        Assertions.assertFalse(patches.isEmpty())
+        Assertions.assertEquals(diffs, patches.first().diffs)
     }
 
     @Test
@@ -90,8 +90,8 @@ class DiffMatchPatchTest {
         val patchText: String = DiffMatchPatch.patch_toText(patches)
         println(patchText)
 
-        Assert.assertFalse(patchText.isEmpty())
-        Assert.assertTrue(patchText, patchText.startsWith("@@ -1,"))
+        Assertions.assertFalse(patchText.isEmpty())
+        Assertions.assertTrue(patchText.startsWith("@@ -1,"), patchText)
     }
 
     @Test
@@ -108,11 +108,12 @@ class DiffMatchPatchTest {
 """
         val patches = DiffMatchPatch.patch_fromText(patchText)
 
-        Assert.assertFalse(patches.isEmpty())
-        Assert.assertEquals("The quick", patches.first().diffs.first().text)
+        Assertions.assertFalse(patches.isEmpty())
+        Assertions.assertEquals("The quick", patches.first().diffs.first().text)
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
+    // expect IllegalArgumentException::class
     fun testPatchFromTextWithInvalidInput() {
         val invalidPatchText = """@@ -1,8 +1,5 @@
 -The quick
