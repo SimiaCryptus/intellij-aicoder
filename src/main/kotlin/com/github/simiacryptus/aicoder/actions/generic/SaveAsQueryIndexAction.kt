@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.skyenet.apps.parsers.DefaultParsingModel
 import com.simiacryptus.skyenet.apps.parsers.DocumentRecord.Companion.saveAsBinary
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -45,7 +44,7 @@ class SaveAsQueryIndexAction : BaseAction() {
                         try {
                             indicator.isIndeterminate = false
                             indicator.fraction = 0.0
-                            saveAsBinary(
+                            saveAsBinary<Map<String,Any>>(
                                 IdeaOpenAIClient.instance,
                                 outputPath,
                                 Executors.newFixedThreadPool(8),

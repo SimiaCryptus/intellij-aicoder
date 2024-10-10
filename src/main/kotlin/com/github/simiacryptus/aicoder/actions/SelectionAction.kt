@@ -55,9 +55,9 @@ abstract class SelectionAction<T : Any>(
         val editorState = editorState(editor)
         val (start, end) = retarget(editorState, selectedText, selectionStart, selectionEnd) ?: return
         val text = editorState.text
-        selectedText = text.substring(start.coerceIn(0, text.length), end.coerceIn(0, text.length))
-        selectionEnd = end.coerceIn(0, text.length)
-        selectionStart = start.coerceIn(0, text.length)
+        selectedText = text.substring(start.coerceIn(0, text.length-1), end.coerceIn(0, text.length-1))
+        selectionEnd = end.coerceIn(0, text.length-1)
+        selectionStart = start.coerceIn(0, text.length-1)
 
         UITools.redoableTask(e) {
             val document = e.getData(CommonDataKeys.EDITOR)?.document

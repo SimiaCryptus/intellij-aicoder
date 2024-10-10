@@ -8,7 +8,8 @@ import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.jopenai.models.chatModel
-import com.simiacryptus.skyenet.apps.parsers.DefaultParsingModel
+import com.simiacryptus.skyenet.apps.parsers.CodeParsingModel
+import com.simiacryptus.skyenet.apps.parsers.DocumentParsingModel
 import com.simiacryptus.skyenet.apps.parsers.DocumentParserApp
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
@@ -53,12 +54,17 @@ class DocumentDataExtractorAction : BaseAction() {
         val pdfFile = selectedFile.toFile
         DataStorage.sessionPaths[session] = pdfFile.parentFile
 
+        val parsingModel = when {
+            selectedFile.name.endsWith(".pdf", ignoreCase = true) -> DocumentParsingModel(AppSettingsState.instance.smartModel.chatModel(), 0.1)
+            selectedFile.name.endsWith(".txt", ignoreCase = true) -> DocumentParsingModel(AppSettingsState.instance.smartModel.chatModel(), 0.1)
+            else -> CodeParsingModel(AppSettingsState.instance.smartModel.chatModel(), 0.1)
+        }
         val documentParserApp = object : DocumentParserApp(
             applicationName = "Document Extractor",
             path = path,
             api = api,
             fileInput = pdfFile.toPath(),
-            parsingModel = DefaultParsingModel(AppSettingsState.instance.smartModel.chatModel(), 0.1),
+            parsingModel = parsingModel,
         ) {
             override fun <T : Any> initSettings(session: Session): T = settings as T
             override val root: File get() = selectedFile.parent.toFile
