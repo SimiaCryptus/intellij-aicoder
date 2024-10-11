@@ -92,6 +92,17 @@ jobs:
         with:
           name: ${{ steps.artifact.outputs.filename }}
           path: ./build/distributions/content/*/*
+
+      # Upload plugin zip for release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/distributions/${{ steps.artifact.outputs.filename }}.zip
+          asset_name: ${{ steps.artifact.outputs.filename }}.zip
+          asset_content_type: application/zip
 #
 #  # Run tests and upload a code coverage report
 #  test:
@@ -241,10 +252,11 @@ jobs:
         run: |
           gh api repos/{owner}/{repo}/releases \
             --jq '.[] | select(.draft == true) | .id' \
-            | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
+            xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
 
       # Create a new release draft which is not publicly visible and requires manual acceptance
       - name: Create Release Draft
+        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -255,3 +267,19 @@ jobs:
           ${{ needs.build.outputs.changelog }}
           EOM
           )"
+      # Download artifact
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact }}
+          path: ./artifact
+      # Upload Release Asset
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifact/${{ needs.build.outputs.artifact }}.zip
+          asset_name: ${{ needs.build.outputs.artifact }}.zip
+          asset_content_type: application/zip
