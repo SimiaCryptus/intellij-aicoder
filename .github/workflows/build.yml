@@ -93,16 +93,6 @@ jobs:
           name: ${{ steps.artifact.outputs.filename }}
           path: ./build/distributions/content/*/*
 
-      # Upload plugin zip for release
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/distributions/${{ steps.artifact.outputs.filename }}.zip
-          asset_name: ${{ steps.artifact.outputs.filename }}.zip
-          asset_content_type: application/zip
 #
 #  # Run tests and upload a code coverage report
 #  test:
