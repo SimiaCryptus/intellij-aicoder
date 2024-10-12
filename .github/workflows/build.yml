@@ -272,6 +272,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.release_url }}
-          asset_path: ./artifact/intellij-aicoder-${{ needs.build.outputs.version }}.zip
+          asset_path: ./artifact/intellij-aicoder-${{ needs.build.outputs.version }}/intellij-aicoder-${{ needs.build.outputs.version }}.zip
           asset_name: intellij-aicoder-${{ needs.build.outputs.version }}.zip
           asset_content_type: application/zip
