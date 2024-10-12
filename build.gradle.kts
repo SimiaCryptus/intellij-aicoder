@@ -63,10 +63,18 @@ dependencies {
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
 
     testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
-    testImplementation(platform("org.junit:junit-bom:5.10.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+//    testImplementation(platform("org.junit:junit-bom:5.11.2"))
+//    testImplementation("org.junit.jupiter:junit-jupiter")
+//    testImplementation("org.junit.jupiter:junit-jupiter")
+// https://mvnrepository.com/artifact/org.junit.platform/junit-platform-engine
+
+    testImplementation(platform("org.junit:junit-bom:5.11.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.junit.vintage:junit-vintage-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
     testImplementation("org.seleniumhq.selenium:selenium-java:4.15.0")
-    testImplementation("org.testng:testng:7.8.0")
     testImplementation(sourceSets.main.get().output)
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = remoterobot_version)
@@ -116,7 +124,12 @@ tasks {
         testLogging {
             events("passed", "skipped", "failed")
         }
-        classpath = sourceSets.test.get().runtimeClasspath
+        systemProperty("junit.jupiter.execution.parallel.enabled", "true")
+        systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
+        systemProperty("idea.force.use.core.classloader", "true")
+        systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+        // Include JUnit 3/4 tests
+        include("**/*Test.class")
     }
     withType<KotlinCompile> {
         compilerOptions {

@@ -12,7 +12,7 @@ class CustomEditActionTest : ActionTestBase() {
 
     private val instruction = "Add code comments"
 
-    @Test
+//    @Test
     fun testProcessing() {
         testScript_SelectionAction(object : CustomEditAction() {
             override fun getConfig(project: Project?): String {

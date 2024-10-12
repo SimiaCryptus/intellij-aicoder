@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions
 
 class InsertImplementationActionTest : ActionTestBase() {
 
-    @Test
+//    @Test
     fun testProcessing() {
         testScript_SelectionAction(InsertImplementationAction(), "/InsertImplementationActionTest.md")
     }

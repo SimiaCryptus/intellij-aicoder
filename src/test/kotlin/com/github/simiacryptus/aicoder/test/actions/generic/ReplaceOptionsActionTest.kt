@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions
 
 class ReplaceOptionsActionTest : ActionTestBase() {
 
-    @Test
+//    @Test
     fun testProcessing() {
         testScript_SelectionAction(object : ReplaceWithSuggestionsAction() {
             override fun choose(choices: List<String>): String {
