@@ -261,9 +261,11 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-            name: intellij-aicoder-${{ needs.build.outputs.version }}
+            name: ${{ needs.build.outputs.version }}
             path: ./artifact
-
+      # List contents of artifact directory
+      - name: List artifact contents
+        run: ls -R ./artifact
       # Upload Release Asset
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
@@ -271,6 +273,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.release_url }}
-          asset_path: ./artifact/intellij-aicoder-${{ needs.build.outputs.version }}.zip
-          asset_name: intellij-aicoder-${{ needs.build.outputs.version }}.zip
+          asset_path: ./artifact/${{ needs.build.outputs.version }}.zip
+          asset_name: ${{ needs.build.outputs.version }}.zip
           asset_content_type: application/zip
