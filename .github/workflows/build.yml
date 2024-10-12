@@ -250,13 +250,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_URL=$(gh release create "v${{ needs.build.outputs.version }}" \
+          gh release create "v${{ needs.build.outputs.version }}" \
             --draft \
             --title "v${{ needs.build.outputs.version }}" \
-            --notes "$(cat << 'EOM'
-          ${{ needs.build.outputs.changelog }}
-          EOM
-          )" --json url -q .url)
+            --notes "${{ needs.build.outputs.changelog }}"
+          RELEASE_URL=$(gh release view "v${{ needs.build.outputs.version }}" --json url -q .url)
           echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
 
       # Download artifact
