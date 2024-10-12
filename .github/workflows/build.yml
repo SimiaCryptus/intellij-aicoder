@@ -258,10 +258,10 @@ jobs:
           echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
 
       # Download artifact
-      - name: Download artifact
+      - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build.outputs.version }}
+          name: ${{ steps.artifact.outputs.filename }}
           path: ./artifact
       # List contents of artifact directory
       - name: List artifact contents
@@ -275,4 +275,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.release_url }}
           asset_path: ./artifact/intellij-aicoder-${{ needs.build.outputs.version }}.zip
           asset_name: intellij-aicoder-${{ needs.build.outputs.version }}.zip
-          asset_content_type: application/zips
+          asset_content_type: application/zip
