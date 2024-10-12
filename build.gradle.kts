@@ -31,7 +31,7 @@ repositories {
 
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.8"
+val skyenet_version = "1.2.9"
 val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
@@ -40,11 +40,11 @@ dependencies {
     implementation("software.amazon.awssdk:bedrockruntime:2.25.9")
 
     implementation("org.apache.commons:commons-text:1.11.0")
-    implementation(group = "com.vladsch.flexmark", name = "flexmark-all", version = "0.64.8")
+    implementation(group = "com.vladsch.flexmark", name = "flexmark", version = "0.64.8")
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.7")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.8")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
@@ -62,20 +62,15 @@ dependencies {
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
 
-    testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
-//    testImplementation(platform("org.junit:junit-bom:5.11.2"))
-//    testImplementation("org.junit.jupiter:junit-jupiter")
-//    testImplementation("org.junit.jupiter:junit-jupiter")
-// https://mvnrepository.com/artifact/org.junit.platform/junit-platform-engine
-
+//    testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
     testImplementation(platform("org.junit:junit-bom:5.11.2"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.vintage:junit-vintage-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    testImplementation("org.seleniumhq.selenium:selenium-java:4.15.0")
-    testImplementation(sourceSets.main.get().output)
+//    testImplementation("org.seleniumhq.selenium:selenium-java:4.15.0")
+//    testImplementation(sourceSets.main.get().output)
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = remoterobot_version)
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = remoterobot_version)
