@@ -246,29 +246,33 @@ jobs:
 
       # Create a new release draft which is not publicly visible and requires manual acceptance
       - name: Create Release Draft
+        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "v${{ needs.build.outputs.version }}" \
+          RELEASE_URL=$(gh release create "v${{ needs.build.outputs.version }}" \
             --draft \
             --title "v${{ needs.build.outputs.version }}" \
             --notes "$(cat << 'EOM'
           ${{ needs.build.outputs.changelog }}
           EOM
-          )"
+          )" --json url -q .url)
+          echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
+
       # Download artifact
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build.outputs.artifact }}
+          name: ${{ needs.build.outputs.version }}
           path: ./artifact
+
       # Upload Release Asset
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/${{ needs.build.outputs.artifact }}.zip
-          asset_name: ${{ needs.build.outputs.artifact }}.zip
+          upload_url: ${{ steps.create_release.outputs.release_url }}
+          asset_path: ./artifact/${{ needs.build.outputs.version }}.zip
+          asset_name: ${{ needs.build.outputs.version }}.zip
           asset_content_type: application/zip
