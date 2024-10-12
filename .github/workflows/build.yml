@@ -261,8 +261,8 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-        - name: ${{ steps.artifact.outputs.filename }}
-          path: ./artifact
+          - name: ${{ steps.artifact.outputs.filename }}
+            path: ./artifact
 
       # Upload Release Asset
       - name: Upload Release Asset
