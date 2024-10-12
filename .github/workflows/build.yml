@@ -23,7 +23,7 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-  
+
 jobs:
 
   # Prepare environment and build the plugin
@@ -134,43 +134,43 @@ jobs:
         with:
           files: ${{ github.workspace }}/build/reports/kover/report.xml
 
-#  # Run Qodana inspections and provide report
-#  inspectCode:
-#    name: Inspect code
-#    needs: [ build ]
-#    runs-on: ubuntu-latest
-#    permissions:
-#      contents: write
-#      checks: write
-#      pull-requests: write
-#    steps:
-#
-#      # Free GitHub Actions Environment Disk Space
-#      - name: Maximize Build Space
-#        uses: jlumbroso/free-disk-space@main
-#        with:
-#          tool-cache: false
-#          large-packages: false
-#
-#      # Check out the current repository
-#      - name: Fetch Sources
-#        uses: actions/checkout@v4
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
-#          fetch-depth: 0  # a full history is required for pull request analysis
-#
-#      # Set up Java environment for the next steps
-#      - name: Setup Java
-#        uses: actions/setup-java@v4
-#        with:
-#          distribution: zulu
-#          java-version: 17
-#
-#      # Run Qodana inspections
-#      - name: Qodana - Code Inspection
-#        uses: JetBrains/qodana-action@v2024.2
-#        with:
-#          cache-default-branch-only: true
+  #  # Run Qodana inspections and provide report
+  #  inspectCode:
+  #    name: Inspect code
+  #    needs: [ build ]
+  #    runs-on: ubuntu-latest
+  #    permissions:
+  #      contents: write
+  #      checks: write
+  #      pull-requests: write
+  #    steps:
+  #
+  #      # Free GitHub Actions Environment Disk Space
+  #      - name: Maximize Build Space
+  #        uses: jlumbroso/free-disk-space@main
+  #        with:
+  #          tool-cache: false
+  #          large-packages: false
+  #
+  #      # Check out the current repository
+  #      - name: Fetch Sources
+  #        uses: actions/checkout@v4
+  #        with:
+  #          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
+  #          fetch-depth: 0  # a full history is required for pull request analysis
+  #
+  #      # Set up Java environment for the next steps
+  #      - name: Setup Java
+  #        uses: actions/setup-java@v4
+  #        with:
+  #          distribution: zulu
+  #          java-version: 17
+  #
+  #      # Run Qodana inspections
+  #      - name: Qodana - Code Inspection
+  #        uses: JetBrains/qodana-action@v2024.2
+  #        with:
+  #          cache-default-branch-only: true
 
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
@@ -261,8 +261,8 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-            name: ${{ needs.build.outputs.version }}
-            path: ./artifact
+          name: ${{ steps.artifact.outputs.filename }}
+          path: ./artifact
       # List contents of artifact directory
       - name: List artifact contents
         run: ls -R ./artifact
@@ -273,6 +273,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.release_url }}
-          asset_path: ./artifact/${{ needs.build.outputs.version }}.zip
-          asset_name: ${{ needs.build.outputs.version }}.zip
+          asset_path: ./artifact/${{ steps.artifact.outputs.filename }}.zip
+          asset_name: ${{ steps.artifact.outputs.filename }}.zip
           asset_content_type: application/zip
