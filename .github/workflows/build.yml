@@ -258,6 +258,7 @@ jobs:
           echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
 
       # Download artifact
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build.outputs.version }}
