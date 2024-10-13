@@ -15,8 +15,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import javax.swing.JComboBox
-import javax.swing.DefaultComboBoxModel
 import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
@@ -45,6 +43,8 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.Box
 import javax.swing.BoxLayout
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -286,12 +286,12 @@ class MassPatchServer(
                             heading = renderMarkdown(userMessage),
                             initialResponse = {
                                 mainActor.answer(toInput(it), api = api)
-                            },
+                                              },
                             outputFn = { design: String ->
                                 var markdown = (ui as SocketManagerBase).addApplyFileDiffLinks(
                                     root = _root as Path,
                                     response = design as String,
-                                    handle = { newCodeMap: Map<Path, String> ->
+                                    handle = { newCodeMap:Map<Path, String> ->
                                         newCodeMap.forEach { (path, newCode) ->
                                             fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                                         }
