@@ -702,7 +702,7 @@ object UITools {
                 val result = task(indicator)
                 this.result.set(result)
             } catch (e: Throwable) {
-                error(log, "Error running task", e)
+                log.info("Error running task", e)
                 error.set(e)
                 isError.set(true)
             } finally {

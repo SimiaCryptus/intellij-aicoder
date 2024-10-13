@@ -31,20 +31,22 @@ repositories {
 
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.9"
+val skyenet_version = "1.2.10"
 val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
 dependencies {
     implementation("software.amazon.awssdk:bedrock:2.25.9")
     implementation("software.amazon.awssdk:bedrockruntime:2.25.9")
+    implementation("software.amazon.awssdk:s3:2.25.9")
+    implementation("software.amazon.awssdk:kms:2.25.9")
 
     implementation("org.apache.commons:commons-text:1.11.0")
     implementation(group = "com.vladsch.flexmark", name = "flexmark", version = "0.64.8")
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.8")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.9")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
@@ -52,6 +54,7 @@ dependencies {
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jackson_version)
+    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version")
 
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)

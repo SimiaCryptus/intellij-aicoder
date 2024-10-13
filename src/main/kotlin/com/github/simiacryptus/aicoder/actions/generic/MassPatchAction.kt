@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
 import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.models.ApiModel.Role
 import com.simiacryptus.jopenai.ChatClient
@@ -31,7 +32,9 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.session.SocketManagerBase
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.nio.file.Files
@@ -98,7 +101,6 @@ class MassPatchAction : BaseAction() {
         val config = getConfig(project, e)
 
         val session = StorageInterface.newGlobalID()
-        SessionProxyServer.chats[session] = MassPatchServer(config=config, api=api)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
             singleInput = true,
@@ -166,6 +168,7 @@ class MassPatchServer(
     path = "/patchChat",
     showMenubar = false,
 ) {
+    private lateinit var _root: Path
 
 
     override val singleInput = false
@@ -220,6 +223,7 @@ class MassPatchServer(
     override fun newSession(user: User?, session: Session): SocketManager {
         val socketManager = super.newSession(user, session)
         val ui = (socketManager as ApplicationSocketManager).applicationInterface
+        _root = config.project?.basePath?.let { Path.of(it) } ?: Path.of(".")
         val task = ui.newTask(true)
         val tabs = TabbedDisplay(task)
         val userMessage = config.settings?.transformationMessage ?: "Create user documentation"
@@ -252,16 +256,17 @@ class MassPatchServer(
                                 mainActor.answer(toInput(it), api = api)
                                               },
                             outputFn = { design: String ->
-                                var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                                    root = root.toPath(),
-                                    response = design,
-                                    handle = { newCodeMap ->
+                                var markdown = (ui as SocketManagerBase).addApplyFileDiffLinks(
+                                    root = _root as Path,
+                                    response = design as String,
+                                    handle = { newCodeMap:Map<Path, String> ->
                                         newCodeMap.forEach { (path, newCode) ->
                                             fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                                         }
-                                    },
+                                    } as (Map<Path, String>) -> Unit,
                                     ui = ui,
-                                    api = api,
+                                    api = api as API,
+                                    shouldAutoApply = { true } as (Path) -> Boolean,
                                 )
                                 """<div>${renderMarkdown(markdown!!)}</div>"""
                             },

@@ -20,7 +20,7 @@ class RecentCodeEditsAction : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         if (e == null) return emptyArray()
         val children = mutableListOf<AnAction>()
-        for ((instruction, _) in AppSettingsState.instance.getRecentCommands("customEdits").mostUsedHistory) {
+        for (instruction in AppSettingsState.instance.getRecentCommands("customEdits").getMostRecent(10)) {
             val id = children.size + 1
             val text = if (id < 10) "_$id: $instruction" else "$id: $instruction"
             val element = object : CustomEditAction() {

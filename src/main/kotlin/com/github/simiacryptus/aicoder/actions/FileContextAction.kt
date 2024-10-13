@@ -27,6 +27,10 @@ abstract class FileContextAction<T : Any>(
 
     final override fun handle(e: AnActionEvent) {
         val config = getConfig(e.project, e)
+        if (config == null) {
+            log.warn("No configuration found for ${javaClass.simpleName}")
+            return
+        }
         val virtualFile = UITools.getSelectedFile(e) ?: UITools.getSelectedFolder(e) ?: return
         val project = e.project ?: return
         val projectRoot = File(project.basePath!!).toPath()
