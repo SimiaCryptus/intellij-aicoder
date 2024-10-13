@@ -37,7 +37,7 @@ class PluginStartupActivity : ProjectActivity {
                     val path = resource?.toURI()?.let { java.nio.file.Paths.get(it) }
                     virtualFile = path?.let { VirtualFileManager.getInstance().findFileByNioPath(it) }
                 } catch (e: Exception) {
-                    log.error("Error opening welcome page", e)
+                    log.debug("Error opening welcome page", e)
                 }
                 if (virtualFile == null) {
                     try {

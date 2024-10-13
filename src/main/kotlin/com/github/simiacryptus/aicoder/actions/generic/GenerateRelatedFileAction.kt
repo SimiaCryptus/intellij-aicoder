@@ -22,13 +22,13 @@ import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JTextArea
 
 class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Settings>() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.getSelectedFiles(event).size != 1) return false
-        return super.isEnabled(event)
+        return UITools.getSelectedFiles(event).size == 1 && super.isEnabled(event)
     }
 
     data class ProjectFile(
@@ -121,7 +121,7 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
 
             )
         )
-        val response = api.chat(chatRequest, model).choices.first().message?.content?.trim()
+        val response = api.chat(chatRequest, model).choices.firstOrNull()?.message?.content?.trim() ?: throw IllegalStateException("No response from API")
         var outputPath = baseFile.path
         val header = response?.split("\n")?.first()
         var body = response?.split("\n")?.drop(1)?.joinToString("\n")?.trim()
@@ -141,8 +141,8 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
 
     companion object {
         fun open(project: Project, outputPath: Path) {
-            lateinit var function: () -> Unit
-            function = {
+            val functionRef = AtomicReference<(() -> Unit)?>(null)
+            val function: () -> Unit = {
                 val file = outputPath.toFile()
                 if (file.exists()) {
                     // Ensure the IDE is ready for file operations
@@ -154,15 +154,16 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
                             val virtualFile = localFileSystem.refreshAndFindFileByIoFile(file)
                             virtualFile?.let {
                                 FileEditorManager.getInstance(project).openFile(it, true)
-                            } ?: scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+                            } ?: scheduledPool.schedule(functionRef.get()!!, 100, TimeUnit.MILLISECONDS)
                         } else {
-                            scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+                            scheduledPool.schedule(functionRef.get()!!, 100, TimeUnit.MILLISECONDS)
                         }
                     }
                 } else {
-                    scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
+                    scheduledPool.schedule(functionRef.get()!!, 100, TimeUnit.MILLISECONDS)
                 }
             }
+            functionRef.set(function)
             scheduledPool.schedule(function, 100, TimeUnit.MILLISECONDS)
         }
 

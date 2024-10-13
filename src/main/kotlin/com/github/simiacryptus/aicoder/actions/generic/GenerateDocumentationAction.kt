@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
+import javax.swing.JComboBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.simiacryptus.jopenai.models.ApiModel
@@ -30,9 +31,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.*
+import java.util.TreeMap
 
 
 class GenerateDocumentationAction : FileContextAction<GenerateDocumentationAction.Settings>() {
@@ -52,6 +55,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
 
         @Name("AI Instruction")
         val transformationMessage = JBTextArea(4, 40)
+
+        @Name("Recent Instructions")
+        val recentInstructions = JComboBox<String>()
 
         @Name("Output File")
         val outputFilename = JBTextField()
@@ -73,11 +79,11 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         val project: Project? = null
     )
 
-    override fun getConfig(project: Project?, e: AnActionEvent): Settings {
+    override fun getConfig(project: Project?, e: AnActionEvent): Settings? {
         val root = UITools.getSelectedFolder(e)?.toNioPath()
         val files = Files.walk(root)
             .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
-            .toList().filterNotNull().toTypedArray()
+            .toList().filterNotNull().sortedBy { it.toString() }.toTypedArray()
         val settingsUI = SettingsUI().apply {
             filesToProcess.setItems(files.toMutableList()) { path ->
                 root?.relativize(path)?.toString() ?: path.toString()
@@ -87,6 +93,14 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             }
             outputDirectory.text = "docs/"
         }
+        val mruDocumentationInstructions = AppSettingsState.instance.getRecentCommands("DocumentationInstructions")
+        settingsUI.recentInstructions.model = DefaultComboBoxModel(
+            mruDocumentationInstructions.getMostRecent(10).map {
+                "${it.split(" ").first()} ${it.split(" ").drop(1).joinToString(" ")}"
+            }.toTypedArray()
+        )
+        settingsUI.recentInstructions.selectedIndex = -1
+        settingsUI.recentInstructions.addActionListener { updateUIFromSelection(settingsUI) }
         val dialog = DocumentationCompilerDialog(project, settingsUI)
         dialog.show()
         val settings: UserSettings = dialog.userSettings
@@ -94,21 +108,44 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         settings.outputDirectory = settingsUI.outputDirectory.text
         val result = dialog.isOK
         settings.filesToProcess = when {
-            result -> files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.toList()
+            result -> files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.sortedBy { it.toString() }.toList()
             else -> listOf()
         }
+        if(settings.filesToProcess.isEmpty()) return null
+        mruDocumentationInstructions.addInstructionToHistory("${settings.outputFilename} ${settings.transformationMessage}")
         //.map { path -> return@map root?.resolve(path) }.filterNotNull()
         return Settings(settings, project)
     }
 
+    private fun updateUIFromSelection(settingsUI: SettingsUI) {
+        val selected = settingsUI.recentInstructions.selectedItem as? String
+        if (selected != null) {
+            val parts = selected.split(" ", limit = 2)
+            if (parts.size == 2) {
+                settingsUI.outputFilename.text = parts[0]
+                settingsUI.transformationMessage.text = parts[1]
+            } else {
+                settingsUI.transformationMessage.text = selected
+            }
+        }
+    }
+
     override fun processSelection(state: SelectionState, config: Settings?): Array<File> {
+        if (config?.settings == null) {
+            // Dialog was cancelled, return empty array
+            return emptyArray<File>().also {
+                // Ensure we don't attempt to open any files when dialog is cancelled
+                return@also
+            }
+        }
+
         val selectedFolder = state.selectedFile.toPath()
         val gitRoot = TestResultAutofixAction.findGitRoot(selectedFolder) ?: selectedFolder
         val outputDirectory = config?.settings?.outputDirectory ?: "docs/"
         var outputPath =
             selectedFolder.resolve(config?.settings?.outputFilename ?: "compiled_documentation.md")
         val relativePath = gitRoot.relativize(outputPath)
-        outputPath =  gitRoot.resolve(outputDirectory).resolve(relativePath)
+        outputPath = gitRoot.resolve(outputDirectory).resolve(relativePath)
         if (outputPath.toFile().exists()) {
             val extension = outputPath.toString().split(".").last()
             val name = outputPath.toString().split(".").dropLast(1).joinToString(".")
@@ -118,14 +155,13 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             outputPath = selectedFolder.resolve("$name.$fileIndex.$extension")
         }
         val executorService = Executors.newFixedThreadPool(4)
-        outputPath.parent.toFile().mkdirs()
         val transformationMessage = config?.settings?.transformationMessage ?: "Create user documentation"
-        val markdownContent = StringBuilder()
+        val markdownContent = TreeMap<String, String>()
         try {
-            val selectedPaths = config?.settings?.filesToProcess ?: listOf()
+            val selectedPaths = (config?.settings?.filesToProcess ?: listOf()).sortedBy { it.toString() }
             val partitionedPaths = Files.walk(selectedFolder)
                 .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
-                .toList().groupBy { selectedPaths.contains(it) }
+                .toList().sortedBy { it.toString() }.groupBy { selectedPaths.contains(it) }
             val pathList = partitionedPaths[true]
                 ?.toList()?.filterNotNull()
                 ?.map<Path, Future<Path>> { path ->
@@ -172,12 +208,19 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                     }
                 }?.filterNotNull() ?: listOf()
             if (config?.settings?.singleOutputFile == true) {
-                Files.write(outputPath, markdownContent.toString().toByteArray())
+                val sortedContent = markdownContent.entries.joinToString("\n\n") { (path, content) ->
+                    "# $path\n\n$content"
+                }
+                outputPath.parent.toFile().mkdirs()
+                outputPath.parent.toFile().mkdirs()
+                Files.write(outputPath, sortedContent.toByteArray())
                 open(config.project!!, outputPath)
                 return arrayOf(outputPath.toFile())
             } else {
+                val outputDir = selectedFolder.resolve(outputDirectory)
+                outputDir.toFile().mkdirs()
                 open(config?.project!!, selectedFolder.resolve(outputDirectory))
-                return pathList.toList().map { it.toFile() }.toTypedArray()
+                return pathList.map { it.toFile() }.toTypedArray()
             }
         } finally {
             executorService.shutdown()
@@ -192,11 +235,10 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         gitRoot: Path,
         outputDirectory: String,
         outputPath: Path,
-        markdownContent: StringBuilder
+        markdownContent: TreeMap<String, String>
     ) {
         if (config?.settings?.singleOutputFile == true) {
-            markdownContent.append("# ${selectedFolder.relativize(path)}\n\n")
-            markdownContent.append(transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##"))
+            markdownContent[selectedFolder.relativize(path).toString()] = transformContent.replace("(?s)(?<![^\\n])#".toRegex(), "\n##")
         } else {
             var individualOutputPath = /*selectedFolder*/ selectedFolder.relativize(
                 path.parent.resolve(
@@ -281,8 +323,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         }
     }
 
-    class DocumentationCompilerDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
+    inner class DocumentationCompilerDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
         val userSettings = UserSettings()
+        private val selectedInstruction = AtomicReference<String>()
 
         init {
             title = "Compile Documentation"
@@ -290,29 +333,39 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             settingsUI.transformationMessage.text = userSettings.transformationMessage
             settingsUI.outputFilename.text = userSettings.outputFilename
             settingsUI.outputDirectory.text = userSettings.outputDirectory
-       settingsUI.singleOutputFile.isSelected = userSettings.singleOutputFile
+            settingsUI.singleOutputFile.isSelected = userSettings.singleOutputFile
+            settingsUI.recentInstructions.addActionListener {
+                val selected = settingsUI.recentInstructions.selectedItem as? String
+                selected?.let {
+                    updateUIFromSelection(settingsUI)
+                }
+            }
             init()
         }
 
         override fun createCenterPanel(): JComponent {
             val panel = JPanel(BorderLayout()).apply {
                 val filesScrollPane = JBScrollPane(settingsUI.filesToProcess).apply {
-               preferredSize = Dimension(600, 400) // Increase the size for better visibility
+                    preferredSize = Dimension(600, 400) // Increase the size for better visibility
                 }
                 add(filesScrollPane, BorderLayout.CENTER) // Make the files list the dominant element
 
                 val optionsPanel = JPanel().apply {
                     layout = BoxLayout(this, BoxLayout.Y_AXIS)
-               border = BorderFactory.createEmptyBorder(10, 10, 10, 10) // Add some padding
+                    border = BorderFactory.createEmptyBorder(10, 10, 10, 10) // Add some padding
+                    add(JLabel("Recent Instructions"))
+                    add(settingsUI.recentInstructions)
+                    add(Box.createVerticalStrut(10))
                     add(JLabel("AI Instruction"))
                     add(settingsUI.transformationMessage)
-               add(Box.createVerticalStrut(10)) // Add some vertical spacing
+                    add(Box.createVerticalStrut(10))
+                    add(Box.createVerticalStrut(10)) // Add some vertical spacing
                     add(JLabel("Output File"))
                     add(settingsUI.outputFilename)
-               add(Box.createVerticalStrut(10))
+                    add(Box.createVerticalStrut(10))
                     add(JLabel("Output Directory"))
                     add(settingsUI.outputDirectory)
-               add(Box.createVerticalStrut(10))
+                    add(Box.createVerticalStrut(10))
                     add(settingsUI.singleOutputFile)
                 }
                 add(optionsPanel, BorderLayout.SOUTH)
@@ -321,9 +374,9 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         }
 
         override fun doOKAction() {
-       if (!validateInput()) {
-           return
-       }
+            if (!validateInput()) {
+                return
+            }
             super.doOKAction()
             userSettings.transformationMessage = settingsUI.transformationMessage.text
             userSettings.outputFilename = settingsUI.outputFilename.text
@@ -334,21 +387,22 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                 settingsUI.filesToProcess.items.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }
             userSettings.singleOutputFile = settingsUI.singleOutputFile.isSelected
         }
-   private fun validateInput(): Boolean {
-       if (settingsUI.transformationMessage.text.isBlank()) {
-           Messages.showErrorDialog("AI Instruction cannot be empty", "Input Error")
-           return false
-       }
-       if (settingsUI.outputFilename.text.isBlank()) {
-           Messages.showErrorDialog("Output File cannot be empty", "Input Error")
-           return false
-       }
-       if (settingsUI.outputDirectory.text.isBlank()) {
-           Messages.showErrorDialog("Output Directory cannot be empty", "Input Error")
-           return false
-       }
-       return true
-   }
+
+        private fun validateInput(): Boolean {
+            if (settingsUI.transformationMessage.text.isBlank()) {
+                Messages.showErrorDialog("AI Instruction cannot be empty", "Input Error")
+                return false
+            }
+            if (settingsUI.outputFilename.text.isBlank()) {
+                Messages.showErrorDialog("Output File cannot be empty", "Input Error")
+                return false
+            }
+            if (settingsUI.outputDirectory.text.isBlank()) {
+                Messages.showErrorDialog("Output Directory cannot be empty", "Input Error")
+                return false
+            }
+            return true
+        }
     }
 }
 

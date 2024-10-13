@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiManager
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
@@ -71,15 +72,26 @@ class AnalyzeProblemAction : AnAction() {
                     if (document != null) {
                         val lineNumber = item.line
                         val column = item.column
-                        appendLine("Position: Line $lineNumber, Column $column")
+                        appendLine("Position: Line ${lineNumber + 1}, Column ${column + 1}")
 
-                        val lineContent = document.getText(com.intellij.openapi.util.TextRange(
-                            document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)
-                        ))
-                        appendLine("Source:\n  $lineContent\n${" ".repeat(column + 2)}^\n")
+                        // Capture 5 lines of context
+                        val startLine = maxOf(0, lineNumber - 2)
+                        val endLine = minOf(document.lineCount - 1, lineNumber + 2)
+                        val contextLines = (startLine..endLine).map { line ->
+                            val start = document.getLineStartOffset(line)
+                            val end = document.getLineEndOffset(line)
+                            document.getText(TextRange(start, end))
+                        }
+                        appendLine("Context:")
+                        contextLines.forEachIndexed { index, content ->
+                            val linePrefix = if (index + startLine == lineNumber) ">" else " "
+                            appendLine("$linePrefix ${index + startLine + 1}: $content")
+                        }
+                        appendLine("${" ".repeat(column + 5)}^")
                     }
+
                     val projectStructure = getProjectStructure(gitRoot)
-                    appendLine("Project structure:\n  ${projectStructure.replace("\n","\n  ")}\n")
+                    appendLine("Project structure:\n  ${projectStructure.replace("\n", "\n  ")}\n")
                     appendLine("## ${file.path}\n```${fileType.lowercase()}\n${document?.text}\n```\n")
                 }
                 log.info("Problem info: $problemInfo")
@@ -163,14 +175,15 @@ class AnalyzeProblemAction : AnAction() {
 
                     task.add(
                         AgentPatterns.displayMapInTabs(
-                        mapOf(
-                            "Text" to renderMarkdown(plan.text, ui = ui),
-                            "JSON" to renderMarkdown(
-                                "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
-                                ui = ui
-                            ),
+                            mapOf(
+                                "Text" to renderMarkdown(plan.text, ui = ui),
+                                "JSON" to renderMarkdown(
+                                    "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
+                                    ui = ui
+                                ),
+                            )
                         )
-                    ))
+                    )
 
                     plan.obj.errors?.forEach { error ->
                         Retryable(ui, task) {
@@ -198,6 +211,7 @@ class AnalyzeProblemAction : AnAction() {
                 task.error(ui, e)
             }
         }
+
         private fun generateAndAddResponse(
             ui: ApplicationInterface,
             task: SessionTask,
@@ -205,7 +219,7 @@ class AnalyzeProblemAction : AnAction() {
             summary: String,
             filesToFix: List<String>,
             api: API
-        ) : String {
+        ): String {
             val response = SimpleActor(
                 prompt = """
                 |You are a helpful AI that helps people with coding.

@@ -11,6 +11,8 @@ import com.simiacryptus.jopenai.models.ChatModels
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.util.JsonUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
 
@@ -47,10 +49,10 @@ data class AppSettingsState(
     var shellCommand: String = getDefaultShell(),
     var enableLegacyActions: Boolean = false,
     var executables: MutableSet<String> = mutableSetOf(),
-    var recentArguments: MutableList<String> = mutableListOf()
+    var recentArguments: MutableList<String> = mutableListOf(),
+    val recentCommands: MutableMap<String, MRUItems> = mutableMapOf<String, MRUItems>(),
 ) : PersistentStateComponent<SimpleEnvelope> {
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
-    private val recentCommands = mutableMapOf<String, MRUItems>()
 
     @JsonIgnore
     override fun getState(): SimpleEnvelope {
@@ -65,7 +67,7 @@ data class AppSettingsState(
         val fromJson = try {
             JsonUtil.fromJson(state.value!!, AppSettingsState::class.java)
         } catch (e: Exception) {
-            //throw RuntimeException("Error loading settings: ${state.value}", e)
+            log.warn("Error loading settings: ${state.value}", e)
             AppSettingsState()
         }
         XmlSerializerUtil.copyBean(fromJson, this)
@@ -139,6 +141,7 @@ data class AppSettingsState(
     }
 
     companion object {
+        val log = LoggerFactory.getLogger(AppSettingsState::class.java)
         var auxiliaryLog: File? = null
         const val WELCOME_VERSION: String = "1.5.0"
 

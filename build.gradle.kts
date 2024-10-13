@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 fun properties(key: String) = providers.gradleProperty(key).get()
 
 plugins {
-    id("java") // Java support
+    id("java")
     kotlin("jvm") version "2.0.20"
     id("org.jetbrains.intellij.platform") version "2.1.0"
     id("org.jetbrains.changelog") version "2.2.1"
@@ -21,30 +21,29 @@ version = properties("pluginVersion")
 
 repositories {
     mavenCentral()
-    // IntelliJ Platform Gradle Plugin Repositories Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-repositories-extension.html
     intellijPlatform {
         defaultRepositories()
     }
-//    maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
-//    maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
 
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.9"
+val skyenet_version = "1.2.10"
 val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
 dependencies {
     implementation("software.amazon.awssdk:bedrock:2.25.9")
     implementation("software.amazon.awssdk:bedrockruntime:2.25.9")
+    implementation("software.amazon.awssdk:s3:2.25.9")
+    implementation("software.amazon.awssdk:kms:2.25.9")
 
     implementation("org.apache.commons:commons-text:1.11.0")
     implementation(group = "com.vladsch.flexmark", name = "flexmark", version = "0.64.8")
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.8")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.9")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
@@ -52,6 +51,7 @@ dependencies {
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jackson_version)
+    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version")
 
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
@@ -62,15 +62,11 @@ dependencies {
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
 
-//    testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
     testImplementation(platform("org.junit:junit-bom:5.11.2"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.vintage:junit-vintage-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-//    testImplementation("org.seleniumhq.selenium:selenium-java:4.15.0")
-//    testImplementation(sourceSets.main.get().output)
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = remoterobot_version)
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = remoterobot_version)
@@ -111,6 +107,7 @@ tasks {
 
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        exclude("org/jetbrains/**")
     }
 
 

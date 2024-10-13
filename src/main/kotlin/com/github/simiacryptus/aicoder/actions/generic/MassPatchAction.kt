@@ -15,8 +15,11 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import javax.swing.JComboBox
+import javax.swing.DefaultComboBoxModel
 import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
 import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.models.ApiModel.Role
 import com.simiacryptus.jopenai.ChatClient
@@ -32,12 +35,15 @@ import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.session.SocketManagerBase
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.UUID
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -57,10 +63,14 @@ class MassPatchAction : BaseAction() {
         @Name("AI Instruction")
         val transformationMessage = JBTextArea(4, 40)
 
+        @Name("Recent Instructions")
+        val recentInstructions = JComboBox<String>()
+
+
     }
 
     class UserSettings(
-        var transformationMessage: String = "Create user documentation",
+        var transformationMessage: String = "Review, fix, and improve",
         var filesToProcess: List<Path> = listOf(),
     )
 
@@ -69,7 +79,7 @@ class MassPatchAction : BaseAction() {
         val project: Project? = null
     )
 
-    /*override*/ fun getConfig(project: Project?, e: AnActionEvent): Settings {
+    fun getConfig(project: Project?, e: AnActionEvent): Settings? {
         val root = UITools.getSelectedFolder(e)?.toNioPath()
         val files = Files.walk(root)
             .filter { isLLMIncludable(it.toFile()) }
@@ -82,23 +92,37 @@ class MassPatchAction : BaseAction() {
                 filesToProcess.setItemSelected(path, true)
             }
         }
-        val dialog = ConfigDialog(project, settingsUI)
-        dialog.show()
-        val result = dialog.isOK
-        val settings: UserSettings = dialog.userSettings
-        settings.filesToProcess = when {
-            result -> files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.toList()
-            else -> listOf()
+        val mruPatchInstructions = AppSettingsState.instance.getRecentCommands("PatchInstructions")
+        settingsUI.recentInstructions.model = DefaultComboBoxModel(
+            mruPatchInstructions.getMostRecent(10).toTypedArray()
+        )
+        settingsUI.recentInstructions.selectedIndex = -1
+        settingsUI.recentInstructions.addActionListener {
+            updateUIFromSelection(settingsUI)
         }
+
+        val dialog = ConfigDialog(project, settingsUI, "Mass Patch")
+        dialog.show()
+        if (!dialog.isOK) return null
+        val settings: UserSettings = dialog.userSettings
+        settings.filesToProcess = files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.toList()
+        mruPatchInstructions.addInstructionToHistory(settings.transformationMessage)
         return Settings(settings, project)
     }
+
+    private fun updateUIFromSelection(settingsUI: SettingsUI) {
+        val selected = settingsUI.recentInstructions.selectedItem as? String
+        if (selected != null) {
+            settingsUI.transformationMessage.text = selected
+        }
+    }
+
 
     override fun handle(e: AnActionEvent) {
         val project = e.project
         val config = getConfig(project, e)
 
         val session = StorageInterface.newGlobalID()
-        SessionProxyServer.chats[session] = MassPatchServer(config=config, api=api)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
             singleInput = true,
@@ -121,11 +145,11 @@ class MassPatchAction : BaseAction() {
 
     }
 
-    class ConfigDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
+    class ConfigDialog(project: Project?, private val settingsUI: SettingsUI, title: String) : DialogWrapper(project) {
         val userSettings = UserSettings()
 
         init {
-            title = "Compile Documentation"
+            this.title = title
             // Set the default values for the UI elements from userSettings
             settingsUI.transformationMessage.text = userSettings.transformationMessage
             init()
@@ -141,6 +165,9 @@ class MassPatchAction : BaseAction() {
 
                 val optionsPanel = JPanel().apply {
                     layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                    add(JLabel("Recent Instructions"))
+                    add(settingsUI.recentInstructions)
+                    add(Box.createVerticalStrut(10))
                     add(JLabel("AI Instruction"))
                     add(settingsUI.transformationMessage)
                 }
@@ -166,6 +193,7 @@ class MassPatchServer(
     path = "/patchChat",
     showMenubar = false,
 ) {
+    private lateinit var _root: Path
 
 
     override val singleInput = false
@@ -220,7 +248,15 @@ class MassPatchServer(
     override fun newSession(user: User?, session: Session): SocketManager {
         val socketManager = super.newSession(user, session)
         val ui = (socketManager as ApplicationSocketManager).applicationInterface
+        _root = config.project?.basePath?.let { Path.of(it) } ?: Path.of(".")
         val task = ui.newTask(true)
+        val api = (api as ChatClient).getChildClient().apply {
+            val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
+            createFile.second?.apply {
+                logStreams += this.outputStream().buffered()
+                task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+            }
+        }
         val tabs = TabbedDisplay(task)
         val userMessage = config.settings?.transformationMessage ?: "Create user documentation"
         val codeFiles = config.settings?.filesToProcess
@@ -250,18 +286,19 @@ class MassPatchServer(
                             heading = renderMarkdown(userMessage),
                             initialResponse = {
                                 mainActor.answer(toInput(it), api = api)
-                                              },
+                            },
                             outputFn = { design: String ->
-                                var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                                    root = root.toPath(),
-                                    response = design,
-                                    handle = { newCodeMap ->
+                                var markdown = (ui as SocketManagerBase).addApplyFileDiffLinks(
+                                    root = _root as Path,
+                                    response = design as String,
+                                    handle = { newCodeMap: Map<Path, String> ->
                                         newCodeMap.forEach { (path, newCode) ->
                                             fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                                         }
-                                    },
+                                    } as (Map<Path, String>) -> Unit,
                                     ui = ui,
-                                    api = api,
+                                    api = api as API,
+                                    shouldAutoApply = { true } as (Path) -> Boolean,
                                 )
                                 """<div>${renderMarkdown(markdown!!)}</div>"""
                             },

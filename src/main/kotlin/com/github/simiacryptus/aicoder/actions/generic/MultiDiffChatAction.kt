@@ -31,6 +31,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.util.UUID
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
@@ -158,8 +159,15 @@ class MultiDiffChatAction : BaseAction() {
             if (api is ChatClient) api.budget = settings.budget ?: 2.00
 
             val task = ui.newTask()
+            val api = (api as ChatClient).getChildClient().apply {
+                val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
+                createFile.second?.apply {
+                    logStreams += this.outputStream().buffered()
+                    task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+                }
+            }
             val codex = GPT4Tokenizer()
-            task.header(renderMarkdown(getCodeFiles().joinToString("\n") { path ->
+            task.verbose(renderMarkdown(getCodeFiles().joinToString("\n") { path ->
                 "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
             }))
             val toInput = { it: String -> listOf(codeSummary(), it) }

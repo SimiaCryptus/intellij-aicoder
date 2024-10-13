@@ -702,7 +702,7 @@ object UITools {
                 val result = task(indicator)
                 this.result.set(result)
             } catch (e: Throwable) {
-                error(log, "Error running task", e)
+                log.info("Error running task", e)
                 error.set(e)
                 isError.set(true)
             } finally {
@@ -937,7 +937,7 @@ object UITools {
         //pane.isComponentOrientationLeftToRight = true
         val dialog = pane.createDialog(parentComponent, title)
         pane.selectInitialValue()
-        dialog.show()
+        dialog.isVisible = true
         dialog.dispose()
         val value = pane.inputValue
         return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
@@ -951,4 +951,3 @@ object UITools {
     }
 
 }
-

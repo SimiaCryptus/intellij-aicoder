@@ -90,9 +90,13 @@ class PlanAheadConfigDialog(
         }
 
         override fun getValueAt(row: Int, column: Int): Any =
-            if (column == 0) {
-                checkboxStates[row]
-            } else super.getValueAt(row, column)
+            try {
+                if (column == 0) {
+                    checkboxStates[row]
+                } else super.getValueAt(row, column)
+            } catch (e: IndexOutOfBoundsException) {
+                false
+            }
     }
     private val commandTable = JBTable(tableModel).apply { putClientProperty("terminateEditOnFocusLost", true) }
     private val addCommandButton = JButton("Add Command")
