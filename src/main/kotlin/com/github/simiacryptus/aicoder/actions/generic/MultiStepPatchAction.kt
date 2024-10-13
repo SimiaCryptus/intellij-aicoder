@@ -206,6 +206,14 @@ class MultiStepPatchAction : BaseAction() {
             }
 
             val task = ui.newTask()
+            val api = (api as ChatClient).getChildClient().apply {
+                val createFile = task.createFile(".logs/api-${java.util.UUID.randomUUID()}.log")
+                createFile.second?.apply {
+                    logStreams += this.outputStream().buffered()
+                    task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+                }
+            }
+
             val toInput = { it: String -> listOf(codeSummary(), it) }
             val architectureResponse = Discussable(
                 task = task,
@@ -299,6 +307,7 @@ class MultiStepPatchAction : BaseAction() {
             }
         }
     }
+
     companion object {
         private val log = LoggerFactory.getLogger(MultiStepPatchAction::class.java)
         val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")

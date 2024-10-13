@@ -28,6 +28,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.util.UUID
 
 class MultiCodeChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -119,7 +120,16 @@ class MultiCodeChatAction : BaseAction() {
 
             val task = ui.newTask()
             val codex = GPT4Tokenizer()
-            task.header(renderMarkdown(codeFiles.joinToString("\n") { path ->
+
+            val api = (api as ChatClient).getChildClient().apply {
+                val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
+                createFile.second?.apply {
+                    logStreams += this.outputStream().buffered()
+                    task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+                }
+            }
+            task.echo(renderMarkdown(userMessage))
+            task.verbose(renderMarkdown(codeFiles.joinToString("\n") { path ->
                 "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
             }))
             val toInput = { it: String -> listOf(codeSummary(), it) }

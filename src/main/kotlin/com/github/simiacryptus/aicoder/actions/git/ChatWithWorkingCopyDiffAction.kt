@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ContentRevision
-import com.intellij.openapi.project.Project
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.StorageInterface
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -33,7 +31,7 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
 
         Thread {
             try {
-                val diffInfo = getWorkingCopyDiff(project, changeListManager)
+                val diffInfo = getWorkingCopyDiff(changeListManager)
                 openChatWithDiff(e, diffInfo)
             } catch (e: Throwable) {
                 log.error("Error comparing changes", e)
@@ -77,7 +75,7 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
 
 
 
-    private fun getWorkingCopyDiff(project: Project, changeListManager: ChangeListManager): String {
+    private fun getWorkingCopyDiff(changeListManager: ChangeListManager): String {
         val changes = changeListManager.allChanges
         return changes.joinToString("\n\n") { change ->
             val diffForChange = getDiffForChange(change)
