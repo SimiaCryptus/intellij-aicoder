@@ -10,7 +10,7 @@ import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vfs.VirtualFile
@@ -112,7 +112,8 @@ class ChatWithCommitAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = e.getData(DataKey.create<String>("VCS")) != "Git"
+        e.presentation.isEnabledAndVisible = e.getData(PlatformDataKeys.PROJECT) != null && 
+                                             e.getData(VcsDataKeys.VCS)?.name != "Git"
     }
 
 }

@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 fun properties(key: String) = providers.gradleProperty(key).get()
 
 plugins {
-    id("java") // Java support
+    id("java")
     kotlin("jvm") version "2.0.20"
     id("org.jetbrains.intellij.platform") version "2.1.0"
     id("org.jetbrains.changelog") version "2.2.1"
@@ -21,12 +21,9 @@ version = properties("pluginVersion")
 
 repositories {
     mavenCentral()
-    // IntelliJ Platform Gradle Plugin Repositories Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-repositories-extension.html
     intellijPlatform {
         defaultRepositories()
     }
-//    maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
-//    maven(url = "https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven")
 }
 
 val jetty_version = "11.0.24"
@@ -65,15 +62,11 @@ dependencies {
 
     implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
 
-//    testImplementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0")
     testImplementation(platform("org.junit:junit-bom:5.11.2"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.vintage:junit-vintage-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-//    testImplementation("org.seleniumhq.selenium:selenium-java:4.15.0")
-//    testImplementation(sourceSets.main.get().output)
 
     testImplementation(group = "com.intellij.remoterobot", name = "remote-robot", version = remoterobot_version)
     testImplementation(group = "com.intellij.remoterobot", name = "remote-fixtures", version = remoterobot_version)
@@ -114,6 +107,7 @@ tasks {
 
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        exclude("org/jetbrains/**")
     }
 
 
