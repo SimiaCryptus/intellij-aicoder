@@ -15,8 +15,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import javax.swing.JComboBox
-import javax.swing.DefaultComboBoxModel
 import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
