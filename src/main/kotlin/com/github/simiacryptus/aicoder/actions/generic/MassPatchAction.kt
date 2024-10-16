@@ -66,7 +66,6 @@ class MassPatchAction : BaseAction() {
         @Name("Recent Instructions")
         val recentInstructions = JComboBox<String>()
 
-
     }
 
     class UserSettings(
