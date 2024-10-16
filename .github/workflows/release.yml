@@ -18,6 +18,13 @@ jobs:
       pull-requests: write
     steps:
 
+      # Free GitHub Actions Environment Disk Space
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          large-packages: false
+
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v3
@@ -30,6 +37,10 @@ jobs:
         with:
           distribution: zulu
           java-version: 17
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       # Set environment variables
       - name: Export Properties
@@ -44,14 +55,6 @@ jobs:
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-      # Update the Unreleased section with the current release note
-      - name: Patch Changelog
-        if: ${{ steps.properties.outputs.changelog != '' }}
-        env:
-          CHANGELOG: ${{ steps.properties.outputs.changelog }}
-        run: |
-          ./gradlew patchChangelog --release-note="$CHANGELOG"
 
       # Publish the plugin to JetBrains Marketplace
       - name: Publish Plugin
