@@ -17,6 +17,25 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      # Free additional disk space
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf \
+            "$AGENT_TOOLSDIRECTORY" \
+            /opt/google/chrome \
+            /opt/microsoft/msedge \
+            /opt/microsoft/powershell \
+            /opt/pipx \
+            /usr/lib/mono \
+            /usr/local/julia* \
+            /usr/local/lib/android \
+            /usr/local/lib/node_modules \
+            /usr/local/share/chromium \
+            /usr/local/share/powershell \
+            /usr/share/dotnet \
+            /usr/share/swift
+          df -h /
+
 
       # Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
