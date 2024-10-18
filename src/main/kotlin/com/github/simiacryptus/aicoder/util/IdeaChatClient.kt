@@ -88,7 +88,7 @@ open class IdeaChatClient(
     ): ChatResponse {
         val storeMetadata = AppSettingsState.instance.storeMetadata
         var chatRequest = chatRequest.copy(
-            store = storeMetadata?.isNotBlank(),
+            store = storeMetadata?.let { !isSanctioned && it.isNotBlank() },
             metadata = storeMetadata?.let { JsonUtil.fromJson(it, Map::class.java) }
         )
         val lastEvent = lastEvent
