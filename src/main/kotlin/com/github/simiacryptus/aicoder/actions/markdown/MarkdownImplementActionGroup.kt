@@ -2,7 +2,6 @@ package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -10,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
 
 class MarkdownImplementActionGroup : ActionGroup() {
@@ -42,6 +42,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
 
     open class MarkdownImplementAction(private val language: String) : SelectionAction<String>(true) {
         override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
         init {
             templatePresentation.text = language
             templatePresentation.description = language

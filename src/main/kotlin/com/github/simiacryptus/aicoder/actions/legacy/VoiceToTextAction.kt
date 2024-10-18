@@ -117,7 +117,7 @@ class VoiceToTextAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if(!AppSettingsState.instance.enableLegacyActions) return false
+        if (!AppSettingsState.instance.enableLegacyActions) return false
         return try {
             null != targetDataLine.get(50, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {

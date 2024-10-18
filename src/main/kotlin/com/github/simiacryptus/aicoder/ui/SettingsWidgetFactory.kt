@@ -11,7 +11,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ChatModel
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
@@ -44,8 +44,8 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
             }
         }
 
-        fun models() = ChatModels.values().filter { isVisible(it.value) }
-            .entries.sortedBy { "${it.value.provider.name} - ${it.value.modelName}" }.map { it.value }.toList()
+        fun models() = ChatModel.values().filter { it.value != null && isVisible(it.value!!) }
+            .entries.sortedBy { "${it.value!!.provider.name} - ${it.value!!.modelName}" }.map { it.value }.toList()
 
         override fun ID(): String {
             return "AICodingAssistant.SettingsWidget"
@@ -78,7 +78,8 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
                 cursor = Cursor(Cursor.HAND_CURSOR)
                 addMouseListener(object : MouseAdapter() {
                     override fun mouseClicked(e: MouseEvent) = browse(
-                        URI("https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant/edit/reviews"))
+                        URI("https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant/edit/reviews")
+                    )
                 })
             }, BorderLayout.EAST)
             return header
@@ -98,14 +99,14 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
             ) {
                 text = value // Here you can add more customization if needed
                 if (value != null) {
-                    val model = models().find { it.modelName == value }
+                    val model = models().find { it?.modelName == value }
                     text = "<html><b>${model?.provider?.name}</b> - <i>$value</i></html>" // Enhance label formatting
                 }
             }
         }
 
         override fun getPopup(): JBPopup {
-            val listModel = CollectionListModel(models().map { it.modelName })
+            val listModel = CollectionListModel(models().map { it?.modelName ?: "" })
             val list = JBList(listModel)
             list.cellRenderer = getRenderer()
             list.visibleRowCount = 20
@@ -131,7 +132,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
         }
 
         companion object {
-            fun isVisible(it: ChatModels): Boolean {
+            fun isVisible(it: ChatModel): Boolean {
                 val hasApiKey =
                     AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.provider.name)
                 return false != hasApiKey

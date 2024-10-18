@@ -3,10 +3,10 @@ package com.github.simiacryptus.aicoder.util
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
-import java.net.URI
-import java.net.DatagramSocket
 import java.net.DatagramPacket
+import java.net.DatagramSocket
 import java.net.InetAddress
+import java.net.URI
 
 object BrowseUtil {
 

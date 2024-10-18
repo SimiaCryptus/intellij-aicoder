@@ -12,8 +12,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
@@ -27,7 +27,7 @@ class LineFilterChatAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         val language = ComputerLanguage.getComputerLanguage(e)?.name ?: return
         val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
         val code = editor.caretModel.primaryCaret.selectedText ?: editor.document.text

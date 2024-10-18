@@ -3,8 +3,8 @@
 //import com.github.simiacryptus.aicoder.config.ActionSettingsRegistry
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
-import com.google.common.util.concurrent.*
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.google.common.util.concurrent.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -619,7 +619,7 @@ object UITools {
     fun getSelectedFiles(e: AnActionEvent): List<VirtualFile> {
         val dataContext = e.dataContext
         val data = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-        if(null != data) return data.toList()
+        if (null != data) return data.toList()
         val editor = PlatformDataKeys.EDITOR.getData(dataContext)
         if (editor != null) {
             val file = FileDocumentManager.getInstance().getFile(editor.document)

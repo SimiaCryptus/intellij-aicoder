@@ -1,13 +1,10 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 object FileSystemUtils {
 

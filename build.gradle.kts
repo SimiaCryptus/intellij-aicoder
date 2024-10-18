@@ -11,7 +11,7 @@ plugins {
     id("org.jetbrains.intellij.platform") version "2.1.0"
     id("org.jetbrains.changelog") version "2.2.1"
     id("org.jetbrains.qodana") version "2024.2.3"
-    id("org.jetbrains.kotlinx.kover") version "0.9.0-RC"
+    //id("org.jetbrains.kotlinx.kover") version "0.9.0-RC"
     id("org.jetbrains.dokka") version "2.0.0-Beta"
 }
 
@@ -28,7 +28,7 @@ repositories {
 
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.11"
+val skyenet_version = "1.2.12"
 val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
@@ -43,7 +43,7 @@ dependencies {
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.9")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.10")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
@@ -51,7 +51,7 @@ dependencies {
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jackson_version)
-    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version")
 
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
@@ -181,7 +181,7 @@ intellijPlatform {
     }
 
     publishing {
-    // Include VCS plugin
+        // Include VCS plugin
         token = providers.environmentVariable("PUBLISH_TOKEN")
         // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
@@ -208,6 +208,7 @@ changelog {
 }
 
 // Configure Gradle Kover Plugin - read more: https://github.com/Kotlin/kotlinx-kover#configuration
+/*
 kover {
     reports {
         total {
@@ -217,6 +218,7 @@ kover {
         }
     }
 }
+*/
 
 tasks {
     wrapper {

@@ -1,11 +1,10 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.simiacryptus.jopenai.ChatClient
-import com.simiacryptus.jopenai.OpenAIClient
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.core.platform.model.StorageInterface
+import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 
@@ -15,7 +14,7 @@ open class CodeChatSocketManager(
     val filename: String,
     val codeSelection: String,
     api: ChatClient,
-    model: ChatModels,
+    model: ChatModel,
     storage: StorageInterface?,
 ) : ChatSocketManager(
     session = session,

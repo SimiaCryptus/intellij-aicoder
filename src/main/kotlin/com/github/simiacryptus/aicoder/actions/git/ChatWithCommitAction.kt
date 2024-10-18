@@ -3,10 +3,9 @@ package com.github.simiacryptus.aicoder.actions.git
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
-import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,8 +14,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.IterativePatchUtil
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
@@ -69,7 +69,7 @@ class ChatWithCommitAction : AnAction() {
     }
 
     private fun openChatWithDiff(e: AnActionEvent, diffInfo: String) {
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         SessionProxyServer.agents[session] = CodeChatSocketManager(
             session = session,
             language = "diff",
@@ -112,8 +112,8 @@ class ChatWithCommitAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = e.getData(PlatformDataKeys.PROJECT) != null && 
-                                             e.getData(VcsDataKeys.VCS)?.name != "Git"
+        e.presentation.isEnabledAndVisible = e.getData(PlatformDataKeys.PROJECT) != null &&
+                e.getData(VcsDataKeys.VCS)?.name != "Git"
     }
 
 }

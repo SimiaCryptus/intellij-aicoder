@@ -90,7 +90,7 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.PlanChatAction"
-                text="Plan Chat"
+                text="Chat w/ Planner"
                 description="Interactive session for project planning, task breakdown, and development strategy discussions">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
@@ -102,25 +102,25 @@
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.PrePlanAction"
-                text="Pre-Plan"
+                text="Pre-Planner"
                 description="Set up a structured task planning session with customizable parameters and execution environment">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction"
-                text="Multi-Step Patch"
+                text="Multi-Step Editor"
                 description="Break down complex code modifications into a series of manageable steps, with intelligent suggestions for each stage">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.MultiDiffChatAction"
-                text="Patch Files"
+                text="Modify Files"
                 description="Analyze and generate patches for multiple files simultaneously, considering the broader project context">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction"
-                text="Auto-Fix"
+                text="Run ... and Fix"
                 description="Intelligent analysis and automatic resolution of build or test errors, with customizable fix suggestions">
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>

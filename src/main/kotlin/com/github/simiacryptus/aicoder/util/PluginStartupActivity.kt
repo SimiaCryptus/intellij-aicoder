@@ -7,9 +7,15 @@ import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.*
-import com.simiacryptus.skyenet.core.platform.ApplicationServicesConfig.isLocked
+import com.simiacryptus.skyenet.core.platform.hsql.HSQLUsageManager
+import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig
+import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig.isLocked
+import com.simiacryptus.skyenet.core.platform.model.AuthenticationInterface
+import com.simiacryptus.skyenet.core.platform.model.AuthorizationInterface
+import com.simiacryptus.skyenet.core.platform.model.User
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.full.declaredMembers
@@ -25,6 +31,8 @@ class PluginStartupActivity : ProjectActivity {
             try {
                 currentThread.contextClassLoader = PluginStartupActivity::class.java.classLoader
                 init()
+                // Add user-supplied models to ChatModel
+                addUserSuppliedModels(AppSettingsState.instance.userSuppliedModels)
             } finally {
                 currentThread.contextClassLoader = prevClassLoader
             }
@@ -108,5 +116,18 @@ class PluginStartupActivity : ProjectActivity {
 
     companion object {
         val log = org.slf4j.LoggerFactory.getLogger(PluginStartupActivity::class.java)
+
+        fun addUserSuppliedModels(userModels: List<AppSettingsState.UserSuppliedModel>) {
+            userModels.forEach { model ->
+                ChatModel.values[model.displayName] = ChatModel(
+                    name = model.displayName,
+                    modelName = model.modelId,
+                    maxTotalTokens = 4096, // Default value, adjust as needed
+                    provider = model.provider,
+                    inputTokenPricePerK = 0.0, // Default value, adjust as needed
+                    outputTokenPricePerK = 0.0 // Default value, adjust as needed
+                )
+            }
+        }
     }
 }

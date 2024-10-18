@@ -3,36 +3,36 @@
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.models.ApiModel
-import com.simiacryptus.jopenai.models.ApiModel.Role
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.describe.Description
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ApiModel
+import com.simiacryptus.jopenai.models.ApiModel.Role
+import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
-import com.simiacryptus.util.JsonUtil
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.core.platform.model.StorageInterface
+import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
-import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.util.JsonUtil
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -50,7 +50,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
     val path = "/webDev"
 
     override fun handle(e: AnActionEvent) {
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         val selectedFile = UITools.getSelectedFolder(e)
         if (null != selectedFile) {
             DataStorage.sessionPaths[session] = selectedFile.toFile
@@ -87,7 +87,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
         applicationName: String = "Web Development Agent",
         val temperature: Double = 0.1,
         root: VirtualFile?,
-        override val singleInput : Boolean = false,
+        override val singleInput: Boolean = false,
     ) : ApplicationServer(
         applicationName = applicationName,
         path = "/webdev",
@@ -121,8 +121,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
         data class Settings(
             val budget: Double? = 2.00,
             val tools: List<String> = emptyList(),
-            val model: ChatModels = OpenAIModels.GPT4o,
-            val parsingModel: ChatModels = OpenAIModels.GPT4oMini,
+            val model: ChatModel = OpenAIModels.GPT4o,
+            val parsingModel: ChatModel = OpenAIModels.GPT4oMini,
         )
 
         override val settingsClass: Class<*> get() = Settings::class.java
@@ -137,8 +137,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
         session: Session,
         user: User?,
         val ui: ApplicationInterface,
-        val model: ChatModels,
-        val parsingModel: ChatModels,
+        val model: ChatModel,
+        val parsingModel: ChatModel,
         val tools: List<String> = emptyList(),
         actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
             ActorTypes.ArchitectureDiscussionActor to ParsedActor(
@@ -620,6 +620,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
     companion object {
         private val log = LoggerFactory.getLogger(WebDevelopmentAssistantAction::class.java)
         val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
+
         data class ProjectSpec(
             @Description("Files in the project design, including all local html, css, and js files.")
             val files: List<ProjectFile> = emptyList()

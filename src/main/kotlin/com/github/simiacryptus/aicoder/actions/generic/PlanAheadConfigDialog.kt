@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.TaskSettings
 import com.simiacryptus.skyenet.apps.plan.TaskType
@@ -34,35 +34,38 @@ class PlanAheadConfigDialog(
         override fun isCellEditable(row: Int, column: Int) = column == 0 || column == 2
     }
     private val taskTable = JBTable(taskTableModel).apply { putClientProperty("terminateEditOnFocusLost", true) }
-        // Add a function to retrieve visible models
-        private fun getVisibleModels() =
-            ChatModels.values().map { it.value }.filter { isVisible(it) }.toList()
-                .sortedBy { "${it.provider.name} - ${it.modelName}" }
-        // Custom renderer to display provider name and model name
-        private fun getModelRenderer() = object : DefaultTableCellRenderer() {
-            override fun getTableCellRendererComponent(
-                table: JTable,
-                value: Any,
-                isSelected: Boolean,
-                hasFocus: Boolean,
-                row: Int,
-                column: Int
-            ): Component {
-                val label = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column) as JLabel
-                if (value is String) {
-                    val model = getVisibleModels().find { it.modelName == value }
-                    label.text = "<html><b>${model?.provider?.name}</b> - <i>$value</i></html>"
-                }
-                return label
+
+    // Add a function to retrieve visible models
+    private fun getVisibleModels() =
+        ChatModel.values().map { it.value }.filter { isVisible(it) }.toList()
+            .sortedBy { "${it.provider.name} - ${it.modelName}" }
+
+    // Custom renderer to display provider name and model name
+    private fun getModelRenderer() = object : DefaultTableCellRenderer() {
+        override fun getTableCellRendererComponent(
+            table: JTable,
+            value: Any,
+            isSelected: Boolean,
+            hasFocus: Boolean,
+            row: Int,
+            column: Int
+        ): Component {
+            val label = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column) as JLabel
+            if (value is String) {
+                val model = getVisibleModels().find { it.modelName == value }
+                label.text = "<html><b>${model?.provider?.name}</b> - <i>$value</i></html>"
             }
+            return label
         }
-        companion object {
-            fun isVisible(it: ChatModels): Boolean {
-                val hasApiKey =
-                    AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.provider.name)
-                return false != hasApiKey
-            }
+    }
+
+    companion object {
+        fun isVisible(it: ChatModel): Boolean {
+            val hasApiKey =
+                AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.provider.name)
+            return false != hasApiKey
         }
+    }
 
     private val checkboxStates = AppSettingsState.instance.executables.map { true }.toMutableList()
     private val tableModel = object : DefaultTableModel(arrayOf("Enabled", "Command"), 0) {
@@ -103,19 +106,19 @@ class PlanAheadConfigDialog(
     private val editCommandButton = JButton("Edit Command")
 
 
-        init {
-            taskTable.columnModel.getColumn(2).apply {
-                preferredWidth = 200
-                maxWidth = 250
-                val modelComboBox = JComboBox(getVisibleModels().map { it.modelName }.toTypedArray())
-                cellEditor = DefaultCellEditor(modelComboBox)
-                cellRenderer = getModelRenderer()
-            }
+    init {
+        taskTable.columnModel.getColumn(2).apply {
+            preferredWidth = 200
+            maxWidth = 250
+            val modelComboBox = JComboBox(getVisibleModels().map { it.modelName }.toTypedArray())
+            cellEditor = DefaultCellEditor(modelComboBox)
+            cellRenderer = getModelRenderer()
+        }
 
         init()
         title = "Configure Plan Ahead Action"
         // Add model combobox and change listener to update the settings based on slider value
-            
+
         temperatureSlider.addChangeListener {
             settings.temperature = temperatureSlider.value / 100.0
         }
@@ -175,8 +178,8 @@ class PlanAheadConfigDialog(
         }
         editCommandButton.isEnabled = false
         // Initialize task table
-            val values = TaskType.values()
-            values.forEach { taskType ->
+        val values = TaskType.values()
+        values.forEach { taskType ->
             val taskSettings = settings.getTaskSettings(taskType)
             taskTableModel.addRow(
                 arrayOf(
@@ -227,7 +230,7 @@ class PlanAheadConfigDialog(
         for (i in 0 until taskTableModel.rowCount) {
             val taskType = TaskType.valueOf(taskTableModel.getValueAt(i, 1) as String)
             val modelName = taskTableModel.getValueAt(i, 2) as String
-            val selectedModel = ChatModels.values().toList().find { it.first == modelName }?.second
+            val selectedModel = ChatModel.values().toList().find { it.first == modelName }?.second
             settings.setTaskSettings(taskType, TaskSettings(taskTableModel.getValueAt(i, 0) as Boolean).apply {
                 this.model = selectedModel
             })

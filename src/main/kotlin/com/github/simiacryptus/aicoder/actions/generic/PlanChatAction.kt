@@ -3,15 +3,15 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.PlanChatApp
-import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
-import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -38,7 +38,7 @@ class PlanChatAction : BaseAction() {
         )
         if (dialog.showAndGet()) {
             // Settings are applied only if the user clicks OK
-            val session = StorageInterface.newGlobalID()
+            val session = Session.newGlobalID()
             val folder = UITools.getSelectedFolder(e)
             val root = folder?.toFile ?: getModuleRootForFile(
                 UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")

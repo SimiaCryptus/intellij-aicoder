@@ -1,10 +1,9 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
-import ai.grazie.utils.dropPrefix
 import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.config.Name
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -29,10 +28,12 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
             120
         )
     }
+
     class Settings(
         var directive: String = "",
         val project: Project? = null
     )
+
     override fun getConfig(project: Project?, e: AnActionEvent): Settings {
         val userSettings = UITools.showDialog(
             project,

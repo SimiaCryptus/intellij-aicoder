@@ -4,9 +4,8 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -14,12 +13,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -60,7 +59,7 @@ class MultiCodeChatAction : BaseAction() {
         val files = getFiles(virtualFiles, root!!)
         codeFiles.addAll(files)
 
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         SessionProxyServer.chats[session] = PatchApp(root.toFile(), { codeSummary() }, codeFiles)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
@@ -143,19 +142,21 @@ class MultiCodeChatAction : BaseAction() {
                         |${renderMarkdown(codeSummary())}
                         |</div>
                         |
-                        |<div>${renderMarkdown(
-                        ui.socketManager?.addApplyFileDiffLinks(
-                            root = root.toPath(),
-                            response = design,
-                            handle = { newCodeMap ->
-                                newCodeMap.forEach { (path, newCode) ->
-                                    content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                                }
-                            },
-                            ui = ui,
-                            api = api,
-                        )!!
-                    )}</div>
+                        |<div>${
+                        renderMarkdown(
+                            ui.socketManager?.addApplyFileDiffLinks(
+                                root = root.toPath(),
+                                response = design,
+                                handle = { newCodeMap ->
+                                    newCodeMap.forEach { (path, newCode) ->
+                                        content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                    }
+                                },
+                                ui = ui,
+                                api = api,
+                            )!!
+                        )
+                    }</div>
                     """.trimMargin()
 
                 },
