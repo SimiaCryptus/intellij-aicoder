@@ -1,26 +1,26 @@
 ﻿package com.github.simiacryptus.aicoder.actions.generic
 
-import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
-import com.simiacryptus.diff.addApplyDiffLinks
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
+import com.simiacryptus.diff.addApplyDiffLinks
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
-import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
-import com.simiacryptus.skyenet.webui.application.AppInfoData
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 
@@ -31,7 +31,7 @@ class DiffChatAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         val language = ComputerLanguage.getComputerLanguage(e)?.name ?: ""
         val document = editor.document
         val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return

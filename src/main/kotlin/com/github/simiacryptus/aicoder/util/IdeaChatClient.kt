@@ -2,22 +2,25 @@
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.FormBuilder
-import com.simiacryptus.jopenai.models.ApiModel.*
 import com.simiacryptus.jopenai.ChatClient
+import com.simiacryptus.jopenai.isSanctioned
 import com.simiacryptus.jopenai.models.APIProvider
+import com.simiacryptus.jopenai.models.ApiModel.*
 import com.simiacryptus.jopenai.models.OpenAIModel
-import com.simiacryptus.jopenai.models.OpenAITextModel
-import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.jopenai.models.TextModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.util.JsonUtil
 import org.apache.hc.core5.http.HttpRequest
 import org.slf4j.LoggerFactory
+import org.slf4j.event.Level
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -25,11 +28,14 @@ import javax.swing.JPanel
 import javax.swing.JTextArea
 
 
-class IdeaChatClient : ChatClient(
-    key = AppSettingsState.instance.apiKey?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
+open class IdeaChatClient(
+    key: Map<APIProvider, String> = AppSettingsState.instance.apiKey?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
         ?.associate { it.key to it.value } ?: mapOf(),
-    apiBase = AppSettingsState.instance.apiBase?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
+    apiBase: Map<APIProvider, String> = AppSettingsState.instance.apiBase?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
         ?.associate { it.key to it.value } ?: mapOf(),
+) : ChatClient(
+    key = key,
+    apiBase = apiBase,
 ) {
 
     init {
@@ -37,6 +43,26 @@ class IdeaChatClient : ChatClient(
         require(key.size == apiBase.size) {
             "API Key not configured for all providers: ${key.keys} != ${APIProvider.values().toList()}"
         }
+    }
+
+    private class IdeaChildClient(
+        val inner: IdeaChatClient,
+        key: Map<APIProvider, String>,
+        apiBase: Map<APIProvider, String>
+    ) : IdeaChatClient(
+        key = key,
+        apiBase = apiBase
+    ) {
+        override fun log(level: Level, msg: String) {
+            if (isSanctioned) return
+            super.log(level, msg)
+            inner.log(level, msg)
+        }
+    }
+
+    override fun getChildClient(): ChatClient = IdeaChildClient(inner = this, key = key, apiBase = apiBase).apply {
+        session = inner.session
+        user = inner.user
     }
 
     private val isInRequest = AtomicBoolean(false)
@@ -58,9 +84,25 @@ class IdeaChatClient : ChatClient(
     @Suppress("NAME_SHADOWING")
     override fun chat(
         chatRequest: ChatRequest,
-        model: OpenAITextModel
+        model: TextModel
     ): ChatResponse {
+        val storeMetadata = AppSettingsState.instance.storeMetadata
+        var chatRequest = chatRequest.copy(
+            store = storeMetadata?.isNotBlank(),
+            metadata = storeMetadata?.let { JsonUtil.fromJson(it, Map::class.java) }
+        )
+        val lastEvent = lastEvent
         lastEvent ?: return super.chat(chatRequest, model)
+        chatRequest = chatRequest.copy(
+            store = chatRequest.store,
+            metadata = chatRequest.metadata?.let {
+                it + mapOf(
+                    "project" to lastEvent.project?.name,
+                    "action" to lastEvent.presentation.text,
+                    "language" to lastEvent.getData(CommonDataKeys.PSI_FILE)?.language?.displayName,
+                )
+            }
+        )
         if (isInRequest.getAndSet(true)) {
             val response = super.chat(chatRequest, model)
             if (null != response.usage) {
@@ -86,7 +128,7 @@ class IdeaChatClient : ChatClient(
                 }
                 return withJsonDialog(chatRequest, { chatRequest ->
                     UITools.run(
-                        lastEvent!!.project, "OpenAI Request", true, suppressProgress = false
+                        lastEvent.project, "OpenAI Request", true, suppressProgress = false
                     ) {
                         val response = super.chat(chatRequest, model)
                         if (null != response.usage) {
@@ -106,10 +148,9 @@ class IdeaChatClient : ChatClient(
     }
 
 
+    companion object {
 
-            companion object {
-
-            val instance by lazy {
+        val instance by lazy {
             //log.info("Initializing OpenAI Client", Throwable())
             val client = IdeaChatClient()
             if (AppSettingsState.instance.apiLog) {
@@ -191,7 +232,7 @@ class IdeaChatClient : ChatClient(
         }
 
         private val log = LoggerFactory.getLogger(IdeaChatClient::class.java)
-        val currentSession = StorageInterface.newGlobalID()
+        val currentSession = Session.newGlobalID()
         val localUser = User(id = "1", email = "user@localhost")
     }
 

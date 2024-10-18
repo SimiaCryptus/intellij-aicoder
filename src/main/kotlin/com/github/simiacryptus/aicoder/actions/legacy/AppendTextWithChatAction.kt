@@ -2,11 +2,11 @@ package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.ApiModel.*
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 
 class AppendTextWithChatAction : SelectionAction<String>() {

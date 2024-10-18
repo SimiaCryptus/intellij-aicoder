@@ -3,24 +3,24 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.components.JBTextField
-import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.PlanAheadApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
-import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import com.simiacryptus.util.JsonUtil
 import org.slf4j.LoggerFactory
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -45,8 +45,8 @@ class PrePlanAction : BaseAction() {
 
         try {
             val taskBreakdownWithPrompt = JsonUtil.fromJson<PlanUtil.TaskBreakdownWithPrompt>(jsonInput, PlanUtil.TaskBreakdownWithPrompt::class.java)
-            
-            val session = StorageInterface.newGlobalID()
+
+            val session = Session.newGlobalID()
             val folder = UITools.getSelectedFolder(e)
             val root = folder?.toFile ?: getModuleRootForFile(
                 UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("No file selected")
@@ -83,7 +83,7 @@ class PrePlanAction : BaseAction() {
                 loadImages = false,
                 showMenubar = false
             )
-            
+
             val server = AppServer.getServer(e.project)
             openBrowser(server, session.toString())
         } catch (ex: Exception) {

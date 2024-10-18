@@ -3,17 +3,17 @@ package com.github.simiacryptus.aicoder.actions.git
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
-import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import javax.swing.JOptionPane
@@ -41,7 +41,7 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
     }
 
     private fun openChatWithDiff(e: AnActionEvent, diffInfo: String) {
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         SessionProxyServer.agents[session] = CodeChatSocketManager(
             session = session,
             language = "diff",
@@ -74,16 +74,16 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
     }
 
 
-
     private fun getWorkingCopyDiff(changeListManager: ChangeListManager): String {
         val changes = changeListManager.allChanges
         return changes.joinToString("\n\n") { change ->
             val diffForChange = getDiffForChange(change)
             "File: ${change.virtualFile?.path ?: "Unknown"}\n" +
-            "Type: ${change.type}\n" +
-            (diffForChange ?: "No diff available")
+                    "Type: ${change.type}\n" +
+                    (diffForChange ?: "No diff available")
         }.ifEmpty { "No changes found" }
     }
+
     private fun getDiffForChange(change: com.intellij.openapi.vcs.changes.Change): String? {
         val beforeRevision = change.beforeRevision
         val afterRevision = change.afterRevision

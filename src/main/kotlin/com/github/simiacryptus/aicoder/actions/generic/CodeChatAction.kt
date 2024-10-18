@@ -3,16 +3,16 @@
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.LanguageUtils
-import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
@@ -23,7 +23,7 @@ class CodeChatAction : BaseAction() {
     override fun handle(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         val language = LanguageUtils.getComputerLanguage(e)?.name ?: ""
         val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
 

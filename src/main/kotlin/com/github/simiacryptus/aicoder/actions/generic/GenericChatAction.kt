@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.StorageInterface
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
@@ -23,7 +23,7 @@ class GenericChatAction : BaseAction() {
     val model = AppSettingsState.instance.smartModel.chatModel()
 
     override fun handle(e: AnActionEvent) {
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         SessionProxyServer.agents[session] = ChatSocketManager(
             session = session,
             model = model,

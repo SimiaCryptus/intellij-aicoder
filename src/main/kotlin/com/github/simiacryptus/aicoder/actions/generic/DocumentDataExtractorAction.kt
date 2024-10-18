@@ -3,20 +3,19 @@ package com.github.simiacryptus.aicoder.actions.generic
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.parsers.CodeParsingModel
-import com.simiacryptus.skyenet.apps.parsers.DocumentParsingModel
 import com.simiacryptus.skyenet.apps.parsers.DocumentParserApp
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import org.slf4j.LoggerFactory
+import com.simiacryptus.skyenet.apps.parsers.DocumentParsingModel
 import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import org.slf4j.LoggerFactory
 import java.io.File
 
 class DocumentDataExtractorAction : BaseAction() {
@@ -26,14 +25,14 @@ class DocumentDataExtractorAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if(!super.isEnabled(event)) return false
+        if (!super.isEnabled(event)) return false
         val selectedFile = UITools.getSelectedFile(event)
         return selectedFile != null && (
-            selectedFile.name.endsWith(".pdf", ignoreCase = true) ||
-            selectedFile.name.endsWith(".txt", ignoreCase = true) ||
-            selectedFile.name.endsWith(".md", ignoreCase = true) ||
-            selectedFile.name.endsWith(".html", ignoreCase = true)
-        )
+                selectedFile.name.endsWith(".pdf", ignoreCase = true) ||
+                        selectedFile.name.endsWith(".txt", ignoreCase = true) ||
+                        selectedFile.name.endsWith(".md", ignoreCase = true) ||
+                        selectedFile.name.endsWith(".html", ignoreCase = true)
+                )
     }
 
     override fun handle(e: AnActionEvent) {
@@ -50,7 +49,7 @@ class DocumentDataExtractorAction : BaseAction() {
         if (!configDialog.showAndGet()) return
         settings = configDialog.settings
 
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         val pdfFile = selectedFile.toFile
         DataStorage.sessionPaths[session] = pdfFile.parentFile
 

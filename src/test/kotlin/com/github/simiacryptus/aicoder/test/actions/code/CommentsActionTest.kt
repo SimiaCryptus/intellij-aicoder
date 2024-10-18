@@ -1,15 +1,15 @@
 ﻿package com.github.simiacryptus.aicoder.test.actions.code
 
-import com.github.simiacryptus.aicoder.test.actions.ActionTestBase
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.actions.legacy.CommentsAction
+import com.github.simiacryptus.aicoder.test.actions.ActionTestBase
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
 class CommentsActionTest : ActionTestBase() {
 
-//    @Test
+    //    @Test
     fun testProcessing() {
         testScript_SelectionAction(CommentsAction(), "/CommentsActionTest.md")
     }

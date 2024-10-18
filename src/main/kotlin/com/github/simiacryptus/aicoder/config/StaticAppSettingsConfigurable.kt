@@ -1,20 +1,26 @@
 package com.github.simiacryptus.aicoder.config
 
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
+import com.github.simiacryptus.aicoder.util.PluginStartupActivity.Companion.addUserSuppliedModels
 import com.simiacryptus.jopenai.models.APIProvider
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.FlowLayout
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.io.File
 import java.io.FileOutputStream
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 import javax.swing.table.DefaultTableModel
 
 class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
     override fun apply() {
         super.apply()
+        addUserSuppliedModels(settingsInstance.userSuppliedModels)
         if (settingsInstance.apiLog) {
             val file = File(AppSettingsState.instance.pluginHome, "openai.log")
             if (AppSettingsState.auxiliaryLog?.absolutePath?.lowercase() != file.absolutePath.lowercase()) {
@@ -97,6 +103,29 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                         add(JLabel("Disable Auto-Open URLs:"))
                         add(component.disableAutoOpenUrls)
                     })
+                    add(JPanel(BorderLayout()).apply {
+                        add(JLabel("Store Metadata (JSON):"), BorderLayout.NORTH)
+                        val scrollPane = JScrollPane(component.storeMetadata)
+                        scrollPane.preferredSize = Dimension(300, 100)
+                        add(scrollPane, BorderLayout.CENTER)
+                    })
+                    add(JPanel(BorderLayout()).apply {
+                        add(JLabel("User-Supplied Models:"), BorderLayout.NORTH)
+                        add(JScrollPane(component.userSuppliedModels).apply {
+                            preferredSize = Dimension(500, 200)
+                        }, BorderLayout.CENTER)
+                        add(JPanel(GridBagLayout()).apply {
+                            val gbc = GridBagConstraints().apply {
+                                gridx = 0
+                                gridy = 0
+                                fill = GridBagConstraints.HORIZONTAL
+                                weightx = 1.0
+                            }
+                            add(component.addUserModelButton, gbc)
+                            gbc.gridx++
+                            add(component.removeUserModelButton, gbc)
+                        }, BorderLayout.SOUTH)
+                    })
                     add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                         add(JLabel("Enable API Log:"))
                         add(component.apiLog)
@@ -156,6 +185,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             component.devActions.isSelected = settings.devActions
             component.editRequests.isSelected = settings.editRequests
             component.mainImageModel.selectedItem = settings.mainImageModel
+            component.storeMetadata.text = settings.storeMetadata ?: ""
             component.temperature.text = settings.temperature.toString()
             component.pluginHome.text = settings.pluginHome.absolutePath
             component.shellCommand.text = settings.shellCommand
@@ -168,6 +198,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             component.showWelcomeScreen.isSelected = settings.showWelcomeScreen
             component.enableLegacyActions.isSelected = settings.enableLegacyActions
             component.setExecutables(settings.executables)
+            component.setUserSuppliedModels(settings.userSuppliedModels)
         } catch (e: Exception) {
             log.warn("Error setting UI", e)
         }
@@ -190,6 +221,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             settings.editRequests = component.editRequests.isSelected
             settings.disableAutoOpenUrls = component.disableAutoOpenUrls.isSelected
             settings.temperature = component.temperature.text.safeDouble()
+            settings.storeMetadata = component.storeMetadata.text.takeIf { it.isNotBlank() }
             settings.mainImageModel = (component.mainImageModel.selectedItem as String)
             settings.pluginHome = File(component.pluginHome.text)
             settings.shellCommand = component.shellCommand.text
@@ -216,6 +248,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                 }
             }
             settings.showWelcomeScreen = component.showWelcomeScreen.isSelected
+            settings.userSuppliedModels = component.getUserSuppliedModels().toMutableList()
         } catch (e: Exception) {
             log.warn("Error reading UI", e)
         }

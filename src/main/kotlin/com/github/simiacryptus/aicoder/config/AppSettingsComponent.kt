@@ -17,7 +17,8 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.table.JBTable
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.APIProvider
+import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import java.awt.BorderLayout
@@ -31,6 +32,13 @@ import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 
 class AppSettingsComponent : com.intellij.openapi.Disposable {
+    @Suppress("unused")
+    @Name("Store Metadata")
+    val storeMetadata = JTextArea().apply {
+        lineWrap = true
+        wrapStyleWord = true
+    }
+
     val executablesModel = DefaultListModel<String>().apply {
         AppSettingsState.instance.executables.forEach { addElement(it) }
     }
@@ -170,6 +178,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     @Suppress("unused")
     @Name("Edit API Requests")
     val editRequests = JBCheckBox()
+
     @Suppress("unused")
     @Name("Disable Auto-Open URLs")
     val disableAutoOpenUrls = JBCheckBox()
@@ -220,8 +229,43 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         }
     }
 
+    @Name("User-Supplied Models")
+    val userSuppliedModels = JBTable(DefaultTableModel(arrayOf("Display Name", "Model ID", "Provider"), 0)).apply {
+        columnModel.getColumn(0).preferredWidth = 150
+        columnModel.getColumn(1).preferredWidth = 200
+        columnModel.getColumn(2).preferredWidth = 100
+        columnModel.getColumn(2).cellEditor = DefaultCellEditor(JComboBox(APIProvider.values().map { it.name }.toTypedArray()))
+    }
+    val addUserModelButton = JButton("Add Model").apply {
+        addActionListener {
+            (userSuppliedModels.model as DefaultTableModel).addRow(arrayOf("", "", APIProvider.OpenAI))
+        }
+    }
+    val removeUserModelButton = JButton("Remove Model").apply {
+        addActionListener {
+            if (userSuppliedModels.selectedRow != -1)
+                (userSuppliedModels.model as DefaultTableModel).removeRow(userSuppliedModels.selectedRow)
+        }
+    }
+
+
     @Name("Editor Actions")
     var usage = UsageTable(ApplicationServices.usageManager)
+    fun getUserSuppliedModels(): List<AppSettingsState.UserSuppliedModel> {
+        return (0 until userSuppliedModels.rowCount).map { row ->
+            AppSettingsState.UserSuppliedModel(
+                userSuppliedModels.getValueAt(row, 0) as String,
+                userSuppliedModels.getValueAt(row, 1) as String,
+                userSuppliedModels.getValueAt(row, 2) as APIProvider
+            )
+        }
+    }
+
+    fun setUserSuppliedModels(models: List<AppSettingsState.UserSuppliedModel>) {
+        val model = userSuppliedModels.model as DefaultTableModel
+        model.rowCount = 0
+        models.forEach { model.addRow(arrayOf(it.displayName, it.modelId, it.provider)) }
+    }
 
     init {
         // Initialize executables list
@@ -238,7 +282,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
                 ((executablesPanel.getComponent(0) as? JScrollPane)?.viewport?.view as? JList<String>)?.model as? DefaultListModel<String>
             return model?.elements()?.toList()?.toSet() ?: emptySet()
         }
-        ChatModels.values()
+        ChatModel.values()
             .filter {
                 AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name)
                     ?: false
@@ -252,21 +296,21 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         }
         // Sort the items in the ComboBoxes
         val smartModelItems = (0 until smartModel.itemCount).map { smartModel.getItemAt(it) }
-            .filter {  modelItem ->
-                isVisible(ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@filter false)
+            .filter { modelItem ->
+                isVisible(ChatModel.values().entries.find { it.value.modelName == modelItem }?.value ?: return@filter false)
             }
             .sortedBy { modelItem ->
                 val model =
-                    ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
+                    ChatModel.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
                 "${model.provider.name} - ${model.modelName}"
             }.toList()
         val fastModelItems = (0 until fastModel.itemCount).map { fastModel.getItemAt(it) }
-            .filter {  modelItem ->
-                isVisible(ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@filter false)
+            .filter { modelItem ->
+                isVisible(ChatModel.values().entries.find { it.value.modelName == modelItem }?.value ?: return@filter false)
             }
             .sortedBy { modelItem ->
                 val model =
-                    ChatModels.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
+                    ChatModel.values().entries.find { it.value.modelName == modelItem }?.value ?: return@sortedBy ""
                 "${model.provider.name} - ${model.modelName}"
             }.toList()
         smartModel.removeAllItems()
@@ -295,7 +339,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         ) {
             text = value // Here you can add more customization if needed
             if (value != null) {
-                val model = ChatModels.values().entries.find { it.value.modelName == value }?.value
+                val model = ChatModel.values().entries.find { it.value.modelName == value }?.value
                 text = "${model?.provider?.name} - $value"
             }
         }

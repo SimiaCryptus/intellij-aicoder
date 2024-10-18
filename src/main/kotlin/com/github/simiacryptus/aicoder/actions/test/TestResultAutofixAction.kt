@@ -4,33 +4,32 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
-import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
-import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
-import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.util.JsonUtil
 import org.jetbrains.annotations.NotNull
 import java.io.File
 import java.nio.file.Path
@@ -46,8 +45,8 @@ class TestResultAutofixAction : BaseAction() {
         ): MutableSet<Path> {
             val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
             virtualFiles?.forEach { file ->
-                if(file.name.startsWith(".")) return@forEach
-                if(isGitignore(file)) return@forEach
+                if (file.name.startsWith(".")) return@forEach
+                if (isGitignore(file)) return@forEach
                 if (file.isDirectory) {
                     codeFiles.addAll(getFiles(file.children))
                 } else {
@@ -56,13 +55,14 @@ class TestResultAutofixAction : BaseAction() {
             }
             return codeFiles
         }
+
         fun getFiles(
             virtualFiles: Array<out Path>?
         ): MutableSet<Path> {
             val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
             virtualFiles?.forEach { file ->
-                if(file.fileName.startsWith(".")) return@forEach
-                if(isGitignore(file)) return@forEach
+                if (file.fileName.startsWith(".")) return@forEach
+                if (isGitignore(file)) return@forEach
                 if (file.toFile().isDirectory) {
                     codeFiles.addAll(getFiles(file.toFile().listFiles().map { it.toPath() }.toTypedArray()))
                 } else {
@@ -73,7 +73,7 @@ class TestResultAutofixAction : BaseAction() {
         }
 
         fun getProjectStructure(projectPath: VirtualFile?): String {
-            return getProjectStructure(Path.of((projectPath?: return "Project path is null").path))
+            return getProjectStructure(Path.of((projectPath ?: return "Project path is null").path))
         }
 
         fun getProjectStructure(root: Path): String {
@@ -139,22 +139,22 @@ class TestResultAutofixAction : BaseAction() {
         val sb = StringBuilder()
         sb.appendLine("Test Name: ${testProxy.name}")
         sb.appendLine("Duration: ${testProxy.duration} ms")
-        
+
         if (testProxy.errorMessage != null) {
             sb.appendLine("Error Message:")
             sb.appendLine(testProxy.errorMessage)
         }
-        
+
         if (testProxy.stacktrace != null) {
             sb.appendLine("Stacktrace:")
             sb.appendLine(testProxy.stacktrace)
         }
-        
+
         return sb.toString()
     }
 
     private fun openAutofixWithTestResult(e: AnActionEvent, testInfo: String, projectStructure: String) {
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         SessionProxyServer.chats[session] = TestResultAutofixApp(session, testInfo, e.project?.basePath, projectStructure)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
@@ -221,15 +221,17 @@ class TestResultAutofixAction : BaseAction() {
                         model = AppSettingsState.instance.smartModel.chatModel()
                     ).answer(listOf(testInfo), api = IdeaChatClient.instance)
 
-                    task.add(AgentPatterns.displayMapInTabs(
-                        mapOf(
-                            "Text" to renderMarkdown(plan.text, ui = ui),
-                            "JSON" to renderMarkdown(
-                                "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
-                                ui = ui
-                            ),
+                    task.add(
+                        AgentPatterns.displayMapInTabs(
+                            mapOf(
+                                "Text" to renderMarkdown(plan.text, ui = ui),
+                                "JSON" to renderMarkdown(
+                                    "${tripleTilde}json\n${JsonUtil.toJson(plan.obj)}\n$tripleTilde",
+                                    ui = ui
+                                ),
+                            )
                         )
-                    ))
+                    )
 
                     plan.obj.errors?.forEach { error ->
                         Retryable(ui, task) {
@@ -264,7 +266,7 @@ class TestResultAutofixAction : BaseAction() {
             error: ParsedError,
             summary: String,
             filesToFix: List<String>
-        ) : String {
+        ): String {
             val response = SimpleActor(
                 prompt = """
                 You are a helpful AI that helps people with coding.
@@ -303,7 +305,7 @@ $projectStructure
 
     data class ParsedErrors(
         val errors: List<ParsedError>? = null
-                    )
+    )
 
     data class ParsedError(
         val message: String? = null,

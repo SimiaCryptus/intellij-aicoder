@@ -43,7 +43,7 @@ dependencies {
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.9")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.10")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
@@ -51,7 +51,7 @@ dependencies {
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = jackson_version)
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jackson_version)
-    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version")
 
     implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
     implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
@@ -181,7 +181,7 @@ intellijPlatform {
     }
 
     publishing {
-    // Include VCS plugin
+        // Include VCS plugin
         token = providers.environmentVariable("PUBLISH_TOKEN")
         // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:

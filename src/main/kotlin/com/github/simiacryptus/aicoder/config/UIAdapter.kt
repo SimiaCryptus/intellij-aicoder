@@ -56,7 +56,7 @@ abstract class UIAdapter<C : Any, S : Any>(
         log.error("Error reading settings", e)
         settingsInstance
     }
-    
+
     override fun isModified() = when {
         component == null -> false
         getSettings() != settingsInstance -> true

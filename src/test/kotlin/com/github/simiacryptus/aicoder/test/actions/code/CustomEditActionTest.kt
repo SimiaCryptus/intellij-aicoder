@@ -1,18 +1,18 @@
 ﻿package com.github.simiacryptus.aicoder.test.actions.code
 
-import com.github.simiacryptus.aicoder.test.actions.ActionTestBase
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.actions.code.CustomEditAction
+import com.github.simiacryptus.aicoder.test.actions.ActionTestBase
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.project.Project
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
 class CustomEditActionTest : ActionTestBase() {
 
     private val instruction = "Add code comments"
 
-//    @Test
+    //    @Test
     fun testProcessing() {
         testScript_SelectionAction(object : CustomEditAction() {
             override fun getConfig(project: Project?): String {

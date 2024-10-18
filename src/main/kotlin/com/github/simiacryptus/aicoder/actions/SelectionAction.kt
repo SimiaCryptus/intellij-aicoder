@@ -1,8 +1,8 @@
 ﻿package com.github.simiacryptus.aicoder.actions
 
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.LanguageUtils
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -55,9 +55,9 @@ abstract class SelectionAction<T : Any>(
         val editorState = editorState(editor)
         val (start, end) = retarget(editorState, selectedText, selectionStart, selectionEnd) ?: return
         val text = editorState.text
-        selectedText = text.substring(start.coerceIn(0, text.length-1), end.coerceIn(0, text.length-1))
-        selectionEnd = end.coerceIn(0, text.length-1)
-        selectionStart = start.coerceIn(0, text.length-1)
+        selectedText = text.substring(start.coerceIn(0, (text.length - 1).coerceAtLeast(0)), end.coerceIn(0, (text.length - 1).coerceAtLeast(0)))
+        selectionEnd = end.coerceIn(0, (text.length - 1).coerceAtLeast(0))
+        selectionStart = start.coerceIn(0, (text.length - 1).coerceAtLeast(0))
 
         UITools.redoableTask(e) {
             val document = e.getData(CommonDataKeys.EDITOR)?.document
@@ -74,7 +74,7 @@ abstract class SelectionAction<T : Any>(
                         selectionOffset = selectionStart,
                         selectionLength = selectionEnd - selectionStart,
                         entireDocument = editor.document.text,
-                       language = LanguageUtils.getComputerLanguage(e),
+                        language = LanguageUtils.getComputerLanguage(e),
                         indent = indent,
                         contextRanges = editorState.contextRanges,
                         psiFile = editorState.psiFile,
@@ -160,7 +160,7 @@ abstract class SelectionAction<T : Any>(
                 if (start >= end) return false
             }
         }
-       val computerLanguage = LanguageUtils.getComputerLanguage(event)
+        val computerLanguage = LanguageUtils.getComputerLanguage(event)
         return isLanguageSupported(computerLanguage)
     }
 
@@ -177,7 +177,7 @@ abstract class SelectionAction<T : Any>(
     )
 
     open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-       return LanguageUtils.isLanguageSupported(computerLanguage)
+        return LanguageUtils.isLanguageSupported(computerLanguage)
     }
 
     open fun defaultSelection(editorState: EditorState, offset: Int) = editorState.line

@@ -6,27 +6,29 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.imageModel
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.API
+import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.models.ApiModel.Role
-import com.simiacryptus.jopenai.ChatClient
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.core.platform.model.StorageInterface
+import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
-import com.simiacryptus.skyenet.webui.application.ApplicationInterface
-import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.application.ApplicationInterface
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -71,7 +73,7 @@ class CreateImageAction : BaseAction() {
         val files = getFiles(virtualFiles, root!!)
         codeFiles.addAll(files)
 
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
 //        val storage = ApplicationServices.dataStorageFactory(root?.toFile()!!) as DataStorage?
 //        val selectedFile = UITools.getSelectedFolder(event)
         if (/*null != storage &&*/ null != root) {
@@ -149,7 +151,7 @@ class CreateImageAction : BaseAction() {
         session: Session,
         user: User?,
         val ui: ApplicationInterface,
-        val model: ChatModels,
+        val model: ChatModel,
         val codeSummary: () -> String = { "" },
         actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
             ActorTypes.MainActor to ImageActor(
@@ -213,6 +215,7 @@ class CreateImageAction : BaseAction() {
             ).call()
         }
     }
+
     private fun write(
         code: ImageResponse,
         path: Path

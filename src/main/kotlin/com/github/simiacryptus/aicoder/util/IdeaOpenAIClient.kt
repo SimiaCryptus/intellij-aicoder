@@ -1,9 +1,9 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.APIProvider
+import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.models.OpenAIModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import org.apache.hc.core5.http.HttpRequest
@@ -31,7 +31,8 @@ class IdeaOpenAIClient : OpenAIClient(
 //        AppSettingsState.instance.tokenCounter += tokens.total_tokens
         ApplicationServices.usageManager.incrementUsage(
             IdeaChatClient.currentSession,
-            IdeaChatClient.localUser, model!!, tokens)
+            IdeaChatClient.localUser, model!!, tokens
+        )
     }
 
     override fun authorize(request: HttpRequest, apiProvider: APIProvider) {

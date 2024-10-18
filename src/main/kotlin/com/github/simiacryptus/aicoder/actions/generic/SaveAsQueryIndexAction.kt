@@ -44,7 +44,7 @@ class SaveAsQueryIndexAction : BaseAction() {
                         try {
                             indicator.isIndeterminate = false
                             indicator.fraction = 0.0
-                            saveAsBinary<Map<String,Any>>(
+                            saveAsBinary<Map<String, Any>>(
                                 IdeaOpenAIClient.instance,
                                 outputPath,
                                 Executors.newFixedThreadPool(8),

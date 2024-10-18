@@ -3,27 +3,27 @@ package com.github.simiacryptus.aicoder.actions.git
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
-import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.LocalFilePath
-import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.changes.TextRevisionNumber
-import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.webui.application.AppInfoData
-import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.TextRevisionNumber
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.simiacryptus.jopenai.models.chatModel
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
+import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import javax.swing.JOptionPane
 
 class ChatWithCommitDiffAction : AnAction() {
@@ -53,7 +53,7 @@ class ChatWithCommitDiffAction : AnAction() {
     }
 
     private fun openChatWithDiff(e: AnActionEvent, diffInfo: String) {
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         SessionProxyServer.agents[session] = CodeChatSocketManager(
             session = session,
             language = "diff",
@@ -97,12 +97,14 @@ class ChatWithCommitDiffAction : AnAction() {
             }
         }
     }
+
     private fun getDiffForChange(project: Project, change: Change, selectedCommit: VcsRevisionNumber): String? {
         val file = change.virtualFile ?: return null
         val currentContent = change.afterRevision?.content ?: return null
         val selectedContent = getContentForRevision(project, file, selectedCommit) ?: return null
         return createSimpleDiff(currentContent, selectedContent)
     }
+
     private fun getContentForRevision(project: Project, file: VirtualFile, revisionNumber: VcsRevisionNumber): String? {
         try {
             val contentRevision = CurrentContentRevision(LocalFilePath(file.path, file.isDirectory))
@@ -112,6 +114,7 @@ class ChatWithCommitDiffAction : AnAction() {
             return null
         }
     }
+
     private fun createSimpleDiff(currentContent: String, selectedContent: String): String {
         val currentLines = currentContent.lines()
         val selectedLines = selectedContent.lines()
@@ -133,11 +136,10 @@ class ChatWithCommitDiffAction : AnAction() {
     }
 
 
-
     override fun update(e: AnActionEvent) {
         val project = e.project
-        e.presentation.isEnabledAndVisible = project != null && 
-            ProjectLevelVcsManager.getInstance(project).allActiveVcss.isNotEmpty()
+        e.presentation.isEnabledAndVisible = project != null &&
+                ProjectLevelVcsManager.getInstance(project).allActiveVcss.isNotEmpty()
     }
 
 }

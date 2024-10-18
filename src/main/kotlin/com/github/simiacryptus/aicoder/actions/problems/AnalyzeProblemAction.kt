@@ -9,10 +9,9 @@ import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Comp
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.ParsedError
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.ParsedErrors
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
+import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.analysis.problemsView.toolWindow.ProblemNode
-import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -20,26 +19,26 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
-import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.platform.StorageInterface
-import com.simiacryptus.skyenet.core.platform.User
+import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
+import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
-import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
-import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.util.JsonUtil
 import javax.swing.JOptionPane
 
 class AnalyzeProblemAction : AnAction() {
@@ -105,7 +104,7 @@ class AnalyzeProblemAction : AnAction() {
     }
 
     private fun openAnalysisSession(project: Project, problemInfo: String, gitRoot: VirtualFile?) {
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         SessionProxyServer.chats[session] = ProblemAnalysisApp(session, problemInfo, gitRoot)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",

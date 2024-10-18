@@ -4,7 +4,6 @@ import com.github.simiacryptus.aicoder.actions.FileContextAction
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction
 import com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction.Companion.getProjectStructure
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -17,10 +16,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
-import javax.swing.JComboBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.simiacryptus.jopenai.models.ApiModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import org.apache.commons.io.IOUtils
 import java.awt.BorderLayout
@@ -29,13 +28,14 @@ import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.TreeMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
-import java.util.TreeMap
+import javax.swing.JComboBox
 
 
 class GenerateDocumentationAction : FileContextAction<GenerateDocumentationAction.Settings>() {
@@ -111,7 +111,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             result -> files.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }.sortedBy { it.toString() }.toList()
             else -> listOf()
         }
-        if(settings.filesToProcess.isEmpty()) return null
+        if (settings.filesToProcess.isEmpty()) return null
         mruDocumentationInstructions.addInstructionToHistory("${settings.outputFilename} ${settings.transformationMessage}")
         //.map { path -> return@map root?.resolve(path) }.filterNotNull()
         return Settings(settings, project)

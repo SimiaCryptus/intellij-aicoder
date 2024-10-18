@@ -2,20 +2,20 @@ package com.github.simiacryptus.aicoder.actions.code
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ChatModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import kotlin.toString
 
-abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatModels) : SelectionAction<String>(false) {
+abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatModel) : SelectionAction<String>(false) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     interface VirtualAPI {
@@ -81,20 +81,62 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
         }
     }
 
-    protected open fun scrubHtml(str: String): String {
+    protected open fun scrubHtml(str: String, maxLength: Int = 100 * 1024): String {
         val document: Document = Jsoup.parse(str)
-        document.select("script, style").remove() // Remove script and style tags
-        document.select("*").forEach { element ->
-            val importantAttributes = listOf("href", "src", "alt", "title", "width", "height", "style", "class", "id")
-            element.attributes().filter { it.key !in importantAttributes }.forEach { element.removeAttr(it.key) }
-        } // Remove all non-important attributes
-        document.select("*").forEach { element ->
-            if (element.text().isNullOrEmpty()) {
-                element.remove()
+        // Remove unnecessary elements, attributes, and optimize the document
+        document.apply {
+            if (document.body().html().length > maxLength) return@apply
+            select("script, style, link, meta, iframe, noscript").remove() // Remove unnecessary and potentially harmful tags
+            outputSettings().prettyPrint(false) // Disable pretty printing for compact output
+            if (document.body().html().length > maxLength) return@apply
+            // Remove comments
+            select("*").forEach { it.childNodes().removeAll { node -> node.nodeName() == "#comment" } }
+            if (document.body().html().length > maxLength) return@apply
+            // Remove data-* attributes
+            select("*[data-*]").forEach { it.attributes().removeAll { attr -> attr.key.startsWith("data-") } }
+            if (document.body().html().length > maxLength) return@apply
+            select("*").forEach { element ->
+                val importantAttributes = setOf("href", "src", "alt", "title", "width", "height", "style", "class", "id", "name")
+                element.attributes().removeAll { it.key !in importantAttributes }
             }
-        } // Remove elements with empty text
-        val text = document.toString()
-        return text // Return the plain text content
+            if (document.body().html().length > maxLength) return@apply
+            // Remove empty elements
+            select("*").filter { it.text().isBlank() && it.attributes().isEmpty() && !it.hasAttr("img") }.forEach { remove() }
+            if (document.body().html().length > maxLength) return@apply
+            // Unwrap single-child elements with no attributes
+            select("*").forEach { element ->
+                if (element.childNodes().size == 1 && element.childNodes()[0].nodeName() == "#text" && element.attributes().isEmpty()) {
+                    element.unwrap()
+                }
+            }
+            if (document.body().html().length > maxLength) return@apply
+            // Convert relative URLs to absolute
+            select("[href],[src]").forEach { element ->
+                element.attr("href")?.let { href -> element.attr("href", href.makeAbsolute()) }
+                element.attr("src")?.let { src -> element.attr("src", src.makeAbsolute()) }
+            }
+            if (document.body().html().length > maxLength) return@apply
+            // Remove empty attributes
+            select("*").forEach { element ->
+                element.attributes().removeAll { it.value.isBlank() }
+            }
+        }
+
+        // Truncate if necessary
+        val result = document.body().html()
+        return if (result.length > maxLength) {
+            result.substring(0, maxLength)
+        } else {
+            result
+        }
+    }
+
+    private fun String.makeAbsolute(): String {
+        return if (startsWith("http://") || startsWith("https://") || startsWith("//")) {
+            this
+        } else {
+            "https://$this"
+        }
     }
 }
 

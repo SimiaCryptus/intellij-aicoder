@@ -4,22 +4,21 @@ import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.chatModel
-import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.models.ApiModel
-import com.simiacryptus.jopenai.models.ApiModel.Role
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.describe.Description
-import com.simiacryptus.jopenai.models.ChatModels
+import com.simiacryptus.jopenai.models.ApiModel
+import com.simiacryptus.jopenai.models.ApiModel.Role
+import com.simiacryptus.jopenai.models.ChatModel
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
-import com.simiacryptus.util.JsonUtil.toJson
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.Retryable
@@ -27,11 +26,14 @@ import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
 import com.simiacryptus.skyenet.core.platform.*
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.core.platform.model.StorageInterface
+import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.commonRoot
-import com.simiacryptus.skyenet.webui.application.ApplicationInterface
-import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.application.ApplicationInterface
+import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import com.simiacryptus.util.JsonUtil.toJson
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
@@ -44,7 +46,7 @@ class MultiStepPatchAction : BaseAction() {
     val path = "/autodev"
 
     override fun handle(e: AnActionEvent) {
-        val session = StorageInterface.newGlobalID()
+        val session = Session.newGlobalID()
         val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
         val selectedFile = UITools.getSelectedFolder(e)
         if (null != storage && null != selectedFile) {
@@ -108,7 +110,7 @@ class MultiStepPatchAction : BaseAction() {
         data class Settings(
             val budget: Double? = 2.00,
             val tools: List<String> = emptyList(),
-            val model: ChatModels? = AppSettingsState.instance.smartModel.chatModel(),
+            val model: ChatModel? = AppSettingsState.instance.smartModel.chatModel(),
         )
 
         override val settingsClass: Class<*> get() = Settings::class.java
@@ -123,8 +125,8 @@ class MultiStepPatchAction : BaseAction() {
         session: Session,
         user: User?,
         val ui: ApplicationInterface,
-        val model: ChatModels,
-        val parsingModel: ChatModels,
+        val model: ChatModel,
+        val parsingModel: ChatModel,
         actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
             ActorTypes.DesignActor to ParsedActor(
                 resultClass = TaskList::class.java,
@@ -254,7 +256,7 @@ class MultiStepPatchAction : BaseAction() {
                     val task = ui.newTask(false).apply { taskTabs[description] = placeholder }
                     pool.submit {
                         task.header("Task: $description")
-                        Retryable(ui,task) {
+                        Retryable(ui, task) {
                             try {
                                 val filter = codeFiles.filter { path ->
                                     paths?.find { path.toString().contains(it) }?.isNotEmpty() == true
@@ -282,7 +284,7 @@ class MultiStepPatchAction : BaseAction() {
                                         filter.joinToString("\n\n") {
                                             "# ${it}\n```${
                                                 it.toString().split('.').last().let { /*escapeHtml4*/it/*.indent("  ")*/ }
-                                            }\n${ root.resolve(it).toFile().readText() }\n```"
+                                            }\n${root.resolve(it).toFile().readText()}\n```"
                                         },
                                         architectureResponse.text,
                                         "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
@@ -294,7 +296,8 @@ class MultiStepPatchAction : BaseAction() {
                                     },
                                     ui = ui,
                                     api = api
-                                ))
+                                )
+                                )
                             } catch (e: Exception) {
                                 task.error(ui, e)
                                 ""
@@ -302,8 +305,8 @@ class MultiStepPatchAction : BaseAction() {
                         }
                     }
                 }.toTypedArray().forEach { it.get() }
-            } catch (e : Exception) {
-                log.warn("Error",e)
+            } catch (e: Exception) {
+                log.warn("Error", e)
             }
         }
     }
