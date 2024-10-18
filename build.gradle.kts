@@ -11,7 +11,7 @@ plugins {
     id("org.jetbrains.intellij.platform") version "2.1.0"
     id("org.jetbrains.changelog") version "2.2.1"
     id("org.jetbrains.qodana") version "2024.2.3"
-    id("org.jetbrains.kotlinx.kover") version "0.9.0-RC"
+    //id("org.jetbrains.kotlinx.kover") version "0.9.0-RC"
     id("org.jetbrains.dokka") version "2.0.0-Beta"
 }
 
@@ -208,6 +208,7 @@ changelog {
 }
 
 // Configure Gradle Kover Plugin - read more: https://github.com/Kotlin/kotlinx-kover#configuration
+/*
 kover {
     reports {
         total {
@@ -217,6 +218,7 @@ kover {
         }
     }
 }
+*/
 
 tasks {
     wrapper {
