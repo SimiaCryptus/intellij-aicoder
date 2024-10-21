@@ -89,7 +89,7 @@ open class ActionTestBase {
                         )).apply { parentFile?.mkdirs() }.absoluteFile,
                         projectRoot.absoluteFile
                     )
-                    val result = selectionAction.processSelection(selectionState, configData)
+                    val result = selectionAction.processSelection(selectionState, configData, progress)
                     for (file in result) {
                         try {
                             val filePath = projectRoot.toPath().relativize(file.toPath()).toString()

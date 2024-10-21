@@ -15,6 +15,7 @@ import com.simiacryptus.skyenet.apps.general.PlanAheadApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
+import com.simiacryptus.skyenet.apps.plan.TaskBreakdownWithPrompt
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
@@ -44,7 +45,7 @@ class PrePlanAction : BaseAction() {
         jsonInput = fillInTemplate(jsonInput)
 
         try {
-            val taskBreakdownWithPrompt = JsonUtil.fromJson<PlanUtil.TaskBreakdownWithPrompt>(jsonInput, PlanUtil.TaskBreakdownWithPrompt::class.java)
+            val taskBreakdownWithPrompt = JsonUtil.fromJson<TaskBreakdownWithPrompt>(jsonInput, TaskBreakdownWithPrompt::class.java)
 
             val session = Session.newGlobalID()
             val folder = UITools.getSelectedFolder(e)

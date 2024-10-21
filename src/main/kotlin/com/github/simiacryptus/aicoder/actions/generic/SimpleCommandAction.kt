@@ -78,7 +78,7 @@ class SimpleCommandAction : BaseAction() {
                 .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
                 .map { root.toPath().relativize(it) ?: it }.toSet()
 
-            override fun codeSummary(paths: List<Path>): String = paths
+            override fun codeSummary(paths: List<Path>) = paths
                 .filter { it.toFile().exists() }
                 .joinToString("\n\n") { path ->
                     """
@@ -89,18 +89,15 @@ class SimpleCommandAction : BaseAction() {
                     """.trimMargin()
                 }
 
-            override fun projectSummary(): String {
-                val codeFiles = codeFiles()
-                return codeFiles
-                    .asSequence()
-                    .filter { settings.workingDirectory.toPath()?.resolve(it)?.toFile()?.exists() == true }
-                    .distinct().sorted()
-                    .joinToString("\n") { path ->
-                        "* ${path} - ${
-                            settings.workingDirectory.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
-                        } bytes".trim()
-                    }
-            }
+            override fun projectSummary() = codeFiles()
+                .asSequence()
+                .filter { settings.workingDirectory.toPath()?.resolve(it)?.toFile()?.exists() == true }
+                .distinct().sorted()
+                .joinToString("\n") { path ->
+                    "* ${path} - ${
+                        settings.workingDirectory.toPath()?.resolve(path)?.toFile()?.length() ?: "?"
+                    } bytes".trim()
+                }
 
             override fun searchFiles(searchStrings: List<String>): Set<Path> {
                 return searchStrings.flatMap { searchString ->

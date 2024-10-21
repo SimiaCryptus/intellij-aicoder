@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.simiacryptus.jopenai.models.ApiModel
@@ -67,7 +68,7 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
         )
     }
 
-    override fun processSelection(state: SelectionState, config: Settings?): Array<File> {
+    override fun processSelection(state: SelectionState, config: Settings?, progress: ProgressIndicator): Array<File> {
         val root = getModuleRootForFile(state.selectedFile).toPath()
         val selectedFile = state.selectedFile
         val analogue = generateFile(

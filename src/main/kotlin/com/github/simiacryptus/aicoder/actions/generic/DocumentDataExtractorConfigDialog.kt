@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.simiacryptus.skyenet.apps.parsers.DocumentParserApp
+import com.simiacryptus.skyenet.apps.parse.DocumentParserApp
 import javax.swing.*
 
 class DocumentDataExtractorConfigDialog(

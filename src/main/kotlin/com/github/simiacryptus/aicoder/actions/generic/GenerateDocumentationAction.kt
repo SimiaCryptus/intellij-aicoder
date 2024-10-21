@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -33,7 +34,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
 import javax.swing.JComboBox
 
@@ -130,7 +130,8 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
         }
     }
 
-    override fun processSelection(state: SelectionState, config: Settings?): Array<File> {
+    override fun processSelection(state: SelectionState, config: Settings?, progress: ProgressIndicator): Array<File> {
+        progress.fraction = 0.0
         if (config?.settings == null) {
             // Dialog was cancelled, return empty array
             return emptyArray<File>().also {
@@ -138,12 +139,13 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                 return@also
             }
         }
+       progress.text = "Initializing documentation generation..."
 
         val selectedFolder = state.selectedFile.toPath()
         val gitRoot = TestResultAutofixAction.findGitRoot(selectedFolder) ?: selectedFolder
-        val outputDirectory = config?.settings?.outputDirectory ?: "docs/"
+        val outputDirectory = config.settings.outputDirectory
         var outputPath =
-            selectedFolder.resolve(config?.settings?.outputFilename ?: "compiled_documentation.md")
+            selectedFolder.resolve(config.settings.outputFilename)
         val relativePath = gitRoot.relativize(outputPath)
         outputPath = gitRoot.resolve(outputDirectory).resolve(relativePath)
         if (outputPath.toFile().exists()) {
@@ -155,13 +157,15 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             outputPath = selectedFolder.resolve("$name.$fileIndex.$extension")
         }
         val executorService = Executors.newFixedThreadPool(4)
-        val transformationMessage = config?.settings?.transformationMessage ?: "Create user documentation"
+        val transformationMessage = config.settings.transformationMessage
         val markdownContent = TreeMap<String, String>()
         try {
-            val selectedPaths = (config?.settings?.filesToProcess ?: listOf()).sortedBy { it.toString() }
+            val selectedPaths = config.settings.filesToProcess.sortedBy { it.toString() }
             val partitionedPaths = Files.walk(selectedFolder)
                 .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
                 .toList().sortedBy { it.toString() }.groupBy { selectedPaths.contains(it) }
+           val totalFiles = partitionedPaths[true]?.size ?: 0
+           var processedFiles = 0
             val pathList = partitionedPaths[true]
                 ?.toList()?.filterNotNull()
                 ?.map<Path, Future<Path>> { path ->
@@ -183,6 +187,11 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                                     outputPath,
                                     markdownContent
                                 )
+                               synchronized(progress) {
+                                   processedFiles++
+                                   progress.fraction = processedFiles.toDouble() / totalFiles
+                                   progress.text = "Processing file ${processedFiles} of ${totalFiles}"
+                               }
                                 return@submit path
                             } catch (e: Exception) {
                                 retries++
@@ -207,7 +216,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                         null
                     }
                 }?.filterNotNull() ?: listOf()
-            if (config?.settings?.singleOutputFile == true) {
+            if (config.settings.singleOutputFile == true) {
                 val sortedContent = markdownContent.entries.joinToString("\n\n") { (path, content) ->
                     "# $path\n\n$content"
                 }
@@ -219,7 +228,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             } else {
                 val outputDir = selectedFolder.resolve(outputDirectory)
                 outputDir.toFile().mkdirs()
-                open(config?.project!!, selectedFolder.resolve(outputDirectory))
+                open(config.project!!, selectedFolder.resolve(outputDirectory))
                 return pathList.map { it.toFile() }.toTypedArray()
             }
         } finally {
@@ -325,7 +334,6 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
 
     inner class DocumentationCompilerDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
         val userSettings = UserSettings()
-        private val selectedInstruction = AtomicReference<String>()
 
         init {
             title = "Compile Documentation"
