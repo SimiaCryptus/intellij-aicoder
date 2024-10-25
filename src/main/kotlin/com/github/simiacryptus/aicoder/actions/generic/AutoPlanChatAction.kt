@@ -2,13 +2,14 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction.Companion.getFiles
 import com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction.Companion.tripleTilde
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.AutoPlanChatApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
@@ -19,6 +20,8 @@ import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.nio.file.Path
 
 class AutoPlanChatAction : BaseAction() {
 
@@ -60,7 +63,9 @@ class AutoPlanChatAction : BaseAction() {
                 showMenubar = false,
                 api = api,
             ) {
-                fun codeFiles() = getFiles(UITools.getSelectedFiles(e).toTypedArray())
+                fun codeFiles() = (UITools.getSelectedFiles(e).toTypedArray()?.toList()?.flatMap<VirtualFile, File> {
+                    FileValidationUtils.expandFileList(it.toFile).toList<File>()
+                }?.map<File, Path> { it.toPath() }?.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
                     .filter { it.toFile().exists() }
                     .filter { it.toFile().length() < 1024 * 1024 / 2 }
                     .map { root.toPath().relativize(it) ?: it }.toSet()
@@ -81,7 +86,7 @@ class AutoPlanChatAction : BaseAction() {
                         "* ${path} - ${root.resolve(path.toFile()).length()} bytes"
                     }
 
-                override fun initialPrompt(userMessage: String) = super.initialPrompt(userMessage) + listOf(
+                override fun contextData(): List<String> = listOf(
                     if (codeFiles().size < 4) {
                         "Files:\n" + codeSummary()
                     } else {
@@ -91,8 +96,8 @@ class AutoPlanChatAction : BaseAction() {
             }
             ApplicationServer.appInfoMap[session] = AppInfoData(
                 applicationName = "Auto Plan Chat",
-                singleInput = true,
-                stickyInput = false,
+                singleInput = false,
+                stickyInput = true,
                 loadImages = false,
                 showMenubar = false
             )

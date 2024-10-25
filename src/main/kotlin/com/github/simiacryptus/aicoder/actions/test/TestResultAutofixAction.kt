@@ -5,7 +5,6 @@ import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
-import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
@@ -13,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.models.chatModel
@@ -46,7 +46,7 @@ class TestResultAutofixAction : BaseAction() {
             val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
             virtualFiles?.forEach { file ->
                 if (file.name.startsWith(".")) return@forEach
-                if (isGitignore(file)) return@forEach
+                if (isGitignore(file.toNioPath())) return@forEach
                 if (file.isDirectory) {
                     codeFiles.addAll(getFiles(file.children))
                 } else {

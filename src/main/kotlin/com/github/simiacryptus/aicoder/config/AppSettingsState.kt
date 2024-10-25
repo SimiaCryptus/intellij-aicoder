@@ -8,6 +8,13 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
+/**
+ * Stores and manages plugin configuration settings.
+ *
+ * This class is responsible for persisting and retrieving the plugin's
+ * configuration settings. It uses the IntelliJ Platform's persistence
+ * framework to save settings across IDE restarts.
+ */
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
@@ -148,6 +155,11 @@ data class AppSettingsState(
     }
 
     companion object {
+        /**
+         * Gets the instance of AppSettingsState for the current project.
+         *
+         * @return The AppSettingsState instance.
+         */
 
         val log = LoggerFactory.getLogger(AppSettingsState::class.java)
         var auxiliaryLog: File? = null
@@ -172,8 +184,27 @@ data class AppSettingsState(
         var modelId: String = "",
         var provider: APIProvider = APIProvider.OpenAI
     )
-
-    interface SettingsChangeListener {
-        fun onSettingsChange(newSettings: AppSettingsState)
-    }
+    /**
+     * The API key used for authentication with the AI service.
+     */
+    /**
+     * The selected AI model to be used for code generation and analysis.
+     */
+    /**
+     * The temperature setting for AI responses (0.0 to 1.0).
+     */
+    /**
+     * The maximum number of tokens to be used in AI requests.
+     */
+    /**
+     * Gets the instance of AppSettingsState.
+     *
+     * @return The current instance of AppSettingsState.
+     */
+    /**
+     * Loads the state from the given state object.
+     *
+     * @param state The state object to load from.
+     */
+    var analyticsEnabled: Boolean = false
 }

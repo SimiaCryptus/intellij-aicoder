@@ -6,7 +6,6 @@ import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
-import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -16,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.diff.IterativePatchUtil
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
@@ -353,7 +353,7 @@ class ReplicateCommitAction : BaseAction() {
         virtualFiles?.forEach { file ->
             if (file.isDirectory) {
                 if (file.name.startsWith(".")) return@forEach
-                if (isGitignore(file)) return@forEach
+                if (FileValidationUtils.Companion.isGitignore(file.toNioPath())) return@forEach
                 codeFiles.addAll(getFiles(file.children))
             } else {
                 codeFiles.add((file.toNioPath()))
@@ -363,11 +363,7 @@ class ReplicateCommitAction : BaseAction() {
     }
 
     private fun getUserSettings(event: AnActionEvent?): Settings? {
-        val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
-            File(
-                it
-            ).toPath()
-        }
+        val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let { File(it).toPath() }
         val files = UITools.getSelectedFiles(event).map { it.path.let { File(it).toPath() } }.toMutableSet()
         if (files.isEmpty()) Files.walk(root)
             .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }

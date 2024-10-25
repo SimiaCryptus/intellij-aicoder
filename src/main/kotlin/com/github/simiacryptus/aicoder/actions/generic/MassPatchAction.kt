@@ -14,7 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
+import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludableFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
@@ -80,7 +80,7 @@ class MassPatchAction : BaseAction() {
     fun getConfig(project: Project?, e: AnActionEvent): Settings? {
         val root = UITools.getSelectedFolder(e)?.toNioPath()
         val files = Files.walk(root)
-            .filter { isLLMIncludable(it.toFile()) }
+            .filter { isLLMIncludableFile(it.toFile()) }
             .toList().filterNotNull().toTypedArray()
         val settingsUI = SettingsUI().apply {
             filesToProcess.setItems(files.toMutableList()) { path ->
@@ -263,7 +263,7 @@ class MassPatchServer(
                 socketManager.pool.submit {
                     try {
                         val codeSummary = listOf(path)
-                            .filter { isLLMIncludable(it.toFile()) }
+                            .filter { isLLMIncludableFile(it.toFile()) }
                             ?.associateWith { it.toFile().readText(Charsets.UTF_8) }
                             ?.entries?.joinToString("\n\n") { (path, code) ->
                                 val extension = path.toString().split('.').lastOrNull()

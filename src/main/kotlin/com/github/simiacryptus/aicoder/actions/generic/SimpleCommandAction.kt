@@ -4,15 +4,15 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
-import com.github.simiacryptus.aicoder.util.FileSystemUtils.isGitignore
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.diff.FileValidationUtils.Companion.filteredWalk
 import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
-import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludable
+import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludableFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
@@ -74,7 +74,9 @@ class SimpleCommandAction : BaseAction() {
         virtualFiles: Array<out VirtualFile>?
     ): PatchApp {
         return object : PatchApp(root, session, settings) {
-            override fun codeFiles() = getFiles(virtualFiles)
+            override fun codeFiles() = (virtualFiles?.toList<VirtualFile>()?.flatMap<VirtualFile, File> {
+                FileValidationUtils.expandFileList(it.toFile).toList()
+            }?.map<File, Path> { it.toPath() }?.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
                 .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
                 .map { root.toPath().relativize(it) ?: it }.toSet()
 
@@ -102,7 +104,7 @@ class SimpleCommandAction : BaseAction() {
             override fun searchFiles(searchStrings: List<String>): Set<Path> {
                 return searchStrings.flatMap { searchString ->
                     filteredWalk(settings.workingDirectory) { !isGitignore(it.toPath()) }
-                        .filter { isLLMIncludable(it) }
+                        .filter { isLLMIncludableFile(it) }
                         .filter { it.readText().contains(searchString, ignoreCase = true) }
                         .map { it.toPath() }
                         .toList()
@@ -364,23 +366,6 @@ $tripleTilde
             }
         }
 
-        fun getFiles(
-            virtualFiles: Array<out VirtualFile>?
-        ): MutableSet<Path> {
-            val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
-            virtualFiles?.forEach { file ->
-                if (file.isDirectory) {
-                    if (file.name.startsWith(".")) return@forEach
-                    if (isGitignore(file)) return@forEach
-                    if (file.name.endsWith(".png")) return@forEach
-                    if (file.length > 1024 * 256) return@forEach
-                    codeFiles.addAll(getFiles(file.children))
-                } else {
-                    codeFiles.add((file.toNioPath()))
-                }
-            }
-            return codeFiles
-        }
     }
 }
 

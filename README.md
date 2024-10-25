@@ -36,7 +36,7 @@ code!
 * 🔄 **Diff Windows**: Easily compare and review code changes.
 
 
-## **Installation & Setup**
+## 📥 Installation & Setup
 
 Getting started with AI Coding Assistant is a breeze:
 
