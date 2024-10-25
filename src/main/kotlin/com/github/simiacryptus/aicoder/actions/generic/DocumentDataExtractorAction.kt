@@ -8,9 +8,9 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.simiacryptus.jopenai.models.chatModel
-import com.simiacryptus.skyenet.apps.parsers.CodeParsingModel
-import com.simiacryptus.skyenet.apps.parsers.DocumentParserApp
-import com.simiacryptus.skyenet.apps.parsers.DocumentParsingModel
+import com.simiacryptus.skyenet.apps.parse.CodeParsingModel
+import com.simiacryptus.skyenet.apps.parse.DocumentParserApp
+import com.simiacryptus.skyenet.apps.parse.DocumentParsingModel
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.AppInfoData

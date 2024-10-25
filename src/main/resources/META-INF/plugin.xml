@@ -95,6 +95,12 @@
 
             <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
         </action>
+        <action class="com.github.simiacryptus.aicoder.actions.generic.AutoPlanChatAction"
+                text="Auto-Plan"
+                description="Automatically generate a structured task plan based on the selected code, project, or task description">
+
+            <add-to-group group-id="com.github.simiacryptus.aicoder.ui.ProjectMenu" anchor="last"/>
+        </action>
         <action class="com.github.simiacryptus.aicoder.actions.generic.SaveAsQueryIndexAction"
                 text="Save as Query DB"
                 description="Convert selected parsed JSON files into an optimized binary index for efficient querying and data retrieval">

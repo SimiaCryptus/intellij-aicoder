@@ -6,6 +6,7 @@ import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.ApiModel.*
 import com.simiacryptus.jopenai.models.chatModel
@@ -46,7 +47,8 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
 
     override fun processSelection(
         state: SelectionState,
-        config: Settings?
+        config: Settings?,
+        progress: ProgressIndicator
     ): Array<File> {
         val projectRoot = state.projectRoot.toPath()
         val inputPath = projectRoot.relativize(state.selectedFile.toPath()).toString()

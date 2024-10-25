@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.test.util.MarkdownProcessor
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.intellij.mock.MockProgressIndicator
 import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.jopenai.util.ClientUtil
 import com.simiacryptus.util.JsonUtil
@@ -89,7 +90,7 @@ open class ActionTestBase {
                         )).apply { parentFile?.mkdirs() }.absoluteFile,
                         projectRoot.absoluteFile
                     )
-                    val result = selectionAction.processSelection(selectionState, configData)
+                    val result = selectionAction.processSelection(selectionState, configData, MockProgressIndicator())
                     for (file in result) {
                         try {
                             val filePath = projectRoot.toPath().relativize(file.toPath()).toString()

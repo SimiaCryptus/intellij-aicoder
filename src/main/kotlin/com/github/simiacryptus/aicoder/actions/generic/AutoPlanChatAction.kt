@@ -2,13 +2,16 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction.Companion.tripleTilde
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.vfs.VirtualFile
+import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.jopenai.models.chatModel
-import com.simiacryptus.skyenet.apps.general.PlanChatApp
+import com.simiacryptus.skyenet.apps.general.AutoPlanChatApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.core.platform.Session
@@ -17,9 +20,10 @@ import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
-import kotlin.collections.set
+import java.io.File
+import java.nio.file.Path
 
-class PlanChatAction : BaseAction() {
+class AutoPlanChatAction : BaseAction() {
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -44,7 +48,7 @@ class PlanChatAction : BaseAction() {
                 UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")
             )
             DataStorage.sessionPaths[session] = root
-            SessionProxyServer.chats[session] = PlanChatApp(
+            SessionProxyServer.chats[session] = object : AutoPlanChatApp(
                 planSettings = dialog.settings.copy(
                     env = mapOf(),
                     workingDir = root.absolutePath,
@@ -58,11 +62,42 @@ class PlanChatAction : BaseAction() {
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 showMenubar = false,
                 api = api,
-            )
+            ) {
+                fun codeFiles() = (UITools.getSelectedFiles(e).toTypedArray()?.toList()?.flatMap<VirtualFile, File> {
+                    FileValidationUtils.expandFileList(it.toFile).toList<File>()
+                }?.map<File, Path> { it.toPath() }?.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
+                    .filter { it.toFile().exists() }
+                    .filter { it.toFile().length() < 1024 * 1024 / 2 }
+                    .map { root.toPath().relativize(it) ?: it }.toSet()
+
+                fun codeSummary() = codeFiles()
+                    .joinToString("\n\n") { path ->
+                        """
+                        |# ${path}
+                        |$tripleTilde${path.toString().split('.').lastOrNull()}
+                        |${root.resolve(path.toFile()).readText(Charsets.UTF_8)}
+                        |$tripleTilde
+                    """.trimMargin()
+                    }
+
+                fun projectSummary() = codeFiles()
+                    .asSequence().distinct().sorted()
+                    .joinToString("\n") { path ->
+                        "* ${path} - ${root.resolve(path.toFile()).length()} bytes"
+                    }
+
+                override fun contextData(): List<String> = listOf(
+                    if (codeFiles().size < 4) {
+                        "Files:\n" + codeSummary()
+                    } else {
+                        "Files:\n" + projectSummary()
+                    },
+                )
+            }
             ApplicationServer.appInfoMap[session] = AppInfoData(
-                applicationName = "Code Chat",
-                singleInput = true,
-                stickyInput = false,
+                applicationName = "Auto Plan Chat",
+                singleInput = false,
+                stickyInput = true,
                 loadImages = false,
                 showMenubar = false
             )
@@ -79,12 +114,12 @@ class PlanChatAction : BaseAction() {
                 log.info("Opening browser to $uri")
                 browse(uri)
             } catch (e: Throwable) {
-                LoggerFactory.getLogger(PlanChatAction::class.java).warn("Error opening browser", e)
+                log.warn("Error opening browser", e)
             }
         }.start()
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(PlanChatAction::class.java)
+        private val log = LoggerFactory.getLogger(AutoPlanChatAction::class.java)
     }
 }

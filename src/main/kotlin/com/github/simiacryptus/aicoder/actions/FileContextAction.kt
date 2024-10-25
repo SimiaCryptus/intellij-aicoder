@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,7 +24,7 @@ abstract class FileContextAction<T : Any>(
         val projectRoot: File,
     )
 
-    abstract fun processSelection(state: SelectionState, config: T?): Array<File>
+    abstract fun processSelection(state: SelectionState, config: T?, progress: ProgressIndicator): Array<File>
 
     final override fun handle(e: AnActionEvent) {
         val config = getConfig(e.project, e)
@@ -37,16 +38,16 @@ abstract class FileContextAction<T : Any>(
         Thread {
             try {
                 UITools.redoableTask(e) {
-                    UITools.run(e.project, templateText!!, true) {
+                    UITools.run(e.project, templateText!!, true) { progress ->
                         val newFiles = try {
                             processSelection(
                                 SelectionState(
                                     selectedFile = virtualFile.toNioPath().toFile(),
                                     projectRoot = projectRoot.toFile(),
-                                ), config
+                                ), config, progress
                             )
                         } finally {
-                            if (it.isCanceled) throw InterruptedException()
+                            if (progress.isCanceled) throw InterruptedException()
                         }
                         val start = System.currentTimeMillis()
                         val fileSystem = LocalFileSystem.getInstance()

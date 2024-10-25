@@ -25,6 +25,7 @@ class PlanAheadConfigDialog(
 ) : DialogWrapper(project) {
     private val temperatureSlider = JSlider(0, 100, (settings.temperature * 100).toInt())
     private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
+    private val allowBlockingCheckbox = JCheckBox("Allow blocking", settings.allowBlocking)
     private val taskTableModel = object : DefaultTableModel(arrayOf("Enabled", "Task Type", "Model"), 0) {
         override fun getColumnClass(columnIndex: Int) = when (columnIndex) {
             0 -> java.lang.Boolean::class.java
@@ -210,6 +211,7 @@ class PlanAheadConfigDialog(
         panel.add(taskTablePanel)
 
         panel.add(autoFixCheckbox)
+        panel.add(allowBlockingCheckbox)
         panel.add(JLabel("Auto-Fix Commands:"))
         val scrollPane = JBScrollPane(commandTable)
         scrollPane.preferredSize = Dimension(350, 100)
@@ -236,6 +238,7 @@ class PlanAheadConfigDialog(
             })
         }
         settings.autoFix = autoFixCheckbox.isSelected
+        settings.allowBlocking = allowBlockingCheckbox.isSelected
         settings.commandAutoFixCommands = (0 until tableModel.rowCount)
             .filter { tableModel.getValueAt(it, 0) as Boolean }
             .map { tableModel.getValueAt(it, 1) as String }

@@ -17,7 +17,7 @@ class ApplyPatchAction : BaseAction(
 
     override fun handle(event: AnActionEvent) {
         val project = event.project ?: return
-        val virtualFile = UITools.getSelectedFile(event) ?: return
+        val virtualFiles = UITools.getSelectedFiles(event) ?: return
 
         // Prompt user to input patch content
         val patchContent = Messages.showMultilineInputDialog(
@@ -28,8 +28,9 @@ class ApplyPatchAction : BaseAction(
             null,
             null
         ) ?: return
-
-        applyPatch(virtualFile, patchContent, project)
+        virtualFiles.forEach { virtualFile ->
+            applyPatch(virtualFile, patchContent, project)
+        }
     }
 
     private fun applyPatch(file: VirtualFile, patchContent: String, project: com.intellij.openapi.project.Project) {

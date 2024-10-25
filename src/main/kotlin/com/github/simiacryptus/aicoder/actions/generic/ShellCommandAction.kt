@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.chatModel
-import com.simiacryptus.skyenet.apps.coding.CodingAgent
+import com.simiacryptus.skyenet.apps.code.CodingAgent
 import com.simiacryptus.skyenet.core.actors.CodingActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User

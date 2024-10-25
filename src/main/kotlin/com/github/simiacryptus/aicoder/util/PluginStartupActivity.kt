@@ -3,9 +3,11 @@ package com.github.simiacryptus.aicoder.util
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.OutputInterceptor
@@ -16,12 +18,17 @@ import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig.is
 import com.simiacryptus.skyenet.core.platform.model.AuthenticationInterface
 import com.simiacryptus.skyenet.core.platform.model.AuthorizationInterface
 import com.simiacryptus.skyenet.core.platform.model.User
+import org.jetbrains.annotations.NonNls
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.full.declaredMembers
 import kotlin.reflect.jvm.isAccessible
 
 class PluginStartupActivity : ProjectActivity {
+    private val documentationPageOpenTimes = ConcurrentHashMap<String, Long>()
+    private lateinit var messageBusConnection: com.intellij.util.messages.MessageBusConnection
     override suspend fun execute(project: Project) {
         // Check if this is the first run after installation
         try {
@@ -36,6 +43,8 @@ class PluginStartupActivity : ProjectActivity {
             } finally {
                 currentThread.contextClassLoader = prevClassLoader
             }
+            // Set up file editor listener for documentation tracking
+            setupDocumentationTracking(project)
 
             if (AppSettingsState.instance.showWelcomeScreen || AppSettingsState.instance.greetedVersion != AppSettingsState.WELCOME_VERSION) {
                 val welcomeFile = "welcomePage.md"
@@ -86,6 +95,47 @@ class PluginStartupActivity : ProjectActivity {
             log.error("Error during plugin startup", e)
         }
     }
+    private fun setupDocumentationTracking(project: Project) {
+        messageBusConnection = project.messageBus.connect()
+        messageBusConnection.subscribe(
+            FileEditorManagerListener.FILE_EDITOR_MANAGER,
+            object : FileEditorManagerListener {
+                override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+                    if (isDocumentationFile(file)) {
+                        trackDocumentationPageView(file)
+                    }
+                }
+                override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+                    if (isDocumentationFile(file)) {
+                        trackDocumentationPageClose(file)
+                    }
+                }
+            }
+        )
+    }
+    private fun isDocumentationFile(file: VirtualFile): Boolean {
+        return file.path.contains("/docs/") || file.extension == "md"
+    }
+    private fun trackDocumentationPageView(file: VirtualFile) {
+        if (AppSettingsState.instance.analyticsEnabled) {
+            val pagePath = file.path
+            documentationPageOpenTimes[pagePath] = System.currentTimeMillis()
+            mapOf<String, @NonNls String>("page" to pagePath)
+        }
+    }
+    private fun trackDocumentationPageClose(file: VirtualFile) {
+        if (AppSettingsState.instance.analyticsEnabled) {
+            val pagePath = file.path
+            val openTime = documentationPageOpenTimes.remove(pagePath)
+            if (openTime != null) {
+                val timeSpent = System.currentTimeMillis() - openTime
+                mapOf(
+                    "page" to pagePath,
+                    "time_spent" to TimeUnit.MILLISECONDS.toSeconds(timeSpent)
+                )
+            }
+        }
+    }
 
     private val isInitialized = AtomicBoolean(false)
 
@@ -112,7 +162,6 @@ class PluginStartupActivity : ProjectActivity {
         }
         isLocked = true
     }
-
 
     companion object {
         val log = org.slf4j.LoggerFactory.getLogger(PluginStartupActivity::class.java)
