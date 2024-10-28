@@ -37,7 +37,10 @@ class AutoPlanChatAction : BaseAction() {
                 ),
                 temperature = AppSettingsState.instance.temperature,
                 workingDir = UITools.getSelectedFolder(e)?.toFile?.absolutePath ?: "",
-                env = mapOf()
+                env = mapOf(),
+                githubToken = AppSettingsState.instance.githubToken,
+                googleApiKey = AppSettingsState.instance.googleApiKey,
+                googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
             )
         )
         if (dialog.showAndGet()) {

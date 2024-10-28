@@ -32,7 +32,6 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
-import com.simiacryptus.skyenet.webui.session.SocketManagerBase
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.nio.file.Files
@@ -47,6 +46,7 @@ import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JCheckBox
 
 class MassPatchAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -64,17 +64,20 @@ class MassPatchAction : BaseAction() {
 
         @Name("Recent Instructions")
         val recentInstructions = JComboBox<String>()
+        @Name("Auto Apply")
+        val autoApply = JCheckBox("Auto Apply Changes")
 
     }
 
     class UserSettings(
         var transformationMessage: String = "Review, fix, and improve",
         var filesToProcess: List<Path> = listOf(),
+        var autoApply: Boolean = false,
     )
 
     class Settings(
         val settings: UserSettings? = null,
-        val project: Project? = null
+        val project: Project? = null,
     )
 
     fun getConfig(project: Project?, e: AnActionEvent): Settings? {
@@ -89,6 +92,7 @@ class MassPatchAction : BaseAction() {
             files.forEach { path ->
                 filesToProcess.setItemSelected(path, true)
             }
+            autoApply.isSelected = false
         }
         val mruPatchInstructions = AppSettingsState.instance.getRecentCommands("PatchInstructions")
         settingsUI.recentInstructions.model = DefaultComboBoxModel(
@@ -121,6 +125,7 @@ class MassPatchAction : BaseAction() {
         val config = getConfig(project, e)
 
         val session = Session.newGlobalID()
+        SessionProxyServer.chats[session] = MassPatchServer(config=config!!, api=api, autoApply = config.settings?.autoApply ?: false)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
             singleInput = true,
@@ -150,6 +155,7 @@ class MassPatchAction : BaseAction() {
             this.title = title
             // Set the default values for the UI elements from userSettings
             settingsUI.transformationMessage.text = userSettings.transformationMessage
+            settingsUI.autoApply.isSelected = userSettings.autoApply
             init()
         }
 
@@ -168,6 +174,8 @@ class MassPatchAction : BaseAction() {
                     add(Box.createVerticalStrut(10))
                     add(JLabel("AI Instruction"))
                     add(settingsUI.transformationMessage)
+                    add(Box.createVerticalStrut(10))
+                    add(settingsUI.autoApply)
                 }
                 add(optionsPanel, BorderLayout.SOUTH)
             }
@@ -179,13 +187,15 @@ class MassPatchAction : BaseAction() {
             userSettings.transformationMessage = settingsUI.transformationMessage.text
             userSettings.filesToProcess =
                 settingsUI.filesToProcess.items.filter { path -> settingsUI.filesToProcess.isItemSelected(path) }
+            userSettings.autoApply = settingsUI.autoApply.isSelected
         }
     }
 }
 
 class MassPatchServer(
     val config: Settings,
-    val api: ChatClient
+    val api: ChatClient,
+    val autoApply: Boolean
 ) : ApplicationServer(
     applicationName = "Multi-file Patch Chat",
     path = "/patchChat",
@@ -286,17 +296,18 @@ class MassPatchServer(
                                 mainActor.answer(toInput(it), api = api)
                             },
                             outputFn = { design: String ->
-                                var markdown = (ui as SocketManagerBase).addApplyFileDiffLinks(
-                                    root = _root as Path,
-                                    response = design as String,
+                                var markdown = ui.socketManager?.addApplyFileDiffLinks(
+                                    root = _root,
+                                    response = design,
                                     handle = { newCodeMap: Map<Path, String> ->
                                         newCodeMap.forEach { (path, newCode) ->
                                             fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                                         }
-                                    } as (Map<Path, String>) -> Unit,
+                                    },
                                     ui = ui,
                                     api = api as API,
-                                    shouldAutoApply = { true } as (Path) -> Boolean,
+                                    shouldAutoApply = { autoApply },
+                                    model = AppSettingsState.instance.fastModel.chatModel(),
                                 )
                                 """<div>${renderMarkdown(markdown!!)}</div>"""
                             },
@@ -318,7 +329,6 @@ class MassPatchServer(
                     }
                 }
             }, 10, java.util.concurrent.TimeUnit.MILLISECONDS)
-
         }
         return socketManager
     }

@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.jopenai.ChatClient
-import com.simiacryptus.jopenai.isSanctioned
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ApiModel.*
 import com.simiacryptus.jopenai.models.OpenAIModel
@@ -54,7 +53,6 @@ open class IdeaChatClient(
         apiBase = apiBase
     ) {
         override fun log(level: Level, msg: String) {
-            if (isSanctioned) return
             super.log(level, msg)
             inner.log(level, msg)
         }
@@ -88,7 +86,7 @@ open class IdeaChatClient(
     ): ChatResponse {
         val storeMetadata = AppSettingsState.instance.storeMetadata
         var chatRequest = chatRequest.copy(
-            store = storeMetadata?.let { !isSanctioned && it.isNotBlank() },
+            store = storeMetadata?.let { it.isNotBlank() },
             metadata = storeMetadata?.let { JsonUtil.fromJson(it, Map::class.java) }
         )
         val lastEvent = lastEvent

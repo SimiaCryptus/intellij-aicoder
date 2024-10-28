@@ -36,7 +36,6 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
     override fun build(component: AppSettingsComponent): JComponent {
         val tabbedPane = com.intellij.ui.components.JBTabbedPane()
-
         try {// Basic Settings Tab
             val basicSettingsPanel = JPanel(BorderLayout()).apply {
                 add(JPanel(BorderLayout()).apply {
@@ -50,16 +49,12 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                         add(component.fastModel)
                     })
                     add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                        add(JLabel("Main Image Model:"))
+                        add(JLabel("Image Model:"))
                         add(component.mainImageModel)
                     })
                     add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                         add(JLabel("Temperature:"))
                         add(component.temperature)
-                    })
-                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                        add(JLabel("Human Language:"))
-                        add(component.humanLanguage)
                     })
                     add(JPanel(BorderLayout()).apply {
                         add(JLabel("API Configurations:"), BorderLayout.NORTH)
@@ -68,6 +63,22 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                     add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                         add(JLabel("Executables:"))
                         add(component.executablesPanel)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Human Language:"))
+                        add(component.humanLanguage)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("GitHub Token:"))
+                        add(component.githubToken)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Google API Key:"))
+                        add(component.googleApiKey)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("Google Search Engine ID:"))
+                        add(component.googleSearchEngineId)
                     })
                 })
             }
@@ -172,13 +183,13 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
     override fun write(settings: AppSettingsState, component: AppSettingsComponent) {
         try {
-            // Update the executables in the settings
-            settings.executables = component.getExecutables().toMutableSet()
+            component.githubToken.text = settings.githubToken ?: ""
+            component.googleApiKey.text = settings.googleApiKey ?: ""
+            component.googleSearchEngineId.text = settings.googleSearchEngineId ?: ""
             component.humanLanguage.text = settings.humanLanguage
             component.listeningPort.text = settings.listeningPort.toString()
             component.listeningEndpoint.text = settings.listeningEndpoint
             component.suppressErrors.isSelected = settings.suppressErrors
-//      component.modelName.selectedItem = settings.modelName
             component.fastModel.selectedItem = settings.fastModel
             component.smartModel.selectedItem = settings.smartModel
             component.apiLog.isSelected = settings.apiLog
@@ -206,14 +217,14 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
     override fun read(component: AppSettingsComponent, settings: AppSettingsState) {
         try {
-            //      settings.modelName = component.modelName.selectedItem as String
-            // Update the UI with the executables from the settings
+            settings.githubToken = component.githubToken.text.takeIf { it.isNotBlank() }
+            settings.googleApiKey = component.googleApiKey.text.takeIf { it.isNotBlank() }
+            settings.googleSearchEngineId = component.googleSearchEngineId.text.takeIf { it.isNotBlank() }
             settings.executables = component.getExecutables().toMutableSet()
             settings.humanLanguage = component.humanLanguage.text
             settings.listeningPort = component.listeningPort.text.safeInt()
             settings.listeningEndpoint = component.listeningEndpoint.text
             settings.suppressErrors = component.suppressErrors.isSelected
-            //      settings.modelName = component.modelName.selectedItem as String
             settings.fastModel = component.fastModel.selectedItem as String
             settings.smartModel = component.smartModel.selectedItem as String
             settings.apiLog = component.apiLog.isSelected
@@ -225,7 +236,6 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             settings.mainImageModel = (component.mainImageModel.selectedItem as String)
             settings.pluginHome = File(component.pluginHome.text)
             settings.shellCommand = component.shellCommand.text
-            //      settings.modelName = component.modelName.selectedItem as String
             settings.enableLegacyActions = component.enableLegacyActions.isSelected
 
             val tableModel = component.apis.model as DefaultTableModel
@@ -234,17 +244,11 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                 val key = tableModel.getValueAt(row, 1) as String
                 val base = tableModel.getValueAt(row, 2) as String
                 if (key.isNotBlank()) {
-//          settings.apiKey?.put(provider, key)
                     settings.apiKey = settings.apiKey?.toMutableMap()?.apply { put(provider, key) }
-//          settings.apiBase?.put(provider, base)
                     settings.apiBase = settings.apiBase?.toMutableMap()?.apply { put(provider, base) }
                 } else {
-//          settings.apiKey.remove(provider)
                     settings.apiKey = settings.apiKey?.toMutableMap()?.apply { remove(provider) }
-//          settings.apiBase.remove(provider)
-                    settings.apiBase = settings.apiBase?.toMutableMap()?.apply {
-                        remove(provider)
-                    }
+                    settings.apiBase = settings.apiBase?.toMutableMap()?.apply { remove(provider) }
                 }
             }
             settings.showWelcomeScreen = component.showWelcomeScreen.isSelected
