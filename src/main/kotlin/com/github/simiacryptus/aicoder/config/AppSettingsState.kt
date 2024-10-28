@@ -58,7 +58,10 @@ data class AppSettingsState(
     var executables: MutableSet<String> = mutableSetOf(),
     var recentArguments: MutableList<String> = mutableListOf(),
     val recentCommands: MutableMap<String, MRUItems> = mutableMapOf<String, MRUItems>(),
-    var userSuppliedModels: MutableList<UserSuppliedModel> = mutableListOf()
+    var userSuppliedModels: MutableList<UserSuppliedModel> = mutableListOf(),
+    var githubToken: String? = null,
+    var googleApiKey: String? = null,
+    var googleSearchEngineId: String? = null
 ) : PersistentStateComponent<SimpleEnvelope> {
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
 
@@ -122,6 +125,9 @@ data class AppSettingsState(
         if (executables != other.executables) return false
         //userSuppliedModels
         if (userSuppliedModels.toTypedArray().contentDeepEquals(other.userSuppliedModels.toTypedArray()).not()) return false
+        if (googleApiKey != other.googleApiKey) return false
+        if (googleSearchEngineId != other.googleSearchEngineId) return false
+        if (githubToken != other.githubToken) return false
         return true
     }
 
@@ -151,16 +157,13 @@ data class AppSettingsState(
         result = 31 * result + enableLegacyActions.hashCode()
         result = 31 * result + executables.hashCode()
         result = 31 * result + userSuppliedModels.hashCode()
+        result = 31 * result + (googleApiKey?.hashCode() ?: 0)
+        result = 31 * result + (googleSearchEngineId?.hashCode() ?: 0)
+        result = 31 * result + (githubToken?.hashCode() ?: 0)
         return result
     }
 
     companion object {
-        /**
-         * Gets the instance of AppSettingsState for the current project.
-         *
-         * @return The AppSettingsState instance.
-         */
-
         val log = LoggerFactory.getLogger(AppSettingsState::class.java)
         var auxiliaryLog: File? = null
         const val WELCOME_VERSION: String = "1.5.0"
@@ -184,27 +187,5 @@ data class AppSettingsState(
         var modelId: String = "",
         var provider: APIProvider = APIProvider.OpenAI
     )
-    /**
-     * The API key used for authentication with the AI service.
-     */
-    /**
-     * The selected AI model to be used for code generation and analysis.
-     */
-    /**
-     * The temperature setting for AI responses (0.0 to 1.0).
-     */
-    /**
-     * The maximum number of tokens to be used in AI requests.
-     */
-    /**
-     * Gets the instance of AppSettingsState.
-     *
-     * @return The current instance of AppSettingsState.
-     */
-    /**
-     * Loads the state from the given state object.
-     *
-     * @param state The state object to load from.
-     */
     var analyticsEnabled: Boolean = false
 }

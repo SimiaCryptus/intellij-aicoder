@@ -64,6 +64,9 @@ class PrePlanAction : BaseAction() {
                 workingDir = root.absolutePath,
                 env = mapOf(),
                 language = if (isWindows) "powershell" else "bash",
+                githubToken = AppSettingsState.instance.githubToken,
+                googleApiKey = AppSettingsState.instance.googleApiKey,
+                googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
             )
             planSettings = PlanAheadConfigDialog(e.project, planSettings).let {
                 if (!it.showAndGet()) throw RuntimeException("User cancelled")

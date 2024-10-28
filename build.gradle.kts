@@ -28,7 +28,7 @@ repositories {
 
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.13"
+val skyenet_version = "1.2.14"
 val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
@@ -43,7 +43,7 @@ dependencies {
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.10")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.11")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)

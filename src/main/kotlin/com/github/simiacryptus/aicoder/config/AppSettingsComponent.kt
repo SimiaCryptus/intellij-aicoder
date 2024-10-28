@@ -33,6 +33,24 @@ import javax.swing.table.DefaultTableModel
 
 class AppSettingsComponent : com.intellij.openapi.Disposable {
     @Suppress("unused")
+    @Name("GitHub Token")
+    val githubToken = JBTextField().apply {
+        toolTipText = "GitHub Personal Access Token"
+        columns = 30
+    }
+    @Suppress("unused")
+    @Name("Google API Key")
+    val googleApiKey = JBTextField().apply {
+        toolTipText = "Google API Key"
+        columns = 30
+    }
+    @Suppress("unused")
+    @Name("Google Search Engine ID")
+    val googleSearchEngineId = JBTextField().apply {
+        toolTipText = "Google Search Engine ID"
+        columns = 30
+    }
+    @Suppress("unused")
     @Name("Store Metadata")
     val storeMetadata = JTextArea().apply {
         lineWrap = true
@@ -268,6 +286,10 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     }
 
     init {
+        // Initialize new fields
+        githubToken.text = AppSettingsState.instance.githubToken ?: ""
+        googleApiKey.text = AppSettingsState.instance.googleApiKey ?: ""
+        googleSearchEngineId.text = AppSettingsState.instance.googleSearchEngineId ?: ""
         // Initialize executables list
         setExecutables(AppSettingsState.instance.executables)
         fun getExecutables(): Set<String> {
