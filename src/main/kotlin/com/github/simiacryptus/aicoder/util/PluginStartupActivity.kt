@@ -19,6 +19,7 @@ import com.simiacryptus.skyenet.core.platform.model.AuthenticationInterface
 import com.simiacryptus.skyenet.core.platform.model.AuthorizationInterface
 import com.simiacryptus.skyenet.core.platform.model.User
 import org.jetbrains.annotations.NonNls
+import software.amazon.awssdk.regions.Region
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -146,6 +147,17 @@ class PluginStartupActivity : ProjectActivity {
         ApplicationServices.clientManager = object : ClientManager() {
             override fun createChatClient(session: Session, user: User?) =
                 IdeaChatClient.instance
+        }
+        AppSettingsState.instance.apply {
+            if (!awsProfile.isNullOrBlank() && !awsRegion.isNullOrBlank() && !awsBucket.isNullOrBlank()) {
+                ApplicationServices.cloud = AwsPlatform(
+                    bucket = awsBucket!!,
+                    region = Region.of(awsRegion!!),
+                    profileName = awsProfile!!,
+                )
+            } else {
+                ApplicationServices.cloud = null
+            }
         }
         ApplicationServices.usageManager = HSQLUsageManager(ApplicationServicesConfig.dataStorageRoot.resolve("usage"))
         ApplicationServices.authorizationManager = object : AuthorizationInterface {

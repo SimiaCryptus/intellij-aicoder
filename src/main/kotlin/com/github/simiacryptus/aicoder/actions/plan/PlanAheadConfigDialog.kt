@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.generic
+package com.github.simiacryptus.aicoder.actions.plan
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.intellij.openapi.fileChooser.FileChooser
@@ -110,7 +110,6 @@ class PlanAheadConfigDialog(
     init {
         taskTable.columnModel.getColumn(2).apply {
             preferredWidth = 200
-            maxWidth = 250
             val modelComboBox = JComboBox(getVisibleModels().map { it.modelName }.toTypedArray())
             cellEditor = DefaultCellEditor(modelComboBox)
             cellRenderer = getModelRenderer()
@@ -171,8 +170,8 @@ class PlanAheadConfigDialog(
             }
         }
         commandTable.columnModel.getColumn(0).apply {
-            preferredWidth = 60
-            maxWidth = 60
+            preferredWidth = 50
+            maxWidth = 100
         }
         commandTable.selectionModel.addListSelectionListener {
             editCommandButton.isEnabled = commandTable.selectedRow != -1
@@ -190,8 +189,8 @@ class PlanAheadConfigDialog(
                 )
             )
         }
-        taskTable.columnModel.getColumn(0).preferredWidth = 60
-        taskTable.columnModel.getColumn(0).maxWidth = 60
+        taskTable.columnModel.getColumn(0).preferredWidth = 50
+        taskTable.columnModel.getColumn(0).maxWidth = 100
         taskTable.columnModel.getColumn(1).preferredWidth = 200
         taskTable.columnModel.getColumn(2).preferredWidth = 200
         // Call setupCommandTable to initialize commandTable
@@ -254,8 +253,8 @@ class PlanAheadConfigDialog(
     private fun setupCommandTable() {
         commandTable.columnModel.getColumn(0).apply {
             cellEditor = DefaultCellEditor(JCheckBox())
-            preferredWidth = 60
-            maxWidth = 60
+            preferredWidth = 50
+            maxWidth = 100
         }
         tableModel.addTableModelListener { e ->
             if (e.column == 0) {

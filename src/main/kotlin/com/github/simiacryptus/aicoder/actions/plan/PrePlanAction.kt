@@ -1,7 +1,9 @@
-package com.github.simiacryptus.aicoder.actions.generic
+package com.github.simiacryptus.aicoder.actions.plan
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
+import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
@@ -9,11 +11,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.PlanAheadApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
-import com.simiacryptus.skyenet.apps.plan.PlanUtil
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.apps.plan.TaskBreakdownWithPrompt
 import com.simiacryptus.skyenet.core.platform.Session
@@ -61,7 +63,7 @@ class PrePlanAction : BaseAction() {
                     if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
                 ),
                 temperature = AppSettingsState.instance.temperature,
-                workingDir = root.absolutePath,
+                workingDir = UITools.getRoot(e),
                 env = mapOf(),
                 language = if (isWindows) "powershell" else "bash",
                 githubToken = AppSettingsState.instance.githubToken,
@@ -72,13 +74,14 @@ class PrePlanAction : BaseAction() {
                 if (!it.showAndGet()) throw RuntimeException("User cancelled")
                 it.settings
             }
-            SessionProxyServer.chats[session] = PlanAheadApp(
+            SessionProxyServer.Companion.chats[session] = PlanAheadApp(
                 planSettings = planSettings,
                 model = AppSettingsState.instance.smartModel.chatModel(),
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 showMenubar = false,
                 initialPlan = taskBreakdownWithPrompt,
                 api = api,
+                api2 = api2,
             )
             ApplicationServer.appInfoMap[session] = AppInfoData(
                 applicationName = "Code Chat",
@@ -138,7 +141,7 @@ class PrePlanAction : BaseAction() {
                     variables.forEach { variable ->
                         gbc.gridy++
                         gbc.gridx = 0
-                        panel.add(com.intellij.ui.components.JBLabel(variable), gbc)
+                        panel.add(JBLabel(variable), gbc)
                         gbc.gridx = 1
                         panel.add(fields[variable], gbc)
                     }

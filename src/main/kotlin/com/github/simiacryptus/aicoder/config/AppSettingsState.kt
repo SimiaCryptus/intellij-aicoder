@@ -1,5 +1,12 @@
 package com.github.simiacryptus.aicoder.config
 
+/**
+ * Stores and manages plugin configuration settings.
+ *
+ * This class is responsible for persisting and retrieving the plugin's
+ * configuration settings. It uses the IntelliJ Platform's persistence
+ * framework to save settings across IDE restarts.
+ */
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.github.simiacryptus.aicoder.util.PluginStartupActivity.Companion.addUserSuppliedModels
 import com.intellij.openapi.application.ApplicationManager
@@ -8,16 +15,10 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
-/**
- * Stores and manages plugin configuration settings.
- *
- * This class is responsible for persisting and retrieving the plugin's
- * configuration settings. It uses the IntelliJ Platform's persistence
- * framework to save settings across IDE restarts.
- */
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
+import com.simiacryptus.skyenet.core.platform.AwsPlatform
 import com.simiacryptus.util.JsonUtil
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -61,7 +62,10 @@ data class AppSettingsState(
     var userSuppliedModels: MutableList<UserSuppliedModel> = mutableListOf(),
     var githubToken: String? = null,
     var googleApiKey: String? = null,
-    var googleSearchEngineId: String? = null
+    var googleSearchEngineId: String? = null,
+    var awsProfile: String? = null,
+    var awsRegion: String? = null,
+    var awsBucket: String? = null
 ) : PersistentStateComponent<SimpleEnvelope> {
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
 
@@ -128,6 +132,9 @@ data class AppSettingsState(
         if (googleApiKey != other.googleApiKey) return false
         if (googleSearchEngineId != other.googleSearchEngineId) return false
         if (githubToken != other.githubToken) return false
+        if (awsProfile != other.awsProfile) return false
+        if (awsRegion != other.awsRegion) return false
+        if (awsBucket != other.awsBucket) return false
         return true
     }
 
@@ -160,6 +167,9 @@ data class AppSettingsState(
         result = 31 * result + (googleApiKey?.hashCode() ?: 0)
         result = 31 * result + (googleSearchEngineId?.hashCode() ?: 0)
         result = 31 * result + (githubToken?.hashCode() ?: 0)
+        result = 31 * result + (awsProfile?.hashCode() ?: 0)
+        result = 31 * result + (awsRegion?.hashCode() ?: 0)
+        result = 31 * result + (awsBucket?.hashCode() ?: 0)
         return result
     }
 

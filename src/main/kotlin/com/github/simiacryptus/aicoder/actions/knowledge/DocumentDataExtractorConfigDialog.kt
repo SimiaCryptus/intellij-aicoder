@@ -1,4 +1,4 @@
-package com.github.simiacryptus.aicoder.actions.generic
+package com.github.simiacryptus.aicoder.actions.knowledge
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper

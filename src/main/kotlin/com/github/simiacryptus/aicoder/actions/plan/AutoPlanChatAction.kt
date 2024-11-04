@@ -1,8 +1,10 @@
-package com.github.simiacryptus.aicoder.actions.generic
+package com.github.simiacryptus.aicoder.actions.plan
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
+import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction.Companion.tripleTilde
+import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
@@ -36,7 +38,7 @@ class AutoPlanChatAction : BaseAction() {
                     if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
                 ),
                 temperature = AppSettingsState.instance.temperature,
-                workingDir = UITools.getSelectedFolder(e)?.toFile?.absolutePath ?: "",
+                workingDir = UITools.getRoot(e),
                 env = mapOf(),
                 githubToken = AppSettingsState.instance.githubToken,
                 googleApiKey = AppSettingsState.instance.googleApiKey,
@@ -51,7 +53,7 @@ class AutoPlanChatAction : BaseAction() {
                 UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")
             )
             DataStorage.sessionPaths[session] = root
-            SessionProxyServer.chats[session] = object : AutoPlanChatApp(
+            SessionProxyServer.Companion.chats[session] = object : AutoPlanChatApp(
                 planSettings = dialog.settings.copy(
                     env = mapOf(),
                     workingDir = root.absolutePath,
@@ -65,6 +67,7 @@ class AutoPlanChatAction : BaseAction() {
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 showMenubar = false,
                 api = api,
+                api2 = api2,
             ) {
                 fun codeFiles() = (UITools.getSelectedFiles(e).toTypedArray()?.toList()?.flatMap<VirtualFile, File> {
                     FileValidationUtils.expandFileList(it.toFile).toList<File>()
