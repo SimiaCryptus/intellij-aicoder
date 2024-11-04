@@ -21,6 +21,7 @@ import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
+import com.simiacryptus.skyenet.core.platform.AwsPlatform
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -48,6 +49,24 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     @Name("Google Search Engine ID")
     val googleSearchEngineId = JBTextField().apply {
         toolTipText = "Google Search Engine ID"
+        columns = 30
+    }
+    @Suppress("unused")
+    @Name("AWS Profile")
+    val awsProfile = JBTextField().apply {
+        toolTipText = "AWS Profile"
+        columns = 30
+    }
+    @Suppress("unused")
+    @Name("AWS Region")
+    val awsRegion = JBTextField().apply {
+        toolTipText = "AWS Region"
+        columns = 30
+    }
+    @Suppress("unused")
+    @Name("AWS Bucket")
+    val awsBucket = JBTextField().apply {
+        toolTipText = "AWS Bucket"
         columns = 30
     }
     @Suppress("unused")
@@ -290,6 +309,9 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         githubToken.text = AppSettingsState.instance.githubToken ?: ""
         googleApiKey.text = AppSettingsState.instance.googleApiKey ?: ""
         googleSearchEngineId.text = AppSettingsState.instance.googleSearchEngineId ?: ""
+        awsProfile.text = AppSettingsState.instance.awsProfile ?: ""
+        awsRegion.text = AppSettingsState.instance.awsRegion ?: ""
+        awsBucket.text = AppSettingsState.instance.awsBucket ?: ""
         // Initialize executables list
         setExecutables(AppSettingsState.instance.executables)
         fun getExecutables(): Set<String> {

@@ -170,15 +170,15 @@
                     text="Code Chat"
                     description="Initiate an interactive dialogue session to discuss and analyze multiple code files simultaneously">
             </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.PlanAheadAction"
+            <action class="com.github.simiacryptus.aicoder.actions.plan.PlanAheadAction"
                     text="Task Runner"
                     description="Intelligent task planning and execution tool for breaking down complex coding tasks into manageable steps">
             </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.AutoPlanChatAction"
+            <action class="com.github.simiacryptus.aicoder.actions.plan.AutoPlanChatAction"
                     text="Auto-Plan"
                     description="Automatically generate a structured task plan based on the selected code, project, or task description">
             </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.PrePlanAction"
+            <action class="com.github.simiacryptus.aicoder.actions.plan.PrePlanAction"
                     text="Pre-Planner"
                     description="Set up a structured task planning session with customizable parameters and execution environment">
             </action>
@@ -202,12 +202,17 @@
                     text="Create File from Description"
                     description="Create a new file with appropriate content based on a natural language description, intelligently determining file type and location">
             </action>
-            <action id="com.github.simiacryptus.aicoder.actions.generic.DocumentDataExtractorAction"
-                    class="com.github.simiacryptus.aicoder.actions.generic.DocumentDataExtractorAction"
+            <action id="com.github.simiacryptus.aicoder.actions.knowledge.DocumentDataExtractorAction"
+                    class="com.github.simiacryptus.aicoder.actions.knowledge.DocumentDataExtractorAction"
                     text="Extract Document Data"
                     description="Comprehensive tool for extracting and analyzing text and images from various document formats (PDF, TXT, MD, HTML)">
             </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.SaveAsQueryIndexAction"
+            <action id="com.github.simiacryptus.aicoder.actions.knowledge.CreateProjectorFromQueryIndexAction"
+                    class="com.github.simiacryptus.aicoder.actions.knowledge.CreateProjectorFromQueryIndexAction"
+                    text="View Projector"
+                    description="View Vectors using Tensorflow Projector">
+            </action>
+            <action class="com.github.simiacryptus.aicoder.actions.knowledge.SaveAsQueryIndexAction"
                     text="Save as Query DB"
                     description="Convert selected parsed JSON files into an optimized binary index for efficient querying and data retrieval">
             </action>
@@ -220,7 +225,7 @@
                     text="Shell Agent"
                     description="Execute shell commands in the selected directory via a coding agent">
             </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.PlanChatAction"
+            <action class="com.github.simiacryptus.aicoder.actions.plan.PlanChatAction"
                     text="Chat w/ Planner"
                     description="Interactive session for project planning, task breakdown, and development strategy discussions">
             </action>
@@ -239,6 +244,11 @@
             <action class="com.github.simiacryptus.aicoder.actions.generic.WebDevelopmentAssistantAction"
                     text="Web Dev"
                     description="Comprehensive tool for web application development, assisting with file generation, code writing, and project structure">
+            </action>
+            <action id="AICoderGoogleSearchAndDownload"
+                    class="com.github.simiacryptus.aicoder.actions.knowledge.GoogleSearchAndDownloadAction"
+                    text="Google Search and Download"
+                    description="Search Google and download results">
             </action>
         </group>
 

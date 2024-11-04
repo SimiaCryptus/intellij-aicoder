@@ -17,3 +17,5 @@ tokens
 html-games.iml
 *.iml
 test-recordings/
+*.index.data
+*.parsed.json

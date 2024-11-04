@@ -80,6 +80,18 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
                         add(JLabel("Google Search Engine ID:"))
                         add(component.googleSearchEngineId)
                     })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("AWS Profile:"))
+                        add(component.awsProfile)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("AWS Region:"))
+                        add(component.awsRegion)
+                    })
+                    add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                        add(JLabel("AWS Bucket:"))
+                        add(component.awsBucket)
+                    })
                 })
             }
             tabbedPane.addTab("Basic Settings", basicSettingsPanel)
@@ -186,6 +198,9 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             component.githubToken.text = settings.githubToken ?: ""
             component.googleApiKey.text = settings.googleApiKey ?: ""
             component.googleSearchEngineId.text = settings.googleSearchEngineId ?: ""
+            component.awsProfile.text = settings.awsProfile ?: ""
+            component.awsRegion.text = settings.awsRegion ?: ""
+            component.awsBucket.text = settings.awsBucket ?: ""
             component.humanLanguage.text = settings.humanLanguage
             component.listeningPort.text = settings.listeningPort.toString()
             component.listeningEndpoint.text = settings.listeningEndpoint
@@ -220,6 +235,9 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             settings.githubToken = component.githubToken.text.takeIf { it.isNotBlank() }
             settings.googleApiKey = component.googleApiKey.text.takeIf { it.isNotBlank() }
             settings.googleSearchEngineId = component.googleSearchEngineId.text.takeIf { it.isNotBlank() }
+            settings.awsProfile = component.awsProfile.text.takeIf { it.isNotBlank() }
+            settings.awsRegion = component.awsRegion.text.takeIf { it.isNotBlank() }
+            settings.awsBucket = component.awsBucket.text.takeIf { it.isNotBlank() }
             settings.executables = component.getExecutables().toMutableSet()
             settings.humanLanguage = component.humanLanguage.text
             settings.listeningPort = component.listeningPort.text.safeInt()

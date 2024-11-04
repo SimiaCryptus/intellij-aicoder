@@ -1,6 +1,6 @@
 ﻿package com.github.simiacryptus.aicoder.util
 
-//import com.github.simiacryptus.aicoder.config.ActionSettingsRegistry
+import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
@@ -81,6 +81,10 @@ object UITools {
     private val errorLog = mutableListOf<Pair<String, Throwable>>()
     private val actionLog = mutableListOf<String>()
     private val singleThreadPool = Executors.newSingleThreadExecutor()
+
+    fun getRoot(e: AnActionEvent) : String {
+        return getSelectedFolder(e)?.toFile?.absolutePath ?: UITools.getSelectedFile(e)?.toFile?.parent ?: ""
+    }
 
     fun redoableTask(
         event: AnActionEvent,
@@ -623,9 +627,7 @@ object UITools {
         val editor = PlatformDataKeys.EDITOR.getData(dataContext)
         if (editor != null) {
             val file = FileDocumentManager.getInstance().getFile(editor.document)
-            if (file != null) {
-                return listOf(file)
-            }
+            if (file != null) { return listOf(file) }
         }
         return emptyList()
     }
