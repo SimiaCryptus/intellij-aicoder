@@ -50,38 +50,43 @@ class AppServer(
 
 
     private val serverLock = Object()
-    private val progressThread = Thread {
-        try {
-            UITools.run(
-                project, "Running CodeChat Server on $port", false
-            ) {
-                while (isRunning(it)) {
-                    Thread.sleep(1000)
-                }
-                synchronized(serverLock) {
-                    if (it.isCanceled) {
-                        log.info("Server cancelled")
-                        server.stop()
-                    } else {
-                        log.info("Server stopped")
-                    }
-                }
-            }
-        } finally {
-            log.info("Stopping Server")
-            server.stop()
-        }
-    }
+//    private val progressThread = Thread {
+//        try {
+//            UITools.run(
+//                project, "Running CodeChat Server on $port", false
+//            ) {
+//                while (isRunning(it)) {
+//                    Thread.sleep(1000)
+//                }
+//                synchronized(serverLock) {
+//                    if (it.isCanceled) {
+//                        log.info("Server cancelled")
+//                        server.stop()
+//                    } else {
+//                        log.info("Server stopped")
+//                    }
+//                }
+//            }
+//        } finally {
+//            log.info("Stopping Server")
+//            server.stop()
+//        }
+//    }
 
     private fun isRunning(it: ProgressIndicator) = synchronized(serverLock) { !it.isCanceled && server.isRunning }
+
     fun start() {
         server.start()
-        progressThread.start()
+//        progressThread.start()
     }
 
     companion object {
         @Transient
         private var server: AppServer? = null
+        fun isRunning(): Boolean {
+            return server?.server?.isRunning ?: false
+        }
+        
         fun getServer(project: Project?): AppServer {
             if (null == server || !server!!.server.isRunning) {
                 server = AppServer(
