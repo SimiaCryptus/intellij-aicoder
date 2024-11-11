@@ -28,7 +28,7 @@ repositories {
 
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.17"
+val skyenet_version = "1.2.16"
 val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
