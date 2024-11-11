@@ -1,6 +1,7 @@
 package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.ui.SettingsWidgetFactory
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
 import java.net.DatagramPacket
@@ -11,6 +12,7 @@ import java.net.URI
 object BrowseUtil {
 
     fun browse(uri: URI) {
+        SettingsWidgetFactory.settingsWidget?.updateSessionsList()
         sendUdpMessage(uri.toString())
         if (!AppSettingsState.instance.disableAutoOpenUrls && Desktop.isDesktopSupported()) {
             val desktop = Desktop.getDesktop()
