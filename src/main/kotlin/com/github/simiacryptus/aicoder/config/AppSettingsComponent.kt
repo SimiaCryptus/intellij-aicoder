@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.config
 
 
-import com.github.simiacryptus.aicoder.ui.SettingsWidgetFactory.SettingsWidget.Companion.isVisible
+import com.github.simiacryptus.aicoder.actions.plan.PlanAheadConfigDialog.Companion.isVisible
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser

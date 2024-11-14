@@ -12,35 +12,70 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
+import com.intellij.ui.treeStructure.Tree
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.platform.Session
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Cursor
-import java.awt.FlowLayout
-import java.awt.GridLayout
-import java.awt.Toolkit
+import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.net.URI
 import javax.swing.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
+import javax.swing.tree.TreeSelectionModel
 
 class SettingsWidgetFactory : StatusBarWidgetFactory {
 
   class SettingsWidget : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
 
     private var statusBar: StatusBar? = null
-    private val smartModelList = createModelList()
-    private val fastModelList = createModelList()
+    private val smartModelTree by lazy { createModelTree("Smart Model", AppSettingsState.instance.smartModel) }
+    private val fastModelTree by lazy { createModelTree("Fast Model", AppSettingsState.instance.fastModel) }
     private var project: Project? = null
-    private val sessionsList = JList<Session>()
+    private val sessionsList = JBList<Session>()
     private val sessionsListModel = DefaultListModel<Session>()
+    private fun createModelTree(title: String, selectedModel: String?): JTree {
+      val root = DefaultMutableTreeNode(title)
+      val providers = models().groupBy { it.second.provider }
+      for ((provider, models) in providers) {
+        val providerNode = DefaultMutableTreeNode(provider.name)
+        for (model in models) {
+          val modelNode = DefaultMutableTreeNode(model.second.modelName)
+          providerNode.add(modelNode)
+        }
+        root.add(providerNode)
+      }
+      val treeModel = DefaultTreeModel(root)
+      val tree = Tree(treeModel)
+      tree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+      tree.isRootVisible = false
+      tree.showsRootHandles = true
+      tree.addTreeSelectionListener {
+        val selectedPath = tree.selectionPath
+        if (selectedPath != null && selectedPath.pathCount == 3) { // Provider -> Model
+          val modelName = selectedPath.lastPathComponent.toString()
+          when (title) {
+            "Smart Model" -> AppSettingsState.instance.smartModel = modelName
+            "Fast Model" -> AppSettingsState.instance.fastModel = modelName
+          }
+          statusBar?.updateWidget(ID())
+        }
+      }
+      // Expand and select the node if a model is selected
+      if (selectedModel != null) {
+        SwingUtilities.invokeLater {
+          setSelectedModel(tree, selectedModel)
+        }
+      }
+      return tree
+    }
+
     private val temperatureSlider by lazy {
       val slider = JSlider(0, 100, (AppSettingsState.instance.temperature * 100).toInt())
       slider.addChangeListener { AppSettingsState.instance.temperature = slider.value / 100.0 }
@@ -150,25 +185,28 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       }
     }
 
-    private fun createModelList(): JBList<String> {
-      val list = JBList(CollectionListModel(models().map { it?.modelName ?: "" }))
-      list.cellRenderer = getRenderer()
-      list.visibleRowCount = 20
-      return list
-    }
+    // Removed createModelList() as we are using tree views instead
 
 
     init {
       AppSettingsState.instance.addOnSettingsLoadedListener {
         statusBar?.updateWidget(ID())
       }
-      // Initialize selection for both lists
-      smartModelList.setSelectedValue(AppSettingsState.instance.smartModel, true)
-      fastModelList.setSelectedValue(AppSettingsState.instance.fastModel, true)
+        // Initialize selection for both trees on EDT
+        if (AppSettingsState.instance.smartModel.isNotEmpty()) {
+          SwingUtilities.invokeLater {
+            setSelectedModel(smartModelTree, AppSettingsState.instance.smartModel)
+          }
+        }
+        if (AppSettingsState.instance.fastModel.isNotEmpty()) {
+          SwingUtilities.invokeLater {
+            setSelectedModel(fastModelTree, AppSettingsState.instance.fastModel)
+          }
+        }
     }
 
-    fun models() = ChatModel.values().filter { it.value != null && isVisible(it.value!!) }
-      .entries.sortedBy { "${it.value!!.provider.name} - ${it.value!!.modelName}" }.map { it.value }.toList()
+    fun models() = ChatModel.values().filter { it.value != null && isVisible(it.value!!) }.toList()
+      .sortedBy { "${it.second.provider.name} - ${it.second.modelName}" }
 
     override fun ID(): String {
       return "AICodingAssistant.SettingsWidget"
@@ -214,11 +252,29 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       ) {
         text = value // Here you can add more customization if needed
         if (value != null) {
-          val model = models().find { it?.modelName == value }
-          text = "<html><b>${model?.provider?.name}</b> - <i>$value</i></html>" // Enhance label formatting
+          val model = models().find { it.second.modelName == value }
+          text = "<html><b>${model?.second?.provider?.name}</b> - <i>$value</i></html>" // Enhance label formatting
         }
       }
     }
+
+    private fun setSelectedModel(tree: JTree, modelName: String) {
+      val root = tree.model as DefaultTreeModel
+      val rootNode = root.root as DefaultMutableTreeNode
+      for (i in 0 until rootNode.childCount) {
+        val providerNode = rootNode.getChildAt(i) as DefaultMutableTreeNode
+        for (j in 0 until providerNode.childCount) {
+          val modelNode = providerNode.getChildAt(j) as DefaultMutableTreeNode
+          if (modelNode.userObject == modelName) {
+            val path = TreePath(modelNode.path)
+            tree.selectionPath = path
+            tree.scrollPathToVisible(path)
+            break
+          }
+        }
+      }
+    }
+
 
     override fun getPopup(): JBPopup {
 
@@ -228,11 +284,11 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       val tabbedPane = JTabbedPane()
       // Smart model tab
       val smartModelPanel = JPanel(BorderLayout())
-      smartModelPanel.add(JScrollPane(smartModelList), BorderLayout.CENTER)
+      smartModelPanel.add(JScrollPane(smartModelTree), BorderLayout.CENTER)
       tabbedPane.addTab("Smart Model", smartModelPanel)
       // Fast model tab
       val fastModelPanel = JPanel(BorderLayout())
-      fastModelPanel.add(JScrollPane(fastModelList), BorderLayout.CENTER)
+      fastModelPanel.add(JScrollPane(fastModelTree), BorderLayout.CENTER)
       tabbedPane.addTab("Fast Model", fastModelPanel)
       // Add server control tab
       tabbedPane.addTab("Server", createServerControlPanel())
@@ -250,27 +306,16 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
         }
       })
 
-      smartModelList.addListSelectionListener {
-        val selectedValue = smartModelList.selectedValue
-        if (selectedValue != null) {
-          AppSettingsState.instance.smartModel = selectedValue
-          statusBar?.updateWidget(ID())
-        }
-      }
+      // Removed smartModelList selection listener as tree handles it
 
-      fastModelList.addListSelectionListener {
-        val selectedValue = fastModelList.selectedValue
-        if (selectedValue != null) {
-          AppSettingsState.instance.fastModel = selectedValue
-          statusBar?.updateWidget(ID())
-        }
-      }
+      // Removed fastModelList selection listener as tree handles it
       return popup
     }
 
+    // Optionally, update getSelectedValue to reflect selected models from trees
     override fun getSelectedValue(): String {
-//      return "${AppSettingsState.instance.smartModel} / ${AppSettingsState.instance.fastModel}"
-      return "${AppSettingsState.instance.smartModel}"
+//      return "Smart: ${AppSettingsState.instance.smartModel} | Fast: ${AppSettingsState.instance.fastModel}"
+      return AppSettingsState.instance.smartModel
     }
 
     override fun getTooltipText(): String {
@@ -285,12 +330,10 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
           serverStatus
     }
 
-    companion object {
-      fun isVisible(it: ChatModel): Boolean {
-        val hasApiKey =
-          AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.provider.name)
-        return false != hasApiKey
-      }
+    // Companion object removed, making isVisible a regular function
+    private fun isVisible(it: ChatModel): Boolean {
+      // Temporarily allow all models to be visible for debugging
+      return true
     }
 
   }
@@ -303,16 +346,12 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
     return "AI Coding Assistant Settings"
   }
 
-  companion object {
-    val settingsWidget = SettingsWidget()
-  }
-
   override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
-    return settingsWidget
+    return SettingsWidget()
   }
 
   override fun createWidget(project: Project): StatusBarWidget {
-    return settingsWidget
+    return SettingsWidget()
   }
 
   override fun isAvailable(project: Project): Boolean {
