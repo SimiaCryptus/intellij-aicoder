@@ -5,11 +5,13 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.simiacryptus.skyenet.apps.parse.DocumentParserApp
+import com.simiacryptus.skyenet.apps.parse.ParsingModelType
 import javax.swing.*
 
 class DocumentDataExtractorConfigDialog(
     project: Project?,
-    var settings: DocumentParserApp.Settings
+    var settings: DocumentParserApp.Settings,
+    var modelType: ParsingModelType<*>
 ) : DialogWrapper(project) {
 
     private val dpiField = JBTextField(settings.dpi.toString())
@@ -20,6 +22,11 @@ class DocumentDataExtractorConfigDialog(
     private val saveImageFilesCheckbox = JBCheckBox("Save Image Files", settings.saveImageFiles)
     private val saveTextFilesCheckbox = JBCheckBox("Save Text Files", settings.saveTextFiles)
     private val saveFinalJsonCheckbox = JBCheckBox("Save Final JSON", settings.saveFinalJson)
+    private val fastModeCheckbox = JBCheckBox("Fast Mode", settings.fastMode)
+    private val addLineNumbersCheckbox = JBCheckBox("Add Line Numbers", settings.addLineNumbers)
+    private val modelTypeComboBox = JComboBox(ParsingModelType.values().toTypedArray()).apply {
+        selectedItem = modelType
+    }
 
     init {
         init()
@@ -29,7 +36,7 @@ class DocumentDataExtractorConfigDialog(
     override fun createCenterPanel(): JComponent {
         val panel = JPanel()
         panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
-
+        panel.add(createLabeledField("Parsing Model:", modelTypeComboBox))
         panel.add(createLabeledField("DPI:", dpiField))
         panel.add(createLabeledField("Max Pages:", maxPagesField))
         panel.add(createLabeledField("Output Format:", outputFormatField))
@@ -38,6 +45,8 @@ class DocumentDataExtractorConfigDialog(
         panel.add(saveImageFilesCheckbox)
         panel.add(saveTextFilesCheckbox)
         panel.add(saveFinalJsonCheckbox)
+        panel.add(fastModeCheckbox)
+        panel.add(addLineNumbersCheckbox)
 
         return panel
     }
@@ -60,8 +69,11 @@ class DocumentDataExtractorConfigDialog(
             showImages = showImagesCheckbox.isSelected,
             saveImageFiles = saveImageFilesCheckbox.isSelected,
             saveTextFiles = saveTextFilesCheckbox.isSelected,
-            saveFinalJson = saveFinalJsonCheckbox.isSelected
+            saveFinalJson = saveFinalJsonCheckbox.isSelected,
+            fastMode = fastModeCheckbox.isSelected,
+            addLineNumbers = addLineNumbersCheckbox.isSelected
         )
+        modelType = modelTypeComboBox.selectedItem as ParsingModelType<*>
         super.doOKAction()
     }
 }
