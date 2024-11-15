@@ -12,9 +12,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.models.chatModel
-import com.simiacryptus.skyenet.apps.parse.CodeParsingModel
 import com.simiacryptus.skyenet.apps.parse.DocumentParserApp
 import com.simiacryptus.skyenet.apps.parse.DocumentParsingModel
+import com.simiacryptus.skyenet.apps.parse.ParsingModel
+import com.simiacryptus.skyenet.apps.parse.ParsingModel.DocumentData
+import com.simiacryptus.skyenet.apps.parse.ParsingModelType
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -26,6 +28,7 @@ import java.nio.file.Path
 class DocumentDataExtractorAction : BaseAction() {
   val path = "/pdfExtractor"
   private var settings = DocumentParserApp.Settings()
+  private var modelType = ParsingModelType.Document
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -68,29 +71,24 @@ class DocumentDataExtractorAction : BaseAction() {
       return
     }
     val selectedFile = processableFiles.first()
-    val configDialog = DocumentDataExtractorConfigDialog(e.project, settings)
+    val configDialog = DocumentDataExtractorConfigDialog(e.project, settings, modelType)
     if (!configDialog.showAndGet()) return
     settings = configDialog.settings
+    modelType = configDialog.modelType as ParsingModelType<DocumentParsingModel>
 
     val session = Session.newGlobalID()
     DataStorage.sessionPaths[session] = selectedFile.toFile.parentFile
 
     val smartModel = AppSettingsState.instance.smartModel.chatModel()
-    val parsingModel = when {
-      selectedFile.name.endsWith(".pdf", ignoreCase = true) -> DocumentParsingModel(smartModel, 0.1)
-      selectedFile.name.endsWith(".txt", ignoreCase = true) -> DocumentParsingModel(smartModel, 0.1)
-      selectedFile.name.endsWith(".html", ignoreCase = true) -> DocumentParsingModel(smartModel, 0.1)
-      selectedFile.name.endsWith(".htm", ignoreCase = true) -> DocumentParsingModel(smartModel, 0.1)
-      selectedFile.name.endsWith(".md", ignoreCase = true) -> DocumentParsingModel(smartModel, 0.1)
-      else -> CodeParsingModel(smartModel, 0.1)
-    }
+    val parsingModel = ParsingModelType.getImpl(smartModel, 0.1, modelType)
 
-    SessionProxyServer.Companion.chats[session] = object : DocumentParserApp(
+    SessionProxyServer.chats[session] = object : DocumentParserApp(
       applicationName = "Document Extractor",
       path = this@DocumentDataExtractorAction.path,
       api = this@DocumentDataExtractorAction.api,
       fileInputs = processableFiles.map<VirtualFile, Path> { it.toNioPath() },
-      parsingModel = parsingModel,
+      parsingModel = parsingModel as ParsingModel<DocumentData>,
+      fastMode = settings.fastMode,
     ) {
       override fun <T : Any> initSettings(session: Session): T = this@DocumentDataExtractorAction.settings as T
       override val root: File get() = selectedFile.parent.toFile

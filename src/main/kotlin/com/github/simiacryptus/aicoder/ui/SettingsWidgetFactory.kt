@@ -40,16 +40,26 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
     private var project: Project? = null
     private val sessionsList = JBList<Session>()
     private val sessionsListModel = DefaultListModel<Session>()
-    private fun createModelTree(title: String, selectedModel: String?): JTree {
+    private fun createModelTree(title: String, selectedModel: String?): Tree {
       val root = DefaultMutableTreeNode(title)
-      val providers = models().groupBy { it.second.provider }
+      // Filter models by providers that have API keys set
+      val providers = models()
+        .filter { model -> 
+          val providerName = model.second.provider.name
+          AppSettingsState.instance.apiKey?.get(providerName)?.isNotEmpty() == true
+        }
+        .groupBy { it.second.provider }
+      
       for ((provider, models) in providers) {
         val providerNode = DefaultMutableTreeNode(provider.name)
         for (model in models) {
           val modelNode = DefaultMutableTreeNode(model.second.modelName)
           providerNode.add(modelNode)
         }
-        root.add(providerNode)
+        // Only add provider node if it has models
+        if (providerNode.childCount > 0) {
+          root.add(providerNode)
+        }
       }
       val treeModel = DefaultTreeModel(root)
       val tree = Tree(treeModel)
