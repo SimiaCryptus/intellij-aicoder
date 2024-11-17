@@ -121,7 +121,7 @@ class DocumentedMassPatchServer(
                                             api = api as API,
                                             shouldAutoApply = { autoApply },
                                             model = AppSettingsState.instance.fastModel.chatModel(),
-                                            defaultFile = _root.resolve(path).toFile().absolutePath
+                                            defaultFile = path.toString()
                                         ) ?: design
                                     }
                                 }</div>"""
