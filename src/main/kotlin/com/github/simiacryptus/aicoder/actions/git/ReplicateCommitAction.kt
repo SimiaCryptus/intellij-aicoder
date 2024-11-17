@@ -44,8 +44,10 @@ class ReplicateCommitAction : BaseAction() {
     private val logger = Logger.getInstance(ReplicateCommitAction::class.java)
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    // Add error handling wrapper
 
     override fun handle(event: AnActionEvent) {
+        try {
         val settings = getUserSettings(event) ?: return
         val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
@@ -61,9 +63,11 @@ class ReplicateCommitAction : BaseAction() {
         val changes = event.getData(VcsDataKeys.CHANGES)
         val session = Session.newGlobalID()
 
-        Thread {
+            UITools.run(event.project, "Replicating Commit", true) { progress ->
+                progress.text = "Generating diff info..."
             try {
                 val diffInfo = generateDiffInfo(files, changes)
+                progress.text = "Creating patch application..."
                 val patchApp = object : PatchApp(root.toFile(), session, settings, diffInfo) {
                     override fun codeFiles() = getFiles(virtualFiles)
                         .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
@@ -94,6 +98,7 @@ class ReplicateCommitAction : BaseAction() {
                         return str
                     }
                 }
+                progress.text = "Setting up session..."
                 SessionProxyServer.chats[session] = patchApp
                 ApplicationServer.appInfoMap[session] = AppInfoData(
                     applicationName = "Code Chat",
@@ -103,20 +108,35 @@ class ReplicateCommitAction : BaseAction() {
                     showMenubar = false
                 )
             } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
+                logger.error("Error setting up patch application", e)
+                UITools.showErrorDialog(event.project, "Failed to set up patch application: ${e.message}", "Error")
             }
-        }.start()
+            }
+            // Open browser in separate thread
         Thread {
             Thread.sleep(500)
             try {
                 val server = AppServer.getServer(event.project)
                 val uri = server.server.uri.resolve("/#$session")
-                BaseAction.log.info("Opening browser to $uri")
+                logger.info("Opening browser to $uri")
                 browse(uri)
             } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
+                logger.error("Error opening browser", e)
+                UITools.showErrorDialog(event.project, "Failed to open browser: ${e.message}", "Error")
             }
         }.start()
+        } catch (e: Exception) {
+            logger.error("Error in ReplicateCommitAction", e)
+            UITools.showErrorDialog(event.project, "Operation failed: ${e.message}", "Error")
+        }
+    }
+
+    // Add proper enablement logic
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
+        val project = event.project ?: return false
+        val changes = event.getData(VcsDataKeys.CHANGES)
+        return changes != null && changes.isNotEmpty()
     }
 
     private fun generateDiffInfo(files: Array<VirtualFile>?, changes: Array<out Change>?): String {
@@ -380,8 +400,6 @@ class ReplicateCommitAction : BaseAction() {
             }
         }?.toTypedArray()
     }
-
-    override fun isEnabled(event: AnActionEvent) = true
 
     companion object {
         private val log = LoggerFactory.getLogger(ReplicateCommitAction::class.java)

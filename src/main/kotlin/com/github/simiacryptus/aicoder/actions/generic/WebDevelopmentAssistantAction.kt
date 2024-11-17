@@ -47,9 +47,10 @@ val VirtualFile.toFile: File get() = File(this.path)
 class WebDevelopmentAssistantAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    val path = "/webDev"
+    private val path = "/webDev"
 
     override fun handle(e: AnActionEvent) {
+        try {
         val session = Session.newGlobalID()
         val selectedFile = UITools.getSelectedFolder(e)
         if (null != selectedFile) {
@@ -65,17 +66,17 @@ class WebDevelopmentAssistantAction : BaseAction() {
         )
         val server = AppServer.getServer(e.project)
 
-        Thread {
+            UITools.run(e.project, "Opening Web Development Assistant", true) { progress ->
+                progress.text = "Launching browser..."
             Thread.sleep(500)
-            try {
 
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
                 browse(uri)
-            } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
             }
-        }.start()
+        } catch (e: Throwable) {
+            UITools.error(log, "Error launching Web Development Assistant", e)
+        }
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
@@ -94,6 +95,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
         showMenubar = false,
         root = root?.toFile!!,
     ) {
+        private val log = LoggerFactory.getLogger(WebDevApp::class.java)
+
         override fun userMessage(
             session: Session,
             user: User?,
@@ -101,6 +104,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             ui: ApplicationInterface,
             api: API
         ) {
+            try {
             val settings = getSettings(session, user) ?: Settings()
             if (api is ChatClient) api.budget = settings.budget ?: 2.00
             WebDevAgent(
@@ -116,6 +120,9 @@ class WebDevelopmentAssistantAction : BaseAction() {
             ).start(
                 userMessage = userMessage,
             )
+            } catch (e: Throwable) {
+                log.error("Error processing user message", e)
+            }
         }
 
         data class Settings(

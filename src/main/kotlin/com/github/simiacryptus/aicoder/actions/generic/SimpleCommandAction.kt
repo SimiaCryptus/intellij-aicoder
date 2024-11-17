@@ -38,8 +38,10 @@ import kotlin.io.path.walk
 
 class SimpleCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    // Add error handling wrapper for main action
 
     override fun handle(event: AnActionEvent) {
+        try {
         val settings = getUserSettings(event) ?: run {
             log.error("Failed to retrieve user settings.")
             return
@@ -65,6 +67,10 @@ class SimpleCommandAction : BaseAction() {
         val server = AppServer.getServer(event.project)
 
         openBrowserWithDelay(server.server.uri.resolve("/#$session"))
+        } catch (e: Exception) {
+            log.error("Error handling action", e)
+            UITools.showErrorDialog(event.project, "Failed to execute command: ${e.message}", "Error")
+        }
     }
 
     private fun createPatchApp(
@@ -72,24 +78,29 @@ class SimpleCommandAction : BaseAction() {
         session: Session,
         settings: Settings,
         virtualFiles: Array<out VirtualFile>?
-    ): PatchApp {
-        return object : PatchApp(root, session, settings) {
+    ): PatchApp = UITools.run(null, "Creating patch application", true) { progress ->
+        progress.text = "Initializing patch application..."
+        object : PatchApp(root, session, settings) {
             override fun codeFiles() = (virtualFiles?.toList<VirtualFile>()?.flatMap<VirtualFile, File> {
                 FileValidationUtils.expandFileList(it.toFile).toList()
             }?.map<File, Path> { it.toPath() }?.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
                 .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
                 .map { root.toPath().relativize(it) ?: it }.toSet()
+            // Add progress indication for long operations
 
             override fun codeSummary(paths: List<Path>) = paths
                 .filter { it.toFile().exists() }
-                .joinToString("\n\n") { path ->
+                .mapIndexed { index, path ->
+                    progress.fraction = index.toDouble() / paths.size
+                    progress.text = "Processing ${path.fileName}..."
                     """
                         |# ${settings.workingDirectory.toPath()?.relativize(path)}
                         |$tripleTilde${path.toString().split('.').lastOrNull()}
                         |${path.toFile().readText(Charsets.UTF_8)}
                         |$tripleTilde
                     """.trimMargin()
-                }
+                }.joinToString("\n\n")
+            // Add validation for file operations
 
             override fun projectSummary() = codeFiles()
                 .asSequence()
@@ -102,6 +113,7 @@ class SimpleCommandAction : BaseAction() {
                 }
 
             override fun searchFiles(searchStrings: List<String>): Set<Path> {
+                require(searchStrings.isNotEmpty()) { "Search strings cannot be empty" }
                 return searchStrings.flatMap { searchString ->
                     filteredWalk(settings.workingDirectory) { !isGitignore(it.toPath()) }
                         .filter { isLLMIncludableFile(it) }
@@ -112,17 +124,19 @@ class SimpleCommandAction : BaseAction() {
             }
         }
     }
+    // Add proper resource cleanup
 
     private fun openBrowserWithDelay(uri: java.net.URI) {
-        Thread {
+        Thread({
             Thread.sleep(500)
             try {
                 log.info("Opening browser to $uri")
                 browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
+                UITools.showErrorDialog(null, "Failed to open browser: ${e.message}", "Error")
             }
-        }.start()
+        }, "BrowserOpener").apply { isDaemon = true }.start()
     }
 
     abstract inner class PatchApp(
@@ -368,4 +382,3 @@ $tripleTilde
 
     }
 }
-

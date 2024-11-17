@@ -162,10 +162,6 @@
                text="_AI Coder"
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.DocumentedMassPatchAction"
-                    text="Mass Patch with Documentation"
-                    description="Analyze and patch multiple code files while considering markdown documentation files for context and standards">
-            </action>
             <action class="com.github.simiacryptus.aicoder.actions.generic.MultiDiffChatAction"
                     text="Modify Files"
                     description="Analyze and generate patches for multiple files simultaneously, considering the broader project context">
@@ -197,6 +193,10 @@
             <action class="com.github.simiacryptus.aicoder.actions.generic.MassPatchAction"
                     text="Mass Patch"
                     description="Analyze and generate patches for multiple selected files, with intelligent suggestions for code modifications">
+            </action>
+            <action class="com.github.simiacryptus.aicoder.actions.generic.DocumentedMassPatchAction"
+                    text="Mass Patch with Documentation"
+                    description="Analyze and patch multiple code files while considering markdown documentation files for context and standards">
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateRelatedFileAction"
                     text="Generate Related File"

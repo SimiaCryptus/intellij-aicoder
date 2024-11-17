@@ -2,7 +2,6 @@ package com.github.simiacryptus.aicoder.actions.generic
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
@@ -14,16 +13,12 @@ import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludableFile
-import com.simiacryptus.diff.addApplyFileDiffLinks
-import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.ChatClient
-import com.simiacryptus.jopenai.models.ApiModel
-import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.*
@@ -89,9 +84,11 @@ class DocumentedMassPatchAction : BaseAction() {
     }
 
     private fun getConfig(project: Project?, e: AnActionEvent): Settings? {
-        val root = UITools.getSelectedFolder(e)?.toNioPath()
-        val allFiles = Files.walk(root).toList()
-        
+        var root = UITools.getSelectedFolder(e)?.toNioPath()
+        val allFiles = root?.let { Files.walk(it).toList() } ?: UITools.getSelectedFiles(e).map { it.toNioPath() }
+        if (root == null) {
+            root = e.project?.basePath?.let { File(it).toPath() }
+        }
         val docFiles = allFiles.filter { it.toString().endsWith(".md") }.toTypedArray()
         val sourceFiles = allFiles.filter { 
             isLLMIncludableFile(it.toFile()) && !it.toString().endsWith(".md") 

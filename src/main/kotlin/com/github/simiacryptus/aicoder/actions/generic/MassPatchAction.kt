@@ -36,23 +36,19 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.Box
-import javax.swing.BoxLayout
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JComboBox
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JCheckBox
+import javax.swing.*
 
 class MassPatchAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    private val log = org.slf4j.LoggerFactory.getLogger(MassPatchAction::class.java)
+
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.getSelectedFile(event)?.isDirectory == false) return false
-        return super.isEnabled(event)
+        if (!super.isEnabled(event)) return false
+        val file = UITools.getSelectedFile(event) ?: return false
+        return file.isDirectory
     }
 
     class SettingsUI {
@@ -117,9 +113,14 @@ class MassPatchAction : BaseAction() {
     }
 
 
-    override fun handle(e: AnActionEvent) {
-        val project = e.project
-        val config = getConfig(project, e)
+    override fun handle(event: AnActionEvent) {
+        try {
+            val project = event.project
+            val config = getConfig(project, event)
+            if (config == null) {
+                log.info("Configuration cancelled by user")
+                return
+            }
 
         val session = Session.newGlobalID()
         SessionProxyServer.chats[session] = MassPatchServer(config=config!!, api=api, autoApply = config.settings?.autoApply ?: false)
@@ -131,8 +132,8 @@ class MassPatchAction : BaseAction() {
             showMenubar = false
         )
 
-        val server = AppServer.getServer(e.project)
-        Thread {
+            val server = AppServer.getServer(event.project)
+            UITools.run(project, "Opening browser") {
             Thread.sleep(500)
             try {
                 val uri = server.server.uri.resolve("/#$session")
@@ -140,8 +141,13 @@ class MassPatchAction : BaseAction() {
                 browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
+                UITools.showErrorDialog(project, "Failed to open browser: ${e.message}", "Error")
             }
-        }.start()
+            }
+        } catch (e: Exception) {
+            log.error("Error in mass patch action", e)
+            UITools.showErrorDialog(event.project, e.message ?: "", "Error")
+        }
 
     }
 
@@ -198,6 +204,7 @@ class MassPatchServer(
     path = "/patchChat",
     showMenubar = false,
 ) {
+    private val log = org.slf4j.LoggerFactory.getLogger(MassPatchServer::class.java)
     private lateinit var _root: Path
 
 
@@ -250,10 +257,17 @@ class MassPatchServer(
             )
         }
 
+
     override fun newSession(user: User?, session: Session): SocketManager {
         val socketManager = super.newSession(user, session)
         val ui = (socketManager as ApplicationSocketManager).applicationInterface
-        _root = config.project?.basePath?.let { Path.of(it) } ?: Path.of(".")
+        try {
+            _root = config.project?.basePath?.let { Path.of(it) }
+                ?: throw IllegalStateException("Project base path not found")
+        } catch (e: Exception) {
+            log.error("Failed to initialize root path", e)
+            throw e
+        }
         val task = ui.newTask(true)
         val api = (api as ChatClient).getChildClient().apply {
             val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")

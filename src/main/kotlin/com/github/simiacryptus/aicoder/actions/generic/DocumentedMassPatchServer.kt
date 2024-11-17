@@ -107,20 +107,24 @@ class DocumentedMassPatchServer(
                                 mainActor.answer(toInput(it), api = api)
                             },
                             outputFn = { design: String ->
-                                var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                                    root = _root,
-                                    response = design,
-                                    handle = { newCodeMap ->
-                                        newCodeMap.forEach { (path, newCode) ->
-                                            fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                                        }
-                                    },
-                                    ui = ui,
-                                    api = api as API,
-                                    shouldAutoApply = { autoApply },
-                                    model = AppSettingsState.instance.fastModel.chatModel(),
-                                )
-                                """<div>${renderMarkdown(markdown!!)}</div>"""
+                                """<div>${
+                                    renderMarkdown(design) {
+                                        ui.socketManager?.addApplyFileDiffLinks(
+                                            root = _root,
+                                            response = design,
+                                            handle = { newCodeMap ->
+                                                newCodeMap.forEach { (path, newCode) ->
+                                                    fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                                }
+                                            },
+                                            ui = ui,
+                                            api = api as API,
+                                            shouldAutoApply = { autoApply },
+                                            model = AppSettingsState.instance.fastModel.chatModel(),
+                                            defaultFile = _root.resolve(path).toFile().absolutePath
+                                        ) ?: design
+                                    }
+                                }</div>"""
                             },
                             ui = ui,
                             reviseResponse = { userMessages ->
