@@ -94,7 +94,7 @@
 
 - Code Chat
 
-## [1.2.18]
+## [1.2.19]
 
 ### Improved
 
@@ -475,9 +475,9 @@
 [1.2.23]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.22...v1.2.23
 [1.2.22]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.21...v1.2.22
 [1.2.21]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.19...v1.2.21
-[1.2.19]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.18...v1.2.19
+[1.2.19]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.19...v1.2.19
 
-[1.2.18]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.14...v1.2.18
+[1.2.19]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.14...v1.2.19
 
 [1.2.14]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.11...v1.2.14
 

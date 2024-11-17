@@ -58,15 +58,12 @@ class MassPatchAction : BaseAction() {
     class SettingsUI {
         @Name("Files to Process")
         val filesToProcess = CheckBoxList<Path>()
-
         @Name("AI Instruction")
         val transformationMessage = JBTextArea(4, 40)
-
         @Name("Recent Instructions")
         val recentInstructions = JComboBox<String>()
         @Name("Auto Apply")
         val autoApply = JCheckBox("Auto Apply Changes")
-
     }
 
     class UserSettings(

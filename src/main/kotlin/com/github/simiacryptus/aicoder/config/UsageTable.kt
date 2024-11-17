@@ -6,11 +6,13 @@ import com.intellij.ui.table.JBTable
 import com.simiacryptus.skyenet.core.platform.model.UsageInterface
 import org.jdesktop.swingx.JXTable
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.event.ActionEvent
 import java.util.*
 import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.JPanel
+import javax.swing.JTable
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
@@ -22,20 +24,38 @@ class UsageTable(
     val columnNames = arrayOf("Model", "Prompt", "Completion", "Cost")
 
     val rowData by lazy {
-        usage.getUserUsageSummary(IdeaChatClient.localUser).map { entry ->
+        val usageData = usage.getUserUsageSummary(IdeaChatClient.localUser).map { entry ->
             listOf(
                 entry.key.modelName,
                 entry.value.prompt_tokens.toString(),
                 entry.value.completion_tokens.toString(),
                 String.format("%.2f", entry.value.cost)
             ).toMutableList()
-        }.toMutableList()
+        }
+        // Calculate totals
+        val totalPromptTokens = usageData.sumOf { it[1].toString().toInt() }
+        val totalCompletionTokens = usageData.sumOf { it[2].toString().toInt() }
+        val totalCost = usageData.sumOf { it[3].toString().toDouble() }
+        // Add totals row
+        (usageData + listOf(listOf(
+            "TOTAL",
+            totalPromptTokens.toString(),
+            totalCompletionTokens.toString(),
+            String.format("%.2f", totalCost)
+        ).toMutableList())).toMutableList()
     }
 
     private val dataModel by lazy {
         object : AbstractTableModel() {
             override fun getColumnName(column: Int): String {
                 return columnNames.get(column).toString()
+            }
+            override fun getValueAt(row: Int, col: Int): Any {
+                return rowData[row][col]
+            }
+            override fun isCellEditable(row: Int, column: Int): Boolean {
+                // Make the total row non-editable
+                return row != rowData.size - 1
             }
 
             override fun getRowCount(): Int {
@@ -46,16 +66,13 @@ class UsageTable(
                 return columnNames.size
             }
 
-            override fun getValueAt(row: Int, col: Int): Any {
-                return rowData[row][col]
-            }
 
-            override fun isCellEditable(row: Int, column: Int): Boolean {
-                return true
-            }
 
             override fun setValueAt(value: Any, row: Int, col: Int) {
-                rowData[row][col] = value.toString()
+                // Prevent editing total row
+                if (row == rowData.size - 1) return
+                val strings = rowData[row]
+                strings[col] = value.toString()
                 fireTableCellUpdated(row, col)
             }
 
@@ -78,10 +95,34 @@ class UsageTable(
     }
 
     init {
+        // Custom renderer for the total row
+        val totalRowRenderer = object : DefaultTableCellRenderer() {
+            override fun getTableCellRendererComponent(
+                table: JTable?,
+                value: Any?,
+                isSelected: Boolean,
+                hasFocus: Boolean,
+                row: Int,
+                column: Int
+            ): Component {
+                val c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
+                if (row == table?.model?.rowCount?.minus(1)) {
+                    font = font.deriveFont(font.style or java.awt.Font.BOLD)
+                }
+                return c
+            }
+        }
+
         jtable.columnModel.getColumn(0).cellRenderer = DefaultTableCellRenderer()
         jtable.columnModel.getColumn(1).cellRenderer = DefaultTableCellRenderer()
         jtable.columnModel.getColumn(2).cellRenderer = DefaultTableCellRenderer()
         jtable.columnModel.getColumn(3).cellRenderer = DefaultTableCellRenderer()
+        // Apply the total row renderer to all columns
+        for (i in 0..3) {
+            val column = jtable.columnModel.getColumn(i)
+            column.cellRenderer = totalRowRenderer
+        }
+
 
         val editor = object : JXTable.GenericEditor() {
             override fun isCellEditable(anEvent: EventObject?) = false

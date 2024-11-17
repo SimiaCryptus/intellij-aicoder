@@ -3,6 +3,7 @@ package com.github.simiacryptus.aicoder.ui
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.config.UsageTable
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -16,6 +17,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.treeStructure.Tree
 import com.simiacryptus.jopenai.models.ChatModel
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
@@ -195,9 +197,6 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       }
     }
 
-    // Removed createModelList() as we are using tree views instead
-
-
     init {
       AppSettingsState.instance.addOnSettingsLoadedListener {
         statusBar?.updateWidget(ID())
@@ -302,6 +301,10 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       tabbedPane.addTab("Fast Model", fastModelPanel)
       // Add server control tab
       tabbedPane.addTab("Server", createServerControlPanel())
+      // Add usage tab
+      val usagePanel = JPanel(BorderLayout())
+      usagePanel.add(UsageTable(ApplicationServices.usageManager), BorderLayout.CENTER)
+      tabbedPane.addTab("Usage", usagePanel)
 
       panel.add(tabbedPane, BorderLayout.CENTER)
       panel.add(temperatureSlider, BorderLayout.SOUTH)
@@ -315,16 +318,10 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
           updateSessionsList()
         }
       })
-
-      // Removed smartModelList selection listener as tree handles it
-
-      // Removed fastModelList selection listener as tree handles it
       return popup
     }
 
-    // Optionally, update getSelectedValue to reflect selected models from trees
     override fun getSelectedValue(): String {
-//      return "Smart: ${AppSettingsState.instance.smartModel} | Fast: ${AppSettingsState.instance.fastModel}"
       return AppSettingsState.instance.smartModel
     }
 
@@ -334,15 +331,15 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       } else {
         "Server stopped"
       }
-      return "Smart Model: ${AppSettingsState.instance.smartModel}\n" +
-          "Fast Model: ${AppSettingsState.instance.fastModel}\n" +
-          "Temperature: ${AppSettingsState.instance.temperature}\n" +
-          serverStatus
+      return """
+        Smart Model: ${AppSettingsState.instance.smartModel}<br/>
+        Fast Model: ${AppSettingsState.instance.fastModel}<br/>
+        Temperature: ${AppSettingsState.instance.temperature}<br/>
+        $serverStatus
+        """.trimIndent().trim()
     }
 
-    // Companion object removed, making isVisible a regular function
     private fun isVisible(it: ChatModel): Boolean {
-      // Temporarily allow all models to be visible for debugging
       return true
     }
 

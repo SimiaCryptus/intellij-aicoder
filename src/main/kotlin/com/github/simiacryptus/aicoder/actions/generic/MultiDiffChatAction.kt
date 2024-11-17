@@ -177,18 +177,20 @@ class MultiDiffChatAction : BaseAction() {
                 heading = renderMarkdown(userMessage),
                 initialResponse = { it: String -> mainActor().answer(toInput(it), api = api) },
                 outputFn = { design: String ->
-                    var markdown = ui.socketManager?.addApplyFileDiffLinks(
-                        root = root.toPath(),
-                        response = design,
-                        handle = { newCodeMap ->
-                            newCodeMap.forEach { (path, newCode) ->
-                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                            }
-                        },
-                        ui = ui,
-                        api = api,
-                    )
-                    """<div>${renderMarkdown(markdown!!)}</div>"""
+                    """<div>${
+                        renderMarkdown(design) {
+                            return@renderMarkdown ui.socketManager?.addApplyFileDiffLinks(
+                                root = root.toPath(),
+                                response = it,
+                                handle = { newCodeMap ->
+                                    newCodeMap.forEach { (path, newCode) ->
+                                        task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                    }
+                                },
+                                ui = ui,
+                                api = api,
+                            ) ?: it
+                        } }</div>"""
                 },
                 ui = ui,
                 reviseResponse = { userMessages: List<Pair<String, Role>> ->
