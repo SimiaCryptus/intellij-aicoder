@@ -65,7 +65,7 @@ open class CustomEditAction : SelectionAction<String>() {
 
     override fun getConfig(project: Project?): String? {
         return UITools.showInputDialog(
-            project as Component?,
+            null,
             "Enter edit instruction:",
             "Edit Code",
             JOptionPane.QUESTION_MESSAGE
