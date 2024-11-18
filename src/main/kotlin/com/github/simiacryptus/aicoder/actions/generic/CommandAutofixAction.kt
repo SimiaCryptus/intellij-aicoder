@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.CmdPatchApp
 import com.simiacryptus.skyenet.apps.general.PatchApp
@@ -25,18 +26,46 @@ import javax.swing.*
 import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
+    private lateinit var event: AnActionEvent
+
+    /**
+     * Returns the thread that should be used for action update.
+     */
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
+    /**
+     * Handles the action execution.
+     * Shows settings dialog, creates patch app session and opens browser interface.
+     */
+
     override fun handle(event: AnActionEvent) {
-        val settings = getUserSettings(event) ?: return
-        val dataContext = event.dataContext
-        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+        try {
+            UITools.run(event.project, "Initializing Command Autofix", true) { progress ->
+                progress.isIndeterminate = true
+                progress.text = "Getting settings..."
+                val settings = getUserSettings(event) ?: return@run
+                val dataContext = event.dataContext
+                val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+                setupAndLaunchSession(event, settings, virtualFiles)
+            }
+        } catch (e: Throwable) {
+            log.error("Failed to execute command autofix", e)
+            UITools.showErrorDialog(event.project, "Failed to execute command autofix: ${e.message}", "Error")
+        }
+    }
         val folder = UITools.getSelectedFolder(event)
         val root = if (null != folder) {
             folder.toFile.toPath()
         } else {
             event.project?.basePath?.let { File(it).toPath() }
         }!!
+
+    /**
+     * Sets up and launches the patch app session
+     */
+    private fun setupAndLaunchSession(event: AnActionEvent, settings: PatchApp.Settings, virtualFiles: Array<VirtualFile>?) {
+        val project = event.project ?: return
+
         val session = Session.newGlobalID()
         val patchApp = CmdPatchApp(
             root,
@@ -67,7 +96,15 @@ class CommandAutofixAction : BaseAction() {
         }.start()
     }
 
-    override fun isEnabled(event: AnActionEvent) = true
+    /**
+     * Checks if the action should be enabled
+     */
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (event.project == null) return false
+        val folder = UITools.getSelectedFolder(event)
+        val hasBasePath = event.project?.basePath != null
+        return folder != null || hasBasePath
+    }
 
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)

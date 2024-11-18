@@ -1,12 +1,13 @@
 package com.github.simiacryptus.aicoder.actions.git
 
 import com.github.simiacryptus.aicoder.AppServer
+import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
-import com.intellij.openapi.actionSystem.AnAction
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -24,33 +25,39 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
-import javax.swing.JOptionPane
+import com.intellij.openapi.application.ApplicationManager as IntellijAppManager
 
-class ChatWithCommitDiffAction : AnAction() {
+class ChatWithCommitDiffAction : BaseAction(
+    name = "Chat with Commit Diff",
+    description = "Opens a chat interface to discuss commit differences"
+) {
     companion object {
         private val log = Logger.getInstance(ChatWithCommitDiffAction::class.java)
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun handle(e: AnActionEvent) {
         log.info("Comparing selected commit with the current HEAD")
         val project = e.project ?: return
         val selectedCommit = e.getData(VcsDataKeys.VCS_REVISION_NUMBER) ?: return
         val vcsManager = ProjectLevelVcsManager.getInstance(project)
         val vcs = vcsManager.allActiveVcss.firstOrNull() ?: run {
-            JOptionPane.showMessageDialog(null, "No active VCS found", "Error", JOptionPane.ERROR_MESSAGE)
+            UITools.showErrorDialog(project, "No active VCS found", "Error")
             return
         }
 
-        Thread {
+        UITools.run(project, "Comparing Changes", true) { progress ->
             try {
+                progress.text = "Retrieving changes between commits..."
                 val diffInfo = getChangesBetweenCommits(project, selectedCommit).ifEmpty { "No changes found" }
+                progress.text = "Opening chat interface..."
                 openChatWithDiff(e, diffInfo)
             } catch (e: Throwable) {
                 log.error("Error comparing changes", e)
-                JOptionPane.showMessageDialog(null, e.message, "Error", JOptionPane.ERROR_MESSAGE)
+                UITools.showErrorDialog(project, "Error comparing changes: ${e.message}", "Error")
             }
-        }.start()
+        }
     }
+
 
     private fun openChatWithDiff(e: AnActionEvent, diffInfo: String) {
         val session = Session.newGlobalID()
@@ -73,7 +80,7 @@ class ChatWithCommitDiffAction : AnAction() {
 
         val server = AppServer.getServer(e.project)
 
-        Thread {
+        IntellijAppManager.getApplication().executeOnPooledThread {
             Thread.sleep(500)
             try {
                 val uri = server.server.uri.resolve("/#$session")
@@ -82,7 +89,7 @@ class ChatWithCommitDiffAction : AnAction() {
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
             }
-        }.start()
+        }
     }
 
     private fun getChangesBetweenCommits(project: Project, selectedCommit: VcsRevisionNumber): String {
@@ -136,11 +143,10 @@ class ChatWithCommitDiffAction : AnAction() {
     }
 
 
-    override fun update(e: AnActionEvent) {
+    fun updateAction(e: AnActionEvent) {
         val project = e.project
         e.presentation.isEnabledAndVisible = project != null &&
                 ProjectLevelVcsManager.getInstance(project).allActiveVcss.isNotEmpty()
     }
 
 }
-

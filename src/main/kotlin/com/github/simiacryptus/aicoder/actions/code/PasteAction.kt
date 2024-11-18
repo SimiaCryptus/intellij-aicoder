@@ -1,25 +1,65 @@
 package com.github.simiacryptus.aicoder.actions.code
 
+// ... keep existing imports
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
-import kotlin.toString
 
+/**
+ * Base class for paste actions that convert clipboard content to appropriate code format
+ * Supports both text and HTML clipboard content with automatic language detection
+ */
 abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatModel) : SelectionAction<String>(false) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    protected fun processSelection(event: AnActionEvent, config: String?): String {
+        val state = SelectionState(
+            language = event.getData(CommonDataKeys.VIRTUAL_FILE)?.extension?.let { ComputerLanguage.findByExtension(it) },
+            selectedText = getSelectedText(event.getData(CommonDataKeys.EDITOR)),
+            progress = ProgressManager.getInstance().progressIndicator
+        )
+        return processSelection(state, config)
+    }
 
+    private fun getSelectedText(editor: Editor?): String? {
+        if (editor == null) return null
+        val caret = editor.caretModel.primaryCaret
+        return if (caret.hasSelection()) {
+            editor.document.getText(TextRange(caret.selectionStart, caret.selectionEnd))
+        } else null
+    }
+
+    data class SelectionState(
+        val language: ComputerLanguage?,
+        val selectedText: String?,
+        val progress: ProgressIndicator?
+    )
+
+    /**
+     * API interface for code conversion
+     */
     interface VirtualAPI {
         fun convert(text: String, from_language: String, to_language: String): ConvertedText
+
+        /**
+         * Response class containing converted code
+         */
 
         class ConvertedText {
             var code: String? = null
@@ -27,12 +67,24 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
         }
     }
 
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(PasteActionBase::class.java)
+    }
+
+    /**
+     * Smart paste action using more capable but slower model
+     */
+
     override fun getConfig(project: Project?): String {
         return ""
     }
 
-    override fun processSelection(state: SelectionState, config: String?): String {
+
+    protected fun processSelection(state: SelectionState, config: String?): String {
+        val progress: ProgressIndicator? = state.progress
+        progress?.text = "Reading clipboard content..."
         val text = getClipboard().toString().trim()
+        progress?.text = "Converting code format..."
         return ChatProxy(
             VirtualAPI::class.java,
             api,
@@ -64,13 +116,19 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
     } ?: false
 
     private fun getClipboard(): Any? {
+        try {
         val toolkit = Toolkit.getDefaultToolkit()
         val systemClipboard = toolkit.systemClipboard
         return systemClipboard.getContents(null)?.let { contents ->
             return when {
-                contents.isDataFlavorSupported(DataFlavor.selectionHtmlFlavor) -> contents.getTransferData(DataFlavor.selectionHtmlFlavor).let { scrubHtml(it.toString().trim()) }
-                contents.isDataFlavorSupported(DataFlavor.fragmentHtmlFlavor) -> contents.getTransferData(DataFlavor.fragmentHtmlFlavor).let { scrubHtml(it.toString().trim()) }
-                contents.isDataFlavorSupported(DataFlavor.allHtmlFlavor) -> contents.getTransferData(DataFlavor.allHtmlFlavor).let { scrubHtml(it.toString().trim()) }
+                contents.isDataFlavorSupported(DataFlavor.selectionHtmlFlavor) -> contents.getTransferData(DataFlavor.selectionHtmlFlavor).toString().trim()
+                    ?.let { scrubHtml(it) }
+
+                contents.isDataFlavorSupported(DataFlavor.fragmentHtmlFlavor) -> contents.getTransferData(DataFlavor.fragmentHtmlFlavor).toString().trim()
+                    ?.let { scrubHtml(it) }
+
+                contents.isDataFlavorSupported(DataFlavor.allHtmlFlavor) -> contents.getTransferData(DataFlavor.allHtmlFlavor).toString().trim()
+                    ?.let { scrubHtml(it) }
                 contents.isDataFlavorSupported(DataFlavor.stringFlavor) -> contents.getTransferData(DataFlavor.stringFlavor)
                 contents.isDataFlavorSupported(DataFlavor.getTextPlainUnicodeFlavor()) -> contents.getTransferData(
                     DataFlavor.getTextPlainUnicodeFlavor()
@@ -78,6 +136,10 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
 
                 else -> null
             }
+        }
+        } catch (e: Exception) {
+            log.error("Failed to access clipboard", e)
+            return null
         }
     }
 
@@ -141,4 +203,14 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
 }
 
 class SmartPasteAction : PasteActionBase({ it.smartModel.chatModel() })
-class FastPasteAction : PasteActionBase({ it.fastModel.chatModel() })
+
+/**
+ * Fast paste action using faster but simpler model
+ */
+class FastPasteAction : PasteActionBase({ it.fastModel.chatModel() }) {
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(FastPasteAction::class.java)
+    }
+
+    protected var progress: ProgressIndicator? = null
+}

@@ -17,6 +17,16 @@ import java.util.concurrent.Executors
 
 class SaveAsQueryIndexAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    data class IndexConfig(
+        val threadCount: Int = 8,
+        val batchSize: Int = 100
+    )
+
+    private fun getConfig(project: com.intellij.openapi.project.Project?): IndexConfig {
+        // Could be enhanced to show a dialog for configuration
+        return IndexConfig()
+    }
+
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
@@ -27,10 +37,15 @@ class SaveAsQueryIndexAction : BaseAction() {
         }
     }
 
+
     override fun handle(e: AnActionEvent) {
         val selectedFiles = UITools.getSelectedFiles(e)
         if (selectedFiles.isEmpty()) {
-            UITools.showErrorDialog(e.project, "Please select JSON files to convert.", "No Files Selected")
+            UITools.showErrorDialog(
+                e.project,
+                "Please select JSON files to convert.",
+                "No Files Selected"
+            )
             return
         }
         val jsonFiles = selectedFiles.flatMap { file ->
@@ -44,29 +59,42 @@ class SaveAsQueryIndexAction : BaseAction() {
             UITools.showErrorDialog(e.project, "No .parsed.json files found in selection.", "No Valid Files")
             return
         }
-        ProgressManager.getInstance().run(object : Task.Backgroundable(e.project, "Indexing Vectors", false) {
+        val config = getConfig(e.project)
+        ProgressManager.getInstance().run(object : Task.Backgroundable(e.project, "Indexing Vectors", true) {
             override fun run(indicator: ProgressIndicator) {
-                val threadPool = Executors.newFixedThreadPool(8)
+                val threadPool = Executors.newFixedThreadPool(config.threadCount)
                 try {
                     indicator.isIndeterminate = false
                     indicator.fraction = 0.0
+                    indicator.text = "Initializing vector indexing..."
+
                     saveAsBinary(
                       openAIClient = IdeaOpenAIClient.instance,
                       pool = threadPool,
                       progressState = ProgressState().apply {
                         onUpdate += {
                           indicator.fraction = it.progress / it.max
+                            indicator.text = "Processing files (${it.progress}/${it.max})"
+                            if (indicator.isCanceled) {
+                                throw InterruptedException("Operation cancelled by user")
+                            }
                         }
                       },
                       inputPaths = jsonFiles.map { it.path }.toTypedArray()
                     )
+
                     indicator.fraction = 1.0
+                    indicator.text = "Vector indexing complete"
                     log.info("Conversion to Data complete")
+                    UITools.showInfoMessage(e.project, "Vector indexing completed successfully", "Success")
+                } catch (ex: InterruptedException) {
+                    log.info("Vector indexing cancelled by user")
+                    UITools.showInfoMessage(e.project, "Vector indexing cancelled", "Cancelled")
                 } catch (ex: Exception) {
                     log.error("Error during binary conversion", ex)
                     UITools.showErrorDialog(e.project, "Error during conversion: ${ex.message}", "Conversion Failed")
                 } finally {
-                    threadPool.shutdown()
+                    threadPool.shutdownNow()
                 }
             }
         })

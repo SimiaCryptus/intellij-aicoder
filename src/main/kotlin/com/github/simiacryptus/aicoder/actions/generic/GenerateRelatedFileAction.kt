@@ -7,6 +7,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -27,6 +28,8 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JTextArea
 
 class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Settings>() {
+    private val log = Logger.getInstance(GenerateRelatedFileAction::class.java)
+
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
     override fun isEnabled(event: AnActionEvent): Boolean {
         return UITools.getSelectedFiles(event).size == 1 && super.isEnabled(event)
@@ -69,31 +72,46 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
     }
 
     override fun processSelection(state: SelectionState, config: Settings?, progress: ProgressIndicator): Array<File> {
-        val root = getModuleRootForFile(state.selectedFile).toPath()
-        val selectedFile = state.selectedFile
-        val analogue = generateFile(
-            ProjectFile(
-                path = root.relativize(selectedFile.toPath()).toString(),
-                code = IOUtils.toString(FileInputStream(selectedFile), "UTF-8")
-            ),
-            config?.settings?.directive ?: ""
-        )
-        var outputPath = root.resolve(analogue.path)
-        if (outputPath.toFile().exists()) {
-            val extension = outputPath.toString().split(".").last()
-            val name = outputPath.toString().split(".").dropLast(1).joinToString(".")
-            val fileIndex = (1..Int.MAX_VALUE).find {
-                !root.resolve("$name.$it.$extension").toFile().exists()
+        try {
+            progress.isIndeterminate = false
+            progress.text = "Reading source file..."
+            progress.fraction = 0.2
+            val root = getModuleRootForFile(state.selectedFile).toPath()
+            val selectedFile = state.selectedFile
+            val analogue = generateFile(
+                baseFile = ProjectFile(
+                    path = root.relativize(selectedFile.toPath()).toString(),
+                    code = IOUtils.toString(FileInputStream(selectedFile), "UTF-8")
+                ),
+                directive = config?.settings?.directive ?: "",
+                progress = progress
+            )
+            progress.text = "Generating output file..."
+            progress.fraction = 0.6
+            var outputPath = root.resolve(analogue.path)
+            if (outputPath.toFile().exists()) {
+                val extension = outputPath.toString().split(".").last()
+                val name = outputPath.toString().split(".").dropLast(1).joinToString(".")
+                val fileIndex = (1..Int.MAX_VALUE).find {
+                    !root.resolve("$name.$it.$extension").toFile().exists()
+                }
+                outputPath = root.resolve("$name.$fileIndex.$extension")
             }
-            outputPath = root.resolve("$name.$fileIndex.$extension")
+            progress.text = "Writing output file..."
+            progress.fraction = 0.8
+            outputPath.parent.toFile().mkdirs()
+            FileUtils.write(outputPath.toFile(), analogue.code, "UTF-8")
+            open(config?.project!!, outputPath)
+            return arrayOf(outputPath.toFile())
+        } catch (e: Exception) {
+            log.error("Failed to generate related file", e)
+            throw e
         }
-        outputPath.parent.toFile().mkdirs()
-        FileUtils.write(outputPath.toFile(), analogue.code, "UTF-8")
-        open(config?.project!!, outputPath)
-        return arrayOf(outputPath.toFile())
     }
 
-    private fun generateFile(baseFile: ProjectFile, directive: String): ProjectFile {
+    private fun generateFile(baseFile: ProjectFile, directive: String, progress: ProgressIndicator): ProjectFile = try {
+        progress.text = "Generating content with AI..."
+        progress.fraction = 0.4
         val model = AppSettingsState.instance.smartModel.chatModel()
         val chatRequest = ApiModel.ChatRequest(
             model = model.modelName,
@@ -110,7 +128,7 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
                 ),
                 ChatMessage(
                     Role.user, """
-            |Create a new file based on the following directive: $directive
+                 Create a new file based on the following directive: $directive
             |
             |The file should be based on `${baseFile.path}` which contains the following code:
             |
@@ -134,10 +152,12 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
         if (matcher != null) {
             outputPath = matcher.groupValues[1].trim()
         }
-        return ProjectFile(
+        ProjectFile(
             path = outputPath,
             code = body ?: ""
         )
+    } catch (e: Exception) {
+        throw e
     }
 
     companion object {

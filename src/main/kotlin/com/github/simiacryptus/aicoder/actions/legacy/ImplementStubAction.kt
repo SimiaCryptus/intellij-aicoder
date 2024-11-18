@@ -3,16 +3,24 @@ package com.github.simiacryptus.aicoder.actions.legacy
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.ComputerLanguage
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
 import com.simiacryptus.util.StringUtil
 import java.util.*
 
+/**
+ * Action that implements stub methods/classes using AI code generation.
+ * Extends SelectionAction to handle code selection and language detection.
+ */
+
 class ImplementStubAction : SelectionAction<String>() {
+    private val log = Logger.getInstance(ImplementStubAction::class.java)
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun isEnabled(event: AnActionEvent) = AppSettingsState.instance.enableLegacyActions
@@ -57,16 +65,27 @@ class ImplementStubAction : SelectionAction<String>() {
     }
 
     override fun processSelection(state: SelectionState, config: String?): String {
-        val code = state.selectedText ?: ""
-        val settings = AppSettingsState.instance
-        val outputHumanLanguage = settings.humanLanguage
-        val computerLanguage = state.language
+        try {
+            val code = state.selectedText ?: ""
+            val settings = AppSettingsState.instance
+            val outputHumanLanguage = settings.humanLanguage
+            val computerLanguage = state.language ?: return code
+            if (!isLanguageSupported(computerLanguage)) {
+                UITools.showWarning(null, "Language ${computerLanguage.name} is not supported")
+                return code
+            }
+            return processCode(code, state, computerLanguage, outputHumanLanguage)
+        } catch (e: Exception) {
+            log.error("Error implementing stub", e)
+            UITools.showError(null, "Failed to implement stub: ${e.message}")
+            return state.selectedText ?: ""
+        }
+    }
+
+    private fun processCode(code: String, state: SelectionState, computerLanguage: ComputerLanguage, outputHumanLanguage: String): String {
 
         val codeContext = state.contextRanges.filter {
-            PsiUtil.matchesType(
-                it.name,
-                PsiUtil.ELEMENTS_CODE
-            )
+            PsiUtil.matchesType(it.name, PsiUtil.ELEMENTS_CODE)
         }
         var smallestIntersectingMethod = ""
         if (codeContext.isNotEmpty()) smallestIntersectingMethod =
@@ -79,7 +98,7 @@ class ImplementStubAction : SelectionAction<String>() {
         return getProxy().editCode(
             declaration,
             "Implement Stub",
-            computerLanguage?.name?.lowercase(Locale.ROOT) ?: "",
+            computerLanguage.name.lowercase(Locale.ROOT),
             outputHumanLanguage
         ).code ?: ""
     }

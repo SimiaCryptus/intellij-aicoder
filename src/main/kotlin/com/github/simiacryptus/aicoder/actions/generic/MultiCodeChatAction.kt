@@ -27,7 +27,15 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
+
+/**
+ * Action that enables multi-file code chat functionality.
+ * Allows users to select multiple files and discuss them with an AI assistant.
+ * Supports code modifications through patch application.
+ *
+ * @see BaseAction
+ */
 
 class MultiCodeChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -41,9 +49,9 @@ class MultiCodeChatAction : BaseAction() {
             .entries.joinToString("\n\n") { (path, code) ->
                 val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
                 """
-            |# $path
-            |```$extension
-            |${code}
+ # $path
+ ```$extension
+ ${code}
             |```
             """.trimMargin()
             }
@@ -59,16 +67,28 @@ class MultiCodeChatAction : BaseAction() {
         val files = getFiles(virtualFiles, root!!)
         codeFiles.addAll(files)
 
-        val session = Session.newGlobalID()
-        SessionProxyServer.chats[session] = PatchApp(root.toFile(), { codeSummary() }, codeFiles)
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = false,
-            stickyInput = true,
-            loadImages = false,
-            showMenubar = false
-        )
-        val server = AppServer.getServer(event.project)
+        try {
+            UITools.run(event.project, "Initializing Chat", true) { progress ->
+                progress.isIndeterminate = true
+                progress.text = "Setting up chat session..."
+                val session = Session.newGlobalID()
+                SessionProxyServer.chats[session] = PatchApp(root.toFile(), { codeSummary() }, codeFiles)
+                ApplicationServer.appInfoMap[session] = AppInfoData(
+                    applicationName = "Code Chat",
+                    singleInput = false,
+                    stickyInput = true,
+                    loadImages = false,
+                    showMenubar = false
+                )
+                val server = AppServer.getServer(event.project)
+                launchBrowser(server, session.toString())
+            }
+        } catch (e: Throwable) {
+            UITools.error(log, "Failed to initialize chat session", e)
+        }
+    }
+
+    private fun launchBrowser(server: AppServer, session: String) {
 
         Thread {
             Thread.sleep(500)
@@ -83,7 +103,14 @@ class MultiCodeChatAction : BaseAction() {
         }.start()
     }
 
-    inner class PatchApp(
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
+        val files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+        return files != null && files.isNotEmpty()
+    }
+
+    /** Application class that handles the chat interface and code modifications */
+    private inner class PatchApp(
         override val root: File,
         val codeSummary: () -> String,
         val codeFiles: Set<Path> = setOf(),
@@ -94,6 +121,7 @@ class MultiCodeChatAction : BaseAction() {
     ) {
         override val singleInput = false
         override val stickyInput = true
+
         private val mainActor: SimpleActor
             get() = SimpleActor(
                 prompt = """
@@ -106,6 +134,13 @@ class MultiCodeChatAction : BaseAction() {
                         """.trimMargin(),
                 model = AppSettingsState.instance.smartModel.chatModel()
             )
+
+        /**
+         * Handles user messages in the chat interface
+         *
+         * @throws RuntimeException if API calls fail
+         * @throws IOException if file operations fail
+         */
 
         override fun userMessage(
             session: Session,
@@ -164,14 +199,22 @@ class MultiCodeChatAction : BaseAction() {
         }
     }
 
+    /**
+     * Recursively collects files from the selected virtual files
+     *
+     * @param virtualFiles Array of selected virtual files
+     * @param root Project root path
+     * @return Set of relative paths to the selected files
+     */
+
 
     private fun getFiles(
         virtualFiles: Array<out VirtualFile>?,
         root: Path
-    ): MutableSet<Path> {
+    ): Set<Path> {
         val codeFiles = mutableSetOf<Path>()
         virtualFiles?.forEach { file ->
-            if (file.isDirectory) {
+            if (file.isDirectory && !file.name.startsWith(".")) {
                 getFiles(file.children, root)
             } else {
                 codeFiles.add(root.relativize(file.toNioPath()))
@@ -180,7 +223,6 @@ class MultiCodeChatAction : BaseAction() {
         return codeFiles
     }
 
-    override fun isEnabled(event: AnActionEvent) = true
 
     companion object {
         private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)

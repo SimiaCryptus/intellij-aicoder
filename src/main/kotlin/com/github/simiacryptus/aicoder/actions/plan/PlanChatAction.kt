@@ -9,6 +9,8 @@ import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.PlanChatApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
@@ -21,11 +23,33 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import kotlin.collections.set
 
+/**
+ * Action that opens a Plan Chat interface for executing and planning commands.
+ * Supports both Windows (PowerShell) and Unix (Bash) environments.
+ */
+
 class PlanChatAction : BaseAction() {
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    override fun isEnabled(e: AnActionEvent): Boolean {
+        if (!super.isEnabled(e)) return false
+        return UITools.getSelectedFolder(e) != null || UITools.getSelectedFile(e) != null
+    }
+
 
     override fun handle(e: AnActionEvent) {
+        try {
+            UITools.run(e.project, "Initializing Plan Chat", true) { progress ->
+                progress.isIndeterminate = true
+                progress.text = "Setting up chat environment..."
+                initializeAndOpenChat(e)
+            }
+        } catch (ex: Throwable) {
+            UITools.error(log, "Failed to initialize Plan Chat", ex)
+        }
+    }
+
+    private fun initializeAndOpenChat(e: AnActionEvent) {
         val dialog = PlanAheadConfigDialog(
             e.project, PlanSettings(
                 defaultModel = AppSettingsState.instance.smartModel.chatModel(),
@@ -42,7 +66,12 @@ class PlanChatAction : BaseAction() {
             )
         )
         if (dialog.showAndGet()) {
-            // Settings are applied only if the user clicks OK
+            setupChatSession(e, dialog.settings)
+        }
+    }
+
+    private fun setupChatSession(e: AnActionEvent, settings: PlanSettings) {
+        WriteCommandAction.runWriteCommandAction(e.project) {
             val session = Session.newGlobalID()
             val folder = UITools.getSelectedFolder(e)
             val root = folder?.toFile ?: getModuleRootForFile(
@@ -50,7 +79,7 @@ class PlanChatAction : BaseAction() {
             )
             DataStorage.sessionPaths[session] = root
             SessionProxyServer.Companion.chats[session] = PlanChatApp(
-                planSettings = dialog.settings.copy(
+                planSettings = settings.copy(
                     env = mapOf(),
                     workingDir = root.absolutePath,
                     language = if (isWindows) "powershell" else "bash",
@@ -78,16 +107,17 @@ class PlanChatAction : BaseAction() {
     }
 
     private fun openBrowser(server: AppServer, session: String) {
-        Thread {
+        ApplicationManager.getApplication().invokeLater {
             Thread.sleep(500)
             try {
                 val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
                 browse(uri)
             } catch (e: Throwable) {
+                log.error("Failed to open browser", e)
                 LoggerFactory.getLogger(PlanChatAction::class.java).warn("Error opening browser", e)
             }
-        }.start()
+        }
     }
 
     companion object {

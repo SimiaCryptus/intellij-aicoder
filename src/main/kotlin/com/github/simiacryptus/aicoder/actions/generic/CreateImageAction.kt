@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.actions.generic
+package com.github.simiacryptus.aicoder.actions.generic
 
 import ai.grazie.utils.mpp.UUID
 import com.github.simiacryptus.aicoder.AppServer
@@ -19,8 +19,11 @@ import com.simiacryptus.jopenai.models.ApiModel.Role
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
-import com.simiacryptus.skyenet.core.actors.*
-import com.simiacryptus.skyenet.core.platform.*
+import com.simiacryptus.skyenet.core.actors.ActorSystem
+import com.simiacryptus.skyenet.core.actors.BaseActor
+import com.simiacryptus.skyenet.core.actors.ImageActor
+import com.simiacryptus.skyenet.core.actors.ImageResponse
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.model.StorageInterface
 import com.simiacryptus.skyenet.core.platform.model.User
@@ -32,76 +35,92 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
 
 class CreateImageAction : BaseAction() {
+    data class ImageConfig(
+        val imageSize: String = "1024x1024", val imageFormat: String = "png", val quality: Int = 100
+    )
+
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/imageCreator"
 
     override fun handle(event: AnActionEvent) {
-        var root: Path? = null
+        val rootRef = AtomicReference<Path?>(null)
         val codeFiles: MutableSet<Path> = mutableSetOf()
-
-        fun codeSummary() = codeFiles.filter {
-            root!!.resolve(it).toFile().exists()
-        }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
-            .entries.joinToString("\n\n") { (path, code) ->
-                val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-                """
-            |# $path
-            |```$extension
-            |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
-            |```
-            """.trimMargin()
-            }
-
-        val dataContext = event.dataContext
-        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-        val folder = UITools.getSelectedFolder(event)
-        root = if (null != folder) {
-            folder.toFile.toPath()
-        } else if (1 == virtualFiles?.size) {
-            UITools.getSelectedFile(event)?.parent?.toNioPath()
-        } else {
-            getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
-        }
-
-        val files = getFiles(virtualFiles, root!!)
-        codeFiles.addAll(files)
-
-        val session = Session.newGlobalID()
-//        val storage = ApplicationServices.dataStorageFactory(root?.toFile()!!) as DataStorage?
-//        val selectedFile = UITools.getSelectedFolder(event)
-        if (/*null != storage &&*/ null != root) {
-            DataStorage.sessionPaths[session] = root.toFile()!!
-        }
-
-        SessionProxyServer.chats[session] = PatchApp(event, root.toFile(), ::codeSummary)
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
-
-        val server = AppServer.getServer(event.project)
-
-        Thread {
-            Thread.sleep(500)
+        UITools.run(event.project, "Creating Image", true) { progress ->
             try {
+                progress.text = "Analyzing code files..."
 
-                val uri = server.server.uri.resolve("/#$session")
-                BaseAction.log.info("Opening browser to $uri")
-                browse(uri)
+                fun codeSummary() = codeFiles.filter {
+                    rootRef.get()?.resolve(it)?.toFile()?.exists() ?: false
+                }.associateWith { rootRef.get()?.resolve(it)?.toFile()?.readText(Charsets.UTF_8) }
+                    .entries.joinToString("\n\n") { (path, code) ->
+                        val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+                        """
+|# $path
+|```$extension
+|${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+|```
+""".trimMargin()
+                    }
+
+                val dataContext = event.dataContext
+                val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+                progress.text = "Determining root directory..."
+                val folder = UITools.getSelectedFolder(event)
+                rootRef.set(
+                    if (null != folder) {
+                        folder.toFile.toPath()
+                    } else if (1 == virtualFiles?.size) {
+                        UITools.getSelectedFile(event)?.parent?.toNioPath()
+                    } else {
+                        getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
+                    }
+                )
+                progress.text = "Collecting files..."
+
+                val root = rootRef.get() ?: throw RuntimeException("Root path not set")
+                val files = getFiles(virtualFiles, root)
+                codeFiles.addAll(files)
+                progress.text = "Initializing session..."
+
+                val session = Session.newGlobalID()
+                DataStorage.sessionPaths[session] = root.toFile()
+                progress.text = "Starting server..."
+
+                SessionProxyServer.chats[session] = PatchApp(event, root.toFile(), ::codeSummary)
+                ApplicationServer.appInfoMap[session] = AppInfoData(
+                    applicationName = "Code Chat",
+                    singleInput = true,
+                    stickyInput = false,
+                    loadImages = false,
+                    showMenubar = false
+                )
+
+                val server = AppServer.getServer(event.project)
+
+                Thread {
+                    Thread.sleep(500)
+                    try {
+
+                        val uri = server.server.uri.resolve("/#$session")
+                        BaseAction.log.info("Opening browser to $uri")
+                        browse(uri)
+                    } catch (e: Throwable) {
+                        log.warn("Error opening browser", e)
+                    }
+                }.start()
             } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
+                log.error("Failed to create image", e)
+                UITools.showErrorDialog(event.project, "Failed to create image: ${e.message}", "Error")
             }
-        }.start()
+        }
     }
 
     inner class PatchApp(
@@ -156,13 +175,13 @@ class CreateImageAction : BaseAction() {
         actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
             ActorTypes.MainActor to ImageActor(
                 prompt = """
-                        |You are a technical drawing assistant.
-                        |
-                        |You will be composing an image about the following code:
-                        |
-                        |${codeSummary()}
-                        |
-                        """.trimMargin(),
+|You are a technical drawing assistant.
+|
+|You will be composing an image about the following code:
+|
+|${codeSummary()}
+|
+""".trimMargin(),
                 textModel = model,
                 imageModel = AppSettingsState.instance.mainImageModel.imageModel()
             ),
@@ -219,15 +238,20 @@ class CreateImageAction : BaseAction() {
     private fun write(
         code: ImageResponse,
         path: Path
-    ): ByteArray {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        val data = ImageIO.write(
-            code.image,
-            path.toString().split(".").last(),
-            byteArrayOutputStream
-        )
-        val bytes = byteArrayOutputStream.toByteArray()
-        return bytes
+    ): ByteArray = try {
+        path.parent?.toFile()?.mkdirs()
+        ByteArrayOutputStream().use { outputStream ->
+            if (!ImageIO.write(
+                    code.image, path.toString().split(".").last(), outputStream
+                )
+            ) {
+                throw IOException("Failed to write image in format: ${path.toString().split(".").last()}")
+            }
+            outputStream.toByteArray()
+        }
+    } catch (e: Exception) {
+        log.error("Failed to write image to $path", e)
+        throw RuntimeException("Failed to write image: ${e.message}", e)
     }
 
     private fun getFiles(
@@ -246,9 +270,16 @@ class CreateImageAction : BaseAction() {
         return codeFiles
     }
 
-    override fun isEnabled(event: AnActionEvent) = true
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+        if (virtualFiles == null || virtualFiles.isEmpty()) return false
+        if (event.project == null) return false
+// Check if any files are selected or if a directory is selected
+        return virtualFiles.any { it.isDirectory || it.extension in supportedExtensions }
+    }
 
     companion object {
         private val log = LoggerFactory.getLogger(CreateImageAction::class.java)
+        private val supportedExtensions = setOf("kt", "java", "py", "js", "ts", "html", "css", "xml")
     }
 }

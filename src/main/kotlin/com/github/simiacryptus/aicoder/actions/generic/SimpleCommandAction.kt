@@ -38,38 +38,47 @@ import kotlin.io.path.walk
 
 class SimpleCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
-    // Add error handling wrapper for main action
 
     override fun handle(event: AnActionEvent) {
+        val project = event.project
         try {
-        val settings = getUserSettings(event) ?: run {
-            log.error("Failed to retrieve user settings.")
-            return
-        }
-        val dataContext = event.dataContext
-        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-        val folder = UITools.getSelectedFolder(event)
-        val root = folder?.toFile?.toPath() ?: event.project?.basePath?.let { File(it).toPath() } ?: run {
-            log.error("Failed to determine project root.")
-            return
-        }
+            val settings = getUserSettings(event) ?: run {
+                log.error("Failed to retrieve user settings")
+                UITools.showErrorDialog(project, "Failed to retrieve settings", "Error")
+                return
+            }
+            UITools.run(project, "Initializing", true) { progress ->
+                progress.text = "Setting up command execution..."
+                val dataContext = event.dataContext
+                val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+                val folder = UITools.getSelectedFolder(event)
+                val root = folder?.toFile?.toPath() ?: project?.basePath?.let { File(it).toPath() } ?: run {
+                    throw IllegalStateException("Failed to determine project root")
+                }
 
-        val session = Session.newGlobalID()
-        val patchApp = createPatchApp(root.toFile(), session, settings, virtualFiles)
-        SessionProxyServer.chats[session] = patchApp
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
-        val server = AppServer.getServer(event.project)
+                val session = Session.newGlobalID()
+                progress.text = "Creating patch application..."
+                val patchApp = createPatchApp(root.toFile(), session, settings, virtualFiles)
+                progress.text = "Configuring session..."
+                SessionProxyServer.chats[session] = patchApp
+                ApplicationServer.appInfoMap[session] = AppInfoData(
+                    applicationName = "Code Chat",
+                    singleInput = true,
+                    stickyInput = false,
+                    loadImages = false,
+                    showMenubar = false
+                )
+                val server = AppServer.getServer(project)
+                openBrowserWithDelay(server.server.uri.resolve("/#$session"))
+            }
 
-        openBrowserWithDelay(server.server.uri.resolve("/#$session"))
         } catch (e: Exception) {
             log.error("Error handling action", e)
-            UITools.showErrorDialog(event.project, "Failed to execute command: ${e.message}", "Error")
+            UITools.showErrorDialog(
+                project,
+                "Failed to execute command: ${e.message}",
+                "Error"
+            )
         }
     }
 
@@ -78,13 +87,16 @@ class SimpleCommandAction : BaseAction() {
         session: Session,
         settings: Settings,
         virtualFiles: Array<out VirtualFile>?
-    ): PatchApp = UITools.run(null, "Creating patch application", true) { progress ->
+    ): PatchApp = UITools.run(null, "Creating Patch Application", true) { progress ->
         progress.text = "Initializing patch application..."
         object : PatchApp(root, session, settings) {
+            // Limit file size to 0.5MB for performance
+            private val maxFileSize = 512 * 1024
+
             override fun codeFiles() = (virtualFiles?.toList<VirtualFile>()?.flatMap<VirtualFile, File> {
                 FileValidationUtils.expandFileList(it.toFile).toList()
             }?.map<File, Path> { it.toPath() }?.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
-                .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
+                .filter { it.toFile().length() < maxFileSize }
                 .map { root.toPath().relativize(it) ?: it }.toSet()
             // Add progress indication for long operations
 
@@ -93,6 +105,7 @@ class SimpleCommandAction : BaseAction() {
                 .mapIndexed { index, path ->
                     progress.fraction = index.toDouble() / paths.size
                     progress.text = "Processing ${path.fileName}..."
+                    if (progress.isCanceled) throw InterruptedException("Operation cancelled")
                     """
                         |# ${settings.workingDirectory.toPath()?.relativize(path)}
                         |$tripleTilde${path.toString().split('.').lastOrNull()}

@@ -11,7 +11,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
@@ -44,18 +46,22 @@ class ReplicateCommitAction : BaseAction() {
     private val logger = Logger.getInstance(ReplicateCommitAction::class.java)
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
-    // Add error handling wrapper
 
     override fun handle(event: AnActionEvent) {
+        val project = event.project ?: return
         try {
-        val settings = getUserSettings(event) ?: return
-        val dataContext = event.dataContext
+            val settings = getUserSettings(event) ?: run {
+                Messages.showErrorDialog(project, "Could not determine working directory", "Configuration Error")
+                return
+            }
+
+            val dataContext = event.dataContext
         val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
         val folder = UITools.getSelectedFolder(event)
         var root = if (null != folder) {
             folder.toFile.toPath()
         } else {
-            event.project?.basePath?.let { File(it).toPath() }
+            project.basePath?.let { File(it).toPath() }
         }!!
 
         val virtualFiles1 = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
@@ -63,9 +69,8 @@ class ReplicateCommitAction : BaseAction() {
         val changes = event.getData(VcsDataKeys.CHANGES)
         val session = Session.newGlobalID()
 
-            UITools.run(event.project, "Replicating Commit", true) { progress ->
+            UITools.run(project, "Replicating Commit", true) { progress ->
                 progress.text = "Generating diff info..."
-            try {
                 val diffInfo = generateDiffInfo(files, changes)
                 progress.text = "Creating patch application..."
                 val patchApp = object : PatchApp(root.toFile(), session, settings, diffInfo) {
@@ -107,27 +112,22 @@ class ReplicateCommitAction : BaseAction() {
                     loadImages = false,
                     showMenubar = false
                 )
-            } catch (e: Throwable) {
-                logger.error("Error setting up patch application", e)
-                UITools.showErrorDialog(event.project, "Failed to set up patch application: ${e.message}", "Error")
             }
-            }
-            // Open browser in separate thread
-        Thread {
+            ApplicationManager.getApplication().executeOnPooledThread {
             Thread.sleep(500)
             try {
-                val server = AppServer.getServer(event.project)
+                val server = AppServer.getServer(project)
                 val uri = server.server.uri.resolve("/#$session")
                 logger.info("Opening browser to $uri")
                 browse(uri)
             } catch (e: Throwable) {
                 logger.error("Error opening browser", e)
-                UITools.showErrorDialog(event.project, "Failed to open browser: ${e.message}", "Error")
+                UITools.showErrorDialog(project, "Failed to open browser: ${e.message}", "Error")
             }
-        }.start()
+            }
         } catch (e: Exception) {
             logger.error("Error in ReplicateCommitAction", e)
-            UITools.showErrorDialog(event.project, "Operation failed: ${e.message}", "Error")
+            Messages.showErrorDialog(project, "Operation failed: ${e.message}", "Error")
         }
     }
 

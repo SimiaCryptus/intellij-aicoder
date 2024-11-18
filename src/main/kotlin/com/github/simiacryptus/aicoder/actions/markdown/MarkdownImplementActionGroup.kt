@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
+import org.slf4j.LoggerFactory
 
 class MarkdownImplementActionGroup : ActionGroup() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -26,10 +27,15 @@ class MarkdownImplementActionGroup : ActionGroup() {
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(MarkdownImplementActionGroup::class.java)
         fun isEnabled(e: AnActionEvent): Boolean {
-            val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
-            if (ComputerLanguage.Markdown != computerLanguage) return false
-            return UITools.hasSelection(e)
+            return try {
+                val computerLanguage = ComputerLanguage.getComputerLanguage(e) ?: return false
+                ComputerLanguage.Markdown == computerLanguage && UITools.hasSelection(e)
+            } catch (ex: Exception) {
+                log.error("Error checking action enablement", ex)
+                false
+            }
         }
     }
 
@@ -72,15 +78,26 @@ class MarkdownImplementActionGroup : ActionGroup() {
         }
 
         override fun processSelection(state: SelectionState, config: String?): String {
-            val code = getProxy().implement(state.selectedText ?: "", "autodetect", language).code ?: ""
-            return """
-                |
-                |
-                |```$language
-                |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
-                |```
-                |
-                |""".trimMargin()
+            return try {
+                UITools.run(state.project, "Converting to $language", true) { progress ->
+                    progress.text = "Generating $language code..."
+                    progress.isIndeterminate = true
+                    val code = getProxy().implement(state.selectedText ?: "", "autodetect", language).code
+                        ?: throw IllegalStateException("No code generated")
+                    """
+                   |
+                   |
+                   |```$language
+                   |${code.trim()}
+                   |```
+                   |
+                   |""".trimMargin()
+                }
+            } catch (e: Exception) {
+                log.error("Error processing selection", e)
+                UITools.showErrorDialog(state.project, "Failed to convert code: ${e.message}", "Conversion Error")
+                state.selectedText ?: ""
+            }
         }
     }
 }

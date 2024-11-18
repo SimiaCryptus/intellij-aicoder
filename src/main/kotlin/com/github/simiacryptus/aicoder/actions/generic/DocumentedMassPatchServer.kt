@@ -25,6 +25,11 @@ class DocumentedMassPatchServer(
     val config: DocumentedMassPatchAction.Settings,
     val api: ChatClient,
     val autoApply: Boolean
+    /**
+     * Server for handling documented mass code patches
+     * @param config Settings containing project and file configurations
+     * @param api ChatClient for AI interactions
+     * @param autoApply Whether to automatically apply suggested patches */
 ) : ApplicationServer(
     applicationName = "Documented Code Patch",
     path = "/patchChat",
@@ -34,6 +39,10 @@ class DocumentedMassPatchServer(
 
     override val singleInput = false
     override val stickyInput = true
+
+    /**
+     * Main actor for processing code reviews and generating patches
+     */
 
     private val mainActor: SimpleActor
         get() {
@@ -54,6 +63,13 @@ class DocumentedMassPatchServer(
             )
         }
 
+    /**
+     * Creates a new session for handling code review and patch generation
+     * @param user The user initiating the session
+     * @param session The session context
+     * @return SocketManager for managing the session
+     */
+
     override fun newSession(user: User?, session: Session): SocketManager {
         val socketManager = super.newSession(user, session)
         val ui = (socketManager as ApplicationSocketManager).applicationInterface
@@ -61,8 +77,10 @@ class DocumentedMassPatchServer(
         val task = ui.newTask(true)
         val api = (api as ChatClient).getChildClient().apply {
             val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
+            // Handle potential null from createFile
             createFile.second?.apply {
                 logStreams += this.outputStream().buffered()
+                task.add("Initializing API logging...")
                 task.verbose("API log: <a href=\"file:///$this\">$this</a>")
             }
         }
@@ -85,6 +103,7 @@ class DocumentedMassPatchServer(
             socketManager.scheduledThreadPoolExecutor.schedule({
                 socketManager.pool.submit {
                     try {
+                        task.add("Processing ${path}...")
                         val codeSummary = """
                              $docSummary
                              
@@ -138,6 +157,7 @@ class DocumentedMassPatchServer(
                             atomicRef = AtomicReference(),
                             semaphore = Semaphore(0),
                         ).call()
+                        task.add("Completed processing ${path}")
                     } catch (e: Exception) {
                         log.warn("Error processing $path", e)
                         task.error(ui, e)

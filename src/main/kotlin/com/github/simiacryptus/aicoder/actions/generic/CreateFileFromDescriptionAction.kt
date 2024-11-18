@@ -6,6 +6,8 @@ import com.github.simiacryptus.aicoder.config.Name
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.ApiModel.*
@@ -16,6 +18,7 @@ import javax.swing.JTextArea
 
 class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescriptionAction.Settings>(false, true) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    private val log = Logger.getInstance(CreateFileFromDescriptionAction::class.java)
 
     class ProjectFile(var path: String = "", var code: String = "")
 
@@ -50,12 +53,34 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         config: Settings?,
         progress: ProgressIndicator
     ): Array<File> {
+        progress.isIndeterminate = false
+        progress.text = "Generating file from description..."
+        return try {
+            processSelectionInternal(state, config, progress)
+        } catch (e: Exception) {
+            log.error("Failed to create file from description", e)
+            UITools.showErrorDialog(
+                config?.project,
+                "Failed to create file: ${e.message}",
+                "Error"
+            )
+            emptyArray()
+        }
+    }
+
+    private fun processSelectionInternal(
+        state: SelectionState,
+        config: Settings?,
+        progress: ProgressIndicator
+    ): Array<File> {
         val projectRoot = state.projectRoot.toPath()
         val inputPath = projectRoot.relativize(state.selectedFile.toPath()).toString()
         val pathSegments = inputPath.split("/").toList()
         val updirSegments = pathSegments.takeWhile { it == ".." }
         val moduleRoot = projectRoot.resolve(pathSegments.take(updirSegments.size * 2).joinToString("/"))
         val filePath = pathSegments.drop(updirSegments.size * 2).joinToString("/")
+        progress.text = "Generating file content..."
+        progress.fraction = 0.3
 
         val generatedFile = generateFile(filePath, config?.directive ?: "Create a new file")
 
@@ -72,8 +97,11 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         } else {
             outputPath = moduleRoot.resolve(path)
         }
+        progress.text = "Writing file to disk..."
+        progress.fraction = 0.8
+
         outputPath.parent.toFile().mkdirs()
-        outputPath.toFile().writeText(generatedFile.code)
+        WriteCommandAction.runWriteCommandAction(config?.project) { outputPath.toFile().writeText(generatedFile.code) }
         Thread.sleep(100)
 
         return arrayOf(outputPath.toFile())
@@ -83,6 +111,7 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         basePath: String,
         directive: String
     ): ProjectFile {
+        if (directive.isBlank()) throw IllegalArgumentException("Directive cannot be empty")
         val model = AppSettingsState.instance.smartModel.chatModel()
         val chatRequest = ChatRequest(
             model = model.modelName,
@@ -106,21 +135,26 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
                 )
             )
         )
-        val response = api.chat(
-            chatRequest,
-            AppSettingsState.instance.smartModel.chatModel()
-        ).choices.first().message?.content?.trim() ?: ""
-        var outputPath = basePath
-        val header = response.lines().first()
-        var body = response.lines().drop(1).joinToString("\n").trim().lines().dropWhile { it.startsWith("```") }.dropLastWhile { it.startsWith("```") }.joinToString("\n")
-        val pathPattern = """File(?:name)?: ['`"]?([^'`"]+)['`"]?""".toRegex()
-        if (pathPattern.matches(header)) {
-            val match = pathPattern.matchEntire(header)!!
-            outputPath = match.groupValues[1]
+        try {
+            val response = api.chat(
+                chatRequest,
+                AppSettingsState.instance.smartModel.chatModel()
+            ).choices.first().message?.content?.trim() ?: throw IllegalStateException("Empty response from AI")
+            var outputPath = basePath
+            val header = response.lines().firstOrNull() ?: throw IllegalStateException("Invalid response format")
+            var body = response.lines().drop(1).joinToString("\n").trim().lines()
+                .dropWhile { it.startsWith("```") }
+                .dropLastWhile { it.startsWith("```") }
+                .joinToString("\n")
+            val pathPattern = """File(?:name)?: ['`"]?([^'`"]+)['`"]?""".toRegex()
+            if (pathPattern.matches(header)) {
+                val match = pathPattern.matchEntire(header)!!
+                outputPath = match.groupValues[1]
+            }
+            return ProjectFile(path = outputPath, code = body)
+        } catch (e: Exception) {
+            log.error("Failed to generate file content", e)
+            throw IllegalStateException("Failed to generate file content: ${e.message}", e)
         }
-        return ProjectFile(
-            path = outputPath,
-            code = body
-        )
     }
 }

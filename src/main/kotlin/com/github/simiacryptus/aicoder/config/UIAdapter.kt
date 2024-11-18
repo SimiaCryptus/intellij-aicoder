@@ -81,11 +81,11 @@ abstract class UIAdapter<C : Any, S : Any>(
         UITools.buildFormViaReflection(component, false)!!
 
     open fun read(component: C, settings: S) {
-        UITools.readKotlinUIViaReflection(component, settings)
+        UITools.readKotlinUIViaReflection(settings, component, Any::class, Any::class)
     }
 
     open fun write(settings: S, component: C) {
-        UITools.writeKotlinUIViaReflection(settings, component)
+        UITools.writeKotlinUIViaReflection(settings, component, Any::class, Any::class)
     }
 
 }

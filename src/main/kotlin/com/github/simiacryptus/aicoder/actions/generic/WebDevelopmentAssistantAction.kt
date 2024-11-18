@@ -48,27 +48,32 @@ class WebDevelopmentAssistantAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     private val path = "/webDev"
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
+        val file = UITools.getSelectedFile(event) ?: return false
+        return file.isDirectory
+    }
+
 
     override fun handle(e: AnActionEvent) {
         try {
-        val session = Session.newGlobalID()
-        val selectedFile = UITools.getSelectedFolder(e)
-        if (null != selectedFile) {
+            val project = e.project ?: return
+            val session = Session.newGlobalID()
+            val selectedFile = UITools.getSelectedFolder(e) ?: return
             DataStorage.sessionPaths[session] = selectedFile.toFile
-        }
-        SessionProxyServer.chats[session] = WebDevApp(root = selectedFile)
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
-        val server = AppServer.getServer(e.project)
+            SessionProxyServer.chats[session] = WebDevApp(root = selectedFile)
+            ApplicationServer.appInfoMap[session] = AppInfoData(
+                applicationName = "Code Chat",
+                singleInput = true,
+                stickyInput = false,
+                loadImages = false,
+                showMenubar = false
+            )
+            val server = AppServer.getServer(project)
 
             UITools.run(e.project, "Opening Web Development Assistant", true) { progress ->
                 progress.text = "Launching browser..."
-            Thread.sleep(500)
+                Thread.sleep(500)
 
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
@@ -79,10 +84,6 @@ class WebDevelopmentAssistantAction : BaseAction() {
         }
     }
 
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.getSelectedFile(event)?.isDirectory == false) return false
-        return super.isEnabled(event)
-    }
 
     open class WebDevApp(
         applicationName: String = "Web Development Agent",
@@ -97,6 +98,10 @@ class WebDevelopmentAssistantAction : BaseAction() {
     ) {
         private val log = LoggerFactory.getLogger(WebDevApp::class.java)
 
+        companion object {
+            private const val DEFAULT_BUDGET = 2.00
+        }
+
         override fun userMessage(
             session: Session,
             user: User?,
@@ -105,23 +110,24 @@ class WebDevelopmentAssistantAction : BaseAction() {
             api: API
         ) {
             try {
-            val settings = getSettings(session, user) ?: Settings()
-            if (api is ChatClient) api.budget = settings.budget ?: 2.00
-            WebDevAgent(
-                api = api,
-                dataStorage = dataStorage,
-                session = session,
-                user = user,
-                ui = ui,
-                tools = settings.tools,
-                model = settings.model,
-                parsingModel = settings.parsingModel,
-                root = root,
-            ).start(
-                userMessage = userMessage,
-            )
+                val settings = getSettings(session, user) ?: Settings()
+                if (api is ChatClient) {
+                    api.budget = settings.budget ?: DEFAULT_BUDGET
+                }
+                WebDevAgent(
+                    api = api,
+                    dataStorage = dataStorage,
+                    session = session,
+                    user = user,
+                    ui = ui,
+                    tools = settings.tools,
+                    model = settings.model,
+                    parsingModel = settings.parsingModel,
+                    root = root,
+                ).start(userMessage = userMessage)
             } catch (e: Throwable) {
                 log.error("Error processing user message", e)
+                throw e
             }
         }
 

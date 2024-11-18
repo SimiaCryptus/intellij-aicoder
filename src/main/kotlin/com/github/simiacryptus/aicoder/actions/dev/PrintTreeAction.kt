@@ -2,9 +2,11 @@
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import org.slf4j.LoggerFactory
 
 /**
@@ -13,16 +15,38 @@ import org.slf4j.LoggerFactory
  * Then, open the file you want to print the tree structure of.
  * Finally, select the "PrintTreeAction" action from the editor context menu.
  * This will print the tree structure of the file to the log.
+ *
+ * @property log Logger instance for this class
+ * @see BaseAction
+ * @see PsiUtil
  */
 class PrintTreeAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(e: AnActionEvent) {
-        log.warn(PsiUtil.printTree(PsiUtil.getLargestContainedEntity(e)!!))
+        val project = e.project ?: return
+        UITools.run(project, "Analyzing Code Structure", true) { progress ->
+            try {
+                progress.isIndeterminate = true
+                progress.text = "Generating PSI tree structure..."
+                ApplicationManager.getApplication().executeOnPooledThread {
+                    val psiEntity = PsiUtil.getLargestContainedEntity(e)
+                    if (psiEntity != null) {
+                        log.info(PsiUtil.printTree(psiEntity))
+                    } else {
+                        log.warn("No PSI entity found in current context")
+                    }
+                }
+            } catch (ex: Throwable) {
+                UITools.error(log, "Failed to print PSI tree", ex)
+            }
+        }
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        return AppSettingsState.instance.devActions
+        if (!super.isEnabled(event)) return false
+        if (!AppSettingsState.instance.devActions) return false
+        return PsiUtil.getLargestContainedEntity(event) != null
     }
 
     companion object {

@@ -25,7 +25,10 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
 
-class DocumentDataExtractorAction : BaseAction() {
+class DocumentDataExtractorAction : BaseAction(
+    name = "Extract Document Data",
+    description = "Extracts structured data from documents using AI"
+) {
   val path = "/pdfExtractor"
   private var settings = DocumentParserApp.Settings()
   private var modelType = ParsingModelType.Document
@@ -76,40 +79,68 @@ class DocumentDataExtractorAction : BaseAction() {
     settings = configDialog.settings
     modelType = configDialog.modelType as ParsingModelType<DocumentParsingModel>
 
-    val session = Session.newGlobalID()
-    DataStorage.sessionPaths[session] = selectedFile.toFile.parentFile
+      UITools.run(e.project, "Initializing Document Extractor", true) { progress ->
+          try {
+              progress.text = "Setting up session..."
+              val session = Session.newGlobalID()
+              DataStorage.sessionPaths[session] = selectedFile.toFile.parentFile
 
-    val smartModel = AppSettingsState.instance.smartModel.chatModel()
-    val parsingModel = ParsingModelType.getImpl(smartModel, 0.1, modelType)
+              progress.text = "Configuring AI model..."
+              val smartModel = AppSettingsState.instance.smartModel.chatModel()
+              val parsingModel = ParsingModelType.getImpl(smartModel, 0.1, modelType)
 
-    SessionProxyServer.chats[session] = object : DocumentParserApp(
-      applicationName = "Document Extractor",
-      path = this@DocumentDataExtractorAction.path,
-      api = this@DocumentDataExtractorAction.api,
-      fileInputs = processableFiles.map<VirtualFile, Path> { it.toNioPath() },
-      parsingModel = parsingModel as ParsingModel<DocumentData>,
-      fastMode = settings.fastMode,
-    ) {
-      override fun <T : Any> initSettings(session: Session): T = this@DocumentDataExtractorAction.settings as T
-      override val root: File get() = selectedFile.parent.toFile
-    }
-    ApplicationServer.appInfoMap[session] = AppInfoData(
-      applicationName = "Code Chat",
-      singleInput = true,
-      stickyInput = false,
-      loadImages = false,
-      showMenubar = false
-    )
+              progress.text = "Initializing document parser..."
+              SessionProxyServer.chats[session] = object : DocumentParserApp(
+                  applicationName = "Document Extractor",
+                  path = this@DocumentDataExtractorAction.path,
+                  api = this@DocumentDataExtractorAction.api,
+                  fileInputs = processableFiles.map<VirtualFile, Path> { it.toNioPath() },
+                  parsingModel = parsingModel as ParsingModel<DocumentData>,
+                  fastMode = settings.fastMode,
+              ) {
+                  override fun <T : Any> initSettings(session: Session): T = this@DocumentDataExtractorAction.settings as T
+                  override val root: File get() = selectedFile.parent.toFile
+              }
+              val sessionId = Session.newGlobalID()
+              SessionProxyServer.chats[session] = DocumentParserApp(
+                  applicationName = "Document Extractor",
+                  path = path,
+                  api = api,
+                  fileInputs = processableFiles.map { it.toNioPath() },
+                  parsingModel = parsingModel,
+                  fastMode = settings.fastMode
+              )
+              ApplicationServer.appInfoMap[sessionId] = AppInfoData(
+                  applicationName = "Document Data Extractor",
+                  singleInput = false,
+                  stickyInput = true,
+                  loadImages = false,
+                  showMenubar = false
+              )
 
-    val server = AppServer.getServer(e.project)
+              progress.text = "Starting server..."
+              val server = AppServer.getServer(e.project)
+              launchBrowser(server, sessionId.toString())
+          } catch (ex: Throwable) {
+              log.error("Failed to initialize document extractor", ex)
+              UITools.showErrorDialog(
+                  e.project,
+                  "Failed to initialize document extractor: ${ex.message}",
+                  "Initialization Error"
+              )
+          }
+      }
+  }
+
+    private fun launchBrowser(server: AppServer, session: String) {
     Thread {
       Thread.sleep(500)
       try {
         val uri = server.server.uri.resolve("/#$session")
-        BaseAction.log.info("Opening browser to $uri")
+          log.info("Opening browser to $uri")
         browse(uri)
       } catch (e: Throwable) {
-        BaseAction.log.warn("Error opening browser", e)
+          log.warn("Error opening browser", e)
       }
     }.start()
   }

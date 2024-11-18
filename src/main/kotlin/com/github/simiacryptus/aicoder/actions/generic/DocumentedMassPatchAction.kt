@@ -85,13 +85,14 @@ class DocumentedMassPatchAction : BaseAction() {
 
     private fun getConfig(project: Project?, e: AnActionEvent): Settings? {
         var root = UITools.getSelectedFolder(e)?.toNioPath()
-        val allFiles = root?.let { Files.walk(it).toList() } ?: UITools.getSelectedFiles(e).map { it.toNioPath() }
+        val allFiles: List<Path> = root?.let { Files.walk(it).toList() }
+            ?: UITools.getSelectedFiles(e).map { it.toNioPath() }
         if (root == null) {
             root = e.project?.basePath?.let { File(it).toPath() }
         }
-        val docFiles = allFiles.filter { it.toString().endsWith(".md") }.toTypedArray()
-        val sourceFiles = allFiles.filter { 
-            isLLMIncludableFile(it.toFile()) && !it.toString().endsWith(".md") 
+        val docFiles: Array<Path> = allFiles.filter { it.toString().endsWith(".md") }.toTypedArray()
+        val sourceFiles: Array<Path> = allFiles.filter {
+            isLLMIncludableFile(it.toFile()) && !it.toString().endsWith(".md")
         }.toTypedArray()
 
         val settingsUI = SettingsUI().apply {

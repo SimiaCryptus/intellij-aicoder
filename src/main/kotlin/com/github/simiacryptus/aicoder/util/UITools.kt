@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.util
+package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
@@ -31,7 +32,10 @@ import com.simiacryptus.jopenai.exceptions.ModerationException
 import com.simiacryptus.jopenai.models.APIProvider
 import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Toolkit
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
@@ -49,17 +53,39 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.max
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
-import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaType
 
 object UITools {
     val retry = WeakHashMap<Document, Runnable>()
 
+    fun showError(project: Project?, message: String, title: String = "Error") {
+        Messages.showErrorDialog(project, message, title)
+    }
+
+    fun showWarning(project: Project?, message: String, title: String = "Warning") {
+        Messages.showWarningDialog(project, message, title)
+    }
+
+    fun getLanguageFromFile(fileName: String): String {
+        return when {
+            fileName.endsWith(".kt") -> "kotlin"
+            fileName.endsWith(".java") -> "java"
+            fileName.endsWith(".py") -> "python"
+            fileName.endsWith(".js") -> "javascript"
+            fileName.endsWith(".ts") -> "typescript"
+            fileName.endsWith(".html") -> "html"
+            fileName.endsWith(".css") -> "css"
+            fileName.endsWith(".xml") -> "xml"
+            fileName.endsWith(".json") -> "json"
+            else -> "text"
+        }
+    }
     private val log = LoggerFactory.getLogger(UITools::class.java)
     private val threadFactory: ThreadFactory = ThreadFactoryBuilder().setNameFormat("API Thread %d").build()
     private val pool: ListeningExecutorService by lazy {
@@ -227,9 +253,13 @@ object UITools {
         return indent
     }
 
-    fun <T : Any, R : Any> readKotlinUIViaReflection(component: R, settings: T) {
-        val componentClass: Class<*> = component.javaClass
-        val declaredUIFields = componentClass.kotlin.memberProperties.map { it.name }.toSet()
+    fun <T : Any, R : Any> readKotlinUIViaReflection(
+        settings: T,
+        component: R,
+        componentClass: KClass<*>,
+        settingsClass: KClass<*>
+    ) {
+        val declaredUIFields = componentClass.memberProperties.map { it.name }.toSet()
         for (settingsField in settings.javaClass.kotlin.memberProperties) {
             if (settingsField is KMutableProperty<*>) {
                 settingsField.isAccessible = true
@@ -238,7 +268,7 @@ object UITools {
                     var newSettingsValue: Any? = null
                     if (!declaredUIFields.contains(settingsFieldName)) continue
                     val uiField: KProperty1<R, *> =
-                        (componentClass.kotlin.memberProperties.find { it.name == settingsFieldName } as KProperty1<R, *>?)!!
+                        (componentClass.memberProperties.find { it.name == settingsFieldName } as KProperty1<R, *>?)!!
                     var uiVal = uiField.get(component)
                     if (uiVal is JScrollPane) {
                         uiVal = uiVal.viewport.view
@@ -293,9 +323,13 @@ object UITools {
         )
     }
 
-    fun <T : Any, R : Any> writeKotlinUIViaReflection(settings: T, component: R) {
-        val componentClass: Class<*> = component.javaClass
-        val declaredUIFields = componentClass.kotlin.memberProperties.map { it.name }.toSet()
+    fun <T : Any, R : Any> writeKotlinUIViaReflection(
+        settings: T,
+        component: R,
+        componentClass: KClass<*>,
+        settingsClass: KClass<*>
+    ) {
+        val declaredUIFields = componentClass.memberProperties.map { it.name }.toSet()
         val memberProperties = settings.javaClass.kotlin.memberProperties
         val publicProperties = memberProperties.filter {
             it.visibility == KVisibility.PUBLIC //&& it is KMutableProperty<*>
@@ -308,7 +342,7 @@ object UITools {
                     continue
                 }
                 val uiField: KProperty1<R, Any> =
-                    (componentClass.kotlin.memberProperties.find { it.name == fieldName } as KProperty1<R, Any>?)!!
+                    (componentClass.memberProperties.find { it.name == fieldName } as KProperty1<R, Any>?)!!
                 val settingsVal = settingsField.get(settings) ?: continue
                 var uiVal = uiField.get(component)
                 if (uiVal is JScrollPane) {
@@ -351,8 +385,7 @@ object UITools {
 
     private fun <T : Any> addKotlinFields(ui: T, formBuilder: FormBuilder, fillVertically: Boolean) {
         var first = true
-        for (field in ui.javaClass.kotlin.memberProperties) {
-            if (field.javaField == null) continue
+        for (field in ui.javaClass.kotlin.memberProperties.filterNotNull()) {
             try {
                 val nameAnnotation = field.annotations.find { it is Name } as Name?
                 val component = field.get(ui) as JComponent
@@ -545,7 +578,7 @@ object UITools {
         configClass: Class<C>,
         title: String = "Generate Project",
         onComplete: (C) -> Unit = { _ -> },
-    ): C = showDialog(
+    ): C = showDialog<C, T>(
         project,
         uiClass.getConstructor().newInstance(),
         configClass.getConstructor().newInstance(),
@@ -580,7 +613,7 @@ object UITools {
         dialog.show()
         log.debug("Dialog shown with result: ${dialog.isOK}")
         if (dialog.isOK) {
-            readKotlinUIViaReflection(component, config)
+            readKotlinUIViaReflection(component, config, component::class, config::class)
             log.debug("Reading UI via reflection completed")
             onComplete(config)
             log.debug("onComplete callback executed")
@@ -724,7 +757,7 @@ object UITools {
         }
     }
 
-    fun <T> run(
+    fun <T : Any> run(
         project: Project?,
         title: String?,
         canBeCancelled: Boolean = true,
@@ -945,11 +978,25 @@ object UITools {
         return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
     }
 
-    fun showErrorDialog(project: Project?, errorMessage: String, subMessage: String) {
+    fun showErrorDialog(project: Project?, errorMessage: String, title: String) {
         val formBuilder = FormBuilder.createFormBuilder()
-        formBuilder.addLabeledComponent("Error", JLabel(errorMessage))
-        formBuilder.addLabeledComponent("Details", JLabel(subMessage))
-        showOptionDialog(formBuilder.panel, "Dismiss", title = "Error", modal = true)
+        formBuilder.addComponent(JLabel(errorMessage))
+        showOptionDialog(formBuilder.panel, "OK", title = title, modal = true)
     }
 
+    fun showErrorDetails(project: Project?, e: Throwable) {
+        val sw = StringWriter()
+        e.printStackTrace(PrintWriter(sw))
+        val formBuilder = FormBuilder.createFormBuilder()
+        val textArea = JBTextArea(sw.toString())
+        textArea.isEditable = false
+        formBuilder.addComponent(JBScrollPane(textArea))
+        showOptionDialog(formBuilder.panel, "OK", title = "Error Details", modal = true)
+    }
+
+    fun showInfoMessage(project: Project?, message: String, title: String) {
+        val formBuilder = FormBuilder.createFormBuilder()
+        formBuilder.addComponent(JLabel(message))
+        showOptionDialog(formBuilder.panel, "OK", title = title, modal = true)
+    }
 }

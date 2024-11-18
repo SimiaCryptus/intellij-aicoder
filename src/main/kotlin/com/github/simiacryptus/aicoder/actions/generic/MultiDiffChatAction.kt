@@ -36,7 +36,11 @@ import java.util.concurrent.atomic.AtomicReference
 
 class MultiDiffChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
-// Add proper error handling per best practices
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
+        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+        return virtualFiles != null && virtualFiles.isNotEmpty()
+    }
 
     override fun handle(event: AnActionEvent) {
         try {
@@ -48,10 +52,12 @@ class MultiDiffChatAction : BaseAction() {
             root = if (null != folder) {
                 folder.toFile.toPath()
             } else {
-                getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
+                getModuleRootForFile(
+                    UITools.getSelectedFile(event)?.parent?.toFile
+                        ?: throw RuntimeException("No file or folder selected")
+                ).toPath()
             }
             val initialFiles = getFiles(virtualFiles, root)
-
             val session = Session.newGlobalID()
             SessionProxyServer.chats[session] = PatchApp(root.toFile(), initialFiles)
             ApplicationServer.appInfoMap[session] = AppInfoData(
@@ -62,8 +68,6 @@ class MultiDiffChatAction : BaseAction() {
                 showMenubar = false
             )
             val server = AppServer.getServer(event.project)
-
-// Use proper thread management with progress indication
             UITools.run(event.project, "Opening Browser", true) { progress ->
                 Thread.sleep(500)
                 try {
@@ -71,11 +75,13 @@ class MultiDiffChatAction : BaseAction() {
                     BaseAction.log.info("Opening browser to $uri")
                     browse(uri)
                 } catch (e: Throwable) {
-                    log.warn("Error opening browser", e)
-                    UITools.showErrorDialog(event.project, "Failed to open browser: ${e.message}", "Error")
+                    val message = "Failed to open browser: ${e.message}"
+                    log.error(message, e)
+                    UITools.showErrorDialog(event.project, message, "Error")
                 }
             }
         } catch (e: Exception) {
+            // Comprehensive error logging
             log.error("Error in MultiDiffChatAction", e)
             UITools.showErrorDialog(event.project, e.message ?: "", "Error")
         }
@@ -101,7 +107,12 @@ class MultiDiffChatAction : BaseAction() {
                 log.warn("Root directory does not exist: $root")
                 return emptySet()
             }
-            return initialFiles.filter { root.toPath().resolve(it).toFile().exists() }.toSet()
+            return initialFiles.filter { path ->
+                val file = root.toPath().resolve(path).toFile()
+                val exists = file.exists()
+                if (!exists) log.warn("File does not exist: $file")
+                exists
+            }.toSet()
         }
 
         private fun codeSummary(): String {
@@ -237,17 +248,26 @@ ${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
         root: Path
     ): MutableSet<Path> {
         val codeFiles = mutableSetOf<Path>()
+        if (virtualFiles == null) {
+            log.warn("No virtual files provided")
+            return codeFiles
+        }
+        // Filter out unsupported file types
+        val supportedExtensions = setOf("kt", "java", "py", "js", "ts", "html", "css", "xml")
+        fun isSupportedFile(file: VirtualFile): Boolean {
+            return file.extension in supportedExtensions
+        }
+
         virtualFiles?.forEach { file ->
             if (file.isDirectory) {
                 getFiles(file.children, root)
-            } else {
+            } else if (isSupportedFile(file)) {
                 codeFiles.add(root.relativize(file.toNioPath()))
             }
         }
         return codeFiles
     }
 
-    override fun isEnabled(event: AnActionEvent) = true
 
     companion object {
         private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)

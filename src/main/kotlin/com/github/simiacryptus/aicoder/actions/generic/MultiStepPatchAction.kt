@@ -9,6 +9,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
@@ -24,7 +25,8 @@ import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
-import com.simiacryptus.skyenet.core.platform.*
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.model.StorageInterface
 import com.simiacryptus.skyenet.core.platform.model.User
@@ -44,8 +46,18 @@ class MultiStepPatchAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/autodev"
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
+        val files = UITools.getSelectedFolder(event) ?: return false
+        return true
+    }
+
 
     override fun handle(e: AnActionEvent) {
+        val project = e.project ?: return
+        UITools.run(project, "Initializing Auto Dev Assistant", true) { progress ->
+            progress.isIndeterminate = true
+            try {
         val session = Session.newGlobalID()
         val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
         val selectedFile = UITools.getSelectedFolder(e)
@@ -62,17 +74,17 @@ class MultiStepPatchAction : BaseAction() {
         )
         val server = AppServer.getServer(e.project)
 
-        Thread {
-            Thread.sleep(500)
-            try {
 
-                val uri = server.server.uri.resolve("/#$session")
-                BaseAction.log.info("Opening browser to $uri")
-                browse(uri)
+                ApplicationManager.getApplication().invokeLater {
+                    progress.text = "Opening browser..."
+                    val uri = server.server.uri.resolve("/#$session")
+                    BaseAction.log.info("Opening browser to $uri")
+                    browse(uri)
+                }
             } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
+                UITools.error(log, "Failed to initialize Auto Dev Assistant", e)
             }
-        }.start()
+        }
     }
 
     open class AutoDevApp(
@@ -84,6 +96,10 @@ class MultiStepPatchAction : BaseAction() {
         path = "/autodev",
         showMenubar = false,
     ) {
+        companion object {
+            private const val DEFAULT_BUDGET = 2.00
+        }
+
         override fun userMessage(
             session: Session,
             user: User?,
@@ -91,8 +107,11 @@ class MultiStepPatchAction : BaseAction() {
             ui: ApplicationInterface,
             api: API
         ) {
-            val settings = getSettings(session, user) ?: Settings()
-            if (api is ChatClient) api.budget = settings.budget ?: 2.00
+            val settings = getSettings(session, user) ?: Settings(
+                budget = DEFAULT_BUDGET,
+                model = AppSettingsState.instance.smartModel.chatModel()
+            )
+            if (api is ChatClient) api.budget = settings.budget ?: DEFAULT_BUDGET
             AutoDevAgent(
                 api = api,
                 dataStorage = dataStorage,

@@ -7,11 +7,19 @@ import com.github.simiacryptus.aicoder.util.LanguageUtils
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
 
-open class RenameVariablesAction : SelectionAction<String>() {
+/**
+ * Action to suggest and apply variable name improvements in code.
+ * Supports multiple programming languages and uses AI to generate naming suggestions.
+ */
+
+class RenameVariablesAction : SelectionAction<String>() {
+    private val log = Logger.getInstance(RenameVariablesAction::class.java)
+
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun isEnabled(event: AnActionEvent) = AppSettingsState.instance.enableLegacyActions
@@ -48,38 +56,55 @@ open class RenameVariablesAction : SelectionAction<String>() {
         return ""
     }
 
+    @Throws(Exception::class)
+
     override fun processSelection(event: AnActionEvent?, state: SelectionState, config: String?): String {
-        val renameSuggestions = UITools.run(event?.project, templateText, true, true) {
-            proxy
-                .suggestRenames(
-                    state.selectedText ?: "",
-                    state.language?.name ?: "",
-                    AppSettingsState.instance.humanLanguage
-                )
-                .suggestions
-                .filter { it.originalName != null && it.suggestedName != null }
-                .associate { it.originalName!! to it.suggestedName!! }
-        }
-        val selectedSuggestions = choose(renameSuggestions)
-        return UITools.run(event?.project, templateText, true, true) {
-            var selectedText = state.selectedText
-            val filter = renameSuggestions.filter { it.key in selectedSuggestions }
-            filter.forEach { (key, value) ->
-                selectedText = selectedText?.replace(key, value)
+        try {
+            val renameSuggestions = UITools.run(event?.project, "Analyzing Code", true, true) { progress ->
+                progress.text = "Generating rename suggestions..."
+                proxy
+                    .suggestRenames(
+                        state.selectedText ?: "",
+                        state.language?.name ?: "",
+                        AppSettingsState.instance.humanLanguage
+                    )
+                    .suggestions
+                    .filter { it.originalName != null && it.suggestedName != null }
+                    .associate { it.originalName!! to it.suggestedName!! }
             }
-            selectedText ?: ""
+            if (renameSuggestions.isEmpty()) {
+                UITools.showInfoMessage(event?.project, "No rename suggestions found", "No Changes")
+                return state.selectedText ?: ""
+            }
+            val selectedSuggestions = Companion.choose(renameSuggestions)
+            return UITools.run(event?.project, "Applying Changes", true, true) { progress ->
+                progress.text = "Applying selected renames..."
+                var selectedText = state.selectedText
+                val filter = renameSuggestions.filter { it.key in selectedSuggestions }
+                filter.forEach { (key, value) ->
+                    selectedText = selectedText?.replace(key, value)
+                }
+                selectedText ?: ""
+            }
+        } catch (e: Exception) {
+            log.error("Error during rename operation", e)
+            UITools.showErrorDialog(event?.project, "Failed to process rename operation: ${e.message}", "Error")
+            throw e
         }
     }
 
-    open fun choose(renameSuggestions: Map<String, String>): Set<String> {
-        return UITools.showCheckboxDialog(
-            "Select which items to rename",
-            renameSuggestions.keys.toTypedArray(),
-            renameSuggestions.map { (key, value) -> "$key -> $value" }.toTypedArray()
-        ).toSet()
-    }
 
     override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
         return LanguageUtils.isLanguageSupported(computerLanguage)
+    }
+
+    companion object {
+        fun choose(renameSuggestions: Map<String, String>): Set<String> {
+            return UITools.showCheckboxDialog(
+                "Select which items to rename",
+                renameSuggestions.keys.toTypedArray(),
+                renameSuggestions.map { (key, value) -> "$key -> $value" }.toTypedArray()
+            ).toSet()
+        }
     }
 }
