@@ -39,6 +39,7 @@ import com.simiacryptus.util.JsonUtil.toJson
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
@@ -64,6 +65,7 @@ class MultiStepPatchAction : BaseAction() {
         if (null != storage && null != selectedFile) {
             DataStorage.sessionPaths[session] = selectedFile.toFile
         }
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.chats[session] = AutoDevApp(event = e)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",

@@ -37,6 +37,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
@@ -102,6 +103,7 @@ class CreateImageAction : BaseAction() {
                     loadImages = false,
                     showMenubar = false
                 )
+                SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
 
                 val server = AppServer.getServer(event.project)
 

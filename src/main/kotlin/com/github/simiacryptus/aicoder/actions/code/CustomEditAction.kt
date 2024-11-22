@@ -73,7 +73,7 @@ open class CustomEditAction : SelectionAction<String>() {
     }
 
     override fun processSelection(state: SelectionState, instruction: String?): String {
-        if (instruction == null || instruction.isBlank()) return state.selectedText ?: ""
+        if (instruction.isNullOrBlank()) return state.selectedText ?: ""
         return try {
             UITools.run(state.project, "Processing Edit", true) { progress ->
                 progress.isIndeterminate = true

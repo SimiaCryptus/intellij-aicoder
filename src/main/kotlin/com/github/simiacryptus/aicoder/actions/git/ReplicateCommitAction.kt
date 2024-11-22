@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.walk
 
@@ -104,6 +105,7 @@ class ReplicateCommitAction : BaseAction() {
                     }
                 }
                 progress.text = "Setting up session..."
+                SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
                 SessionProxyServer.chats[session] = patchApp
                 ApplicationServer.appInfoMap[session] = AppInfoData(
                     applicationName = "Code Chat",

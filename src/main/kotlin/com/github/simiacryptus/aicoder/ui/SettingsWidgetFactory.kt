@@ -19,12 +19,15 @@ import com.intellij.ui.treeStructure.Tree
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig.dataStorageRoot
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
 import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.io.File
 import java.net.URI
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
@@ -176,7 +179,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       return "http://${settings.listeningEndpoint}:${settings.listeningPort}/?session=${session.sessionId}"
     }
 
-    private class SessionListRenderer : ListCellRenderer<Session> {
+    private inner class SessionListRenderer : ListCellRenderer<Session> {
       private val label = JLabel()
       override fun getListCellRendererComponent(
         list: JList<out Session>?,
@@ -185,7 +188,20 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
         isSelected: Boolean,
         cellHasFocus: Boolean
       ): Component {
-        label.text = "Session ${value?.sessionId?.take(8)}"
+        label.text = if (value != null) {
+          try {
+              val sessionName = ApplicationServices.metadataStorageFactory(dataStorageRoot).getSessionName(null, value)
+            when {
+              sessionName.isNullOrBlank() -> getDefaultSessionLabel(value)
+              else -> "$sessionName (${value.sessionId.take(8)})"
+            }
+          } catch (e: Exception) {
+            getDefaultSessionLabel(value)
+          }
+        } else {
+          "Unknown Session"
+        }
+
         if (isSelected) {
           label.background = list?.selectionBackground
           label.foreground = list?.selectionForeground
@@ -194,6 +210,9 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
           label.foreground = list?.foreground
         }
         return label
+      }
+      private fun getDefaultSessionLabel(session: Session): String {
+        return "Session ${session.sessionId.take(8)}"
       }
     }
 

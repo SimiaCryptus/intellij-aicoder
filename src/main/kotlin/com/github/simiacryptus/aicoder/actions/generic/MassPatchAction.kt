@@ -36,6 +36,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
@@ -54,10 +55,13 @@ class MassPatchAction : BaseAction() {
     class SettingsUI {
         @Name("Files to Process")
         val filesToProcess = CheckBoxList<Path>()
+
         @Name("AI Instruction")
         val transformationMessage = JBTextArea(4, 40)
+
         @Name("Recent Instructions")
         val recentInstructions = JComboBox<String>()
+
         @Name("Auto Apply")
         val autoApply = JCheckBox("Auto Apply Changes")
     }
@@ -122,27 +126,32 @@ class MassPatchAction : BaseAction() {
                 return
             }
 
-        val session = Session.newGlobalID()
-        SessionProxyServer.chats[session] = MassPatchServer(config=config!!, api=api, autoApply = config.settings?.autoApply ?: false)
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
+            val session = Session.newGlobalID()
+            SessionProxyServer.metadataStorage.setSessionName(
+                null,
+                session,
+                "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+            )
+            SessionProxyServer.chats[session] = MassPatchServer(config = config!!, api = api, autoApply = config.settings?.autoApply ?: false)
+            ApplicationServer.appInfoMap[session] = AppInfoData(
+                applicationName = "Code Chat",
+                singleInput = true,
+                stickyInput = false,
+                loadImages = false,
+                showMenubar = false
+            )
 
             val server = AppServer.getServer(event.project)
             UITools.run(project, "Opening browser") {
-            Thread.sleep(500)
-            try {
-                val uri = server.server.uri.resolve("/#$session")
-                log.info("Opening browser to $uri")
-                browse(uri)
-            } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
-                UITools.showErrorDialog(project, "Failed to open browser: ${e.message}", "Error")
-            }
+                Thread.sleep(500)
+                try {
+                    val uri = server.server.uri.resolve("/#$session")
+                    log.info("Opening browser to $uri")
+                    browse(uri)
+                } catch (e: Throwable) {
+                    log.warn("Error opening browser", e)
+                    UITools.showErrorDialog(project, "Failed to open browser: ${e.message}", "Error")
+                }
             }
         } catch (e: Exception) {
             log.error("Error in mass patch action", e)
@@ -156,7 +165,7 @@ class MassPatchAction : BaseAction() {
 
         init {
             this.title = title
-            // Set the default values for the UI elements from userSettings
+// Set the default values for the UI elements from userSettings
             settingsUI.transformationMessage.text = userSettings.transformationMessage
             settingsUI.autoApply.isSelected = userSettings.autoApply
             init()
@@ -215,43 +224,43 @@ class MassPatchServer(
 
             return SimpleActor(
                 prompt = """
-                            |You are a helpful AI that helps people with coding.
-                            |
-                            |Response should use one or more code patches in diff format within ```diff code blocks.
-                            |Each diff should be preceded by a header that identifies the file being modified.
-                            |The diff format should use + for line additions, - for line deletions.
-                            |The diff should include 2 lines of context before and after every change.
-                            |
-                            |Example:
-                            |
-                            |Here are the patches:
-                            |
-                            |### src/utils/exampleUtils.js
-                            |```diff
-                            | // Utility functions for example feature
-                            | const b = 2;
-                            | function exampleFunction() {
-                            |-   return b + 1;
-                            |+   return b + 2;
-                            | }
-                            |```
-                            |
-                            |### tests/exampleUtils.test.js
-                            |```diff
-                            | // Unit tests for exampleUtils
-                            | const assert = require('assert');
-                            | const { exampleFunction } = require('../src/utils/exampleUtils');
-                            | 
-                            | describe('exampleFunction', () => {
-                            |-   it('should return 3', () => {
-                            |+   it('should return 4', () => {
-                            |     assert.equal(exampleFunction(), 3);
-                            |   });
-                            | });
-                            |```
-                            |
-                            |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                            """.trimMargin(),
+|You are a helpful AI that helps people with coding.
+|
+|Response should use one or more code patches in diff format within ```diff code blocks.
+|Each diff should be preceded by a header that identifies the file being modified.
+|The diff format should use + for line additions, - for line deletions.
+|The diff should include 2 lines of context before and after every change.
+|
+|Example:
+|
+|Here are the patches:
+|
+|### src/utils/exampleUtils.js
+|```diff
+| // Utility functions for example feature
+| const b = 2;
+| function exampleFunction() {
+|-   return b + 1;
+|+   return b + 2;
+| }
+|```
+|
+|### tests/exampleUtils.test.js
+|```diff
+| // Unit tests for exampleUtils
+| const assert = require('assert');
+| const { exampleFunction } = require('../src/utils/exampleUtils');
+| 
+| describe('exampleFunction', () => {
+|-   it('should return 3', () => {
+|+   it('should return 4', () => {
+|     assert.equal(exampleFunction(), 3);
+|   });
+| });
+|```
+|
+|If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+""".trimMargin(),
                 model = AppSettingsState.instance.smartModel.chatModel(),
                 temperature = AppSettingsState.instance.temperature,
             )
@@ -289,11 +298,11 @@ class MassPatchServer(
                             ?.entries?.joinToString("\n\n") { (path, code) ->
                                 val extension = path.toString().split('.').lastOrNull()
                                 """
-                            |# $path
-                            |```$extension
-                            |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
-                            |```
-                            """.trimMargin()
+|# $path
+|```$extension
+|${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+|```
+""".trimMargin()
                             }
                         val fileTask = ui.newTask(false).apply {
                             tabs[path.toString()] = placeholder

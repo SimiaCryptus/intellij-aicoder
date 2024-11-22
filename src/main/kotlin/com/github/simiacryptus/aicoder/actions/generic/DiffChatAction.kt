@@ -26,6 +26,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
+import java.text.SimpleDateFormat
 import com.intellij.openapi.application.ApplicationManager as IntellijAppManager
 
 class DiffChatAction : BaseAction() {
@@ -101,6 +102,7 @@ class DiffChatAction : BaseAction() {
     ) {
         var selectionEnd = selectionEnd
 
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.agents[session] = object : CodeChatSocketManager(
             session = session,
             language = language,

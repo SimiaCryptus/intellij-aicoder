@@ -2,7 +2,6 @@ package com.github.simiacryptus.aicoder
 
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.skyenet.webui.chat.ChatServer

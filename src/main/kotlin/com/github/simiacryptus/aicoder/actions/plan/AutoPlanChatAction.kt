@@ -24,6 +24,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 
 class AutoPlanChatAction : BaseAction() {
     // Maximum file size to process (512KB)
@@ -90,6 +91,7 @@ class AutoPlanChatAction : BaseAction() {
             loadImages = false,
             showMenubar = false
         )
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
     }
 
     private fun createChatApp(root: File, e: AnActionEvent, dialog: PlanAheadConfigDialog) =

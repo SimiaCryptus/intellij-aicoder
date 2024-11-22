@@ -15,6 +15,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import org.slf4j.LoggerFactory
+import java.text.SimpleDateFormat
 
 class GenericChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -33,6 +34,7 @@ class GenericChatAction : BaseAction() {
                 progress.text = "Setting up chat session..."
 
                 val session = Session.newGlobalID()
+                SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
                 SessionProxyServer.agents[session] = ChatSocketManager(
                     session = session,
                     model = model,

@@ -22,6 +22,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import org.slf4j.LoggerFactory
+import java.text.SimpleDateFormat
 
 class LineFilterChatAction : BaseAction() {
     private lateinit var lines: List<String>
@@ -92,6 +93,7 @@ class LineFilterChatAction : BaseAction() {
             append("001\n## Injected subtitle\n\n025\n026\n\n013\n014\n")
             append("```")
         }.trimMargin()
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.agents[session] = object : ChatSocketManager(
             session = session,
             model = AppSettingsState.instance.smartModel.chatModel(),

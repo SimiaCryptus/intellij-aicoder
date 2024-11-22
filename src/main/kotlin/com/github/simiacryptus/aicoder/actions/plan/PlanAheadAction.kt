@@ -60,7 +60,7 @@ class PlanAheadAction : BaseAction() {
                 ),
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),
             )
-            SessionProxyServer.Companion.chats[session] = PlanAheadApp(
+            SessionProxyServer.chats[session] = PlanAheadApp(
                 planSettings = planSettings,
                 model = AppSettingsState.instance.smartModel.chatModel(),
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),

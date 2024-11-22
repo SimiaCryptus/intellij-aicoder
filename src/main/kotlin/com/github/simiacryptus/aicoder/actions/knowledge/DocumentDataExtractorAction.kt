@@ -24,6 +24,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 
 class DocumentDataExtractorAction : BaseAction(
     name = "Extract Document Data",
@@ -90,6 +91,7 @@ class DocumentDataExtractorAction : BaseAction(
               val parsingModel = ParsingModelType.getImpl(smartModel, 0.1, modelType)
 
               progress.text = "Initializing document parser..."
+              SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
               SessionProxyServer.chats[session] = object : DocumentParserApp(
                   applicationName = "Document Extractor",
                   path = this@DocumentDataExtractorAction.path,
@@ -102,6 +104,7 @@ class DocumentDataExtractorAction : BaseAction(
                   override val root: File get() = selectedFile.parent.toFile
               }
               val sessionId = Session.newGlobalID()
+              SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
               SessionProxyServer.chats[session] = DocumentParserApp(
                   applicationName = "Document Extractor",
                   path = path,

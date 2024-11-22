@@ -19,6 +19,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
+import java.text.SimpleDateFormat
 
 class ShellCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -56,6 +57,7 @@ class ShellCommandAction : BaseAction() {
             showMenubar = false
         )
 
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.chats[session] = object : ApplicationServer(
             applicationName = "Shell Agent",
             path = "/shellAgent",

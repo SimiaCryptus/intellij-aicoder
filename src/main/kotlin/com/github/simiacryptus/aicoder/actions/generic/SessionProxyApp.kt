@@ -1,6 +1,8 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig.dataStorageRoot
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
@@ -25,11 +27,11 @@ class SessionProxyServer : ApplicationServer(
     }.toMap()
 
     override fun newSession(user: User?, session: Session) =
-        chats[session]?.newSession(user, session) ?: agents[session]!!
+        chats[session]?.newSession(user, session) ?: agents[session] ?: throw IllegalStateException("No agent found for session $session")
 
     companion object {
         private val log = org.slf4j.LoggerFactory.getLogger(SessionProxyServer::class.java)
-
+        val metadataStorage by lazy { ApplicationServices.metadataStorageFactory(dataStorageRoot) }
         val agents = mutableMapOf<Session, SocketManager>()
         val chats = mutableMapOf<Session, ChatServer>()
     }

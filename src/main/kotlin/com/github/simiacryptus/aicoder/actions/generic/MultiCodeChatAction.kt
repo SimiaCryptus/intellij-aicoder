@@ -27,6 +27,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -72,6 +73,7 @@ class MultiCodeChatAction : BaseAction() {
                 progress.isIndeterminate = true
                 progress.text = "Setting up chat session..."
                 val session = Session.newGlobalID()
+                SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
                 SessionProxyServer.chats[session] = PatchApp(root.toFile(), { codeSummary() }, codeFiles)
                 ApplicationServer.appInfoMap[session] = AppInfoData(
                     applicationName = "Code Chat",

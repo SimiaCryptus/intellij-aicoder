@@ -25,6 +25,7 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import java.text.SimpleDateFormat
 import com.intellij.openapi.application.ApplicationManager as IntellijAppManager
 
 class ChatWithCommitDiffAction : BaseAction(
@@ -77,6 +78,7 @@ class ChatWithCommitDiffAction : BaseAction(
             loadImages = false,
             showMenubar = false
         )
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
 
         val server = AppServer.getServer(e.project)
 

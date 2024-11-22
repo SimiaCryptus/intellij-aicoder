@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 
 class TestResultAutofixAction : BaseAction() {
     companion object {
@@ -155,6 +156,7 @@ class TestResultAutofixAction : BaseAction() {
 
     private fun openAutofixWithTestResult(e: AnActionEvent, testInfo: String, projectStructure: String) {
         val session = Session.newGlobalID()
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.chats[session] = TestResultAutofixApp(session, testInfo, e.project?.basePath, projectStructure)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",

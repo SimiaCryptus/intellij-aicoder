@@ -30,6 +30,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
@@ -59,6 +60,7 @@ class MultiDiffChatAction : BaseAction() {
             }
             val initialFiles = getFiles(virtualFiles, root)
             val session = Session.newGlobalID()
+            SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
             SessionProxyServer.chats[session] = PatchApp(root.toFile(), initialFiles)
             ApplicationServer.appInfoMap[session] = AppInfoData(
                 applicationName = "Code Chat",

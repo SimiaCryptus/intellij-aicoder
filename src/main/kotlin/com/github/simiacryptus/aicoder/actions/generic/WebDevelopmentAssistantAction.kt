@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
@@ -61,6 +62,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             val session = Session.newGlobalID()
             val selectedFile = UITools.getSelectedFolder(e) ?: return
             DataStorage.sessionPaths[session] = selectedFile.toFile
+            SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
             SessionProxyServer.chats[session] = WebDevApp(root = selectedFile)
             ApplicationServer.appInfoMap[session] = AppInfoData(
                 applicationName = "Code Chat",

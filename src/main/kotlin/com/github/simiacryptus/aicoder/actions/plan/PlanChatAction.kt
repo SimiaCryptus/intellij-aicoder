@@ -78,7 +78,7 @@ class PlanChatAction : BaseAction() {
                 UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("")
             )
             DataStorage.sessionPaths[session] = root
-            SessionProxyServer.Companion.chats[session] = PlanChatApp(
+            SessionProxyServer.chats[session] = PlanChatApp(
                 planSettings = settings.copy(
                     env = mapOf(),
                     workingDir = root.absolutePath,

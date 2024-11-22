@@ -20,6 +20,7 @@ import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
+import java.text.SimpleDateFormat
 
 val String.isBinary: Boolean
     get() {
@@ -86,6 +87,7 @@ class ChatWithCommitAction : AnAction() {
             loadImages = false,
             showMenubar = false
         )
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
 
         val server = AppServer.getServer(e.project)
 

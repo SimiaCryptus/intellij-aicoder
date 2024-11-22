@@ -22,12 +22,11 @@ import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.io.File
 import java.nio.file.Files
+import java.text.SimpleDateFormat
 import javax.swing.*
 import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
-    private lateinit var event: AnActionEvent
-
     /**
      * Returns the thread that should be used for action update.
      */
@@ -53,19 +52,18 @@ class CommandAutofixAction : BaseAction() {
             UITools.showErrorDialog(event.project, "Failed to execute command autofix: ${e.message}", "Error")
         }
     }
-        val folder = UITools.getSelectedFolder(event)
-        val root = if (null != folder) {
-            folder.toFile.toPath()
-        } else {
-            event.project?.basePath?.let { File(it).toPath() }
-        }!!
-
     /**
      * Sets up and launches the patch app session
      */
     private fun setupAndLaunchSession(event: AnActionEvent, settings: PatchApp.Settings, virtualFiles: Array<VirtualFile>?) {
         val project = event.project ?: return
 
+        val folder = UITools.getSelectedFolder(event)
+        val root = if (null != folder) {
+            folder.toFile.toPath()
+        } else {
+            event.project?.basePath?.let { File(it).toPath() }
+        }!!
         val session = Session.newGlobalID()
         val patchApp = CmdPatchApp(
             root,
@@ -83,6 +81,7 @@ class CommandAutofixAction : BaseAction() {
             loadImages = false,
             showMenubar = false
         )
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         val server = AppServer.getServer(event.project)
         Thread {
             Thread.sleep(500)

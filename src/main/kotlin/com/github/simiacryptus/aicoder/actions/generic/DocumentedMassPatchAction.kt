@@ -21,6 +21,7 @@ import java.awt.Dimension
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import javax.swing.*
 
 class DocumentedMassPatchAction : BaseAction() {
@@ -57,6 +58,7 @@ class DocumentedMassPatchAction : BaseAction() {
         if (config == null) return
 
         val session = Session.newGlobalID()
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.chats[session] = DocumentedMassPatchServer(
             config = config,
             api = api,

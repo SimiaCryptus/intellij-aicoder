@@ -19,6 +19,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import org.slf4j.LoggerFactory
+import java.text.SimpleDateFormat
 
 class CreateProjectorFromQueryIndexAction : BaseAction() {
   data class ProjectorConfig(
@@ -85,6 +86,7 @@ class CreateProjectorFromQueryIndexAction : BaseAction() {
               return socketManager
             }
           }
+          SessionProxyServer.metadataStorage.setSessionName(null, config.sessionId, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
 
           indicator.fraction = 1.0
           indicator.text = "Opening browser..."
