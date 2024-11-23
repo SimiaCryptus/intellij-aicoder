@@ -9,6 +9,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
@@ -172,8 +173,9 @@ abstract class SelectionAction<T : Any>(
         val language: ComputerLanguage? = null,
         val indent: CharSequence? = null,
         val contextRanges: Array<ContextRange> = arrayOf(),
-        val psiFile: PsiFile?,
-        val project: Project?
+        val psiFile: PsiFile? = null,
+        val project: Project? = null,
+        val progress: ProgressIndicator? = null,
     )
 
     open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
