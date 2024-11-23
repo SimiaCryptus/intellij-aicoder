@@ -142,7 +142,7 @@ class MassPatchAction : BaseAction() {
             )
 
             val server = AppServer.getServer(event.project)
-            UITools.run(project, "Opening browser") {
+            UITools.runAsync(project, "Opening browser") {
                 Thread.sleep(500)
                 try {
                     val uri = server.server.uri.resolve("/#$session")

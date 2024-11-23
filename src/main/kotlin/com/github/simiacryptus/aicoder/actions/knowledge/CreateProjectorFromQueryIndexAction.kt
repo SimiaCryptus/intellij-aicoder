@@ -50,7 +50,7 @@ class CreateProjectorFromQueryIndexAction : BaseAction() {
       return
     }
 
-    UITools.run(e.project, "Creating Projector", true) { indicator ->
+    UITools.runAsync(e.project, "Creating Projector", true) { indicator ->
         try {
           indicator.isIndeterminate = false
           indicator.fraction = 0.0

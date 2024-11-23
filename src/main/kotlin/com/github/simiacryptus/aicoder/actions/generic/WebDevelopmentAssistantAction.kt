@@ -73,7 +73,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
             )
             val server = AppServer.getServer(project)
 
-            UITools.run(e.project, "Opening Web Development Assistant", true) { progress ->
+            UITools.runAsync(e.project, "Opening Web Development Assistant", true) { progress ->
                 progress.text = "Launching browser..."
                 Thread.sleep(500)
 

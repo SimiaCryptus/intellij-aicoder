@@ -80,7 +80,7 @@ class DocumentDataExtractorAction : BaseAction(
     settings = configDialog.settings
     modelType = configDialog.modelType as ParsingModelType<DocumentParsingModel>
 
-      UITools.run(e.project, "Initializing Document Extractor", true) { progress ->
+      UITools.runAsync(e.project, "Initializing Document Extractor", true) { progress ->
           try {
               progress.text = "Setting up session..."
               val session = Session.newGlobalID()

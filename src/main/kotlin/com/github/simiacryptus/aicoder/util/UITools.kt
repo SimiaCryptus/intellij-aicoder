@@ -677,41 +677,113 @@ object UITools {
     class ModalTask<T>(
         project: Project, title: String, canBeCancelled: Boolean, val task: (ProgressIndicator) -> T
     ) : Task.WithResult<T, Exception>(project, title, canBeCancelled), Supplier<T> {
+        private val taskLog = LoggerFactory.getLogger(ModalTask::class.java)
         private val result = AtomicReference<T>()
         private val isError = AtomicBoolean(false)
         private val error = AtomicReference<Throwable>()
         private val semaphore = Semaphore(0)
+        private val completed = AtomicBoolean(false)
+        private val threadList = Collections.synchronizedList(ArrayList<Thread>())
+        private val cancelled = AtomicBoolean(false)
+        private val started = AtomicBoolean(false)
+        private val lock = Object()
+
         override fun compute(indicator: ProgressIndicator): T? {
+            taskLog.debug("Starting compute() for ModalTask: $title")
+            synchronized(lock) {
+                taskLog.debug("Checking task state - started: ${started.get()}, completed: ${completed.get()}, cancelled: ${cancelled.get()}")
+                if (!started.compareAndSet(false, true)) return null
+                if (completed.get() || cancelled.get()) {
+                    taskLog.debug("Task already completed or cancelled, releasing semaphore")
+                    semaphore.release()
+                    return null
+                }
+            }
             val currentThread = Thread.currentThread()
-            val threads = ArrayList<Thread>()
+            taskLog.debug("Adding thread ${currentThread.name} to threadList")
+            threadList.add(currentThread)
             val scheduledFuture = scheduledPool.scheduleAtFixedRate({
                 if (indicator.isCanceled) {
-                    threads.forEach { it.interrupt() }
+                    taskLog.debug("Indicator cancelled, interrupting threads")
+                    cancelled.set(true)
+                    threadList.forEach { it.interrupt() }
                 }
             }, 0, 1, TimeUnit.SECONDS)
-            threads.add(currentThread)
             return try {
+                synchronized(lock) {
+                    if (completed.get() || cancelled.get()) {
+                        taskLog.debug("Task completed or cancelled during execution")
+                        semaphore.release()
+                        return null
+                    }
+                }
+                taskLog.debug("Executing task")
                 result.set(task(indicator))
+                taskLog.debug("Task completed successfully")
                 result.get()
             } catch (e: Throwable) {
-                error(log, "Error running task", e)
+                taskLog.error("Error executing task", e)
+                log.info("Error running task", e)
                 isError.set(true)
                 error.set(e)
                 null
             } finally {
-                semaphore.release()
-                threads.remove(currentThread)
+                synchronized(lock) {
+                    taskLog.debug("Finalizing task execution")
+                    completed.set(true)
+                    semaphore.release()
+                }
+                taskLog.debug("Removing thread ${currentThread.name} from threadList")
+                threadList.remove(currentThread)
                 scheduledFuture.cancel(true)
             }
         }
 
         override fun get(): T {
-            semaphore.acquire()
-            semaphore.release()
-            if (isError.get()) {
-                throw error.get()
+            taskLog.debug("Attempting to get task result")
+            try {
+                val acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS)
+                taskLog.debug("Semaphore acquired: $acquired")
+                synchronized(lock) {
+                    if (!started.get() || !acquired) {
+                        taskLog.error("Task timed out or never started")
+                        cancelled.set(true)
+                        throw TimeoutException("Task timed out after 30 seconds")
+                    }
+                }
+            } finally {
+                semaphore.release()
             }
-            return result.get()
+            synchronized(lock) {
+                taskLog.debug("Checking final task state - completed: ${completed.get()}, error: ${isError.get()}, cancelled: ${cancelled.get()}")
+                if (!completed.get()) {
+                    throw IllegalStateException(
+                        "Task not completed" +
+                                (if (cancelled.get()) " (cancelled)" else "")
+                    )
+                }
+                if (isError.get()) {
+                    val e = error.get() ?: RuntimeException("Unknown error occurred")
+                    taskLog.error("Task failed with error", e)
+                    throw e
+                }
+                if (cancelled.get()) {
+                    taskLog.debug("Task was cancelled")
+                    throw InterruptedException("Task was cancelled")
+                }
+                taskLog.debug("Returning successful task result")
+                return result.get() ?: throw IllegalStateException("No result available")
+            }
+        }
+
+        override fun onCancel() {
+            taskLog.debug("Task cancelled")
+            super.onCancel()
+            synchronized(lock) {
+                cancelled.set(true)
+                threadList.forEach { it.interrupt() }
+                semaphore.release()
+            }
         }
 
     }
@@ -719,41 +791,127 @@ object UITools {
     class BgTask<T>(
         project: Project, title: String, canBeCancelled: Boolean, val task: (ProgressIndicator) -> T
     ) : Task.Backgroundable(project, title, canBeCancelled, DEAF), Supplier<T> {
+        private val taskLog = LoggerFactory.getLogger(BgTask::class.java)
 
         private val result = AtomicReference<T>()
         private val isError = AtomicBoolean(false)
         private val error = AtomicReference<Throwable>()
-        private val semaphore = Semaphore(0)
+        private val startSemaphore = Semaphore(0)
+        private val completeSemaphore = Semaphore(0)
+        private val completed = AtomicBoolean(false)
+        private val threadList = Collections.synchronizedList(ArrayList<Thread>())
+        private val cancelled = AtomicBoolean(false)
+        private val started = AtomicBoolean(false)
+        private val lock = Object()
+
         override fun run(indicator: ProgressIndicator) {
+            taskLog.debug("Starting run() for BgTask: $title")
+            synchronized(lock) {
+                taskLog.debug("Checking task state - started: ${started.get()}, completed: ${completed.get()}, cancelled: ${cancelled.get()}")
+                if (!started.compareAndSet(false, true)) return
+                if (completed.get() || cancelled.get()) {
+                    taskLog.debug("Task already completed or cancelled, releasing semaphore")
+                    startSemaphore.release()
+                    completeSemaphore.release()
+                    return
+                }
+            }
+            startSemaphore.release()
             val currentThread = Thread.currentThread()
-            val threads = ArrayList<Thread>()
+            taskLog.debug("Adding thread ${currentThread.name} to threadList")
+            threadList.add(currentThread)
             val scheduledFuture = scheduledPool.scheduleAtFixedRate({
                 if (indicator.isCanceled) {
-                    threads.forEach { it.interrupt() }
+                    taskLog.debug("Indicator cancelled, interrupting threads")
+                    cancelled.set(true)
+                    threadList.forEach { it.interrupt() }
                 }
             }, 0, 1, TimeUnit.SECONDS)
-            threads.add(currentThread)
             try {
+                synchronized(lock) {
+                    if (completed.get() || cancelled.get()) {
+                        taskLog.debug("Task completed or cancelled during execution")
+                        completeSemaphore.release()
+                        return
+                    }
+                }
+                taskLog.debug("Executing task")
                 val result = task(indicator)
                 this.result.set(result)
+                taskLog.debug("Task completed successfully")
             } catch (e: Throwable) {
+                taskLog.error("Error executing task", e)
                 log.info("Error running task", e)
                 error.set(e)
                 isError.set(true)
             } finally {
-                semaphore.release()
-                threads.remove(currentThread)
+                synchronized(lock) {
+                    taskLog.debug("Finalizing task execution")
+                    completed.set(true)
+                    completeSemaphore.release()
+                }
+                taskLog.debug("Removing thread ${currentThread.name} from threadList")
+                threadList.remove(currentThread)
                 scheduledFuture.cancel(true)
             }
         }
 
         override fun get(): T {
-            semaphore.acquire()
-            semaphore.release()
-            if (isError.get()) {
-                throw error.get()
+            taskLog.debug("Attempting to get task result")
+            try {
+                // Wait for task to start
+                val startAcquired = startSemaphore.tryAcquire(5, TimeUnit.SECONDS)
+                taskLog.debug("Start semaphore acquired: $startAcquired")
+                synchronized(lock) {
+                    if (!started.get() || !startAcquired) {
+                        taskLog.error("Task timed out or never started")
+                        cancelled.set(true)
+                        throw TimeoutException("Task failed to start after 5 seconds")
+                    }
+                }
+                // Wait for task to complete
+                val completeAcquired = completeSemaphore.tryAcquire(30, TimeUnit.SECONDS)
+                taskLog.debug("Complete semaphore acquired: $completeAcquired")
+                if (!completeAcquired) {
+                    taskLog.error("Task execution timed out")
+                    cancelled.set(true)
+                    throw TimeoutException("Task execution timed out after 30 seconds")
+                }
+            } finally {
+                startSemaphore.release()
+                completeSemaphore.release()
             }
-            return result.get()
+            synchronized(lock) {
+                taskLog.debug("Checking final task state - completed: ${completed.get()}, error: ${isError.get()}, cancelled: ${cancelled.get()}")
+                if (!completed.get()) {
+                    throw IllegalStateException(
+                        "Task not completed" +
+                                (if (cancelled.get()) " (cancelled)" else "")
+                    )
+                }
+                if (isError.get()) {
+                    val e = error.get() ?: RuntimeException("Unknown error occurred")
+                    taskLog.error("Task failed with error", e)
+                    throw e
+                }
+                if (cancelled.get()) {
+                    taskLog.debug("Task was cancelled")
+                    throw InterruptedException("Task was cancelled")
+                }
+                taskLog.debug("Returning successful task result")
+                return result.get() ?: throw IllegalStateException("No result available")
+            }
+        }
+
+        override fun onCancel() {
+            taskLog.debug("Task cancelled")
+            super.onCancel()
+            synchronized(lock) {
+                cancelled.set(true)
+                threadList.forEach { it.interrupt() }
+                startSemaphore.release()
+                completeSemaphore.release()
+            }
         }
     }
 
@@ -774,6 +932,35 @@ object UITools {
             ProgressManager.getInstance().run(t)
             t.get()
         }
+    }
+
+
+    fun runAsync(
+        project: Project?,
+        title: String?,
+        canBeCancelled: Boolean = true,
+        suppressProgress: Boolean = true,
+        task: (ProgressIndicator) -> Unit,
+    ) {
+        Thread {
+            try {
+                if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
+                    checkApiKey()
+                    task(AbstractProgressIndicatorBase())
+                } else {
+                    checkApiKey()
+                    val t = if (AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
+                    else BgTask(project, title ?: "", canBeCancelled, task)
+                    ProgressManager.getInstance().run(t)
+                    t.get()
+                }
+            } catch (e: Throwable) {
+                error(log, "Error running task", e)
+                showError(project, "Failed to initialize chat: ${e.message}")
+            }
+        }.apply {
+            name = title
+        }.start()
     }
 
     fun checkApiKey(k: String = AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""): String {

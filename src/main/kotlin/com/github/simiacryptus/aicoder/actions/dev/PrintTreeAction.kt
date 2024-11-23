@@ -25,7 +25,7 @@ class PrintTreeAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         val project = e.project ?: return
-        UITools.run(project, "Analyzing Code Structure", true) { progress ->
+        UITools.runAsync(project, "Analyzing Code Structure", true) { progress ->
             try {
                 progress.isIndeterminate = true
                 progress.text = "Generating PSI tree structure..."

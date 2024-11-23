@@ -49,7 +49,7 @@ class DiffChatAction : BaseAction() {
         val document = editor.document
         val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return
             val (rawText, selectionStart, selectionEnd) = getSelectionDetails(editor)
-            UITools.run(e.project, "Initializing Chat", true) { progress ->
+            UITools.runAsync(e.project, "Initializing Chat", true) { progress ->
                 progress.isIndeterminate = true
                 progress.text = "Setting up chat session..."
                 setupApplicationServer(session)

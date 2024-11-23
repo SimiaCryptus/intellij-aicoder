@@ -53,7 +53,7 @@ class AutoPlanChatAction : BaseAction() {
         )
         if (dialog.showAndGet()) {
             try {
-                UITools.run(e.project, "Initializing Auto Plan Chat", true) { progress ->
+                UITools.runAsync(e.project, "Initializing Auto Plan Chat", true) { progress ->
                     initializeChat(e, dialog, progress)
                 }
             } catch (ex: Exception) {

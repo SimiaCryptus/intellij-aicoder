@@ -118,7 +118,7 @@ class TestResultAutofixAction : BaseAction() {
         val dataContext = e.dataContext
         val virtualFile = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)?.firstOrNull()
         val root = Companion.findGitRoot(virtualFile)
-        UITools.run(e.project, "Analyzing Test Result", true) { progress ->
+        UITools.runAsync(e.project, "Analyzing Test Result", true) { progress ->
             progress.isIndeterminate = true
             progress.text = "Analyzing test failure..."
             try {

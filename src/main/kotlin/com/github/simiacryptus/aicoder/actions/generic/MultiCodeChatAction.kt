@@ -69,7 +69,7 @@ class MultiCodeChatAction : BaseAction() {
         codeFiles.addAll(files)
 
         try {
-            UITools.run(event.project, "Initializing Chat", true) { progress ->
+            UITools.runAsync(event.project, "Initializing Chat", true) { progress ->
                 progress.isIndeterminate = true
                 progress.text = "Setting up chat session..."
                 val session = Session.newGlobalID()

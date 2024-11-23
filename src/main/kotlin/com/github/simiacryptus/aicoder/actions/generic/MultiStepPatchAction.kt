@@ -56,25 +56,29 @@ class MultiStepPatchAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         val project = e.project ?: return
-        UITools.run(project, "Initializing Auto Dev Assistant", true) { progress ->
+        UITools.runAsync(project, "Initializing Auto Dev Assistant", true) { progress ->
             progress.isIndeterminate = true
             try {
-        val session = Session.newGlobalID()
-        val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
-        val selectedFile = UITools.getSelectedFolder(e)
-        if (null != storage && null != selectedFile) {
-            DataStorage.sessionPaths[session] = selectedFile.toFile
-        }
-        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
-        SessionProxyServer.chats[session] = AutoDevApp(event = e)
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
-        val server = AppServer.getServer(e.project)
+                val session = Session.newGlobalID()
+                val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
+                val selectedFile = UITools.getSelectedFolder(e)
+                if (null != storage && null != selectedFile) {
+                    DataStorage.sessionPaths[session] = selectedFile.toFile
+                }
+                SessionProxyServer.metadataStorage.setSessionName(
+                    null,
+                    session,
+                    "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+                )
+                SessionProxyServer.chats[session] = AutoDevApp(event = e)
+                ApplicationServer.appInfoMap[session] = AppInfoData(
+                    applicationName = "Code Chat",
+                    singleInput = true,
+                    stickyInput = false,
+                    loadImages = false,
+                    showMenubar = false
+                )
+                val server = AppServer.getServer(e.project)
 
 
                 ApplicationManager.getApplication().invokeLater {
@@ -297,27 +301,29 @@ class MultiStepPatchAction : BaseAction() {
                                       |
                                     """.trimMargin()
                                 }
-                                renderMarkdown(ui.socketManager!!.addApplyFileDiffLinks(
-                                    root = root,
-                                    response = taskActor.answer(listOf(
-                                        codeSummary(),
-                                        userMessage,
-                                        filter.joinToString("\n\n") {
-                                            "# ${it}\n```${
-                                                it.toString().split('.').last().let { /*escapeHtml4*/it/*.indent("  ")*/ }
-                                            }\n${root.resolve(it).toFile().readText()}\n```"
+                                renderMarkdown(
+                                    ui.socketManager!!.addApplyFileDiffLinks(
+                                        root = root,
+                                        response = taskActor.answer(
+                                            listOf(
+                                            codeSummary(),
+                                            userMessage,
+                                            filter.joinToString("\n\n") {
+                                                "# ${it}\n```${
+                                                    it.toString().split('.').last().let { /*escapeHtml4*/it/*.indent("  ")*/ }
+                                                }\n${root.resolve(it).toFile().readText()}\n```"
+                                            },
+                                            architectureResponse.text,
+                                            "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
+                                        ), api),
+                                        handle = { newCodeMap ->
+                                            newCodeMap.forEach { (path, newCode) ->
+                                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                            }
                                         },
-                                        architectureResponse.text,
-                                        "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                                    ), api),
-                                    handle = { newCodeMap ->
-                                        newCodeMap.forEach { (path, newCode) ->
-                                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                                        }
-                                    },
-                                    ui = ui,
-                                    api = api
-                                )
+                                        ui = ui,
+                                        api = api
+                                    )
                                 )
                             } catch (e: Exception) {
                                 task.error(ui, e)

@@ -54,7 +54,7 @@ class CreateImageAction : BaseAction() {
     override fun handle(event: AnActionEvent) {
         val rootRef = AtomicReference<Path?>(null)
         val codeFiles: MutableSet<Path> = mutableSetOf()
-        UITools.run(event.project, "Creating Image", true) { progress ->
+        UITools.runAsync(event.project, "Creating Image", true) { progress ->
             try {
                 progress.text = "Analyzing code files..."
 

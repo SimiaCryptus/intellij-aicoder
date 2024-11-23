@@ -29,7 +29,7 @@ class GenericChatAction : BaseAction() {
         val project = e.project ?: return
 
         try {
-            UITools.run(project, "Initializing Chat", true) { progress ->
+            UITools.runAsync(project, "Initializing Chat", true) { progress ->
                 progress.isIndeterminate = true
                 progress.text = "Setting up chat session..."
 

@@ -46,7 +46,7 @@ class ChatWithCommitDiffAction : BaseAction(
             return
         }
 
-        UITools.run(project, "Comparing Changes", true) { progress ->
+        UITools.runAsync(project, "Comparing Changes", true) { progress ->
             try {
                 progress.text = "Retrieving changes between commits..."
                 val diffInfo = getChangesBetweenCommits(project, selectedCommit).ifEmpty { "No changes found" }

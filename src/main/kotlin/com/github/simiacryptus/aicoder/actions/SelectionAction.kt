@@ -66,7 +66,6 @@ abstract class SelectionAction<T : Any>(
             WriteCommandAction.runWriteCommandAction(e.project) {
                 rangeMarker = document?.createGuardedBlock(selectionStart, selectionEnd)
             }
-
             val newText = try {
                 processSelection(
                     event = e,

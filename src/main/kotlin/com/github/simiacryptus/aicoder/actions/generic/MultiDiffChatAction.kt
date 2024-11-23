@@ -70,7 +70,7 @@ class MultiDiffChatAction : BaseAction() {
                 showMenubar = false
             )
             val server = AppServer.getServer(event.project)
-            UITools.run(event.project, "Opening Browser", true) { progress ->
+            UITools.runAsync(event.project, "Opening Browser", true) { progress ->
                 Thread.sleep(500)
                 try {
                     val uri = server.server.uri.resolve("/#$session")

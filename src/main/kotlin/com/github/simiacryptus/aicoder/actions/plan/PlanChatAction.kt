@@ -39,7 +39,7 @@ class PlanChatAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         try {
-            UITools.run(e.project, "Initializing Plan Chat", true) { progress ->
+            UITools.runAsync(e.project, "Initializing Plan Chat", true) { progress ->
                 progress.isIndeterminate = true
                 progress.text = "Setting up chat environment..."
                 initializeAndOpenChat(e)

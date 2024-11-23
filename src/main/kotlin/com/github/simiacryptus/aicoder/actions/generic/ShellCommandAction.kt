@@ -30,7 +30,7 @@ class ShellCommandAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         val project = e.project ?: return
-        UITools.run(project, "Initializing Shell Command", true) { progress ->
+        UITools.runAsync(project, "Initializing Shell Command", true) { progress ->
             try {
                 initializeShellCommand(e, progress)
             } catch (ex: Exception) {
