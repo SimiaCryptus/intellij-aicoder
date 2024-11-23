@@ -3,7 +3,7 @@ import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-fun properties(key: String) = providers.gradleProperty(key).get()
+fun properties(key: String) = providers.gradleProperty(key).getOrElse("")
 
 plugins {
     id("java")
