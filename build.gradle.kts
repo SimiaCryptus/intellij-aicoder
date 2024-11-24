@@ -223,10 +223,6 @@ kover {
 */
 
 tasks {
-    wrapper {
-        gradleVersion = providers.gradleProperty("gradleVersion").get()
-    }
-
     publishPlugin {
         dependsOn(patchChangelog)
     }
