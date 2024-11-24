@@ -4,13 +4,10 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
-import java.awt.Component
 import javax.swing.JOptionPane
 
 /**
@@ -100,12 +97,4 @@ open class CustomEditAction : SelectionAction<String>() {
         }
     }
 
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        if (!super.isEnabled(event)) return false
-        return event.getData(DATA_KEY) != null
-    }
-
-    companion object {
-        private val DATA_KEY = DataKey.create<String>("CustomEditAction.key")
-    }
 }
