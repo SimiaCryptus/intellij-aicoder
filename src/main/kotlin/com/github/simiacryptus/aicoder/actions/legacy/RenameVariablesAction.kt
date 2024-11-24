@@ -17,7 +17,7 @@ import com.simiacryptus.jopenai.proxy.ChatProxy
  * Supports multiple programming languages and uses AI to generate naming suggestions.
  */
 
-class RenameVariablesAction : SelectionAction<String>() {
+open class RenameVariablesAction : SelectionAction<String>() {
     private val log = Logger.getInstance(RenameVariablesAction::class.java)
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
