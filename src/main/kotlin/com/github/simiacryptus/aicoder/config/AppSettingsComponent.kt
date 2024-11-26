@@ -312,6 +312,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         awsProfile.text = AppSettingsState.instance.awsProfile ?: ""
         awsRegion.text = AppSettingsState.instance.awsRegion ?: ""
         awsBucket.text = AppSettingsState.instance.awsBucket ?: ""
+        disableAutoOpenUrls.isSelected = AppSettingsState.instance.disableAutoOpenUrls
         // Initialize executables list
         setExecutables(AppSettingsState.instance.executables)
         fun getExecutables(): Set<String> {

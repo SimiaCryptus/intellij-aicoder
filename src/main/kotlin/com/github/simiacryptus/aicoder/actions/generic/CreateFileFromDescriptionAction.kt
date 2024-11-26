@@ -24,7 +24,7 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
 
     class SettingsUI {
         @Name("Directive")
-        var directive: JTextArea = JTextArea(
+        val directive: JTextArea = JTextArea(
             """
             Create a new file
             """.trimIndent(),
@@ -45,7 +45,7 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
             Settings::class.java,
             "Create File From Description"
         )
-        return Settings(userSettings?.directive ?: "", project)
+        return Settings(userSettings.directive, project)
     }
 
     override fun processSelection(

@@ -19,7 +19,6 @@ import com.intellij.ui.treeStructure.Tree
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig.dataStorageRoot
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +26,6 @@ import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.io.File
 import java.net.URI
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
@@ -150,7 +148,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       copyButton.addActionListener {
         val session = sessionsList.selectedValue
         if (session != null) {
-          val link = getSessionLink(session)
+          val link = Companion.getSessionLink(session)
           val selection = StringSelection(link)
           Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, null)
         }
@@ -158,7 +156,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       openButton.addActionListener {
         val session = sessionsList.selectedValue
         if (session != null) {
-          browse(URI(getSessionLink(session)))
+          browse(URI(Companion.getSessionLink(session)))
         }
       }
       actionPanel.add(copyButton)
@@ -170,13 +168,9 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
 
     fun updateSessionsList() {
       sessionsListModel.clear()
-      SessionProxyServer.chats.keys.forEach { sessionsListModel.addElement(it) }
-      SessionProxyServer.agents.keys.forEach { sessionsListModel.addElement(it) }
-    }
-
-    private fun getSessionLink(session: Session): String {
-      val settings = AppSettingsState.instance
-      return "http://${settings.listeningEndpoint}:${settings.listeningPort}/?session=${session.sessionId}"
+      (SessionProxyServer.chats.keys + SessionProxyServer.agents.keys).distinct().forEach {
+        sessionsListModel.addElement(it)
+      }
     }
 
     private inner class SessionListRenderer : ListCellRenderer<Session> {
@@ -270,22 +264,6 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       return header
     }
 
-    private fun getRenderer(): ListCellRenderer<in String> = object : SimpleListCellRenderer<String>() {
-      override fun customize(
-        list: JList<out String>,
-        value: String?,
-        index: Int,
-        selected: Boolean,
-        hasFocus: Boolean
-      ) {
-        text = value // Here you can add more customization if needed
-        if (value != null) {
-          val model = models().find { it.second.modelName == value }
-          text = "<html><b>${model?.second?.provider?.name}</b> - <i>$value</i></html>" // Enhance label formatting
-        }
-      }
-    }
-
     private fun setSelectedModel(tree: JTree, modelName: String) {
       val root = tree.model as DefaultTreeModel
       val rootNode = root.root as DefaultMutableTreeNode
@@ -305,6 +283,8 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
 
 
     override fun getPopup(): JBPopup {
+      // Update sessions list before creating popup
+      updateSessionsList()
 
       val panel = JPanel(BorderLayout())
       panel.add(createHeader(), BorderLayout.NORTH)
@@ -360,6 +340,11 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
 
     private fun isVisible(it: ChatModel): Boolean {
       return true
+    }
+
+    companion object {
+      fun getSessionLink(session: Session) =
+        "http://${AppSettingsState.instance.listeningEndpoint}:${AppSettingsState.instance.listeningPort}/#${session.sessionId}"
     }
 
   }

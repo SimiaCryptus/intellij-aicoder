@@ -99,7 +99,7 @@ class DocumentedMassPatchServer(
         } ?: ""
 
         // Then process code files
-        config.settings?.codeFiles?.forEach { path ->
+        config.settings?.codeFilePaths?.forEach { path: Path ->
             socketManager.scheduledThreadPoolExecutor.schedule({
                 socketManager.pool.submit {
                     try {

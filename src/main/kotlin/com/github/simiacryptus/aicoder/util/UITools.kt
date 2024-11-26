@@ -256,9 +256,9 @@ object UITools {
     fun <T : Any, R : Any> readKotlinUIViaReflection(
         settings: T,
         component: R,
-        componentClass: KClass<*>,
-        settingsClass: KClass<*>
+        componentClass: KClass<*> = component::class,
     ) {
+
         val declaredUIFields = componentClass.memberProperties.map { it.name }.toSet()
         for (settingsField in settings.javaClass.kotlin.memberProperties) {
             if (settingsField is KMutableProperty<*>) {
@@ -613,7 +613,11 @@ object UITools {
         dialog.show()
         log.debug("Dialog shown with result: ${dialog.isOK}")
         if (dialog.isOK) {
-            readKotlinUIViaReflection(component, config, component::class, config::class)
+            readKotlinUIViaReflection(
+                settings = config,
+                component = component,
+                componentClass = component::class
+            )
             log.debug("Reading UI via reflection completed")
             onComplete(config)
             log.debug("onComplete callback executed")
@@ -870,7 +874,7 @@ object UITools {
                     }
                 }
                 // Wait for task to complete
-                val completeAcquired = completeSemaphore.tryAcquire(30, TimeUnit.SECONDS)
+                val completeAcquired = completeSemaphore.tryAcquire(3000, TimeUnit.SECONDS)
                 taskLog.debug("Complete semaphore acquired: $completeAcquired")
                 if (!completeAcquired) {
                     taskLog.error("Task execution timed out")

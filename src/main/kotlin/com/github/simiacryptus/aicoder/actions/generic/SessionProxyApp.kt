@@ -8,6 +8,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatServer
 import com.simiacryptus.skyenet.webui.session.SocketManager
+import java.net.URL
 
 class SessionProxyServer : ApplicationServer(
     applicationName = "AI Coding Assistant",

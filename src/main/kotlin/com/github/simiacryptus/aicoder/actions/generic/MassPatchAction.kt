@@ -48,8 +48,13 @@ class MassPatchAction : BaseAction() {
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
-        val file = UITools.getSelectedFile(event) ?: return false
-        return file.isDirectory
+        UITools.getSelectedFolder(event) ?: UITools.getSelectedFiles(event).let {
+            when (it.size) {
+                0 -> null
+                else -> it
+            }
+        } ?: return false
+        return true
     }
 
     class SettingsUI {

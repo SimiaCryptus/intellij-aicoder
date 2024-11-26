@@ -43,7 +43,7 @@ class DocumentedMassPatchAction : BaseAction() {
     class UserSettings(
         var transformationMessage: String = "Review and update code according to documentation standards",
         var documentationFiles: List<Path> = listOf(),
-        var codeFiles: List<Path> = listOf(),
+        var codeFilePaths: List<Path> = listOf(),
         var autoApply: Boolean = false,
     )
 
@@ -163,7 +163,7 @@ class DocumentedMassPatchAction : BaseAction() {
                 transformationMessage = settingsUI.transformationMessage.text
                 documentationFiles = settingsUI.documentationFiles.items
                     .filter { settingsUI.documentationFiles.isItemSelected(it) }
-                codeFiles = settingsUI.codeFiles.items
+                codeFilePaths = settingsUI.codeFiles.items
                     .filter { settingsUI.codeFiles.isItemSelected(it) }
                 autoApply = settingsUI.autoApply.isSelected
             }

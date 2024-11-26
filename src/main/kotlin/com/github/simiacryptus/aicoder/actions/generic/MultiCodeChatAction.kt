@@ -180,10 +180,10 @@ class MultiCodeChatAction : BaseAction() {
                         |</div>
                         |
                         |<div>${
-                        renderMarkdown(
+                        renderMarkdown(design) {
                             ui.socketManager?.addApplyFileDiffLinks(
                                 root = root.toPath(),
-                                response = design,
+                                response = it,
                                 handle = { newCodeMap ->
                                     newCodeMap.forEach { (path, newCode) ->
                                         content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
@@ -192,7 +192,7 @@ class MultiCodeChatAction : BaseAction() {
                                 ui = ui,
                                 api = api,
                             )!!
-                        )
+                        }
                     }</div>
                     """.trimMargin()
 

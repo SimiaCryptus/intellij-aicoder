@@ -6,7 +6,7 @@ open class AppSettingsConfigurable : UIAdapter<AppSettingsComponent, AppSettings
     AppSettingsState.instance
 ) {
     override fun read(component: AppSettingsComponent, settings: AppSettingsState) {
-        UITools.readKotlinUIViaReflection(component, settings, AppSettingsComponent::class, AppSettingsState::class)
+        UITools.readKotlinUIViaReflection(settings = settings, component = component)
     }
 
     override fun write(settings: AppSettingsState, component: AppSettingsComponent) {
