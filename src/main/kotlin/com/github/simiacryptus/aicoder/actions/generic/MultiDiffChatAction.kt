@@ -29,6 +29,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
@@ -46,7 +47,6 @@ class MultiDiffChatAction : BaseAction() {
     override fun handle(event: AnActionEvent) {
         try {
             val root: Path
-
             val dataContext = event.dataContext
             val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
             val folder = UITools.getSelectedFolder(event)
@@ -254,16 +254,10 @@ ${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
             log.warn("No virtual files provided")
             return codeFiles
         }
-        // Filter out unsupported file types
-        val supportedExtensions = setOf("kt", "java", "py", "js", "ts", "html", "css", "xml")
-        fun isSupportedFile(file: VirtualFile): Boolean {
-            return file.extension in supportedExtensions
-        }
-
-        virtualFiles?.forEach { file ->
+        virtualFiles.forEach { file ->
             if (file.isDirectory) {
                 getFiles(file.children, root)
-            } else if (isSupportedFile(file)) {
+            } else if (file.toNioPath().isBinary().not()) {
                 codeFiles.add(root.relativize(file.toNioPath()))
             }
         }
@@ -275,4 +269,8 @@ ${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
         private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
 
     }
+}
+
+private fun Path.isBinary(): Boolean {
+    return Files.readAllBytes(this).any { it == 0.toByte() }
 }

@@ -2,20 +2,22 @@ package com.github.simiacryptus.aicoder
 
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.skyenet.webui.chat.ChatServer
+import com.simiacryptus.skyenet.webui.servlet.CorsFilter
+import jakarta.servlet.DispatcherType
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
+import org.eclipse.jetty.servlet.FilterHolder
 import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
+import java.util.*
 
 class AppServer(
     private val localName: String,
-    private val port: Int,
-    project: Project?
+    private val port: Int
 ) {
 
     private val log by lazy { LoggerFactory.getLogger(javaClass) }
@@ -26,9 +28,12 @@ class AppServer(
         server
     }
 
-    private val handlers = arrayOf<WebAppContext>(
+    private val handlers = arrayOf(
         newWebAppContext(SessionProxyServer(), "/")
-    ).toMutableList()
+    ).map {
+        it.addFilter(FilterHolder(CorsFilter()), "/*", EnumSet.of(DispatcherType.REQUEST))
+        it
+    }.toMutableList()
 
     private val contexts by lazy {
         val contexts = ContextHandlerCollection()
@@ -49,34 +54,9 @@ class AppServer(
 
 
     private val serverLock = Object()
-//    private val progressThread = Thread {
-//        try {
-//            UITools.run(
-//                project, "Running CodeChat Server on $port", false
-//            ) {
-//                while (isRunning(it)) {
-//                    Thread.sleep(1000)
-//                }
-//                synchronized(serverLock) {
-//                    if (it.isCanceled) {
-//                        log.info("Server cancelled")
-//                        server.stop()
-//                    } else {
-//                        log.info("Server stopped")
-//                    }
-//                }
-//            }
-//        } finally {
-//            log.info("Stopping Server")
-//            server.stop()
-//        }
-//    }
-
-    private fun isRunning(it: ProgressIndicator) = synchronized(serverLock) { !it.isCanceled && server.isRunning }
 
     fun start() {
         server.start()
-//        progressThread.start()
     }
 
     companion object {
@@ -90,8 +70,7 @@ class AppServer(
             if (null == server || !server!!.server.isRunning) {
                 server = AppServer(
                     AppSettingsState.instance.listeningEndpoint,
-                    AppSettingsState.instance.listeningPort,
-                    project
+                    AppSettingsState.instance.listeningPort
                 )
                 server!!.start()
             }
