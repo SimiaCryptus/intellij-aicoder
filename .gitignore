@@ -18,3 +18,4 @@ html-games.iml
 test-recordings/
 *.index.data
 *.parsed.json
+.intellijPlatform
