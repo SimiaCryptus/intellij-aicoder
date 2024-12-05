@@ -78,7 +78,8 @@ abstract class SelectionAction<T : Any>(
                         indent = indent,
                         contextRanges = editorState.contextRanges,
                         psiFile = editorState.psiFile,
-                        project = e.project
+                        project = e.project,
+                        editor = editor,
                     ),
                     config = config
                 )
@@ -175,6 +176,7 @@ abstract class SelectionAction<T : Any>(
         val psiFile: PsiFile? = null,
         val project: Project? = null,
         val progress: ProgressIndicator? = null,
+        val editor: Editor? = null,
     )
 
     open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {

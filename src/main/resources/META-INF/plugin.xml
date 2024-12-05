@@ -39,6 +39,11 @@
                     text="Open Simiacryptus Apps"
                     description="Opens the Simiacryptus Apps web page in your default browser, providing access to additional resources and documentation">
             </action>
+            <action class="com.github.simiacryptus.aicoder.actions.generic.OutlineAction"
+                    id="OutlineAction"
+                    text="AI Outline Tool"
+                    description="Create and expand outlines using AI assistance">
+            </action>
         </group>
         <group id="com.github.simiacryptus.aicoder.ui.EditorMenu"
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"

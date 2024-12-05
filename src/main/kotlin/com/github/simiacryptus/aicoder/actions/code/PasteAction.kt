@@ -167,12 +167,11 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
         val text = clipboardContent.toString().trim()
         progress?.text = "Converting code format..."
         val converter = converter(api, model(AppSettingsState.instance), AppSettingsState.instance.temperature)
-        return converter.convert(text, "autodetect", state.language?.name ?: "").code ?: ""
+        return converter.convert(text, "autodetect", state.language?.name ?: state.editor?.virtualFile?.extension ?: "").code ?: ""
     }
 
     override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        if (computerLanguage == null) return false
-        return computerLanguage != ComputerLanguage.Text
+        return true
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
