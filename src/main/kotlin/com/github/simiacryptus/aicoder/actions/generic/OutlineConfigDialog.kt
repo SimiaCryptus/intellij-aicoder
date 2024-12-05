@@ -45,7 +45,7 @@ class OutlineConfigDialog(
             row {
                 cell(JScrollPane(expansionStepsList))
                     .align(Align.FILL)
-                    .comment("List of models to use in sequence for outline generation")
+                    .comment("List of models to use in sequence for outline generation. At least one model is required.")
             }
             row {
                 button("Add Step") {
@@ -53,12 +53,20 @@ class OutlineConfigDialog(
                     if (dialog.showAndGet()) {
                         dialog.selectedModel?.let { model ->
                             expansionSteps.addElement(ExpansionStep(model))
+                            expansionStepsList.selectedIndex = expansionSteps.size() - 1
                         }
                     }
                 }
                 button("Remove Step") {
                     if (expansionStepsList.selectedIndex >= 0) {
+                        val newIndex = if (expansionStepsList.selectedIndex > 0) 
+                            expansionStepsList.selectedIndex - 1 
+                        else if (expansionSteps.size() > 1) 
+                            0 
+                        else 
+                            -1
                         expansionSteps.remove(expansionStepsList.selectedIndex)
+                        expansionStepsList.selectedIndex = newIndex
                     }
                 }
                 button("Edit Step") {
@@ -82,6 +90,9 @@ class OutlineConfigDialog(
     }
 
     override fun doValidate(): ValidationInfo? {
+        if (expansionSteps.size() == 0) {
+            return ValidationInfo("At least one expansion step is required", expansionStepsList)
+        }
         return null
     }
 

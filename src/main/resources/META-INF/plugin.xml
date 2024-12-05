@@ -34,6 +34,12 @@
                     text="Coding Assistant Chat"
                     description="Initiate a general-purpose chat session to discuss coding concepts, get assistance with programming tasks, or explore software development ideas">
             </action>
+            <action id="AICoderEnhancedChat"
+                    class="com.github.simiacryptus.aicoder.actions.generic.LargeOutputChatAction"
+                    text="Enhanced Code Chat"
+                    description="Open enhanced AI code chat with structured responses">
+                <add-to-group group-id="ToolsMenu" anchor="last"/>
+            </action>
             <action id="OpenWebPageAction"
                     class="com.github.simiacryptus.aicoder.actions.OpenWebPageAction"
                     text="Open Simiacryptus Apps"
