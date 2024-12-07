@@ -175,10 +175,6 @@ class MultiCodeChatAction : BaseAction() {
                 process = { content ->
                     val design = mainActor.answer(toInput(userMessage), api = api)
                     """
-                        |<div>
-                        |${renderMarkdown(codeSummary())}
-                        |</div>
-                        |
                         |<div>${
                         renderMarkdown(design) {
                             ui.socketManager?.addApplyFileDiffLinks(
