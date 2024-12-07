@@ -25,7 +25,6 @@ class OutlineAction : BaseAction() {
         if (!configDialog.showAndGet()) return
         settings = configDialog.settings
 
-
         try {
             UITools.runAsync(project, "Initializing Outline Tool", true) { progress ->
                 progress.isIndeterminate = true
