@@ -196,7 +196,7 @@ class SimpleCommandAction : BaseAction() {
     ) {
         try {
             val planTxt = projectSummary()
-            task.add(renderMarkdown(planTxt))
+            task.verbose(renderMarkdown(planTxt))
             Retryable(ui, task) {
                 val plan = ParsedActor(
                     resultClass = ParsedTasks::class.java,
