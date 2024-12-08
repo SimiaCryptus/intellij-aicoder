@@ -19,89 +19,85 @@ import com.simiacryptus.jopenai.proxy.ChatProxy
 // ... keep existing imports
 
 class DescribeAction : SelectionAction<String>() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-    private val log = Logger.getInstance(DescribeAction::class.java)
-    protected fun processSelection(event: AnActionEvent, config: String?): String {
-        val state = getState(event) ?: throw IllegalStateException("No state available")
-        return processSelection(state, config)
-    }
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  private val log = Logger.getInstance(DescribeAction::class.java)
 
-    data class SelectionState(
-        val language: ComputerLanguage?,
-        val selectedText: String?,
-        val indent: String?
+  data class SelectionState(
+    val language: ComputerLanguage?,
+    val selectedText: String?,
+    val indent: String?
+  )
+
+  protected fun getState(event: AnActionEvent): SelectionState? {
+    val editor: Editor = event.getData(CommonDataKeys.EDITOR) ?: return null
+    val caret = editor.caretModel.primaryCaret
+    val file: VirtualFile? = event.getData(CommonDataKeys.VIRTUAL_FILE)
+    return SelectionState(
+      language = file?.let { ComputerLanguage.findByExtension(it.extension ?: "") },
+      selectedText = if (caret.hasSelection()) editor.document.getText(TextRange(caret.selectionStart, caret.selectionEnd)) else null,
+      indent = UITools.getIndent(caret).toString()
     )
+  }
 
-    protected fun getState(event: AnActionEvent): SelectionState? {
-        val editor: Editor = event.getData(CommonDataKeys.EDITOR) ?: return null
-        val caret = editor.caretModel.primaryCaret
-        val file: VirtualFile? = event.getData(CommonDataKeys.VIRTUAL_FILE)
-        return SelectionState(
-            language = file?.let { ComputerLanguage.findByExtension(it.extension ?: "") },
-            selectedText = if (caret.hasSelection()) editor.document.getText(TextRange(caret.selectionStart, caret.selectionEnd)) else null,
-            indent = UITools.getIndent(caret).toString()
-        )
+
+  interface DescribeAction_VirtualAPI {
+    fun describeCode(
+      code: String,
+      computerLanguage: String,
+      humanLanguage: String
+    ): DescribeAction_ConvertedText
+
+    class DescribeAction_ConvertedText {
+      var text: String? = null
+      var language: String? = null
     }
+  }
+
+  private val proxy: DescribeAction_VirtualAPI
+    get() = ChatProxy(
+      clazz = DescribeAction_VirtualAPI::class.java,
+      api = api,
+      temperature = AppSettingsState.instance.temperature,
+      model = AppSettingsState.instance.smartModel.chatModel(),
+      deserializerRetries = 5
+    ).create()
+
+  override fun getConfig(project: Project?): String {
+    // No configuration needed for this action
+    return ""
+  }
 
 
-    interface DescribeAction_VirtualAPI {
-        fun describeCode(
-            code: String,
-            computerLanguage: String,
-            humanLanguage: String
-        ): DescribeAction_ConvertedText
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if (!super.isEnabled(event)) return false
+    val state = getState(event)
+    return state?.language != null && state.selectedText?.isNotBlank() == true
+  }
 
-        class DescribeAction_ConvertedText {
-            var text: String? = null
-            var language: String? = null
-        }
+  override fun processSelection(state: SelectionAction.SelectionState, config: String?): String {
+    try {
+      val description = proxy.describeCode(
+        IndentedText.fromString(state.selectedText).textBlock.toString().trim(),
+        state.language?.name ?: "",
+        AppSettingsState.instance.humanLanguage
+      ).text ?: throw IllegalStateException("Failed to generate description")
+      val wrapping = com.github.simiacryptus.aicoder.util.StringUtil.lineWrapping(description.trim(), 120)
+      val numberOfLines = wrapping.trim().split("\n").reversed().dropWhile { it.isEmpty() }.size
+      val commentStyle = if (numberOfLines == 1) {
+        state.language?.lineComment
+      } else {
+        state.language?.blockComment
+      }
+      return buildString {
+        append(state.indent)
+        append(commentStyle?.fromString(wrapping)?.withIndent(state.indent!!) ?: wrapping)
+        append("\n")
+        append(state.indent)
+        append(state.selectedText)
+      }
+    } catch (e: Exception) {
+      log.error("Failed to describe code", e)
+      throw e
     }
-
-    private val proxy: DescribeAction_VirtualAPI
-        get() = ChatProxy(
-            clazz = DescribeAction_VirtualAPI::class.java,
-            api = api,
-            temperature = AppSettingsState.instance.temperature,
-            model = AppSettingsState.instance.smartModel.chatModel(),
-            deserializerRetries = 5
-        ).create()
-
-    override fun getConfig(project: Project?): String {
-        // No configuration needed for this action
-        return ""
-    }
-
-
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        if (!super.isEnabled(event)) return false
-        val state = getState(event)
-        return state?.language != null && state.selectedText?.isNotBlank() == true
-    }
-
-    protected fun processSelection(state: SelectionState, config: String?): String {
-        try {
-            val description = proxy.describeCode(
-                IndentedText.fromString(state.selectedText).textBlock.toString().trim(),
-                state.language?.name ?: "",
-                AppSettingsState.instance.humanLanguage
-            ).text ?: throw IllegalStateException("Failed to generate description")
-            val wrapping = com.github.simiacryptus.aicoder.util.StringUtil.lineWrapping(description.trim(), 120)
-            val numberOfLines = wrapping.trim().split("\n").reversed().dropWhile { it.isEmpty() }.size
-            val commentStyle = if (numberOfLines == 1) {
-                state.language?.lineComment
-            } else {
-                state.language?.blockComment
-            }
-            return buildString {
-                append(state.indent)
-                append(commentStyle?.fromString(wrapping)?.withIndent(state.indent!!) ?: wrapping)
-                append("\n")
-                append(state.indent)
-                append(state.selectedText)
-            }
-        } catch (e: Exception) {
-            log.error("Failed to describe code", e)
-            throw e
-        }
-    }
+  }
 }

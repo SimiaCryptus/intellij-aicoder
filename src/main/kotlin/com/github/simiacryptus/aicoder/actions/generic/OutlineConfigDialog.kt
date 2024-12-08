@@ -120,6 +120,9 @@ data class ExpansionStep(
 
 
 data class OutlineSettings(
-    val expansionSteps: List<ExpansionStep> = listOf(ExpansionStep(AppSettingsState.instance.smartModel.chatModel())),
+    val expansionSteps: List<ExpansionStep> = listOf(
+        ExpansionStep(AppSettingsState.instance.smartModel.chatModel()),
+        ExpansionStep(AppSettingsState.instance.smartModel.chatModel())
+    ),
     val temperature: Double = AppSettingsState.instance.temperature,
 )
