@@ -3,103 +3,139 @@ package com.github.simiacryptus.aicoder.actions.knowledge
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.simiacryptus.skyenet.apps.parse.DocumentParserApp
 import com.simiacryptus.skyenet.apps.parse.ParsingModelType
-import javax.swing.JComboBox
 import javax.swing.JComponent
 
 class DocumentDataExtractorConfigDialog(
-    project: Project?,
-    var settings: DocumentParserApp.Settings,
-    var modelType: ParsingModelType<*>
-) : DialogWrapper(project, true) {  // Make dialog modal for better UX
-    companion object {
-        private const val DEFAULT_DPI = 300f
-        private const val DEFAULT_MAX_PAGES = 100
-        private const val DEFAULT_PAGES_PER_BATCH = 10
+  project: Project?,
+  var settings: DocumentParserApp.Settings,
+  var modelType: ParsingModelType<*>
+) : DialogWrapper(project, true) {
+  companion object {
+    private const val DEFAULT_DPI = 300f
+    private const val DEFAULT_MAX_PAGES = 100
+    private const val DEFAULT_PAGES_PER_BATCH = 10
+  }
+
+  private var dpiValue = settings.dpi.toString()
+  private var maxPagesValue = settings.maxPages.toString()
+  private var outputFormatValue = settings.outputFormat
+  private var pagesPerBatchValue = settings.pagesPerBatch.toString()
+  private var showImagesValue = settings.showImages
+  private var saveImageFilesValue = settings.saveImageFiles
+  private var saveTextFilesValue = settings.saveTextFiles
+  private var saveFinalJsonValue = settings.saveFinalJson
+  private var fastModeValue = settings.fastMode
+  private var addLineNumbersValue = settings.addLineNumbers
+  private var selectedModelType = modelType
+
+  init {
+    init()
+    title = "Configure Document Data Extractor"
+  }
+
+  override fun createCenterPanel(): JComponent {
+    return panel {
+      row("Parsing Model:") {
+        comboBox(ParsingModelType.values().toList())
+          .bindItem({ selectedModelType }, { selectedModelType = it ?: modelType })
+      }
+      row("DPI:") {
+        textField()
+          .bindText({ dpiValue }, { dpiValue = it })
+          .validationOnInput {
+            validateFloatField(it.text, "DPI")
+          }
+      }
+      row("Max Pages:") {
+        textField()
+          .bindText({ maxPagesValue }, { maxPagesValue = it })
+          .validationOnInput {
+            validateIntField(it.text, "Max pages")
+          }
+      }
+      row("Output Format:") {
+        textField()
+          .bindText({ outputFormatValue }, { outputFormatValue = it })
+      }
+      row("Pages Per Batch:") {
+        textField()
+          .bindText({ pagesPerBatchValue }, { pagesPerBatchValue = it })
+          .validationOnInput {
+            validateIntField(it.text, "Pages per batch")
+          }
+      }
+      row {
+        checkBox("Show Images")
+          .bindSelected({ showImagesValue }, { showImagesValue = it })
+        checkBox("Save Image Files")
+          .bindSelected({ saveImageFilesValue }, { saveImageFilesValue = it })
+      }
+      row {
+        checkBox("Save Text Files")
+          .bindSelected({ saveTextFilesValue }, { saveTextFilesValue = it })
+        checkBox("Save Final JSON")
+          .bindSelected({ saveFinalJsonValue }, { saveFinalJsonValue = it })
+      }
+      row {
+        checkBox("Fast Mode")
+          .bindSelected({ fastModeValue }, { fastModeValue = it })
+        checkBox("Add Line Numbers")
+          .bindSelected({ addLineNumbersValue }, { addLineNumbersValue = it })
+      }
     }
+  }
 
-    private val dpiField = JBTextField(settings.dpi.toString())
-    private val maxPagesField = JBTextField(settings.maxPages.toString())
-    private val outputFormatField = JBTextField(settings.outputFormat)
-    private val pagesPerBatchField = JBTextField(settings.pagesPerBatch.toString())
-    private val showImagesCheckbox = JBCheckBox("Show Images", settings.showImages)
-    private val saveImageFilesCheckbox = JBCheckBox("Save Image Files", settings.saveImageFiles)
-    private val saveTextFilesCheckbox = JBCheckBox("Save Text Files", settings.saveTextFiles)
-    private val saveFinalJsonCheckbox = JBCheckBox("Save Final JSON", settings.saveFinalJson)
-    private val fastModeCheckbox = JBCheckBox("Fast Mode", settings.fastMode)
-    private val addLineNumbersCheckbox = JBCheckBox("Add Line Numbers", settings.addLineNumbers)
-    private val modelTypeComboBox = JComboBox(ParsingModelType.values().toTypedArray()).apply {
-        selectedItem = modelType
+  private fun validateFloatField(text: String, fieldName: String): ValidationInfo? {
+    try {
+      text.toFloat().also {
+        if (it <= 0) return ValidationInfo("$fieldName must be positive")
+      }
+    } catch (e: NumberFormatException) {
+      return ValidationInfo("Invalid $fieldName value")
     }
+    return null
+  }
 
-    init {
-        init()
-        title = "Configure Document Data Extractor"
+  private fun validateIntField(text: String, fieldName: String): ValidationInfo? {
+    try {
+      text.toInt().also {
+        if (it <= 0) return ValidationInfo("$fieldName must be positive")
+      }
+    } catch (e: NumberFormatException) {
+      return ValidationInfo("Invalid $fieldName value")
     }
+    return null
+  }
 
-    override fun createCenterPanel(): JComponent {
+  override fun doValidate(): ValidationInfo? {
+    return validateFloatField(dpiValue, "DPI")
+      ?: validateIntField(maxPagesValue, "Max pages")
+      ?: validateIntField(pagesPerBatchValue, "Pages per batch")
+  }
 
-        return panel {
-            row("Parsing Model:") { modelTypeComboBox(CCFlags.growX) }
-            row("DPI:") { dpiField(CCFlags.growX) }
-            row("Max Pages:") { maxPagesField(CCFlags.growX) }
-            row("Output Format:") { outputFormatField(CCFlags.growX) }
-            row("Pages Per Batch:") { pagesPerBatchField(CCFlags.growX) }
-            row { showImagesCheckbox() }
-            row { saveImageFilesCheckbox() }
-            row { saveTextFilesCheckbox() }
-            row { saveFinalJsonCheckbox() }
-            row { fastModeCheckbox() }
-            row { addLineNumbersCheckbox() }
-        }
-    }
 
-    override fun doValidate(): ValidationInfo? {
-        try {
-            dpiField.text.toFloat().also {
-                if (it <= 0) return ValidationInfo("DPI must be positive", dpiField)
-            }
-        } catch (e: NumberFormatException) {
-            return ValidationInfo("Invalid DPI value", dpiField)
-        }
-        try {
-            maxPagesField.text.toInt().also {
-                if (it <= 0) return ValidationInfo("Max pages must be positive", maxPagesField)
-            }
-        } catch (e: NumberFormatException) {
-            return ValidationInfo("Invalid max pages value", maxPagesField)
-        }
-        try {
-            pagesPerBatchField.text.toInt().also {
-                if (it <= 0) return ValidationInfo("Pages per batch must be positive", pagesPerBatchField)
-            }
-        } catch (e: NumberFormatException) {
-            return ValidationInfo("Invalid pages per batch value", pagesPerBatchField)
-        }
-        return null
-    }
+  override fun doOKAction() {
+    if (doValidate() != null) return
 
-    override fun doOKAction() {
-        if (doValidate() != null) return
-
-        settings = DocumentParserApp.Settings(
-            dpi = dpiField.text.toFloatOrNull() ?: DEFAULT_DPI,
-            maxPages = maxPagesField.text.toIntOrNull() ?: DEFAULT_MAX_PAGES,
-            outputFormat = outputFormatField.text,
-            pagesPerBatch = pagesPerBatchField.text.toIntOrNull() ?: DEFAULT_PAGES_PER_BATCH,
-            showImages = showImagesCheckbox.isSelected,
-            saveImageFiles = saveImageFilesCheckbox.isSelected,
-            saveTextFiles = saveTextFilesCheckbox.isSelected,
-            saveFinalJson = saveFinalJsonCheckbox.isSelected,
-            fastMode = fastModeCheckbox.isSelected,
-            addLineNumbers = addLineNumbersCheckbox.isSelected
-        )
-        modelType = modelTypeComboBox.selectedItem as ParsingModelType<*>
-        super.doOKAction()
-    }
+    settings = DocumentParserApp.Settings(
+      dpi = dpiValue.toFloatOrNull() ?: DEFAULT_DPI,
+      maxPages = maxPagesValue.toIntOrNull() ?: DEFAULT_MAX_PAGES,
+      outputFormat = outputFormatValue,
+      pagesPerBatch = pagesPerBatchValue.toIntOrNull() ?: DEFAULT_PAGES_PER_BATCH,
+      showImages = showImagesValue,
+      saveImageFiles = saveImageFilesValue,
+      saveTextFiles = saveTextFilesValue,
+      saveFinalJson = saveFinalJsonValue,
+      fastMode = fastModeValue,
+      addLineNumbers = addLineNumbersValue
+    )
+    modelType = selectedModelType
+    super.doOKAction()
+  }
 }

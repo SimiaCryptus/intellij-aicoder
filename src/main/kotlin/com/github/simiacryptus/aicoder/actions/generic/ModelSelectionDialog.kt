@@ -1,10 +1,10 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.simiacryptus.jopenai.models.ChatModel
+import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
+import com.simiacryptus.jopenai.models.ChatModel
 import javax.swing.JComponent
 
 class ModelSelectionDialog(
@@ -14,11 +14,6 @@ class ModelSelectionDialog(
 ) : DialogWrapper(project, true) {
 
     var selectedModel: ChatModel? = null
-    private val modelComboBox = ComboBox(
-        availableModels.map { it.modelName }.toTypedArray()
-    ).apply {
-        selectedItem = initialSelection?.modelName
-    }
 
     init {
         init()
@@ -27,12 +22,15 @@ class ModelSelectionDialog(
 
     override fun createCenterPanel(): JComponent = panel {
         row("Model:") {
-            cell(modelComboBox)
+            comboBox(availableModels.map { it.modelName })
+                .bindItem({ initialSelection?.modelName }, { selectedItem ->
+                    selectedModel = availableModels.find { it.modelName == selectedItem }
+                })
+                .focused()
+                .validationOnApply {
+                    if (it.selectedItem == null) error("Please select a model")
+                    null
+                }
         }
-    }
-
-    override fun doOKAction() {
-        selectedModel = availableModels.find { it.modelName == modelComboBox.selectedItem }
-        super.doOKAction()
     }
 }

@@ -7,6 +7,10 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
+ import com.intellij.ui.dsl.builder.bindValue
+ import com.intellij.ui.dsl.builder.bindSelected
+ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+ import com.intellij.ui.components.JBScrollPane
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.models.chatModel
 import javax.swing.*
@@ -16,20 +20,11 @@ class OutlineConfigDialog(
     var settings: OutlineSettings
 ) : DialogWrapper(project, true) {
 
-    private val temperatureSlider = JSlider(0, 100, (settings.temperature * 100).toInt())
+    private var temperature = (settings.temperature * 100).toInt()
     private val expansionSteps = DefaultListModel<ExpansionStep>().apply {
         settings.expansionSteps.forEach { addElement(it) }
     }
-    private val expansionStepsList = JBList(expansionSteps).apply {
-        cellRenderer = ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
-                JLabel(value?.model?.modelName ?: "Unknown Model").apply {
-                    if (isSelected) {
-                        background = list?.selectionBackground
-                        foreground = list?.selectionForeground
-                    }
-                }
-            }
-    }
+    private var selectedIndex = -1
     private val availableModels = ChatModel.values()
         .map { it.value }
         .filter { isVisible(it) }
@@ -43,39 +38,55 @@ class OutlineConfigDialog(
     override fun createCenterPanel(): JComponent = panel {
         group("Outline Generation Steps") {
             row {
-                cell(JScrollPane(expansionStepsList))
-                    .align(Align.FILL)
-                    .comment("List of models to use in sequence for outline generation. At least one model is required.")
-            }
-            row {
-                button("Add Step") {
-                    val dialog = ModelSelectionDialog(project, availableModels)
-                    if (dialog.showAndGet()) {
-                        dialog.selectedModel?.let { model ->
-                            expansionSteps.addElement(ExpansionStep(model))
-                            expansionStepsList.selectedIndex = expansionSteps.size() - 1
+            val listComponent = JBList(expansionSteps).apply {
+                cellRenderer = ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
+                    JLabel(value?.model?.modelName ?: "Unknown Model").apply {
+                        if (isSelected) {
+                            background = list.selectionBackground
+                            foreground = list.selectionForeground
                         }
                     }
                 }
-                button("Remove Step") {
-                    if (expansionStepsList.selectedIndex >= 0) {
-                        val newIndex = if (expansionStepsList.selectedIndex > 0) 
-                            expansionStepsList.selectedIndex - 1 
-                        else if (expansionSteps.size() > 1) 
-                            0 
-                        else 
-                            -1
-                        expansionSteps.remove(expansionStepsList.selectedIndex)
-                        expansionStepsList.selectedIndex = newIndex
+                addListSelectionListener { e ->
+                    if (!e.valueIsAdjusting) {
+                        selectedIndex = selectedIndex
                     }
                 }
-                button("Edit Step") {
-                    if (expansionStepsList.selectedIndex >= 0) {
-                        val currentStep = expansionSteps.get(expansionStepsList.selectedIndex)
-                        val dialog = ModelSelectionDialog(project, availableModels, currentStep.model)
+            }
+            cell(listComponent)
+                .align(Align.FILL)
+                .comment("List of models to use in sequence for outline generation. At least one model is required.")
+            }
+            row {
+                this@group.buttonsGroup {
+                    this@row.button("Add Step") {
+                        val dialog = ModelSelectionDialog(project, availableModels)
                         if (dialog.showAndGet()) {
                             dialog.selectedModel?.let { model ->
-                                expansionSteps.set(expansionStepsList.selectedIndex, ExpansionStep(model))
+                                expansionSteps.addElement(ExpansionStep(model))
+                                selectedIndex = expansionSteps.size() - 1
+                            }
+                        }
+                    }
+                    this@row.button("Remove Step") {
+                        if (selectedIndex >= 0) {
+                            val newIndex = when {
+                              selectedIndex > 0 -> selectedIndex - 1
+                              expansionSteps.size() > 1 -> 0
+                              else -> -1
+                            }
+                            expansionSteps.remove(selectedIndex)
+                            selectedIndex = newIndex
+                        }
+                    }
+                    this@row.button("Edit Step") {
+                        if (selectedIndex >= 0) {
+                            val currentStep = expansionSteps.get(selectedIndex)
+                            val dialog = ModelSelectionDialog(project, availableModels, currentStep.model)
+                            if (dialog.showAndGet()) {
+                                dialog.selectedModel?.let { model ->
+                                    expansionSteps.set(selectedIndex, ExpansionStep(model))
+                                }
                             }
                         }
                     }
@@ -83,7 +94,13 @@ class OutlineConfigDialog(
             }
         }
         row("Global Temperature:") {
-            cell(temperatureSlider)
+            slider(
+                min = 0,
+                max = 100,
+                minorTickSpacing = 1,
+                majorTickSpacing = 10,
+            )
+                .bindValue({ temperature }, { temperature = it })
                 .align(Align.FILL)
                 .comment("Adjust the temperature value (0-100)")
         }
@@ -91,7 +108,7 @@ class OutlineConfigDialog(
 
     override fun doValidate(): ValidationInfo? {
         if (expansionSteps.size() == 0) {
-            return ValidationInfo("At least one expansion step is required", expansionStepsList)
+            return ValidationInfo("At least one expansion step is required")
         }
         return null
     }
@@ -99,7 +116,7 @@ class OutlineConfigDialog(
     override fun doOKAction() {
         settings = OutlineSettings(
             expansionSteps = List(expansionSteps.size()) { expansionSteps.getElementAt(it) },
-            temperature = temperatureSlider.value / 100.0,
+            temperature = temperature / 100.0,
         )
         super.doOKAction()
     }
