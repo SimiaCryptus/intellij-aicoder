@@ -67,7 +67,7 @@
                     description="Initiate an interactive session to discuss and apply patches to your code, with intelligent suggestions for modifications">
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.code.SmartPasteAction"
-                    text="_Paste"
+                    text="_Smart Paste"
                     description="Smart paste functionality that automatically detects and converts clipboard content to match the current file's programming language">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift V"/>
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift V"/>
