@@ -36,23 +36,25 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.UUID
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.Box
-import javax.swing.BoxLayout
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JComboBox
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JCheckBox
+import javax.swing.*
 
 class MassPatchAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    private val log = org.slf4j.LoggerFactory.getLogger(MassPatchAction::class.java)
+
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.getSelectedFile(event)?.isDirectory == false) return false
-        return super.isEnabled(event)
+        if (!super.isEnabled(event)) return false
+        UITools.getSelectedFolder(event) ?: UITools.getSelectedFiles(event).let {
+            when (it.size) {
+                0 -> null
+                else -> it
+            }
+        } ?: return false
+        return true
     }
 
     class SettingsUI {
@@ -64,9 +66,9 @@ class MassPatchAction : BaseAction() {
 
         @Name("Recent Instructions")
         val recentInstructions = JComboBox<String>()
+
         @Name("Auto Apply")
         val autoApply = JCheckBox("Auto Apply Changes")
-
     }
 
     class UserSettings(
@@ -120,31 +122,46 @@ class MassPatchAction : BaseAction() {
     }
 
 
-    override fun handle(e: AnActionEvent) {
-        val project = e.project
-        val config = getConfig(project, e)
-
-        val session = Session.newGlobalID()
-        SessionProxyServer.chats[session] = MassPatchServer(config=config!!, api=api, autoApply = config.settings?.autoApply ?: false)
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
-
-        val server = AppServer.getServer(e.project)
-        Thread {
-            Thread.sleep(500)
-            try {
-                val uri = server.server.uri.resolve("/#$session")
-                log.info("Opening browser to $uri")
-                browse(uri)
-            } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
+    override fun handle(event: AnActionEvent) {
+        try {
+            val project = event.project
+            val config = getConfig(project, event)
+            if (config == null) {
+                log.info("Configuration cancelled by user")
+                return
             }
-        }.start()
+
+            val session = Session.newGlobalID()
+            SessionProxyServer.metadataStorage.setSessionName(
+                null,
+                session,
+                "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+            )
+            SessionProxyServer.chats[session] = MassPatchServer(config = config!!, api = api, autoApply = config.settings?.autoApply ?: false)
+            ApplicationServer.appInfoMap[session] = AppInfoData(
+                applicationName = "Code Chat",
+                singleInput = true,
+                stickyInput = false,
+                loadImages = false,
+                showMenubar = false
+            )
+
+            val server = AppServer.getServer(event.project)
+            UITools.runAsync(project, "Opening browser") {
+                Thread.sleep(500)
+                try {
+                    val uri = server.server.uri.resolve("/#$session")
+                    log.info("Opening browser to $uri")
+                    browse(uri)
+                } catch (e: Throwable) {
+                    log.warn("Error opening browser", e)
+                    UITools.showErrorDialog(project, "Failed to open browser: ${e.message}", "Error")
+                }
+            }
+        } catch (e: Exception) {
+            log.error("Error in mass patch action", e)
+            UITools.showErrorDialog(event.project, e.message ?: "", "Error")
+        }
 
     }
 
@@ -153,7 +170,7 @@ class MassPatchAction : BaseAction() {
 
         init {
             this.title = title
-            // Set the default values for the UI elements from userSettings
+// Set the default values for the UI elements from userSettings
             settingsUI.transformationMessage.text = userSettings.transformationMessage
             settingsUI.autoApply.isSelected = userSettings.autoApply
             init()
@@ -201,6 +218,7 @@ class MassPatchServer(
     path = "/patchChat",
     showMenubar = false,
 ) {
+    private val log = org.slf4j.LoggerFactory.getLogger(MassPatchServer::class.java)
     private lateinit var _root: Path
 
 
@@ -211,52 +229,59 @@ class MassPatchServer(
 
             return SimpleActor(
                 prompt = """
-                            |You are a helpful AI that helps people with coding.
-                            |
-                            |Response should use one or more code patches in diff format within ```diff code blocks.
-                            |Each diff should be preceded by a header that identifies the file being modified.
-                            |The diff format should use + for line additions, - for line deletions.
-                            |The diff should include 2 lines of context before and after every change.
-                            |
-                            |Example:
-                            |
-                            |Here are the patches:
-                            |
-                            |### src/utils/exampleUtils.js
-                            |```diff
-                            | // Utility functions for example feature
-                            | const b = 2;
-                            | function exampleFunction() {
-                            |-   return b + 1;
-                            |+   return b + 2;
-                            | }
-                            |```
-                            |
-                            |### tests/exampleUtils.test.js
-                            |```diff
-                            | // Unit tests for exampleUtils
-                            | const assert = require('assert');
-                            | const { exampleFunction } = require('../src/utils/exampleUtils');
-                            | 
-                            | describe('exampleFunction', () => {
-                            |-   it('should return 3', () => {
-                            |+   it('should return 4', () => {
-                            |     assert.equal(exampleFunction(), 3);
-                            |   });
-                            | });
-                            |```
-                            |
-                            |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                            """.trimMargin(),
+|You are a helpful AI that helps people with coding.
+|
+|Response should use one or more code patches in diff format within ```diff code blocks.
+|Each diff should be preceded by a header that identifies the file being modified.
+|The diff format should use + for line additions, - for line deletions.
+|The diff should include 2 lines of context before and after every change.
+|
+|Example:
+|
+|Here are the patches:
+|
+|### src/utils/exampleUtils.js
+|```diff
+| // Utility functions for example feature
+| const b = 2;
+| function exampleFunction() {
+|-   return b + 1;
+|+   return b + 2;
+| }
+|```
+|
+|### tests/exampleUtils.test.js
+|```diff
+| // Unit tests for exampleUtils
+| const assert = require('assert');
+| const { exampleFunction } = require('../src/utils/exampleUtils');
+| 
+| describe('exampleFunction', () => {
+|-   it('should return 3', () => {
+|+   it('should return 4', () => {
+|     assert.equal(exampleFunction(), 3);
+|   });
+| });
+|```
+|
+|If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+""".trimMargin(),
                 model = AppSettingsState.instance.smartModel.chatModel(),
                 temperature = AppSettingsState.instance.temperature,
             )
         }
 
+
     override fun newSession(user: User?, session: Session): SocketManager {
         val socketManager = super.newSession(user, session)
         val ui = (socketManager as ApplicationSocketManager).applicationInterface
-        _root = config.project?.basePath?.let { Path.of(it) } ?: Path.of(".")
+        try {
+            _root = config.project?.basePath?.let { Path.of(it) }
+                ?: throw IllegalStateException("Project base path not found")
+        } catch (e: Exception) {
+            log.error("Failed to initialize root path", e)
+            throw e
+        }
         val task = ui.newTask(true)
         val api = (api as ChatClient).getChildClient().apply {
             val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
@@ -278,11 +303,11 @@ class MassPatchServer(
                             ?.entries?.joinToString("\n\n") { (path, code) ->
                                 val extension = path.toString().split('.').lastOrNull()
                                 """
-                            |# $path
-                            |```$extension
-                            |${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
-                            |```
-                            """.trimMargin()
+|# $path
+|```$extension
+|${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
+|```
+""".trimMargin()
                             }
                         val fileTask = ui.newTask(false).apply {
                             tabs[path.toString()] = placeholder

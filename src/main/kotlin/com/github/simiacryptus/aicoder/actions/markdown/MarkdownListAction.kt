@@ -1,8 +1,7 @@
-﻿package com.github.simiacryptus.aicoder.actions.markdown
+package com.github.simiacryptus.aicoder.actions.markdown
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.github.simiacryptus.aicoder.util.ComputerLanguage
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.UITools.getIndent
 import com.github.simiacryptus.aicoder.util.UITools.insertString
@@ -12,12 +11,48 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
 import com.simiacryptus.util.StringUtil
+import java.awt.Component
+import javax.swing.JOptionPane
 
+/**
+ * Action that extends markdown lists by generating additional items using AI.
+ * Supports bullet lists and checkbox lists.
+ */
 class MarkdownListAction : BaseAction() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    private val log = Logger.getInstance(MarkdownListAction::class.java)
+    private lateinit var progress: ProgressIndicator
+
+    data class ListConfig(
+        val itemCount: Int = 0,
+        val temperature: Double = AppSettingsState.instance.temperature
+    )
+
+    /**
+     * Gets configuration for list generation
+     */
+    private fun getConfig(project: Project?): ListConfig? {
+        return try {
+            ListConfig(
+                itemCount = UITools.showInputDialog(
+                    project as? Component,
+                    "How many new items to generate?",
+                    "Generate List Items",
+                    JOptionPane.QUESTION_MESSAGE
+                )?.let { Integer.parseInt(it.toString()) } ?: return null
+            )
+        } catch (e: Exception) {
+            log.warn("Failed to get configuration", e)
+            null
+        }
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     interface ListAPI {
         fun newListItems(
@@ -37,6 +72,7 @@ class MarkdownListAction : BaseAction() {
                 api = api,
                 model = AppSettingsState.instance.smartModel.chatModel(),
                 deserializerRetries = 5,
+                temperature = AppSettingsState.instance.temperature
             )
             chatProxy.addExample(
                 returnValue = ListAPI.Items(
@@ -52,7 +88,11 @@ class MarkdownListAction : BaseAction() {
         }
 
     override fun handle(e: AnActionEvent) {
-        val caret = e.getData(CommonDataKeys.CARET) ?: return
+        try {
+            val project = e.project ?: return
+            val config = getConfig(project) ?: return
+
+            val caret = e.getData(CommonDataKeys.CARET) ?: return
         val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
         val list =
             getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl") ?: return
@@ -63,6 +103,8 @@ class MarkdownListAction : BaseAction() {
                     if (all.isEmpty()) it.text else all[0].text
                 }.toList(), 10, false
         )
+            progress.fraction = 0.4
+            progress.text = "Generating new items..."
         val indent = getIndent(caret)
         val endOffset = list.textRange.endOffset
         val bulletTypes = listOf("- [ ] ", "- ", "* ")
@@ -75,13 +117,18 @@ class MarkdownListAction : BaseAction() {
 
         UITools.redoableTask(e) {
             var newItems: List<String?>? = null
+            progress.isIndeterminate = false
+            progress.fraction = 0.2
+            progress.text = "Analyzing existing items..."
             UITools.run(
                 e.project, "Generating New Items", true
             ) {
                 newItems = proxy.newListItems(
                     rawItems,
-                    (items.size * 2)
+                    config.itemCount
                 ).items
+                progress.fraction = 0.8
+                progress.text = "Formatting results..."
             }
             var newList = ""
             ApplicationManager.getApplication().runReadAction {
@@ -95,17 +142,21 @@ class MarkdownListAction : BaseAction() {
                 insertString(document, endOffset, "\n" + newList)
             }
         }
+
+        } catch (ex: Exception) {
+            log.error("Failed to generate list items", ex)
+            UITools.showErrorDialog(
+                e.project,
+                "Failed to generate list items: ${ex.message}",
+                "Error"
+            )
+        }
     }
 
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        val computerLanguage = ComputerLanguage.getComputerLanguage(event) ?: return false
-        if (ComputerLanguage.Markdown != computerLanguage) return false
-        val caret = event.getData(CommonDataKeys.CARET) ?: return false
-        val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return false
-        getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl") ?: return false
-        return true
+    override fun isEnabled(e: AnActionEvent): Boolean {
+        val enabled = super.isEnabled(e)
+        e.presentation.isEnabledAndVisible = enabled
+        return enabled
     }
+
 }
-
-
-

@@ -9,6 +9,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
@@ -65,7 +66,6 @@ abstract class SelectionAction<T : Any>(
             WriteCommandAction.runWriteCommandAction(e.project) {
                 rangeMarker = document?.createGuardedBlock(selectionStart, selectionEnd)
             }
-
             val newText = try {
                 processSelection(
                     event = e,
@@ -78,7 +78,8 @@ abstract class SelectionAction<T : Any>(
                         indent = indent,
                         contextRanges = editorState.contextRanges,
                         psiFile = editorState.psiFile,
-                        project = e.project
+                        project = e.project,
+                        editor = editor,
                     ),
                     config = config
                 )
@@ -172,12 +173,14 @@ abstract class SelectionAction<T : Any>(
         val language: ComputerLanguage? = null,
         val indent: CharSequence? = null,
         val contextRanges: Array<ContextRange> = arrayOf(),
-        val psiFile: PsiFile?,
-        val project: Project?
+        val psiFile: PsiFile? = null,
+        val project: Project? = null,
+        val progress: ProgressIndicator? = null,
+        val editor: Editor? = null,
     )
 
     open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        return LanguageUtils.isLanguageSupported(computerLanguage)
+        return true // LanguageUtils.isLanguageSupported(computerLanguage)
     }
 
     open fun defaultSelection(editorState: EditorState, offset: Int) = editorState.line

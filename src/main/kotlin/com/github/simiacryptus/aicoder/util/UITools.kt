@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.util
+package com.github.simiacryptus.aicoder.util
 
 import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
@@ -31,7 +32,10 @@ import com.simiacryptus.jopenai.exceptions.ModerationException
 import com.simiacryptus.jopenai.models.APIProvider
 import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Toolkit
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
@@ -49,17 +53,39 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.max
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
-import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaType
 
 object UITools {
     val retry = WeakHashMap<Document, Runnable>()
 
+    fun showError(project: Project?, message: String, title: String = "Error") {
+        Messages.showErrorDialog(project, message, title)
+    }
+
+    fun showWarning(project: Project?, message: String, title: String = "Warning") {
+        Messages.showWarningDialog(project, message, title)
+    }
+
+    fun getLanguageFromFile(fileName: String): String {
+        return when {
+            fileName.endsWith(".kt") -> "kotlin"
+            fileName.endsWith(".java") -> "java"
+            fileName.endsWith(".py") -> "python"
+            fileName.endsWith(".js") -> "javascript"
+            fileName.endsWith(".ts") -> "typescript"
+            fileName.endsWith(".html") -> "html"
+            fileName.endsWith(".css") -> "css"
+            fileName.endsWith(".xml") -> "xml"
+            fileName.endsWith(".json") -> "json"
+            else -> "text"
+        }
+    }
     private val log = LoggerFactory.getLogger(UITools::class.java)
     private val threadFactory: ThreadFactory = ThreadFactoryBuilder().setNameFormat("API Thread %d").build()
     private val pool: ListeningExecutorService by lazy {
@@ -227,9 +253,13 @@ object UITools {
         return indent
     }
 
-    fun <T : Any, R : Any> readKotlinUIViaReflection(component: R, settings: T) {
-        val componentClass: Class<*> = component.javaClass
-        val declaredUIFields = componentClass.kotlin.memberProperties.map { it.name }.toSet()
+    fun <T : Any, R : Any> readKotlinUIViaReflection(
+        settings: T,
+        component: R,
+        componentClass: KClass<*> = component::class,
+    ) {
+
+        val declaredUIFields = componentClass.memberProperties.map { it.name }.toSet()
         for (settingsField in settings.javaClass.kotlin.memberProperties) {
             if (settingsField is KMutableProperty<*>) {
                 settingsField.isAccessible = true
@@ -238,7 +268,7 @@ object UITools {
                     var newSettingsValue: Any? = null
                     if (!declaredUIFields.contains(settingsFieldName)) continue
                     val uiField: KProperty1<R, *> =
-                        (componentClass.kotlin.memberProperties.find { it.name == settingsFieldName } as KProperty1<R, *>?)!!
+                        (componentClass.memberProperties.find { it.name == settingsFieldName } as KProperty1<R, *>?)!!
                     var uiVal = uiField.get(component)
                     if (uiVal is JScrollPane) {
                         uiVal = uiVal.viewport.view
@@ -293,9 +323,13 @@ object UITools {
         )
     }
 
-    fun <T : Any, R : Any> writeKotlinUIViaReflection(settings: T, component: R) {
-        val componentClass: Class<*> = component.javaClass
-        val declaredUIFields = componentClass.kotlin.memberProperties.map { it.name }.toSet()
+    fun <T : Any, R : Any> writeKotlinUIViaReflection(
+        settings: T,
+        component: R,
+        componentClass: KClass<*>,
+        settingsClass: KClass<*>
+    ) {
+        val declaredUIFields = componentClass.memberProperties.map { it.name }.toSet()
         val memberProperties = settings.javaClass.kotlin.memberProperties
         val publicProperties = memberProperties.filter {
             it.visibility == KVisibility.PUBLIC //&& it is KMutableProperty<*>
@@ -308,7 +342,7 @@ object UITools {
                     continue
                 }
                 val uiField: KProperty1<R, Any> =
-                    (componentClass.kotlin.memberProperties.find { it.name == fieldName } as KProperty1<R, Any>?)!!
+                    (componentClass.memberProperties.find { it.name == fieldName } as KProperty1<R, Any>?)!!
                 val settingsVal = settingsField.get(settings) ?: continue
                 var uiVal = uiField.get(component)
                 if (uiVal is JScrollPane) {
@@ -351,8 +385,7 @@ object UITools {
 
     private fun <T : Any> addKotlinFields(ui: T, formBuilder: FormBuilder, fillVertically: Boolean) {
         var first = true
-        for (field in ui.javaClass.kotlin.memberProperties) {
-            if (field.javaField == null) continue
+        for (field in ui.javaClass.kotlin.memberProperties.filterNotNull()) {
             try {
                 val nameAnnotation = field.annotations.find { it is Name } as Name?
                 val component = field.get(ui) as JComponent
@@ -545,7 +578,7 @@ object UITools {
         configClass: Class<C>,
         title: String = "Generate Project",
         onComplete: (C) -> Unit = { _ -> },
-    ): C = showDialog(
+    ): C = showDialog<C, T>(
         project,
         uiClass.getConstructor().newInstance(),
         configClass.getConstructor().newInstance(),
@@ -580,7 +613,11 @@ object UITools {
         dialog.show()
         log.debug("Dialog shown with result: ${dialog.isOK}")
         if (dialog.isOK) {
-            readKotlinUIViaReflection(component, config)
+            readKotlinUIViaReflection(
+                settings = config,
+                component = component,
+                componentClass = component::class
+            )
             log.debug("Reading UI via reflection completed")
             onComplete(config)
             log.debug("onComplete callback executed")
@@ -644,41 +681,113 @@ object UITools {
     class ModalTask<T>(
         project: Project, title: String, canBeCancelled: Boolean, val task: (ProgressIndicator) -> T
     ) : Task.WithResult<T, Exception>(project, title, canBeCancelled), Supplier<T> {
+        private val taskLog = LoggerFactory.getLogger(ModalTask::class.java)
         private val result = AtomicReference<T>()
         private val isError = AtomicBoolean(false)
         private val error = AtomicReference<Throwable>()
         private val semaphore = Semaphore(0)
+        private val completed = AtomicBoolean(false)
+        private val threadList = Collections.synchronizedList(ArrayList<Thread>())
+        private val cancelled = AtomicBoolean(false)
+        private val started = AtomicBoolean(false)
+        private val lock = Object()
+
         override fun compute(indicator: ProgressIndicator): T? {
+            taskLog.debug("Starting compute() for ModalTask: $title")
+            synchronized(lock) {
+                taskLog.debug("Checking task state - started: ${started.get()}, completed: ${completed.get()}, cancelled: ${cancelled.get()}")
+                if (!started.compareAndSet(false, true)) return null
+                if (completed.get() || cancelled.get()) {
+                    taskLog.debug("Task already completed or cancelled, releasing semaphore")
+                    semaphore.release()
+                    return null
+                }
+            }
             val currentThread = Thread.currentThread()
-            val threads = ArrayList<Thread>()
+            taskLog.debug("Adding thread ${currentThread.name} to threadList")
+            threadList.add(currentThread)
             val scheduledFuture = scheduledPool.scheduleAtFixedRate({
                 if (indicator.isCanceled) {
-                    threads.forEach { it.interrupt() }
+                    taskLog.debug("Indicator cancelled, interrupting threads")
+                    cancelled.set(true)
+                    threadList.forEach { it.interrupt() }
                 }
             }, 0, 1, TimeUnit.SECONDS)
-            threads.add(currentThread)
             return try {
+                synchronized(lock) {
+                    if (completed.get() || cancelled.get()) {
+                        taskLog.debug("Task completed or cancelled during execution")
+                        semaphore.release()
+                        return null
+                    }
+                }
+                taskLog.debug("Executing task")
                 result.set(task(indicator))
+                taskLog.debug("Task completed successfully")
                 result.get()
             } catch (e: Throwable) {
-                error(log, "Error running task", e)
+                taskLog.error("Error executing task", e)
+                log.info("Error running task", e)
                 isError.set(true)
                 error.set(e)
                 null
             } finally {
-                semaphore.release()
-                threads.remove(currentThread)
+                synchronized(lock) {
+                    taskLog.debug("Finalizing task execution")
+                    completed.set(true)
+                    semaphore.release()
+                }
+                taskLog.debug("Removing thread ${currentThread.name} from threadList")
+                threadList.remove(currentThread)
                 scheduledFuture.cancel(true)
             }
         }
 
         override fun get(): T {
-            semaphore.acquire()
-            semaphore.release()
-            if (isError.get()) {
-                throw error.get()
+            taskLog.debug("Attempting to get task result")
+            try {
+                val acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS)
+                taskLog.debug("Semaphore acquired: $acquired")
+                synchronized(lock) {
+                    if (!started.get() || !acquired) {
+                        taskLog.error("Task timed out or never started")
+                        cancelled.set(true)
+                        throw TimeoutException("Task timed out after 30 seconds")
+                    }
+                }
+            } finally {
+                semaphore.release()
             }
-            return result.get()
+            synchronized(lock) {
+                taskLog.debug("Checking final task state - completed: ${completed.get()}, error: ${isError.get()}, cancelled: ${cancelled.get()}")
+                if (!completed.get()) {
+                    throw IllegalStateException(
+                        "Task not completed" +
+                                (if (cancelled.get()) " (cancelled)" else "")
+                    )
+                }
+                if (isError.get()) {
+                    val e = error.get() ?: RuntimeException("Unknown error occurred")
+                    taskLog.error("Task failed with error", e)
+                    throw e
+                }
+                if (cancelled.get()) {
+                    taskLog.debug("Task was cancelled")
+                    throw InterruptedException("Task was cancelled")
+                }
+                taskLog.debug("Returning successful task result")
+                return result.get() ?: throw IllegalStateException("No result available")
+            }
+        }
+
+        override fun onCancel() {
+            taskLog.debug("Task cancelled")
+            super.onCancel()
+            synchronized(lock) {
+                cancelled.set(true)
+                threadList.forEach { it.interrupt() }
+                semaphore.release()
+            }
         }
 
     }
@@ -686,45 +795,131 @@ object UITools {
     class BgTask<T>(
         project: Project, title: String, canBeCancelled: Boolean, val task: (ProgressIndicator) -> T
     ) : Task.Backgroundable(project, title, canBeCancelled, DEAF), Supplier<T> {
+        private val taskLog = LoggerFactory.getLogger(BgTask::class.java)
 
         private val result = AtomicReference<T>()
         private val isError = AtomicBoolean(false)
         private val error = AtomicReference<Throwable>()
-        private val semaphore = Semaphore(0)
+        private val startSemaphore = Semaphore(0)
+        private val completeSemaphore = Semaphore(0)
+        private val completed = AtomicBoolean(false)
+        private val threadList = Collections.synchronizedList(ArrayList<Thread>())
+        private val cancelled = AtomicBoolean(false)
+        private val started = AtomicBoolean(false)
+        private val lock = Object()
+
         override fun run(indicator: ProgressIndicator) {
+            taskLog.debug("Starting run() for BgTask: $title")
+            synchronized(lock) {
+                taskLog.debug("Checking task state - started: ${started.get()}, completed: ${completed.get()}, cancelled: ${cancelled.get()}")
+                if (!started.compareAndSet(false, true)) return
+                if (completed.get() || cancelled.get()) {
+                    taskLog.debug("Task already completed or cancelled, releasing semaphore")
+                    startSemaphore.release()
+                    completeSemaphore.release()
+                    return
+                }
+            }
+            startSemaphore.release()
             val currentThread = Thread.currentThread()
-            val threads = ArrayList<Thread>()
+            taskLog.debug("Adding thread ${currentThread.name} to threadList")
+            threadList.add(currentThread)
             val scheduledFuture = scheduledPool.scheduleAtFixedRate({
                 if (indicator.isCanceled) {
-                    threads.forEach { it.interrupt() }
+                    taskLog.debug("Indicator cancelled, interrupting threads")
+                    cancelled.set(true)
+                    threadList.forEach { it.interrupt() }
                 }
             }, 0, 1, TimeUnit.SECONDS)
-            threads.add(currentThread)
             try {
+                synchronized(lock) {
+                    if (completed.get() || cancelled.get()) {
+                        taskLog.debug("Task completed or cancelled during execution")
+                        completeSemaphore.release()
+                        return
+                    }
+                }
+                taskLog.debug("Executing task")
                 val result = task(indicator)
                 this.result.set(result)
+                taskLog.debug("Task completed successfully")
             } catch (e: Throwable) {
+                taskLog.error("Error executing task", e)
                 log.info("Error running task", e)
                 error.set(e)
                 isError.set(true)
             } finally {
-                semaphore.release()
-                threads.remove(currentThread)
+                synchronized(lock) {
+                    taskLog.debug("Finalizing task execution")
+                    completed.set(true)
+                    completeSemaphore.release()
+                }
+                taskLog.debug("Removing thread ${currentThread.name} from threadList")
+                threadList.remove(currentThread)
                 scheduledFuture.cancel(true)
             }
         }
 
         override fun get(): T {
-            semaphore.acquire()
-            semaphore.release()
-            if (isError.get()) {
-                throw error.get()
+            taskLog.debug("Attempting to get task result")
+            try {
+                // Wait for task to start
+                val startAcquired = startSemaphore.tryAcquire(5, TimeUnit.SECONDS)
+                taskLog.debug("Start semaphore acquired: $startAcquired")
+                synchronized(lock) {
+                    if (!started.get() || !startAcquired) {
+                        taskLog.error("Task timed out or never started")
+                        cancelled.set(true)
+                        throw TimeoutException("Task failed to start after 5 seconds")
+                    }
+                }
+                // Wait for task to complete
+                val completeAcquired = completeSemaphore.tryAcquire(3000, TimeUnit.SECONDS)
+                taskLog.debug("Complete semaphore acquired: $completeAcquired")
+                if (!completeAcquired) {
+                    taskLog.error("Task execution timed out")
+                    cancelled.set(true)
+                    throw TimeoutException("Task execution timed out after 30 seconds")
+                }
+            } finally {
+                startSemaphore.release()
+                completeSemaphore.release()
             }
-            return result.get()
+            synchronized(lock) {
+                taskLog.debug("Checking final task state - completed: ${completed.get()}, error: ${isError.get()}, cancelled: ${cancelled.get()}")
+                if (!completed.get()) {
+                    throw IllegalStateException(
+                        "Task not completed" +
+                                (if (cancelled.get()) " (cancelled)" else "")
+                    )
+                }
+                if (isError.get()) {
+                    val e = error.get() ?: RuntimeException("Unknown error occurred")
+                    taskLog.error("Task failed with error", e)
+                    throw e
+                }
+                if (cancelled.get()) {
+                    taskLog.debug("Task was cancelled")
+                    throw InterruptedException("Task was cancelled")
+                }
+                taskLog.debug("Returning successful task result")
+                return result.get() ?: throw IllegalStateException("No result available")
+            }
+        }
+
+        override fun onCancel() {
+            taskLog.debug("Task cancelled")
+            super.onCancel()
+            synchronized(lock) {
+                cancelled.set(true)
+                threadList.forEach { it.interrupt() }
+                startSemaphore.release()
+                completeSemaphore.release()
+            }
         }
     }
 
-    fun <T> run(
+    fun <T : Any> run(
         project: Project?,
         title: String?,
         canBeCancelled: Boolean = true,
@@ -741,6 +936,35 @@ object UITools {
             ProgressManager.getInstance().run(t)
             t.get()
         }
+    }
+
+
+    fun runAsync(
+        project: Project?,
+        title: String?,
+        canBeCancelled: Boolean = true,
+        suppressProgress: Boolean = true,
+        task: (ProgressIndicator) -> Unit,
+    ) {
+        Thread {
+            try {
+                if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
+                    checkApiKey()
+                    task(AbstractProgressIndicatorBase())
+                } else {
+                    checkApiKey()
+                    val t = if (AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
+                    else BgTask(project, title ?: "", canBeCancelled, task)
+                    ProgressManager.getInstance().run(t)
+                    t.get()
+                }
+            } catch (e: Throwable) {
+                error(log, "Error running task", e)
+                showError(project, "Failed to initialize chat: ${e.message}")
+            }
+        }.apply {
+            name = title
+        }.start()
     }
 
     fun checkApiKey(k: String = AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""): String {
@@ -945,11 +1169,25 @@ object UITools {
         return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
     }
 
-    fun showErrorDialog(project: Project?, errorMessage: String, subMessage: String) {
+    fun showErrorDialog(project: Project?, errorMessage: String, title: String) {
         val formBuilder = FormBuilder.createFormBuilder()
-        formBuilder.addLabeledComponent("Error", JLabel(errorMessage))
-        formBuilder.addLabeledComponent("Details", JLabel(subMessage))
-        showOptionDialog(formBuilder.panel, "Dismiss", title = "Error", modal = true)
+        formBuilder.addComponent(JLabel(errorMessage))
+        showOptionDialog(formBuilder.panel, "OK", title = title, modal = true)
     }
 
+    fun showErrorDetails(project: Project?, e: Throwable) {
+        val sw = StringWriter()
+        e.printStackTrace(PrintWriter(sw))
+        val formBuilder = FormBuilder.createFormBuilder()
+        val textArea = JBTextArea(sw.toString())
+        textArea.isEditable = false
+        formBuilder.addComponent(JBScrollPane(textArea))
+        showOptionDialog(formBuilder.panel, "OK", title = "Error Details", modal = true)
+    }
+
+    fun showInfoMessage(project: Project?, message: String, title: String) {
+        val formBuilder = FormBuilder.createFormBuilder()
+        formBuilder.addComponent(JLabel(message))
+        showOptionDialog(formBuilder.panel, "OK", title = title, modal = true)
+    }
 }

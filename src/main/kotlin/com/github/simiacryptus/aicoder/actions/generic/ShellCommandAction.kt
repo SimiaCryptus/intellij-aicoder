@@ -7,7 +7,7 @@ import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.progress.ProgressIndicator
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.code.CodingAgent
@@ -19,6 +19,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
+import java.text.SimpleDateFormat
 
 class ShellCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -28,12 +29,25 @@ class ShellCommandAction : BaseAction() {
     }
 
     override fun handle(e: AnActionEvent) {
-        val project = e.project
-        val selectedFolder = UITools.getSelectedFolder(e)?.toFile
-        if (selectedFolder == null) {
-            Messages.showErrorDialog(project, "Please select a directory", "Error")
-            return
+        val project = e.project ?: return
+        UITools.runAsync(project, "Initializing Shell Command", true) { progress ->
+            try {
+                initializeShellCommand(e, progress)
+            } catch (ex: Exception) {
+                log.error("Failed to initialize shell command", ex)
+                UITools.showErrorDialog(
+                    project,
+                    "Failed to initialize shell command: ${ex.message}",
+                    "Error"
+                )
+            }
         }
+    }
+
+    private fun initializeShellCommand(e: AnActionEvent, progress: ProgressIndicator) {
+        progress.text = "Setting up shell environment..."
+        val selectedFolder = UITools.getSelectedFolder(e)?.toFile ?: throw IllegalStateException("No directory selected")
+        progress.text = "Configuring session..."
         val session = Session.newGlobalID()
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
@@ -42,6 +56,8 @@ class ShellCommandAction : BaseAction() {
             loadImages = false,
             showMenubar = false
         )
+
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.chats[session] = object : ApplicationServer(
             applicationName = "Shell Agent",
             path = "/shellAgent",
@@ -58,6 +74,7 @@ class ShellCommandAction : BaseAction() {
                 ui: ApplicationInterface,
                 api: API
             ) {
+                progress.text = "Processing command..."
                 val task = ui.newTask()
                 val agent = object : CodingAgent<ProcessInterpreter>(
                     api = api,
@@ -74,7 +91,10 @@ class ShellCommandAction : BaseAction() {
                     temperature = AppSettingsState.instance.temperature,
                     details = """
                         Execute the following shell command(s) in the specified directory and provide the output.
-                        Ensure to handle any errors or exceptions gracefully.
+                        Guidelines:
+                        - Handle errors and exceptions gracefully
+                        - Provide clear output formatting
+                        - Support command cancellation
                     """.trimIndent(),
                     model = AppSettingsState.instance.smartModel.chatModel(),
                     mainTask = task,
@@ -100,7 +120,7 @@ class ShellCommandAction : BaseAction() {
                       |${acceptButton(task, request, response, formText) { formHandle!! }}
                       |</div>
                       |${super.reviseMsg(task, request, response, formText) { formHandle!! }}
-                      """.trimMargin(), className = "reply-message"
+                      """.trimMargin(), additionalClasses = "reply-message"
                         )
                         formText.append(formHandle.toString())
                         formHandle.toString()
@@ -122,6 +142,7 @@ class ShellCommandAction : BaseAction() {
                 }
             }
         }
+        progress.text = "Opening browser interface..."
 
         val server = AppServer.getServer(e.project)
 
@@ -131,7 +152,7 @@ class ShellCommandAction : BaseAction() {
                 val uri = server.server.uri.resolve("/#$session")
                 log.info("Opening browser to $uri")
                 browse(uri)
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 log.warn("Error opening browser", e)
             }
         }.start()

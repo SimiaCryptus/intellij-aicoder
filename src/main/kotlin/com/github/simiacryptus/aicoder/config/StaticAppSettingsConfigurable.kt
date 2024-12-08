@@ -205,6 +205,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             component.listeningPort.text = settings.listeningPort.toString()
             component.listeningEndpoint.text = settings.listeningEndpoint
             component.suppressErrors.isSelected = settings.suppressErrors
+            component.disableAutoOpenUrls.isSelected = settings.disableAutoOpenUrls
             component.fastModel.selectedItem = settings.fastModel
             component.smartModel.selectedItem = settings.smartModel
             component.apiLog.isSelected = settings.apiLog

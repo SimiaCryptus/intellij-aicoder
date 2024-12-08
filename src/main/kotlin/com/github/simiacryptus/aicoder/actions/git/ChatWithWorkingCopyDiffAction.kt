@@ -16,6 +16,7 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import java.text.SimpleDateFormat
 import javax.swing.JOptionPane
 
 class ChatWithWorkingCopyDiffAction : AnAction() {
@@ -58,6 +59,7 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
             loadImages = false,
             showMenubar = false
         )
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
 
         val server = AppServer.getServer(e.project)
 
