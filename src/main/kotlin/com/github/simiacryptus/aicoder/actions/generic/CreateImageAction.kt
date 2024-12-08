@@ -204,7 +204,7 @@ class CreateImageAction : BaseAction() {
             Discussable(
                 task = task,
                 userMessage = { userMessage },
-                heading = userMessage,
+                heading = renderMarkdown(userMessage),
                 initialResponse = { it: String -> mainActor.answer(toInput(it), api = api) },
                 outputFn = { img: ImageResponse ->
                     val id = UUID.random().text

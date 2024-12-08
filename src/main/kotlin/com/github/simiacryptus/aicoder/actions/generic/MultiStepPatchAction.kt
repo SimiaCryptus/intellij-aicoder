@@ -245,7 +245,7 @@ class MultiStepPatchAction : BaseAction() {
             val architectureResponse = Discussable(
                 task = task,
                 userMessage = { userMessage },
-                heading = userMessage,
+                heading = renderMarkdown(userMessage),
                 initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
                 outputFn = { design: ParsedResponse<TaskList> ->
                     //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```")
