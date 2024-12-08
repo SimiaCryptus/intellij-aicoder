@@ -57,7 +57,6 @@ open class RenameVariablesAction : SelectionAction<String>() {
     }
 
     @Throws(Exception::class)
-
     override fun processSelection(event: AnActionEvent?, state: SelectionState, config: String?): String {
         try {
             val renameSuggestions = UITools.run(event?.project, "Analyzing Code", true, true) { progress ->
@@ -65,7 +64,7 @@ open class RenameVariablesAction : SelectionAction<String>() {
                 proxy
                     .suggestRenames(
                         state.selectedText ?: "",
-                        state.language?.name ?: "",
+                        state.language?.name ?: state.editor?.virtualFile?.extension ?: "",
                         AppSettingsState.instance.humanLanguage
                     )
                     .suggestions
@@ -91,11 +90,6 @@ open class RenameVariablesAction : SelectionAction<String>() {
             UITools.showErrorDialog(event?.project, "Failed to process rename operation: ${e.message}", "Error")
             throw e
         }
-    }
-
-
-    override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        return LanguageUtils.isLanguageSupported(computerLanguage)
     }
 
     companion object {

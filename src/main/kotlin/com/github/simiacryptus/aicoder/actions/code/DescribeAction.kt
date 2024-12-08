@@ -71,14 +71,14 @@ class DescribeAction : SelectionAction<String>() {
   override fun isEnabled(event: AnActionEvent): Boolean {
     if (!super.isEnabled(event)) return false
     val state = getState(event)
-    return state?.language != null && state.selectedText?.isNotBlank() == true
+    return state?.selectedText?.isNotBlank() == true
   }
 
   override fun processSelection(state: SelectionAction.SelectionState, config: String?): String {
     try {
       val description = proxy.describeCode(
         IndentedText.fromString(state.selectedText).textBlock.toString().trim(),
-        state.language?.name ?: "",
+        state.language?.name ?: state.editor?.virtualFile?.extension ?: "",
         AppSettingsState.instance.humanLanguage
       ).text ?: throw IllegalStateException("Failed to generate description")
       val wrapping = com.github.simiacryptus.aicoder.util.StringUtil.lineWrapping(description.trim(), 120)

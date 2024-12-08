@@ -81,7 +81,7 @@ open class CustomEditAction : SelectionAction<String>() {
                 val result = proxy.editCode(
                     state.selectedText ?: "",
                     instruction,
-                    state.language?.name ?: "text",
+                    state.language?.name ?: state.editor?.virtualFile?.extension ?: "unknown",
                     outputHumanLanguage
                 )
                 result.code ?: state.selectedText ?: ""

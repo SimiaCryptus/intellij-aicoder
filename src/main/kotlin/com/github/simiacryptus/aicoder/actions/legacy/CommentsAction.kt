@@ -25,14 +25,10 @@ class CommentsAction : SelectionAction<String>() {
         return ""
     }
 
-    override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        return LanguageUtils.isLanguageSupported(computerLanguage)
-    }
-
     override fun processSelection(state: SelectionState, config: String?): String {
         try {
             val selectedText = state.selectedText ?: return ""
-            val language = state.language?.toString() ?: return selectedText
+            val language = state.language?.toString() ?: state.editor?.virtualFile?.extension ?: return selectedText
             return ChatProxy(
                 clazz = CommentsAction_VirtualAPI::class.java,
                 api = api,

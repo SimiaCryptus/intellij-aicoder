@@ -180,7 +180,7 @@ abstract class SelectionAction<T : Any>(
     )
 
     open fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        return LanguageUtils.isLanguageSupported(computerLanguage)
+        return true // LanguageUtils.isLanguageSupported(computerLanguage)
     }
 
     open fun defaultSelection(editorState: EditorState, offset: Int) = editorState.line
