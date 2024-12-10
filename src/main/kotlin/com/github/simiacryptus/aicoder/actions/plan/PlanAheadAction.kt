@@ -28,7 +28,7 @@ class PlanAheadAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(e: AnActionEvent) {
-        val dialog = PlanAheadConfigDialog(
+        val dialog = PlanConfigDialog(
             e.project, PlanSettings(
                 defaultModel = AppSettingsState.instance.smartModel.chatModel(),
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),

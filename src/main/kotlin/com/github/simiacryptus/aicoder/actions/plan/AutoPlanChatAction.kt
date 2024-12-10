@@ -36,7 +36,7 @@ class AutoPlanChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(e: AnActionEvent) {
-        val dialog = PlanAheadConfigDialog(
+        val dialog = PlanConfigDialog(
             e.project, PlanSettings(
                 defaultModel = AppSettingsState.instance.smartModel.chatModel(),
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),
@@ -63,7 +63,7 @@ class AutoPlanChatAction : BaseAction() {
         }
     }
 
-    private fun initializeChat(e: AnActionEvent, dialog: PlanAheadConfigDialog, progress: ProgressIndicator) {
+    private fun initializeChat(e: AnActionEvent, dialog: PlanConfigDialog, progress: ProgressIndicator) {
         progress.text = "Setting up session..."
         val session = Session.newGlobalID()
         val root = getProjectRoot(e) ?: throw RuntimeException("Could not determine project root")
@@ -81,7 +81,7 @@ class AutoPlanChatAction : BaseAction() {
         }
     }
 
-    private fun setupChatSession(session: Session, root: File, e: AnActionEvent, dialog: PlanAheadConfigDialog) {
+    private fun setupChatSession(session: Session, root: File, e: AnActionEvent, dialog: PlanConfigDialog) {
         DataStorage.sessionPaths[session] = root
         SessionProxyServer.chats[session] = createChatApp(root, e, dialog)
         ApplicationServer.appInfoMap[session] = AppInfoData(
@@ -94,7 +94,7 @@ class AutoPlanChatAction : BaseAction() {
         SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
     }
 
-    private fun createChatApp(root: File, e: AnActionEvent, dialog: PlanAheadConfigDialog) =
+    private fun createChatApp(root: File, e: AnActionEvent, dialog: PlanConfigDialog) =
         object : AutoPlanChatApp(
             planSettings = dialog.settings.copy(
                 env = mapOf(),

@@ -50,7 +50,7 @@ class PlanChatAction : BaseAction() {
     }
 
     private fun initializeAndOpenChat(e: AnActionEvent) {
-        val dialog = PlanAheadConfigDialog(
+        val dialog = PlanConfigDialog(
             e.project, PlanSettings(
                 defaultModel = AppSettingsState.instance.smartModel.chatModel(),
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),
