@@ -1,8 +1,6 @@
 package com.github.simiacryptus.aicoder.actions.plan
 
 import com.github.simiacryptus.aicoder.config.AppSettingsState
-import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -14,6 +12,7 @@ import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.simiacryptus.jopenai.models.ChatModel
+import com.simiacryptus.skyenet.apps.plan.CommandAutoFixTask
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
 import com.simiacryptus.skyenet.apps.plan.TaskType
@@ -27,6 +26,7 @@ import javax.swing.table.DefaultTableModel
 class PlanConfigDialog(
   project: Project?,
   val settings: PlanSettings,
+  singleTaskMode: Boolean = false,
 ) : DialogWrapper(project) {
   companion object {
     private const val MIN_TEMP = 0
@@ -37,80 +37,19 @@ class PlanConfigDialog(
     private const val DEFAULT_PANEL_HEIGHT = 200
     private const val TEMPERATURE_SCALE = 100.0
     private const val TEMPERATURE_LABEL = "%.2f"
+    private const val TOOLTIP_WIDTH = 300
+    private const val TOOLTIP_PADDING = 5
+    private const val FONT_SIZE_ENABLED = 14f
+    private const val FONT_SIZE_DISABLED = 12f
+    private const val DIVIDER_PROPORTION = 0.3f
+    private const val COMMAND_BUTTON_WIDTH = 30
+    private const val COMMAND_PANEL_HEIGHT = 30
 
     fun isVisible(it: ChatModel): Boolean {
-      return AppSettingsState.instance.apiKey
-        ?.filter { it.value.isNotBlank() }
-        ?.keys
-        ?.contains(it.provider.name)
-        ?: false
+      return AppSettingsState.instance.apiKey?.get(it.provider.name)?.isNotBlank() ?: false
     }
   }
-
-  private data class CommandTableEntry(
-    var enabled: Boolean,
-    val command: String
-  )
-
-  private val temperatureSlider = JSlider(MIN_TEMP, MAX_TEMP, (settings.temperature * TEMPERATURE_SCALE).toInt()).apply {
-    addChangeListener {
-      settings.temperature = value / TEMPERATURE_SCALE
-      temperatureLabel.text = TEMPERATURE_LABEL.format(settings.temperature)
-    }
-  }
-  private val temperatureLabel = JLabel(TEMPERATURE_LABEL.format(settings.temperature))
-  private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
-  private val allowBlockingCheckbox = JCheckBox("Allow blocking", settings.allowBlocking)
-  private val taskTypeList = JBList(TaskType.values())
-  private val configPanelContainer = JPanel(CardLayout())
-  private val taskConfigs = mutableMapOf<String, TaskTypeConfigPanel>()
-  private val singleTaskModeCheckbox = JCheckBox("Single Task Mode", false)
-  private val removeCommandButton = JButton("Remove Command").apply {
-    isEnabled = false
-  }
-
   private inner class TaskTypeListCellRenderer : DefaultListCellRenderer() {
-    override fun getListCellRendererComponent(
-      list: JList<*>?,
-      value: Any?,
-      index: Int,
-      isSelected: Boolean,
-      cellHasFocus: Boolean
-    ): Component {
-      val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-      if (component is JLabel && value is TaskType<*, *>) {
-        // Set tooltip with detailed HTML description
-        toolTipText = getTaskTooltip(value)
-        // Access settings directly through the outer class
-        val isEnabled = settings.getTaskSettings(value).enabled
-        // Set font style and color based on enabled status
-        font = when (isEnabled) {
-          true -> {
-            font.deriveFont(Font.BOLD).deriveFont(14f)
-          }
-
-          false -> {
-            font.deriveFont(Font.ITALIC).deriveFont(12f)
-          }
-        }
-        foreground = if (isEnabled) {
-          list?.foreground
-        } else {
-          list?.foreground?.darker()?.darker()
-        }
-        // Set task name and description
-        text = buildString {
-          val taskDescription = getTaskDescription(value)
-          append(value.name)
-          if (taskDescription.isNotEmpty()) {
-            append(" - ")
-            append(taskDescription)
-          }
-        }
-      }
-      return component
-    }
-
     private fun getTaskTooltip(taskType: TaskType<*, *>): String = """
       <html>
       <body style='width: 300px; padding: 5px;'>
@@ -362,7 +301,6 @@ class PlanConfigDialog(
       </html>
     """
 
-
     private fun getTaskDescription(taskType: TaskType<*, *>): String = when (taskType) {
       TaskType.Search -> "Search project files using patterns with contextual results"
       TaskType.EmbeddingSearch -> "Perform semantic search using AI embeddings"
@@ -387,37 +325,114 @@ class PlanConfigDialog(
       TaskType.GoogleSearch -> "Perform Google web searches with custom filtering"
       else -> "No description available"
     }
-  }
 
-  private fun getVisibleModels() =
-    ChatModel.values().map { it.value }.filter { isVisible(it) }.toList()
-      .sortedBy { "${it.provider.name} - ${it.modelName}" }
+    override fun getListCellRendererComponent(
+      list: JList<*>?,
+      value: Any?,
+      index: Int,
+      isSelected: Boolean,
+      cellHasFocus: Boolean
+    ): Component {
+      val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      if (component is JLabel && value is TaskType<*, *>) {
+        toolTipText = getTaskTooltip(value)
+        val isEnabled = settings.getTaskSettings(value).enabled
+        font = when (isEnabled) {
 
-  private inner class TaskTypeConfigPanel(val taskType: TaskType<*, *>) : JPanel() {
-    val enabledCheckbox = JCheckBox("Enabled", settings.getTaskSettings(taskType).enabled)
-    private val modelComboBox = ComboBox(getVisibleModels().map { it.modelName }.toTypedArray()).apply {
-      maximumSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
-      preferredSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
-    }
-
-    init {
-      removeCommandButton.addActionListener {
-        val selectedRow = commandTable.selectedRow
-        if (selectedRow != -1) {
-          val command = tableModel.getValueAt(selectedRow, 1) as String
-          val confirmResult = JOptionPane.showConfirmDialog(
-            null,
-            "Remove command: $command?",
-            "Confirm Remove",
-            JOptionPane.YES_NO_OPTION
-          )
-          if (confirmResult == JOptionPane.YES_OPTION) {
-            tableModel.removeRow(selectedRow)
-            checkboxStates.removeAt(selectedRow)
-            AppSettingsState.instance.executables.remove(command)
+          true -> font.deriveFont(Font.BOLD + Font.PLAIN, FONT_SIZE_ENABLED)
+          false -> font.deriveFont(Font.ITALIC + Font.PLAIN, FONT_SIZE_DISABLED)
+        }
+        foreground = if (isEnabled) {
+          list?.foreground
+        } else {
+          list?.foreground?.darker()?.darker()
+        }
+        // Set task name and description
+        text = buildString {
+          val taskDescription = getTaskDescription(value)
+          append(value.name)
+          if (taskDescription.isNotEmpty()) {
+            append(" - ")
+            append(taskDescription)
           }
         }
       }
+      return component
+    }
+  }
+
+  private inner class TaskTypeConfigPanel(val taskType: TaskType<*, *>) : JPanel() {
+    val enabledCheckbox = JCheckBox("Enabled", settings.getTaskSettings(taskType).enabled)
+    private val modelComboBox = ComboBox(getVisibleModels().distinctBy { it.modelName }.map { it.modelName }.toTypedArray()).apply {
+      maximumSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
+      preferredSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
+      // Set initial selection based on current model
+      val currentModel = settings.getTaskSettings(taskType).model
+      selectedItem = currentModel?.modelName
+    }
+    private val commandList = if (taskType == TaskType.CommandAutoFix) {
+      JBTable(object : DefaultTableModel(
+        arrayOf("Enabled", "Command"),
+        0
+      ) {
+        private val entries = mutableListOf<CommandTableEntry>()
+
+        init {
+          // Pre-sort executables for better UX
+          val sortedExecutables = AppSettingsState.instance.executables.sorted()
+          sortedExecutables.forEach { command ->
+            // Get the enabled state from current settings
+            val isEnabled = (settings.getTaskSettings(taskType) as? CommandAutoFixTask.CommandAutoFixTaskSettings)
+              ?.commandAutoFixCommands?.contains(command) ?: true
+            entries.add(CommandTableEntry(isEnabled, command))
+            addRow(arrayOf(isEnabled, command))
+          }
+        }
+
+        override fun getColumnClass(columnIndex: Int) = when (columnIndex) {
+          0 -> java.lang.Boolean::class.java
+          else -> super.getColumnClass(columnIndex)
+        }
+
+        override fun isCellEditable(row: Int, column: Int) = column == 0
+        override fun setValueAt(aValue: Any?, row: Int, column: Int) {
+          if (column == 0 && aValue is Boolean) {
+            entries[row].enabled = aValue
+            super.setValueAt(aValue, row, column)
+            fireTableCellUpdated(row, column)
+            updateCommandSettings()
+            // Force UI refresh
+            taskTypeList.repaint()
+          } else {
+            throw IllegalArgumentException("Invalid column index: $column")
+          }
+        }
+
+        private fun updateCommandSettings() {
+          val newSettings = CommandAutoFixTask.CommandAutoFixTaskSettings(
+            taskType.name,
+            settings.getTaskSettings(taskType).enabled,
+            getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
+            entries.filter { it.enabled }.map { it.command }
+          )
+          settings.setTaskSettings(taskType, newSettings)
+        }
+      }).apply {
+        preferredScrollableViewportSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 100)
+        columnModel.getColumn(0).apply {
+          preferredWidth = 50
+          maxWidth = 100
+          cellEditor = DefaultCellEditor(JCheckBox())
+          // Add tooltip for better UX
+          headerValue = "<html>Enable/disable<br>command</html>"
+        }
+        columnModel.getColumn(1).apply {
+          headerValue = "<html>Command path<br>or name</html>"
+        }
+      }
+    } else null
+
+    init {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       alignmentX = Component.LEFT_ALIGNMENT
       add(enabledCheckbox.apply { alignmentX = Component.LEFT_ALIGNMENT })
@@ -425,88 +440,150 @@ class PlanConfigDialog(
       add(JLabel("Model:").apply { alignmentX = Component.LEFT_ALIGNMENT })
       add(Box.createVerticalStrut(2))
       add(modelComboBox.apply { alignmentX = Component.LEFT_ALIGNMENT })
-      add(Box.createVerticalGlue())
+      if (commandList != null) {
+        add(Box.createVerticalStrut(10))
+        add(JLabel("Available Commands:").apply { alignmentX = Component.LEFT_ALIGNMENT })
+        add(Box.createVerticalStrut(2))
+        add(JBScrollPane(commandList).apply {
+          alignmentX = Component.LEFT_ALIGNMENT
+          preferredSize = Dimension(DEFAULT_PANEL_WIDTH - 50, DEFAULT_LIST_HEIGHT / 2)
+          maximumSize = Dimension(DEFAULT_PANEL_WIDTH - 50, DEFAULT_LIST_HEIGHT / 2)
+        })
+        add(Box.createVerticalStrut(5))
+        add(JPanel().apply {
+          layout = BoxLayout(this, BoxLayout.X_AXIS)
+          alignmentX = Component.LEFT_ALIGNMENT
+          maximumSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
+          add(JButton("Add Command").apply {
+            maximumSize = Dimension(DEFAULT_PANEL_WIDTH / 2 - 30, 30)
+            addActionListener {
+              val command = JOptionPane.showInputDialog(
+                this,
+                "Enter command path:",
+                "Add Command",
+                JOptionPane.PLAIN_MESSAGE
+              )
+              if (command != null && command.isNotEmpty()) {
+                (commandList.model as DefaultTableModel).addRow(arrayOf(true, command))
+                AppSettingsState.instance.executables.add(command)
+              }
+            }
+          })
+          add(Box.createHorizontalStrut(5))
+          add(JButton("Remove Command").apply {
+            maximumSize = Dimension(DEFAULT_PANEL_WIDTH / 2 - 30, 30)
+            addActionListener {
+              val selectedRow = commandList.selectedRow
+              if (selectedRow != -1) {
+                val command = (commandList.model as DefaultTableModel).getValueAt(selectedRow, 1) as String
+                val confirmResult = JOptionPane.showConfirmDialog(
+                  null,
+                  "Remove command: $command?",
+                  "Confirm Remove",
+                  JOptionPane.YES_NO_OPTION
+                )
+                if (confirmResult == JOptionPane.YES_OPTION) {
+                  (commandList.model as DefaultTableModel).removeRow(selectedRow)
+                  AppSettingsState.instance.executables.remove(command)
+                }
+              } else {
+                JOptionPane.showMessageDialog(
+                  null,
+                  "Please select a command to remove."
+                )
+              }
+            }
+          })
+        })
+      }
+      
       val currentModel = settings.getTaskSettings(taskType).model
       modelComboBox.selectedItem = currentModel?.modelName
       enabledCheckbox.addItemListener {
-        // Update the settings immediately when checkbox state changes
-        settings.setTaskSettings(taskType, TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
-          this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
-        })
+        val newSettings = when (taskType) {
+          TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
+            taskType.name,
+            enabledCheckbox.isSelected,
+            getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
+            (0 until (commandList?.model?.rowCount ?: 0))
+              .filter { row -> (commandList?.model?.getValueAt(row, 0) as? Boolean) ?: false }
+              .map { row -> commandList?.model?.getValueAt(row, 1) as String }
+          )
+
+          else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
+            this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
+          }
+        }
+        settings.setTaskSettings(taskType, newSettings)
         taskTypeList.repaint()
       }
       modelComboBox.addActionListener {
-        settings.setTaskSettings(taskType, TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
-          this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
-        })
+        val newSettings = when (taskType) {
+          TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
+            taskType.name,
+            enabledCheckbox.isSelected,
+            getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
+            (0 until (commandList?.model?.rowCount ?: 0)).map { row ->
+              commandList?.model?.getValueAt(row, 0) as String
+            }
+          )
+
+          else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
+            this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
+          }
+        }
+        settings.setTaskSettings(taskType, newSettings)
       }
     }
 
     fun saveSettings() {
-      // Only need to save model selection since enabled state is saved immediately
-      settings.setTaskSettings(taskType, TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
-        this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
-      })
+      val newSettings = when (taskType) {
+        TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
+          taskType.name,
+          enabledCheckbox.isSelected,
+          getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
+          (0 until (commandList?.model?.rowCount ?: 0)).map { row ->
+            commandList?.model?.getValueAt(row, 0) as String
+          }
+        )
+
+        else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
+          this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
+        }
+      }
+      settings.setTaskSettings(taskType, newSettings)
     }
   }
 
-  private val checkboxStates = AppSettingsState.instance.executables.map { true }.toMutableList()
-  private val tableModel = object : DefaultTableModel(arrayOf("Enabled", "Command"), 0) {
-    private val entries = mutableListOf<CommandTableEntry>()
+  private data class CommandTableEntry(
+    var enabled: Boolean,
+    val command: String
+  )
 
-    init {
-      AppSettingsState.instance.executables.forEach { command ->
-        entries.add(CommandTableEntry(true, command))
-        addRow(arrayOf(true, command))
-      }
-    }
-
-    override fun getColumnClass(columnIndex: Int) = when (columnIndex) {
-      0 -> java.lang.Boolean::class.java
-      else -> super.getColumnClass(columnIndex)
-    }
-
-    override fun isCellEditable(row: Int, column: Int) = column == 0
-
-    override fun setValueAt(aValue: Any?, row: Int, column: Int) {
-      if (column == 0 && aValue is Boolean) {
-        entries[row].enabled = aValue
-        super.setValueAt(aValue, row, column)
-        fireTableCellUpdated(row, column)
-      } else {
-        throw IllegalArgumentException("Invalid column index: $column")
-      }
-    }
-
-    override fun getValueAt(row: Int, column: Int): Any =
-      try {
-        if (column == 0) {
-          entries[row].enabled
-        } else super.getValueAt(row, column)
-      } catch (e: IndexOutOfBoundsException) {
-        false
-      }
-
-  }
-  private val commandTable = JBTable(tableModel).apply {
-    putClientProperty("terminateEditOnFocusLost", true)
-    this.columnModel.getColumn(0).apply {
-      preferredWidth = 50
-      maxWidth = 100
+  private val temperatureSlider = JSlider(MIN_TEMP, MAX_TEMP, (settings.temperature * TEMPERATURE_SCALE).toInt()).apply {
+    addChangeListener {
+      settings.temperature = value / TEMPERATURE_SCALE
+      temperatureLabel.text = TEMPERATURE_LABEL.format(settings.temperature)
     }
   }
-  private val addCommandButton = JButton("Add Command")
-  private val editCommandButton = JButton("Edit Command")
+  private val temperatureLabel = JLabel(TEMPERATURE_LABEL.format(settings.temperature))
+  private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
+  private val allowBlockingCheckbox = JCheckBox("Allow blocking", settings.allowBlocking)
+  private val taskTypeList = JBList(TaskType.values())
+  private val configPanelContainer = JPanel(CardLayout())
+  private val taskConfigs = mutableMapOf<String, TaskTypeConfigPanel>()
+
+  private fun getVisibleModels() =
+    ChatModel.values().map { it.value }.filter { isVisible(it) }.toList()
+      .sortedBy { "${it.provider.name} - ${it.modelName}" }
 
   init {
-    // Set the custom cell renderer for the task type list
     taskTypeList.cellRenderer = TaskTypeListCellRenderer()
-
     taskTypeList.addListSelectionListener { e ->
       if (!e.valueIsAdjusting) {
         val selectedType = (taskTypeList.selectedValue as TaskType<*, *>).name
         (configPanelContainer.layout as CardLayout).show(configPanelContainer, selectedType)
-        if (singleTaskModeCheckbox.isSelected) {
+        if (singleTaskMode) {
           // Disable all tasks except the selected one
           TaskType.values().forEach { taskType ->
             val isSelected = taskType.name == selectedType
@@ -515,7 +592,7 @@ class PlanConfigDialog(
         }
       }
     }
-    // Initialize config panels for each task type
+
     TaskType.values().forEach { taskType ->
       val configPanel = TaskTypeConfigPanel(taskType)
       taskConfigs[taskType.name] = configPanel
@@ -523,102 +600,34 @@ class PlanConfigDialog(
     }
 
     init()
-    title = "Configure Plan Ahead Action"
-    // Add listener for single task mode checkbox
-    singleTaskModeCheckbox.addItemListener { e ->
-      if (e.stateChange == java.awt.event.ItemEvent.SELECTED) {
-        // When enabled, only keep the currently selected task enabled
-        val selectedType = (taskTypeList.selectedValue as TaskType<*, *>).name
-        TaskType.values().forEach { taskType ->
-          val isSelected = taskType.name == selectedType
-          taskConfigs[taskType.name]?.enabledCheckbox?.isSelected = isSelected
-        }
-      }
-    }
-    // Add model combobox and change listener to update the settings based on slider value
-
+    title = "Configure Planning and Tasks"
     temperatureSlider.addChangeListener {
       settings.temperature = temperatureSlider.value / 100.0
     }
-    // Update parsingModel based on modelComboBox selection
-    val fileChooserDescriptor = FileChooserDescriptor(true, false, false, false, false, false)
-      .withTitle("Select Command")
-      .withDescription("Choose an executable file for the auto-fix command")
-    addCommandButton.addActionListener {
-      val newCommand = if ((it as? java.awt.event.ActionEvent)?.modifiers?.and(java.awt.event.InputEvent.CTRL_DOWN_MASK) != 0) {
-        // Control was held - prompt for direct path input
-        JOptionPane.showInputDialog(
-          null,
-          "Enter command path:",
-          "Add Command",
-          JOptionPane.PLAIN_MESSAGE
-        )
-      } else {
-        // Normal click - show file chooser
-        FileChooser.chooseFile(fileChooserDescriptor, project, null)?.path
-      }
-      if (newCommand != null) {
-        val confirmResult = JOptionPane.showConfirmDialog(
-          null,
-          "Add command: $newCommand?",
-          "Confirm Command",
-          JOptionPane.YES_NO_OPTION
-        )
-        if (confirmResult == JOptionPane.YES_OPTION) {
-          tableModel.addRow(arrayOf(true, newCommand))
-          checkboxStates.add(true)
-          AppSettingsState.instance.executables.add(newCommand)
-        }
-      }
-    }
-    editCommandButton.addActionListener {
-      val selectedRow = commandTable.selectedRow
-      if (selectedRow != -1) {
-        val currentCommand = tableModel.getValueAt(selectedRow, 1) as String
-        val newCommand = JOptionPane.showInputDialog(
-          null,
-          "Edit command:",
-          currentCommand
-        )
-        if (newCommand != null && newCommand.isNotEmpty()) {
-          val confirmResult = JOptionPane.showConfirmDialog(
-            null,
-            "Update command to: $newCommand?",
-            "Confirm Edit",
-            JOptionPane.YES_NO_OPTION
-          )
-          if (confirmResult == JOptionPane.YES_OPTION) {
-            tableModel.setValueAt(newCommand, selectedRow, 1)
-            AppSettingsState.instance.executables.remove(currentCommand)
-            AppSettingsState.instance.executables.add(newCommand)
-          }
-        }
-      } else {
-        JOptionPane.showMessageDialog(null, "Please select a command to edit.")
-      }
-    }
-    commandTable.columnModel.getColumn(0).apply {
-      preferredWidth = 50
-      maxWidth = 100
-    }
-    commandTable.selectionModel.addListSelectionListener {
-      editCommandButton.isEnabled = commandTable.selectedRow != -1
-      removeCommandButton.isEnabled = commandTable.selectedRow != -1
-    }
-    editCommandButton.isEnabled = false
-    // Call setupCommandTable to initialize commandTable
-    setupCommandTable()
   }
 
   override fun createCenterPanel(): JComponent = panel {
-    group("Tasks") {
+    group("Settings") {
       row {
-        cell(singleTaskModeCheckbox)
+        cell(autoFixCheckbox)
           .align(Align.FILL)
+          .comment("Automatically apply suggested fixes without confirmation")
       }
       row {
+        cell(allowBlockingCheckbox)
+          .align(Align.FILL)
+          .comment("Allow tasks to block UI while processing")
+      }
+      row("Temperature:") {
+        cell(temperatureSlider).align(Align.FILL)
+          .comment("Adjust AI response creativity (higher = more creative)")
+        cell(temperatureLabel)
+      }
+    }
+    group("Tasks") {
+      row {
         cell(
-          JBSplitter(false, 0.3f).apply {
+          JBSplitter(false, DIVIDER_PROPORTION).apply {
             firstComponent = JBScrollPane(taskTypeList).apply {
               minimumSize = Dimension(DEFAULT_LIST_WIDTH, DEFAULT_LIST_HEIGHT)
               preferredSize = Dimension(DEFAULT_LIST_WIDTH + 100, DEFAULT_LIST_HEIGHT)
@@ -639,43 +648,6 @@ class PlanConfigDialog(
     }
       .layout(RowLayout.PARENT_GRID)
       .resizableRow()
-    group("Settings") {
-      row {
-        cell(autoFixCheckbox)
-          .align(Align.FILL)
-      }
-      row {
-        cell(allowBlockingCheckbox)
-          .align(Align.FILL)
-      }
-      row("Temperature:") {
-        cell(temperatureSlider).align(Align.FILL)
-        cell(temperatureLabel)
-      }
-      row("Command Line Tools:") {
-        cell(
-          JBSplitter(true, 0.9f).apply {
-            firstComponent = JBScrollPane(commandTable).apply {
-              minimumSize = Dimension(350, 100)
-              preferredSize = Dimension(350, 200)
-            }
-            secondComponent = JPanel().apply {
-              layout = BoxLayout(this, BoxLayout.X_AXIS)
-              add(addCommandButton)
-              add(Box.createHorizontalStrut(5))
-              add(editCommandButton)
-              add(Box.createHorizontalStrut(5))
-              add(removeCommandButton)
-            }
-            dividerWidth = 3
-            isShowDividerControls = true
-            isShowDividerIcon = true
-            splitterProportionKey = "planAhead.commands.splitter"
-          })
-          .align(Align.FILL)
-          .resizableColumn()
-      }
-    }
   }
 
   override fun doOKAction() {
@@ -685,30 +657,7 @@ class PlanConfigDialog(
     }
     settings.autoFix = autoFixCheckbox.isSelected
     settings.allowBlocking = allowBlockingCheckbox.isSelected
-    settings.commandAutoFixCommands = (0 until tableModel.rowCount)
-      .filter { tableModel.getValueAt(it, 0) as Boolean }
-      .map { tableModel.getValueAt(it, 1) as String }
-    // Update the global tool collection
-    settings.commandAutoFixCommands?.forEach { command ->
-      if (!AppSettingsState.instance.executables.contains(command)) {
-        AppSettingsState.instance.executables.add(command)
-      }
-    }
     super.doOKAction()
   }
 
-  private fun setupCommandTable() {
-    commandTable.columnModel.getColumn(0).apply {
-      cellEditor = DefaultCellEditor(JCheckBox())
-      preferredWidth = 50
-      maxWidth = 100
-    }
-    tableModel.addTableModelListener { e ->
-      if (e.column == 0) {
-        val row = e.firstRow
-        val value = tableModel.getValueAt(row, 0) as Boolean
-        checkboxStates[row] = value
-      }
-    }
-  }
 }
