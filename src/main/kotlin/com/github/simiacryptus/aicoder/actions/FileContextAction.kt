@@ -51,7 +51,7 @@ abstract class FileContextAction<T : Any>(
                         }
                         val start = System.currentTimeMillis()
                         val fileSystem = LocalFileSystem.getInstance()
-                        while (null == fileSystem.refreshAndFindFileByIoFile(newFiles.firstOrNull() ?: throw IllegalStateException())) {
+                        while (null == fileSystem.refreshAndFindFileByIoFile(newFiles.firstOrNull() ?: throw IllegalStateException("No new files"))) {
                             if (System.currentTimeMillis() - start > 10000) {
                                 throw IllegalStateException("File not found: ${newFiles.firstOrNull()}")
                             }

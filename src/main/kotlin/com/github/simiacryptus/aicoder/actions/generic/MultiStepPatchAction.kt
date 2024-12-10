@@ -9,6 +9,7 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
@@ -24,7 +25,8 @@ import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
-import com.simiacryptus.skyenet.core.platform.*
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
+import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.model.StorageInterface
 import com.simiacryptus.skyenet.core.platform.model.User
@@ -37,6 +39,7 @@ import com.simiacryptus.util.JsonUtil.toJson
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
@@ -44,35 +47,50 @@ class MultiStepPatchAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     val path = "/autodev"
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
+        val files = UITools.getSelectedFolder(event) ?: return false
+        return true
+    }
+
 
     override fun handle(e: AnActionEvent) {
-        val session = Session.newGlobalID()
-        val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
-        val selectedFile = UITools.getSelectedFolder(e)
-        if (null != storage && null != selectedFile) {
-            DataStorage.sessionPaths[session] = selectedFile.toFile
-        }
-        SessionProxyServer.chats[session] = AutoDevApp(event = e)
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
-        val server = AppServer.getServer(e.project)
-
-        Thread {
-            Thread.sleep(500)
+        val project = e.project ?: return
+        UITools.runAsync(project, "Initializing Auto Dev Assistant", true) { progress ->
+            progress.isIndeterminate = true
             try {
+                val session = Session.newGlobalID()
+                val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
+                val selectedFile = UITools.getSelectedFolder(e)
+                if (null != storage && null != selectedFile) {
+                    DataStorage.sessionPaths[session] = selectedFile.toFile
+                }
+                SessionProxyServer.metadataStorage.setSessionName(
+                    null,
+                    session,
+                    "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+                )
+                SessionProxyServer.chats[session] = AutoDevApp(event = e)
+                ApplicationServer.appInfoMap[session] = AppInfoData(
+                    applicationName = "Code Chat",
+                    singleInput = true,
+                    stickyInput = false,
+                    loadImages = false,
+                    showMenubar = false
+                )
+                val server = AppServer.getServer(e.project)
 
-                val uri = server.server.uri.resolve("/#$session")
-                BaseAction.log.info("Opening browser to $uri")
-                browse(uri)
+
+                ApplicationManager.getApplication().invokeLater {
+                    progress.text = "Opening browser..."
+                    val uri = server.server.uri.resolve("/#$session")
+                    BaseAction.log.info("Opening browser to $uri")
+                    browse(uri)
+                }
             } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
+                UITools.error(log, "Failed to initialize Auto Dev Assistant", e)
             }
-        }.start()
+        }
     }
 
     open class AutoDevApp(
@@ -84,6 +102,10 @@ class MultiStepPatchAction : BaseAction() {
         path = "/autodev",
         showMenubar = false,
     ) {
+        companion object {
+            private const val DEFAULT_BUDGET = 2.00
+        }
+
         override fun userMessage(
             session: Session,
             user: User?,
@@ -91,8 +113,11 @@ class MultiStepPatchAction : BaseAction() {
             ui: ApplicationInterface,
             api: API
         ) {
-            val settings = getSettings(session, user) ?: Settings()
-            if (api is ChatClient) api.budget = settings.budget ?: 2.00
+            val settings = getSettings(session, user) ?: Settings(
+                budget = DEFAULT_BUDGET,
+                model = AppSettingsState.instance.smartModel.chatModel()
+            )
+            if (api is ChatClient) api.budget = settings.budget ?: DEFAULT_BUDGET
             AutoDevAgent(
                 api = api,
                 dataStorage = dataStorage,
@@ -220,7 +245,7 @@ class MultiStepPatchAction : BaseAction() {
             val architectureResponse = Discussable(
                 task = task,
                 userMessage = { userMessage },
-                heading = userMessage,
+                heading = renderMarkdown(userMessage),
                 initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
                 outputFn = { design: ParsedResponse<TaskList> ->
                     //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```")
@@ -276,27 +301,29 @@ class MultiStepPatchAction : BaseAction() {
                                       |
                                     """.trimMargin()
                                 }
-                                renderMarkdown(ui.socketManager!!.addApplyFileDiffLinks(
-                                    root = root,
-                                    response = taskActor.answer(listOf(
-                                        codeSummary(),
-                                        userMessage,
-                                        filter.joinToString("\n\n") {
-                                            "# ${it}\n```${
-                                                it.toString().split('.').last().let { /*escapeHtml4*/it/*.indent("  ")*/ }
-                                            }\n${root.resolve(it).toFile().readText()}\n```"
+                                renderMarkdown(
+                                    ui.socketManager!!.addApplyFileDiffLinks(
+                                        root = root,
+                                        response = taskActor.answer(
+                                            listOf(
+                                            codeSummary(),
+                                            userMessage,
+                                            filter.joinToString("\n\n") {
+                                                "# ${it}\n```${
+                                                    it.toString().split('.').last().let { /*escapeHtml4*/it/*.indent("  ")*/ }
+                                                }\n${root.resolve(it).toFile().readText()}\n```"
+                                            },
+                                            architectureResponse.text,
+                                            "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
+                                        ), api),
+                                        handle = { newCodeMap ->
+                                            newCodeMap.forEach { (path, newCode) ->
+                                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                                            }
                                         },
-                                        architectureResponse.text,
-                                        "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                                    ), api),
-                                    handle = { newCodeMap ->
-                                        newCodeMap.forEach { (path, newCode) ->
-                                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                                        }
-                                    },
-                                    ui = ui,
-                                    api = api
-                                )
+                                        ui = ui,
+                                        api = api
+                                    )
                                 )
                             } catch (e: Exception) {
                                 task.error(ui, e)

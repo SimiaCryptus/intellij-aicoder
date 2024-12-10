@@ -127,6 +127,8 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
             } else {
                 settingsUI.transformationMessage.text = selected
             }
+        } else {
+            settingsUI.transformationMessage.text = ""
         }
     }
 

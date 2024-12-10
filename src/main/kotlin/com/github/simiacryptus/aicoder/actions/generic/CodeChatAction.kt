@@ -16,6 +16,7 @@ import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
+import java.text.SimpleDateFormat
 
 class CodeChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -43,6 +44,7 @@ class CodeChatAction : BaseAction() {
             loadImages = false,
             showMenubar = false
         )
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
 
         val server = AppServer.getServer(e.project)
 

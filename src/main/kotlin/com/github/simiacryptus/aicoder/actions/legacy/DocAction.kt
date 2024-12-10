@@ -11,8 +11,19 @@ import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
 
+/**
+ * Action that generates documentation for selected code blocks.
+ * Supports multiple programming languages and documentation styles.
+ */
+
 class DocAction : SelectionAction<String>() {
+    companion object {
+        private const val DEFAULT_DESERIALIZER_RETRIES = 5
+    }
+
+    private val log = com.intellij.openapi.diagnostic.Logger.getInstance(DocAction::class.java)
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    fun getDisplayName() = "Generate Documentation"
 
     override fun isEnabled(event: AnActionEvent) = AppSettingsState.instance.enableLegacyActions
 
@@ -36,7 +47,7 @@ class DocAction : SelectionAction<String>() {
             api = api,
             model = AppSettingsState.instance.smartModel.chatModel(),
             temperature = AppSettingsState.instance.temperature,
-            deserializerRetries = 5
+            deserializerRetries = DEFAULT_DESERIALIZER_RETRIES
         )
         chatProxy.addExample(
             DocAction_VirtualAPI.DocAction_ConvertedText().apply {
@@ -67,15 +78,24 @@ class DocAction : SelectionAction<String>() {
     }
 
     override fun processSelection(state: SelectionState, config: String?): String {
-        val code = state.selectedText
-        val indentedInput = IndentedText.fromString(code.toString())
-        val docString = proxy.processCode(
-            indentedInput.textBlock.toString(),
-            "Write detailed " + (state.language?.docStyle ?: "documentation") + " prefix for code block",
-            state.language?.name ?: "",
-            AppSettingsState.instance.humanLanguage
-        ).text ?: ""
-        return docString + code
+        try {
+            val code = state.selectedText ?: return ""
+            val indentedInput = IndentedText.fromString(code)
+            val docString = proxy.processCode(
+                indentedInput.textBlock.toString(),
+                "Write detailed " + (state.language?.docStyle ?: "documentation") + " prefix for code block",
+                state.language?.name ?: "",
+                AppSettingsState.instance.humanLanguage
+            ).text ?: ""
+            return docString + code
+        } catch (e: Exception) {
+            log.error("Failed to generate documentation", e)
+            throw RuntimeException(
+                "Failed to generate documentation: ${e.message}",
+                e
+            )
+        }
+
     }
 
     override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {

@@ -1,4 +1,4 @@
-﻿package com.github.simiacryptus.aicoder.actions
+package com.github.simiacryptus.aicoder.actions
 
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
@@ -33,7 +33,7 @@ abstract class BaseAction(
     final override fun actionPerformed(e: AnActionEvent) {
         UITools.logAction(
             """
-            |Action: ${javaClass.simpleName}
+ Action: ${javaClass.simpleName}
         """.trimMargin().trim()
         )
         IdeaChatClient.lastEvent = e

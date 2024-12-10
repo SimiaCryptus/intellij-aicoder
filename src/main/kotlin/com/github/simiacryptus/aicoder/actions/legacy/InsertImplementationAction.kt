@@ -44,7 +44,17 @@ class InsertImplementationAction : SelectionAction<String>() {
     }
 
     override fun getConfig(project: Project?): String {
-        return ""
+        try {
+            // Validate settings before proceeding
+            if (AppSettingsState.instance.smartModel == null) {
+                UITools.showErrorDialog(project, "AI model not configured", "Configuration Error")
+                return ""
+            }
+            return ""
+        } catch (e: Exception) {
+            UITools.error(log, "Failed to get configuration", e)
+            return ""
+        }
     }
 
     override fun defaultSelection(editorState: EditorState, offset: Int): Pair<Int, Int> {
@@ -68,45 +78,56 @@ class InsertImplementationAction : SelectionAction<String>() {
     }
 
     override fun processSelection(state: SelectionState, config: String?): String {
-        val humanLanguage = AppSettingsState.instance.humanLanguage
-        val computerLanguage = state.language
-        val psiClassContextActionParams = getPsiClassContextActionParams(state)
-        val selectedText = state.selectedText ?: ""
+        val humanLanguage: String = AppSettingsState.instance.humanLanguage
+        val computerLanguage: ComputerLanguage? = state.language
+        try {
+            val psiClassContextActionParams = getPsiClassContextActionParams(state)
+            val selectedText = state.selectedText ?: ""
 
-        val comment = psiClassContextActionParams.largestIntersectingComment
-        var instruct = comment?.subString(state.entireDocument ?: "")?.trim() ?: selectedText
-        if (selectedText.split(" ").dropWhile { it.isEmpty() }.size > 4) {
-            instruct = selectedText.trim()
-        }
-        val fromString: TextBlock? = computerLanguage?.getCommentModel(instruct)?.fromString(instruct)
-        val specification = fromString?.rawString()?.map { it.toString().trim() }
-            ?.filter { it.isNotEmpty() }?.reduce { a, b -> "$a $b" } ?: return selectedText
-        val code = if (state.psiFile != null) {
-            UITools.run(state.project, "Insert Implementation", true, true) {
-                val psiClassContext = runReadAction {
-                    PsiClassContext.getContext(
-                        state.psiFile,
-                        psiClassContextActionParams.selectionStart,
-                        psiClassContextActionParams.selectionEnd,
-                        computerLanguage
-                    ).toString()
-                }
-                getProxy().implementCode(
-                    specification,
-                    psiClassContext,
-                    computerLanguage.name,
-                    humanLanguage
-                ).code
+            val comment = psiClassContextActionParams.largestIntersectingComment
+            var instruct = comment?.subString(state.entireDocument ?: "")?.trim() ?: selectedText
+            if (selectedText.split(" ").dropWhile { it.isEmpty() }.size > 4) {
+                instruct = selectedText.trim()
             }
-        } else {
+            val fromString: TextBlock? = computerLanguage?.getCommentModel(instruct)?.fromString(instruct)
+            val specification = fromString?.rawString()?.map { it.toString().trim() }
+                ?.filter { it.isNotEmpty() }?.reduce { a, b -> "$a $b" } ?: return selectedText
+            val code = if (state.psiFile != null) {
+                UITools.run(state.project, "Insert Implementation", true, true) { progress ->
+                    progress.isIndeterminate = false
+                    progress.text = "Analyzing context..."
+                    progress.fraction = 0.2
+                    val psiClassContext = runReadAction {
+                        PsiClassContext.getContext(
+                            state.psiFile,
+                            psiClassContextActionParams.selectionStart,
+                            psiClassContextActionParams.selectionEnd,
+                            computerLanguage
+                        ).toString()
+                    }
+                    progress.text = "Generating implementation..."
+                    progress.fraction = 0.6
+                    getProxy().implementCode(
+                        specification = specification,
+                        prefix = psiClassContext,
+                        computerLanguage = computerLanguage.name,
+                        humanLanguage = humanLanguage
+                    ).code ?: throw IllegalStateException("No code generated")
+                }
+            } else {
+                getProxy().implementCode(specification, "", computerLanguage.name, humanLanguage).code
+            }
             getProxy().implementCode(
                 specification,
                 "",
                 computerLanguage.name,
                 humanLanguage
             ).code
+            return if (code != null) "$selectedText\n${state.indent}$code" else selectedText
+        } catch (e: Exception) {
+            UITools.error(log, "Failed to process selection", e)
+            return state.selectedText ?: ""
         }
-        return if (code != null) "$selectedText\n${state.indent}$code" else selectedText
     }
 
     private fun getPsiClassContextActionParams(state: SelectionState): PsiClassContextActionParams {

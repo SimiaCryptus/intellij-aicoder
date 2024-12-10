@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.walk
 
@@ -40,31 +41,47 @@ class SimpleCommandAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(event: AnActionEvent) {
-        val settings = getUserSettings(event) ?: run {
-            log.error("Failed to retrieve user settings.")
-            return
-        }
-        val dataContext = event.dataContext
-        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-        val folder = UITools.getSelectedFolder(event)
-        val root = folder?.toFile?.toPath() ?: event.project?.basePath?.let { File(it).toPath() } ?: run {
-            log.error("Failed to determine project root.")
-            return
-        }
+        val project = event.project
+        try {
+            val settings = getUserSettings(event) ?: run {
+                log.error("Failed to retrieve user settings")
+                UITools.showErrorDialog(project, "Failed to retrieve settings", "Error")
+                return
+            }
+            UITools.run(project, "Initializing", true) { progress ->
+                progress.text = "Setting up command execution..."
+                val dataContext = event.dataContext
+                val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+                val folder = UITools.getSelectedFolder(event)
+                val root = folder?.toFile?.toPath() ?: project?.basePath?.let { File(it).toPath() } ?: run {
+                    throw IllegalStateException("Failed to determine project root")
+                }
 
-        val session = Session.newGlobalID()
-        val patchApp = createPatchApp(root.toFile(), session, settings, virtualFiles)
-        SessionProxyServer.chats[session] = patchApp
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
-        val server = AppServer.getServer(event.project)
+                val session = Session.newGlobalID()
+                progress.text = "Creating patch application..."
+                val patchApp = createPatchApp(root.toFile(), session, settings, virtualFiles)
+                progress.text = "Configuring session..."
+                SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
+                SessionProxyServer.chats[session] = patchApp
+                ApplicationServer.appInfoMap[session] = AppInfoData(
+                    applicationName = "Code Chat",
+                    singleInput = true,
+                    stickyInput = false,
+                    loadImages = false,
+                    showMenubar = false
+                )
+                val server = AppServer.getServer(project)
+                openBrowserWithDelay(server.server.uri.resolve("/#$session"))
+            }
 
-        openBrowserWithDelay(server.server.uri.resolve("/#$session"))
+        } catch (e: Exception) {
+            log.error("Error handling action", e)
+            UITools.showErrorDialog(
+                project,
+                "Failed to execute command: ${e.message}",
+                "Error"
+            )
+        }
     }
 
     private fun createPatchApp(
@@ -72,24 +89,33 @@ class SimpleCommandAction : BaseAction() {
         session: Session,
         settings: Settings,
         virtualFiles: Array<out VirtualFile>?
-    ): PatchApp {
-        return object : PatchApp(root, session, settings) {
+    ): PatchApp = UITools.run(null, "Creating Patch Application", true) { progress ->
+        progress.text = "Initializing patch application..."
+        object : PatchApp(root, session, settings) {
+            // Limit file size to 0.5MB for performance
+            private val maxFileSize = 512 * 1024
+
             override fun codeFiles() = (virtualFiles?.toList<VirtualFile>()?.flatMap<VirtualFile, File> {
                 FileValidationUtils.expandFileList(it.toFile).toList()
             }?.map<File, Path> { it.toPath() }?.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
-                .filter { it.toFile().length() < 1024 * 1024 / 2 } // Limit to 0.5MB
+                .filter { it.toFile().length() < maxFileSize }
                 .map { root.toPath().relativize(it) ?: it }.toSet()
+            // Add progress indication for long operations
 
             override fun codeSummary(paths: List<Path>) = paths
                 .filter { it.toFile().exists() }
-                .joinToString("\n\n") { path ->
+                .mapIndexed { index, path ->
+                    progress.fraction = index.toDouble() / paths.size
+                    progress.text = "Processing ${path.fileName}..."
+                    if (progress.isCanceled) throw InterruptedException("Operation cancelled")
                     """
                         |# ${settings.workingDirectory.toPath()?.relativize(path)}
                         |$tripleTilde${path.toString().split('.').lastOrNull()}
                         |${path.toFile().readText(Charsets.UTF_8)}
                         |$tripleTilde
                     """.trimMargin()
-                }
+                }.joinToString("\n\n")
+            // Add validation for file operations
 
             override fun projectSummary() = codeFiles()
                 .asSequence()
@@ -102,6 +128,7 @@ class SimpleCommandAction : BaseAction() {
                 }
 
             override fun searchFiles(searchStrings: List<String>): Set<Path> {
+                require(searchStrings.isNotEmpty()) { "Search strings cannot be empty" }
                 return searchStrings.flatMap { searchString ->
                     filteredWalk(settings.workingDirectory) { !isGitignore(it.toPath()) }
                         .filter { isLLMIncludableFile(it) }
@@ -112,17 +139,19 @@ class SimpleCommandAction : BaseAction() {
             }
         }
     }
+    // Add proper resource cleanup
 
     private fun openBrowserWithDelay(uri: java.net.URI) {
-        Thread {
+        Thread({
             Thread.sleep(500)
             try {
                 log.info("Opening browser to $uri")
                 browse(uri)
             } catch (e: Throwable) {
                 log.warn("Error opening browser", e)
+                UITools.showErrorDialog(null, "Failed to open browser: ${e.message}", "Error")
             }
-        }.start()
+        }, "BrowserOpener").apply { isDaemon = true }.start()
     }
 
     abstract inner class PatchApp(
@@ -167,7 +196,7 @@ class SimpleCommandAction : BaseAction() {
     ) {
         try {
             val planTxt = projectSummary()
-            task.add(renderMarkdown(planTxt))
+            task.verbose(renderMarkdown(planTxt))
             Retryable(ui, task) {
                 val plan = ParsedActor(
                     resultClass = ParsedTasks::class.java,
@@ -368,4 +397,3 @@ $tripleTilde
 
     }
 }
-

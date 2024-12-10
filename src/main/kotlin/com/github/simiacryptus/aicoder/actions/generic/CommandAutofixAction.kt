@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.CmdPatchApp
 import com.simiacryptus.skyenet.apps.general.PatchApp
@@ -21,16 +22,40 @@ import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.io.File
 import java.nio.file.Files
+import java.text.SimpleDateFormat
 import javax.swing.*
 import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
+    /**
+     * Returns the thread that should be used for action update.
+     */
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
+    /**
+     * Handles the action execution.
+     * Shows settings dialog, creates patch app session and opens browser interface.
+     */
+
     override fun handle(event: AnActionEvent) {
-        val settings = getUserSettings(event) ?: return
-        val dataContext = event.dataContext
-        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+        try {
+            UITools.runAsync(event.project, "Initializing Command Autofix", true) { progress ->
+                progress.isIndeterminate = true
+                progress.text = "Getting settings..."
+                val settings = getUserSettings(event) ?: return@runAsync
+                val dataContext = event.dataContext
+                val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+                setupAndLaunchSession(event, settings, virtualFiles)
+            }
+        } catch (e: Throwable) {
+            log.error("Failed to execute command autofix", e)
+            UITools.showErrorDialog(event.project, "Failed to execute command autofix: ${e.message}", "Error")
+        }
+    }
+    /**
+     * Sets up and launches the patch app session
+     */
+    private fun setupAndLaunchSession(event: AnActionEvent, settings: PatchApp.Settings, virtualFiles: Array<VirtualFile>?) {
         val folder = UITools.getSelectedFolder(event)
         val root = if (null != folder) {
             folder.toFile.toPath()
@@ -40,7 +65,6 @@ class CommandAutofixAction : BaseAction() {
         val session = Session.newGlobalID()
         val patchApp = CmdPatchApp(
             root,
-            session,
             settings,
             api,
             virtualFiles?.map { it.toFile }?.toTypedArray(),
@@ -54,6 +78,7 @@ class CommandAutofixAction : BaseAction() {
             loadImages = false,
             showMenubar = false
         )
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         val server = AppServer.getServer(event.project)
         Thread {
             Thread.sleep(500)
@@ -67,7 +92,15 @@ class CommandAutofixAction : BaseAction() {
         }.start()
     }
 
-    override fun isEnabled(event: AnActionEvent) = true
+    /**
+     * Checks if the action should be enabled
+     */
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (event.project == null) return false
+        val folder = UITools.getSelectedFolder(event)
+        val hasBasePath = event.project?.basePath != null
+        return folder != null || hasBasePath
+    }
 
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
@@ -80,11 +113,13 @@ class CommandAutofixAction : BaseAction() {
             if (files.isEmpty()) Files.walk(root)
                 .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
                 .toList().filterNotNull().forEach { files.add(it) }
-            val settingsUI = SettingsUI(root!!.toFile())
-            val dialog = CommandSettingsDialog(event.project, settingsUI)
-            dialog.show()
-            return if (dialog.isOK) {
-                val executable = File(settingsUI.commandField.selectedItem?.toString() ?: return null)
+            var settings: PatchApp.Settings? = null
+            SwingUtilities.invokeAndWait {
+                val settingsUI = SettingsUI(root!!.toFile())
+                val dialog = CommandSettingsDialog(event.project, settingsUI)
+                dialog.show()
+                settings = if (dialog.isOK) {
+                val executable = File(settingsUI.commandField.selectedItem?.toString() ?: throw IllegalArgumentException("No executable selected"))
                 AppSettingsState.instance.executables += executable.absolutePath
                 val argument = settingsUI.argumentsField.selectedItem?.toString() ?: ""
                 AppSettingsState.instance.recentArguments.remove(argument)
@@ -102,6 +137,8 @@ class CommandAutofixAction : BaseAction() {
             } else {
                 null
             }
+            }
+            return settings
         }
 
         class SettingsUI(root: File) {
