@@ -11,32 +11,25 @@ import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.jopenai.models.chatModel
-import com.simiacryptus.skyenet.apps.general.AutoPlanChatApp
+import com.simiacryptus.skyenet.apps.general.SingleTaskApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
-import java.nio.file.Path
 import java.text.SimpleDateFormat
 
-class AutoPlanChatAction : BaseAction() {
-    // Maximum file size to process (512KB)
-    private companion object {
-        private const val MAX_FILE_SIZE = 512 * 1024
-    }
-
+class SingleTaskAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun handle(e: AnActionEvent) {
         val dialog = PlanConfigDialog(
-            e.project, PlanSettings(
+            e.project,
+            PlanSettings(
                 defaultModel = AppSettingsState.instance.smartModel.chatModel(),
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 command = listOf(
@@ -48,53 +41,69 @@ class AutoPlanChatAction : BaseAction() {
                 githubToken = AppSettingsState.instance.githubToken,
                 googleApiKey = AppSettingsState.instance.googleApiKey,
                 googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
-            )
+            ),
+            singleTaskMode = true
         )
         if (dialog.showAndGet()) {
             try {
                 val planSettings = dialog.settings
-                UITools.runAsync(e.project, "Initializing Auto Plan Chat", true) { progress ->
-                    initializeChat(e, progress, planSettings)
+                UITools.runAsync(e.project, "Initializing Single Task", true) { progress ->
+                    initializeTask(e, progress, planSettings, contextData(e))
                 }
             } catch (ex: Exception) {
-                log.error("Failed to initialize chat", ex)
-                UITools.showError(e.project, "Failed to initialize chat: ${ex.message}")
+                log.error("Failed to initialize task", ex)
+                UITools.showError(e.project, "Failed to initialize task: ${ex.message}")
             }
         }
     }
 
-    private fun initializeChat(e: AnActionEvent, progress: ProgressIndicator, planSettings: PlanSettings) {
+    private fun initializeTask(
+        e: AnActionEvent,
+        progress: ProgressIndicator,
+        planSettings: PlanSettings,
+        contextData: List<String> = emptyList(),
+    ) {
         progress.text = "Setting up session..."
         val session = Session.newGlobalID()
-        val root = getProjectRoot(e) ?: throw RuntimeException("Could not determine project root")
+        val root = getProjectRoot(e)
         progress.text = "Processing files..."
-        setupChatSession(session, root, e, planSettings)
+        setupTaskSession(session, root, planSettings, contextData)
         progress.text = "Starting server..."
         val server = AppServer.getServer(e.project)
         openBrowser(server, session.toString())
     }
 
-    private fun getProjectRoot(e: AnActionEvent): File? {
-        val folder = UITools.getSelectedFolder(e)
-        return folder?.toFile ?: UITools.getSelectedFile(e)?.parent?.toFile?.let { file ->
-            getModuleRootForFile(file)
-        }
-    }
+    private fun getProjectRoot(e: AnActionEvent) =
+        UITools.getSelectedFolder(e)?.toFile ?: UITools.getRoot(e).let { File(it) }
 
-    private fun setupChatSession(session: Session, root: File, e: AnActionEvent, planSettings: PlanSettings) {
+    private fun setupTaskSession(
+        session: Session,
+        root: File,
+        planSettings: PlanSettings,
+        contextData: List<String> = emptyList(),
+    ) {
         DataStorage.sessionPaths[session] = root
-        SessionProxyServer.chats[session] = createChatApp(root, e, planSettings)
+        SessionProxyServer.chats[session] = createSingleTaskApp(root, planSettings, contextData)
         ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Auto Plan Chat",
-            singleInput = false,
-            stickyInput = true,
+            applicationName = "Single Task",
+            singleInput = true,
+            stickyInput = false,
             loadImages = false,
             showMenubar = false
         )
-        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
+        SessionProxyServer.metadataStorage.setSessionName(
+            null,
+            session,
+            "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+        )
     }
 
-    private fun createChatApp(root: File, e: AnActionEvent, planSettings: PlanSettings): AutoPlanChatApp = object : AutoPlanChatApp(
+    private fun createSingleTaskApp(
+        root: File,
+        planSettings: PlanSettings,
+        contextData: List<String> = emptyList(),
+    ): SingleTaskApp = object : SingleTaskApp(
+        applicationName = "Single Task",
         planSettings = planSettings.copy(
             env = mapOf(),
             workingDir = root.absolutePath,
@@ -110,42 +119,9 @@ class AutoPlanChatAction : BaseAction() {
         api = api,
         api2 = api2,
     ) {
-        private fun codeFiles() = (UITools.getSelectedFiles(e).toTypedArray().toList().flatMap<VirtualFile, File> {
-            FileValidationUtils.expandFileList(it.toFile).toList<File>()
-        }.map<File, Path> { it.toPath() }.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
-            .filter { it.toFile().exists() }
-            .filter { it.toFile().length() < MAX_FILE_SIZE }
-            .map { root.toPath().relativize(it) ?: it }.toSet()
-
-        private fun codeSummary() = codeFiles()
-            .joinToString("\n\n") { path ->
-                """
-                    |# ${path}
-                    |$tripleTilde${path.toString().split('.').lastOrNull()}
-                    |${root.resolve(path.toFile()).readText(Charsets.UTF_8)}
-                    |$tripleTilde
-                """.trimMargin()
-            }
-
-        private fun projectSummary() = codeFiles()
-            .asSequence().distinct().sorted()
-            .joinToString("\n") { path ->
-                "* ${path} - ${root.resolve(path.toFile()).length()} bytes"
-            }
-
-        override fun contextData(): List<String> =
-            try {
-                listOf(
-                    if (codeFiles().size < 4) {
-                        "Files:\n" + codeSummary()
-                    } else {
-                        "Files:\n" + projectSummary()
-                    }
-                )
-            } catch (e: Exception) {
-                log.error("Error generating context data", e)
-                emptyList()
-            }
+        override fun contextData(): List<String> {
+            return contextData
+        }
     }
 
     private fun openBrowser(server: AppServer, session: String) {
@@ -161,4 +137,38 @@ class AutoPlanChatAction : BaseAction() {
         }.start()
     }
 
+    companion object {
+        fun contextData(event: AnActionEvent): List<String> {
+            val selectedFiles = UITools.getSelectedFiles(event).toTypedArray().toList()
+            if (selectedFiles.isEmpty()) return emptyList()
+            val root = UITools.getRoot(event).let { File(it) }
+            val maxFileSize = 512 * 1024 // 512KB limit
+            return selectedFiles
+                .flatMap { virtualFile ->
+                    try {
+                        FileValidationUtils.expandFileList(virtualFile.toFile).toList()
+                    } catch (e: Exception) {
+                        emptyList<File>()
+                    }
+                }
+                .filter { file ->
+                    file.exists() && file.length() < maxFileSize
+                }
+                .map { file ->
+                    try {
+                        val relativePath = root.toPath().relativize(file.toPath())
+                        """
+                        # ${relativePath}
+                        ${tripleTilde}${file.extension}
+                        ${file.readText(Charsets.UTF_8)}
+                        $tripleTilde
+                        """.trimIndent()
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                .filterNotNull()
+
+        }
+    }
 }

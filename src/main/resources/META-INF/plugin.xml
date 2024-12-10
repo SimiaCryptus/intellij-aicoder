@@ -193,6 +193,10 @@
                     text="Pre-Planner"
                     description="Set up a structured task planning session with customizable parameters and execution environment">
             </action>
+            <action class="com.github.simiacryptus.aicoder.actions.plan.SingleTaskAction"
+                    text="Single Task"
+                    description="Execute a single AI-powered task with focused functionality">
+            </action>
             <action class="com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction"
                     text="Do Something"
                     description="Execute custom coding tasks with intelligent assistance, analyzing project structure and context">
