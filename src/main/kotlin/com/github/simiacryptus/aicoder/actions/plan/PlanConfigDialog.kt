@@ -29,6 +29,8 @@ class PlanConfigDialog(
   singleTaskMode: Boolean = false,
 ) : DialogWrapper(project) {
   companion object {
+    private const val CONFIG_COMBO_WIDTH = 200
+    private const val CONFIG_COMBO_HEIGHT = 30
     private const val MIN_TEMP = 0
     private const val MAX_TEMP = 100
     private const val DEFAULT_LIST_WIDTH = 150
@@ -363,23 +365,24 @@ class PlanConfigDialog(
 
   private inner class TaskTypeConfigPanel(val taskType: TaskType<*, *>) : JPanel() {
     val enabledCheckbox = JCheckBox("Enabled", settings.getTaskSettings(taskType).enabled)
-    private val modelComboBox = ComboBox(getVisibleModels().distinctBy { it.modelName }.map { it.modelName }.toTypedArray()).apply {
+    val modelComboBox = ComboBox(getVisibleModels().distinctBy { it.modelName }.map { it.modelName }.toTypedArray()).apply {
       maximumSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
       preferredSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
-      // Set initial selection based on current model
-      val currentModel = settings.getTaskSettings(taskType).model
-      selectedItem = currentModel?.modelName
+      settings.getTaskSettings(taskType).model?.let { model ->
+        selectedItem = model.modelName
+      }
     }
     private val commandList = if (taskType == TaskType.CommandAutoFix) {
       JBTable(object : DefaultTableModel(
         arrayOf("Enabled", "Command"),
         0
       ) {
+
         private val entries = mutableListOf<CommandTableEntry>()
 
         init {
-          // Pre-sort executables for better UX
-          val sortedExecutables = AppSettingsState.instance.executables.sorted()
+          val sortedExecutables = AppSettingsState.instance.executables
+            .sortedWith(String.CASE_INSENSITIVE_ORDER)
           sortedExecutables.forEach { command ->
             // Get the enabled state from current settings
             val isEnabled = (settings.getTaskSettings(taskType) as? CommandAutoFixTask.CommandAutoFixTaskSettings)
@@ -395,6 +398,7 @@ class PlanConfigDialog(
         }
 
         override fun isCellEditable(row: Int, column: Int) = column == 0
+
         override fun setValueAt(aValue: Any?, row: Int, column: Int) {
           if (column == 0 && aValue is Boolean) {
             entries[row].enabled = aValue
@@ -435,6 +439,7 @@ class PlanConfigDialog(
     init {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       alignmentX = Component.LEFT_ALIGNMENT
+      border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
       add(enabledCheckbox.apply { alignmentX = Component.LEFT_ALIGNMENT })
       add(Box.createVerticalStrut(5))
       add(JLabel("Model:").apply { alignmentX = Component.LEFT_ALIGNMENT })
@@ -539,14 +544,13 @@ class PlanConfigDialog(
     fun saveSettings() {
       val newSettings = when (taskType) {
         TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
-          taskType.name,
-          enabledCheckbox.isSelected,
-          getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
-          (0 until (commandList?.model?.rowCount ?: 0)).map { row ->
-            commandList?.model?.getValueAt(row, 0) as String
-          }
+          task_type = taskType.name,
+          enabled = enabledCheckbox.isSelected,
+          model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
+          commandAutoFixCommands = (0 until (commandList?.model?.rowCount ?: 0)).filter { row ->
+            commandList?.model?.getValueAt(row, 0) as Boolean
+          }.map { row -> commandList?.model?.getValueAt(row, 1) as String }
         )
-
         else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
           this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
         }
@@ -572,6 +576,10 @@ class PlanConfigDialog(
   private val taskTypeList = JBList(TaskType.values())
   private val configPanelContainer = JPanel(CardLayout())
   private val taskConfigs = mutableMapOf<String, TaskTypeConfigPanel>()
+  private val savedConfigsCombo = ComboBox<String>().apply {
+    preferredSize = Dimension(CONFIG_COMBO_WIDTH, CONFIG_COMBO_HEIGHT)
+    AppSettingsState.instance.savedPlanConfigs.keys.sorted().forEach { addItem(it) }
+  }
 
   private fun getVisibleModels() =
     ChatModel.values().map { it.value }.filter { isVisible(it) }.toList()
@@ -598,6 +606,8 @@ class PlanConfigDialog(
       taskConfigs[taskType.name] = configPanel
       configPanelContainer.add(configPanel, taskType.name)
     }
+    // Select first task by default
+    taskTypeList.selectedIndex = 0
 
     init()
     title = "Configure Planning and Tasks"
@@ -606,8 +616,96 @@ class PlanConfigDialog(
     }
   }
 
+
+  private fun saveCurrentConfig() {
+    val configName = JOptionPane.showInputDialog(
+      null,
+      "Enter configuration name:",
+      "Save Configuration",
+      JOptionPane.PLAIN_MESSAGE
+    )?.trim()
+    
+    if (configName.isNullOrBlank()) {
+      JOptionPane.showMessageDialog(null, "Please enter a name for the configuration")
+      return
+    }
+    val taskSettingsMap = TaskType.values().associate { taskType ->
+      val taskSettings = settings.getTaskSettings(taskType)
+      taskType.name to AppSettingsState.TaskSettingsSerialized(
+        enabled = taskSettings.enabled,
+        modelName = taskSettings.model?.modelName,
+        commandAutoFixCommands = if (taskType == TaskType.CommandAutoFix) {
+          (taskSettings as? CommandAutoFixTask.CommandAutoFixTaskSettings)?.commandAutoFixCommands
+        } else null
+      )
+    }
+    val config = AppSettingsState.SavedPlanConfig(
+      name = configName,
+      temperature = settings.temperature,
+      autoFix = settings.autoFix,
+      allowBlocking = settings.allowBlocking,
+      taskSettings = taskSettingsMap
+    )
+    AppSettingsState.instance.savedPlanConfigs[configName] = config
+    if (savedConfigsCombo.itemCount == 0 || savedConfigsCombo.getItemAt(0) != configName) {
+      savedConfigsCombo.insertItemAt(configName, 0)
+    }
+  }
+
+  private fun loadConfig(configName: String) {
+    val config = AppSettingsState.instance.savedPlanConfigs[configName] ?: return
+    settings.temperature = config.temperature
+    settings.autoFix = config.autoFix
+    settings.allowBlocking = config.allowBlocking
+    temperatureSlider.value = (config.temperature * TEMPERATURE_SCALE).toInt()
+    temperatureLabel.text = TEMPERATURE_LABEL.format(config.temperature)
+    autoFixCheckbox.isSelected = config.autoFix
+    allowBlockingCheckbox.isSelected = config.allowBlocking
+    config.taskSettings.forEach { (taskTypeName, serializedSettings) ->
+      val taskType = TaskType.values().find { it.name == taskTypeName } ?: return@forEach
+      val newSettings = when (taskType) {
+        TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
+          taskTypeName,
+          serializedSettings.enabled,
+          getVisibleModels().find { it.modelName == serializedSettings.modelName },
+          serializedSettings.commandAutoFixCommands ?: emptyList()
+        )
+
+        else -> TaskSettingsBase(taskTypeName, serializedSettings.enabled).apply {
+          this.model = getVisibleModels().find { it.modelName == serializedSettings.modelName }
+        }
+      }
+      settings.setTaskSettings(taskType, newSettings)
+      taskConfigs[taskTypeName]?.apply {
+        enabledCheckbox.isSelected = serializedSettings.enabled
+        modelComboBox.selectedItem = serializedSettings.modelName
+      }
+    }
+    taskTypeList.repaint()
+  }
+
   override fun createCenterPanel(): JComponent = panel {
     group("Settings") {
+      row("Saved Configs:") {
+        cell(savedConfigsCombo)
+          .align(Align.FILL)
+        button("Save...") {
+          saveCurrentConfig()
+        }
+        button("Load") {
+          val selected = savedConfigsCombo.selectedItem as? String
+          if (selected != null) {
+            loadConfig(selected)
+          }
+        }
+        button("Delete") {
+          val selected = savedConfigsCombo.selectedItem as? String
+          if (selected != null) {
+            AppSettingsState.instance.savedPlanConfigs.remove(selected)
+            savedConfigsCombo.removeItem(selected)
+          }
+        }
+      }
       row {
         cell(autoFixCheckbox)
           .align(Align.FILL)

@@ -53,8 +53,9 @@ class AutoPlanChatAction : BaseAction() {
         )
         if (dialog.showAndGet()) {
             try {
+                val planSettings = dialog.settings
                 UITools.runAsync(e.project, "Initializing Auto Plan Chat", true) { progress ->
-                    initializeChat(e, dialog, progress)
+                    initializeChat(e, progress, planSettings)
                 }
             } catch (ex: Exception) {
                 log.error("Failed to initialize chat", ex)
@@ -63,12 +64,12 @@ class AutoPlanChatAction : BaseAction() {
         }
     }
 
-    private fun initializeChat(e: AnActionEvent, dialog: PlanConfigDialog, progress: ProgressIndicator) {
+    private fun initializeChat(e: AnActionEvent, progress: ProgressIndicator, planSettings: PlanSettings) {
         progress.text = "Setting up session..."
         val session = Session.newGlobalID()
         val root = getProjectRoot(e) ?: throw RuntimeException("Could not determine project root")
         progress.text = "Processing files..."
-        setupChatSession(session, root, e, dialog)
+        setupChatSession(session, root, e, planSettings)
         progress.text = "Starting server..."
         val server = AppServer.getServer(e.project)
         openBrowser(server, session.toString())
@@ -81,9 +82,9 @@ class AutoPlanChatAction : BaseAction() {
         }
     }
 
-    private fun setupChatSession(session: Session, root: File, e: AnActionEvent, dialog: PlanConfigDialog) {
+    private fun setupChatSession(session: Session, root: File, e: AnActionEvent, planSettings: PlanSettings) {
         DataStorage.sessionPaths[session] = root
-        SessionProxyServer.chats[session] = createChatApp(root, e, dialog)
+        SessionProxyServer.chats[session] = createChatApp(root, e, planSettings)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Auto Plan Chat",
             singleInput = false,
@@ -94,60 +95,59 @@ class AutoPlanChatAction : BaseAction() {
         SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
     }
 
-    private fun createChatApp(root: File, e: AnActionEvent, dialog: PlanConfigDialog) =
-        object : AutoPlanChatApp(
-            planSettings = dialog.settings.copy(
-                env = mapOf(),
-                workingDir = root.absolutePath,
-                language = if (isWindows) "powershell" else "bash",
-                command = listOf(
-                    if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
-                ),
-                parsingModel = AppSettingsState.instance.fastModel.chatModel(),
+    private fun createChatApp(root: File, e: AnActionEvent, planSettings: PlanSettings): AutoPlanChatApp = object : AutoPlanChatApp(
+        planSettings = planSettings.copy(
+            env = mapOf(),
+            workingDir = root.absolutePath,
+            language = if (isWindows) "powershell" else "bash",
+            command = listOf(
+                if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
             ),
-            model = AppSettingsState.instance.smartModel.chatModel(),
             parsingModel = AppSettingsState.instance.fastModel.chatModel(),
-            showMenubar = false,
-            api = api,
-            api2 = api2,
-        ) {
-            private fun codeFiles() = (UITools.getSelectedFiles(e).toTypedArray().toList().flatMap<VirtualFile, File> {
-                FileValidationUtils.expandFileList(it.toFile).toList<File>()
-            }.map<File, Path> { it.toPath() }.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
-                .filter { it.toFile().exists() }
-                .filter { it.toFile().length() < MAX_FILE_SIZE }
-                .map { root.toPath().relativize(it) ?: it }.toSet()
+        ),
+        model = AppSettingsState.instance.smartModel.chatModel(),
+        parsingModel = AppSettingsState.instance.fastModel.chatModel(),
+        showMenubar = false,
+        api = api,
+        api2 = api2,
+    ) {
+        private fun codeFiles() = (UITools.getSelectedFiles(e).toTypedArray().toList().flatMap<VirtualFile, File> {
+            FileValidationUtils.expandFileList(it.toFile).toList<File>()
+        }.map<File, Path> { it.toPath() }.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
+            .filter { it.toFile().exists() }
+            .filter { it.toFile().length() < MAX_FILE_SIZE }
+            .map { root.toPath().relativize(it) ?: it }.toSet()
 
-            private fun codeSummary() = codeFiles()
-                .joinToString("\n\n") { path ->
-                    """
+        private fun codeSummary() = codeFiles()
+            .joinToString("\n\n") { path ->
+                """
                     |# ${path}
                     |$tripleTilde${path.toString().split('.').lastOrNull()}
                     |${root.resolve(path.toFile()).readText(Charsets.UTF_8)}
                     |$tripleTilde
                 """.trimMargin()
-                }
+            }
 
-            private fun projectSummary() = codeFiles()
-                .asSequence().distinct().sorted()
-                .joinToString("\n") { path ->
-                    "* ${path} - ${root.resolve(path.toFile()).length()} bytes"
-                }
+        private fun projectSummary() = codeFiles()
+            .asSequence().distinct().sorted()
+            .joinToString("\n") { path ->
+                "* ${path} - ${root.resolve(path.toFile()).length()} bytes"
+            }
 
-            override fun contextData(): List<String> =
-                try {
-                    listOf(
-                        if (codeFiles().size < 4) {
+        override fun contextData(): List<String> =
+            try {
+                listOf(
+                    if (codeFiles().size < 4) {
                         "Files:\n" + codeSummary()
                     } else {
                         "Files:\n" + projectSummary()
-                        }
-                    )
-                } catch (e: Exception) {
-                    log.error("Error generating context data", e)
-                    emptyList()
-                }
-        }
+                    }
+                )
+            } catch (e: Exception) {
+                log.error("Error generating context data", e)
+                emptyList()
+            }
+    }
 
     private fun openBrowser(server: AppServer, session: String) {
         Thread {
