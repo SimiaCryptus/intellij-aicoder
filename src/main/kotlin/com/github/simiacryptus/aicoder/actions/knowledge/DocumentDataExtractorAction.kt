@@ -38,7 +38,6 @@ class DocumentDataExtractorAction : BaseAction(
 
   override fun isEnabled(event: AnActionEvent): Boolean {
     if (!super.isEnabled(event)) return false
-    if (!AppSettingsState.instance.devActions) return false
     val selectedFiles = UITools.getSelectedFiles(event)
     val processableFiles = selectedFiles.flatMap { file ->
       when {

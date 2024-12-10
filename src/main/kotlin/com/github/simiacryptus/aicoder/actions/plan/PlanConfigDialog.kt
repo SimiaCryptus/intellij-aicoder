@@ -26,7 +26,7 @@ import javax.swing.table.DefaultTableModel
 class PlanConfigDialog(
   project: Project?,
   val settings: PlanSettings,
-  singleTaskMode: Boolean = false,
+  val singleTaskMode: Boolean = false,
 ) : DialogWrapper(project) {
   companion object {
     private const val CONFIG_COMBO_WIDTH = 200
@@ -39,58 +39,41 @@ class PlanConfigDialog(
     private const val DEFAULT_PANEL_HEIGHT = 200
     private const val TEMPERATURE_SCALE = 100.0
     private const val TEMPERATURE_LABEL = "%.2f"
-    private const val TOOLTIP_WIDTH = 300
-    private const val TOOLTIP_PADDING = 5
     private const val FONT_SIZE_ENABLED = 14f
     private const val FONT_SIZE_DISABLED = 12f
     private const val DIVIDER_PROPORTION = 0.3f
-    private const val COMMAND_BUTTON_WIDTH = 30
-    private const val COMMAND_PANEL_HEIGHT = 30
 
     fun isVisible(it: ChatModel): Boolean {
       return AppSettingsState.instance.apiKey?.get(it.provider.name)?.isNotBlank() ?: false
     }
   }
 
-  // Add model selection validation
   private fun validateModelSelection(taskType: TaskType<*, *>, model: ChatModel?): Boolean {
     if (model == null && settings.getTaskSettings(taskType).enabled) {
       JOptionPane.showMessageDialog(
-        null,
-        "Please select a model for enabled task: ${taskType.name}",
-        "Model Required",
-        JOptionPane.WARNING_MESSAGE
+        null, "Please select a model for enabled task: ${taskType.name}", "Model Required", JOptionPane.WARNING_MESSAGE
       )
       return false
     }
     return true
   }
 
-  // Add config name validation
-  private fun validateConfigName(name: String?): Boolean {
-    return when {
-      name.isNullOrBlank() -> {
-        JOptionPane.showMessageDialog(
-          null,
-          "Please enter a valid configuration name",
-          "Invalid Name",
-          JOptionPane.WARNING_MESSAGE
-        )
-        false
-      }
-
-      name.contains(Regex("[^a-zA-Z0-9_-]")) -> {
-        JOptionPane.showMessageDialog(
-          null,
-          "Configuration name can only contain letters, numbers, underscores and hyphens",
-          "Invalid Name",
-          JOptionPane.WARNING_MESSAGE
-        )
-        false
-      }
-
-      else -> true
+  private fun validateConfigName(name: String?) = when {
+    name.isNullOrBlank() -> {
+      JOptionPane.showMessageDialog(
+        null, "Please enter a valid configuration name", "Invalid Name", JOptionPane.WARNING_MESSAGE
+      )
+      false
     }
+
+    name.contains(Regex("[^a-zA-Z0-9_-]")) -> {
+      JOptionPane.showMessageDialog(
+        null, "Configuration name can only contain letters, numbers, underscores and hyphens", "Invalid Name", JOptionPane.WARNING_MESSAGE
+      )
+      false
+    }
+
+    else -> true
   }
 
   private inner class TaskTypeListCellRenderer : DefaultListCellRenderer() {
@@ -338,7 +321,7 @@ class PlanConfigDialog(
           </ul>
         """
 
-        else -> "No detailed description available"
+        else -> ""
       }
     }</p>
       </body>
@@ -367,15 +350,11 @@ class PlanConfigDialog(
       TaskType.WebFetchAndTransform -> "Fetch and transform web content into desired formats"
       TaskType.GitHubSearch -> "Search GitHub repositories, code, issues and users"
       TaskType.GoogleSearch -> "Perform Google web searches with custom filtering"
-      else -> "No description available"
+      else -> ""
     }
 
     override fun getListCellRendererComponent(
-      list: JList<*>?,
-      value: Any?,
-      index: Int,
-      isSelected: Boolean,
-      cellHasFocus: Boolean
+      list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
     ): Component {
       val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
       if (component is JLabel && value is TaskType<*, *>) {
@@ -391,7 +370,6 @@ class PlanConfigDialog(
         } else {
           list?.foreground?.darker()?.darker()
         }
-        // Set task name and description
         text = buildString {
           val taskDescription = getTaskDescription(value)
           append(value.name)
@@ -410,7 +388,6 @@ class PlanConfigDialog(
     val modelComboBox = ComboBox(getVisibleModels().distinctBy { it.modelName }.map { it.modelName }.toTypedArray()).apply {
       maximumSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
       preferredSize = Dimension(DEFAULT_PANEL_WIDTH - 50, 30)
-      // Set selected model and handle case when no models are available
       if (itemCount > 0) {
         val currentModel = settings.getTaskSettings(taskType).model
         selectedItem = when {
@@ -421,19 +398,16 @@ class PlanConfigDialog(
     }
     private val commandList = if (taskType == TaskType.CommandAutoFix) {
       JBTable(object : DefaultTableModel(
-        arrayOf("Enabled", "Command"),
-        0
+        arrayOf("Enabled", "Command"), 0
       ) {
 
         private val entries = mutableListOf<CommandTableEntry>()
 
         init {
-          val sortedExecutables = AppSettingsState.instance.executables
-            .sortedWith(String.CASE_INSENSITIVE_ORDER)
+          val sortedExecutables = AppSettingsState.instance.executables.sortedWith(String.CASE_INSENSITIVE_ORDER)
           sortedExecutables.forEach { command ->
-            // Get the enabled state from current settings
-            val isEnabled = (settings.getTaskSettings(taskType) as? CommandAutoFixTask.CommandAutoFixTaskSettings)
-              ?.commandAutoFixCommands?.contains(command) ?: true
+            val isEnabled =
+              (settings.getTaskSettings(taskType) as? CommandAutoFixTask.CommandAutoFixTaskSettings)?.commandAutoFixCommands?.contains(command) ?: true
             entries.add(CommandTableEntry(isEnabled, command))
             addRow(arrayOf(isEnabled, command))
           }
@@ -452,7 +426,6 @@ class PlanConfigDialog(
             super.setValueAt(aValue, row, column)
             fireTableCellUpdated(row, column)
             updateCommandSettings()
-            // Force UI refresh
             taskTypeList.repaint()
           } else {
             throw IllegalArgumentException("Invalid column index: $column")
@@ -464,8 +437,7 @@ class PlanConfigDialog(
             taskType.name,
             settings.getTaskSettings(taskType).enabled,
             getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
-            entries.filter { it.enabled }.map { it.command }
-          )
+            entries.filter { it.enabled }.map { it.command })
           settings.setTaskSettings(taskType, newSettings)
         }
       }).apply {
@@ -474,7 +446,6 @@ class PlanConfigDialog(
           preferredWidth = 50
           maxWidth = 100
           cellEditor = DefaultCellEditor(JCheckBox())
-          // Add tooltip for better UX
           headerValue = "<html>Enable/disable<br>command</html>"
         }
         columnModel.getColumn(1).apply {
@@ -510,10 +481,7 @@ class PlanConfigDialog(
             maximumSize = Dimension(DEFAULT_PANEL_WIDTH / 2 - 30, 30)
             addActionListener {
               val command = JOptionPane.showInputDialog(
-                this,
-                "Enter command path:",
-                "Add Command",
-                JOptionPane.PLAIN_MESSAGE
+                this, "Enter command path:", "Add Command", JOptionPane.PLAIN_MESSAGE
               )
               if (command != null && command.isNotEmpty()) {
                 (commandList.model as DefaultTableModel).addRow(arrayOf(true, command))
@@ -529,10 +497,7 @@ class PlanConfigDialog(
               if (selectedRow != -1) {
                 val command = (commandList.model as DefaultTableModel).getValueAt(selectedRow, 1) as String
                 val confirmResult = JOptionPane.showConfirmDialog(
-                  null,
-                  "Remove command: $command?",
-                  "Confirm Remove",
-                  JOptionPane.YES_NO_OPTION
+                  null, "Remove command: $command?", "Confirm Remove", JOptionPane.YES_NO_OPTION
                 )
                 if (confirmResult == JOptionPane.YES_OPTION) {
                   (commandList.model as DefaultTableModel).removeRow(selectedRow)
@@ -540,8 +505,7 @@ class PlanConfigDialog(
                 }
               } else {
                 JOptionPane.showMessageDialog(
-                  null,
-                  "Please select a command to remove."
+                  null, "Please select a command to remove."
                 )
               }
             }
@@ -557,10 +521,8 @@ class PlanConfigDialog(
             taskType.name,
             enabledCheckbox.isSelected,
             getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
-            (0 until (commandList?.model?.rowCount ?: 0))
-              .filter { row -> (commandList?.model?.getValueAt(row, 0) as? Boolean) ?: false }
-              .map { row -> commandList?.model?.getValueAt(row, 1) as String }
-          )
+            (0 until (commandList?.model?.rowCount ?: 0)).filter { row -> (commandList?.model?.getValueAt(row, 0) as? Boolean) ?: false }
+              .map { row -> commandList?.model?.getValueAt(row, 1) as String })
 
           else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
             this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
@@ -577,8 +539,7 @@ class PlanConfigDialog(
             getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
             (0 until (commandList?.model?.rowCount ?: 0)).map { row ->
               commandList?.model?.getValueAt(row, 1) as String
-            }
-          )
+            })
 
           else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
             this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
@@ -596,8 +557,7 @@ class PlanConfigDialog(
           model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
           commandAutoFixCommands = (0 until (commandList?.model?.rowCount ?: 0)).filter { row ->
             commandList?.model?.getValueAt(row, 0) as Boolean
-          }.map { row -> commandList?.model?.getValueAt(row, 1) as String }
-        )
+          }.map { row -> commandList?.model?.getValueAt(row, 1) as String })
 
         else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
           this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
@@ -610,8 +570,7 @@ class PlanConfigDialog(
   }
 
   private data class CommandTableEntry(
-    var enabled: Boolean,
-    val command: String
+    var enabled: Boolean, val command: String
   )
 
   private val temperatureSlider = JSlider(MIN_TEMP, MAX_TEMP, (settings.temperature * TEMPERATURE_SCALE).toInt()).apply {
@@ -631,9 +590,7 @@ class PlanConfigDialog(
     AppSettingsState.instance.savedPlanConfigs.keys.sorted().forEach { addItem(it) }
   }
 
-  private fun getVisibleModels() =
-    ChatModel.values().map { it.value }.filter { isVisible(it) }.toList()
-      .sortedBy { "${it.provider.name} - ${it.modelName}" }
+  private fun getVisibleModels() = ChatModel.values().map { it.value }.filter { isVisible(it) }.toList().sortedBy { "${it.provider.name} - ${it.modelName}" }
 
   init {
     taskTypeList.cellRenderer = TaskTypeListCellRenderer()
@@ -642,7 +599,6 @@ class PlanConfigDialog(
         val selectedType = (taskTypeList.selectedValue as TaskType<*, *>).name
         (configPanelContainer.layout as CardLayout).show(configPanelContainer, selectedType)
         if (singleTaskMode) {
-          // Disable all tasks except the selected one
           TaskType.values().forEach { taskType ->
             val isSelected = taskType.name == selectedType
             taskConfigs[taskType.name]?.enabledCheckbox?.isSelected = isSelected
@@ -650,15 +606,12 @@ class PlanConfigDialog(
         }
       }
     }
-
     TaskType.values().forEach { taskType ->
       val configPanel = TaskTypeConfigPanel(taskType)
       taskConfigs[taskType.name] = configPanel
       configPanelContainer.add(configPanel, taskType.name)
     }
-    // Select first task by default
     taskTypeList.selectedIndex = 0
-
     init()
     title = "Configure Planning and Tasks"
     temperatureSlider.addChangeListener {
@@ -669,37 +622,25 @@ class PlanConfigDialog(
 
   private fun saveCurrentConfig() {
     val configName = JOptionPane.showInputDialog(
-      null,
-      "Enter configuration name:",
-      "Save Configuration",
-      JOptionPane.PLAIN_MESSAGE
+      null, "Enter configuration name:", "Save Configuration", JOptionPane.PLAIN_MESSAGE
     )?.trim()
 
     if (!validateConfigName(configName)) {
       return
     }
-    // Save current settings before creating config
     taskConfigs.values.forEach { it.saveSettings() }
-
-    // Check if config already exists
     if (AppSettingsState.instance.savedPlanConfigs.containsKey(configName)) {
       val confirmResult = JOptionPane.showConfirmDialog(
-        null,
-        "Configuration '$configName' already exists. Overwrite?",
-        "Confirm Overwrite",
-        JOptionPane.YES_NO_OPTION
+        null, "Configuration '$configName' already exists. Overwrite?", "Confirm Overwrite", JOptionPane.YES_NO_OPTION
       )
       if (confirmResult != JOptionPane.YES_OPTION) {
         return
       }
     }
-
     val taskSettingsMap = TaskType.values().associate { taskType ->
       val taskSettings = settings.getTaskSettings(taskType)
       taskType.name to AppSettingsState.TaskSettingsSerialized(
-        enabled = taskSettings.enabled,
-        modelName = taskSettings.model?.modelName,
-        commandAutoFixCommands = if (taskType == TaskType.CommandAutoFix) {
+        enabled = taskSettings.enabled, modelName = taskSettings.model?.modelName, commandAutoFixCommands = if (taskType == TaskType.CommandAutoFix) {
           (taskSettings as? CommandAutoFixTask.CommandAutoFixTaskSettings)?.commandAutoFixCommands
         } else null
       )
@@ -718,135 +659,105 @@ class PlanConfigDialog(
 
   private fun loadConfig(configName: String) {
     val config = AppSettingsState.instance.savedPlanConfigs[configName] ?: return
-    // Confirm load if there are unsaved changes
     val hasUnsavedChanges = TaskType.values().any { taskType ->
       val currentSettings = settings.getTaskSettings(taskType)
       val savedSettings = config.taskSettings[taskType.name]
-      currentSettings.enabled != savedSettings?.enabled ||
-          currentSettings.model?.modelName != savedSettings?.modelName
+      currentSettings.enabled != savedSettings?.enabled || currentSettings.model?.modelName != savedSettings.modelName
     }
     if (hasUnsavedChanges) {
       val confirmResult = JOptionPane.showConfirmDialog(
-        null,
-        "Loading will discard unsaved changes. Continue?",
-        "Confirm Load",
-        JOptionPane.YES_NO_OPTION
+        null, "Loading will discard unsaved changes. Continue?", "Confirm Load", JOptionPane.YES_NO_OPTION
       )
       if (confirmResult != JOptionPane.YES_OPTION) {
         return
       }
     }
     try {
-      // Validate temperature range and update UI components atomically
       val validatedTemp = config.temperature.coerceIn(0.0, 1.0)
       settings.temperature = validatedTemp
       temperatureSlider.value = (validatedTemp * TEMPERATURE_SCALE).toInt()
       temperatureLabel.text = TEMPERATURE_LABEL.format(validatedTemp)
-      // Update other settings
-    settings.autoFix = config.autoFix
-    settings.allowBlocking = config.allowBlocking
-    autoFixCheckbox.isSelected = config.autoFix
-    allowBlockingCheckbox.isSelected = config.allowBlocking
-      // Batch update task settings to minimize UI updates
+      settings.autoFix = config.autoFix
+      settings.allowBlocking = config.allowBlocking
+      autoFixCheckbox.isSelected = config.autoFix
+      allowBlockingCheckbox.isSelected = config.allowBlocking
       val taskUpdates = config.taskSettings.mapNotNull { (taskTypeName, serializedSettings) ->
         val taskType = TaskType.values().find { it.name == taskTypeName } ?: return@mapNotNull null
         val availableModels = getVisibleModels()
-        val selectedModel = availableModels.find { it.modelName == serializedSettings.modelName }
-          ?: availableModels.firstOrNull()
+        val selectedModel = availableModels.find { it.modelName == serializedSettings.modelName } ?: availableModels.firstOrNull()
         Triple(taskType, serializedSettings, selectedModel)
       }
       taskUpdates.forEach { (taskType, serializedSettings, selectedModel) ->
+        val newSettings = when (taskType) {
+          TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
+            taskType.name, serializedSettings.enabled, selectedModel, serializedSettings.commandAutoFixCommands ?: emptyList()
+          )
 
-      val newSettings = when (taskType) {
-        TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
-          taskType.name,
-          serializedSettings.enabled,
-          selectedModel,
-          serializedSettings.commandAutoFixCommands ?: emptyList()
-        )
-
-        else -> TaskSettingsBase(taskType.name, serializedSettings.enabled).apply {
-          this.model = selectedModel
+          else -> TaskSettingsBase(taskType.name, serializedSettings.enabled).apply {
+            this.model = selectedModel
+          }
         }
-      }
-      settings.setTaskSettings(taskType, newSettings)
+        settings.setTaskSettings(taskType, newSettings)
         taskConfigs[taskType.name]?.apply {
-        enabledCheckbox.isSelected = serializedSettings.enabled
+          enabledCheckbox.isSelected = serializedSettings.enabled
           if (modelComboBox.itemCount > 0 && selectedModel != null) {
             modelComboBox.selectedItem = selectedModel.modelName
           }
         }
       }
       // Update UI once after all changes
-    taskTypeList.repaint()
+      taskTypeList.repaint()
     } catch (e: Exception) {
       JOptionPane.showMessageDialog(
-        null,
-        "Error loading configuration: ${e.message}",
-        "Load Error",
-        JOptionPane.ERROR_MESSAGE
+        null, "Error loading configuration: ${e.message}", "Load Error", JOptionPane.ERROR_MESSAGE
       )
     }
   }
 
   override fun createCenterPanel(): JComponent = panel {
     group("Settings") {
-      row("Saved Configs:") {
-        cell(savedConfigsCombo)
-          .align(Align.FILL)
-          .comment("Select a saved configuration to load or save current settings")
-        button("Save...") {
-          saveCurrentConfig()
-        }
-        button("Load") {
-          val selected = savedConfigsCombo.selectedItem as? String
-          if (selected != null) {
-            loadConfig(selected)
-          } else {
-            JOptionPane.showMessageDialog(
-              null,
-              "Please select a configuration to load",
-              "No Configuration Selected",
-              JOptionPane.WARNING_MESSAGE
-            )
+      if (!singleTaskMode) {
+        row("Saved Configs:") {
+          cell(savedConfigsCombo).align(Align.FILL).comment("Select a saved configuration to load or save current settings")
+          button("Save...") {
+            saveCurrentConfig()
           }
-        }
-        button("Delete") {
-          val selected = savedConfigsCombo.selectedItem as? String
-          if (selected != null) {
-            val confirmResult = JOptionPane.showConfirmDialog(
-              null,
-              "Delete configuration '$selected'?",
-              "Confirm Delete",
-              JOptionPane.YES_NO_OPTION
-            )
-            if (confirmResult == JOptionPane.YES_OPTION) {
-            AppSettingsState.instance.savedPlanConfigs.remove(selected)
-            savedConfigsCombo.removeItem(selected)
+          button("Load") {
+            val selected = savedConfigsCombo.selectedItem as? String
+            if (selected != null) {
+              loadConfig(selected)
+            } else {
+              JOptionPane.showMessageDialog(
+                null, "Please select a configuration to load", "No Configuration Selected", JOptionPane.WARNING_MESSAGE
+              )
             }
-          } else {
-            JOptionPane.showMessageDialog(
-              null,
-              "Please select a configuration to delete",
-              "No Configuration Selected",
-              JOptionPane.WARNING_MESSAGE
-            )
+          }
+          button("Delete") {
+            val selected = savedConfigsCombo.selectedItem as? String
+            if (selected != null) {
+              val confirmResult = JOptionPane.showConfirmDialog(
+                null, "Delete configuration '$selected'?", "Confirm Delete", JOptionPane.YES_NO_OPTION
+              )
+              if (confirmResult == JOptionPane.YES_OPTION) {
+                AppSettingsState.instance.savedPlanConfigs.remove(selected)
+                savedConfigsCombo.removeItem(selected)
+              }
+            } else {
+              JOptionPane.showMessageDialog(
+                null, "Please select a configuration to delete", "No Configuration Selected", JOptionPane.WARNING_MESSAGE
+              )
+            }
           }
         }
       }
       row {
-        cell(autoFixCheckbox)
-          .align(Align.FILL)
-          .comment("Automatically apply suggested fixes without confirmation")
+        cell(autoFixCheckbox).align(Align.FILL).comment("Automatically apply suggested fixes without confirmation")
       }
       row {
-        cell(allowBlockingCheckbox)
-          .align(Align.FILL)
-          .comment("Allow tasks to block UI while processing")
+        cell(allowBlockingCheckbox).align(Align.FILL).comment("Allow tasks to block UI while processing")
       }
       row("Temperature:") {
-        cell(temperatureSlider).align(Align.FILL)
-          .comment("Adjust AI response creativity (higher = more creative)")
+        cell(temperatureSlider).align(Align.FILL).comment("Adjust AI response creativity (higher = more creative)")
         cell(temperatureLabel)
       }
     }
@@ -865,21 +776,13 @@ class PlanConfigDialog(
             dividerWidth = 3
             isShowDividerControls = true
             isShowDividerIcon = true
-          }
-        )
-          .align(Align.FILL)
-          .resizableColumn()
-      }
-        .resizableRow()
-    }
-      .layout(RowLayout.PARENT_GRID)
-      .resizableRow()
+          }).align(Align.FILL).resizableColumn()
+      }.resizableRow()
+    }.layout(RowLayout.PARENT_GRID).resizableRow()
   }
 
   override fun doOKAction() {
-    // Validate all enabled tasks have models selected
     val invalidTasks = taskConfigs.values.filter { configPanel ->
-      val taskType = configPanel.taskType
       val isEnabled = configPanel.enabledCheckbox.isSelected
       val model = getVisibleModels().find { it.modelName == configPanel.modelComboBox.selectedItem }
       isEnabled && model == null
@@ -887,15 +790,10 @@ class PlanConfigDialog(
     if (invalidTasks.isNotEmpty()) {
       val taskNames = invalidTasks.map { it.taskType.name }.joinToString(", ")
       JOptionPane.showMessageDialog(
-        null,
-        "Please select models for enabled tasks: $taskNames",
-        "Missing Models",
-        JOptionPane.WARNING_MESSAGE
+        null, "Please select models for enabled tasks: $taskNames", "Missing Models", JOptionPane.WARNING_MESSAGE
       )
       return
     }
-
-    // Save settings from all task type config panels
     taskConfigs.values.forEach { configPanel ->
       configPanel.saveSettings()
     }

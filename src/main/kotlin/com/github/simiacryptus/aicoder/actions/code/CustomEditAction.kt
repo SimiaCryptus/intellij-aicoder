@@ -14,8 +14,7 @@ import javax.swing.JOptionPane
  * Action that allows custom editing of code selections using AI.
  * Supports multiple languages and provides custom edit instructions.
  */
-
-open class CustomEditAction : SelectionAction<String>() {
+open class CustomEditAction : SelectionAction<String>(requiresSelection = true) {
     private val log = Logger.getInstance(CustomEditAction::class.java)
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -69,18 +68,18 @@ open class CustomEditAction : SelectionAction<String>() {
         ) as String?
     }
 
-    override fun processSelection(state: SelectionState, instruction: String?): String {
-        if (instruction.isNullOrBlank()) return state.selectedText ?: ""
+    override fun processSelection(state: SelectionState, config: String?): String {
+        if (config.isNullOrBlank()) return state.selectedText ?: ""
         return try {
             UITools.run(state.project, "Processing Edit", true) { progress ->
                 progress.isIndeterminate = true
-                progress.text = "Applying edit: $instruction"
+                progress.text = "Applying edit: $config"
                 val settings = AppSettingsState.instance
                 val outputHumanLanguage = settings.humanLanguage
-                settings.getRecentCommands("customEdits").addInstructionToHistory(instruction)
+                settings.getRecentCommands("customEdits").addInstructionToHistory(config)
                 val result = proxy.editCode(
                     state.selectedText ?: "",
-                    instruction,
+                    config,
                     state.language?.name ?: state.editor?.virtualFile?.extension ?: "unknown",
                     outputHumanLanguage
                 )
@@ -96,5 +95,4 @@ open class CustomEditAction : SelectionAction<String>() {
             state.selectedText ?: ""
         }
     }
-
 }

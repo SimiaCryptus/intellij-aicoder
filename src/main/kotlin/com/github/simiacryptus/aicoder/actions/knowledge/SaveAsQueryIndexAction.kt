@@ -1,7 +1,6 @@
 package com.github.simiacryptus.aicoder.actions.knowledge
 
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.findRecursively
@@ -30,7 +29,6 @@ class SaveAsQueryIndexAction : BaseAction() {
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
-        if (!AppSettingsState.instance.devActions) return false
         val selectedFiles = UITools.getSelectedFiles(event)
         return selectedFiles.isNotEmpty() && selectedFiles.any { file ->
             file.isDirectory || file.name.endsWith(".parsed.json")

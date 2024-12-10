@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.actions.knowledge
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
-import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.findRecursively
@@ -31,7 +30,6 @@ class CreateProjectorFromQueryIndexAction : BaseAction() {
 
   override fun isEnabled(event: AnActionEvent): Boolean {
     if (!super.isEnabled(event)) return false
-    if (!AppSettingsState.instance.devActions) return false
     val selectedFiles = UITools.getSelectedFiles(event)
     val processableFiles = selectedFiles.flatMap { file ->
       when {

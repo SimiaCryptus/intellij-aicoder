@@ -26,28 +26,28 @@
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"
                popup="true"
                icon="MyIcons.icon"
-               text="_AI Coder"
+               text="AI Coder"
                description="AI coding assistant tools">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
             <action class="com.github.simiacryptus.aicoder.actions.generic.GenericChatAction"
                     id="GenericChat"
-                    text="Coding Assistant Chat"
+                    text="💬 AI Assistant Chat"
                     description="Initiate a general-purpose chat session to discuss coding concepts, get assistance with programming tasks, or explore software development ideas">
             </action>
             <action id="AICoderEnhancedChat"
                     class="com.github.simiacryptus.aicoder.actions.generic.LargeOutputChatAction"
-                    text="Enhanced Code Chat"
+                    text="🔍 Enhanced AI Chat"
                     description="Open enhanced AI code chat with structured responses">
                 <add-to-group group-id="ToolsMenu" anchor="last"/>
             </action>
             <action id="OpenWebPageAction"
                     class="com.github.simiacryptus.aicoder.actions.OpenWebPageAction"
-                    text="Open Simiacryptus Apps"
+                    text="🌐 Open apps.simiacrypt.us"
                     description="Opens the Simiacryptus Apps web page in your default browser, providing access to additional resources and documentation">
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.generic.OutlineAction"
                     id="OutlineAction"
-                    text="AI Outline Tool"
+                    text="📋 Outline Tool"
                     description="Create and expand outlines using AI assistance">
             </action>
         </group>
@@ -55,113 +55,113 @@
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"
                popup="true"
                icon="MyIcons.icon"
-               text="_AI Coder"
+               text="AI Editor"
                description="AI coding assistant tools">
             <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="EditorToggleColumnMode"/>
             <action class="com.github.simiacryptus.aicoder.actions.generic.CodeChatAction"
-                    text="Code Chat"
+                    text="💬 Code Chat"
                     description="Start an interactive dialogue about your selected code, offering insights, explanations, and suggestions for improvements">
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.generic.DiffChatAction"
-                    text="Patch Chat"
+                    text="🔧 Patch Chat"
                     description="Initiate an interactive session to discuss and apply patches to your code, with intelligent suggestions for modifications">
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.code.SmartPasteAction"
-                    text="_Smart Paste"
+                    text="📋 _Smart Paste"
                     description="Smart paste functionality that automatically detects and converts clipboard content to match the current file's programming language">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift V"/>
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift V"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.code.FastPasteAction"
-                    text="_Fast Paste"
+                    text="⚡ _Fast Paste"
                     description="Fast paste functionality using a less resource-intensive model for quick conversions.">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt V"/>
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt V"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.code.RedoLast"
-                    text="Re_do Last"
+                    text="🔄 Re_do Last"
                     description="Quickly repeat the most recent intelligent coding operation in the current editor">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift Z"/>
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift Z"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.code.CustomEditAction"
-                    text="_Edit Code..."
+                    text="✏️ _Edit Code..."
                     description="Edit code...">
             </action>
             <group id="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
                    class="com.github.simiacryptus.aicoder.actions.code.RecentCodeEditsAction"
-                   text="_Recent Code Edits"
+                    text="⏱️ _Recent Code Edits"
                    description="Recent code edits"
                    popup="true">
             </group>
             <action class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownListAction"
-                    text="Add _List Items"
+                    text="📝 Add _List Items"
                     description="Intelligently extend Markdown lists by generating contextually relevant new items">
             </action>
             <group id="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
                    class="com.github.simiacryptus.aicoder.actions.markdown.MarkdownImplementActionGroup"
-                   text="Imple_ment As..."
+                    text="🛠️ Imple_ment As..."
                    description="Convert selected Markdown text into executable code snippets in various programming languages"
                    popup="true">
             </group>
             <action class="com.github.simiacryptus.aicoder.actions.code.DescribeAction"
-                    text="Describe C_ode and Prepend Comment"
+                    text="📝 Describe C_ode and Prepend Comment"
                     description="Add doc comments">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift D"/>
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift D"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.legacy.RenameVariablesAction"
-                    text="Rename _Variables"
+                    text="🏷️ Rename _Variables"
                     description="Rename variables">
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt R"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt R"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.legacy.ReplaceWithSuggestionsAction"
-                    text="Replace with Suggestions"
+                    text="💡 Replace with Suggestions"
                     description="Suggest replacements for selected text based on context.">
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt R"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt R"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.dev.LineFilterChatAction"
-                    text="Filter Lines"
+                    text="🔍 Filter Lines"
                     description="Filter lines">
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.dev.PrintTreeAction"
-                    text="Print PSI Tree"
+                    text="🌳 Print PSI Tree"
                     description="Print PSI Tree">
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt A"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt A"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.legacy.AppendTextWithChatAction"
-                    text="Append Text via Chat"
+                    text="📝 Append Text via Chat"
                     description="Append text to your current selection using AI-driven chat suggestions.">
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.legacy.InsertImplementationAction"
-                    text="Insert _Implementation"
+                    text="⚙️ Insert _Implementation"
                     description="Insert implementation">
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt I"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt I"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.legacy.CommentsAction"
-                    text="Add Code _Comments"
+                    text="💭 Add Code _Comments"
                     description="Add code comments">
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt C"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt C"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.legacy.DocAction"
-                    text="Add D_oc Comments"
+                    text="📚 Add D_oc Comments"
                     description="Add code comments">
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt D"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt D"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.legacy.ImplementStubAction"
-                    text="_Implement Stub"
+                    text="🔧 _Implement Stub"
                     description="Implement stub">
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt S"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt S"/>
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.legacy.VoiceToTextAction"
-                    text="Voice to Text"
+                    text="🎤 Voice to Text"
                     description="Convert spoken language into text using AI.">
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt V"/>
             </action>
@@ -174,101 +174,115 @@
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
             <action class="com.github.simiacryptus.aicoder.actions.generic.MultiDiffChatAction"
-                    text="Modify Files"
+                    text="📝 Modify Files"
                     description="Analyze and generate patches for multiple files simultaneously, considering the broader project context">
             </action>
             <action class="com.github.simiacryptus.aicoder.actions.generic.MultiCodeChatAction"
-                    text="Code Chat"
+                    text="💬 Code Chat"
                     description="Initiate an interactive dialogue session to discuss and analyze multiple code files simultaneously">
             </action>
-            <action class="com.github.simiacryptus.aicoder.actions.plan.PlanAheadAction"
-                    text="Task Runner"
-                    description="Intelligent task planning and execution tool for breaking down complex coding tasks into manageable steps">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.plan.AutoPlanChatAction"
-                    text="Auto-Plan"
-                    description="Automatically generate a structured task plan based on the selected code, project, or task description">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.plan.PrePlanAction"
-                    text="Pre-Planner"
-                    description="Set up a structured task planning session with customizable parameters and execution environment">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.plan.SingleTaskAction"
-                    text="Single Task"
-                    description="Execute a single AI-powered task with focused functionality">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction"
-                    text="Do Something"
-                    description="Execute custom coding tasks with intelligent assistance, analyzing project structure and context">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction"
-                    text="Run ... and Fix"
-                    description="Intelligent analysis and automatic resolution of build or test errors, with customizable fix suggestions">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.MassPatchAction"
-                    text="Mass Patch"
-                    description="Analyze and generate patches for multiple selected files, with intelligent suggestions for code modifications">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.DocumentedMassPatchAction"
-                    text="Mass Patch with Documentation"
-                    description="Analyze and patch multiple code files while considering markdown documentation files for context and standards">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateRelatedFileAction"
-                    text="Generate Related File"
-                    description="Intelligently create a new file related to the selected one, suggesting appropriate content and file location">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.CreateFileFromDescriptionAction"
-                    text="Create File from Description"
-                    description="Create a new file with appropriate content based on a natural language description, intelligently determining file type and location">
-            </action>
-            <action id="com.github.simiacryptus.aicoder.actions.knowledge.DocumentDataExtractorAction"
-                    class="com.github.simiacryptus.aicoder.actions.knowledge.DocumentDataExtractorAction"
-                    text="Extract Document Data"
-                    description="Comprehensive tool for extracting and analyzing text and images from various document formats (PDF, TXT, MD, HTML)">
-            </action>
-            <action id="com.github.simiacryptus.aicoder.actions.knowledge.CreateProjectorFromQueryIndexAction"
-                    class="com.github.simiacryptus.aicoder.actions.knowledge.CreateProjectorFromQueryIndexAction"
-                    text="View Projector"
-                    description="View Vectors using Tensorflow Projector">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.knowledge.SaveAsQueryIndexAction"
-                    text="Save as Query DB"
-                    description="Convert selected parsed JSON files into an optimized binary index for efficient querying and data retrieval">
-            </action>
             <action class="com.github.simiacryptus.aicoder.actions.ApplyPatchAction"
-                    text="Apply Patch"
+                    text="🔧 Apply Patch"
                     description="Intelligently apply a provided patch to the selected file, with automatic conflict resolution and error handling">
             </action>
-            <action id="AICoderShellCommand"
-                    class="com.github.simiacryptus.aicoder.actions.generic.ShellCommandAction"
-                    text="Shell Agent"
-                    description="Execute shell commands in the selected directory via a coding agent">
+            <action class="com.github.simiacryptus.aicoder.actions.generic.DocumentedMassPatchAction"
+                    text="🔨 Mass Patch"
+                    description="Analyze and patch multiple code files while considering markdown documentation files for context and standards">
             </action>
-            <action class="com.github.simiacryptus.aicoder.actions.plan.PlanChatAction"
-                    text="Chat w/ Planner"
-                    description="Interactive session for project planning, task breakdown, and development strategy discussions">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction"
-                    text="Multi-Step Editor"
-                    description="Break down complex code modifications into a series of manageable steps, with intelligent suggestions for each stage">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.CreateImageAction"
-                    text="Create Image"
-                    description="Generate visual representations of code structure, algorithms, or data flow based on selected code or project files">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateDocumentationAction"
-                    text="Generate Documentation"
-                    description="Automatically generate comprehensive documentation for selected files or entire project, with customizable output formats">
-            </action>
-            <action class="com.github.simiacryptus.aicoder.actions.generic.WebDevelopmentAssistantAction"
-                    text="Web Dev"
-                    description="Comprehensive tool for web application development, assisting with file generation, code writing, and project structure">
-            </action>
-            <action id="AICoderGoogleSearchAndDownload"
-                    class="com.github.simiacryptus.aicoder.actions.knowledge.GoogleSearchAndDownloadAction"
-                    text="Google Search and Download"
-                    description="Search Google and download results">
-            </action>
+            <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu.Generation"
+                   class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+                   popup="true"
+                   text="⚡ Generate"
+                   description="File generation tools">
+                <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateRelatedFileAction"
+                        text="📄 Generate Related File"
+                        description="Intelligently create a new file related to the selected one, suggesting appropriate content and file location">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.generic.CreateFileFromDescriptionAction"
+                        text="✨ Create File from Description"
+                        description="Create a new file with appropriate content based on a natural language description, intelligently determining file type and location">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.generic.CreateImageAction"
+                        text="🖼️ Create Image"
+                        description="Generate visual representations of code structure, algorithms, or data flow based on selected code or project files">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.generic.GenerateDocumentationAction"
+                        text="📚 Generate Documentation"
+                        description="Automatically generate comprehensive documentation for selected files or entire project, with customizable output formats">
+                </action>
+            </group>
+            <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu.Planning"
+                   class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+                   popup="true"
+                   text="📋 Task Plans"
+                   description="Task planning and management tools">
+                <action class="com.github.simiacryptus.aicoder.actions.plan.PlanAheadAction"
+                        text="🏃 Task Runner"
+                        description="Intelligent task planning and execution tool for breaking down complex coding tasks into manageable steps">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.plan.AutoPlanChatAction"
+                        text="🤖 Auto-Plan"
+                        description="Automatically generate a structured task plan based on the selected code, project, or task description">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.plan.PlanChatAction"
+                        text="💬 Chat w/ Planner"
+                        description="Interactive session for project planning, task breakdown, and development strategy discussions">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.plan.PrePlanAction"
+                        text="📝 Pre-Planner"
+                        description="Set up a structured task planning session with customizable parameters and execution environment">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.plan.SingleTaskAction"
+                        text="✨ Single Task"
+                        description="Execute a single AI-powered task with focused functionality">
+                </action>
+            </group>
+            <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu.Agents"
+                   class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+                   popup="true"
+                   text="🤖 Agents"
+                   description="AI-powered automation agents">
+                <action class="com.github.simiacryptus.aicoder.actions.generic.CommandAutofixAction"
+                        text="🔄 Run ... and Fix"
+                        description="Intelligent analysis and automatic resolution of build or test errors, with customizable fix suggestions">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction"
+                        text="✨ Do Something"
+                        description="Execute custom coding tasks with intelligent assistance, analyzing project structure and context">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction"
+                        text="📝 Multi-Step Editor"
+                        description="Break down complex code modifications into a series of manageable steps, with intelligent suggestions for each stage">
+                </action>
+                <action id="AICoderShellCommand"
+                        class="com.github.simiacryptus.aicoder.actions.generic.ShellCommandAction"
+                        text="🐚 Shell Agent"
+                        description="Execute shell commands in the selected directory via a coding agent">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.generic.WebDevelopmentAssistantAction"
+                        text="🌐 Web Dev"
+                        description="Comprehensive tool for web application development, assisting with file generation, code writing, and project structure">
+                </action>
+            </group>
+            <group id="com.github.simiacryptus.aicoder.ui.ProjectMenu.Knowledge"
+                   class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+                   popup="true"
+                   text="📚 Knowledge Mgmt"
+                   description="Knowledge management and analysis tools">
+                <action class="com.github.simiacryptus.aicoder.actions.knowledge.DocumentDataExtractorAction"
+                        text="📄 Extract Document Data"
+                        description="Comprehensive tool for extracting and analyzing text and images from various document formats (PDF, TXT, MD, HTML)">
+                </action>
+                <action id="com.github.simiacryptus.aicoder.actions.knowledge.CreateProjectorFromQueryIndexAction"
+                        class="com.github.simiacryptus.aicoder.actions.knowledge.CreateProjectorFromQueryIndexAction"
+                        text="🔮 View Projector"
+                        description="View Vectors using Tensorflow Projector">
+                </action>
+                <action class="com.github.simiacryptus.aicoder.actions.knowledge.SaveAsQueryIndexAction"
+                        text="💾 Save as Query DB"
+                        description="Convert selected parsed JSON files into an optimized binary index for efficient querying and data retrieval">
+                </action>
+            </group>
         </group>
 
         <group id="com.github.simiacryptus.aicoder.ui.VcsMenu"
@@ -280,35 +294,35 @@
             <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
             <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"
                     class="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitAction"
-                    text="Chat with Commit"
+                    text="💬 Chat with Commit"
                     description="Chat with Commit">
             </action>
             <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitDiffAction"
                     class="com.github.simiacryptus.aicoder.actions.git.ChatWithCommitDiffAction"
-                    text="Chat with Diff (x..HEAD)"
+                    text="🔄 Chat with Diff (x..HEAD)"
                     description="Chat with Commit Diff">
             </action>
             <action id="com.github.simiacryptus.aicoder.actions.git.ChatWithWorkingCopyDiff"
                     class="com.github.simiacryptus.aicoder.actions.git.ChatWithWorkingCopyDiffAction"
-                    text="Chat with Working Copy Diff"
+                    text="📝 Chat with Working Copy Diff"
                     description="Open a chat session with the diff between HEAD and the working copy">
             </action>
             <action id="com.github.simiacryptus.aicoder.actions.git.ReplicateCommitAction"
                     class="com.github.simiacryptus.aicoder.actions.git.ReplicateCommitAction"
-                    text="Replicate Commit"
+                    text="🔄 Replicate Commit"
                     description="Replicate Commit">
             </action>
         </group>
 
         <action id="com.github.simiacryptus.aicoder.actions.test.ChatWithTestResultAction"
                 class="com.github.simiacryptus.aicoder.actions.test.TestResultAutofixAction"
-                text="AI Analyze Test Result"
+                text="🔍 AI Analyze Test Result"
                 description="Open a chat session to analyze the selected test result">
             <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
         </action>
         <action id="com.github.simiacryptus.aicoder.actions.problems.AnalyzeProblemAction"
                 class="com.github.simiacryptus.aicoder.actions.problems.AnalyzeProblemAction"
-                text="AI Analyze Problem"
+                text="🔧 AI Analyze Problem"
                 description="Open a chat session to analyze and potentially fix the selected problem">
             <add-to-group group-id="ProblemsView.ToolWindow.TreePopup" anchor="last"/>
         </action>

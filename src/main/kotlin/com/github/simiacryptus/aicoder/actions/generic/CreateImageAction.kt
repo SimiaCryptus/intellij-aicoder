@@ -1,287 +1,203 @@
 package com.github.simiacryptus.aicoder.actions.generic
 
-import ai.grazie.utils.mpp.UUID
-import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
-import com.github.simiacryptus.aicoder.actions.generic.MultiStepPatchAction.AutoDevApp.Settings
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.config.AppSettingsState.Companion.imageModel
-import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.jopenai.API
-import com.simiacryptus.jopenai.ChatClient
-import com.simiacryptus.jopenai.models.ApiModel
-import com.simiacryptus.jopenai.models.ApiModel.Role
-import com.simiacryptus.jopenai.models.ChatModel
-import com.simiacryptus.jopenai.util.ClientUtil.toContentList
-import com.simiacryptus.skyenet.Discussable
-import com.simiacryptus.skyenet.core.actors.ActorSystem
-import com.simiacryptus.skyenet.core.actors.BaseActor
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.ui.JBUI
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.actors.ImageActor
 import com.simiacryptus.skyenet.core.actors.ImageResponse
-import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import com.simiacryptus.skyenet.core.platform.model.StorageInterface
-import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
-import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
-import com.simiacryptus.skyenet.webui.application.AppInfoData
-import com.simiacryptus.skyenet.webui.application.ApplicationInterface
-import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
-import java.text.SimpleDateFormat
-import java.util.concurrent.Semaphore
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
+import javax.swing.*
 
 class CreateImageAction : BaseAction() {
-    data class ImageConfig(
-        val imageSize: String = "1024x1024", val imageFormat: String = "png", val quality: Int = 100
-    )
+  inner class ImageGenerationDialog(project: Project) : DialogWrapper(project) {
+    private val fileNameField = JTextField(generateDefaultFileName(), 20)
+    private val instructionsArea = JTextArea(3, 20)
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    init {
+      log.debug("Initializing ImageGenerationDialog")
+      title = "Generate Image"
+      init()
+    }
 
-    val path = "/imageCreator"
+    private fun generateDefaultFileName(): String {
+      val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+      return "generated_image_$timestamp.png"
+    }
 
-    override fun handle(event: AnActionEvent) {
-        val rootRef = AtomicReference<Path?>(null)
-        val codeFiles: MutableSet<Path> = mutableSetOf()
-        UITools.runAsync(event.project, "Creating Image", true) { progress ->
-            try {
-                progress.text = "Analyzing code files..."
 
-                fun codeSummary() = codeFiles.filter {
-                    rootRef.get()?.resolve(it)?.toFile()?.exists() ?: false
-                }.associateWith { rootRef.get()?.resolve(it)?.toFile()?.readText(Charsets.UTF_8) }
-                    .entries.joinToString("\n\n") { (path, code) ->
-                        val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-                        """
-|# $path
-|```$extension
-|${code.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }}
-|```
-""".trimMargin()
-                    }
+    override fun createCenterPanel(): JComponent {
+      return JPanel(GridBagLayout()).apply {
+        val c = GridBagConstraints()
+        c.fill = GridBagConstraints.HORIZONTAL
+        c.insets = JBUI.insets(5)
+        c.gridx = 0; c.gridy = 0
+        add(JLabel("Output filename:"), c)
+        c.gridx = 1; c.gridy = 0
+        add(fileNameField, c)
+        c.gridx = 0; c.gridy = 1
+        add(JLabel("Special instructions:"), c)
+        c.gridx = 1; c.gridy = 1
+        c.fill = GridBagConstraints.BOTH
+        add(JScrollPane(instructionsArea), c)
+      }
+    }
 
-                val dataContext = event.dataContext
-                val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-                progress.text = "Determining root directory..."
-                val folder = UITools.getSelectedFolder(event)
-                rootRef.set(
-                    if (null != folder) {
-                        folder.toFile.toPath()
-                    } else if (1 == virtualFiles?.size) {
-                        UITools.getSelectedFile(event)?.parent?.toNioPath()
-                    } else {
-                        getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
-                    }
-                )
-                progress.text = "Collecting files..."
+    fun getFileName() = fileNameField.text
+    fun getInstructions() = instructionsArea.text
+  }
 
-                val root = rootRef.get() ?: throw RuntimeException("Root path not set")
-                val files = getFiles(virtualFiles, root)
-                codeFiles.addAll(files)
-                progress.text = "Initializing session..."
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-                val session = Session.newGlobalID()
-                DataStorage.sessionPaths[session] = root.toFile()
-                progress.text = "Starting server..."
-
-                SessionProxyServer.chats[session] = PatchApp(event, root.toFile(), ::codeSummary)
-                ApplicationServer.appInfoMap[session] = AppInfoData(
-                    applicationName = "Code Chat",
-                    singleInput = true,
-                    stickyInput = false,
-                    loadImages = false,
-                    showMenubar = false
-                )
-                SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
-
-                val server = AppServer.getServer(event.project)
-
-                Thread {
-                    Thread.sleep(500)
-                    try {
-
-                        val uri = server.server.uri.resolve("/#$session")
-                        BaseAction.log.info("Opening browser to $uri")
-                        browse(uri)
-                    } catch (e: Throwable) {
-                        log.warn("Error opening browser", e)
-                    }
-                }.start()
-            } catch (e: Throwable) {
-                log.error("Failed to create image", e)
-                UITools.showErrorDialog(event.project, "Failed to create image: ${e.message}", "Error")
-            }
+  override fun handle(e: AnActionEvent) {
+    log.info("Starting CreateImageAction handler")
+    val rootRef = AtomicReference<Path?>(null)
+    val codeFiles: MutableSet<Path> = mutableSetOf()
+    val dialog = ImageGenerationDialog(e.project!!)
+    if (!dialog.showAndGet()) {
+      log.debug("Dialog cancelled by user")
+      return
+    }
+    UITools.runAsync(e.project, "Creating Image", true) { progress ->
+      try {
+        progress.text = "Analyzing code files..."
+        log.debug("Beginning code analysis")
+        fun codeSummary() = codeFiles.filter {
+          rootRef.get()?.resolve(it)?.toFile()?.exists() ?: false
+        }.associateWith { rootRef.get()?.resolve(it)?.toFile()?.readText(Charsets.UTF_8) }.entries.joinToString("\n\n") { (path, code) ->
+          val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+          "# $path\n```$extension\n${code}\n```"
         }
-    }
 
-    inner class PatchApp(
-        private val event: AnActionEvent,
-        override val root: File,
-        val codeSummary: () -> String = { "" },
-    ) : ApplicationServer(
-        applicationName = "Multi-file Patch Chat",
-        path = path,
-        showMenubar = false,
-    ) {
-        override val singleInput = false
-        override val stickyInput = true
+        val dataContext = e.dataContext
+        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+        log.debug("Found ${virtualFiles?.size ?: 0} virtual files")
+        progress.text = "Determining root directory..."
+        val folder = UITools.getSelectedFolder(e)
+        rootRef.set(
+          if (null != folder) {
+            log.debug("Using selected folder as root: ${folder.toFile}")
+            folder.toFile.toPath()
+          } else if (1 == virtualFiles?.size) {
+            log.debug("Using parent of single file as root")
+            UITools.getSelectedFile(e)?.parent?.toNioPath()
+          } else {
+            log.debug("Using module root as root directory")
+            getModuleRootForFile(UITools.getSelectedFile(e)?.parent?.toFile ?: throw RuntimeException("No file selected")).toPath()
+          }
+        )
+        progress.text = "Collecting files..."
 
-        override fun userMessage(
-            session: Session,
-            user: User?,
-            userMessage: String,
-            ui: ApplicationInterface,
-            api: API
-        ) {
-            val settings = getSettings(session, user) ?: Settings()
-            if (api is ChatClient) api.budget = settings.budget ?: 2.00
-            PatchAgent(
-                api = api,
-                dataStorage = dataStorage,
-                session = session,
-                user = user,
-                ui = ui,
-                model = settings.model!!,
-                codeSummary = { codeSummary() },
-                event = event,
-                root = root,
-            ).start(
-                userMessage = userMessage,
-            )
+        val root = rootRef.get() ?: throw RuntimeException("Root path not set")
+        if (!Files.exists(root)) {
+          throw IOException("Root directory does not exist: $root")
         }
-    }
-
-    enum class ActorTypes {
-        MainActor,
-    }
-
-    inner class PatchAgent(
-        val api: API,
-        dataStorage: StorageInterface,
-        session: Session,
-        user: User?,
-        val ui: ApplicationInterface,
-        val model: ChatModel,
-        val codeSummary: () -> String = { "" },
-        actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
-            ActorTypes.MainActor to ImageActor(
-                prompt = """
-|You are a technical drawing assistant.
-|
-|You will be composing an image about the following code:
-|
-|${codeSummary()}
-|
-""".trimMargin(),
-                textModel = model,
-                imageModel = AppSettingsState.instance.mainImageModel.imageModel()
-            ),
-        ),
-        val event: AnActionEvent,
-        val root: File,
-    ) : ActorSystem<ActorTypes>(
-        actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session
-    ) {
-
-        private val mainActor by lazy { getActor(ActorTypes.MainActor) as ImageActor }
-
-        fun start(
-            userMessage: String,
-        ) {
-            val task = ui.newTask()
-            val toInput = { it: String -> listOf(codeSummary(), it) }
-            Discussable(
-                task = task,
-                userMessage = { userMessage },
-                heading = renderMarkdown(userMessage),
-                initialResponse = { it: String -> mainActor.answer(toInput(it), api = api) },
-                outputFn = { img: ImageResponse ->
-                    val id = UUID.random().text
-                    renderMarkdown(
-                        "<img src='${
-                            task.saveFile(
-                                "$id.png",
-                                write(img, root.resolve("$id.png").toPath())
-                            )
-                        }' style='max-width: 100%;'/><img src='${
-                            task.saveFile(
-                                "$id.jpg",
-                                write(img, root.resolve("$id.jpg").toPath())
-                            )
-                        }' style='max-width: 100%;'/>", ui = ui
-                    )
-                },
-                ui = ui,
-                reviseResponse = { userMessages: List<Pair<String, Role>> ->
-                    mainActor.respond(
-                        messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
-                            .toTypedArray<ApiModel.ChatMessage>()),
-                        input = toInput(userMessage),
-                        api = api
-                    )
-                },
-                atomicRef = AtomicReference(),
-                semaphore = Semaphore(0),
-            ).call()
+        log.info("Using root directory: $root")
+        val files = getFiles(virtualFiles, root)
+        codeFiles.addAll(files)
+        log.debug("Collected ${codeFiles.size} code files")
+        progress.text = "Generating image..."
+        log.info("Starting image generation with ${codeFiles.size} files")
+        val imageActor = ImageActor(
+          prompt = """
+                    You are a technical drawing assistant.
+                    You will be composing an image about the following code:
+                    ${codeSummary()}
+                    Special instructions: ${dialog.getInstructions()}
+                    """.trimIndent(),
+          textModel = AppSettingsState.instance.smartModel.chatModel(),
+          imageModel = AppSettingsState.instance.mainImageModel.imageModel()
+        ).apply { setImageAPI(IdeaOpenAIClient.instance) }
+        log.debug("Sending request to image generation API")
+        val response = imageActor.answer(listOf(codeSummary(), dialog.getInstructions()), api)
+        log.debug("Image generation completed successfully")
+        val imagePath = root.resolve(dialog.getFileName())
+        write(response, imagePath)
+        VirtualFileManager.getInstance().findFileByNioPath(imagePath)?.refresh(false, false)
+      } catch (ex: Throwable) {
+        when (ex) {
+          is IOException -> log.error("IO error during image creation: ${ex.message}", ex)
+          is SecurityException -> log.error("Security error during image creation: ${ex.message}", ex)
+          is IllegalArgumentException -> log.error("Invalid argument during image creation: ${ex.message}", ex)
+          else -> log.error("Unexpected error during image creation", ex)
         }
+        UITools.showErrorDialog(e.project, "Failed to create image: ${ex.message}", "Error")
+      }
     }
+  }
 
-    private fun write(
-        code: ImageResponse,
-        path: Path
-    ): ByteArray = try {
-        path.parent?.toFile()?.mkdirs()
-        ByteArrayOutputStream().use { outputStream ->
-            if (!ImageIO.write(
-                    code.image, path.toString().split(".").last(), outputStream
-                )
-            ) {
-                throw IOException("Failed to write image in format: ${path.toString().split(".").last()}")
-            }
-            outputStream.toByteArray()
-        }
-    } catch (e: Exception) {
-        log.error("Failed to write image to $path", e)
-        throw RuntimeException("Failed to write image: ${e.message}", e)
-    }
+  private fun write(
+    code: ImageResponse, path: Path
+  ) = try {
+    log.debug("Creating parent directories for: $path")
+    path.parent?.toFile()?.mkdirs()
+    val format = path.toString().split(".").last()
+    log.debug("Writing image in format: $format")
 
-    private fun getFiles(
-        virtualFiles: Array<out VirtualFile>?,
-        root: Path
-    ): MutableSet<Path> {
-        val codeFiles = mutableSetOf<Path>()
-        virtualFiles?.forEach { file ->
-            if (file.isDirectory) {
-                getFiles(file.children, root)
-            } else {
-                val relative = root.relativize(file.toNioPath())
-                codeFiles.add(relative) //[] = file.contentsToByteArray().toString(Charsets.UTF_8)
-            }
-        }
-        return codeFiles
+    val bytes = ByteArrayOutputStream().use { outputStream ->
+      if (!ImageIO.write(
+          code.image, format, outputStream
+        )
+      ) {
+        throw IOException("Unsupported or invalid image format: $format")
+      }
+      outputStream.toByteArray()
     }
+    path.toFile().writeBytes(bytes)
+    path
+  } catch (e: Exception) {
+    log.error("Failed to write image to $path", e)
+    when (e) {
+      is IOException -> throw IOException("Failed to write image: ${e.message}", e)
+      is SecurityException -> throw SecurityException("Security error writing image: ${e.message}", e)
+      else -> throw RuntimeException("Unexpected error writing image: ${e.message}", e)
+    }
+  }
 
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
-        if (virtualFiles == null || virtualFiles.isEmpty()) return false
-        if (event.project == null) return false
-// Check if any files are selected or if a directory is selected
-        return virtualFiles.any { it.isDirectory || it.extension in supportedExtensions }
+  private fun getFiles(
+    virtualFiles: Array<out VirtualFile>?, root: Path
+  ): MutableSet<Path> {
+    val codeFiles = mutableSetOf<Path>()
+    virtualFiles?.forEach { file ->
+      if (file.isDirectory) {
+        getFiles(file.children, root)
+      } else {
+        val relative = root.relativize(file.toNioPath())
+        codeFiles.add(relative) //[] = file.contentsToByteArray().toString(Charsets.UTF_8)
+      }
     }
+    return codeFiles
+  }
 
-    companion object {
-        private val log = LoggerFactory.getLogger(CreateImageAction::class.java)
-        private val supportedExtensions = setOf("kt", "java", "py", "js", "ts", "html", "css", "xml")
-    }
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+    if (virtualFiles.isNullOrEmpty()) return false
+    if (event.project == null) return false
+    return true
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(CreateImageAction::class.java)
+  }
 }

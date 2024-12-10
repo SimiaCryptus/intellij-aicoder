@@ -49,12 +49,7 @@ class MultiCodeChatAction : BaseAction() {
         }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
             .entries.joinToString("\n\n") { (path, code) ->
                 val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-                """
- # $path
- ```$extension
- ${code}
-            |```
-            """.trimMargin()
+            "# $path\n```$extension\n$code\n```"
             }
 
         val dataContext = event.dataContext
@@ -95,7 +90,6 @@ class MultiCodeChatAction : BaseAction() {
         Thread {
             Thread.sleep(500)
             try {
-
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
                 browse(uri)
@@ -106,9 +100,8 @@ class MultiCodeChatAction : BaseAction() {
     }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (!super.isEnabled(event)) return false
-        val files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
-        return files != null && files.isNotEmpty()
+      UITools.getSelectedFile(event) ?: return false
+      return super.isEnabled(event)
     }
 
     /** Application class that handles the chat interface and code modifications */
@@ -126,14 +119,12 @@ class MultiCodeChatAction : BaseAction() {
 
         private val mainActor: SimpleActor
             get() = SimpleActor(
-                prompt = """
-                        |You are a helpful AI that helps people with coding.
-                        |
-                        |You will be answering questions about the following code:
-                        |
-                        |${codeSummary()}
-                        |
-                        """.trimMargin(),
+              prompt = ("""
+                  You are a helpful AI that helps people with coding.
+                  
+                  You will be answering questions about the following code:
+                  
+                  """.trimIndent() + codeSummary()).trim(),
                 model = AppSettingsState.instance.smartModel.chatModel()
             )
 
@@ -143,7 +134,6 @@ class MultiCodeChatAction : BaseAction() {
          * @throws RuntimeException if API calls fail
          * @throws IOException if file operations fail
          */
-
         override fun userMessage(
             session: Session,
             user: User?,
@@ -153,10 +143,8 @@ class MultiCodeChatAction : BaseAction() {
         ) {
             val settings = getSettings(session, user) ?: Settings()
             if (api is ChatClient) api.budget = settings.budget ?: 2.00
-
             val task = ui.newTask()
             val codex = GPT4Tokenizer()
-
             val api = (api as ChatClient).getChildClient().apply {
                 val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
                 createFile.second?.apply {
@@ -204,8 +192,6 @@ class MultiCodeChatAction : BaseAction() {
      * @param root Project root path
      * @return Set of relative paths to the selected files
      */
-
-
     private fun getFiles(
         virtualFiles: Array<out VirtualFile>?,
         root: Path
@@ -220,7 +206,6 @@ class MultiCodeChatAction : BaseAction() {
         }
         return codeFiles
     }
-
 
     companion object {
         private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)

@@ -169,4 +169,17 @@ class DocumentedMassPatchAction : BaseAction() {
             }
         }
     }
+
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if (!super.isEnabled(event)) return false
+    UITools.getSelectedFolder(event) ?: UITools.getSelectedFiles(event).let {
+      when (it.size) {
+        0 -> null
+        1 -> null
+        else -> it
+      }
+    } ?: return false
+    return true
+  }
+
 }

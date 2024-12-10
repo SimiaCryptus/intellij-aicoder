@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
+import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.models.ApiModel.Role
@@ -126,6 +128,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
                     model = settings.model,
                     parsingModel = settings.parsingModel,
                     root = root,
+                    api2 = IdeaOpenAIClient.instance,
                 ).start(userMessage = userMessage)
             } catch (e: Throwable) {
                 log.error("Error processing user message", e)
@@ -148,6 +151,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
 
     class WebDevAgent(
         val api: API,
+        val api2: OpenAIClient,
         dataStorage: StorageInterface,
         session: Session,
         user: User?,
@@ -242,7 +246,9 @@ class WebDevelopmentAssistantAction : BaseAction() {
             """.trimIndent(),
                 textModel = model,
                 imageModel = ImageModels.DallE3,
-            ),
+            ).apply {
+                setImageAPI(api2)
+            },
         ),
         val root: File,
     ) :

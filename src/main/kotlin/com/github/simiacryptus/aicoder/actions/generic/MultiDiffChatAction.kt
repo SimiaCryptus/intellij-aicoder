@@ -39,9 +39,8 @@ import java.util.concurrent.atomic.AtomicReference
 class MultiDiffChatAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (!super.isEnabled(event)) return false
-        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
-        return virtualFiles != null && virtualFiles.isNotEmpty()
+      UITools.getSelectedFile(event) ?: return false
+      return super.isEnabled(event)
     }
 
     override fun handle(event: AnActionEvent) {

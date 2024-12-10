@@ -89,59 +89,58 @@ class MarkdownListAction : BaseAction() {
 
     override fun handle(e: AnActionEvent) {
         try {
-            val project = e.project ?: return
-            val config = getConfig(project) ?: return
-
             val caret = e.getData(CommonDataKeys.CARET) ?: return
-        val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
-        val list =
+          val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
+          val project = e.project ?: return
+          val config = getConfig(project) ?: return
+          val list =
             getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl") ?: return
-        val items = StringUtil.trim(
+          val items = StringUtil.trim(
             getAll(list, "MarkdownListItemImpl")
-                .map {
-                    val all = getAll(it, "MarkdownParagraphImpl")
-                    if (all.isEmpty()) it.text else all[0].text
-                }.toList(), 10, false
-        )
+              .map {
+                val all = getAll(it, "MarkdownParagraphImpl")
+                if (all.isEmpty()) it.text else all[0].text
+              }.toList(), 10, false
+          )
             progress.fraction = 0.4
             progress.text = "Generating new items..."
-        val indent = getIndent(caret)
-        val endOffset = list.textRange.endOffset
-        val bulletTypes = listOf("- [ ] ", "- ", "* ")
-        val document = (e.getData(CommonDataKeys.EDITOR) ?: return).document
-        val rawItems = items.map(CharSequence::trim).map {
+          val indent = getIndent(caret)
+          val endOffset = list.textRange.endOffset
+          val bulletTypes = listOf("- [ ] ", "- ", "* ")
+          val document = (e.getData(CommonDataKeys.EDITOR) ?: return).document
+          val rawItems = items.map(CharSequence::trim).map {
             val bulletType = bulletTypes.find(it::startsWith)
             if (null != bulletType) StringUtil.stripPrefix(it, bulletType).toString()
             else it.toString()
-        }
+          }
 
-        UITools.redoableTask(e) {
+          UITools.redoableTask(e) {
             var newItems: List<String?>? = null
             progress.isIndeterminate = false
             progress.fraction = 0.2
             progress.text = "Analyzing existing items..."
             UITools.run(
-                e.project, "Generating New Items", true
+              e.project, "Generating New Items", true
             ) {
-                newItems = proxy.newListItems(
-                    rawItems,
-                    config.itemCount
-                ).items
-                progress.fraction = 0.8
-                progress.text = "Formatting results..."
+              newItems = proxy.newListItems(
+                rawItems,
+                config.itemCount
+              ).items
+              progress.fraction = 0.8
+              progress.text = "Formatting results..."
             }
             var newList = ""
             ApplicationManager.getApplication().runReadAction {
-                val strippedList = list.text.split("\n")
-                    .map(String::trim).filter(String::isNotEmpty)
-                    .joinToString("\n")
-                val bulletString = bulletTypes.find(strippedList::startsWith) ?: "1. "
-                newList = newItems?.joinToString("\n") { indent.toString() + bulletString + it } ?: ""
+              val strippedList = list.text.split("\n")
+                .map(String::trim).filter(String::isNotEmpty)
+                .joinToString("\n")
+              val bulletString = bulletTypes.find(strippedList::startsWith) ?: "1. "
+              newList = newItems?.joinToString("\n") { indent.toString() + bulletString + it } ?: ""
             }
             UITools.writeableFn(e) {
-                insertString(document, endOffset, "\n" + newList)
+              insertString(document, endOffset, "\n" + newList)
             }
-        }
+          }
 
         } catch (ex: Exception) {
             log.error("Failed to generate list items", ex)
@@ -154,9 +153,10 @@ class MarkdownListAction : BaseAction() {
     }
 
     override fun isEnabled(e: AnActionEvent): Boolean {
-        val enabled = super.isEnabled(e)
-        e.presentation.isEnabledAndVisible = enabled
-        return enabled
+      val caret = e.getData(CommonDataKeys.CARET) ?: return false
+      val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return false
+      getSmallestIntersecting(psiFile, caret.selectionStart, caret.selectionEnd, "MarkdownListImpl") ?: return false
+      return super.isEnabled(e)
     }
 
 }

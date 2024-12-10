@@ -51,6 +51,7 @@ class MassPatchAction : BaseAction() {
         UITools.getSelectedFolder(event) ?: UITools.getSelectedFiles(event).let {
             when (it.size) {
                 0 -> null
+              1 -> null
                 else -> it
             }
         } ?: return false

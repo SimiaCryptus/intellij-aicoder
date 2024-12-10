@@ -19,3 +19,4 @@ test-recordings/
 *.index.data
 *.parsed.json
 .intellijPlatform
+.kotlin/

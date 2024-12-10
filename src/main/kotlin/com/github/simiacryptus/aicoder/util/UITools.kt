@@ -109,7 +109,7 @@ object UITools {
     private val singleThreadPool = Executors.newSingleThreadExecutor()
 
     fun getRoot(e: AnActionEvent) : String {
-        return getSelectedFolder(e)?.toFile?.absolutePath ?: UITools.getSelectedFile(e)?.toFile?.parent ?: ""
+      return getSelectedFolder(e)?.toFile?.absolutePath ?: getSelectedFile(e)?.toFile?.parent ?: ""
     }
 
     fun redoableTask(
@@ -646,13 +646,6 @@ object UITools {
         val data = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext)
         if (data != null && !data.isDirectory) {
             return data
-        }
-        val editor = PlatformDataKeys.EDITOR.getData(dataContext)
-        if (editor != null) {
-            val file = FileDocumentManager.getInstance().getFile(editor.document)
-            if (file != null) {
-                return file
-            }
         }
         return null
     }

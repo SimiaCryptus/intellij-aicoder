@@ -3,7 +3,6 @@ package com.github.simiacryptus.aicoder.actions.plan
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
-import com.github.simiacryptus.aicoder.actions.generic.SimpleCommandAction.Companion.tripleTilde
 import com.github.simiacryptus.aicoder.actions.generic.toFile
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
@@ -13,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.jopenai.models.chatModel
+import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import com.simiacryptus.skyenet.apps.general.SingleTaskApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
@@ -141,33 +141,29 @@ class SingleTaskAction : BaseAction() {
         fun contextData(event: AnActionEvent): List<String> {
             val selectedFiles = UITools.getSelectedFiles(event).toTypedArray().toList()
             if (selectedFiles.isEmpty()) return emptyList()
-            val root = UITools.getRoot(event).let { File(it) }
-            val maxFileSize = 512 * 1024 // 512KB limit
+          val root = File(UITools.getRoot(event))
             return selectedFiles
                 .flatMap { virtualFile ->
                     try {
                         FileValidationUtils.expandFileList(virtualFile.toFile).toList()
                     } catch (e: Exception) {
-                        emptyList<File>()
+                      emptyList()
                     }
                 }
                 .filter { file ->
-                    file.exists() && file.length() < maxFileSize
-                }
-                .map { file ->
+                  file.exists() && file.length() < 512 * 1024
+                }.mapNotNull { file ->
                     try {
                         val relativePath = root.toPath().relativize(file.toPath())
+                      val text = file.readText(Charsets.UTF_8)
+                      val tokenCount = GPT4Tokenizer().estimateTokenCount(text)
                         """
-                        # ${relativePath}
-                        ${tripleTilde}${file.extension}
-                        ${file.readText(Charsets.UTF_8)}
-                        $tripleTilde
+                        * ${relativePath} - ${file.length()} bytes, ${tokenCount} tokens
                         """.trimIndent()
                     } catch (e: Exception) {
                         null
                     }
                 }
-                .filterNotNull()
 
         }
     }

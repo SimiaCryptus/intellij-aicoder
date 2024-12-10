@@ -154,15 +154,8 @@ abstract class SelectionAction<T : Any>(
     override fun isEnabled(event: AnActionEvent): Boolean {
         if (!super.isEnabled(event)) return false
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
-        if (requiresSelection) {
-            if (editor.caretModel.primaryCaret.selectedText.isNullOrEmpty()) {
-                val editorState = editorState(editor)
-                val (start, end) = defaultSelection(editorState, editorState.cursorOffset)
-                if (start >= end) return false
-            }
-        }
-        val computerLanguage = LanguageUtils.getComputerLanguage(event)
-        return isLanguageSupported(computerLanguage)
+        if (requiresSelection && editor.caretModel.primaryCaret.selectedText.isNullOrEmpty()) return false
+        return isLanguageSupported(LanguageUtils.getComputerLanguage(event))
     }
 
     data class SelectionState(
