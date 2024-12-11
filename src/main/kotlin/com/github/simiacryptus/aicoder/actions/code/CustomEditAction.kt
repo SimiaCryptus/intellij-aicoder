@@ -4,12 +4,18 @@ import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
 import javax.swing.JOptionPane
 
-open class CustomEditAction : SelectionAction<String>() {
+/**
+ * Action that allows custom editing of code selections using AI.
+ * Supports multiple languages and provides custom edit instructions.
+ */
+open class CustomEditAction : SelectionAction<String>(requiresSelection = true) {
+    private val log = Logger.getInstance(CustomEditAction::class.java)
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     interface VirtualAPI {
@@ -53,23 +59,40 @@ open class CustomEditAction : SelectionAction<String>() {
             return chatProxy.create()
         }
 
-    override fun getConfig(project: Project?): String {
+    override fun getConfig(project: Project?): String? {
         return UITools.showInputDialog(
-            null, "Instruction:", "Edit Code", JOptionPane.QUESTION_MESSAGE
-            //, AppSettingsState.instance.getRecentCommands("customEdits").mostRecentHistory
-        ) as String? ?: ""
+            null,
+            "Enter edit instruction:",
+            "Edit Code",
+            JOptionPane.QUESTION_MESSAGE
+        ) as String?
     }
 
-    override fun processSelection(state: SelectionState, instruction: String?): String {
-        if (instruction == null || instruction.isBlank()) return state.selectedText ?: ""
-        val settings = AppSettingsState.instance
-        val outputHumanLanguage = AppSettingsState.instance.humanLanguage
-        settings.getRecentCommands("customEdits").addInstructionToHistory(instruction)
-        return proxy.editCode(
-            state.selectedText ?: "",
-            instruction,
-            state.language?.name ?: "",
-            outputHumanLanguage
-        ).code ?: state.selectedText ?: ""
+    override fun processSelection(state: SelectionState, config: String?): String {
+        if (config.isNullOrBlank()) return state.selectedText ?: ""
+        return try {
+            UITools.run(state.project, "Processing Edit", true) { progress ->
+                progress.isIndeterminate = true
+                progress.text = "Applying edit: $config"
+                val settings = AppSettingsState.instance
+                val outputHumanLanguage = settings.humanLanguage
+                settings.getRecentCommands("customEdits").addInstructionToHistory(config)
+                val result = proxy.editCode(
+                    state.selectedText ?: "",
+                    config,
+                    state.language?.name ?: state.editor?.virtualFile?.extension ?: "unknown",
+                    outputHumanLanguage
+                )
+                result.code ?: state.selectedText ?: ""
+            }
+        } catch (e: Exception) {
+            log.error("Failed to process edit", e)
+            UITools.showErrorDialog(
+                state.project,
+                "Failed to process edit: ${e.message}",
+                "Edit Error"
+            )
+            state.selectedText ?: ""
+        }
     }
 }

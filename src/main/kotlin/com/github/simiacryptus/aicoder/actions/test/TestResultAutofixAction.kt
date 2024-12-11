@@ -6,13 +6,12 @@ import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
-import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.models.chatModel
@@ -31,13 +30,14 @@ import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.util.JsonUtil
 import org.jetbrains.annotations.NotNull
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
-import javax.swing.JOptionPane
+import java.text.SimpleDateFormat
 
 class TestResultAutofixAction : BaseAction() {
     companion object {
-        private val log = Logger.getInstance(TestResultAutofixAction::class.java)
+        private val log = LoggerFactory.getLogger(TestResultAutofixAction::class.java)
         val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
 
         fun getFiles(
@@ -118,16 +118,17 @@ class TestResultAutofixAction : BaseAction() {
         val dataContext = e.dataContext
         val virtualFile = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)?.firstOrNull()
         val root = Companion.findGitRoot(virtualFile)
-        Thread {
+        UITools.runAsync(e.project, "Analyzing Test Result", true) { progress ->
+            progress.isIndeterminate = true
+            progress.text = "Analyzing test failure..."
             try {
                 val testInfo = getTestInfo(testProxy)
                 val projectStructure = getProjectStructure(root)
                 openAutofixWithTestResult(e, testInfo, projectStructure)
             } catch (ex: Throwable) {
-                log.error("Error analyzing test result", ex)
-                JOptionPane.showMessageDialog(null, ex.message, "Error", JOptionPane.ERROR_MESSAGE)
+                UITools.error(log, "Error analyzing test result", ex)
             }
-        }.start()
+        }
     }
 
     override fun isEnabled(@NotNull e: AnActionEvent): Boolean {
@@ -155,6 +156,7 @@ class TestResultAutofixAction : BaseAction() {
 
     private fun openAutofixWithTestResult(e: AnActionEvent, testInfo: String, projectStructure: String) {
         val session = Session.newGlobalID()
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.chats[session] = TestResultAutofixApp(session, testInfo, e.project?.basePath, projectStructure)
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
@@ -202,8 +204,8 @@ class TestResultAutofixAction : BaseAction() {
         }
 
         private fun runAutofix(ui: ApplicationInterface, task: SessionTask) {
-            try {
-                Retryable(ui, task) {
+            Retryable(ui, task) {
+                try {
                     val plan = ParsedActor(
                         resultClass = ParsedErrors::class.java,
                         prompt = """
@@ -220,6 +222,10 @@ class TestResultAutofixAction : BaseAction() {
                         """.trimIndent(),
                         model = AppSettingsState.instance.smartModel.chatModel()
                     ).answer(listOf(testInfo), api = IdeaChatClient.instance)
+                    if (plan.obj.errors.isNullOrEmpty()) {
+                        task.add("No errors identified in test result")
+                        return@Retryable ""
+                    }
 
                     task.add(
                         AgentPatterns.displayMapInTabs(
@@ -251,12 +257,15 @@ class TestResultAutofixAction : BaseAction() {
                             }
 
                             generateAndAddResponse(ui, task, error, summary, filesToFix)
+                            return@Retryable ""
                         }
                     }
-                    ""
-                }
+                    return@Retryable ""
             } catch (e: Exception) {
-                task.error(ui, e)
+                    log.error("Error in autofix process", e)
+                    task.error(ui, e)
+                    throw e
+                }
             }
         }
 
@@ -266,7 +275,8 @@ class TestResultAutofixAction : BaseAction() {
             error: ParsedError,
             summary: String,
             filesToFix: List<String>
-        ): String {
+        ) {
+            task.add("Generating fix suggestions...")
             val response = SimpleActor(
                 prompt = """
                 You are a helpful AI that helps people with coding.
@@ -286,20 +296,21 @@ $projectStructure
                 """.trimIndent(),
                 model = AppSettingsState.instance.smartModel.chatModel()
             ).answer(listOf(error.message ?: ""), api = IdeaChatClient.instance)
+            task.add("Processing suggested fixes...")
 
             var markdown = ui.socketManager?.addApplyFileDiffLinks(
                 root = root.toPath(),
                 response = response,
                 handle = { newCodeMap ->
                     newCodeMap.forEach { (path, newCode) ->
+                        task.add("Applying changes to $path...")
                         task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                     }
                 },
                 ui = ui,
                 api = api,
             )
-            val msg = "<div>${renderMarkdown(markdown!!)}</div>"
-            return msg
+            task.add("<div>${renderMarkdown(markdown!!)}</div>")
         }
     }
 

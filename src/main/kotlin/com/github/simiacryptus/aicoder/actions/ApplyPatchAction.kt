@@ -40,4 +40,17 @@ class ApplyPatchAction : BaseAction(
             psiFile.virtualFile.setBinaryContent(newContent.toByteArray())
         }
     }
+
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if (!super.isEnabled(event)) return false
+    UITools.getSelectedFiles(event).let {
+      when (it.size) {
+        0 -> null
+        1 -> it
+        else -> null
+      }
+    } ?: return false
+    return true
+  }
+
 }

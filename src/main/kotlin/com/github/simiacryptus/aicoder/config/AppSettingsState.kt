@@ -28,6 +28,7 @@ data class AppSettingsState(
     var temperature: Double = 0.1,
     var smartModel: String = OpenAIModels.GPT4o.modelName,
     var fastModel: String = OpenAIModels.GPT4oMini.modelName,
+    var savedPlanConfigs: MutableMap<String, SavedPlanConfig> = mutableMapOf(),
     var mainImageModel: String = ImageModels.DallE3.modelName,
     var listeningPort: Int = 8081,
     var listeningEndpoint: String = "localhost",
@@ -67,6 +68,18 @@ data class AppSettingsState(
     var awsRegion: String? = null,
     var awsBucket: String? = null
 ) : PersistentStateComponent<SimpleEnvelope> {
+    data class SavedPlanConfig(
+        val name: String,
+        val temperature: Double,
+        val autoFix: Boolean,
+        val allowBlocking: Boolean,
+        val taskSettings: Map<String, TaskSettingsSerialized>
+    )
+    data class TaskSettingsSerialized(
+        val enabled: Boolean,
+        val modelName: String?,
+        val commandAutoFixCommands: List<String>? = null
+    )
     private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
 
     @JsonIgnore

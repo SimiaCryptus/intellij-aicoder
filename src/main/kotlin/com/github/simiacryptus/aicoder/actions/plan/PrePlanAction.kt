@@ -70,7 +70,7 @@ class PrePlanAction : BaseAction() {
                 googleApiKey = AppSettingsState.instance.googleApiKey,
                 googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
             )
-            planSettings = PlanAheadConfigDialog(e.project, planSettings).let {
+            planSettings = PlanConfigDialog(e.project, planSettings).let {
                 if (!it.showAndGet()) throw RuntimeException("User cancelled")
                 it.settings
             }

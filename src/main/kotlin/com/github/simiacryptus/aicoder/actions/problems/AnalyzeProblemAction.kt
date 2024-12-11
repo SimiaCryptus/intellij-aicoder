@@ -39,6 +39,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
 import com.simiacryptus.util.JsonUtil
+import java.text.SimpleDateFormat
 import javax.swing.JOptionPane
 
 class AnalyzeProblemAction : AnAction() {
@@ -113,6 +114,7 @@ class AnalyzeProblemAction : AnAction() {
             loadImages = false,
             showMenubar = false
         )
+        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
 
         val server = AppServer.getServer(project)
 

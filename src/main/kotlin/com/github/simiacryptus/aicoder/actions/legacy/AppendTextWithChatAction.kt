@@ -2,12 +2,20 @@ package com.github.simiacryptus.aicoder.actions.legacy
 
 import com.github.simiacryptus.aicoder.actions.SelectionAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
+import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.ApiModel.*
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
+
+/**
+ * Action that appends AI-generated text to the current selection.
+ * Uses ChatGPT to generate contextually relevant continuations of the selected text.
+ *
+ * @see SelectionAction
+ */
 
 class AppendTextWithChatAction : SelectionAction<String>() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -19,20 +27,27 @@ class AppendTextWithChatAction : SelectionAction<String>() {
     }
 
     override fun processSelection(state: SelectionState, config: String?): String {
-        val settings = AppSettingsState.instance
-        val request = ChatRequest(
-            model = settings.smartModel,
-            temperature = settings.temperature
-        ).copy(
-            temperature = settings.temperature,
-            messages = listOf(
-                ChatMessage(Role.system, "Append text to the end of the user's prompt".toContentList(), null),
-                ChatMessage(Role.user, state.selectedText.toString().toContentList(), null)
-            ),
-        )
-        val chatResponse = api.chat(request, settings.smartModel.chatModel())
-        val b4 = state.selectedText ?: ""
-        val str = chatResponse.choices[0].message?.content ?: ""
-        return b4 + if (str.startsWith(b4)) str.substring(b4.length) else str
+        try {
+            val settings = AppSettingsState.instance
+            val request = ChatRequest(
+                model = settings.smartModel,
+                temperature = settings.temperature
+            ).copy(
+                temperature = settings.temperature,
+                messages = listOf(
+                    ChatMessage(Role.system, "Append text to the end of the user's prompt".toContentList(), null),
+                    ChatMessage(Role.user, state.selectedText.toString().toContentList(), null)
+                ),
+            )
+            val chatResponse = api.chat(request, settings.smartModel.chatModel())
+            val originalText = state.selectedText ?: ""
+            val generatedText = chatResponse.choices[0].message?.content ?: ""
+            // Remove duplicate text if AI response includes the original text
+            return originalText + if (generatedText.startsWith(originalText))
+                generatedText.substring(originalText.length) else generatedText
+        } catch (e: Exception) {
+            UITools.error(log, "Failed to generate text continuation", e)
+            return state.selectedText ?: ""
+        }
     }
 }

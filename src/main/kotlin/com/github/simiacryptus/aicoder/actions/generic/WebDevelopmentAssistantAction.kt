@@ -4,6 +4,7 @@ import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
 import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
+import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.diff.addApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
+import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.models.ApiModel.Role
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
@@ -47,41 +50,44 @@ val VirtualFile.toFile: File get() = File(this.path)
 class WebDevelopmentAssistantAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    val path = "/webDev"
+    private val path = "/webDev"
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
+        val file = UITools.getSelectedFile(event) ?: return false
+        return file.isDirectory
+    }
+
 
     override fun handle(e: AnActionEvent) {
-        val session = Session.newGlobalID()
-        val selectedFile = UITools.getSelectedFolder(e)
-        if (null != selectedFile) {
+        try {
+            val project = e.project ?: return
+            val session = Session.newGlobalID()
+            val selectedFile = UITools.getSelectedFolder(e) ?: return
             DataStorage.sessionPaths[session] = selectedFile.toFile
-        }
-        SessionProxyServer.chats[session] = WebDevApp(root = selectedFile)
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = true,
-            stickyInput = false,
-            loadImages = false,
-            showMenubar = false
-        )
-        val server = AppServer.getServer(e.project)
+            SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
+            SessionProxyServer.chats[session] = WebDevApp(root = selectedFile)
+            ApplicationServer.appInfoMap[session] = AppInfoData(
+                applicationName = "Code Chat",
+                singleInput = true,
+                stickyInput = false,
+                loadImages = false,
+                showMenubar = false
+            )
+            val server = AppServer.getServer(project)
 
-        Thread {
-            Thread.sleep(500)
-            try {
+            UITools.runAsync(e.project, "Opening Web Development Assistant", true) { progress ->
+                progress.text = "Launching browser..."
+                Thread.sleep(500)
 
                 val uri = server.server.uri.resolve("/#$session")
                 BaseAction.log.info("Opening browser to $uri")
                 browse(uri)
-            } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
             }
-        }.start()
+        } catch (e: Throwable) {
+            UITools.error(log, "Error launching Web Development Assistant", e)
+        }
     }
 
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        if (UITools.getSelectedFile(event)?.isDirectory == false) return false
-        return super.isEnabled(event)
-    }
 
     open class WebDevApp(
         applicationName: String = "Web Development Agent",
@@ -94,6 +100,12 @@ class WebDevelopmentAssistantAction : BaseAction() {
         showMenubar = false,
         root = root?.toFile!!,
     ) {
+        private val log = LoggerFactory.getLogger(WebDevApp::class.java)
+
+        companion object {
+            private const val DEFAULT_BUDGET = 2.00
+        }
+
         override fun userMessage(
             session: Session,
             user: User?,
@@ -101,21 +113,27 @@ class WebDevelopmentAssistantAction : BaseAction() {
             ui: ApplicationInterface,
             api: API
         ) {
-            val settings = getSettings(session, user) ?: Settings()
-            if (api is ChatClient) api.budget = settings.budget ?: 2.00
-            WebDevAgent(
-                api = api,
-                dataStorage = dataStorage,
-                session = session,
-                user = user,
-                ui = ui,
-                tools = settings.tools,
-                model = settings.model,
-                parsingModel = settings.parsingModel,
-                root = root,
-            ).start(
-                userMessage = userMessage,
-            )
+            try {
+                val settings = getSettings(session, user) ?: Settings()
+                if (api is ChatClient) {
+                    api.budget = settings.budget ?: DEFAULT_BUDGET
+                }
+                WebDevAgent(
+                    api = api,
+                    dataStorage = dataStorage,
+                    session = session,
+                    user = user,
+                    ui = ui,
+                    tools = settings.tools,
+                    model = settings.model,
+                    parsingModel = settings.parsingModel,
+                    root = root,
+                    api2 = IdeaOpenAIClient.instance,
+                ).start(userMessage = userMessage)
+            } catch (e: Throwable) {
+                log.error("Error processing user message", e)
+                throw e
+            }
         }
 
         data class Settings(
@@ -133,6 +151,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
 
     class WebDevAgent(
         val api: API,
+        val api2: OpenAIClient,
         dataStorage: StorageInterface,
         session: Session,
         user: User?,
@@ -227,7 +246,9 @@ class WebDevelopmentAssistantAction : BaseAction() {
             """.trimIndent(),
                 textModel = model,
                 imageModel = ImageModels.DallE3,
-            ),
+            ).apply {
+                setImageAPI(api2)
+            },
         ),
         val root: File,
     ) :
@@ -289,7 +310,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
                 },
                 atomicRef = AtomicReference(),
                 semaphore = Semaphore(0),
-                heading = userMessage
+                heading = renderMarkdown(userMessage)
             ).call()
 
 

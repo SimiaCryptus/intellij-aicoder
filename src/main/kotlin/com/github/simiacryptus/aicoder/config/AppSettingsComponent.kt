@@ -1,7 +1,7 @@
 package com.github.simiacryptus.aicoder.config
 
 
-import com.github.simiacryptus.aicoder.actions.plan.PlanAheadConfigDialog.Companion.isVisible
+import com.github.simiacryptus.aicoder.actions.plan.PlanConfigDialog.Companion.isVisible
 import com.github.simiacryptus.aicoder.util.IdeaChatClient
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
@@ -21,7 +21,6 @@ import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
-import com.simiacryptus.skyenet.core.platform.AwsPlatform
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -312,6 +311,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         awsProfile.text = AppSettingsState.instance.awsProfile ?: ""
         awsRegion.text = AppSettingsState.instance.awsRegion ?: ""
         awsBucket.text = AppSettingsState.instance.awsBucket ?: ""
+        disableAutoOpenUrls.isSelected = AppSettingsState.instance.disableAutoOpenUrls
         // Initialize executables list
         setExecutables(AppSettingsState.instance.executables)
         fun getExecutables(): Set<String> {
