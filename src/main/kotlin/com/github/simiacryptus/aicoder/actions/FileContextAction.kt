@@ -32,9 +32,16 @@ abstract class FileContextAction<T : Any>(
             log.warn("No configuration found for ${javaClass.simpleName}")
             return
         }
-        val virtualFile = UITools.getSelectedFile(e) ?: UITools.getSelectedFolder(e) ?: return
+        val virtualFile = UITools.getSelectedFile(e) ?: UITools.getSelectedFolder(e) ?: run {
+            log.warn("No file or folder selected")
+            return
+        }
         val project = e.project ?: return
-        val projectRoot = File(project.basePath!!).toPath()
+        val projectBasePath = project.basePath ?: run {
+            log.error("Project base path is null")
+            return
+        }
+        val projectRoot = File(projectBasePath).toPath()
         Thread {
             try {
                 UITools.redoableTask(e) {
@@ -46,15 +53,21 @@ abstract class FileContextAction<T : Any>(
                                     projectRoot = projectRoot.toFile(),
                                 ), config, progress
                             )
+                        } catch (ex: Exception) {
+                            log.error("Error processing selection", ex)
+                            throw ex
                         } finally {
                             if (progress.isCanceled) throw InterruptedException()
                         }
                         val start = System.currentTimeMillis()
                         val fileSystem = LocalFileSystem.getInstance()
-                        while (null == fileSystem.refreshAndFindFileByIoFile(newFiles.firstOrNull() ?: throw IllegalStateException("No new files"))) {
+                        val firstFile = newFiles.firstOrNull() ?: throw IllegalStateException("No files were generated")
+                        var refreshedFile: VirtualFile? = null
+                        while (refreshedFile == null) {
                             if (System.currentTimeMillis() - start > 10000) {
-                                throw IllegalStateException("File not found: ${newFiles.firstOrNull()}")
+                                throw IllegalStateException("Timeout waiting for file to appear: ${firstFile.absolutePath}")
                             }
+                            refreshedFile = fileSystem.refreshAndFindFileByIoFile(firstFile)
                             Thread.sleep(500)
                         }
                         UITools.writeableFn(e) {

@@ -19,15 +19,17 @@ import javax.swing.JTextArea
 class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescriptionAction.Settings>(false, true) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
     private val log = Logger.getInstance(CreateFileFromDescriptionAction::class.java)
+    companion object {
+        private const val DEFAULT_DIRECTIVE = "Create a new file"
+        private const val FILE_PATH_REGEX = """File(?:name)?: ['`"]?([^'`"]+)['`"]?"""
+    }
 
     class ProjectFile(var path: String = "", var code: String = "")
 
     class SettingsUI {
         @Name("Directive")
         val directive: JTextArea = JTextArea(
-            """
-            Create a new file
-            """.trimIndent(),
+            DEFAULT_DIRECTIVE,
             3,
             120
         )
@@ -73,6 +75,9 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         config: Settings?,
         progress: ProgressIndicator
     ): Array<File> {
+        require(state.projectRoot.exists()) { "Project root directory does not exist" }
+        require(state.selectedFile.exists()) { "Selected file does not exist" }
+
         val projectRoot = state.projectRoot.toPath()
         val inputPath = projectRoot.relativize(state.selectedFile.toPath()).toString()
         val pathSegments = inputPath.split("/").toList()
@@ -82,7 +87,7 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         progress.text = "Generating file content..."
         progress.fraction = 0.3
 
-        val generatedFile = generateFile(filePath, config?.directive ?: "Create a new file")
+        val generatedFile = generateFile(filePath, config?.directive ?: DEFAULT_DIRECTIVE)
 
         var path = generatedFile.path
         var outputPath = moduleRoot.resolve(path)
@@ -111,7 +116,7 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
         basePath: String,
         directive: String
     ): ProjectFile {
-        if (directive.isBlank()) throw IllegalArgumentException("Directive cannot be empty")
+        require(directive.isNotBlank()) { "Directive cannot be empty" }
         val model = AppSettingsState.instance.smartModel.chatModel()
         val chatRequest = ChatRequest(
             model = model.modelName,
@@ -136,21 +141,22 @@ class CreateFileFromDescriptionAction : FileContextAction<CreateFileFromDescript
             )
         )
         try {
-            val response = api.chat(
+            val response = api.chat( 
                 chatRequest,
                 AppSettingsState.instance.smartModel.chatModel()
-            ).choices.first().message?.content?.trim() ?: throw IllegalStateException("Empty response from AI")
+            ).choices.firstOrNull()?.message?.content?.trim() ?: throw IllegalStateException("Empty response from AI")
             var outputPath = basePath
             val header = response.lines().firstOrNull() ?: throw IllegalStateException("Invalid response format")
             var body = response.lines().drop(1).joinToString("\n").trim().lines()
                 .dropWhile { it.startsWith("```") }
                 .dropLastWhile { it.startsWith("```") }
                 .joinToString("\n")
-            val pathPattern = """File(?:name)?: ['`"]?([^'`"]+)['`"]?""".toRegex()
+            val pathPattern = FILE_PATH_REGEX.toRegex()
             if (pathPattern.matches(header)) {
                 val match = pathPattern.matchEntire(header)!!
                 outputPath = match.groupValues[1]
             }
+            require(body.isNotBlank()) { "Generated file content cannot be empty" }
             return ProjectFile(path = outputPath, code = body)
         } catch (e: Exception) {
             log.error("Failed to generate file content", e)

@@ -59,7 +59,7 @@ class PrePlanAction : BaseAction() {
             var planSettings = PlanSettings(
                 defaultModel = AppSettingsState.instance.smartModel.chatModel(),
                 parsingModel = AppSettingsState.instance.fastModel.chatModel(),
-                command = listOf(
+                shellCmd = listOf(
                     if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
                 ),
                 temperature = AppSettingsState.instance.temperature,

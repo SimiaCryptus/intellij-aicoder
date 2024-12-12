@@ -5,7 +5,12 @@ import com.github.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.simiacryptus.jopenai.ChatClient
+ /**
+  * Base action class providing common functionality for AI Coder actions.
+  * Handles API client initialization and common UI operations.
+  */
 import org.slf4j.LoggerFactory
 import javax.swing.Icon
 
@@ -17,17 +22,25 @@ abstract class BaseAction(
 
     private val log by lazy { LoggerFactory.getLogger(javaClass) }
     //override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+    /**
+     * Primary API client for chat interactions
+     */
 
     val api: ChatClient
-        get() = IdeaChatClient.instance
+        @JvmName("getChatClient") get() = IdeaChatClient.instance
     val api2 = IdeaOpenAIClient.instance
 
     final override fun update(event: AnActionEvent) {
         event.presentation.isEnabledAndVisible = isEnabled(event)
         super.update(event)
     }
+    /**
+     * Handle the action event
+     * @param e The action event to handle
+     */
 
     abstract fun handle(e: AnActionEvent)
+    /** Determines if this action is enabled in the current context */
 
 
     final override fun actionPerformed(e: AnActionEvent) {
@@ -39,8 +52,12 @@ abstract class BaseAction(
         IdeaChatClient.lastEvent = e
         try {
             handle(e)
+        } catch (e: IllegalStateException) {
+            UITools.error(log, "Invalid state in Action ${javaClass.simpleName}", e)
+        } catch (e: IllegalArgumentException) {
+            UITools.error(log, "Invalid input in Action ${javaClass.simpleName}", e)
         } catch (e: Throwable) {
-            UITools.error(log, "Error in Action ${javaClass.simpleName}", e)
+            UITools.error(log, "Unexpected error in Action ${javaClass.simpleName}", e)
         }
     }
 
@@ -49,6 +66,13 @@ abstract class BaseAction(
 
     companion object {
         val log by lazy { LoggerFactory.getLogger(javaClass) }
-        val scheduledPool = java.util.concurrent.Executors.newScheduledThreadPool(1)
+        val scheduledPool = java.util.concurrent.Executors.newScheduledThreadPool(1).apply {
+            ApplicationManager.getApplication().executeOnPooledThread {
+                Runtime.getRuntime().addShutdownHook(Thread {
+                    this.shutdown()
+                    this.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)
+                })
+            }
+        }
     }
 }

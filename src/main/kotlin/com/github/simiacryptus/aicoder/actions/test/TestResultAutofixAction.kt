@@ -116,7 +116,7 @@ class TestResultAutofixAction : BaseAction() {
     override fun handle(e: AnActionEvent) {
         val testProxy = e.getData(AbstractTestProxy.DATA_KEY) as? SMTestProxy ?: return
         val dataContext = e.dataContext
-        val virtualFile = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)?.firstOrNull()
+        val virtualFile = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)?.firstOrNull() ?: return
         val root = Companion.findGitRoot(virtualFile)
         UITools.runAsync(e.project, "Analyzing Test Result", true) { progress ->
             progress.isIndeterminate = true
@@ -137,7 +137,7 @@ class TestResultAutofixAction : BaseAction() {
     }
 
     private fun getTestInfo(testProxy: SMTestProxy): String {
-        val sb = StringBuilder()
+        val sb = StringBuilder(256) // Pre-allocate buffer with reasonable size
         sb.appendLine("Test Name: ${testProxy.name}")
         sb.appendLine("Duration: ${testProxy.duration} ms")
 
@@ -262,7 +262,7 @@ class TestResultAutofixAction : BaseAction() {
                     }
                     return@Retryable ""
             } catch (e: Exception) {
-                    log.error("Error in autofix process", e)
+                    log.error("Error in autofix process: ${e.message}", e)
                     task.error(ui, e)
                     throw e
                 }

@@ -1,4 +1,7 @@
 package com.github.simiacryptus.aicoder.actions.generic
+/**
+ * Action that provides automated fixing of command execution issues through AI assistance
+ */
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.BaseAction
@@ -28,6 +31,9 @@ import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
     /**
+    /**
+     * Sets up and launches the patch app session with the given settings and files
+     */
      * Returns the thread that should be used for action update.
      */
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -62,7 +68,8 @@ class CommandAutofixAction : BaseAction() {
         } else {
             event.project?.basePath?.let { File(it).toPath() }
         }!!
-        val session = Session.newGlobalID()
+        // Validate input parameters
+        require(settings.executable.exists()) { "Executable file does not exist: ${settings.executable}" }
         val patchApp = CmdPatchApp(
             root,
             settings,
@@ -70,6 +77,7 @@ class CommandAutofixAction : BaseAction() {
             virtualFiles?.map { it.toFile }?.toTypedArray(),
             AppSettingsState.instance.smartModel.chatModel()
         )
+        val session = Session.newGlobalID()
         SessionProxyServer.chats[session] = patchApp
         ApplicationServer.appInfoMap[session] = AppInfoData(
             applicationName = "Code Chat",
@@ -78,7 +86,9 @@ class CommandAutofixAction : BaseAction() {
             loadImages = false,
             showMenubar = false
         )
-        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
+        val dateFormat = SimpleDateFormat("HH:mm:ss")
+        val sessionName = "${javaClass.simpleName} @ ${dateFormat.format(System.currentTimeMillis())}"
+        SessionProxyServer.metadataStorage.setSessionName(null, session, sessionName)
         val server = AppServer.getServer(event.project)
         Thread {
             Thread.sleep(500)
@@ -104,6 +114,9 @@ class CommandAutofixAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
+        private const val DEFAULT_ARGUMENT = "run build"
+        private const val MAX_RECENT_ARGUMENTS = 10
+        private const val TEXT_AREA_ROWS = 3
 
         private fun getUserSettings(event: AnActionEvent?): PatchApp.Settings? {
             val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
@@ -125,7 +138,7 @@ class CommandAutofixAction : BaseAction() {
                 AppSettingsState.instance.recentArguments.remove(argument)
                 AppSettingsState.instance.recentArguments.add(0, argument)
                 AppSettingsState.instance.recentArguments =
-                    AppSettingsState.instance.recentArguments.take(10).toMutableList()
+                    AppSettingsState.instance.recentArguments.take(MAX_RECENT_ARGUMENTS).toMutableList()
                 PatchApp.Settings(
                     executable = executable,
                     arguments = argument,
@@ -140,14 +153,17 @@ class CommandAutofixAction : BaseAction() {
             }
             return settings
         }
+        /**
+         * UI component class for command settings dialog
+         */
 
         class SettingsUI(root: File) {
             val argumentsField = ComboBox<String>().apply {
                 isEditable = true
                 AppSettingsState.instance.recentArguments.forEach { addItem(it) }
                 if (AppSettingsState.instance.recentArguments.isEmpty()) {
-                    addItem("run build")
-                }
+                    addItem(DEFAULT_ARGUMENT)
+                } 
             }
             val commandField = ComboBox(AppSettingsState.instance.executables.toTypedArray()).apply {
                 isEditable = true
@@ -183,7 +199,7 @@ class CommandAutofixAction : BaseAction() {
             val exitCodeZero = JRadioButton("Patch 0 exit code")
             val exitCodeAny = JRadioButton("Patch any exit code")
             val additionalInstructionsField = JTextArea().apply {
-                rows = 3
+                rows = TEXT_AREA_ROWS
                 lineWrap = true
                 wrapStyleWord = true
             }
@@ -191,6 +207,9 @@ class CommandAutofixAction : BaseAction() {
                 isSelected = false
             }
         }
+        /**
+         * Dialog for configuring command autofix settings
+         */
 
         class CommandSettingsDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
             init {

@@ -8,6 +8,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.simiacryptus.diff.IterativePatchUtil
+/**
+ * Action that allows applying a patch to selected files in the IDE.
+ */
 
 class ApplyPatchAction : BaseAction(
     name = "Apply Patch",
@@ -28,29 +31,47 @@ class ApplyPatchAction : BaseAction(
             null,
             null
         ) ?: return
+        if (patchContent.trim().isEmpty()) {
+            Messages.showErrorDialog(project, "Patch content cannot be empty", "Invalid Patch")
+            return
+        }
+
         virtualFiles.forEach { virtualFile ->
-            applyPatch(virtualFile, patchContent, project)
+            try {
+                applyPatch(virtualFile, patchContent, project)
+            } catch (e: Exception) {
+                Messages.showErrorDialog(
+                    project,
+                    "Failed to apply patch to ${virtualFile.name}: ${e.message}",
+                    "Patch Application Error"
+                )
+            }
         }
     }
+    /**
+     * Applies the given patch content to a file.
+     * 
+     * @param file The virtual file to patch
+     * @param patchContent The content of the patch to apply
+     * @param project The current project
+     */
 
     private fun applyPatch(file: VirtualFile, patchContent: String, project: com.intellij.openapi.project.Project) {
         WriteCommandAction.runWriteCommandAction(project) {
             val psiFile = PsiManager.getInstance(project).findFile(file) ?: return@runWriteCommandAction
             val newContent = IterativePatchUtil.applyPatch(psiFile.text, patchContent)
+            if (newContent == psiFile.text) {
+                Messages.showWarningDialog(project, "Patch made no changes to ${file.name}", "No Changes")
+                return@runWriteCommandAction
+            }
             psiFile.virtualFile.setBinaryContent(newContent.toByteArray())
         }
     }
 
-  override fun isEnabled(event: AnActionEvent): Boolean {
-    if (!super.isEnabled(event)) return false
-    UITools.getSelectedFiles(event).let {
-      when (it.size) {
-        0 -> null
-        1 -> it
-        else -> null
-      }
-    } ?: return false
-    return true
-  }
+    override fun isEnabled(event: AnActionEvent): Boolean {
+        if (!super.isEnabled(event)) return false
+        val selectedFiles = UITools.getSelectedFiles(event)
+        return selectedFiles != null && selectedFiles.size == 1
+    }
 
 }

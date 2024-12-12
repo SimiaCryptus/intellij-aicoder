@@ -191,9 +191,7 @@ class CreateImageAction : BaseAction() {
   }
 
   override fun isEnabled(event: AnActionEvent): Boolean {
-    val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
-    if (virtualFiles.isNullOrEmpty()) return false
-    if (event.project == null) return false
+    UITools.getSelectedFile(event) ?: return false
     return true
   }
 
