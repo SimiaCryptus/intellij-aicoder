@@ -7,6 +7,7 @@ import com.github.simiacryptus.aicoder.util.IndentedText
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
@@ -77,7 +78,7 @@ class DocAction : SelectionAction<String>() {
         return ""
     }
 
-    override fun processSelection(state: SelectionState, config: String?): String {
+    override fun processSelection(state: SelectionState, config: String?, progress: ProgressIndicator): String {
         try {
             val code = state.selectedText ?: return ""
             val indentedInput = IndentedText.fromString(code)

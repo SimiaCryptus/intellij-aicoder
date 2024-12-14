@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
@@ -68,23 +69,21 @@ open class CustomEditAction : SelectionAction<String>(requiresSelection = true) 
         ) as String?
     }
 
-    override fun processSelection(state: SelectionState, config: String?): String {
+    override fun processSelection(state: SelectionState, config: String?, progress: ProgressIndicator): String {
         if (config.isNullOrBlank()) return state.selectedText ?: ""
         return try {
-            UITools.run(state.project, "Processing Edit", true) { progress ->
-                progress.isIndeterminate = true
-                progress.text = "Applying edit: $config"
-                val settings = AppSettingsState.instance
-                val outputHumanLanguage = settings.humanLanguage
-                settings.getRecentCommands("customEdits").addInstructionToHistory(config)
-                val result = proxy.editCode(
-                    state.selectedText ?: "",
-                    config,
-                    state.language?.name ?: state.editor?.virtualFile?.extension ?: "unknown",
-                    outputHumanLanguage
-                )
-                result.code ?: state.selectedText ?: ""
-            }
+            progress.isIndeterminate = true
+            progress.text = "Applying edit: $config"
+            val settings = AppSettingsState.instance
+            val outputHumanLanguage = settings.humanLanguage
+            settings.getRecentCommands("customEdits").addInstructionToHistory(config)
+            val result = proxy.editCode(
+                state.selectedText ?: "",
+                config,
+                state.language?.name ?: state.editor?.virtualFile?.extension ?: "unknown",
+                outputHumanLanguage
+            )
+            result.code ?: state.selectedText ?: ""
         } catch (e: Exception) {
             log.error("Failed to process edit", e)
             UITools.showErrorDialog(

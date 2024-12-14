@@ -8,6 +8,7 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
@@ -64,7 +65,7 @@ class ImplementStubAction : SelectionAction<String>() {
         return ""
     }
 
-    override fun processSelection(state: SelectionState, config: String?): String {
+    override fun processSelection(state: SelectionState, config: String?, progress: ProgressIndicator): String {
         try {
             val code = state.selectedText ?: ""
             val settings = AppSettingsState.instance
@@ -74,7 +75,7 @@ class ImplementStubAction : SelectionAction<String>() {
                 UITools.showWarning(null, "Language ${computerLanguage.name} is not supported")
                 return code
             }
-            return processCode(code, state, computerLanguage, outputHumanLanguage)
+            return processCode(code = code, state = state, computerLanguage = computerLanguage, outputHumanLanguage = outputHumanLanguage, progress = progress)
         } catch (e: Exception) {
             log.error("Error implementing stub", e)
             UITools.showError(null, "Failed to implement stub: ${e.message}")
@@ -82,7 +83,7 @@ class ImplementStubAction : SelectionAction<String>() {
         }
     }
 
-    private fun processCode(code: String, state: SelectionState, computerLanguage: ComputerLanguage, outputHumanLanguage: String): String {
+    private fun processCode(code: String, state: SelectionState, computerLanguage: ComputerLanguage, outputHumanLanguage: String, progress: ProgressIndicator): String {
 
         val codeContext = state.contextRanges.filter {
             PsiUtil.matchesType(it.name, PsiUtil.ELEMENTS_CODE)

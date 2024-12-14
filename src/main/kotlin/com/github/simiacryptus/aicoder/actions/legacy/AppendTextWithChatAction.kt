@@ -5,6 +5,7 @@ import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.UITools
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.ApiModel.*
 import com.simiacryptus.jopenai.models.chatModel
@@ -26,7 +27,7 @@ class AppendTextWithChatAction : SelectionAction<String>() {
         return ""
     }
 
-    override fun processSelection(state: SelectionState, config: String?): String {
+    override fun processSelection(state: SelectionState, config: String?, progress: ProgressIndicator): String {
         try {
             val settings = AppSettingsState.instance
             val request = ChatRequest(

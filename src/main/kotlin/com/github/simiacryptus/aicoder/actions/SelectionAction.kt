@@ -186,12 +186,12 @@ abstract class SelectionAction<T : Any>(
         selectionState: SelectionState,
         config: T?
     ): String {
-        return UITools.run(event?.project, templateText ?: "", true) {
-            processSelection(selectionState, config)
+        return UITools.run(event?.project, templateText ?: "", true) { progress ->
+            processSelection(state = selectionState, config = config, progress = progress)
         }
     }
 
-    open fun processSelection(state: SelectionState, config: T?): String {
+    open fun processSelection(state: SelectionState, config: T?, progress: ProgressIndicator): String {
         throw NotImplementedError()
     }
 

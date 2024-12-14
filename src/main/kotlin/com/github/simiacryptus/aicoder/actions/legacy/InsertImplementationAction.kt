@@ -10,6 +10,7 @@ import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
@@ -77,7 +78,7 @@ class InsertImplementationAction : SelectionAction<String>() {
         return foundItem?.range() ?: Pair(start, end)
     }
 
-    override fun processSelection(state: SelectionState, config: String?): String {
+    override fun processSelection(state: SelectionState, config: String?, progress: ProgressIndicator): String {
         val humanLanguage: String = AppSettingsState.instance.humanLanguage
         val computerLanguage: ComputerLanguage? = state.language
         try {
@@ -93,27 +94,25 @@ class InsertImplementationAction : SelectionAction<String>() {
             val specification = fromString?.rawString()?.map { it.toString().trim() }
                 ?.filter { it.isNotEmpty() }?.reduce { a, b -> "$a $b" } ?: return selectedText
             val code = if (state.psiFile != null) {
-                UITools.run(state.project, "Insert Implementation", true, true) { progress ->
-                    progress.isIndeterminate = false
-                    progress.text = "Analyzing context..."
-                    progress.fraction = 0.2
-                    val psiClassContext = runReadAction {
-                        PsiClassContext.getContext(
-                            state.psiFile,
-                            psiClassContextActionParams.selectionStart,
-                            psiClassContextActionParams.selectionEnd,
-                            computerLanguage
-                        ).toString()
-                    }
-                    progress.text = "Generating implementation..."
-                    progress.fraction = 0.6
-                    getProxy().implementCode(
-                        specification = specification,
-                        prefix = psiClassContext,
-                        computerLanguage = computerLanguage.name,
-                        humanLanguage = humanLanguage
-                    ).code ?: throw IllegalStateException("No code generated")
+                progress.isIndeterminate = false
+                progress.text = "Analyzing context..."
+                progress.fraction = 0.2
+                val psiClassContext = runReadAction {
+                    PsiClassContext.getContext(
+                        state.psiFile,
+                        psiClassContextActionParams.selectionStart,
+                        psiClassContextActionParams.selectionEnd,
+                        computerLanguage
+                    ).toString()
                 }
+                progress.text = "Generating implementation..."
+                progress.fraction = 0.6
+                getProxy().implementCode(
+                    specification = specification,
+                    prefix = psiClassContext,
+                    computerLanguage = computerLanguage.name,
+                    humanLanguage = humanLanguage
+                ).code ?: throw IllegalStateException("No code generated")
             } else {
                 getProxy().implementCode(specification, "", computerLanguage.name, humanLanguage).code
             }

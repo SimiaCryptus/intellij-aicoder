@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -74,7 +75,7 @@ class DescribeAction : SelectionAction<String>() {
     return state?.selectedText?.isNotBlank() == true
   }
 
-  override fun processSelection(state: SelectionAction.SelectionState, config: String?): String {
+  override fun processSelection(state: SelectionAction.SelectionState, config: String?, progress: ProgressIndicator): String {
     try {
       val description = proxy.describeCode(
         IndentedText.fromString(state.selectedText).textBlock.toString().trim(),

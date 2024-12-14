@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
@@ -77,15 +78,13 @@ class MarkdownImplementActionGroup : ActionGroup() {
             return ""
         }
 
-        override fun processSelection(state: SelectionState, config: String?): String {
+        override fun processSelection(state: SelectionState, config: String?, progress: ProgressIndicator): String {
             return try {
-                UITools.run(state.project, "Converting to $language", true) { progress ->
-                    progress.text = "Generating $language code..."
-                    progress.isIndeterminate = true
-                    val code = getProxy().implement(state.selectedText ?: "", "autodetect", language).code
-                        ?: throw IllegalStateException("No code generated")
-                  "\n\n```$language\n${code.trim()}\n```\n"
-                }
+                progress.text = "Generating $language code..."
+                progress.isIndeterminate = true
+                val code = getProxy().implement(state.selectedText ?: "", "autodetect", language).code
+                    ?: throw IllegalStateException("No code generated")
+              "\n\n```$language\n${code.trim()}\n```\n"
             } catch (e: Exception) {
                 log.error("Error processing selection", e)
                 UITools.showErrorDialog(state.project, "Failed to convert code: ${e.message}", "Conversion Error")

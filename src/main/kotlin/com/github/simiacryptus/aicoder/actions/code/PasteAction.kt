@@ -26,15 +26,6 @@ import java.awt.datatransfer.DataFlavor.*
 abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatModel) : SelectionAction<String>(false) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    override fun processSelection(
-        event: AnActionEvent?,
-        selectionState: SelectionState,
-        config: String?
-    ) = when {
-        event != null -> processSelection(selectionState, config)
-        else -> ""
-    }
-
     /**
      * API interface for code conversion
      */
@@ -160,7 +151,7 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
     }
 
 
-    override fun processSelection(state: SelectionState, config: String?): String {
+    override fun processSelection(state: SelectionState, config: String?, progress: ProgressIndicator): String {
         val progress: ProgressIndicator? = state.progress
         progress?.text = "Reading clipboard content..."
         val clipboardContent = getClipboard() ?: return ""
