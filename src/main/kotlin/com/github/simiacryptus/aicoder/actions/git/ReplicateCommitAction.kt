@@ -82,12 +82,9 @@ class ReplicateCommitAction : BaseAction() {
                     override fun codeSummary(paths: List<Path>): String = paths
                         .filter { it.toFile().exists() }
                         .joinToString("\n\n") { path ->
-                            """
-                            |# ${settings.workingDirectory.toPath()?.relativize(path)}
-                            |$tripleTilde${path.toString().split('.').lastOrNull()}
-                            |${path.toFile().readText(Charsets.UTF_8)}
-                            |$tripleTilde
-                            """.trimMargin()
+                          "# ${settings.workingDirectory.toPath().relativize(path)}\n$tripleTilde${path.toString().split('.').lastOrNull()}\n${
+                            path.toFile().readText(Charsets.UTF_8)
+                          }\n$tripleTilde"
                         }
 
                     override fun projectSummary(): String {
@@ -221,36 +218,24 @@ class ReplicateCommitAction : BaseAction() {
                 val plan = ParsedActor(
                     resultClass = ParsedTasks::class.java,
                     prompt = """
-                        |You are a helpful AI that helps people with coding.
-                        
-                        |You will be answering questions about the following project:
-                        
-                        |Project Root: ${settings.workingDirectory.absolutePath ?: ""}
-                        
-                        |Files:
-                        |$planTxt
-                        
-                        |Given the request, identify one or more tasks.
-                        |For each task:
-                        |   1) predict the files that need to be fixed
-                        |   2) predict related files that may be needed to debug the issue
-                        """.trimMargin(),
+                      You are a helpful AI that helps people with coding.
+                      
+                      You will be answering questions about the following project:
+                      
+                      Project Root: """.trimIndent() + (settings.workingDirectory.absolutePath ?: "") + """
+                      
+                      Files:
+                      """.trimIndent() + planTxt + """
+                      
+                      Given the request, identify one or more tasks.
+                      For each task:
+                         1) predict the files that need to be fixed
+                         2) predict related files that may be needed to debug the issue
+                      """.trimIndent(),
                     model = AppSettingsState.instance.smartModel.chatModel()
                 ).answer(
                     listOf(
-                        """
-                        |We want to create a change based on the following prior commit:
-                        
-                        |$tripleTilde
-                        |$diffInfo
-                        |$tripleTilde
-                        |
-                        |The change should implement the user's request:
-                        
-                        |$tripleTilde
-                        |$userMessage
-                        |$tripleTilde
-                        """.trimMargin()
+                      "We want to create a change based on the following prior commit:\n\n$tripleTilde\n$diffInfo\n$tripleTilde\n\nThe change should implement the user's request:\n\n$tripleTilde\n$userMessage\n$tripleTilde"
                     ), api = api
                 )
                 task.add(
@@ -273,61 +258,60 @@ class ReplicateCommitAction : BaseAction() {
                         val codeSummary = codeSummary(paths)
                         val response = SimpleActor(
                             prompt = """
-                                |You are a helpful AI that helps people with coding.
-                                
-                                |You will be answering questions about the following code:
-                                
-                                |$codeSummary
-                                
-                                
-                                |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
-                                |Each diff should be preceded by a header that identifies the file being modified.
-                                |The diff format should use + for line additions, - for line deletions.
-                                |The diff should include 2 lines of context before and after every change.
-                                
-                                |Example:
-                                
-                                |Here are the patches:
-                                
-                                |### src/utils/exampleUtils.js
-                                |${tripleTilde}diff
-                                | // Utility functions for example feature
-                                | const b = 2;
-                                | function exampleFunction() {
-                                |-   return b + 1;
-                                |+   return b + 2;
-                                | }
-                                |$tripleTilde
-                                
-                                |### tests/exampleUtils.test.js
-                                |${tripleTilde}diff
-                                | // Unit tests for exampleUtils
-                                | const assert = require('assert');
-                                | const { exampleFunction } = require('../src/utils/exampleUtils');
-                                | 
-                                | describe('exampleFunction', () => {
-                                |-   it('should return 3', () => {
-                                |+   it('should return 4', () => {
-                                |     assert.equal(exampleFunction(), 3);
-                                |   });
-                                | });
-                                |$tripleTilde
-                                
-                                |If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                            """.trimMargin(),
+                              You are a helpful AI that helps people with coding.
+                              
+                              You will be answering questions about the following code:
+                              
+                              """.trimIndent() + codeSummary + """
+                              
+                              
+                              Response should use one or more code patches in diff format within """.trimIndent() + tripleTilde + """diff code blocks.
+                              Each diff should be preceded by a header that identifies the file being modified.
+                              The diff format should use + for line additions, - for line deletions.
+                              The diff should include 2 lines of context before and after every change.
+                              
+                              Example:
+                              
+                              Here are the patches:
+                              
+                              ### src/utils/exampleUtils.js
+                              """.trimIndent() + tripleTilde + """diff
+                               // Utility functions for example feature
+                               const b = 2;
+                               function exampleFunction() {
+                              -   return b + 1;
+                              +   return b + 2;
+                               }
+                              """.trimIndent() + tripleTilde + """
+                              
+                              ### tests/exampleUtils.test.js
+                              """.trimIndent() + tripleTilde + """diff
+                               // Unit tests for exampleUtils
+                               const assert = require('assert');
+                               const { exampleFunction } = require('../src/utils/exampleUtils');
+                               
+                               describe('exampleFunction', () => {
+                              -   it('should return 3', () => {
+                              +   it('should return 4', () => {
+                                   assert.equal(exampleFunction(), 3);
+                                 });
+                               });
+                              """.trimIndent() + tripleTilde + """
+                              
+                              If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+                              """.trimIndent(),
                             model = AppSettingsState.instance.smartModel.chatModel()
                         ).answer(
-                            listOf(
-                                """
-                                |We are working on executing the following directive:
-                                
-                                |${tripleTilde}
-                                |$userMessage
-                                |${tripleTilde}
-                                
-                                |Focus on the task at hand:
-                                |  ${planTask.message?.replace("\n", "\n  ") ?: ""}
-                                """.trimMargin()
+                          listOf(
+                            """
+                              We are working on executing the following directive:
+                              
+                              """.trimIndent() + tripleTilde + """
+                              """.trimIndent() + userMessage + """
+                              """.trimIndent() + tripleTilde + """
+                              
+                              Focus on the task at hand:
+                              """.trimIndent() + (planTask.message?.replace("\n", "\n  ") ?: "")
                             ), api = api
                         )
                         var markdown = ui.socketManager?.addApplyFileDiffLinks(

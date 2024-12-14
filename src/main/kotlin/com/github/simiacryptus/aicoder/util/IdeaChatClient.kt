@@ -17,6 +17,7 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.util.JsonUtil.toJson
 import org.apache.hc.core5.http.HttpRequest
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
@@ -105,9 +106,7 @@ open class IdeaChatClient(
             val response = super.chat(chatRequest, model)
             if (null != response.usage) {
                 UITools.logAction(
-                    """
-                |Chat Response: ${JsonUtil.toJson(response.usage!!)}
-            """.trimMargin().trim()
+                  "Chat Response: ${toJson(response.usage!!)}"
                 )
             }
             return response
@@ -117,9 +116,7 @@ open class IdeaChatClient(
                     val response = super.chat(chatRequest, model)
                     if (null != response.usage) {
                         UITools.logAction(
-                            """
-                        |Chat Response: ${JsonUtil.toJson(response.usage!!)}
-                    """.trimMargin().trim()
+                          "Chat Response: ${toJson(response.usage!!)}"
                         )
                     }
                     return response
@@ -131,9 +128,7 @@ open class IdeaChatClient(
                         val response = super.chat(chatRequest, model)
                         if (null != response.usage) {
                             UITools.logAction(
-                                """
-                            |Chat Response: ${JsonUtil.toJson(response.usage!!)}
-                        """.trimMargin().trim()
+                              "Chat Response: ${toJson(response.usage!!)}".trim()
                             )
                         }
                         response
@@ -226,7 +221,7 @@ open class IdeaChatClient(
             title: String
         ): V {
             val project = lastEvent?.project ?: return function(request)
-            return function(JsonUtil.fromJson(uiEdit(project, title, JsonUtil.toJson(request)), request::class.java))
+          return function(JsonUtil.fromJson(uiEdit(project, title, toJson(request)), request::class.java))
         }
 
         private val log = LoggerFactory.getLogger(IdeaChatClient::class.java)

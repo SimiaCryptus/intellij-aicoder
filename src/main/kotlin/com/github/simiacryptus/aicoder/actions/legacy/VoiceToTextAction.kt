@@ -88,11 +88,7 @@ class VoiceToTextAction : BaseAction() {
                     var text = api2.transcription(recordAudio, prompt)
                     if (prompt.isNotEmpty()) text = " $text"
                     val newPrompt = (prompt + text).split(" ").takeLast(32).joinToString(" ")
-                    log.warn(
-                        """Speech-To-Text Complete
-                        |   Prompt: $prompt
-                        |   Result: $text""".trimMargin()
-                    )
+                  log.warn("Speech-To-Text Complete\n   Prompt: $prompt\n   Result: $text")
                     prompt = newPrompt
                     WriteCommandAction.runWriteCommandAction(event.project) {
                         val editor = event.getData(CommonDataKeys.EDITOR) ?: return@runWriteCommandAction

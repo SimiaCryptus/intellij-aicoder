@@ -165,41 +165,41 @@ class MultiStepPatchAction : BaseAction() {
             ),
             ActorTypes.TaskCodingActor to SimpleActor(
                 prompt = """
-        |Implement the changes to the codebase as described in the task list.
-        |  
-        |Response should use one or more code patches in diff format within ```diff code blocks.
-        |Each diff should be preceded by a header that identifies the file being modified.
-        |The diff format should use + for line additions, - for line deletions.
-        |The diff should include 2 lines of context before and after every change.
-        |
-        |Example:
-        |
-        |Here are the patches:
-        |
-        |### src/utils/exampleUtils.js
-        |```diff
-        | // Utility functions for example feature
-        | const b = 2;
-        | function exampleFunction() {
-        |-   return b + 1;
-        |+   return b + 2;
-        | }
-        |```
-        |
-        |### tests/exampleUtils.test.js
-        |```diff
-        | // Unit tests for exampleUtils
-        | const assert = require('assert');
-        | const { exampleFunction } = require('../src/utils/exampleUtils');
-        | 
-        | describe('exampleFunction', () => {
-        |-   it('should return 3', () => {
-        |+   it('should return 4', () => {
-        |     assert.equal(exampleFunction(), 3);
-        |   });
-        | });
-        |```
-        """.trimMargin(),
+                    Implement the changes to the codebase as described in the task list.
+                      
+                    Response should use one or more code patches in diff format within ```diff code blocks.
+                    Each diff should be preceded by a header that identifies the file being modified.
+                    The diff format should use + for line additions, - for line deletions.
+                    The diff should include 2 lines of context before and after every change.
+                    
+                    Example:
+                    
+                    Here are the patches:
+                    
+                    ### src/utils/exampleUtils.js
+                    ```diff
+                     // Utility functions for example feature
+                     const b = 2;
+                     function exampleFunction() {
+                    -   return b + 1;
+                    +   return b + 2;
+                     }
+                    ```
+                    
+                    ### tests/exampleUtils.test.js
+                    ```diff
+                     // Unit tests for exampleUtils
+                     const assert = require('assert');
+                     const { exampleFunction } = require('../src/utils/exampleUtils');
+                     
+                     describe('exampleFunction', () => {
+                    -   it('should return 3', () => {
+                    +   it('should return 4', () => {
+                         assert.equal(exampleFunction(), 3);
+                       });
+                     });
+                    ```
+                    """.trimIndent(),
                 model = model
             ),
         ),
@@ -288,18 +288,16 @@ class MultiStepPatchAction : BaseAction() {
                                 }
                                 require(filter.isNotEmpty()) {
                                     """
-                                      |No files found for $paths
-                                      |
-                                      |Root:
-                                      |$root
-                                      |
-                                      |Files:
-                                      |${codeFiles.joinToString("\n")}
-                                      |
-                                      |Paths:
-                                      |${paths?.joinToString("\n") ?: ""}
-                                      |
-                                    """.trimMargin()
+                                    No files found for """.trimIndent() + paths + """
+                                    
+                                    Root:
+                                    """.trimIndent() + root + """
+                                    
+                                    Files:
+                                    """.trimIndent() + codeFiles.joinToString("\n") + """
+                                    
+                                    Paths:
+                                    """.trimIndent() + (paths?.joinToString("\n") ?: "")
                                 }
                                 renderMarkdown(
                                     ui.socketManager!!.addApplyFileDiffLinks(

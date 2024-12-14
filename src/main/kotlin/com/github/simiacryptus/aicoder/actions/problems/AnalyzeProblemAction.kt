@@ -223,18 +223,18 @@ class AnalyzeProblemAction : AnAction() {
         ): String {
             val response = SimpleActor(
                 prompt = """
-                |You are a helpful AI that helps people with coding.
-                |Suggest fixes for the following problem:
-                |$problemInfo
-
-                |Here are the relevant files:
-                |$summary
-
-                |Response should use one or more code patches in diff format within ${tripleTilde}diff code blocks.
-                |Each diff should be preceded by a header that identifies the file being modified.
-                |The diff format should use + for line additions, - for line deletions.
-                |The diff should include 2 lines of context before and after every change.
-                """.trimMargin(),
+                  You are a helpful AI that helps people with coding.
+                  Suggest fixes for the following problem:
+                  """.trimIndent() + problemInfo + """
+  
+                  Here are the relevant files:
+                  """.trimIndent() + summary + """
+  
+                  Response should use one or more code patches in diff format within """.trimIndent() + tripleTilde + """diff code blocks.
+                  Each diff should be preceded by a header that identifies the file being modified.
+                  The diff format should use + for line additions, - for line deletions.
+                  The diff should include 2 lines of context before and after every change.
+                  """.trimIndent(),
                 model = AppSettingsState.instance.smartModel.chatModel()
             ).answer(listOf(error.message ?: ""), api = IdeaChatClient.instance)
 

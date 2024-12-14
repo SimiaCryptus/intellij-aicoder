@@ -1016,10 +1016,8 @@ object UITools {
                 )
 
                 val apiKeyInput = JBPasswordField()
-                //bugReportTextArea.rows = 40
                 apiKeyInput.columns = 80
                 apiKeyInput.isEditable = true
-                //apiKeyInput.text = """""".trimMargin()
                 formBuilder.addLabeledComponent("API Key", apiKeyInput)
 
                 val openAccountButton = JXButton("Open Account Page")
@@ -1069,36 +1067,28 @@ object UITools {
                 bugReportTextArea.columns = 80
                 bugReportTextArea.isEditable = false
                 bugReportTextArea.text = """
-          |Log Message: $msg
-          |Error Message: ${e.message}
-          |Error Type: ${e.javaClass.name}
-          |API Base: ${AppSettingsState.instance.apiBase}
-          |
-          |OS: ${System.getProperty("os.name")} / ${System.getProperty("os.version")} / ${System.getProperty("os.arch")}
-          |Locale: ${Locale.getDefault().country} / ${Locale.getDefault().language}
-          |
-          |Error Details:
-          |```
-          |${toString(e)/*.indent("  ")*/}
-          |```
-          |
-          |Action History:
-          |
-          |${actionLog.joinToString("\n") { "* ${it.replace("\n", "\n  ")}" }}
-          |
-          |Error History:
-          |
-          |${
-                    errorLog.filter { it.second != e }.joinToString("\n") {
-                        """
-            |${it.first}
-            |```
-            |${toString(it.second)/*.indent("  ")*/}
-            |```
-            |""".trimMargin()
+                    Log Message: """.trimIndent() + msg + """
+                    Error Message: """.trimIndent() + e.message + """
+                    Error Type: """.trimIndent() + e.javaClass.name + """
+                    API Base: """.trimIndent() + AppSettingsState.instance.apiBase + """
+                    
+                    OS: """.trimIndent() + System.getProperty("os.name") + """ / """ + System.getProperty("os.version") + """ / """ + System.getProperty("os.arch") + """
+                    Locale: """.trimIndent() + Locale.getDefault().country + """ / """ + Locale.getDefault().language + """
+                    
+                    Error Details:
+                    ```
+                    """.trimIndent() + toString(e) + """
+                    ```
+                    
+                    Action History:
+                    
+                    """.trimIndent() + actionLog.joinToString("\n") { "* ${it.replace("\n", "\n  ")}" } + """
+                    
+                    Error History:
+                    
+                    """.trimIndent() + errorLog.filter { it.second != e }.joinToString("\n") {
+                  "${it.first}\n```\n${toString(it.second)}\n```"
                     }
-                }
-                |""".trimMargin()
                 formBuilder.addLabeledComponent("System Report", wrapScrollPane(bugReportTextArea))
 
                 val openButton = JXButton("Open New Issue on our Github page")

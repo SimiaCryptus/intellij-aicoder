@@ -43,6 +43,11 @@ class OutlineAction : BaseAction() {
                     settings = OutlineApp.Settings(
                         models = settings.expansionSteps.map { it.model },
                         temperature = settings.temperature,
+                      parsingModel = settings.parsingModel,
+                      minTokensForExpansion = settings.minTokensForExpansion,
+                      showProjector = settings.showProjector,
+                      writeFinalEssay = settings.writeFinalEssay,
+                      budget = settings.budget
                     )
                 )
                 

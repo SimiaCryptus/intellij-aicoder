@@ -45,9 +45,7 @@ abstract class BaseAction(
 
     final override fun actionPerformed(e: AnActionEvent) {
         UITools.logAction(
-            """
- Action: ${javaClass.simpleName}
-        """.trimMargin().trim()
+          "Action: ${javaClass.simpleName}".trim()
         )
         IdeaChatClient.lastEvent = e
         try {

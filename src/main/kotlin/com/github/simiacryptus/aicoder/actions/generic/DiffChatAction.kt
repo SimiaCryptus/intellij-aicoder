@@ -117,44 +117,43 @@ class DiffChatAction : BaseAction() {
             override val systemPrompt: String
                 @Language("Markdown")
                 get() = super.systemPrompt + """
-          |Please provide code modifications in the following diff format within triple-backtick diff code blocks. Each diff block should be preceded by a header that identifies the file being modified.
-          |
-          |The diff format rules are as follows:
-          |- Use '-' at the beginning of a line to indicate a deletion.
-          |- Use '+' at the beginning of a line to indicate an addition.
-          |- Include 2 lines of context before and after every change to help identify the location of the change.
-          |- If a line is part of the original code and hasn't been modified, simply include it without '+' or '-'.
-          |- Lines starting with "@@" or "---" or "+++" are treated as headers and are ignored.
-          |
-          |Example:
-          |
-          |Here are the patches:
-          |
-          |### src/utils/exampleUtils.js
-          |```diff
-          | // Utility functions for example feature
-          | const b = 2;
-          | function exampleFunction() {
-          |-   return b + 1;
-          |+   return b + 2;
-          | }
-          |```
-          |
-          |### tests/exampleUtils.test.js
-          |```diff
-          | // Unit tests for exampleUtils
-          | const assert = require('assert');
-          | const { exampleFunction } = require('../src/utils/exampleUtils');
-          | 
-          | describe('exampleFunction', () => {
-          |-   it('should return 3', () => {
-          |+   it('should return 4', () => {
-          |     assert.equal(exampleFunction(), 3);
-          |   });
-          | });
-          |```
-
-        """.trimMargin()
+                  Please provide code modifications in the following diff format within triple-backtick diff code blocks. Each diff block should be preceded by a header that identifies the file being modified.
+                  
+                  The diff format rules are as follows:
+                  - Use '-' at the beginning of a line to indicate a deletion.
+                  - Use '+' at the beginning of a line to indicate an addition.
+                  - Include 2 lines of context before and after every change to help identify the location of the change.
+                  - If a line is part of the original code and hasn't been modified, simply include it without '+' or '-'.
+                  - Lines starting with "@@" or "---" or "+++" are treated as headers and are ignored.
+                  
+                  Example:
+                  
+                  Here are the patches:
+                  
+                  ### src/utils/exampleUtils.js
+                  ```diff
+                   // Utility functions for example feature
+                   const b = 2;
+                   function exampleFunction() {
+                  -   return b + 1;
+                  +   return b + 2;
+                   }
+                  ```
+                  
+                  ### tests/exampleUtils.test.js
+                  ```diff
+                   // Unit tests for exampleUtils
+                   const assert = require('assert');
+                   const { exampleFunction } = require('../src/utils/exampleUtils');
+                   
+                   describe('exampleFunction', () => {
+                  -   it('should return 3', () => {
+                  +   it('should return 4', () => {
+                       assert.equal(exampleFunction(), 3);
+                     });
+                   });
+                  ```
+                """.trimIndent()
             val ui by lazy { ApplicationInterface(this) }
             override fun renderResponse(response: String, task: SessionTask): String = """<div>${
                 renderMarkdown(

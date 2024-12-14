@@ -79,7 +79,7 @@ class LineFilterChatAction : BaseAction() {
             append("```${config.language}\n")
             append(config.code)
             append("\n```")
-        }.trimMargin().trim()
+        }
         val systemPrompt = buildString {
             append("You are a helpful AI that helps people with coding.\n\n")
             append("You will be answering questions about the following code located in `${config.filename}`:\n\n")
@@ -92,7 +92,7 @@ class LineFilterChatAction : BaseAction() {
             append("```text\n")
             append("001\n## Injected subtitle\n\n025\n026\n\n013\n014\n")
             append("```")
-        }.trimMargin()
+        }
         SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
         SessionProxyServer.agents[session] = object : ChatSocketManager(
             session = session,

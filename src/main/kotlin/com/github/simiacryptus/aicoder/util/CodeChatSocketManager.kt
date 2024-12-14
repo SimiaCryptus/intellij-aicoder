@@ -19,24 +19,24 @@ open class CodeChatSocketManager(
 ) : ChatSocketManager(
     session = session,
     model = model,
-    userInterfacePrompt = """
-        |# `$filename`
-        |
-        |```$language
-        |$codeSelection
-        |```
-        """.trimMargin().trim(),
+  userInterfacePrompt = ("""
+          # `""".trimIndent() + filename + """`
+          
+          ```""".trimIndent() + language + """
+          """.trimIndent() + codeSelection + """
+          ```
+          """.trimIndent()).trim(),
     systemPrompt = """
-        |You are a helpful AI that helps people with coding.
-        |
-        |You will be answering questions about the following code located in `$filename`:
-        |
-        |```$language
-        |$codeSelection
-        |```
-        |
-        |Responses may use markdown formatting, including code blocks.
-        """.trimMargin(),
+          You are a helpful AI that helps people with coding.
+          
+          You will be answering questions about the following code located in `""" + filename + """`:
+          
+          ```""".trimIndent() + language + """
+          """.trimIndent() + codeSelection + """
+          ```
+          
+          Responses may use markdown formatting, including code blocks.
+          """.trimIndent(),
     api = api,
     applicationClass = ApplicationServer::class.java,
     storage = storage,

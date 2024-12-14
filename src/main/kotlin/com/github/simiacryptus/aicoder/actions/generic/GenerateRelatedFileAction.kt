@@ -127,17 +127,16 @@ class GenerateRelatedFileAction : FileContextAction<GenerateRelatedFileAction.Se
             """.trimIndent().toContentList(), null
                 ),
                 ChatMessage(
-                    Role.user, """
-                 Create a new file based on the following directive: $directive
-            |
-            |The file should be based on `${baseFile.path}` which contains the following code:
-            |
-            |```
-            |${baseFile.code.let { /*escapeHtml4*/it/*.indent("  ")*/ }}
-            |```
-            """.trimMargin().toContentList(), null
+                  Role.user, ("""
+                              Create a new file based on the following directive: """.trimIndent() + directive + """
+                              
+                              The file should be based on `""".trimIndent() + baseFile.path + """` which contains the following code:
+                              
+                              ```
+                              """.trimIndent() + baseFile.code + """
+                              ```
+                              """.trimIndent()).toContentList(), null
                 )
-
             )
         )
         val response = api.chat(chatRequest, model).choices.firstOrNull()?.message?.content?.trim() ?: throw IllegalStateException("No response from API")

@@ -6,11 +6,8 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
- import com.intellij.ui.dsl.builder.bindValue
- import com.intellij.ui.dsl.builder.bindSelected
- import com.intellij.ui.dsl.gridLayout.HorizontalAlign
- import com.intellij.ui.components.JBScrollPane
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.models.chatModel
 import javax.swing.*
@@ -21,6 +18,11 @@ class OutlineConfigDialog(
 ) : DialogWrapper(project, true) {
 
     private var temperature = (settings.temperature * 100).toInt()
+  private var minTokens = settings.minTokensForExpansion
+  private var showProjector = settings.showProjector
+  private var writeFinalEssay = settings.writeFinalEssay
+  private var budget = settings.budget
+  private var parsingModel = settings.parsingModel
     private val expansionSteps = DefaultListModel<ExpansionStep>().apply {
         settings.expansionSteps.forEach { addElement(it) }
     }
@@ -93,6 +95,30 @@ class OutlineConfigDialog(
                 }
             }
         }
+      group("Model Settings") {
+        row("Parsing Model:") {
+          comboBox(availableModels)
+            .apply {
+              component.selectedItem = parsingModel
+              component.addActionListener {
+                parsingModel = component.selectedItem as ChatModel
+              }
+            }
+            .align(Align.FILL)
+            .comment("Model used for parsing outline structure")
+        }
+        row("Min Tokens for Expansion:") {
+          intTextField()
+            .apply {
+              component.text = minTokens.toString()
+              component.addActionListener {
+                minTokens = component.text.toIntOrNull() ?: minTokens
+              }
+            }
+            .focused()
+            .comment("Minimum number of tokens required for section expansion")
+        }
+      }
         row("Global Temperature:") {
             slider(
                 min = 0,
@@ -100,9 +126,38 @@ class OutlineConfigDialog(
                 minorTickSpacing = 1,
                 majorTickSpacing = 10,
             )
-                .bindValue({ temperature }, { temperature = it })
-                .align(Align.FILL)
-                .comment("Adjust the temperature value (0-100)")
+              .apply {
+                component.value = temperature
+                component.addChangeListener {
+                  temperature = component.value
+                }
+              }
+              .focused()
+              .comment("Adjust the temperature value (0-100)")
+        }
+      group("Output Settings") {
+        row {
+          checkBox("Show Projector")
+            .bindSelected({ showProjector }, { showProjector = it })
+            .comment("Enable visualization of concept relationships")
+        }
+        row {
+          checkBox("Write Final Essay")
+            .bindSelected({ writeFinalEssay }, { writeFinalEssay = it })
+            .comment("Generate a final essay from the outline")
+        }
+      }
+      group("Resource Settings") {
+        row("Budget:") {
+          cell(JSpinner(SpinnerNumberModel(budget, 0.1, 10.0, 0.1)))
+            .apply {
+              component.addChangeListener {
+                budget = component.value as Double
+              }
+            }
+            .align(Align.FILL)
+            .comment("Maximum budget in dollars")
+        }
         }
     }
 
@@ -117,6 +172,11 @@ class OutlineConfigDialog(
         settings = OutlineSettings(
             expansionSteps = List(expansionSteps.size()) { expansionSteps.getElementAt(it) },
             temperature = temperature / 100.0,
+          minTokensForExpansion = minTokens,
+          showProjector = showProjector,
+          writeFinalEssay = writeFinalEssay,
+          budget = budget,
+          parsingModel = parsingModel
         )
         super.doOKAction()
     }
@@ -142,4 +202,9 @@ data class OutlineSettings(
         ExpansionStep(AppSettingsState.instance.smartModel.chatModel())
     ),
     val temperature: Double = AppSettingsState.instance.temperature,
+    val minTokensForExpansion: Int = 16,
+    val showProjector: Boolean = true,
+    val writeFinalEssay: Boolean = true,
+    val budget: Double = 2.0,
+    val parsingModel: ChatModel = AppSettingsState.instance.smartModel.chatModel()
 )

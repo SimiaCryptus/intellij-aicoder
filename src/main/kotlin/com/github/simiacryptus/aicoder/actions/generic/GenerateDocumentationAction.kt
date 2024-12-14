@@ -29,13 +29,12 @@ import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.TreeMap
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.*
-import javax.swing.JComboBox
 
 
 class GenerateDocumentationAction : FileContextAction<GenerateDocumentationAction.Settings>() {
@@ -277,17 +276,7 @@ class GenerateDocumentationAction : FileContextAction<GenerateDocumentationActio
                 ),
                 ApiModel.ChatMessage(
                     ApiModel.Role.user,
-                    """
-                    |## Project:
-                    |${findGitRoot(path)?.let { getProjectStructure(it) }}
-                    |
-                    |## $path:
-                    |```
-                    |$fileContent
-                    |```
-                    |
-                    |Instructions: $transformationMessage
-                    """.trimMargin().toContentList()
+                  "## Project:\n${findGitRoot(path)?.let { getProjectStructure(it) }}\n\n## $path:\n```\n$fileContent\n```\n\nInstructions: $transformationMessage".toContentList()
                 ),
             ),
         ),

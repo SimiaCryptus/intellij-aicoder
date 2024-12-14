@@ -119,12 +119,7 @@ class AutoPlanChatAction : BaseAction() {
 
         private fun codeSummary() = codeFiles()
             .joinToString("\n\n") { path ->
-                """
-                    |# ${path}
-                    |$tripleTilde${path.toString().split('.').lastOrNull()}
-                    |${root.resolve(path.toFile()).readText(Charsets.UTF_8)}
-                    |$tripleTilde
-                """.trimMargin()
+              "# ${path}\n$tripleTilde${path.toString().split('.').lastOrNull()}\n${root.resolve(path.toFile()).readText(Charsets.UTF_8)}\n$tripleTilde"
             }
 
         private fun projectSummary() = codeFiles()

@@ -107,20 +107,21 @@ class ShellCommandAction : BaseAction() {
                         val formText = StringBuilder()
                         var formHandle: StringBuilder? = null
                         formHandle = task.add(
-                            """
-                      |<div style="display: flex;flex-direction: column;">
-                      |${
-                                if (!super.canPlay) "" else super.playButton(
+                          "<div style=\"display: flex;flex-direction: column;\">\n${
+                            if (!super.canPlay) "" else super.playButton(
+                              task,
+                              request,
+                              response,
+                              formText
+                            ) { formHandle!! }
+                          }\n${
+                            acceptButton(
                                     task,
                                     request,
                                     response,
                                     formText
                                 ) { formHandle!! }
-                            }
-                      |${acceptButton(task, request, response, formText) { formHandle!! }}
-                      |</div>
-                      |${super.reviseMsg(task, request, response, formText) { formHandle!! }}
-                      """.trimMargin(), additionalClasses = "reply-message"
+                          }\n</div>\n${super.reviseMsg(task, request, response, formText) { formHandle!! }}", additionalClasses = "reply-message"
                         )
                         formText.append(formHandle.toString())
                         formHandle.toString()

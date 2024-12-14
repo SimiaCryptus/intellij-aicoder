@@ -161,24 +161,19 @@ class MultiCodeChatAction : BaseAction() {
                 ui = ui,
                 task = task,
                 process = { content ->
-                    val design = mainActor.answer(toInput(userMessage), api = api)
-                    """
-                        |<div>${
-                        renderMarkdown(design) {
-                            ui.socketManager?.addApplyFileDiffLinks(
-                                root = root.toPath(),
-                                response = it,
-                                handle = { newCodeMap ->
-                                    newCodeMap.forEach { (path, newCode) ->
-                                        content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                                    }
-                                },
-                                ui = ui,
-                                api = api,
-                            )!!
+                  "<div>" + renderMarkdown(mainActor.answer(toInput(userMessage), api = api)) {
+                    ui.socketManager?.addApplyFileDiffLinks(
+                      root = root.toPath(),
+                      response = it,
+                      handle = { newCodeMap ->
+                        newCodeMap.forEach { (path, newCode) ->
+                          content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                         }
-                    }</div>
-                    """.trimMargin()
+                      },
+                      ui = ui,
+                      api = api,
+                    )!!
+                  } + "</div>"
 
                 },
             )

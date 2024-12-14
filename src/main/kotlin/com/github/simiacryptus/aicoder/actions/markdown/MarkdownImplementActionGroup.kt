@@ -84,14 +84,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
                     progress.isIndeterminate = true
                     val code = getProxy().implement(state.selectedText ?: "", "autodetect", language).code
                         ?: throw IllegalStateException("No code generated")
-                    """
-                   |
-                   |
-                   |```$language
-                   |${code.trim()}
-                   |```
-                   |
-                   |""".trimMargin()
+                  "\n\n```$language\n${code.trim()}\n```\n"
                 }
             } catch (e: Exception) {
                 log.error("Error processing selection", e)
