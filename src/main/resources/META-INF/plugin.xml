@@ -26,7 +26,7 @@
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"
                popup="true"
                icon="MyIcons.icon"
-               text="AI Coder"
+               text="_AI Coder"
                description="AI coding assistant tools">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
             <action class="com.github.simiacryptus.aicoder.actions.generic.GenericChatAction"
@@ -55,7 +55,7 @@
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"
                popup="true"
                icon="MyIcons.icon"
-               text="AI Editor"
+               text="_AI Coder"
                description="AI coding assistant tools">
             <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="EditorToggleColumnMode"/>
             <action class="com.github.simiacryptus.aicoder.actions.generic.CodeChatAction"
@@ -311,6 +311,19 @@
                     class="com.github.simiacryptus.aicoder.actions.git.ReplicateCommitAction"
                     text="🔄 Replicate Commit"
                     description="Replicate Commit">
+            </action>
+        </group>
+        <group id="com.github.simiacryptus.aicoder.ui.FindResultsMenu"
+               class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+               popup="true"
+               icon="MyIcons.icon"
+               text="_AI Coder"
+               description="AI-powered file modification tools">
+            <add-to-group group-id="UsageView.Popup" anchor="last"/>
+            <action id="AICoderPlugin.FindResultsModification"
+                    class="com.github.simiacryptus.aicoder.actions.FindResultsModificationAction"
+                    text="Modify Find Results"
+                    description="Modify files based on find results">
             </action>
         </group>
 
