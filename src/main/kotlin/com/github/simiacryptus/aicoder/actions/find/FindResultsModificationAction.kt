@@ -2,25 +2,28 @@ package com.github.simiacryptus.aicoder.actions
 
 import com.github.simiacryptus.aicoder.AppServer
 import com.github.simiacryptus.aicoder.actions.find.FindResultsModificationDialog
+import com.github.simiacryptus.aicoder.actions.generic.MultiDiffChatAction.Companion.patchEditorPrompt
 import com.github.simiacryptus.aicoder.actions.generic.SessionProxyServer
 import com.github.simiacryptus.aicoder.actions.generic.toFile
+import com.github.simiacryptus.aicoder.config.AppSettingsState
 import com.github.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.github.simiacryptus.aicoder.util.UITools
 import com.github.simiacryptus.aicoder.util.psi.PsiUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
+import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.TabbedDisplay
+import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
-import com.simiacryptus.skyenet.util.MarkdownUtil
+import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
@@ -28,6 +31,7 @@ import com.simiacryptus.skyenet.webui.session.SocketManager
 import java.io.File
 import java.nio.file.Path
 import java.text.SimpleDateFormat
+import java.util.*
 import javax.swing.Icon
 
 class FindResultsModificationAction(
@@ -99,23 +103,40 @@ class FindResultsModificationAction(
     path = "/patchChat",
     showMenubar = false,
   ) {
+    override val singleInput = true
+    override val stickyInput = false
+
     override fun newSession(user: User?, session: Session): SocketManager {
       val socketManager = super.newSession(user, session)
       val ui = (socketManager as ApplicationSocketManager).applicationInterface
       val task = ui.newTask()
+      val api = api.getChildClient().apply {
+        val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
+        createFile.second?.apply {
+          logStreams += this.outputStream().buffered()
+          task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+        }
+      }
       val tabs = TabbedDisplay(task)
       usages.groupBy { it.location?.editor?.file }.entries.forEach { (file, usages) ->
         val task = ui.newTask(false)
         tabs[if (null == file) "Unknown" else file.name] = task.placeholder
+        val api = api.getChildClient().apply {
+          val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
+          createFile.second?.apply {
+            logStreams += this.outputStream().buffered()
+            task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+          }
+        }
         fun formatLine(index: Int, line: String, isFocused: Boolean) = when {
           isFocused -> "/* L$index */ $line /* <<< */"
           else -> "/* L$index */ $line"
         }
-        val document = getDocument(project, file ?: return@forEach) ?: return@forEach
+        val document = PsiDocumentManager.getInstance(project).getDocument(file?.findPsiFile(project) ?: return@forEach) ?: return@forEach
         val psiRoot: PsiFile? = file.findPsiFile(project)
         val byContainer = usages.groupBy { getSmallestContainingEntity(psiRoot, it) }.entries.sortedBy { it.key?.textRange?.startOffset }.toTypedArray()
         val lines = document.text.lines()
-        val filteredLines = lines.mapIndexedNotNull { index: Int, line: String ->
+        val filteredLines = lines.mapIndexed { index: Int, line: String ->
           val lineStart = lines.subList(0, index).joinToString("\n").length
           val lineEnd = lineStart + line.length
           val containers = byContainer.map { it.key }.filter {
@@ -132,11 +153,39 @@ class FindResultsModificationAction(
           } else if (containers.isNotEmpty()) {
             formatLine(index, line, false)
           } else {
-            null
+            "..."
           }
-        }.joinToString("\n")
-        task.add(MarkdownUtil.renderMarkdown("## ${file.name}\n\n```${file.extension}\n$filteredLines\n```\n"))
-        // TODO: Ask simpleagent for change, and instrument diffs
+        }.joinToString("\n").replace("(?:\\.\\.\\.\n){2,}".toRegex(), "...\n")
+        val fileListingMarkdown = "## ${file.name}\n\n```${file.extension}\n$filteredLines\n```\n"
+        task.add(renderMarkdown(fileListingMarkdown))
+        val prompt = """
+            You are a code modification assistant. You will receive code files and locations where changes are needed.
+            Your task is to suggest appropriate modifications based on the replacement text provided.
+            Usage locations:
+            """.trimIndent() + usages.joinToString("\n") { "* `${it.presentation.plainText}`" } +
+            "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + patchEditorPrompt
+        ui.socketManager?.addApplyFileDiffLinks(
+          root = root.toPath(),
+          response = SimpleActor(
+            prompt = prompt,
+            model = AppSettingsState.instance.smartModel.chatModel()
+          ).answer(
+            listOf(
+              fileListingMarkdown
+            ), api
+          ).replace(Regex("""/\* L\d+ \*/"""), "").replace(Regex("""/\* <<< \*/"""), ""),
+          handle = { newCodeMap ->
+            newCodeMap.forEach { (path, newCode) ->
+              task.complete("Updated $path")
+            }
+          },
+          ui = ui,
+          api = api,
+          shouldAutoApply = { modificationParams.autoApply },
+          defaultFile = file.toFile.path
+        )?.apply {
+          task.complete(renderMarkdown(this))
+        }
       }
       return socketManager
     }
@@ -149,10 +198,6 @@ class FindResultsModificationAction(
       )
   }
 
-  private fun getDocument(project: Project, file: VirtualFile): Document? {
-    return PsiDocumentManager.getInstance(project).getDocument(file.findPsiFile(project) ?: return null)
-  }
-
   override fun isEnabled(event: AnActionEvent): Boolean {
     val usageView = event.getData(UsageView.USAGE_VIEW_KEY)
     return usageView != null && usageView.usages.isNotEmpty()
@@ -163,13 +208,15 @@ class FindResultsModificationAction(
     val config = dialog.showAndGetConfig()
     return if (config != null) {
       ModificationParams(
-        config.replacementText ?: ""
+        replacementText = config.replacementText ?: "",
+        autoApply = config.autoApply
       )
     } else null
   }
 
   data class ModificationParams(
-    val replacementText: String
+    val replacementText: String,
+    val autoApply: Boolean
   )
 
 }

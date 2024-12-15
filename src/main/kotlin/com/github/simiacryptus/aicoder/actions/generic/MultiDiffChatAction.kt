@@ -134,57 +134,22 @@ class MultiDiffChatAction : BaseAction() {
             api: API
         ) {
             try {
-                fun mainActor() = SimpleActor(
-                    prompt = """
-                  You are a helpful AI that helps people with coding.
-                  
-                  You will be answering questions about the following code:
-                  
-                  """.trimIndent() + codeSummary() + """
-                  
-                  Response should use one or more code patches in diff format within ```diff code blocks.
-                  Each diff should be preceded by a header that identifies the file being modified.
-                  The diff format should use + for line additions, - for line deletions.
-                  The diff should include 2 lines of context before and after every change.
-                  
-                  Example:
-                  
-                  Here are the patches:
-                  
-                  ### src/utils/exampleUtils.js
-                  ```diff
-                   // Utility functions for example feature
-                   const b = 2;
-                   function exampleFunction() {
-                  -   return b + 1;
-                  +   return b + 2;
-                   }
-                  ```
-                  
-                  ### tests/exampleUtils.test.js
-                  ```diff
-                   // Unit tests for exampleUtils
-                   const assert = require('assert');
-                   const { exampleFunction } = require('../src/utils/exampleUtils');
-                   
-                   describe('exampleFunction', () => {
-                  -   it('should return 3', () => {
-                  +   it('should return 4', () => {
-                       assert.equal(exampleFunction(), 3);
-                     });
-                   });
-                  ```
-                  
-                  If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-                  """.trimIndent(),
-                    model = AppSettingsState.instance.smartModel.chatModel()
-                )
+                fun mainActor(): SimpleActor {
+                    return SimpleActor(
+                        prompt = """
+                                  You are a helpful AI that helps people with coding.
+                                  
+                                  You will be answering questions about the following code:
+                                  
+                                  """.trimIndent() + codeSummary() + patchEditorPrompt,
+                        model = AppSettingsState.instance.smartModel.chatModel()
+                    )
+                }
 
                 val settings = getSettings(session, user) ?: Settings()
                 if (api is ChatClient) api.budget = settings.budget ?: 2.00
 
                 val task = ui.newTask()
-// Add progress indication
                 task.add("Processing request...")
 
                 val api = (api as ChatClient).getChildClient().apply {
@@ -261,6 +226,42 @@ class MultiDiffChatAction : BaseAction() {
 
     companion object {
         private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
+        val patchEditorPrompt = """
+          Response should use one or more code patches in diff format within ```diff code blocks.
+          Each diff should be preceded by a header that identifies the file being modified.
+          The diff format should use + for line additions, - for line deletions.
+          The diff should include 2 lines of context before and after every change.
+          
+          Example:
+          
+          Here are the patches:
+          
+          ### src/utils/exampleUtils.js
+          ```diff
+           // Utility functions for example feature
+           const b = 2;
+           function exampleFunction() {
+          -   return b + 1;
+          +   return b + 2;
+           }
+          ```
+          
+          ### tests/exampleUtils.test.js
+          ```diff
+           // Unit tests for exampleUtils
+           const assert = require('assert');
+           const { exampleFunction } = require('../src/utils/exampleUtils');
+           
+           describe('exampleFunction', () => {
+          -   it('should return 3', () => {
+          +   it('should return 4', () => {
+               assert.equal(exampleFunction(), 3);
+             });
+           });
+          ```
+          
+          If needed, new files can be created by using code blocks labeled with the filename in the same manner.
+          """.trimIndent()
 
     }
 }
