@@ -1,16 +1,13 @@
 package com.github.simiacryptus.aicoder.actions.find
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.FormBuilder
-import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JTextField
 
 class FindResultsModificationDialog(
   project: Project,
@@ -21,18 +18,19 @@ class FindResultsModificationDialog(
     rows = 5
     lineWrap = true
     wrapStyleWord = true
+    text = "Please modify this code to:"
   }
   private val matchCountLabel = JBLabel("Found $matchCount matches")
 
   init {
-    title = "Configure Find Results Modification"
+    title = "AI-Based Find Results Modification"
     init()
   }
 
   override fun createCenterPanel(): JComponent {
     val formBuilder = FormBuilder.createFormBuilder()
     formBuilder.addComponent(matchCountLabel)
-    formBuilder.addLabeledComponent("Instructions:", JBScrollPane(replacementTextArea))
+    formBuilder.addLabeledComponent("AI Instructions:", JBScrollPane(replacementTextArea))
     return formBuilder.panel
   }
 
@@ -57,4 +55,3 @@ class FindResultsModificationDialog(
   }
 
 }
-
