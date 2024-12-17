@@ -83,7 +83,7 @@ The action is implemented as a simple override of `actionPerformed()` that calls
 
 
 ### Dependencies
-- Requires `com.github.simiacryptus.aicoder.util.BrowseUtil` for browser handling
+- Requires `com.simiacryptus.aicoder.util.BrowseUtil` for browser handling
 - Uses Java's `URI` class for URL representation
 
 

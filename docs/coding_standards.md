@@ -15,7 +15,7 @@ to ensure consistency, readability, and maintainability of the codebase.
 - **Classes and Interfaces**: Use PascalCase and be descriptive. Example: `StaticAppSettingsConfigurable`.
 - **Functions and Variables**: Use camelCase and be descriptive. Example: `buildComponent`.
 - **Constants**: Use UPPER_SNAKE_CASE. Example: `API_PROVIDER`.
-- **Packages**: Use lowercase and avoid underscores. Example: `com.github.simiacryptus.aicoder.util`.
+- **Packages**: Use lowercase and avoid underscores. Example: `com.simiacryptus.aicoder.util`.
 
 ## Formatting
 

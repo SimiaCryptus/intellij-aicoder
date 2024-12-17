@@ -16,7 +16,7 @@ plugins {
 }
 
 
-group = "com.github.simiacryptus"
+group = "com.simiacryptus"
 version = properties("pluginVersion")
 
 repositories {

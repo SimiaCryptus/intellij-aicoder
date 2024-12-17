@@ -1325,7 +1325,7 @@ This roadmap is a living document and will be updated periodically to reflect pr
 
 # kotlin\com\github\simiacryptus\aicoder\ApplicationEvents.kt
 
-Creating a feature development roadmap for the `ApplicationEvents` class within the `com.github.simiacryptus.aicoder` package involves outlining the future enhancements, improvements, and additions planned for this component. The roadmap will be structured into short-term, mid-term, and long-term goals, considering the current functionalities such as application activation handling, initialization of services like `OutputInterceptor`, `ClientManager`, and various `ApplicationServices`.
+Creating a feature development roadmap for the `ApplicationEvents` class within the `com.simiacryptus.aicoder` package involves outlining the future enhancements, improvements, and additions planned for this component. The roadmap will be structured into short-term, mid-term, and long-term goals, considering the current functionalities such as application activation handling, initialization of services like `OutputInterceptor`, `ClientManager`, and various `ApplicationServices`.
 
 
 #### Short-Term Goals (0-3 Months)
@@ -1524,7 +1524,7 @@ This roadmap provides a structured approach to developing new features for the `
 
 # kotlin\com\github\simiacryptus\aicoder\config\SimpleEnvelope.kt
 
-Creating a feature development roadmap for the `SimpleEnvelope` class within the `com.github.simiacryptus.aicoder.config` package involves outlining a series of enhancements and new functionalities that can be added to make the class more robust, versatile, and useful in various applications. Here's a proposed roadmap:
+Creating a feature development roadmap for the `SimpleEnvelope` class within the `com.simiacryptus.aicoder.config` package involves outlining a series of enhancements and new functionalities that can be added to make the class more robust, versatile, and useful in various applications. Here's a proposed roadmap:
 
 
 #### Phase 1: Basic Enhancements
@@ -1617,7 +1617,7 @@ This roadmap is subject to change based on user feedback, technological advancem
 
 # kotlin\com\github\simiacryptus\aicoder\config\Name.kt
 
-Creating a feature development roadmap for the `Name` annotation within the `com.github.simiacryptus.aicoder.config` package involves outlining a series of planned enhancements and functionalities that will be added over time. This roadmap will guide the development process, ensuring that the annotation becomes more versatile and useful in various coding scenarios. Here's a proposed roadmap:
+Creating a feature development roadmap for the `Name` annotation within the `com.simiacryptus.aicoder.config` package involves outlining a series of planned enhancements and functionalities that will be added over time. This roadmap will guide the development process, ensuring that the annotation becomes more versatile and useful in various coding scenarios. Here's a proposed roadmap:
 
 
 #### Phase 1: Initial Release
@@ -2293,7 +2293,7 @@ Creating a feature development roadmap is an iterative process that requires fle
 
 # kotlin\com\github\simiacryptus\aicoder\util\LineComment.kt
 
-The `LineComment` class and its nested `Factory` class, as part of the `com.github.simiacryptus.aicoder.util` package, provide a structured way to handle line comments within text blocks, particularly useful in the context of code generation or analysis. The development roadmap for enhancing these classes and their functionalities can be structured into several phases, focusing on improving usability, flexibility, and integration capabilities.
+The `LineComment` class and its nested `Factory` class, as part of the `com.simiacryptus.aicoder.util` package, provide a structured way to handle line comments within text blocks, particularly useful in the context of code generation or analysis. The development roadmap for enhancing these classes and their functionalities can be structured into several phases, focusing on improving usability, flexibility, and integration capabilities.
 
 
 #### Phase 1: Core Functionality Enhancements
@@ -4374,7 +4374,7 @@ This roadmap is subject to change based on user feedback and technological advan
 
 # resources\sources\kt\com\github\simiacryptus\aicoder\ApplicationEvents.kt
 
-Creating a feature development roadmap for the `ApplicationEvents` class within the `com.github.simiacryptus.aicoder` package involves outlining the future enhancements, improvements, and additions planned for this component. The roadmap will guide the development process, ensuring that the class evolves to meet the needs of its users effectively. Here's a proposed roadmap:
+Creating a feature development roadmap for the `ApplicationEvents` class within the `com.simiacryptus.aicoder` package involves outlining the future enhancements, improvements, and additions planned for this component. The roadmap will guide the development process, ensuring that the class evolves to meet the needs of its users effectively. Here's a proposed roadmap:
 
 
 #### Phase 1: Initial Setup and Integration
@@ -4912,7 +4912,7 @@ This roadmap is a starting point and may evolve based on user needs, technologic
 
 # resources\sources\kt\com\github\simiacryptus\aicoder\config\Name.kt
 
-Creating a feature development roadmap for the `Name` annotation within the `com.github.simiacryptus.aicoder.config` package involves outlining a series of planned enhancements and functionalities that will be added over time. This roadmap will guide the development process, ensuring that the annotation becomes more versatile and useful for its intended purpose. Here's a proposed roadmap:
+Creating a feature development roadmap for the `Name` annotation within the `com.simiacryptus.aicoder.config` package involves outlining a series of planned enhancements and functionalities that will be added over time. This roadmap will guide the development process, ensuring that the annotation becomes more versatile and useful for its intended purpose. Here's a proposed roadmap:
 
 
 #### Phase 1: Initial Release
@@ -4968,7 +4968,7 @@ This roadmap is a living document and should be revisited regularly to adjust th
 
 # resources\sources\kt\com\github\simiacryptus\aicoder\config\SimpleEnvelope.kt
 
-Creating a feature development roadmap for the `SimpleEnvelope` class within the `com.github.simiacryptus.aicoder.config` package involves outlining a series of enhancements and new functionalities that can be added to make the class more robust, versatile, and useful in various applications. Here's a proposed roadmap:
+Creating a feature development roadmap for the `SimpleEnvelope` class within the `com.simiacryptus.aicoder.config` package involves outlining a series of enhancements and new functionalities that can be added to make the class more robust, versatile, and useful in various applications. Here's a proposed roadmap:
 
 
 #### Phase 1: Basic Enhancements
@@ -5124,7 +5124,7 @@ This roadmap is a living document and should be revisited and revised based on u
 
 # resources\sources\kt\com\github\simiacryptus\aicoder\ui\EditorMenu.kt
 
-Developing a feature for a software project, especially one that integrates with complex platforms like IntelliJ IDEA (as suggested by the provided code snippet), requires careful planning and execution. Below is a structured roadmap to guide the development of a new feature for the `com.github.simiacryptus.aicoder.ui` package, focusing on enhancing the editor menu with additional actions based on user settings.
+Developing a feature for a software project, especially one that integrates with complex platforms like IntelliJ IDEA (as suggested by the provided code snippet), requires careful planning and execution. Below is a structured roadmap to guide the development of a new feature for the `com.simiacryptus.aicoder.ui` package, focusing on enhancing the editor menu with additional actions based on user settings.
 
 
 #### Phase 1: Requirements Gathering and Analysis
@@ -5609,7 +5609,7 @@ This roadmap is iterative and cyclical; the insights gained from the evaluation 
 
 # resources\sources\kt\com\github\simiacryptus\aicoder\util\ComputerLanguage.kt
 
-Developing a feature roadmap for the `ComputerLanguage` enum and its associated classes within the `com.github.simiacryptus.aicoder.util` package involves planning enhancements, optimizations, and new capabilities that can be added to improve its functionality, usability, and integration capabilities. Here's a proposed development roadmap:
+Developing a feature roadmap for the `ComputerLanguage` enum and its associated classes within the `com.simiacryptus.aicoder.util` package involves planning enhancements, optimizations, and new capabilities that can be added to improve its functionality, usability, and integration capabilities. Here's a proposed development roadmap:
 
 
 #### Phase 1: Core Enhancements
