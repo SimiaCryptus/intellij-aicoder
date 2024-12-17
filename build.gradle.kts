@@ -3,7 +3,7 @@ import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-fun properties(key: String) = providers.gradleProperty(key).get()
+fun properties(key: String) = providers.gradleProperty(key).getOrElse("")
 
 plugins {
     id("java")
@@ -16,7 +16,7 @@ plugins {
 }
 
 
-group = "com.github.simiacryptus"
+group = "com.simiacryptus"
 version = properties("pluginVersion")
 
 repositories {
@@ -28,7 +28,7 @@ repositories {
 
 val jetty_version = "11.0.24"
 val slf4j_version = "2.0.16"
-val skyenet_version = "1.2.17"
+val skyenet_version = "1.2.22"
 val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
 
@@ -45,7 +45,7 @@ dependencies {
     implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
     implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
 
-    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.12")
+    implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.13")
     implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
     implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
@@ -223,10 +223,6 @@ kover {
 */
 
 tasks {
-    wrapper {
-        gradleVersion = providers.gradleProperty("gradleVersion").get()
-    }
-
     publishPlugin {
         dependsOn(patchChangelog)
     }
