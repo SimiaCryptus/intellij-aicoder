@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.simiacryptus.intellijopenaicodeassist</id>
+    <id>com.github.simiacryptus.intellijopenaicodeassist</id>
     <name>AI Coding Assistant</name>
     <vendor url="https://blog.simiacrypt.us/">SimiaCryptus Software</vendor>
     <category>Code Tools</category>
