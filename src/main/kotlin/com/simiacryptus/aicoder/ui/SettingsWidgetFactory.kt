@@ -46,12 +46,12 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       val root = DefaultMutableTreeNode(title)
       // Filter models by providers that have API keys set
       val providers = models()
-        .filter { model -> 
+        .filter { model ->
           val providerName = model.second.provider.name
           AppSettingsState.instance.apiKey?.get(providerName)?.isNotEmpty() == true
         }
         .groupBy { it.second.provider }
-      
+
       for ((provider, models) in providers) {
         val providerNode = DefaultMutableTreeNode(provider.name)
         for (model in models) {
@@ -183,7 +183,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       ): Component {
         label.text = if (value != null) {
           try {
-              val sessionName = ApplicationServices.metadataStorageFactory(dataStorageRoot).getSessionName(null, value)
+            val sessionName = ApplicationServices.metadataStorageFactory(dataStorageRoot).getSessionName(null, value)
             when {
               sessionName.isNullOrBlank() -> getDefaultSessionLabel(value)
               else -> "$sessionName (${value.sessionId.take(8)})"
@@ -204,6 +204,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
         }
         return label
       }
+
       private fun getDefaultSessionLabel(session: Session): String {
         return "Session ${session.sessionId.take(8)}"
       }
@@ -213,17 +214,17 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       AppSettingsState.instance.addOnSettingsLoadedListener {
         statusBar?.updateWidget(ID())
       }
-        // Initialize selection for both trees on EDT
-        if (AppSettingsState.instance.smartModel.isNotEmpty()) {
-          SwingUtilities.invokeLater {
-            setSelectedModel(smartModelTree, AppSettingsState.instance.smartModel)
-          }
+      // Initialize selection for both trees on EDT
+      if (AppSettingsState.instance.smartModel.isNotEmpty()) {
+        SwingUtilities.invokeLater {
+          setSelectedModel(smartModelTree, AppSettingsState.instance.smartModel)
         }
-        if (AppSettingsState.instance.fastModel.isNotEmpty()) {
-          SwingUtilities.invokeLater {
-            setSelectedModel(fastModelTree, AppSettingsState.instance.fastModel)
-          }
+      }
+      if (AppSettingsState.instance.fastModel.isNotEmpty()) {
+        SwingUtilities.invokeLater {
+          setSelectedModel(fastModelTree, AppSettingsState.instance.fastModel)
         }
+      }
     }
 
     fun models() = ChatModel.values().filter { it.value != null && isVisible(it.value!!) }.toList()

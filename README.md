@@ -10,7 +10,6 @@ Are you a developer looking to supercharge your coding workflow? Look no further
 game-changing IntelliJ plugin that harnesses the power of cutting-edge Language Model APIs to revolutionize the way you
 code!
 
-
 ## 🌟 Key Features
 
 * 🔓 **Open Source**: AI Coding Assistant is released under the Apache 2.0 license, allowing for transparency and community contributions.
@@ -28,14 +27,12 @@ code!
   Coding Assistant's sleek, intuitive toolbar UI.
 * 🔄 **Version Control Integration**: AI-powered tools for analyzing and working with Git commits and diffs
 
-
 ## 🛠️ Configuration
 
 * 🔑 **API Keys**: Securely set up your API keys for various providers.
 * 🌐 **Web UI**: Access a user-friendly web interface for enhanced interaction.
 * ⚙️ **Customizable Settings**: Configure the plugin through the IDE's settings panel
 * 📊 **Token Usage Monitoring**: Track your API token usage through the status bar widget
-
 
 ## 📥 Installation & Setup
 
@@ -50,37 +47,50 @@ Getting started with AI Coding Assistant is a breeze:
 AI Coding Assistant offers a suite of powerful actions designed to streamline your coding process:
 
 ### 💬 Chat Features
+
 * **AI Assistant Chat**: General-purpose coding assistance and discussions
 * **Enhanced AI Chat**: Structured responses for complex coding queries
 * **Code Chat**: Context-aware code analysis and suggestions
 * **Patch Chat**: Interactive code modification discussions
+
 ### ✏️ Editor Tools
+
 * **Smart Paste**: Intelligent clipboard content conversion
 * **Fast Paste**: Quick code conversion using lightweight models
 * **Redo Last**: Repeat recent AI operations
 * **Custom Edit**: Flexible code modification tools
 * **Recent Code Edits**: Access to previous modifications
+
 ### 📝 Documentation Tools
+
 * **Describe Code**: Automatic comment generation
 * **Add Doc Comments**: Comprehensive documentation generation
 * **Add Code Comments**: Context-aware code annotation
+
 ### 🔧 Code Enhancement
+
 * **Rename Variables**: Intelligent variable renaming
 * **Replace with Suggestions**: Context-aware code replacement
 * **Filter Lines**: Smart code filtering
 * **Implement Stub**: Automatic stub implementation
+
 ### 📋 Project Tools
+
 * **Modify Files**: Batch file modifications
 * **Mass Patch**: Documentation-aware code updates
 * **Apply Patch**: Smart patch application
 * **Generate Related File**: Context-aware file generation
 * **Create File from Description**: Natural language file creation
+
 ### 🤖 AI Agents
+
 * **Task Runner**: Automated task execution
 * **Auto-Plan**: Intelligent project planning
 * **Shell Agent**: Command-line automation
 * **Web Dev**: Web development assistance
+
 ### 📚 Knowledge Management
+
 * **Extract Document Data**: Multi-format data extraction
 * **View Projector**: Vector visualization
 * **Save as Query DB**: Optimized data indexing

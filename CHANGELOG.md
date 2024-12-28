@@ -7,11 +7,13 @@
 ## [1.5.10]
 
 ### Added
+
 - New Git-related actions: ChatWithCommitAction, ChatWithCommitDiffAction, and ChatWithWorkingCopyDiffAction
 - SimpleCommandAction for executing custom commands
 - VCS menu integration with AI Coder options in the VCS log context menu
 
 ### Changed
+
 - Updated dependencies: skyenet_version to 1.0.80 and jo-penai to 1.1.0
 - Removed kotlinx-coroutines-core dependency
 - Added Git4Idea and GitHub plugins to the intellij block
@@ -19,23 +21,30 @@
 - Updated plugin.xml to include new actions and dependencies
 
 ### Improved
+
 - Enhanced Git integration capabilities
 - Streamlined build system and dependency management
 
 ## [1.4.0]
 
 ### Added
+
 - Support for Gemini models
 - Support for Mistral Large
+
 ### Removed
+
 - Dynamic action support (temporarily) due to performance issues and bugs
+
 ### Improved
+
 - Patching logic
 - Various fixes
- 
+
 ## [1.3.0]
 
 ### Added
+
 - `DiffChatAction`: A new action for engaging in a chat session to generate and apply code diffs directly within the
   IDE.
 - `MultiDiffChatAction`: Allows for collaborative code review and diff generation across multiple files.
@@ -468,13 +477,21 @@
   from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
 
 [Unreleased]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.5.10...HEAD
+
 [1.5.10]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.4.0...v1.5.10
+
 [1.4.0]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.3.0...v1.4.0
+
 [1.3.0]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.24...v1.3.0
+
 [1.2.24]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.23...v1.2.24
+
 [1.2.23]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.22...v1.2.23
+
 [1.2.22]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.21...v1.2.22
+
 [1.2.21]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.19...v1.2.21
+
 [1.2.19]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.18...v1.2.19
 
 [1.2.18]: https://github.com/SimiaCryptus/intellij-aicoder/compare/v1.2.14...v1.2.18

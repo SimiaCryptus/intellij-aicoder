@@ -9,16 +9,16 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 
 open class CodeChatSocketManager(
-    session: Session,
-    val language: String,
-    val filename: String,
-    val codeSelection: String,
-    api: ChatClient,
-    model: ChatModel,
-    storage: StorageInterface?,
+  session: Session,
+  val language: String,
+  val filename: String,
+  val codeSelection: String,
+  api: ChatClient,
+  model: ChatModel,
+  storage: StorageInterface?,
 ) : ChatSocketManager(
-    session = session,
-    model = model,
+  session = session,
+  model = model,
   userInterfacePrompt = ("""
           # `""".trimIndent() + filename + """`
           
@@ -26,7 +26,7 @@ open class CodeChatSocketManager(
           """.trimIndent() + codeSelection + """
           ```
           """.trimIndent()).trim(),
-    systemPrompt = """
+  systemPrompt = """
           You are a helpful AI that helps people with coding.
           
           You will be answering questions about the following code located in `""" + filename + """`:
@@ -37,9 +37,9 @@ open class CodeChatSocketManager(
           
           Responses may use markdown formatting, including code blocks.
           """.trimIndent(),
-    api = api,
-    applicationClass = ApplicationServer::class.java,
-    storage = storage,
+  api = api,
+  applicationClass = ApplicationServer::class.java,
+  storage = storage,
 ) {
-    override fun canWrite(user: User?): Boolean = true
+  override fun canWrite(user: User?): Boolean = true
 }

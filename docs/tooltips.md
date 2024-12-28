@@ -673,9 +673,10 @@ steps:
 2. Fill in any template variables in the JSON input through a dynamic form.
 3. Configure advanced planning settings, including AI models, execution environment, and parameters.
 4. Launch a web-based interface for the PlanAheadApp, which provides an interactive environment to:
-  - Review and refine the task breakdown
-  - Generate and execute steps to complete the task
-  - Monitor progress and results
+
+- Review and refine the task breakdown
+- Generate and execute steps to complete the task
+- Monitor progress and results
 
 This action is ideal for complex, multi-step tasks that benefit from AI-assisted planning and execution. It integrates
 with your project's file system and can execute commands in your development environment.
@@ -1272,13 +1273,16 @@ the following steps:
 2. Analyzes the project structure and relevant file contents.
 3. Uses AI to identify distinct errors and determine which files need to be fixed or are related to the problem.
 4. For each identified error, it:
-  - Examines the content of relevant files
-  - Generates suggested fixes using AI
-  - Presents the fixes as code patches in diff format
+
+- Examines the content of relevant files
+- Generates suggested fixes using AI
+- Presents the fixes as code patches in diff format
+
 5. Opens a new browser window with an interactive session where you can:
-  - View the analysis results
-  - See suggested fixes for each error
-  - Apply patches directly to your code
+
+- View the analysis results
+- See suggested fixes for each error
+- Apply patches directly to your code
 
 This tool is particularly useful for complex issues or when you're unsure how to approach a problem. It leverages AI to
 provide context-aware solutions tailored to your specific codebase."

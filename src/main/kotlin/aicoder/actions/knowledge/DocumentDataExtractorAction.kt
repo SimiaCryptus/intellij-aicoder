@@ -63,6 +63,7 @@ class DocumentDataExtractorAction : BaseAction(
         "exe", "dmg", "apk", "msi", "deb",
       ).contains(it)
     } == true -> false
+
     filename.endsWith(".pdf", ignoreCase = true) -> true
     filename.endsWith(".txt", ignoreCase = true) -> true
     filename.endsWith(".html", ignoreCase = true) -> true

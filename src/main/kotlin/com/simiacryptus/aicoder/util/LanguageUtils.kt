@@ -11,17 +11,17 @@ import java.util.*
 
 object LanguageUtils {
 
-    fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-        return computerLanguage != null
-    }
+  fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
+    return computerLanguage != null
+  }
 
-    fun getComputerLanguage(e: AnActionEvent): ComputerLanguage? {
-        return ApplicationManager.getApplication().runReadAction<ComputerLanguage?> {
-            val editor = e.getData(CommonDataKeys.EDITOR) ?: return@runReadAction null
-            val virtualFile: VirtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return@runReadAction null
-            val file = PsiManager.getInstance(e.project!!).findFile(virtualFile)?.virtualFile?.toFile ?: return@runReadAction null
-            val extension = if (file.extension != null) file.extension.lowercase(Locale.getDefault()) else ""
-            return@runReadAction ComputerLanguage.findByExtension(extension)
-        }
+  fun getComputerLanguage(e: AnActionEvent): ComputerLanguage? {
+    return ApplicationManager.getApplication().runReadAction<ComputerLanguage?> {
+      val editor = e.getData(CommonDataKeys.EDITOR) ?: return@runReadAction null
+      val virtualFile: VirtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return@runReadAction null
+      val file = PsiManager.getInstance(e.project!!).findFile(virtualFile)?.virtualFile?.toFile ?: return@runReadAction null
+      val extension = if (file.extension != null) file.extension.lowercase(Locale.getDefault()) else ""
+      return@runReadAction ComputerLanguage.findByExtension(extension)
     }
+  }
 }

@@ -45,127 +45,127 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
 class MultiStepPatchAction : BaseAction() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    val path = "/autodev"
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        if (!super.isEnabled(event)) return false
-        val files = UITools.getSelectedFolder(event) ?: return false
-        return true
-    }
-
-
-    override fun handle(e: AnActionEvent) {
-        val project = e.project ?: return
-        UITools.runAsync(project, "Initializing Auto Dev Assistant", true) { progress ->
-            progress.isIndeterminate = true
-            try {
-                val session = Session.newGlobalID()
-                val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
-                val selectedFile = UITools.getSelectedFolder(e)
-                if (null != storage && null != selectedFile) {
-                    DataStorage.sessionPaths[session] = selectedFile.toFile
-                }
-                SessionProxyServer.metadataStorage.setSessionName(
-                    null,
-                    session,
-                    "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
-                )
-                SessionProxyServer.chats[session] = AutoDevApp(event = e)
-                ApplicationServer.appInfoMap[session] = AppInfoData(
-                    applicationName = "Code Chat",
-                    singleInput = true,
-                    stickyInput = false,
-                    loadImages = false,
-                    showMenubar = false
-                )
-                val server = AppServer.getServer(e.project)
+  val path = "/autodev"
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if (!super.isEnabled(event)) return false
+    val files = UITools.getSelectedFolder(event) ?: return false
+    return true
+  }
 
 
-                ApplicationManager.getApplication().invokeLater {
-                    progress.text = "Opening browser..."
-                    val uri = server.server.uri.resolve("/#$session")
-                    BaseAction.log.info("Opening browser to $uri")
-                    browse(uri)
-                }
-            } catch (e: Throwable) {
-                UITools.error(log, "Failed to initialize Auto Dev Assistant", e)
-            }
+  override fun handle(e: AnActionEvent) {
+    val project = e.project ?: return
+    UITools.runAsync(project, "Initializing Auto Dev Assistant", true) { progress ->
+      progress.isIndeterminate = true
+      try {
+        val session = Session.newGlobalID()
+        val storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome) as DataStorage?
+        val selectedFile = UITools.getSelectedFolder(e)
+        if (null != storage && null != selectedFile) {
+          DataStorage.sessionPaths[session] = selectedFile.toFile
         }
-    }
-
-    open class AutoDevApp(
-        applicationName: String = "Auto Dev Assistant v1.2",
-        val temperature: Double = 0.1,
-        val event: AnActionEvent,
-    ) : ApplicationServer(
-        applicationName = applicationName,
-        path = "/autodev",
-        showMenubar = false,
-    ) {
-        companion object {
-            private const val DEFAULT_BUDGET = 2.00
-        }
-
-        override fun userMessage(
-            session: Session,
-            user: User?,
-            userMessage: String,
-            ui: ApplicationInterface,
-            api: API
-        ) {
-            val settings = getSettings(session, user) ?: Settings(
-                budget = DEFAULT_BUDGET,
-                model = AppSettingsState.instance.smartModel.chatModel()
-            )
-            if (api is ChatClient) api.budget = settings.budget ?: DEFAULT_BUDGET
-            AutoDevAgent(
-                api = api,
-                dataStorage = dataStorage,
-                session = session,
-                user = user,
-                ui = ui,
-                model = settings.model!!,
-                parsingModel = AppSettingsState.instance.fastModel.chatModel(),
-                event = event,
-            ).start(
-                userMessage = userMessage,
-            )
-        }
-
-        data class Settings(
-            val budget: Double? = 2.00,
-            val tools: List<String> = emptyList(),
-            val model: ChatModel? = AppSettingsState.instance.smartModel.chatModel(),
+        SessionProxyServer.metadataStorage.setSessionName(
+          null,
+          session,
+          "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
         )
+        SessionProxyServer.chats[session] = AutoDevApp(event = e)
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+          applicationName = "Code Chat",
+          singleInput = true,
+          stickyInput = false,
+          loadImages = false,
+          showMenubar = false
+        )
+        val server = AppServer.getServer(e.project)
 
-        override val settingsClass: Class<*> get() = Settings::class.java
 
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : Any> initSettings(session: Session): T? = Settings() as T
+        ApplicationManager.getApplication().invokeLater {
+          progress.text = "Opening browser..."
+          val uri = server.server.uri.resolve("/#$session")
+          BaseAction.log.info("Opening browser to $uri")
+          browse(uri)
+        }
+      } catch (e: Throwable) {
+        UITools.error(log, "Failed to initialize Auto Dev Assistant", e)
+      }
+    }
+  }
+
+  open class AutoDevApp(
+    applicationName: String = "Auto Dev Assistant v1.2",
+    val temperature: Double = 0.1,
+    val event: AnActionEvent,
+  ) : ApplicationServer(
+    applicationName = applicationName,
+    path = "/autodev",
+    showMenubar = false,
+  ) {
+    companion object {
+      private const val DEFAULT_BUDGET = 2.00
     }
 
-    class AutoDevAgent(
-        val api: API,
-        dataStorage: StorageInterface,
-        session: Session,
-        user: User?,
-        val ui: ApplicationInterface,
-        val model: ChatModel,
-        val parsingModel: ChatModel,
-        actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
-            ActorTypes.DesignActor to ParsedActor(
-                resultClass = TaskList::class.java,
-                prompt = """
+    override fun userMessage(
+      session: Session,
+      user: User?,
+      userMessage: String,
+      ui: ApplicationInterface,
+      api: API
+    ) {
+      val settings = getSettings(session, user) ?: Settings(
+        budget = DEFAULT_BUDGET,
+        model = AppSettingsState.instance.smartModel.chatModel()
+      )
+      if (api is ChatClient) api.budget = settings.budget ?: DEFAULT_BUDGET
+      AutoDevAgent(
+        api = api,
+        dataStorage = dataStorage,
+        session = session,
+        user = user,
+        ui = ui,
+        model = settings.model!!,
+        parsingModel = AppSettingsState.instance.fastModel.chatModel(),
+        event = event,
+      ).start(
+        userMessage = userMessage,
+      )
+    }
+
+    data class Settings(
+      val budget: Double? = 2.00,
+      val tools: List<String> = emptyList(),
+      val model: ChatModel? = AppSettingsState.instance.smartModel.chatModel(),
+    )
+
+    override val settingsClass: Class<*> get() = Settings::class.java
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> initSettings(session: Session): T? = Settings() as T
+  }
+
+  class AutoDevAgent(
+    val api: API,
+    dataStorage: StorageInterface,
+    session: Session,
+    user: User?,
+    val ui: ApplicationInterface,
+    val model: ChatModel,
+    val parsingModel: ChatModel,
+    actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+      ActorTypes.DesignActor to ParsedActor(
+        resultClass = TaskList::class.java,
+        prompt = """
           Translate the user directive into an action plan for the project.
           Break the user's request into a list of simple tasks to be performed.
           For each task, provide a list of files to be modified and a description of the changes to be made.
         """.trimIndent(),
-                model = model,
-                parsingModel = parsingModel,
-            ),
-            ActorTypes.TaskCodingActor to SimpleActor(
-                prompt = """
+        model = model,
+        parsingModel = parsingModel,
+      ),
+      ActorTypes.TaskCodingActor to SimpleActor(
+        prompt = """
                     Implement the changes to the codebase as described in the task list.
                       
                     Response should use one or more code patches in diff format within ```diff code blocks.
@@ -201,94 +201,94 @@ class MultiStepPatchAction : BaseAction() {
                      });
                     ```
                     """.trimIndent(),
-                model = model
-            ),
-        ),
-        val event: AnActionEvent,
-    ) : ActorSystem<AutoDevAgent.ActorTypes>(
-        actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session
+        model = model
+      ),
+    ),
+    val event: AnActionEvent,
+  ) : ActorSystem<AutoDevAgent.ActorTypes>(
+    actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session
+  ) {
+    enum class ActorTypes {
+      DesignActor,
+      TaskCodingActor,
+    }
+
+    private val designActor by lazy { getActor(ActorTypes.DesignActor) as ParsedActor<TaskList> }
+    private val taskActor by lazy { getActor(ActorTypes.TaskCodingActor) as SimpleActor }
+
+    fun start(
+      userMessage: String,
     ) {
-        enum class ActorTypes {
-            DesignActor,
-            TaskCodingActor,
+      val codeFiles = mutableSetOf<Path>()
+      val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+        ?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
+      PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
+        //
+        codeFiles.add(root.relativize(file.toNioPath()))
+      }
+      require(codeFiles.isNotEmpty()) { "No files selected" }
+      fun codeSummary() = codeFiles.joinToString("\n\n") { path ->
+        "# $path\n```${
+          path.toString().split('.').last()
+        }\n${root.resolve(path).toFile().readText()}\n```"
+      }
+
+      val task = ui.newTask()
+      val api = (api as ChatClient).getChildClient().apply {
+        val createFile = task.createFile(".logs/api-${java.util.UUID.randomUUID()}.log")
+        createFile.second?.apply {
+          logStreams += this.outputStream().buffered()
+          task.verbose("API log: <a href=\"file:///$this\">$this</a>")
         }
+      }
 
-        private val designActor by lazy { getActor(ActorTypes.DesignActor) as ParsedActor<TaskList> }
-        private val taskActor by lazy { getActor(ActorTypes.TaskCodingActor) as SimpleActor }
+      val toInput = { it: String -> listOf(codeSummary(), it) }
+      val architectureResponse = Discussable(
+        task = task,
+        userMessage = { userMessage },
+        heading = renderMarkdown(userMessage),
+        initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
+        outputFn = { design: ParsedResponse<TaskList> ->
+          //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```")
+          AgentPatterns.displayMapInTabs(
+            mapOf(
+              "Text" to renderMarkdown(design.text, ui = ui),
+              "JSON" to renderMarkdown("```json\n${toJson(design.obj)/*.indent("  ")*/}\n```", ui = ui),
+            )
+          )
+        },
+        ui = ui,
+        reviseResponse = { userMessages: List<Pair<String, Role>> ->
+          designActor.respond(
+            messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
+              .toTypedArray<ApiModel.ChatMessage>()),
+            input = toInput(userMessage),
+            api = api
+          )
+        },
+        atomicRef = AtomicReference(),
+        semaphore = Semaphore(0),
+      ).call()
 
-        fun start(
-            userMessage: String,
-        ) {
-            val codeFiles = mutableSetOf<Path>()
-            val root = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
-                ?.map { it.toFile.toPath() }?.toTypedArray()?.commonRoot()!!
-            PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.forEach { file ->
-                //
-                codeFiles.add(root.relativize(file.toNioPath()))
-            }
-            require(codeFiles.isNotEmpty()) { "No files selected" }
-            fun codeSummary() = codeFiles.joinToString("\n\n") { path ->
-                "# $path\n```${
-                    path.toString().split('.').last()
-                }\n${root.resolve(path).toFile().readText()}\n```"
-            }
-
-            val task = ui.newTask()
-            val api = (api as ChatClient).getChildClient().apply {
-                val createFile = task.createFile(".logs/api-${java.util.UUID.randomUUID()}.log")
-                createFile.second?.apply {
-                    logStreams += this.outputStream().buffered()
-                    task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+      try {
+        val taskTabs = TabbedDisplay(task)
+        architectureResponse.obj.tasks.map { (paths, description) ->
+          var description = (description ?: UUID.random().toString()).trim()
+          // Strip `#` from the beginning of the description
+          while (description.startsWith("#")) {
+            description = description.substring(1)
+          }
+          description = renderMarkdown(description, ui = ui, tabs = false)
+          val task = ui.newTask(false).apply { taskTabs[description] = placeholder }
+          pool.submit {
+            task.header("Task: $description")
+            Retryable(ui, task) {
+              try {
+                val filter = codeFiles.filter { path ->
+                  paths?.find { path.toString().contains(it) }?.isNotEmpty() == true
                 }
-            }
-
-            val toInput = { it: String -> listOf(codeSummary(), it) }
-            val architectureResponse = Discussable(
-                task = task,
-                userMessage = { userMessage },
-                heading = renderMarkdown(userMessage),
-                initialResponse = { it: String -> designActor.answer(toInput(it), api = api) },
-                outputFn = { design: ParsedResponse<TaskList> ->
-                    //          renderMarkdown("${design.text}\n\n```json\n${JsonUtil.toJson(design.obj)/*.indent("  ")*/}\n```")
-                    AgentPatterns.displayMapInTabs(
-                        mapOf(
-                            "Text" to renderMarkdown(design.text, ui = ui),
-                            "JSON" to renderMarkdown("```json\n${toJson(design.obj)/*.indent("  ")*/}\n```", ui = ui),
-                        )
-                    )
-                },
-                ui = ui,
-                reviseResponse = { userMessages: List<Pair<String, Role>> ->
-                    designActor.respond(
-                        messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
-                            .toTypedArray<ApiModel.ChatMessage>()),
-                        input = toInput(userMessage),
-                        api = api
-                    )
-                },
-                atomicRef = AtomicReference(),
-                semaphore = Semaphore(0),
-            ).call()
-
-            try {
-                val taskTabs = TabbedDisplay(task)
-                architectureResponse.obj.tasks.map { (paths, description) ->
-                    var description = (description ?: UUID.random().toString()).trim()
-                    // Strip `#` from the beginning of the description
-                    while (description.startsWith("#")) {
-                        description = description.substring(1)
-                    }
-                    description = renderMarkdown(description, ui = ui, tabs = false)
-                    val task = ui.newTask(false).apply { taskTabs[description] = placeholder }
-                    pool.submit {
-                        task.header("Task: $description")
-                        Retryable(ui, task) {
-                            try {
-                                val filter = codeFiles.filter { path ->
-                                    paths?.find { path.toString().contains(it) }?.isNotEmpty() == true
-                                }
-                                require(filter.isNotEmpty()) {
-                                    """
+                require(filter.isNotEmpty()) {
+                  """
                                     No files found for """.trimIndent() + paths + """
                                     
                                     Root:
@@ -299,71 +299,71 @@ class MultiStepPatchAction : BaseAction() {
                                     
                                     Paths:
                                     """.trimIndent() + (paths?.joinToString("\n") ?: "")
-                                }
-                                renderMarkdown(
-                                    ui.socketManager!!.addApplyFileDiffLinks(
-                                        root = root,
-                                        response = taskActor.answer(
-                                            listOf(
-                                            codeSummary(),
-                                            userMessage,
-                                            filter.joinToString("\n\n") {
-                                                "# ${it}\n```${
-                                                    it.toString().split('.').last().let { /*escapeHtml4*/it/*.indent("  ")*/ }
-                                                }\n${root.resolve(it).toFile().readText()}\n```"
-                                            },
-                                            architectureResponse.text,
-                                            "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
-                                        ), api),
-                                        handle = { newCodeMap ->
-                                            newCodeMap.forEach { (path, newCode) ->
-                                                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                                            }
-                                        },
-                                        ui = ui,
-                                        api = api
-                                    )
-                                )
-                            } catch (e: Exception) {
-                                task.error(ui, e)
-                                ""
-                            }
-                        }
-                    }
-                }.toTypedArray().forEach { it.get() }
-            } catch (e: Exception) {
-                log.warn("Error", e)
+                }
+                renderMarkdown(
+                  ui.socketManager!!.addApplyFileDiffLinks(
+                    root = root,
+                    response = taskActor.answer(
+                      listOf(
+                        codeSummary(),
+                        userMessage,
+                        filter.joinToString("\n\n") {
+                          "# ${it}\n```${
+                            it.toString().split('.').last().let { /*escapeHtml4*/it/*.indent("  ")*/ }
+                          }\n${root.resolve(it).toFile().readText()}\n```"
+                        },
+                        architectureResponse.text,
+                        "Provide a change for ${paths?.joinToString(",") { it } ?: ""} ($description)"
+                      ), api),
+                    handle = { newCodeMap ->
+                      newCodeMap.forEach { (path, newCode) ->
+                        task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                      }
+                    },
+                    ui = ui,
+                    api = api
+                  )
+                )
+              } catch (e: Exception) {
+                task.error(ui, e)
+                ""
+              }
             }
-        }
+          }
+        }.toTypedArray().forEach { it.get() }
+      } catch (e: Exception) {
+        log.warn("Error", e)
+      }
+    }
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(MultiStepPatchAction::class.java)
+    val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
+
+    data class TaskList(
+      @Description("List of tasks to be performed in this project")
+      val tasks: List<Task> = emptyList()
+    ) : ValidatedObject {
+      override fun validate(): String? = when {
+        tasks.isEmpty() -> "Resources are required"
+        tasks.any { it.validate() != null } -> "Invalid resource"
+        else -> null
+      }
     }
 
-    companion object {
-        private val log = LoggerFactory.getLogger(MultiStepPatchAction::class.java)
-        val root: File get() = File(AppSettingsState.instance.pluginHome, "code_chat")
-
-        data class TaskList(
-            @Description("List of tasks to be performed in this project")
-            val tasks: List<Task> = emptyList()
-        ) : ValidatedObject {
-            override fun validate(): String? = when {
-                tasks.isEmpty() -> "Resources are required"
-                tasks.any { it.validate() != null } -> "Invalid resource"
-                else -> null
-            }
-        }
-
-        data class Task(
-            @Description("List of paths involved in the task. This should include all files to be modified, and can include other files whose content will be informative in writing the changes.")
-            val paths: List<String>? = null,
-            @Description("Detailed description of the changes to be made. Markdown format is supported.")
-            val description: String? = null
-        ) : ValidatedObject {
-            override fun validate(): String? = when {
-                paths.isNullOrEmpty() -> "Paths are required"
-                paths.any { it.isBlank() } -> "Invalid path"
-                else -> null
-            }
-        }
-
+    data class Task(
+      @Description("List of paths involved in the task. This should include all files to be modified, and can include other files whose content will be informative in writing the changes.")
+      val paths: List<String>? = null,
+      @Description("Detailed description of the changes to be made. Markdown format is supported.")
+      val description: String? = null
+    ) : ValidatedObject {
+      override fun validate(): String? = when {
+        paths.isNullOrEmpty() -> "Paths are required"
+        paths.any { it.isBlank() } -> "Invalid path"
+        else -> null
+      }
     }
+
+  }
 }

@@ -21,7 +21,7 @@
 - 🚀 **Performance:** Suggestions to improve the code's efficiency.
 - 🔒 **Security:** Concerns related to vulnerabilities or insecure code practices.
 - 📚 **Documentation:** Recommendations to improve or add comments and documentation for better clarity.
- 
+
 ## Sections
 
 ### 1. Overview
@@ -37,16 +37,16 @@
 [List specific issues, bugs, or areas for improvement. Use the severity levels and note types from the Review Key.]
 
 1. [😊/😐/😠][💡/🐛/🧹/🚀/🔒/📚] [Issue Title]
-   - Description: [Detailed explanation of the issue]
-   - Recommendation: [Suggested solution or improvement]
-   - Rationale: [Reasoning behind the recommendation]
-   - Risks: [Description of potential risks or challenges]
+  - Description: [Detailed explanation of the issue]
+  - Recommendation: [Suggested solution or improvement]
+  - Rationale: [Reasoning behind the recommendation]
+  - Risks: [Description of potential risks or challenges]
 
 2. [😊/😐/😠][💡/🐛/🧹/🚀/🔒/📚] [Issue Title]
-    - Description: [Detailed explanation of the issue]
-    - Recommendation: [Suggested solution or improvement]
-   - Rationale: [Reasoning behind the recommendation]
-   - Risks: [Description of potential risks or challenges]
+  - Description: [Detailed explanation of the issue]
+  - Recommendation: [Suggested solution or improvement]
+  - Rationale: [Reasoning behind the recommendation]
+  - Risks: [Description of potential risks or challenges]
 
 [Add more issues as needed]
 

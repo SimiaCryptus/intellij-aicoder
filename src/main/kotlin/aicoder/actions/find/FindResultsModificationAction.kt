@@ -127,10 +127,12 @@ class FindResultsModificationAction(
             task.verbose("API log: <a href=\"file:///$this\">$this</a>")
           }
         }
+
         fun formatLine(index: Int, line: String, isFocused: Boolean) = when {
           isFocused -> "/* L$index */ $line /* <<< */"
           else -> "/* L$index */ $line"
         }
+
         val document = PsiDocumentManager.getInstance(project).getDocument(file?.findPsiFile(project) ?: return@forEach) ?: return@forEach
         val psiRoot: PsiFile? = file.findPsiFile(project)
         val byContainer = usages.groupBy { getSmallestContainingEntity(psiRoot, it) }.entries.sortedBy { it.key?.textRange?.startOffset }.toTypedArray()

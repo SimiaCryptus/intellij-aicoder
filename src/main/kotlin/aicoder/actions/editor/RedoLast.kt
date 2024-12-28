@@ -12,14 +12,14 @@ import com.simiacryptus.aicoder.util.UITools.retry
  * This will redo the last action that was performed in the editor.
  */
 class RedoLast : BaseAction() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    override fun handle(e: AnActionEvent) {
-        retry[e.getRequiredData(CommonDataKeys.EDITOR).document]!!.run()
-    }
+  override fun handle(e: AnActionEvent) {
+    retry[e.getRequiredData(CommonDataKeys.EDITOR).document]!!.run()
+  }
 
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        return null != retry[event.getRequiredData(CommonDataKeys.EDITOR).document]
-    }
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    return null != retry[event.getRequiredData(CommonDataKeys.EDITOR).document]
+  }
 
 }

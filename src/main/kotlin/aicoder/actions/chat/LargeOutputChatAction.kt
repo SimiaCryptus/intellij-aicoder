@@ -20,81 +20,81 @@ import org.slf4j.LoggerFactory
 import java.text.SimpleDateFormat
 
 class LargeOutputChatAction : BaseAction() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    private val systemPrompt = """
+  private val systemPrompt = """
         You are a helpful AI coding assistant. Please provide detailed, well-structured responses.
         Break down complex explanations into clear sections using the ellipsis notation.
     """.trimIndent()
-    
-    private val userInterfacePrompt = """
+
+  private val userInterfacePrompt = """
         # Enhanced Code Chat
         This chat interface uses structured responses to better organize complex information.
         Feel free to ask coding questions - responses will be broken down into clear sections.
     """.trimIndent()
-    
-    private val model by lazy { AppSettingsState.instance.smartModel.chatModel() }
 
-    override fun handle(e: AnActionEvent) {
-        val project = e.project ?: return
+  private val model by lazy { AppSettingsState.instance.smartModel.chatModel() }
 
-        try {
-            UITools.runAsync(project, "Initializing Enhanced Chat", true) { progress ->
-                progress.isIndeterminate = true
-                progress.text = "Setting up enhanced chat session..."
+  override fun handle(e: AnActionEvent) {
+    val project = e.project ?: return
 
-                val session = Session.newGlobalID()
-                val largeOutputActor = LargeOutputActor(
-                    model = model,
-                    temperature = 0.3,
-                    maxIterations = 3
-                )
+    try {
+      UITools.runAsync(project, "Initializing Enhanced Chat", true) { progress ->
+        progress.isIndeterminate = true
+        progress.text = "Setting up enhanced chat session..."
 
-                SessionProxyServer.metadataStorage.setSessionName(
-                    null, 
-                    session, 
-                    "Enhanced Chat @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
-                )
-                
-                SessionProxyServer.agents[session] = EnhancedChatSocketManager(
-                    session = session,
-                    model = model,
-                    userInterfacePrompt = userInterfacePrompt,
-                    systemPrompt = systemPrompt,
-                    api = api,
-                    storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
-                    applicationClass = ApplicationServer::class.java,
-                    largeOutputActor = largeOutputActor
-                )
+        val session = Session.newGlobalID()
+        val largeOutputActor = LargeOutputActor(
+          model = model,
+          temperature = 0.3,
+          maxIterations = 3
+        )
 
-                ApplicationServer.appInfoMap[session] = AppInfoData(
-                    applicationName = "Enhanced Code Chat",
-                    singleInput = false,
-                    stickyInput = true,
-                    loadImages = false,
-                    showMenubar = false
-                )
+        SessionProxyServer.metadataStorage.setSessionName(
+          null,
+          session,
+          "Enhanced Chat @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+        )
 
-                val server = AppServer.getServer(project)
-                val uri = server.server.uri.resolve("/#$session")
-                
-                ApplicationManager.getApplication().executeOnPooledThread {
-                    try {
-                        BaseAction.log.info("Opening enhanced chat browser to $uri")
-                        browse(uri)
-                    } catch (e: Throwable) {
-                        UITools.error(log, "Failed to open browser", e)
-                    }
-                }
-            }
-        } catch (e: Throwable) {
-            log.warn("Error opening browser", e)
+        SessionProxyServer.agents[session] = EnhancedChatSocketManager(
+          session = session,
+          model = model,
+          userInterfacePrompt = userInterfacePrompt,
+          systemPrompt = systemPrompt,
+          api = api,
+          storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
+          applicationClass = ApplicationServer::class.java,
+          largeOutputActor = largeOutputActor
+        )
+
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+          applicationName = "Enhanced Code Chat",
+          singleInput = false,
+          stickyInput = true,
+          loadImages = false,
+          showMenubar = false
+        )
+
+        val server = AppServer.getServer(project)
+        val uri = server.server.uri.resolve("/#$session")
+
+        ApplicationManager.getApplication().executeOnPooledThread {
+          try {
+            BaseAction.log.info("Opening enhanced chat browser to $uri")
+            browse(uri)
+          } catch (e: Throwable) {
+            UITools.error(log, "Failed to open browser", e)
+          }
         }
+      }
+    } catch (e: Throwable) {
+      log.warn("Error opening browser", e)
     }
+  }
 
-    override fun isEnabled(event: AnActionEvent) = true
+  override fun isEnabled(event: AnActionEvent) = true
 
-    companion object {
-        private val log = LoggerFactory.getLogger(LargeOutputChatAction::class.java)
-    }
+  companion object {
+    private val log = LoggerFactory.getLogger(LargeOutputChatAction::class.java)
+  }
 }

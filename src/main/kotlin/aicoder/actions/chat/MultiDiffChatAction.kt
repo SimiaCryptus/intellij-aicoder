@@ -39,196 +39,200 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
 class MultiDiffChatAction : BaseAction() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-    override fun isEnabled(event: AnActionEvent): Boolean {
-      UITools.getSelectedFile(event) ?: return false
-      return super.isEnabled(event)
-    }
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    UITools.getSelectedFile(event) ?: return false
+    return super.isEnabled(event)
+  }
 
-    override fun handle(event: AnActionEvent) {
+  override fun handle(event: AnActionEvent) {
+    try {
+      val root: Path
+      val dataContext = event.dataContext
+      val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+      val folder = UITools.getSelectedFolder(event)
+      root = if (null != folder) {
+        folder.toFile.toPath()
+      } else {
+        getModuleRootForFile(
+          UITools.getSelectedFile(event)?.parent?.toFile
+            ?: throw RuntimeException("No file or folder selected")
+        ).toPath()
+      }
+      val initialFiles = getFiles(virtualFiles, root)
+      val session = Session.newGlobalID()
+      SessionProxyServer.metadataStorage.setSessionName(
+        null,
+        session,
+        "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+      )
+      SessionProxyServer.chats[session] = PatchApp(root.toFile(), initialFiles)
+      ApplicationServer.appInfoMap[session] = AppInfoData(
+        applicationName = "Code Chat",
+        singleInput = true,
+        stickyInput = false,
+        loadImages = false,
+        showMenubar = false
+      )
+      val server = AppServer.getServer(event.project)
+      UITools.runAsync(event.project, "Opening Browser", true) { progress ->
+        Thread.sleep(500)
         try {
-            val root: Path
-            val dataContext = event.dataContext
-            val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-            val folder = UITools.getSelectedFolder(event)
-            root = if (null != folder) {
-                folder.toFile.toPath()
-            } else {
-                getModuleRootForFile(
-                    UITools.getSelectedFile(event)?.parent?.toFile
-                        ?: throw RuntimeException("No file or folder selected")
-                ).toPath()
-            }
-            val initialFiles = getFiles(virtualFiles, root)
-            val session = Session.newGlobalID()
-            SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
-            SessionProxyServer.chats[session] = PatchApp(root.toFile(), initialFiles)
-            ApplicationServer.appInfoMap[session] = AppInfoData(
-                applicationName = "Code Chat",
-                singleInput = true,
-                stickyInput = false,
-                loadImages = false,
-                showMenubar = false
-            )
-            val server = AppServer.getServer(event.project)
-            UITools.runAsync(event.project, "Opening Browser", true) { progress ->
-                Thread.sleep(500)
-                try {
-                    val uri = server.server.uri.resolve("/#$session")
-                    BaseAction.log.info("Opening browser to $uri")
-                    browse(uri)
-                } catch (e: Throwable) {
-                    val message = "Failed to open browser: ${e.message}"
-                    log.error(message, e)
-                    UITools.showErrorDialog(event.project, message, "Error")
-                }
-            }
-        } catch (e: Exception) {
-            // Comprehensive error logging
-            log.error("Error in MultiDiffChatAction", e)
-            UITools.showErrorDialog(event.project, e.message ?: "", "Error")
+          val uri = server.server.uri.resolve("/#$session")
+          BaseAction.log.info("Opening browser to $uri")
+          browse(uri)
+        } catch (e: Throwable) {
+          val message = "Failed to open browser: ${e.message}"
+          log.error(message, e)
+          UITools.showErrorDialog(event.project, message, "Error")
+        }
+      }
+    } catch (e: Exception) {
+      // Comprehensive error logging
+      log.error("Error in MultiDiffChatAction", e)
+      UITools.showErrorDialog(event.project, e.message ?: "", "Error")
+    }
+  }
+
+  inner class PatchApp(
+    override val root: File,
+    private val initialFiles: Set<Path>,
+  ) : ApplicationServer(
+    applicationName = "Multi-file Patch Chat",
+    path = "/patchChat",
+    showMenubar = false,
+  ) {
+    // Add proper logging
+    private val log = LoggerFactory.getLogger(PatchApp::class.java)
+
+    override val singleInput = false
+    override val stickyInput = true
+
+    // Add validation
+    private fun getCodeFiles(): Set<Path> {
+      if (!root.exists()) {
+        log.warn("Root directory does not exist: $root")
+        return emptySet()
+      }
+      return initialFiles.filter { path ->
+        val file = root.toPath().resolve(path).toFile()
+        val exists = file.exists()
+        if (!exists) log.warn("File does not exist: $file")
+        exists
+      }.toSet()
+    }
+
+    private fun codeSummary(): String {
+      return getCodeFiles().associateWith { root.toPath().resolve(it).toFile().readText(Charsets.UTF_8) }
+        .entries.joinToString("\n\n") { (path, code) ->
+          val extension =
+            path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
+          "# $path\n```$extension\n$code\n```"
         }
     }
 
-    inner class PatchApp(
-        override val root: File,
-        private val initialFiles: Set<Path>,
-    ) : ApplicationServer(
-        applicationName = "Multi-file Patch Chat",
-        path = "/patchChat",
-        showMenubar = false,
+
+    override fun userMessage(
+      session: Session,
+      user: User?,
+      userMessage: String,
+      ui: ApplicationInterface,
+      api: API
     ) {
-        // Add proper logging
-        private val log = LoggerFactory.getLogger(PatchApp::class.java)
-
-        override val singleInput = false
-        override val stickyInput = true
-
-        // Add validation
-        private fun getCodeFiles(): Set<Path> {
-            if (!root.exists()) {
-                log.warn("Root directory does not exist: $root")
-                return emptySet()
-            }
-            return initialFiles.filter { path ->
-                val file = root.toPath().resolve(path).toFile()
-                val exists = file.exists()
-                if (!exists) log.warn("File does not exist: $file")
-                exists
-            }.toSet()
-        }
-
-        private fun codeSummary(): String {
-            return getCodeFiles().associateWith { root.toPath().resolve(it).toFile().readText(Charsets.UTF_8) }
-                .entries.joinToString("\n\n") { (path, code) ->
-                    val extension =
-                        path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-                "# $path\n```$extension\n$code\n```"
-                }
-        }
-
-
-        override fun userMessage(
-            session: Session,
-            user: User?,
-            userMessage: String,
-            ui: ApplicationInterface,
-            api: API
-        ) {
-            try {
-                fun mainActor(): SimpleActor {
-                    return SimpleActor(
-                        prompt = """
+      try {
+        fun mainActor(): SimpleActor {
+          return SimpleActor(
+            prompt = """
                                   You are a helpful AI that helps people with coding.
                                   
                                   You will be answering questions about the following code:
                                   
                                   """.trimIndent() + codeSummary() + patchEditorPrompt,
-                        model = AppSettingsState.instance.smartModel.chatModel()
-                    )
-                }
+            model = AppSettingsState.instance.smartModel.chatModel()
+          )
+        }
 
-                val settings = getSettings(session, user) ?: Settings()
-                if (api is ChatClient) api.budget = settings.budget ?: 2.00
+        val settings = getSettings(session, user) ?: Settings()
+        if (api is ChatClient) api.budget = settings.budget ?: 2.00
 
-                val task = ui.newTask()
-                task.add("Processing request...")
+        val task = ui.newTask()
+        task.add("Processing request...")
 
-                val api = (api as ChatClient).getChildClient().apply {
-                    val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
-                    createFile.second?.apply {
-                        logStreams += this.outputStream().buffered()
-                        task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+        val api = (api as ChatClient).getChildClient().apply {
+          val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
+          createFile.second?.apply {
+            logStreams += this.outputStream().buffered()
+            task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+          }
+        }
+        val codex = GPT4Tokenizer()
+        task.verbose(renderMarkdown(getCodeFiles().joinToString("\n") { path ->
+          "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
+        }))
+        val toInput = { it: String -> listOf(codeSummary(), it) }
+        Discussable(
+          task = task,
+          userMessage = { userMessage },
+          heading = renderMarkdown(userMessage),
+          initialResponse = { it: String -> mainActor().answer(toInput(it), api = api) },
+          outputFn = { design: String ->
+            """<div>${
+              renderMarkdown(design) {
+                return@renderMarkdown ui.socketManager?.addApplyFileDiffLinks(
+                  root = root.toPath(),
+                  response = it,
+                  handle = { newCodeMap ->
+                    newCodeMap.forEach { (path, newCode) ->
+                      task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
                     }
-                }
-                val codex = GPT4Tokenizer()
-                task.verbose(renderMarkdown(getCodeFiles().joinToString("\n") { path ->
-                    "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
-                }))
-                val toInput = { it: String -> listOf(codeSummary(), it) }
-                Discussable(
-                    task = task,
-                    userMessage = { userMessage },
-                    heading = renderMarkdown(userMessage),
-                    initialResponse = { it: String -> mainActor().answer(toInput(it), api = api) },
-                    outputFn = { design: String ->
-                        """<div>${
-                            renderMarkdown(design) {
-                                return@renderMarkdown ui.socketManager?.addApplyFileDiffLinks(
-                                    root = root.toPath(),
-                                    response = it,
-                                    handle = { newCodeMap ->
-                                        newCodeMap.forEach { (path, newCode) ->
-                                            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                                        }
-                                    },
-                                    ui = ui,
-                                    api = api,
-                                ) ?: it
-                            }
-                        }</div>"""
-                    },
-                    ui = ui,
-                    reviseResponse = { userMessages: List<Pair<String, Role>> ->
-                        mainActor().respond(messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
-                            .toTypedArray<ApiModel.ChatMessage>()),
-                            input = toInput(userMessage),
-                            api = api)
-                    },
-                    atomicRef = AtomicReference(),
-                    semaphore = Semaphore(0),
-                ).call()
-            } catch (e: Exception) {
-                log.error("Error processing user message", e)
-                ui.newTask().error(ui, e)
-            }
-        }
+                  },
+                  ui = ui,
+                  api = api,
+                ) ?: it
+              }
+            }</div>"""
+          },
+          ui = ui,
+          reviseResponse = { userMessages: List<Pair<String, Role>> ->
+            mainActor().respond(messages = (userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
+              .toTypedArray<ApiModel.ChatMessage>()),
+              input = toInput(userMessage),
+              api = api)
+          },
+          atomicRef = AtomicReference(),
+          semaphore = Semaphore(0),
+        ).call()
+      } catch (e: Exception) {
+        log.error("Error processing user message", e)
+        ui.newTask().error(ui, e)
+      }
     }
+  }
 
 
-    private fun getFiles(
-        virtualFiles: Array<out VirtualFile>?,
-        root: Path
-    ): MutableSet<Path> {
-        val codeFiles = mutableSetOf<Path>()
-        if (virtualFiles == null) {
-            log.warn("No virtual files provided")
-            return codeFiles
-        }
-        virtualFiles.forEach { file ->
-            if (file.isDirectory) {
-                getFiles(file.children, root)
-            } else if (file.toNioPath().isBinary().not()) {
-                codeFiles.add(root.relativize(file.toNioPath()))
-            }
-        }
-        return codeFiles
+  private fun getFiles(
+    virtualFiles: Array<out VirtualFile>?,
+    root: Path
+  ): MutableSet<Path> {
+    val codeFiles = mutableSetOf<Path>()
+    if (virtualFiles == null) {
+      log.warn("No virtual files provided")
+      return codeFiles
     }
+    virtualFiles.forEach { file ->
+      if (file.isDirectory) {
+        getFiles(file.children, root)
+      } else if (file.toNioPath().isBinary().not()) {
+        codeFiles.add(root.relativize(file.toNioPath()))
+      }
+    }
+    return codeFiles
+  }
 
 
-    companion object {
-        private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
-        val patchEditorPrompt = """
+  companion object {
+    private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
+    val patchEditorPrompt = """
           Response should use one or more code patches in diff format within ```diff code blocks.
           Each diff should be preceded by a header that identifies the file being modified.
           The diff format should use + for line additions, - for line deletions.
@@ -265,9 +269,9 @@ class MultiDiffChatAction : BaseAction() {
           If needed, new files can be created by using code blocks labeled with the filename in the same manner.
           """.trimIndent()
 
-    }
+  }
 }
 
 private fun Path.isBinary(): Boolean {
-    return Files.readAllBytes(this).any { it == 0.toByte() }
+  return Files.readAllBytes(this).any { it == 0.toByte() }
 }

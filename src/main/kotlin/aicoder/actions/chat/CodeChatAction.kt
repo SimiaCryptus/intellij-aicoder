@@ -20,50 +20,54 @@ import org.slf4j.LoggerFactory
 import java.text.SimpleDateFormat
 
 class CodeChatAction : BaseAction() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    override fun handle(e: AnActionEvent) {
-        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+  override fun handle(e: AnActionEvent) {
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
-        val session = Session.newGlobalID()
-        val language = LanguageUtils.getComputerLanguage(e)?.name ?: ""
-        val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
+    val session = Session.newGlobalID()
+    val language = LanguageUtils.getComputerLanguage(e)?.name ?: ""
+    val filename = FileDocumentManager.getInstance().getFile(editor.document)?.name ?: return
 
-        SessionProxyServer.agents[session] = CodeChatSocketManager(
-            session = session,
-            language = language,
-            codeSelection = editor.caretModel.primaryCaret.selectedText ?: editor.document.text,
-            filename = filename,
-            api = api,
-            model = AppSettingsState.instance.smartModel.chatModel(),
-            storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
-        )
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = false,
-            stickyInput = true,
-            loadImages = false,
-            showMenubar = false
-        )
-        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
+    SessionProxyServer.agents[session] = CodeChatSocketManager(
+      session = session,
+      language = language,
+      codeSelection = editor.caretModel.primaryCaret.selectedText ?: editor.document.text,
+      filename = filename,
+      api = api,
+      model = AppSettingsState.instance.smartModel.chatModel(),
+      storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
+    )
+    ApplicationServer.appInfoMap[session] = AppInfoData(
+      applicationName = "Code Chat",
+      singleInput = false,
+      stickyInput = true,
+      loadImages = false,
+      showMenubar = false
+    )
+    SessionProxyServer.metadataStorage.setSessionName(
+      null,
+      session,
+      "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+    )
 
-        val server = AppServer.getServer(e.project)
+    val server = AppServer.getServer(e.project)
 
-        Thread {
-            Thread.sleep(500)
-            try {
-                val uri = server.server.uri.resolve("/#$session")
-                BaseAction.log.info("Opening browser to $uri")
-                browse(uri)
-            } catch (e: Throwable) {
-                log.warn("Error opening browser", e)
-            }
-        }.start()
-    }
+    Thread {
+      Thread.sleep(500)
+      try {
+        val uri = server.server.uri.resolve("/#$session")
+        BaseAction.log.info("Opening browser to $uri")
+        browse(uri)
+      } catch (e: Throwable) {
+        log.warn("Error opening browser", e)
+      }
+    }.start()
+  }
 
-    override fun isEnabled(event: AnActionEvent) = true
+  override fun isEnabled(event: AnActionEvent) = true
 
-    companion object {
-        private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
-    }
+  companion object {
+    private val log = LoggerFactory.getLogger(CodeChatAction::class.java)
+  }
 }

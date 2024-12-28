@@ -16,30 +16,30 @@ import com.simiacryptus.util.StringUtil
  */
 open class IndentedText(var indent: CharSequence, vararg val lines: CharSequence) : TextBlock {
 
-    override fun toString(): String {
-        return rawString().joinToString(TextBlock.DELIMITER + indent)
-    }
+  override fun toString(): String {
+    return rawString().joinToString(TextBlock.DELIMITER + indent)
+  }
 
-    override fun withIndent(indent: CharSequence): IndentedText {
-        return IndentedText(indent, *lines)
-    }
+  override fun withIndent(indent: CharSequence): IndentedText {
+    return IndentedText(indent, *lines)
+  }
 
-    override fun rawString(): Array<out CharSequence> {
-        return lines
-    }
+  override fun rawString(): Array<out CharSequence> {
+    return lines
+  }
 
-    companion object {
-        /**
-         * This method is used to convert a string into an IndentedText object.
-         *
-         * @param text The string to be converted into an IndentedText object.
-         * @return IndentedText object created from the input string.
-         */
-        fun fromString(text: String?): IndentedText {
-            val processedText = (text ?: "").replace("\t", TextBlock.TAB_REPLACEMENT.toString())
-            val lines = processedText.split(TextBlock.DELIMITER)
-            val indent = StringUtil.getWhitespacePrefix(*lines.toTypedArray())
-            return IndentedText(indent, *lines.map { StringUtil.stripPrefix(it, indent) }.toTypedArray())
-        }
+  companion object {
+    /**
+     * This method is used to convert a string into an IndentedText object.
+     *
+     * @param text The string to be converted into an IndentedText object.
+     * @return IndentedText object created from the input string.
+     */
+    fun fromString(text: String?): IndentedText {
+      val processedText = (text ?: "").replace("\t", TextBlock.TAB_REPLACEMENT.toString())
+      val lines = processedText.split(TextBlock.DELIMITER)
+      val indent = StringUtil.getWhitespacePrefix(*lines.toTypedArray())
+      return IndentedText(indent, *lines.map { StringUtil.stripPrefix(it, indent) }.toTypedArray())
     }
+  }
 }

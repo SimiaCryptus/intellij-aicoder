@@ -90,7 +90,7 @@
             </action>
             <group id="aicoder.actions.editor.RecentCodeEditsAction"
                    class="aicoder.actions.editor.RecentCodeEditsAction"
-                    text="⏱️ _Recent Code Edits"
+                   text="⏱️ _Recent Code Edits"
                    description="Recent code edits"
                    popup="true">
             </group>
@@ -100,7 +100,7 @@
             </action>
             <group id="aicoder.actions.markdown.MarkdownImplementActionGroup"
                    class="aicoder.actions.markdown.MarkdownImplementActionGroup"
-                    text="🛠️ Imple_ment As..."
+                   text="🛠️ Imple_ment As..."
                    description="Convert selected Markdown text into executable code snippets in various programming languages"
                    popup="true">
             </group>

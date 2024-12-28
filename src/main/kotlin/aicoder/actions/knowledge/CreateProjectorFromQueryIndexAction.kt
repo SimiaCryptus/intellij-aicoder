@@ -49,64 +49,68 @@ class CreateProjectorFromQueryIndexAction : BaseAction() {
     }
 
     UITools.runAsync(e.project, "Creating Projector", true) { indicator ->
-        try {
-          indicator.isIndeterminate = false
-          indicator.fraction = 0.0
-          indicator.text = "Reading records..."
+      try {
+        indicator.isIndeterminate = false
+        indicator.fraction = 0.0
+        indicator.text = "Reading records..."
 
-          val records = processableFiles.flatMap { DocumentRecord.readBinary(it.path) }
-          val config = ProjectorConfig()
-          indicator.text = "Setting up projector..."
+        val records = processableFiles.flatMap { DocumentRecord.readBinary(it.path) }
+        val config = ProjectorConfig()
+        indicator.text = "Setting up projector..."
 
-          ApplicationServer.appInfoMap[config.sessionId] = AppInfoData(
-            applicationName = config.applicationName,
-            singleInput = false,
-            stickyInput = true,
-            loadImages = false,
-            showMenubar = false
-          )
+        ApplicationServer.appInfoMap[config.sessionId] = AppInfoData(
+          applicationName = config.applicationName,
+          singleInput = false,
+          stickyInput = true,
+          loadImages = false,
+          showMenubar = false
+        )
 
-          SessionProxyServer.chats[config.sessionId] = object : ApplicationServer(
-            applicationName = config.applicationName,
-            path = "/projector",
-            showMenubar = false,
-          ) {
-            override fun newSession(
-              user: User?,
-              session: Session
-            ): SocketManager {
-              val socketManager = super.newSession(user, session)
-              val ui = (socketManager as ApplicationSocketManager).applicationInterface
-              val projector = TensorflowProjector(api, dataStorage, session, ui, null)
-              val result = projector.writeTensorflowEmbeddingProjectorHtmlFromRecords(records)
-              val task = ui.newTask(true)
-              task.complete(result)
-              return socketManager
-            }
+        SessionProxyServer.chats[config.sessionId] = object : ApplicationServer(
+          applicationName = config.applicationName,
+          path = "/projector",
+          showMenubar = false,
+        ) {
+          override fun newSession(
+            user: User?,
+            session: Session
+          ): SocketManager {
+            val socketManager = super.newSession(user, session)
+            val ui = (socketManager as ApplicationSocketManager).applicationInterface
+            val projector = TensorflowProjector(api2, dataStorage, session, ui, null)
+            val result = projector.writeTensorflowEmbeddingProjectorHtmlFromRecords(records)
+            val task = ui.newTask(true)
+            task.complete(result)
+            return socketManager
           }
-          SessionProxyServer.metadataStorage.setSessionName(null, config.sessionId, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
-
-          indicator.fraction = 1.0
-          indicator.text = "Opening browser..."
-
-          val server = AppServer.getServer(e.project)
-
-          ApplicationManager.getApplication().executeOnPooledThread {
-            Thread.sleep(500)
-            try {
-              val uri = server.server.uri.resolve("/#${config.sessionId}")
-              BaseAction.log.info("Opening browser to $uri")
-              browse(uri)
-            } catch (e: Throwable) {
-              log.warn("Error opening browser", e)
-            }
-          }
-
-        } catch (ex: Exception) {
-          log.error("Error during projector creation", ex)
-          UITools.showErrorDialog(e.project, "Error during projector creation: ${ex.message}", "Projector Creation Failed")
         }
+        SessionProxyServer.metadataStorage.setSessionName(
+          null,
+          config.sessionId,
+          "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+        )
+
+        indicator.fraction = 1.0
+        indicator.text = "Opening browser..."
+
+        val server = AppServer.getServer(e.project)
+
+        ApplicationManager.getApplication().executeOnPooledThread {
+          Thread.sleep(500)
+          try {
+            val uri = server.server.uri.resolve("/#${config.sessionId}")
+            BaseAction.log.info("Opening browser to $uri")
+            browse(uri)
+          } catch (e: Throwable) {
+            log.warn("Error opening browser", e)
+          }
+        }
+
+      } catch (ex: Exception) {
+        log.error("Error during projector creation", ex)
+        UITools.showErrorDialog(e.project, "Error during projector creation: ${ex.message}", "Projector Creation Failed")
       }
+    }
   }
 
   private fun getProcessableFiles(e: AnActionEvent) = UITools.getSelectedFiles(e).flatMap { file ->

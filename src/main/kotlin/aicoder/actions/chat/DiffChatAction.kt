@@ -31,93 +31,97 @@ import java.text.SimpleDateFormat
 import com.intellij.openapi.application.ApplicationManager as IntellijAppManager
 
 class DiffChatAction : BaseAction() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    val path = "/diffChat"
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        if (!super.isEnabled(event)) return false
-        val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
-        val document = editor.document
-        return FileDocumentManager.getInstance().getFile(document) != null
+  val path = "/diffChat"
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if (!super.isEnabled(event)) return false
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
+    val document = editor.document
+    return FileDocumentManager.getInstance().getFile(document) != null
+  }
+
+
+  override fun handle(e: AnActionEvent) {
+    try {
+      val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+      val session = Session.newGlobalID()
+      val language = ComputerLanguage.getComputerLanguage(e)?.name ?: ""
+      val document = editor.document
+      val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return
+      val (rawText, selectionStart, selectionEnd) = getSelectionDetails(editor)
+      UITools.runAsync(e.project, "Initializing Chat", true) { progress ->
+        progress.isIndeterminate = true
+        progress.text = "Setting up chat session..."
+        setupApplicationServer(session)
+        setupSessionProxy(session, language, rawText, filename, editor, selectionStart, selectionEnd, document)
+        openBrowserWindow(e, session)
+      }
+    } catch (ex: Throwable) {
+      log.error("Error in DiffChat action", ex)
+      UITools.showErrorDialog(e.project, "Failed to initialize chat: ${ex.message}", "Error")
     }
+  }
 
-
-    override fun handle(e: AnActionEvent) {
-        try {
-        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-            val session = Session.newGlobalID()
-        val language = ComputerLanguage.getComputerLanguage(e)?.name ?: ""
-        val document = editor.document
-        val filename = FileDocumentManager.getInstance().getFile(document)?.name ?: return
-            val (rawText, selectionStart, selectionEnd) = getSelectionDetails(editor)
-            UITools.runAsync(e.project, "Initializing Chat", true) { progress ->
-                progress.isIndeterminate = true
-                progress.text = "Setting up chat session..."
-                setupApplicationServer(session)
-                setupSessionProxy(session, language, rawText, filename, editor, selectionStart, selectionEnd, document)
-                openBrowserWindow(e, session)
-            }
-        } catch (ex: Throwable) {
-            log.error("Error in DiffChat action", ex)
-            UITools.showErrorDialog(e.project, "Failed to initialize chat: ${ex.message}", "Error")
-        }
+  private fun getSelectionDetails(editor: Editor): Triple<String, Int, Int> {
+    val primaryCaret = editor.caretModel.primaryCaret
+    val selectedText = primaryCaret.selectedText
+    return if (selectedText != null) {
+      Triple(
+        selectedText.toString(),
+        primaryCaret.selectionStart,
+        primaryCaret.selectionEnd
+      )
+    } else {
+      Triple(
+        editor.document.text,
+        0,
+        editor.document.text.length
+      )
     }
+  }
 
-    private fun getSelectionDetails(editor: Editor): Triple<String, Int, Int> {
-        val primaryCaret = editor.caretModel.primaryCaret
-        val selectedText = primaryCaret.selectedText
-        return if (selectedText != null) {
-            Triple(
-                selectedText.toString(),
-                primaryCaret.selectionStart,
-                primaryCaret.selectionEnd
-            )
-        } else {
-            Triple(
-                editor.document.text,
-                0,
-                editor.document.text.length
-            )
-        }
-    }
+  private fun setupApplicationServer(session: Session) {
+    ApplicationServer.appInfoMap[session] = AppInfoData(
+      applicationName = "Code Chat",
+      singleInput = false,
+      stickyInput = true,
+      loadImages = false,
+      showMenubar = false
+    )
+  }
 
-    private fun setupApplicationServer(session: Session) {
-        ApplicationServer.appInfoMap[session] = AppInfoData(
-            applicationName = "Code Chat",
-            singleInput = false,
-            stickyInput = true,
-            loadImages = false,
-            showMenubar = false
-        )
-    }
+  private fun setupSessionProxy(
+    session: Session,
+    language: String,
+    rawText: String,
+    filename: String,
+    editor: Editor,
+    selectionStart: Int,
+    selectionEnd: Int,
+    document: Document
+  ) {
+    var selectionEnd = selectionEnd
 
-    private fun setupSessionProxy(
-        session: Session,
-        language: String,
-        rawText: String,
-        filename: String,
-        editor: Editor,
-        selectionStart: Int,
-        selectionEnd: Int,
-        document: Document
+    SessionProxyServer.metadataStorage.setSessionName(
+      null,
+      session,
+      "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+    )
+    SessionProxyServer.agents[session] = object : CodeChatSocketManager(
+      session = session,
+      language = language,
+      codeSelection = rawText,
+      filename = filename,
+      api = api,
+      model = AppSettingsState.instance.smartModel.chatModel(),
+      storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
     ) {
-        var selectionEnd = selectionEnd
 
-        SessionProxyServer.metadataStorage.setSessionName(null, session, "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
-        SessionProxyServer.agents[session] = object : CodeChatSocketManager(
-            session = session,
-            language = language,
-            codeSelection = rawText,
-            filename = filename,
-            api = api,
-            model = AppSettingsState.instance.smartModel.chatModel(),
-            storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
-        ) {
-
-            // ... rest of the implementation
-            override val systemPrompt: String
-                @Language("Markdown")
-                get() = super.systemPrompt + """
+      // ... rest of the implementation
+      override val systemPrompt: String
+        @Language("Markdown")
+        get() = super.systemPrompt + """
                   Please provide code modifications in the following diff format within triple-backtick diff code blocks. Each diff block should be preceded by a header that identifies the file being modified.
                   
                   The diff format rules are as follows:
@@ -155,40 +159,40 @@ class DiffChatAction : BaseAction() {
                    });
                   ```
                 """.trimIndent()
-            val ui by lazy { ApplicationInterface(this) }
-            override fun renderResponse(response: String, task: SessionTask): String = """<div>${
-                renderMarkdown(
-                    addApplyDiffLinks(
-                        code = {
-                            editor.document.getText(TextRange(selectionStart, selectionEnd))
-                        },
-                        response = response,
-                        handle = { newCode: String ->
-                            WriteCommandAction.runWriteCommandAction(editor.project) {
-                                selectionEnd = selectionStart + newCode.length
-                                document.replaceString(selectionStart, selectionStart + rawText.length, newCode)
-                            }
-                        },
-                        task = task,
-                        ui = ui
-                    )
-                )
-            }</div>"""
-        }
+      val ui by lazy { ApplicationInterface(this) }
+      override fun renderResponse(response: String, task: SessionTask): String = """<div>${
+        renderMarkdown(
+          addApplyDiffLinks(
+            code = {
+              editor.document.getText(TextRange(selectionStart, selectionEnd))
+            },
+            response = response,
+            handle = { newCode: String ->
+              WriteCommandAction.runWriteCommandAction(editor.project) {
+                selectionEnd = selectionStart + newCode.length
+                document.replaceString(selectionStart, selectionStart + rawText.length, newCode)
+              }
+            },
+            task = task,
+            ui = ui
+          )
+        )
+      }</div>"""
     }
+  }
 
 
-    private fun openBrowserWindow(e: AnActionEvent, session: Session) {
-        IntellijAppManager.getApplication().executeOnPooledThread {
-            val server = AppServer.getServer(e.project)
-            val uri = server.server.uri.resolve("/#$session")
-            BaseAction.log.info("Opening browser to $uri")
-            browse(uri)
-        }
+  private fun openBrowserWindow(e: AnActionEvent, session: Session) {
+    IntellijAppManager.getApplication().executeOnPooledThread {
+      val server = AppServer.getServer(e.project)
+      val uri = server.server.uri.resolve("/#$session")
+      BaseAction.log.info("Opening browser to $uri")
+      browse(uri)
     }
+  }
 
 
-    companion object {
-        private val log = LoggerFactory.getLogger(DiffChatAction::class.java)
-    }
+  companion object {
+    private val log = LoggerFactory.getLogger(DiffChatAction::class.java)
+  }
 }

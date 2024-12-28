@@ -21,35 +21,35 @@ import org.slf4j.LoggerFactory
  * @see PsiUtil
  */
 class PrintTreeAction : BaseAction() {
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    override fun handle(e: AnActionEvent) {
-        val project = e.project ?: return
-        UITools.runAsync(project, "Analyzing Code Structure", true) { progress ->
-            try {
-                progress.isIndeterminate = true
-                progress.text = "Generating PSI tree structure..."
-                ApplicationManager.getApplication().executeOnPooledThread {
-                    val psiEntity = PsiUtil.getLargestContainedEntity(e)
-                    if (psiEntity != null) {
-                        log.info(PsiUtil.printTree(psiEntity))
-                    } else {
-                        log.warn("No PSI entity found in current context")
-                    }
-                }
-            } catch (ex: Throwable) {
-                UITools.error(log, "Failed to print PSI tree", ex)
-            }
+  override fun handle(e: AnActionEvent) {
+    val project = e.project ?: return
+    UITools.runAsync(project, "Analyzing Code Structure", true) { progress ->
+      try {
+        progress.isIndeterminate = true
+        progress.text = "Generating PSI tree structure..."
+        ApplicationManager.getApplication().executeOnPooledThread {
+          val psiEntity = PsiUtil.getLargestContainedEntity(e)
+          if (psiEntity != null) {
+            log.info(PsiUtil.printTree(psiEntity))
+          } else {
+            log.warn("No PSI entity found in current context")
+          }
         }
+      } catch (ex: Throwable) {
+        UITools.error(log, "Failed to print PSI tree", ex)
+      }
     }
+  }
 
-    override fun isEnabled(event: AnActionEvent): Boolean {
-        if (!super.isEnabled(event)) return false
-        if (!AppSettingsState.instance.devActions) return false
-        return PsiUtil.getLargestContainedEntity(event) != null
-    }
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if (!super.isEnabled(event)) return false
+    if (!AppSettingsState.instance.devActions) return false
+    return PsiUtil.getLargestContainedEntity(event) != null
+  }
 
-    companion object {
-        private val log = LoggerFactory.getLogger(PrintTreeAction::class.java)
-    }
+  companion object {
+    private val log = LoggerFactory.getLogger(PrintTreeAction::class.java)
+  }
 }
