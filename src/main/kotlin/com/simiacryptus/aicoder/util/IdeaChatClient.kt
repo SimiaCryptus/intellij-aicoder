@@ -72,7 +72,7 @@ open class IdeaChatClient(
   }
 
   override fun authorize(request: HttpRequest, apiProvider: APIProvider) {
-    val checkApiKey = UITools.checkApiKey(key.get(apiProvider) ?: throw IllegalArgumentException("No API Key for $apiProvider"))
+    val checkApiKey = key.get(apiProvider) ?: throw IllegalArgumentException("No API Key for $apiProvider")
     key = key.toMutableMap().let {
       it[apiProvider] = checkApiKey
       it

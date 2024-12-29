@@ -62,7 +62,6 @@ class CreateFileFromDescriptionAction : aicoder.actions.FileContextAction<Create
     } catch (e: Exception) {
       log.error("Failed to create file from description", e)
       UITools.showErrorDialog(
-        config?.project,
         "Failed to create file: ${e.message}",
         "Error"
       )

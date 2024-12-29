@@ -40,7 +40,6 @@ class SaveAsQueryIndexAction : BaseAction() {
     val selectedFiles = UITools.getSelectedFiles(e)
     if (selectedFiles.isEmpty()) {
       UITools.showErrorDialog(
-        e.project,
         "Please select JSON files to convert.",
         "No Files Selected"
       )
@@ -54,7 +53,7 @@ class SaveAsQueryIndexAction : BaseAction() {
       }
     }
     if (jsonFiles.isEmpty()) {
-      UITools.showErrorDialog(e.project, "No .parsed.json files found in selection.", "No Valid Files")
+      UITools.showErrorDialog("No .parsed.json files found in selection.", "No Valid Files")
       return
     }
     val config = getConfig(e.project)
@@ -84,13 +83,13 @@ class SaveAsQueryIndexAction : BaseAction() {
           indicator.fraction = 1.0
           indicator.text = "Vector indexing complete"
           log.info("Conversion to Data complete")
-          UITools.showInfoMessage(e.project, "Vector indexing completed successfully", "Success")
+          UITools.showInfoMessage("Vector indexing completed successfully", "Success")
         } catch (ex: InterruptedException) {
           log.info("Vector indexing cancelled by user")
-          UITools.showInfoMessage(e.project, "Vector indexing cancelled", "Cancelled")
+          UITools.showInfoMessage("Vector indexing cancelled", "Cancelled")
         } catch (ex: Exception) {
           log.error("Error during binary conversion", ex)
-          UITools.showErrorDialog(e.project, "Error during conversion: ${ex.message}", "Conversion Failed")
+          UITools.showErrorDialog("Error during conversion: ${ex.message}", "Conversion Failed")
         } finally {
           threadPool.shutdownNow()
         }

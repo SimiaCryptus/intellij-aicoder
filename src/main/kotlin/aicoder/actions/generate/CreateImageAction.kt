@@ -143,7 +143,7 @@ class CreateImageAction : BaseAction() {
           is IllegalArgumentException -> log.error("Invalid argument during image creation: ${ex.message}", ex)
           else -> log.error("Unexpected error during image creation", ex)
         }
-        UITools.showErrorDialog(e.project, "Failed to create image: ${ex.message}", "Error")
+        UITools.showErrorDialog("Failed to create image: ${ex.message}", "Error")
       }
     }
   }

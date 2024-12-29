@@ -82,7 +82,7 @@ class DocumentDataExtractorAction : BaseAction(
       }
     }
     if (processableFiles.isEmpty()) {
-      UITools.showErrorDialog(e.project, "No valid files found in selection.", "No Valid Files")
+      UITools.showErrorDialog("No valid files found in selection.", "No Valid Files")
       return
     }
     val selectedFile = processableFiles.first()
@@ -125,7 +125,7 @@ class DocumentDataExtractorAction : BaseAction(
       } catch (ex: Throwable) {
         log.error("Failed to initialize document extractor", ex)
         UITools.showErrorDialog(
-          e.project, "Failed to initialize document extractor: ${ex.message}", "Initialization Error"
+          "Failed to initialize document extractor: ${ex.message}", "Initialization Error"
         )
       }
     }

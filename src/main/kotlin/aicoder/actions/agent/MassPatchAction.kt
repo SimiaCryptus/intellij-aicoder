@@ -158,12 +158,12 @@ class MassPatchAction : BaseAction() {
           browse(uri)
         } catch (e: Throwable) {
           log.warn("Error opening browser", e)
-          UITools.showErrorDialog(project, "Failed to open browser: ${e.message}", "Error")
+          UITools.showErrorDialog("Failed to open browser: ${e.message}", "Error")
         }
       }
     } catch (e: Exception) {
       log.error("Error in mass patch action", e)
-      UITools.showErrorDialog(event.project, e.message ?: "", "Error")
+      UITools.showErrorDialog(e.message ?: "", "Error")
     }
 
   }

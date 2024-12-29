@@ -44,7 +44,7 @@ class CreateProjectorFromQueryIndexAction : BaseAction() {
   override fun handle(e: AnActionEvent) {
     val processableFiles = getProcessableFiles(e)
     if (processableFiles.isEmpty()) {
-      UITools.showErrorDialog(e.project, "Please select a valid query index file (.index.data).", "Invalid Selection")
+      UITools.showErrorDialog("Please select a valid query index file (.index.data).", "Invalid Selection")
       return
     }
 
@@ -108,7 +108,7 @@ class CreateProjectorFromQueryIndexAction : BaseAction() {
 
       } catch (ex: Exception) {
         log.error("Error during projector creation", ex)
-        UITools.showErrorDialog(e.project, "Error during projector creation: ${ex.message}", "Projector Creation Failed")
+        UITools.showErrorDialog("Error during projector creation: ${ex.message}", "Projector Creation Failed")
       }
     }
   }

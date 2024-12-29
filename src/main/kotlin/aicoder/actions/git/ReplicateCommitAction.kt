@@ -125,7 +125,7 @@ class ReplicateCommitAction : BaseAction() {
           browse(uri)
         } catch (e: Throwable) {
           logger.error("Error opening browser", e)
-          UITools.showErrorDialog(project, "Failed to open browser: ${e.message}", "Error")
+          UITools.showErrorDialog("Failed to open browser: ${e.message}", "Error")
         }
       }
     } catch (e: Exception) {

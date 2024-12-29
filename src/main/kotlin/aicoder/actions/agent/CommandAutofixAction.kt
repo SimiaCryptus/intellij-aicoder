@@ -57,7 +57,7 @@ class CommandAutofixAction : BaseAction() {
       }
     } catch (e: Throwable) {
       log.error("Failed to execute command autofix", e)
-      UITools.showErrorDialog(event.project, "Failed to execute command autofix: ${e.message}", "Error")
+      UITools.showErrorDialog("Failed to execute command autofix: ${e.message}", "Error")
     }
   }
 

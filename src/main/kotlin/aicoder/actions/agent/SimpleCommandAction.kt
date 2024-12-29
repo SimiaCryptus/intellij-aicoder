@@ -46,7 +46,7 @@ class SimpleCommandAction : BaseAction() {
     try {
       val settings = getUserSettings(event) ?: run {
         log.error("Failed to retrieve user settings")
-        UITools.showErrorDialog(project, "Failed to retrieve settings", "Error")
+        UITools.showErrorDialog("Failed to retrieve settings", "Error")
         return
       }
       UITools.run(project, "Initializing", true) { progress ->
@@ -82,7 +82,6 @@ class SimpleCommandAction : BaseAction() {
     } catch (e: Exception) {
       log.error("Error handling action", e)
       UITools.showErrorDialog(
-        project,
         "Failed to execute command: ${e.message}",
         "Error"
       )
@@ -151,7 +150,7 @@ class SimpleCommandAction : BaseAction() {
         browse(uri)
       } catch (e: Throwable) {
         log.warn("Error opening browser", e)
-        UITools.showErrorDialog(null, "Failed to open browser: ${e.message}", "Error")
+        UITools.showErrorDialog("Failed to open browser: ${e.message}", "Error")
       }
     }, "BrowserOpener").apply { isDaemon = true }.start()
   }

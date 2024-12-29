@@ -145,7 +145,6 @@ class MarkdownListAction : BaseAction() {
     } catch (ex: Exception) {
       log.error("Failed to generate list items", ex)
       UITools.showErrorDialog(
-        e.project,
         "Failed to generate list items: ${ex.message}",
         "Error"
       )

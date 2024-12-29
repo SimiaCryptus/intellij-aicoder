@@ -42,7 +42,7 @@ class ChatWithCommitDiffAction : BaseAction(
     val selectedCommit = e.getData(VcsDataKeys.VCS_REVISION_NUMBER) ?: return
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val vcs = vcsManager.allActiveVcss.firstOrNull() ?: run {
-      UITools.showErrorDialog(project, "No active VCS found", "Error")
+      UITools.showErrorDialog("No active VCS found", "Error")
       return
     }
 
@@ -54,7 +54,7 @@ class ChatWithCommitDiffAction : BaseAction(
         openChatWithDiff(e, diffInfo)
       } catch (e: Throwable) {
         log.error("Error comparing changes", e)
-        UITools.showErrorDialog(project, "Error comparing changes: ${e.message}", "Error")
+        UITools.showErrorDialog("Error comparing changes: ${e.message}", "Error")
       }
     }
   }

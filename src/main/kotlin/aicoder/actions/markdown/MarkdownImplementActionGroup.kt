@@ -87,7 +87,7 @@ class MarkdownImplementActionGroup : ActionGroup() {
         "\n\n```$language\n${code.trim()}\n```\n"
       } catch (e: Exception) {
         log.error("Error processing selection", e)
-        UITools.showErrorDialog(state.project, "Failed to convert code: ${e.message}", "Conversion Error")
+        UITools.showErrorDialog("Failed to convert code: ${e.message}", "Conversion Error")
         state.selectedText ?: ""
       }
     }

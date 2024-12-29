@@ -10,7 +10,7 @@ open class AppSettingsConfigurable : UIAdapter<AppSettingsComponent, AppSettings
   }
 
   override fun write(settings: AppSettingsState, component: AppSettingsComponent) {
-    UITools.writeKotlinUIViaReflection(settings, component, AppSettingsState::class, AppSettingsComponent::class)
+    UITools.writeKotlinUIViaReflection(settings, component, AppSettingsState::class)
   }
 
   override fun getPreferredFocusedComponent() = component?.temperature

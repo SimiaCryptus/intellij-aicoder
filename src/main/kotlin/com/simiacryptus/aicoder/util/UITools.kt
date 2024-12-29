@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -20,9 +19,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.config.Name
@@ -30,7 +29,6 @@ import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.exceptions.ModerationException
 import com.simiacryptus.jopenai.models.APIProvider
-import org.jdesktop.swingx.JXButton
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.Component
@@ -47,7 +45,6 @@ import java.io.StringWriter
 import java.net.URI
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import javax.swing.*
@@ -72,37 +69,21 @@ object UITools {
     Messages.showWarningDialog(project, message, title)
   }
 
-  fun getLanguageFromFile(fileName: String): String {
-    return when {
-      fileName.endsWith(".kt") -> "kotlin"
-      fileName.endsWith(".java") -> "java"
-      fileName.endsWith(".py") -> "python"
-      fileName.endsWith(".js") -> "javascript"
-      fileName.endsWith(".ts") -> "typescript"
-      fileName.endsWith(".html") -> "html"
-      fileName.endsWith(".css") -> "css"
-      fileName.endsWith(".xml") -> "xml"
-      fileName.endsWith(".json") -> "json"
-      else -> "text"
-    }
-  }
-
   private val log = LoggerFactory.getLogger(UITools::class.java)
   private val threadFactory: ThreadFactory = ThreadFactoryBuilder().setNameFormat("API Thread %d").build()
   private val pool: ListeningExecutorService by lazy {
     MoreExecutors.listeningDecorator(
-      ThreadPoolExecutor(
-        /* corePoolSize = */ AppSettingsState.instance.apiThreads,
-        /* maximumPoolSize = */AppSettingsState.instance.apiThreads,
-        /* keepAliveTime = */ 0L,
-        /* unit = */ TimeUnit.MILLISECONDS,
-        /* workQueue = */ LinkedBlockingQueue(),
-        /* threadFactory = */ threadFactory,
-        /* handler = */ ThreadPoolExecutor.AbortPolicy()
+      ThreadPoolExecutor(/* corePoolSize = */ AppSettingsState.instance.apiThreads,/* maximumPoolSize = */
+        AppSettingsState.instance.apiThreads,/* keepAliveTime = */
+        0L,/* unit = */
+        TimeUnit.MILLISECONDS,/* workQueue = */
+        LinkedBlockingQueue(),/* threadFactory = */
+        threadFactory,/* handler = */
+        ThreadPoolExecutor.AbortPolicy()
       )
     )
   }
-  private val scheduledPool: ListeningScheduledExecutorService by lazy {
+  val scheduledPool: ListeningScheduledExecutorService by lazy {
     MoreExecutors.listeningDecorator(ScheduledThreadPoolExecutor(1, threadFactory))
   }
   private val errorLog = mutableListOf<Pair<String, Throwable>>()
@@ -158,12 +139,7 @@ object UITools {
     document.replaceString(startOffset, endOffset, newText)
     logEdit(
       String.format(
-        "FWD replaceString from %s to %s (%s->%s): %s",
-        startOffset,
-        endOffset,
-        endOffset - startOffset,
-        newText.length,
-        newText
+        "FWD replaceString from %s to %s (%s->%s): %s", startOffset, endOffset, endOffset - startOffset, newText.length, newText
       )
     )
     return Runnable {
@@ -183,12 +159,7 @@ object UITools {
       document.replaceString(startOffset, startOffset + newText.length, oldText)
       logEdit(
         String.format(
-          "REV replaceString from %s to %s (%s->%s): %s",
-          startOffset,
-          startOffset + newText.length,
-          newText.length,
-          oldText.length,
-          oldText
+          "REV replaceString from %s to %s (%s->%s): %s", startOffset, startOffset + newText.length, newText.length, oldText.length, oldText
         )
       )
     }
@@ -268,8 +239,7 @@ object UITools {
         try {
           var newSettingsValue: Any? = null
           if (!declaredUIFields.contains(settingsFieldName)) continue
-          val uiField: KProperty1<R, *> =
-            (componentClass.memberProperties.find { it.name == settingsFieldName } as KProperty1<R, *>?)!!
+          val uiField: KProperty1<R, *> = (componentClass.memberProperties.find { it.name == settingsFieldName } as KProperty1<R, *>?)!!
           var uiVal = uiField.get(component)
           if (uiVal is JScrollPane) {
             uiVal = uiVal.viewport.view
@@ -318,32 +288,38 @@ object UITools {
   }
 
   private fun findValue(enumClass: Class<out Enum<*>?>, string: String): Enum<*>? {
-    enumClass.enumConstants?.filter { it?.name?.compareTo(string, true) == 0 }?.forEach { return it }
-    return java.lang.Enum.valueOf(
-      enumClass, string
-    )
+    // First try case-insensitive match
+    val caseInsensitiveMatch = enumClass.enumConstants?.firstOrNull { 
+      it?.name?.equals(string, ignoreCase = true) == true 
+    }
+    if (caseInsensitiveMatch != null) return caseInsensitiveMatch
+    // Fall back to exact case match
+    return try {
+      java.lang.Enum.valueOf(enumClass, string)
+    } catch (e: IllegalArgumentException) {
+      null
+    }
   }
 
   fun <T : Any, R : Any> writeKotlinUIViaReflection(
-    settings: T,
-    component: R,
-    componentClass: KClass<*>,
-    settingsClass: KClass<*>
+    settings: T, component: R, componentClass: KClass<*>
   ) {
     val declaredUIFields = componentClass.memberProperties.map { it.name }.toSet()
     val memberProperties = settings.javaClass.kotlin.memberProperties
     val publicProperties = memberProperties.filter {
-      it.visibility == KVisibility.PUBLIC //&& it is KMutableProperty<*>
+      it.visibility == KVisibility.PUBLIC && (it is KMutableProperty<*> || it.isAccessible)
     }
     for (settingsField in publicProperties) {
+      settingsField.isAccessible = true
       val fieldName = settingsField.name
       try {
         if (!declaredUIFields.contains(fieldName)) {
           log.warn("Field not found: $fieldName")
           continue
         }
-        val uiField: KProperty1<R, Any> =
-          (componentClass.memberProperties.find { it.name == fieldName } as KProperty1<R, Any>?)!!
+        val uiField = (componentClass.memberProperties.find { it.name == fieldName }
+          ?: throw IllegalStateException("UI field not found: $fieldName")) as KProperty1<R, Any>
+        uiField.isAccessible = true
         val settingsVal = settingsField.get(settings) ?: continue
         var uiVal = uiField.get(component)
         if (uiVal is JScrollPane) {
@@ -521,14 +497,16 @@ object UITools {
     checkboxIds: Array<String>,
     checkboxDescriptions: Array<String>,
   ): Array<String> {
-    val formBuilder = FormBuilder.createFormBuilder()
     val checkboxMap = HashMap<String, JCheckBox>()
-    for (i in checkboxIds.indices) {
-      val checkbox = JCheckBox(checkboxDescriptions[i], null as Icon?, true)
-      checkboxMap[checkboxIds[i]] = checkbox
-      formBuilder.addComponent(checkbox)
+    val panel = panel {
+      for (i in checkboxIds.indices) {
+        row {
+          val checkbox = checkBox(checkboxDescriptions[i]).selected(true).component
+          checkboxMap[checkboxIds[i]] = checkbox
+        }
+      }
     }
-    val dialogResult = showOptionDialog(formBuilder.panel, "OK", title = promptMessage)
+    val dialogResult = showOptionDialog(panel, "OK", title = promptMessage)
     val selectedIds = ArrayList<String>()
     if (dialogResult == 0) {
       for ((checkboxId, checkbox) in checkboxMap) {
@@ -544,16 +522,18 @@ object UITools {
     promptMessage: CharSequence,
     vararg radioButtonDescriptions: CharSequence,
   ): CharSequence? {
-    val formBuilder = FormBuilder.createFormBuilder()
     val radioButtonMap = HashMap<String, JRadioButton>()
     val buttonGroup = ButtonGroup()
-    for (i in radioButtonDescriptions.indices) {
-      val radioButton = JRadioButton(radioButtonDescriptions[i].toString(), null as Icon?, true)
-      radioButtonMap[radioButtonDescriptions[i].toString()] = radioButton
-      buttonGroup.add(radioButton)
-      formBuilder.addComponent(radioButton)
+    val panel = panel {
+      for (description in radioButtonDescriptions) {
+        row {
+          val radioButton = radioButton(description.toString()).selected(true).component
+          radioButtonMap[description.toString()] = radioButton
+          buttonGroup.add(radioButton)
+        }
+      }
     }
-    val dialogResult = showOptionDialog(formBuilder.panel, "OK", title = promptMessage.toString())
+    val dialogResult = showOptionDialog(panel, "OK", title = promptMessage.toString())
     if (dialogResult == 0) {
       for ((radioButtonId, radioButton) in radioButtonMap) {
         if (radioButton.isSelected) {
@@ -580,19 +560,11 @@ object UITools {
     title: String = "Generate Project",
     onComplete: (C) -> Unit = { _ -> },
   ): C = showDialog<C, T>(
-    project,
-    uiClass.getConstructor().newInstance(),
-    configClass.getConstructor().newInstance(),
-    title,
-    onComplete
+    project, uiClass.getConstructor().newInstance(), configClass.getConstructor().newInstance(), title, onComplete
   )
 
   fun <C : Any, T : Any> showDialog(
-    project: Project?,
-    component: T,
-    config: C,
-    title: String,
-    onComplete: (C) -> Unit
+    project: Project?, component: T, config: C, title: String, onComplete: (C) -> Unit
   ): C {
     log.debug("Showing dialog with title: $title")
     val dialog = object : DialogWrapper(project) {
@@ -602,8 +574,6 @@ object UITools {
         this.setOKButtonText("Generate")
         this.setCancelButtonText("Cancel")
         this.isResizable = true
-        //this.setPreferredFocusedComponent(this)
-        //this.setContent(this)
       }
 
       override fun createCenterPanel(): JComponent? {
@@ -615,9 +585,7 @@ object UITools {
     log.debug("Dialog shown with result: ${dialog.isOK}")
     if (dialog.isOK) {
       readKotlinUIViaReflection(
-        settings = config,
-        component = component,
-        componentClass = component::class
+        settings = config, component = component, componentClass = component::class
       )
       log.debug("Reading UI via reflection completed")
       onComplete(config)
@@ -674,247 +642,6 @@ object UITools {
     return runnable.get()
   }
 
-  class ModalTask<T>(
-    project: Project, title: String, canBeCancelled: Boolean, val task: (ProgressIndicator) -> T
-  ) : Task.WithResult<T, Exception>(project, title, canBeCancelled), Supplier<T> {
-    private val taskLog = LoggerFactory.getLogger(ModalTask::class.java)
-    private val result = AtomicReference<T>()
-    private val isError = AtomicBoolean(false)
-    private val error = AtomicReference<Throwable>()
-    private val semaphore = Semaphore(0)
-    private val completed = AtomicBoolean(false)
-    private val threadList = Collections.synchronizedList(ArrayList<Thread>())
-    private val cancelled = AtomicBoolean(false)
-    private val started = AtomicBoolean(false)
-    private val lock = Object()
-
-    override fun compute(indicator: ProgressIndicator): T? {
-      taskLog.debug("Starting compute() for ModalTask: $title")
-      synchronized(lock) {
-        taskLog.debug("Checking task state - started: ${started.get()}, completed: ${completed.get()}, cancelled: ${cancelled.get()}")
-        if (!started.compareAndSet(false, true)) return null
-        if (completed.get() || cancelled.get()) {
-          taskLog.debug("Task already completed or cancelled, releasing semaphore")
-          semaphore.release()
-          return null
-        }
-      }
-      val currentThread = Thread.currentThread()
-      taskLog.debug("Adding thread ${currentThread.name} to threadList")
-      threadList.add(currentThread)
-      val scheduledFuture = scheduledPool.scheduleAtFixedRate({
-        if (indicator.isCanceled) {
-          taskLog.debug("Indicator cancelled, interrupting threads")
-          cancelled.set(true)
-          threadList.forEach { it.interrupt() }
-        }
-      }, 0, 1, TimeUnit.SECONDS)
-      return try {
-        synchronized(lock) {
-          if (completed.get() || cancelled.get()) {
-            taskLog.debug("Task completed or cancelled during execution")
-            semaphore.release()
-            return null
-          }
-        }
-        taskLog.debug("Executing task")
-        result.set(task(indicator))
-        taskLog.debug("Task completed successfully")
-        result.get()
-      } catch (e: Throwable) {
-        taskLog.error("Error executing task", e)
-        log.info("Error running task", e)
-        isError.set(true)
-        error.set(e)
-        null
-      } finally {
-        synchronized(lock) {
-          taskLog.debug("Finalizing task execution")
-          completed.set(true)
-          semaphore.release()
-        }
-        taskLog.debug("Removing thread ${currentThread.name} from threadList")
-        threadList.remove(currentThread)
-        scheduledFuture.cancel(true)
-      }
-    }
-
-    override fun get(): T {
-      taskLog.debug("Attempting to get task result")
-      try {
-        val acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS)
-        taskLog.debug("Semaphore acquired: $acquired")
-        synchronized(lock) {
-          if (!started.get() || !acquired) {
-            taskLog.error("Task timed out or never started")
-            cancelled.set(true)
-            throw TimeoutException("Task timed out after 30 seconds")
-          }
-        }
-      } finally {
-        semaphore.release()
-      }
-      synchronized(lock) {
-        taskLog.debug("Checking final task state - completed: ${completed.get()}, error: ${isError.get()}, cancelled: ${cancelled.get()}")
-        if (!completed.get()) {
-          throw IllegalStateException(
-            "Task not completed" +
-                (if (cancelled.get()) " (cancelled)" else "")
-          )
-        }
-        if (isError.get()) {
-          val e = error.get() ?: RuntimeException("Unknown error occurred")
-          taskLog.error("Task failed with error", e)
-          throw e
-        }
-        if (cancelled.get()) {
-          taskLog.debug("Task was cancelled")
-          throw InterruptedException("Task was cancelled")
-        }
-        taskLog.debug("Returning successful task result")
-        return result.get() ?: throw IllegalStateException("No result available")
-      }
-    }
-
-    override fun onCancel() {
-      taskLog.debug("Task cancelled")
-      super.onCancel()
-      synchronized(lock) {
-        cancelled.set(true)
-        threadList.forEach { it.interrupt() }
-        semaphore.release()
-      }
-    }
-
-  }
-
-  class BgTask<T>(
-    project: Project, title: String, canBeCancelled: Boolean, val task: (ProgressIndicator) -> T
-  ) : Task.Backgroundable(project, title, canBeCancelled, DEAF), Supplier<T> {
-    private val taskLog = LoggerFactory.getLogger(BgTask::class.java)
-
-    private val result = AtomicReference<T>()
-    private val isError = AtomicBoolean(false)
-    private val error = AtomicReference<Throwable>()
-    private val startSemaphore = Semaphore(0)
-    private val completeSemaphore = Semaphore(0)
-    private val completed = AtomicBoolean(false)
-    private val threadList = Collections.synchronizedList(ArrayList<Thread>())
-    private val cancelled = AtomicBoolean(false)
-    private val started = AtomicBoolean(false)
-    private val lock = Object()
-
-    override fun run(indicator: ProgressIndicator) {
-      taskLog.debug("Starting run() for BgTask: $title")
-      synchronized(lock) {
-        taskLog.debug("Checking task state - started: ${started.get()}, completed: ${completed.get()}, cancelled: ${cancelled.get()}")
-        if (!started.compareAndSet(false, true)) return
-        if (completed.get() || cancelled.get()) {
-          taskLog.debug("Task already completed or cancelled, releasing semaphore")
-          startSemaphore.release()
-          completeSemaphore.release()
-          return
-        }
-      }
-      startSemaphore.release()
-      val currentThread = Thread.currentThread()
-      taskLog.debug("Adding thread ${currentThread.name} to threadList")
-      threadList.add(currentThread)
-      val scheduledFuture = scheduledPool.scheduleAtFixedRate({
-        if (indicator.isCanceled) {
-          taskLog.debug("Indicator cancelled, interrupting threads")
-          cancelled.set(true)
-          threadList.forEach { it.interrupt() }
-        }
-      }, 0, 1, TimeUnit.SECONDS)
-      try {
-        synchronized(lock) {
-          if (completed.get() || cancelled.get()) {
-            taskLog.debug("Task completed or cancelled during execution")
-            completeSemaphore.release()
-            return
-          }
-        }
-        taskLog.debug("Executing task")
-        val result = task(indicator)
-        this.result.set(result)
-        taskLog.debug("Task completed successfully")
-      } catch (e: Throwable) {
-        taskLog.error("Error executing task", e)
-        log.info("Error running task", e)
-        error.set(e)
-        isError.set(true)
-      } finally {
-        synchronized(lock) {
-          taskLog.debug("Finalizing task execution")
-          completed.set(true)
-          completeSemaphore.release()
-        }
-        taskLog.debug("Removing thread ${currentThread.name} from threadList")
-        threadList.remove(currentThread)
-        scheduledFuture.cancel(true)
-      }
-    }
-
-    override fun get(): T {
-      taskLog.debug("Attempting to get task result")
-      try {
-        // Wait for task to start
-        val startAcquired = startSemaphore.tryAcquire(5, TimeUnit.SECONDS)
-        taskLog.debug("Start semaphore acquired: $startAcquired")
-        synchronized(lock) {
-          if (!started.get() || !startAcquired) {
-            taskLog.error("Task timed out or never started")
-            cancelled.set(true)
-            throw TimeoutException("Task failed to start after 5 seconds")
-          }
-        }
-        // Wait for task to complete
-        val completeAcquired = completeSemaphore.tryAcquire(3000, TimeUnit.SECONDS)
-        taskLog.debug("Complete semaphore acquired: $completeAcquired")
-        if (!completeAcquired) {
-          taskLog.error("Task execution timed out")
-          cancelled.set(true)
-          throw TimeoutException("Task execution timed out after 30 seconds")
-        }
-      } finally {
-        startSemaphore.release()
-        completeSemaphore.release()
-      }
-      synchronized(lock) {
-        taskLog.debug("Checking final task state - completed: ${completed.get()}, error: ${isError.get()}, cancelled: ${cancelled.get()}")
-        if (!completed.get()) {
-          throw IllegalStateException(
-            "Task not completed" +
-                (if (cancelled.get()) " (cancelled)" else "")
-          )
-        }
-        if (isError.get()) {
-          val e = error.get() ?: RuntimeException("Unknown error occurred")
-          taskLog.error("Task failed with error", e)
-          throw e
-        }
-        if (cancelled.get()) {
-          taskLog.debug("Task was cancelled")
-          throw InterruptedException("Task was cancelled")
-        }
-        taskLog.debug("Returning successful task result")
-        return result.get() ?: throw IllegalStateException("No result available")
-      }
-    }
-
-    override fun onCancel() {
-      taskLog.debug("Task cancelled")
-      super.onCancel()
-      synchronized(lock) {
-        cancelled.set(true)
-        threadList.forEach { it.interrupt() }
-        startSemaphore.release()
-        completeSemaphore.release()
-      }
-    }
-  }
-
   fun <T : Any> run(
     project: Project?,
     title: String?,
@@ -923,10 +650,10 @@ object UITools {
     task: (ProgressIndicator) -> T,
   ): T {
     return if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
-      checkApiKey()
+      AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
       task(AbstractProgressIndicatorBase())
     } else {
-      checkApiKey()
+      AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
       val t = if (AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
       else BgTask(project, title ?: "", canBeCancelled, task)
       ProgressManager.getInstance().run(t)
@@ -945,10 +672,10 @@ object UITools {
     Thread {
       try {
         if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
-          checkApiKey()
+          AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
           task(AbstractProgressIndicatorBase())
         } else {
-          checkApiKey()
+          AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
           val t = if (AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
           else BgTask(project, title ?: "", canBeCancelled, task)
           ProgressManager.getInstance().run(t)
@@ -961,20 +688,6 @@ object UITools {
     }.apply {
       name = title
     }.start()
-  }
-
-  fun checkApiKey(k: String = AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""): String {
-//    var key = k
-//    if (key.isEmpty() || key != AppSettingsState.instance.apiKey) {
-//      synchronized(OpenAIClient::class.java) {
-//        key = AppSettingsState.instance.apiKey
-//        if (key.isEmpty()) {
-//          key = queryAPIKey()?.toString() ?: ""
-//          if (key.isNotEmpty()) AppSettingsState.instance.apiKey = key
-//        }
-//      }
-//    }
-    return k
   }
 
 
@@ -1005,112 +718,91 @@ object UITools {
           ) == true
         }) {
         JOptionPane.showMessageDialog(
-          null,
-          "This request was cancelled by the user",
-          "User Cancelled Request",
-          JOptionPane.WARNING_MESSAGE
+          null, "This request was cancelled by the user", "User Cancelled Request", JOptionPane.WARNING_MESSAGE
         )
       } else if (e.matches { IOException::class.java.isAssignableFrom(it.javaClass) && it.message?.contains("Incorrect API key") == true }) {
 
-        val formBuilder = FormBuilder.createFormBuilder()
 
-        formBuilder.addLabeledComponent(
-          "Error", JLabel("The API key was rejected by the server.")
-        )
-
-        val apiKeyInput = JBPasswordField()
-        apiKeyInput.columns = 80
-        apiKeyInput.isEditable = true
-        formBuilder.addLabeledComponent("API Key", apiKeyInput)
-
-        val openAccountButton = JXButton("Open Account Page")
-        openAccountButton.addActionListener {
-          browse(URI("https://platform.openai.com/account/api-keys"))
-        }
-        formBuilder.addLabeledComponent("OpenAI Account", openAccountButton)
-
-        val testButton = JXButton("Test Key")
-        testButton.addActionListener {
-          val apiKey = apiKeyInput.password.joinToString("")
-          try {
-            OpenAIClient(
-              key = mapOf(
-                APIProvider.OpenAI to apiKey
-              )
-            ).listModels()
-            JOptionPane.showMessageDialog(
-              null,
-              "The API key was accepted by the server. The new value will be saved.",
-              "Success",
-              JOptionPane.INFORMATION_MESSAGE
-            )
-            AppSettingsState.instance.apiKey = mapOf(APIProvider.OpenAI.name to apiKey).toMutableMap()
-          } catch (e: Exception) {
-            JOptionPane.showMessageDialog(
-              null, "The API key was rejected by the server.", "Failure", JOptionPane.WARNING_MESSAGE
-            )
-            return@addActionListener
+        val panel = panel {
+          row {
+            label("The API key was rejected by the server.")
+          }
+          row {
+            val apiKeyInput = passwordField().columns(80).focused().component
+            button("Test Key") {
+              val apiKey = apiKeyInput.password.joinToString("")
+              try {
+                OpenAIClient(
+                  key = mapOf(
+                    APIProvider.OpenAI to apiKey
+                  )
+                ).listModels()
+                JOptionPane.showMessageDialog(
+                  null, "The API key was accepted by the server. The new value will be saved.", "Success", JOptionPane.INFORMATION_MESSAGE
+                )
+                AppSettingsState.instance.apiKey = mapOf(APIProvider.OpenAI.name to apiKey).toMutableMap()
+              } catch (e: Exception) {
+                JOptionPane.showMessageDialog(
+                  null, "The API key was rejected by the server.", "Failure", JOptionPane.WARNING_MESSAGE
+                )
+              }
+            }
+          }
+          row {
+            button("Open Account Page") {
+              browse(URI("https://platform.openai.com/account/api-keys"))
+            }
           }
         }
-        formBuilder.addLabeledComponent("Validation", testButton)
         val showOptionDialog = showOptionDialog(
-          formBuilder.panel, "Dismiss", title = "Error", modal = true
+          panel, "Dismiss", title = "Error", modal = true
         )
         log.info("showOptionDialog = $showOptionDialog")
       } else {
-        val formBuilder = FormBuilder.createFormBuilder()
+        val panel = panel {
+          row {
+            label("Oops! Something went wrong. An error report has been generated. You can copy and paste the report below into a new issue on our Github page.")
+          }
+          row {
+            textArea().rows(40).columns(80).text(
+                """
+                Log Message: ${msg.trimIndent()}
+                Error Message: ${e.message?.trimIndent()}
+                Error Type: ${e.javaClass.name}
+                API Base: ${AppSettingsState.instance.apiBase}
 
-        formBuilder.addLabeledComponent(
-          "Error",
-          JLabel("Oops! Something went wrong. An error report has been generated. You can copy and paste the report below into a new issue on our Github page.")
-        )
-
-        val bugReportTextArea = JBTextArea()
-        bugReportTextArea.rows = 40
-        bugReportTextArea.columns = 80
-        bugReportTextArea.isEditable = false
-        bugReportTextArea.text = """
-                    Log Message: """.trimIndent() + msg + """
-                    Error Message: """.trimIndent() + e.message + """
-                    Error Type: """.trimIndent() + e.javaClass.name + """
-                    API Base: """.trimIndent() + AppSettingsState.instance.apiBase + """
-                    
-                    OS: """.trimIndent() + System.getProperty("os.name") + """ / """ + System.getProperty("os.version") + """ / """ + System.getProperty("os.arch") + """
-                    Locale: """.trimIndent() + Locale.getDefault().country + """ / """ + Locale.getDefault().language + """
-                    
-                    Error Details:
-                    ```
-                    """.trimIndent() + toString(e) + """
-                    ```
-                    
-                    Action History:
-                    
-                    """.trimIndent() + actionLog.joinToString("\n") { "* ${it.replace("\n", "\n  ")}" } + """
-                    
-                    Error History:
-                    
-                    """.trimIndent() + errorLog.filter { it.second != e }.joinToString("\n") {
-          "${it.first}\n```\n${toString(it.second)}\n```"
+                OS: ${System.getProperty("os.name")} / ${System.getProperty("os.version")} / ${System.getProperty("os.arch")}
+                Locale: ${Locale.getDefault().country} / ${Locale.getDefault().language}
+                Error Details:
+                ```
+                ${toString(e)}
+                ```
+                Action History:
+                ${actionLog.joinToString("\n") { "* ${it.replace("\n", "\n  ")}" }}
+                Error History:
+                ${errorLog.filter { it.second != e }.joinToString("\n") { "${it.first}\n```\n${toString(it.second)}\n```" }}
+                """.trimIndent()
+              )
+          }
+          row {
+            button("Open New Issue on our Github page") {
+              browse(URI("https://github.com/SimiaCryptus/intellij-aicoder/issues/new"))
+            }
+          }
+          row {
+            val suppressCheckbox = checkBox("Suppress Future Error Popups").component
+            button("Dismiss") {
+              if (suppressCheckbox.isSelected) {
+                AppSettingsState.instance.suppressErrors = true
+              }
+            }
+          }
         }
-        formBuilder.addLabeledComponent("System Report", wrapScrollPane(bugReportTextArea))
-
-        val openButton = JXButton("Open New Issue on our Github page")
-        openButton.addActionListener {
-          browse(URI("https://github.com/SimiaCryptus/intellij-aicoder/issues/new"))
-        }
-        formBuilder.addLabeledComponent("Report Issue/Request Help", openButton)
-
-        val supressFutureErrors = JCheckBox("Suppress Future Error Popups")
-        supressFutureErrors.isSelected = false
-        formBuilder.addComponent(supressFutureErrors)
 
         val showOptionDialog = showOptionDialog(
-          formBuilder.panel, "Dismiss", title = "Error", modal = true
+          panel, "Dismiss", title = "Error", modal = true
         )
         log.info("showOptionDialog = $showOptionDialog")
-        if (supressFutureErrors.isSelected) {
-          AppSettingsState.instance.suppressErrors = true
-        }
       }
     }
   }
@@ -1155,25 +847,17 @@ object UITools {
     return if (value == JOptionPane.UNINITIALIZED_VALUE) null else value
   }
 
-  fun showErrorDialog(project: Project?, errorMessage: String, title: String) {
-    val formBuilder = FormBuilder.createFormBuilder()
-    formBuilder.addComponent(JLabel(errorMessage))
-    showOptionDialog(formBuilder.panel, "OK", title = title, modal = true)
+  fun showErrorDialog(errorMessage: String, title: String) {
+    val panel = panel {
+      row { label(errorMessage) }
+    }
+    showOptionDialog(panel, "OK", title = title, modal = true)
   }
 
-  fun showErrorDetails(project: Project?, e: Throwable) {
-    val sw = StringWriter()
-    e.printStackTrace(PrintWriter(sw))
-    val formBuilder = FormBuilder.createFormBuilder()
-    val textArea = JBTextArea(sw.toString())
-    textArea.isEditable = false
-    formBuilder.addComponent(JBScrollPane(textArea))
-    showOptionDialog(formBuilder.panel, "OK", title = "Error Details", modal = true)
-  }
-
-  fun showInfoMessage(project: Project?, message: String, title: String) {
-    val formBuilder = FormBuilder.createFormBuilder()
-    formBuilder.addComponent(JLabel(message))
-    showOptionDialog(formBuilder.panel, "OK", title = title, modal = true)
+  fun showInfoMessage(message: String, title: String) {
+    val panel = panel {
+      row { label(message) }
+    }
+    showOptionDialog(panel, "OK", title = title, modal = true)
   }
 }

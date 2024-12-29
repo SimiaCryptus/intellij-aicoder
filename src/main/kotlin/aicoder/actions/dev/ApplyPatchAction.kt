@@ -13,7 +13,6 @@ import com.simiacryptus.diff.IterativePatchUtil
 /**
  * Action that allows applying a patch to selected files in the IDE.
  */
-
 class ApplyPatchAction : BaseAction(
   name = "Apply Patch",
   description = "Applies a patch to the current file"
@@ -74,7 +73,13 @@ class ApplyPatchAction : BaseAction(
   override fun isEnabled(event: AnActionEvent): Boolean {
     if (!super.isEnabled(event)) return false
     val selectedFiles = UITools.getSelectedFiles(event)
-    return selectedFiles != null && selectedFiles.size == 1
+    when {
+      null == selectedFiles -> return false
+      selectedFiles.size == 0 -> return false
+      selectedFiles.size > 1 -> return false
+      selectedFiles.first().isDirectory -> return false
+      else -> return true
+    }
   }
 
 }

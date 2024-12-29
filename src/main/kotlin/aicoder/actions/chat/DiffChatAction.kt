@@ -59,7 +59,7 @@ class DiffChatAction : BaseAction() {
       }
     } catch (ex: Throwable) {
       log.error("Error in DiffChat action", ex)
-      UITools.showErrorDialog(e.project, "Failed to initialize chat: ${ex.message}", "Error")
+      UITools.showErrorDialog("Failed to initialize chat: ${ex.message}", "Error")
     }
   }
 

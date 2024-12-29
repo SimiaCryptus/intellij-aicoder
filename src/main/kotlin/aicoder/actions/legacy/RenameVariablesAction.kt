@@ -70,7 +70,7 @@ open class RenameVariablesAction : SelectionAction<String>() {
           .associate { it.originalName!! to it.suggestedName!! }
       }
       if (renameSuggestions.isEmpty()) {
-        UITools.showInfoMessage(event?.project, "No rename suggestions found", "No Changes")
+        UITools.showInfoMessage("No rename suggestions found", "No Changes")
         return state.selectedText ?: ""
       }
       val selectedSuggestions = Companion.choose(renameSuggestions)
@@ -85,7 +85,7 @@ open class RenameVariablesAction : SelectionAction<String>() {
       }
     } catch (e: Exception) {
       log.error("Error during rename operation", e)
-      UITools.showErrorDialog(event?.project, "Failed to process rename operation: ${e.message}", "Error")
+      UITools.showErrorDialog("Failed to process rename operation: ${e.message}", "Error")
       throw e
     }
   }

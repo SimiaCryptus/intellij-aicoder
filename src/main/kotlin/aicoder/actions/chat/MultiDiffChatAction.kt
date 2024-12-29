@@ -84,13 +84,13 @@ class MultiDiffChatAction : BaseAction() {
         } catch (e: Throwable) {
           val message = "Failed to open browser: ${e.message}"
           log.error(message, e)
-          UITools.showErrorDialog(event.project, message, "Error")
+          UITools.showErrorDialog(message, "Error")
         }
       }
     } catch (e: Exception) {
       // Comprehensive error logging
       log.error("Error in MultiDiffChatAction", e)
-      UITools.showErrorDialog(event.project, e.message ?: "", "Error")
+      UITools.showErrorDialog(e.message ?: "", "Error")
     }
   }
 

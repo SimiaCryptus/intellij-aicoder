@@ -73,7 +73,6 @@ open class ReplaceWithSuggestionsAction : SelectionAction<String>() {
     } catch (e: Exception) {
       log.error("Failed to generate suggestions", e)
       UITools.showErrorDialog(
-        event?.project,
         "Failed to generate suggestions: ${e.message}",
         "Error"
       )

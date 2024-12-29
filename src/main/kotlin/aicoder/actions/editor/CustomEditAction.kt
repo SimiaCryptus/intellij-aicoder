@@ -87,7 +87,6 @@ open class CustomEditAction : SelectionAction<String>(requiresSelection = true) 
     } catch (e: Exception) {
       log.error("Failed to process edit", e)
       UITools.showErrorDialog(
-        state.project,
         "Failed to process edit: ${e.message}",
         "Edit Error"
       )

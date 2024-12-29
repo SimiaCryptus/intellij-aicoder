@@ -48,7 +48,7 @@ class InsertImplementationAction : SelectionAction<String>() {
     try {
       // Validate settings before proceeding
       if (AppSettingsState.instance.smartModel == null) {
-        UITools.showErrorDialog(project, "AI model not configured", "Configuration Error")
+        UITools.showErrorDialog("AI model not configured", "Configuration Error")
         return ""
       }
       return ""

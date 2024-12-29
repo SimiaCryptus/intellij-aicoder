@@ -85,7 +85,7 @@ abstract class UIAdapter<C : Any, S : Any>(
   }
 
   open fun write(settings: S, component: C) {
-    UITools.writeKotlinUIViaReflection(settings, component, Any::class, Any::class)
+    UITools.writeKotlinUIViaReflection(settings, component, Any::class)
   }
 
 }

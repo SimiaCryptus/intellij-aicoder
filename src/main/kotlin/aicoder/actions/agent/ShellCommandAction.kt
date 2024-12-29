@@ -37,7 +37,6 @@ class ShellCommandAction : BaseAction() {
       } catch (ex: Exception) {
         log.error("Failed to initialize shell command", ex)
         UITools.showErrorDialog(
-          project,
           "Failed to initialize shell command: ${ex.message}",
           "Error"
         )
