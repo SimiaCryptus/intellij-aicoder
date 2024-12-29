@@ -11,10 +11,6 @@ import java.util.*
 
 object LanguageUtils {
 
-  fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {
-    return computerLanguage != null
-  }
-
   fun getComputerLanguage(e: AnActionEvent): ComputerLanguage? {
     return ApplicationManager.getApplication().runReadAction<ComputerLanguage?> {
       val editor = e.getData(CommonDataKeys.EDITOR) ?: return@runReadAction null

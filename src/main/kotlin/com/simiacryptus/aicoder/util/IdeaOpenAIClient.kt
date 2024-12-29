@@ -25,8 +25,6 @@ class IdeaOpenAIClient : OpenAIClient(
     }
   }
 
-  private val isInRequest = AtomicBoolean(false)
-
   override fun onUsage(model: OpenAIModel?, tokens: ApiModel.Usage) {
 //        AppSettingsState.instance.tokenCounter += tokens.total_tokens
     ApplicationServices.usageManager.incrementUsage(

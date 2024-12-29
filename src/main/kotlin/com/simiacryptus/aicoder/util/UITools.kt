@@ -832,13 +832,10 @@ object UITools {
     val icon = null
     val selectionValues = null
     val initialSelectionValue = null
-    val pane = JOptionPane(
-      message, messageType, JOptionPane.OK_CANCEL_OPTION, icon, null, null
-    )
+    val pane = JOptionPane(message, messageType, JOptionPane.OK_CANCEL_OPTION, icon, null, null)
     pane.wantsInput = true
     pane.selectionValues = selectionValues
     pane.initialSelectionValue = initialSelectionValue
-    //pane.isComponentOrientationLeftToRight = true
     val dialog = pane.createDialog(parentComponent, title)
     pane.selectInitialValue()
     dialog.isVisible = true

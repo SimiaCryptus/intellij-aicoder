@@ -12,7 +12,7 @@ import java.net.URI
 object BrowseUtil {
 
   fun browse(uri: URI) {
-    SettingsWidget()?.updateSessionsList()
+    SettingsWidget().updateSessionsList()
     sendUdpMessage(uri.toString())
     if (!AppSettingsState.instance.disableAutoOpenUrls && Desktop.isDesktopSupported()) {
       val desktop = Desktop.getDesktop()
