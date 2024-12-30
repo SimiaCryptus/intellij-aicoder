@@ -3,12 +3,18 @@ package aicoder.actions
 import aicoder.actions.agent.toFile
 import aicoder.actions.chat.MultiDiffChatAction.Companion.patchEditorPrompt
 import aicoder.actions.find.FindResultsModificationDialog
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.usages.Usage
+import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageView
 import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
@@ -38,6 +44,7 @@ class FindResultsModificationAction(
   description: String? = "Modify files based on find results",
   icon: Icon? = null
 ) : BaseAction(name, description, icon) {
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun handle(event: AnActionEvent) {
     val folder = UITools.getSelectedFolder(event)
@@ -49,8 +56,6 @@ class FindResultsModificationAction(
           ?: throw RuntimeException("No file or folder selected")
       ).toPath()
     }
-
-
     val project = event.project ?: return
     val usageView = event.getData(UsageView.USAGE_VIEW_KEY) ?: return
     val usages = usageView.usages.toTypedArray()
@@ -66,7 +71,13 @@ class FindResultsModificationAction(
         session,
         "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
       )
-      SessionProxyServer.chats[session] = PatchApp(root.toFile(), modificationParams, event.project ?: return, usages)
+      val fileListMap = usages.groupBy { getFile(it) }
+      SessionProxyServer.chats[session] = PatchApp(
+        root = root.toFile(),
+        modificationParams = modificationParams,
+        project = event.project ?: return,
+        usages = fileListMap
+      )
       ApplicationServer.appInfoMap[session] = AppInfoData(
         applicationName = "Code Chat",
         singleInput = true,
@@ -92,11 +103,21 @@ class FindResultsModificationAction(
     }
   }
 
+  private fun getFile(it: Usage) = when {
+    it is UsageInfo2UsageAdapter -> {
+      it.file
+    }
+
+    else -> {
+      it.location?.editor?.file
+    }
+  }
+
   inner class PatchApp(
     override val root: File,
     val modificationParams: ModificationParams,
     val project: Project,
-    val usages: Array<Usage>,
+    val usages: Map<VirtualFile?, List<Usage>>,
   ) : ApplicationServer(
     applicationName = "Multi-file Patch Chat",
     path = "/patchChat",
@@ -117,86 +138,108 @@ class FindResultsModificationAction(
         }
       }
       val tabs = TabbedDisplay(task)
-      usages.groupBy { it.location?.editor?.file }.entries.forEach { (file, usages) ->
+      usages.entries.map { (file, usages) ->
         val task = ui.newTask(false)
-        tabs[if (null == file) "Unknown" else file.name] = task.placeholder
-        val api = api.getChildClient().apply {
-          val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
-          createFile.second?.apply {
-            logStreams += this.outputStream().buffered()
-            task.verbose("API log: <a href=\"file:///$this\">$this</a>")
-          }
+        tabs[file?.name ?: "Unknown"] = task.placeholder
+        lateinit var fileListingMarkdown: String
+        lateinit var prompt: String
+        ApplicationManager.getApplication().runReadAction {
+          file ?: return@runReadAction
+          fileListingMarkdown = "## ${file.name}\n\n```${file.extension}\n${getFilteredLines(project, file, usages)}\n```\n"
+          task.add(renderMarkdown(fileListingMarkdown))
+          prompt = """
+                    You are a code modification assistant. You will receive code files and locations where changes are needed.
+                    Your task is to suggest appropriate modifications based on the replacement text provided.
+                    Usage locations:
+                    """.trimIndent() + usages.joinToString("\n") { "* `${it.presentation.plainText}`" } +
+              "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + patchEditorPrompt
         }
-
-        fun formatLine(index: Int, line: String, isFocused: Boolean) = when {
-          isFocused -> "/* L$index */ $line /* <<< */"
-          else -> "/* L$index */ $line"
-        }
-
-        val document = PsiDocumentManager.getInstance(project).getDocument(file?.findPsiFile(project) ?: return@forEach) ?: return@forEach
-        val psiRoot: PsiFile? = file.findPsiFile(project)
-        val byContainer = usages.groupBy { getSmallestContainingEntity(psiRoot, it) }.entries.sortedBy { it.key?.textRange?.startOffset }.toTypedArray()
-        val lines = document.text.lines()
-        val filteredLines = lines.mapIndexed { index: Int, line: String ->
-          val lineStart = lines.subList(0, index).joinToString("\n").length
-          val lineEnd = lineStart + line.length
-          val containers = byContainer.map { it.key }.filter {
-            val textRange = it?.textRange ?: return@filter false
-            textRange.startOffset <= lineEnd && textRange.endOffset >= lineStart
+        ui.socketManager!!.pool.submit {
+          val api = api.getChildClient().apply {
+            val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
+            createFile.second?.apply {
+              logStreams += this.outputStream().buffered()
+              task.verbose("API log: <a href=\"file:///$this\">$this</a>")
+            }
           }
-          val intersectingUsages = usages.filter {
-            val startOffset = it.navigationOffset ?: return@filter false
-            val endOffset = startOffset + it.presentation.plainText.length
-            startOffset <= lineEnd && endOffset >= lineStart
-          }
-          if (intersectingUsages.isNotEmpty()) {
-            formatLine(index, line, true)
-          } else if (containers.isNotEmpty()) {
-            formatLine(index, line, false)
-          } else {
-            "..."
-          }
-        }.joinToString("\n").replace("(?:\\.\\.\\.\n){2,}".toRegex(), "...\n")
-        val fileListingMarkdown = "## ${file.name}\n\n```${file.extension}\n$filteredLines\n```\n"
-        task.add(renderMarkdown(fileListingMarkdown))
-        val prompt = """
-            You are a code modification assistant. You will receive code files and locations where changes are needed.
-            Your task is to suggest appropriate modifications based on the replacement text provided.
-            Usage locations:
-            """.trimIndent() + usages.joinToString("\n") { "* `${it.presentation.plainText}`" } +
-            "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + patchEditorPrompt
-        ui.socketManager?.addApplyFileDiffLinks(
-          root = root.toPath(),
-          response = SimpleActor(
+          val response = SimpleActor(
             prompt = prompt,
             model = AppSettingsState.instance.smartModel.chatModel()
           ).answer(
             listOf(
               fileListingMarkdown
             ), api
-          ).replace(Regex("""/\* L\d+ \*/"""), "").replace(Regex("""/\* <<< \*/"""), ""),
-          handle = { newCodeMap ->
-            newCodeMap.forEach { (path, newCode) ->
-              task.complete("Updated $path")
-            }
-          },
-          ui = ui,
-          api = api,
-          shouldAutoApply = { modificationParams.autoApply },
-          defaultFile = file.toFile.path
-        )?.apply {
-          task.complete(renderMarkdown(this))
+          ).replace(Regex("""/\* L\d+ \*/"""), "")
+            .replace(Regex("""/\* <<< \*/"""), "")
+          ui.socketManager?.addApplyFileDiffLinks(
+            root = root.toPath(),
+            response = response,
+            handle = { newCodeMap ->
+              newCodeMap.forEach { (path, newCode) ->
+                task.complete("Updated $path")
+              }
+            },
+            ui = ui,
+            api = api,
+            shouldAutoApply = { modificationParams.autoApply },
+            defaultFile = file?.toFile?.path
+          )?.apply {
+            task.complete(renderMarkdown(this))
+          }
         }
-      }
+      }.toTypedArray().forEach { it.get() }
       return socketManager
     }
 
-    private fun getSmallestContainingEntity(psiRoot: PsiFile?, usage: Usage) =
-      PsiUtil.getSmallestContainingEntity(
-        element = psiRoot!!,
-        selectionStart = usage.navigationOffset,
-        selectionEnd = usage.presentation.plainText.length + usage.navigationOffset - 1
-      )
+  }
+
+  private fun getSmallestContainingEntity(psiRoot: PsiFile?, usage: Usage) =
+    PsiUtil.getSmallestContainingEntity(
+      element = psiRoot!!,
+      selectionStart = usage.navigationOffset,
+      selectionEnd = usage.presentation.plainText.length + usage.navigationOffset - 1
+    )
+
+  private fun formatLine(index: Int, line: String, isFocused: Boolean) = when {
+    isFocused -> "/* L$index */ $line /* <<< */"
+    else -> "/* L$index */ $line"
+  }
+
+  fun getFilteredLines(project: Project, file: VirtualFile, usages: List<Usage>): String? {
+    val document =
+      PsiDocumentManager.getInstance(project).getDocument(file.findPsiFile(project) ?: return null) ?: return null
+    val psiRoot: PsiFile? = file.findPsiFile(project)
+    val byContainer = usages.groupBy { getSmallestContainingEntity(psiRoot, it) }.entries.sortedBy { it.key?.textRange?.startOffset }.toTypedArray()
+    val filteredLines = document.text.lines().mapIndexed { index: Int, line: String ->
+      val lineStart = document.getLineStartOffset(index)
+      val lineEnd = document.getLineEndOffset(index)
+      val containers = byContainer.map { it.key }.filter { psiElement ->
+        psiElement ?: return@filter false
+        val startOffset = psiElement.startOffset
+        val endOffset = psiElement.endOffset
+        when {
+          startOffset >= lineEnd -> false
+          endOffset <= lineStart -> false
+          else -> true
+        }
+      }
+      val intersectingUsages = usages.filter { usage ->
+        //val plainText = usage.presentation.plainText.trim()
+        val startOffset = usage.navigationOffset
+        val endOffset = startOffset + 1 // (plainText.length-1)
+        when {
+          startOffset >= lineEnd -> false
+          endOffset <= lineStart -> false
+          else -> true
+        }
+      }
+      when {
+        intersectingUsages.isNotEmpty() -> formatLine(index, line, true)
+        containers.isNotEmpty() -> formatLine(index, line, false)
+        else -> "..."
+      }
+    }.joinToString("\n").replace("(?:\\.\\.\\.\n){2,}".toRegex(), "...\n")
+    return filteredLines
   }
 
   override fun isEnabled(event: AnActionEvent): Boolean {
