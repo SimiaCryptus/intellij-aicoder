@@ -22,7 +22,7 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.IdeaChatClient
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.AgentPatterns
@@ -207,7 +207,7 @@ class AnalyzeProblemAction : AnAction() {
                 }
               }
 
-              generateAndAddResponse(ui, task, error, summary, filesToFix, api)
+              generateAndAddResponse(ui, task, error, summary, api)
             }
           }
           ""
@@ -222,39 +222,41 @@ class AnalyzeProblemAction : AnAction() {
       task: SessionTask,
       error: ParsedError,
       summary: String,
-      filesToFix: List<String>,
       api: API
     ): String {
       val response = SimpleActor(
         prompt = """
-                  You are a helpful AI that helps people with coding.
-                  Suggest fixes for the following problem:
-                  """.trimIndent() + problemInfo + """
-  
-                  Here are the relevant files:
-                  """.trimIndent() + summary + """
-  
-                  Response should use one or more code patches in diff format within """.trimIndent() + tripleTilde + """diff code blocks.
-                  Each diff should be preceded by a header that identifies the file being modified.
-                  The diff format should use + for line additions, - for line deletions.
-                  The diff should include 2 lines of context before and after every change.
-                  """.trimIndent(),
+            You are a helpful AI that helps people with coding.
+            Suggest fixes for the following problem:
+            """.trimIndent() + problemInfo + """
+
+            Here are the relevant files:
+            """.trimIndent() + summary + """
+
+            Response should use one or more code patches in diff format within """.trimIndent() + tripleTilde + """diff code blocks.
+            Each diff should be preceded by a header that identifies the file being modified.
+            The diff format should use + for line additions, - for line deletions.
+            The diff should include 2 lines of context before and after every change.
+            """.trimIndent(),
         model = AppSettingsState.instance.smartModel.chatModel()
       ).answer(listOf(error.message ?: ""), api = IdeaChatClient.instance)
 
-      var markdown = ui.socketManager?.addApplyFileDiffLinks(
-        root = root.toPath(),
-        response = response,
-        handle = { newCodeMap ->
-          newCodeMap.forEach { (path, newCode) ->
-            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-          }
-        },
-        ui = ui,
-        api = api,
-      )
-      val msg = "<div>${renderMarkdown(markdown!!)}</div>"
-      return msg
+      return "<div>${
+        renderMarkdown(
+          instrumentFileDiffs(
+            self = ui.socketManager!!,
+            root = root.toPath(),
+            response = response,
+            handle = { newCodeMap ->
+              newCodeMap.forEach { (path, newCode) ->
+                task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+              }
+            },
+            ui = ui,
+            api = api,
+          )
+        )
+      }</div>"
     }
 
   }

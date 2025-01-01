@@ -19,7 +19,7 @@ import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.diff.IterativePatchUtil
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.chatModel
@@ -318,7 +318,8 @@ class ReplicateCommitAction : BaseAction() {
                               """.trimIndent() + (planTask.message?.replace("\n", "\n  ") ?: "")
               ), api = api
             )
-            var markdown = ui.socketManager?.addApplyFileDiffLinks(
+            var markdown = instrumentFileDiffs(
+              ui.socketManager!!,
               root = root.toPath(),
               response = response,
               handle = { newCodeMap ->

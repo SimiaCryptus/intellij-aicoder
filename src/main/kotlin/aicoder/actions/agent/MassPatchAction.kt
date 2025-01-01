@@ -17,7 +17,7 @@ import com.simiacryptus.aicoder.config.Name
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludableFile
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ApiModel
@@ -302,8 +302,8 @@ class MassPatchServer(
           try {
             val codeSummary = listOf(path)
               .filter { isLLMIncludableFile(it.toFile()) }
-              ?.associateWith { it.toFile().readText(Charsets.UTF_8) }
-              ?.entries?.joinToString("\n\n") { (path, code) ->
+              .associateWith { it.toFile().readText(Charsets.UTF_8) }
+              .entries.joinToString("\n\n") { (path, code) ->
                 val extension = path.toString().split('.').lastOrNull()
                 "# $path\n```$extension\n$code\n```"
               }
@@ -319,7 +319,8 @@ class MassPatchServer(
                 mainActor.answer(toInput(it), api = api)
               },
               outputFn = { design: String ->
-                var markdown = ui.socketManager?.addApplyFileDiffLinks(
+                val markdown = instrumentFileDiffs(
+                  ui.socketManager!!,
                   root = _root,
                   response = design,
                   handle = { newCodeMap: Map<Path, String> ->
@@ -332,7 +333,7 @@ class MassPatchServer(
                   shouldAutoApply = { autoApply },
                   model = AppSettingsState.instance.fastModel.chatModel(),
                 )
-                """<div>${renderMarkdown(markdown!!)}</div>"""
+                """<div>${renderMarkdown(markdown)}</div>"""
               },
               ui = ui,
               reviseResponse = { userMessages: List<Pair<String, Role>> ->

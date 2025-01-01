@@ -12,7 +12,7 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.chatModel
@@ -44,27 +44,15 @@ class MultiCodeChatAction : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun handle(event: AnActionEvent) {
-    var root: Path? = null
-    val codeFiles: MutableSet<Path> = mutableSetOf()
+    val root = getRoot(event) ?: return
+    val codeFiles = Companion.getFiles(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf(), root).toMutableSet()
     fun codeSummary() = codeFiles.filter {
-      root!!.resolve(it).toFile().exists()
-    }.associateWith { root!!.resolve(it).toFile().readText(Charsets.UTF_8) }
+      root.resolve(it).toFile().exists()
+    }.associateWith { root.resolve(it).toFile().readText(Charsets.UTF_8) }
       .entries.joinToString("\n\n") { (path, code) ->
         val extension = path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
         "# $path\n```$extension\n$code\n```"
       }
-
-    val dataContext = event.dataContext
-    val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-    val folder = UITools.getSelectedFolder(event)
-    root = if (null != folder) {
-      folder.toFile.toPath()
-    } else {
-      getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: throw RuntimeException("")).toPath()
-    }
-    val files = getFiles(virtualFiles, root!!)
-    codeFiles.addAll(files)
-
     try {
       UITools.runAsync(event.project, "Initializing Chat", true) { progress ->
         progress.isIndeterminate = true
@@ -91,8 +79,16 @@ class MultiCodeChatAction : BaseAction() {
     }
   }
 
-  private fun launchBrowser(server: AppServer, session: String) {
+  private fun getRoot(event: AnActionEvent): Path? {
+    val folder = UITools.getSelectedFolder(event)
+    return if (null != folder) {
+      folder.toFile.toPath()
+    } else {
+      getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: return null).toPath()
+    }
+  }
 
+  private fun launchBrowser(server: AppServer, session: String) {
     Thread {
       Thread.sleep(500)
       try {
@@ -106,7 +102,9 @@ class MultiCodeChatAction : BaseAction() {
   }
 
   override fun isEnabled(event: AnActionEvent): Boolean {
-    UITools.getSelectedFile(event) ?: return false
+    val root = getRoot(event) ?: return false
+    val files = getFiles(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf(), root)
+    if (files.isEmpty()) return false
     return super.isEnabled(event)
   }
 
@@ -168,7 +166,8 @@ class MultiCodeChatAction : BaseAction() {
         task = task,
         process = { content ->
           "<div>" + MarkdownUtil.renderMarkdown(mainActor.answer(toInput(userMessage), api = api)) {
-            ui.socketManager?.addApplyFileDiffLinks(
+            instrumentFileDiffs(
+              ui.socketManager!!,
               root = root.toPath(),
               response = it,
               handle = { newCodeMap ->
@@ -186,30 +185,18 @@ class MultiCodeChatAction : BaseAction() {
     }
   }
 
-  /**
-   * Recursively collects files from the selected virtual files
-   *
-   * @param virtualFiles Array of selected virtual files
-   * @param root Project root path
-   * @return Set of relative paths to the selected files
-   */
-  private fun getFiles(
-    virtualFiles: Array<out VirtualFile>?,
-    root: Path
-  ): Set<Path> {
-    val codeFiles = mutableSetOf<Path>()
-    virtualFiles?.forEach { file ->
-      if (file.isDirectory && !file.name.startsWith(".")) {
-        getFiles(file.children, root)
-      } else {
-        codeFiles.add(root.relativize(file.toNioPath()))
-      }
-    }
-    return codeFiles
-  }
-
   companion object {
     private val log = LoggerFactory.getLogger(MultiCodeChatAction::class.java)
 
+    fun getFiles(
+      virtualFiles: Array<out VirtualFile>?,
+      root: Path
+    ): Set<Path> = virtualFiles?.flatMap { file ->
+      if (file.isDirectory && !file.name.startsWith(".")) {
+        getFiles(file.children, root)
+      } else {
+        setOf(root.relativize(file.toNioPath()))
+      }
+    }?.toSet() ?: emptySet()
   }
 }

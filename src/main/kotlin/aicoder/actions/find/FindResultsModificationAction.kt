@@ -1,7 +1,6 @@
 package aicoder.actions
 
 import aicoder.actions.agent.toFile
-import aicoder.actions.chat.MultiDiffChatAction.Companion.patchEditorPrompt
 import aicoder.actions.find.FindResultsModificationDialog
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -21,7 +20,8 @@ import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.aicoder.util.psi.PsiUtil
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.SimpleActor
@@ -152,7 +152,7 @@ class FindResultsModificationAction(
                     Your task is to suggest appropriate modifications based on the replacement text provided.
                     Usage locations:
                     """.trimIndent() + usages.joinToString("\n") { "* `${it.presentation.plainText}`" } +
-              "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + patchEditorPrompt
+              "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + AddApplyFileDiffLinks.patchEditorPrompt
         }
         ui.socketManager!!.pool.submit {
           val api = api.getChildClient().apply {
@@ -171,7 +171,8 @@ class FindResultsModificationAction(
             ), api
           ).replace(Regex("""/\* L\d+ \*/"""), "")
             .replace(Regex("""/\* <<< \*/"""), "")
-          ui.socketManager?.addApplyFileDiffLinks(
+          instrumentFileDiffs(
+            ui.socketManager!!,
             root = root.toPath(),
             response = response,
             handle = { newCodeMap ->

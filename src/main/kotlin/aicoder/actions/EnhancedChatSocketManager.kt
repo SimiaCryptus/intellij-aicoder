@@ -3,7 +3,7 @@ package aicoder.actions
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ApiModel
 import com.simiacryptus.jopenai.models.ChatModel
-import com.simiacryptus.skyenet.core.actors.LargeOutputActor
+import com.simiacryptus.skyenet.webui.actors.LargeOutputActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.StorageInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer

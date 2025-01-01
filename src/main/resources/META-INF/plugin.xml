@@ -325,6 +325,11 @@
                     text="Modify Find Results"
                     description="Modify files based on find results">
             </action>
+            <action id="AICoder.FindResultsChatAction"
+                    class="aicoder.actions.find.FindResultsChatAction"
+                    text="Chat About Find Results"
+                    description="Start a code chat about find results">
+            </action>
         </group>
 
         <action id="aicoder.actions.test.ChatWithTestResultAction"

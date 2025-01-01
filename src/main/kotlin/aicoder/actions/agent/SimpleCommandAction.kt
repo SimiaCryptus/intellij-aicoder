@@ -14,7 +14,7 @@ import com.simiacryptus.diff.FileValidationUtils
 import com.simiacryptus.diff.FileValidationUtils.Companion.filteredWalk
 import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludableFile
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.chatModel
@@ -289,7 +289,8 @@ class SimpleCommandAction : BaseAction() {
                 }"
               ), api = api
             )
-            val markdown = ui.socketManager?.addApplyFileDiffLinks(
+            val markdown = instrumentFileDiffs(
+              ui.socketManager!!,
               root = root.toPath(),
               response = response,
               handle = { newCodeMap ->

@@ -13,7 +13,7 @@ import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.IdeaChatClient
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
@@ -302,7 +302,8 @@ $projectStructure
       ).answer(listOf(error.message ?: ""), api = IdeaChatClient.instance)
       task.add("Processing suggested fixes...")
 
-      var markdown = ui.socketManager?.addApplyFileDiffLinks(
+      var markdown = instrumentFileDiffs(
+        ui.socketManager!!,
         root = root.toPath(),
         response = response,
         handle = { newCodeMap ->

@@ -11,7 +11,7 @@ import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.jopenai.models.chatModel
-import com.simiacryptus.skyenet.core.actors.LargeOutputActor
+import com.simiacryptus.skyenet.webui.actors.LargeOutputActor
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.webui.application.AppInfoData

@@ -12,7 +12,8 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ApiModel
@@ -147,7 +148,7 @@ class MultiDiffChatAction : BaseAction() {
                                   
                                   You will be answering questions about the following code:
                                   
-                                  """.trimIndent() + codeSummary() + patchEditorPrompt,
+                                  """.trimIndent() + codeSummary() + AddApplyFileDiffLinks.patchEditorPrompt,
             model = AppSettingsState.instance.smartModel.chatModel()
           )
         }
@@ -178,7 +179,8 @@ class MultiDiffChatAction : BaseAction() {
           outputFn = { design: String ->
             """<div>${
               renderMarkdown(design) {
-                return@renderMarkdown ui.socketManager?.addApplyFileDiffLinks(
+                return@renderMarkdown instrumentFileDiffs(
+                  ui.socketManager!!,
                   root = root.toPath(),
                   response = it,
                   handle = { newCodeMap ->
@@ -232,42 +234,6 @@ class MultiDiffChatAction : BaseAction() {
 
   companion object {
     private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
-    val patchEditorPrompt = """
-          Response should use one or more code patches in diff format within ```diff code blocks.
-          Each diff should be preceded by a header that identifies the file being modified.
-          The diff format should use + for line additions, - for line deletions.
-          The diff should include 2 lines of context before and after every change.
-          
-          Example:
-          
-          Here are the patches:
-          
-          ### src/utils/exampleUtils.js
-          ```diff
-           // Utility functions for example feature
-           const b = 2;
-           function exampleFunction() {
-          -   return b + 1;
-          +   return b + 2;
-           }
-          ```
-          
-          ### tests/exampleUtils.test.js
-          ```diff
-           // Unit tests for exampleUtils
-           const assert = require('assert');
-           const { exampleFunction } = require('../src/utils/exampleUtils');
-           
-           describe('exampleFunction', () => {
-          -   it('should return 3', () => {
-          +   it('should return 4', () => {
-               assert.equal(exampleFunction(), 3);
-             });
-           });
-          ```
-          
-          If needed, new files can be created by using code blocks labeled with the filename in the same manner.
-          """.trimIndent()
 
   }
 }

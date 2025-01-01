@@ -16,7 +16,8 @@ import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.CodeChatSocketManager
 import com.simiacryptus.aicoder.util.ComputerLanguage
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.addApplyDiffLinks
+import com.simiacryptus.diff.AddApplyDiffLinks
+import com.simiacryptus.diff.AddApplyDiffLinks.Companion.addApplyDiffLinks
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
@@ -163,6 +164,7 @@ class DiffChatAction : BaseAction() {
       override fun renderResponse(response: String, task: SessionTask): String = """<div>${
         renderMarkdown(
           addApplyDiffLinks(
+            this,
             code = {
               editor.document.getText(TextRange(selectionStart, selectionEnd))
             },

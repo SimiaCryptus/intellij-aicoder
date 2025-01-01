@@ -1,7 +1,7 @@
 package aicoder.actions.agent
 
 import com.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.diff.addApplyFileDiffLinks
+import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ApiModel
@@ -128,7 +128,8 @@ class DocumentedMassPatchServer(
               outputFn = { design: String ->
                 """<div>${
                   renderMarkdown(design) {
-                    ui.socketManager?.addApplyFileDiffLinks(
+                    instrumentFileDiffs(
+                      self = ui.socketManager!!,
                       root = _root,
                       response = design,
                       handle = { newCodeMap ->
