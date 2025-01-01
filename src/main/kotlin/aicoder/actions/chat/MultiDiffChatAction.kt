@@ -179,7 +179,7 @@ class MultiDiffChatAction : BaseAction() {
           outputFn = { design: String ->
             """<div>${
               renderMarkdown(design) {
-                return@renderMarkdown instrumentFileDiffs(
+                instrumentFileDiffs(
                   ui.socketManager!!,
                   root = root.toPath(),
                   response = it,
@@ -190,7 +190,7 @@ class MultiDiffChatAction : BaseAction() {
                   },
                   ui = ui,
                   api = api,
-                ) ?: it
+                )
               }
             }</div>"""
           },

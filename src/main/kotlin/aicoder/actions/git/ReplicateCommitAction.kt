@@ -17,8 +17,8 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.FileValidationUtils
-import com.simiacryptus.diff.IterativePatchUtil
+import com.simiacryptus.skyenet.core.util.FileValidationUtils
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil
 import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.describe.Description

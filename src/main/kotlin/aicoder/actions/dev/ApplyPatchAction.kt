@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.IterativePatchUtil
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil
 
 /**
  * Action that allows applying a patch to selected files in the IDE.

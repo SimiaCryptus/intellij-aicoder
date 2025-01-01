@@ -12,7 +12,7 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.FileValidationUtils
+import com.simiacryptus.skyenet.core.util.FileValidationUtils
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.AutoPlanChatApp
 import com.simiacryptus.skyenet.apps.plan.PlanSettings

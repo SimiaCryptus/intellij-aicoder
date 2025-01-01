@@ -16,7 +16,7 @@ import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.config.Name
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.FileValidationUtils.Companion.isLLMIncludableFile
+import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
 import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient

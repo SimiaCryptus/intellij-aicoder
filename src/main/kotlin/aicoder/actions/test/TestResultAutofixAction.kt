@@ -12,7 +12,7 @@ import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.IdeaChatClient
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.FileValidationUtils.Companion.isGitignore
+import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.AgentPatterns
