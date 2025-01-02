@@ -9,7 +9,7 @@ import com.simiacryptus.skyenet.core.platform.model.StorageInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 
-class EnhancedChatSocketManager(
+class LargeOutputChatSocketManager(
   session: Session,
   model: ChatModel,
   userInterfacePrompt: String,

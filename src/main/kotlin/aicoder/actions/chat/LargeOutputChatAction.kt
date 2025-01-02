@@ -1,7 +1,7 @@
 package aicoder.actions.chat
 
 import aicoder.actions.BaseAction
-import aicoder.actions.EnhancedChatSocketManager
+import aicoder.actions.LargeOutputChatSocketManager
 import aicoder.actions.SessionProxyServer
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -56,7 +56,7 @@ class LargeOutputChatAction : BaseAction() {
           "Enhanced Chat @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
         )
 
-        SessionProxyServer.agents[session] = EnhancedChatSocketManager(
+        SessionProxyServer.agents[session] = LargeOutputChatSocketManager(
           session = session,
           model = model,
           userInterfacePrompt = userInterfacePrompt,
