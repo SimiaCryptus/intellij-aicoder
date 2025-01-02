@@ -50,7 +50,7 @@ class MultiStepPatchAction : BaseAction() {
   val path = "/autodev"
   override fun isEnabled(event: AnActionEvent): Boolean {
     if (!super.isEnabled(event)) return false
-    val files = UITools.getSelectedFolder(event) ?: return false
+    UITools.getSelectedFile(event) ?: return false
     return true
   }
 
