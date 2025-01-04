@@ -27,8 +27,6 @@ class LargeOutputChatSocketManager(
   storage = storage,
   applicationClass = applicationClass
 ) {
-  override fun respond(api: ChatClient, messages: List<ApiModel.ChatMessage>): String {
-    return largeOutputActor.response(*messages.toTypedArray(), api = api).choices.first().message?.content
-      ?: throw RuntimeException("No response from LLM")
-  }
+  override fun respond(api: ChatClient, messages: List<ApiModel.ChatMessage>) =
+    largeOutputActor.respond(messages.flatMap { it.content?.mapNotNull { it.text } ?: emptyList() }.toList(), api = api)
 }

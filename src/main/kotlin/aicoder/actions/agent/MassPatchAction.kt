@@ -16,8 +16,7 @@ import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.config.Name
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
-import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
+import com.simiacryptus.diff.AddApplyFileDiffLinks
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ApiModel
@@ -29,6 +28,7 @@ import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
@@ -319,7 +319,7 @@ class MassPatchServer(
                 mainActor.answer(toInput(it), api = api)
               },
               outputFn = { design: String ->
-                val markdown = instrumentFileDiffs(
+                val markdown = AddApplyFileDiffLinks.instrumentFileDiffs(
                   ui.socketManager!!,
                   root = _root,
                   response = design,

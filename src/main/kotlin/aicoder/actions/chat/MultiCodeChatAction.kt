@@ -12,7 +12,8 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
+import com.simiacryptus.diff.AddApplyFileDiffLinks
+
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.chatModel
@@ -166,7 +167,7 @@ class MultiCodeChatAction : BaseAction() {
         task = task,
         process = { content ->
           "<div>" + MarkdownUtil.renderMarkdown(mainActor.answer(toInput(userMessage), api = api)) {
-            instrumentFileDiffs(
+            AddApplyFileDiffLinks.instrumentFileDiffs(
               ui.socketManager!!,
               root = root.toPath(),
               response = it,

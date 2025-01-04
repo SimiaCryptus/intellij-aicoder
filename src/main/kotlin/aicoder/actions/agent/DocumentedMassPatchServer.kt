@@ -1,7 +1,8 @@
 package aicoder.actions.agent
 
 import com.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
+import com.simiacryptus.diff.AddApplyFileDiffLinks
+
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ApiModel
@@ -128,7 +129,7 @@ class DocumentedMassPatchServer(
               outputFn = { design: String ->
                 """<div>${
                   renderMarkdown(design) {
-                    instrumentFileDiffs(
+                    AddApplyFileDiffLinks.instrumentFileDiffs(
                       self = ui.socketManager!!,
                       root = _root,
                       response = design,
@@ -142,7 +143,7 @@ class DocumentedMassPatchServer(
                       shouldAutoApply = { autoApply },
                       model = AppSettingsState.instance.fastModel.chatModel(),
                       defaultFile = path.toString()
-                    ) ?: design
+                    )
                   }
                 }</div>"""
               },

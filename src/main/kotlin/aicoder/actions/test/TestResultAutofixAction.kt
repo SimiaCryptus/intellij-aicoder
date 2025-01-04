@@ -12,8 +12,7 @@ import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.IdeaChatClient
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isGitignore
-import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
+import com.simiacryptus.diff.AddApplyFileDiffLinks
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
@@ -21,6 +20,7 @@ import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -302,7 +302,7 @@ $projectStructure
       ).answer(listOf(error.message ?: ""), api = IdeaChatClient.instance)
       task.add("Processing suggested fixes...")
 
-      var markdown = instrumentFileDiffs(
+      var markdown = AddApplyFileDiffLinks.instrumentFileDiffs(
         ui.socketManager!!,
         root = root.toPath(),
         response = response,

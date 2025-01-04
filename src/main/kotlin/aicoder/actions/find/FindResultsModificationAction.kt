@@ -21,7 +21,7 @@ import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.aicoder.util.psi.PsiUtil
 import com.simiacryptus.diff.AddApplyFileDiffLinks
-import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
+
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.SimpleActor
@@ -171,7 +171,7 @@ class FindResultsModificationAction(
             ), api
           ).replace(Regex("""/\* L\d+ \*/"""), "")
             .replace(Regex("""/\* <<< \*/"""), "")
-          instrumentFileDiffs(
+          AddApplyFileDiffLinks.instrumentFileDiffs(
             ui.socketManager!!,
             root = root.toPath(),
             response = response,

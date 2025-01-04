@@ -22,7 +22,8 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.IdeaChatClient
-import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
+import com.simiacryptus.diff.AddApplyFileDiffLinks
+
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.AgentPatterns
@@ -243,7 +244,7 @@ class AnalyzeProblemAction : AnAction() {
 
       return "<div>${
         renderMarkdown(
-          instrumentFileDiffs(
+          AddApplyFileDiffLinks.instrumentFileDiffs(
             self = ui.socketManager!!,
             root = root.toPath(),
             response = response,

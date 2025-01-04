@@ -10,7 +10,8 @@ import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.IdeaOpenAIClient
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.diff.AddApplyFileDiffLinks.Companion.instrumentFileDiffs
+import com.simiacryptus.diff.AddApplyFileDiffLinks
+
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.OpenAIClient
@@ -451,7 +452,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
         },
         outputFn = { code ->
           renderMarkdown(
-            instrumentFileDiffs(
+            AddApplyFileDiffLinks.instrumentFileDiffs(
               ui.socketManager!!,
               root = root.toPath(),
               response = code,
