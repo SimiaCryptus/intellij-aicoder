@@ -173,10 +173,6 @@
                text="_AI Coder"
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
-            <action class="aicoder.actions.chat.LargeOutputCodeChatAction"
-                    text="🔍 Enhanced Code Analysis"
-                    description="Analyze multiple code files with structured AI responses using enhanced chat interface">
-            </action>
             <action class="aicoder.actions.chat.MultiDiffChatAction"
                     text="📝 Modify Files"
                     description="Analyze and generate patches for multiple files simultaneously, considering the broader project context">
@@ -213,6 +209,10 @@
                 <action class="aicoder.actions.generate.GenerateDocumentationAction"
                         text="📚 Generate Documentation"
                         description="Automatically generate comprehensive documentation for selected files or entire project, with customizable output formats">
+                </action>
+                <action class="aicoder.actions.chat.LargeOutputCodeChatAction"
+                        text="💬 Large Output Code Chat"
+                        description="Analyze multiple code files with the Large Output Actor">
                 </action>
             </group>
             <group id="com.simiacryptus.aicoder.ui.ProjectMenu.Planning"
