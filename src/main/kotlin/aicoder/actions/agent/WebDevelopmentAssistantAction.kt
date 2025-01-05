@@ -27,9 +27,9 @@ import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.*
+import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import com.simiacryptus.skyenet.core.platform.model.StorageInterface
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -52,7 +52,6 @@ val VirtualFile.toFile: File get() = File(this.path)
 class WebDevelopmentAssistantAction : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  private val path = "/webDev"
   override fun isEnabled(event: AnActionEvent): Boolean {
     if (!super.isEnabled(event)) return false
     val file = UITools.getSelectedFile(event) ?: return false
@@ -126,15 +125,14 @@ class WebDevelopmentAssistantAction : BaseAction() {
         }
         WebDevAgent(
           api = api,
-          dataStorage = dataStorage,
+          api2 = IdeaOpenAIClient.instance,
           session = session,
           user = user,
           ui = ui,
-          tools = settings.tools,
           model = settings.model,
           parsingModel = settings.parsingModel,
+          tools = settings.tools,
           root = root,
-          api2 = IdeaOpenAIClient.instance,
         ).start(userMessage = userMessage)
       } catch (e: Throwable) {
         log.error("Error processing user message", e)
@@ -158,14 +156,15 @@ class WebDevelopmentAssistantAction : BaseAction() {
   class WebDevAgent(
     val api: API,
     val api2: OpenAIClient,
-    dataStorage: StorageInterface,
-    session: Session,
-    user: User?,
+    val session: Session,
+    val user: User?,
     val ui: ApplicationInterface,
     val model: ChatModel,
     val parsingModel: ChatModel,
     val tools: List<String> = emptyList(),
-    actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+    val root: File,
+  ) {
+    val actors = mapOf(
       ActorTypes.ArchitectureDiscussionActor to ParsedActor(
         resultClass = ProjectSpec::class.java,
         prompt = """
@@ -255,15 +254,8 @@ class WebDevelopmentAssistantAction : BaseAction() {
       ).apply {
         setImageAPI(api2)
       },
-    ),
-    val root: File,
-  ) :
-    ActorSystem<WebDevAgent.ActorTypes>(
-      actorMap.map { it.key.name to it.value }.toMap(),
-      dataStorage,
-      user,
-      session
-    ) {
+    ).map { it.key.name to it.value }.toMap()
+
     enum class ActorTypes {
       HtmlCodingActor,
       JavascriptCodingActor,
@@ -274,13 +266,13 @@ class WebDevelopmentAssistantAction : BaseAction() {
       ImageActor,
     }
 
-    private val architectureDiscussionActor by lazy { getActor(ActorTypes.ArchitectureDiscussionActor) as ParsedActor<ProjectSpec> }
-    private val htmlActor by lazy { getActor(ActorTypes.HtmlCodingActor) as SimpleActor }
-    private val imageActor by lazy { getActor(ActorTypes.ImageActor) as ImageActor }
-    private val javascriptActor by lazy { getActor(ActorTypes.JavascriptCodingActor) as SimpleActor }
-    private val cssActor by lazy { getActor(ActorTypes.CssCodingActor) as SimpleActor }
-    private val codeReviewer by lazy { getActor(ActorTypes.CodeReviewer) as SimpleActor }
-    private val etcActor by lazy { getActor(ActorTypes.EtcCodingActor) as SimpleActor }
+    private val architectureDiscussionActor by lazy { actors.get(ActorTypes.ArchitectureDiscussionActor.name)!! as ParsedActor<ProjectSpec> }
+    private val htmlActor by lazy { actors.get(ActorTypes.HtmlCodingActor.name)!! as SimpleActor }
+    private val imageActor by lazy { actors.get(ActorTypes.ImageActor.name)!! as ImageActor }
+    private val javascriptActor by lazy { actors.get(ActorTypes.JavascriptCodingActor.name)!! as SimpleActor }
+    private val cssActor by lazy { actors.get(ActorTypes.CssCodingActor.name)!! as SimpleActor }
+    private val codeReviewer by lazy { actors.get(ActorTypes.CodeReviewer.name)!! as SimpleActor }
+    private val etcActor by lazy { actors.get(ActorTypes.EtcCodingActor.name)!! as SimpleActor }
 
     private val codeFiles = mutableSetOf<Path>()
 
@@ -338,7 +330,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
           val task = ui.newTask(false).apply { fileTabs[path.toString()] = placeholder }
           task.header("Drafting $path")
           codeFiles.add(File(path).toPath())
-          pool.submit {
+          ApplicationServices.clientManager.getPool(session, user).submit {
             when (path!!.split(".").last().lowercase()) {
 
               "js" -> draftResourceCode(

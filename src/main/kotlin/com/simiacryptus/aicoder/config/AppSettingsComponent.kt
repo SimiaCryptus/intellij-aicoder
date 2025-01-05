@@ -320,18 +320,6 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     disableAutoOpenUrls.isSelected = AppSettingsState.instance.disableAutoOpenUrls
     // Initialize executables list
     setExecutables(AppSettingsState.instance.executables)
-    fun getExecutables(): Set<String> {
-      fun setExecutables(executables: Set<String>) {
-        val model =
-          ((executablesPanel.getComponent(0) as? JScrollPane)?.viewport?.view as? JList<String>)?.model as? DefaultListModel<String>
-        model?.clear()
-        executables.forEach { model?.addElement(it) }
-      }
-
-      val model =
-        ((executablesPanel.getComponent(0) as? JScrollPane)?.viewport?.view as? JList<String>)?.model as? DefaultListModel<String>
-      return model?.elements()?.toList()?.toSet() ?: emptySet()
-    }
     ChatModel.values()
       .filter {
         AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name)

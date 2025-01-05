@@ -20,62 +20,11 @@ object PsiUtil {
     "Comment", "DocComment", "LineComment", "BlockComment", "JavadocComment"
   )
 
-  // Expression types for parsing code
-  private val EXPRESSION_TYPES = arrayOf(
-    "Expression", "BinaryExpression", "CallExpression", "LiteralExpression",
-    "ReferenceExpression", "MethodCallExpression", "LambdaExpression"
-  )
-
-  // Import and package related types
-  private val IMPORT_TYPES = arrayOf(
-    "ImportStatement", "ImportList", "PackageStatement"
-  )
-
   // Common block types used in multiple places
   private val BLOCK_TYPES = arrayOf(
     "CodeBlock", "BlockExpr", "Block", "BlockExpression", "StatementList", "BlockFields",
     "ClassBody", "MethodBody", "FunctionBody", "TryBlock", "CatchBlock", "FinallyBlock"
   )
-
-  // Additional element types for specific use cases
-  private val STATEMENT_TYPES = arrayOf(
-    "Statement", "ExpressionStatement", "DeclarationStatement", "ReturnStatement",
-    "IfStatement", "WhileStatement", "ForStatement", "DoWhileStatement",
-    "SwitchStatement", "BreakStatement", "ContinueStatement", "ThrowStatement",
-    "TryStatement", "CatchStatement", "FinallyStatement", "AssertStatement",
-    "YieldStatement", "SynchronizedStatement"
-  )
-
-  // Annotation related types
-  private val ANNOTATION_TYPES = arrayOf(
-    "Annotation", "AnnotationMethod", "AnnotationParameter", "ModifierList"
-  )
-
-  // Generic/Template related types
-  private val GENERIC_TYPES = arrayOf(
-    "TypeParameter", "TypeArgument", "WildcardType", "GenericType"
-  )
-
-  /**
-   * Gets all expressions within the given element
-   */
-  fun getAllExpressions(element: PsiElement): List<PsiElement> {
-    return getAll(element, *EXPRESSION_TYPES)
-  }
-
-  /**
-   * Gets all annotations on an element
-   */
-  fun getAnnotations(element: PsiElement): List<PsiElement> {
-    return getAll(element, *ANNOTATION_TYPES)
-  }
-
-  /**
-   * Gets all type parameters/generic arguments on an element
-   */
-  fun getGenericParameters(element: PsiElement): List<PsiElement> {
-    return getAll(element, *GENERIC_TYPES)
-  }
 
   /**
    * Gets the name of an element (class, method, field etc)
@@ -107,125 +56,6 @@ object PsiUtil {
     }
   }
 
-  /**
-   * Gets all import statements within the given element
-   */
-  fun getAllImports(element: PsiElement): List<PsiElement> {
-    return getAll(element, *IMPORT_TYPES)
-  }
-
-  /**
-   * Gets the package statement for the file containing this element
-   */
-  fun getPackageStatement(element: PsiElement): PsiElement? {
-    var current = element
-    while (current.parent != null) {
-      current = current.parent
-    }
-    return getAll(current, "PackageStatement").firstOrNull()
-  }
-
-  /**
-   * Gets the full package name for the file containing this element
-   */
-  fun getPackageName(element: PsiElement): String? {
-    val pkg = getPackageStatement(element) ?: return null
-    return pkg.text.substringAfter("package").trim()
-  }
-
-  /**
-   * Gets all method/function parameters within the given element
-   */
-  fun getParameters(element: PsiElement): List<PsiElement> {
-    return getAll(element, "Parameter")
-  }
-
-  /**
-   * Gets the return type of a method/function element if available
-   */
-  fun getReturnType(element: PsiElement): String? {
-    if (!matchesType(element, "Method", "Function")) return null
-    val declaration = getDeclaration(element)
-    return when {
-      declaration.contains("->") -> // Lambda syntax
-        declaration.substringAfter("->").trim()
-
-      declaration.contains(":") -> // Kotlin syntax
-        declaration.substringAfter(":").substringBefore("{").trim()
-
-      declaration.contains(" ") -> // Java syntax
-        declaration.substringBefore(" ").trim()
-
-      else -> null
-    }
-  }
-
-  /**
-   * Gets the throws/exception declarations for a method
-   */
-  fun getThrowsDeclarations(element: PsiElement): List<String> {
-    if (!matchesType(element, "Method", "Function")) return emptyList()
-    val declaration = getDeclaration(element)
-    return if (declaration.contains("throws")) {
-      declaration.substringAfter("throws")
-        .substringBefore("{")
-        .split(",")
-        .map { it.trim() }
-    } else emptyList()
-  }
-
-  /**
-   * Gets the generic type parameters for a class/method
-   */
-  fun getGenericTypeParameters(element: PsiElement): List<String> {
-    if (!matchesType(element, "Class", "Interface", "Method", "Function")) return emptyList()
-    val declaration = getDeclaration(element)
-    return if (declaration.contains("<")) {
-      declaration.substringAfter("<")
-        .substringBefore(">")
-        .split(",")
-        .map { it.trim() }
-    } else emptyList()
-  }
-
-  /**
-   * Gets all variable declarations within the given scope
-   */
-  fun getVariableDeclarations(element: PsiElement): List<PsiElement> {
-    return getAll(element, "Variable", "Field")
-  }
-
-  /**
-   * Gets the type of a variable/field declaration if available
-   */
-  fun getVariableType(element: PsiElement): String? {
-    if (!matchesType(element, "Variable", "Field")) return null
-    val declaration = getDeclaration(element)
-    return declaration.substringBefore(" ").trim()
-  }
-
-  /**
-   * Checks if the element represents a static member
-   */
-  fun isStatic(element: PsiElement): Boolean {
-    val text = element.text.trim()
-    return text.startsWith("static ") || text.contains(" static ")
-  }
-
-  /**
-   * Gets the visibility modifier of an element (public, private, protected)
-   */
-  fun getVisibility(element: PsiElement): String {
-    val text = element.text.trim()
-    return when {
-      text.startsWith("public ") || text.contains(" public ") -> "public"
-      text.startsWith("private ") || text.contains(" private ") -> "private"
-      text.startsWith("protected ") || text.contains(" protected ") -> "protected"
-      text.startsWith("internal ") || text.contains(" internal ") -> "internal" // Kotlin visibility
-      else -> "default"
-    }
-  }
-
   fun getAll(element: PsiElement, vararg types: CharSequence): List<PsiElement> {
     val elements: MutableList<PsiElement> = ArrayList()
     val visitor = AtomicReference<PsiElementVisitor>()
@@ -240,44 +70,6 @@ object PsiUtil {
     })
     element.accept(visitor.get())
     return elements
-  }
-
-  /**
-   * Gets all statements within the given element
-   */
-  fun getAllStatements(element: PsiElement): List<PsiElement> {
-    return getAll(element, *STATEMENT_TYPES)
-  }
-
-  /**
-   * Gets the parent block containing this element
-   */
-  fun getParentBlock(element: PsiElement): PsiElement? {
-    var current = element.parent
-    while (current != null) {
-      if (matchesType(current, *BLOCK_TYPES)) return current
-      current = current.parent
-    }
-    return null
-  }
-
-  /**
-   * Gets the nearest parent element of any of the specified types
-   */
-  fun getParentOfType(element: PsiElement, vararg types: CharSequence): PsiElement? {
-    var current = element.parent
-    while (current != null) {
-      if (matchesType(current, *types)) return current
-      current = current.parent
-    }
-    return null
-  }
-
-  /**
-   * Checks if an element has a parent of any of the specified types
-   */
-  fun hasParentOfType(element: PsiElement, vararg types: CharSequence): Boolean {
-    return getParentOfType(element, *types) != null
   }
 
   fun getSmallestIntersecting(
@@ -465,19 +257,4 @@ object PsiUtil {
     return docComment?.text?.trim() ?: ""
   }
 
-  /**
-   * Gets the full qualified name of a class/method/field element
-   */
-  fun getQualifiedName(element: PsiElement): String? {
-    if (!matchesType(element, *ELEMENTS_CODE)) return null
-    val parts = mutableListOf<String>()
-    var current: PsiElement? = element
-    while (current != null) {
-      if (matchesType(current, "Class", "Interface", "Enum")) {
-        parts.add(0, current.text.substringBefore("{").trim())
-      }
-      current = current.parent
-    }
-    return if (parts.isEmpty()) null else parts.joinToString(".")
-  }
 }

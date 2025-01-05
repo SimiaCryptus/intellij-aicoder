@@ -71,13 +71,6 @@ class MRUItems : Serializable {
     }
   }
 
-  @JsonIgnore
-  fun getMostRecentWithTimestamp(limit: Int = DEFAULT_LIMIT): List<Pair<String, Instant>> {
-    return lock.read {
-      history.take(min(limit, historyLimit)).map { Pair(it.instruction, it.lastUsed) }
-    }
-  }
-
   fun clear() {
     lock.write {
       history.clear()
@@ -105,38 +98,6 @@ class MRUItems : Serializable {
   fun contains(item: String): Boolean {
     return lock.read {
       history.any { it.instruction == item }
-    }
-  }
-
-  @JsonIgnore
-  fun getUsageCount(item: String): Int {
-    return lock.read { history.find { it.instruction == item }?.usageCount ?: 0 }
-  }
-
-  @JsonIgnore
-  fun getLastUsedTimestamp(item: String): Instant? {
-    return lock.read { history.find { it.instruction == item }?.lastUsed }
-  }
-
-  fun merge(other: MRUItems) {
-    lock.write {
-      other.history.forEach { otherItem ->
-        val existingItem = history.find { it.instruction == otherItem.instruction }
-        if (existingItem != null) {
-          existingItem.usageCount += otherItem.usageCount
-          existingItem.lastUsed = maxOf(existingItem.lastUsed, otherItem.lastUsed)
-        } else {
-          history.add(otherItem)
-        }
-      }
-      history.sortByDescending { it.lastUsed }
-      trimHistories()
-    }
-  }
-
-  fun removeOlderThan(timestamp: Instant) {
-    lock.write {
-      history.removeAll { it.lastUsed.isBefore(timestamp) }
     }
   }
 

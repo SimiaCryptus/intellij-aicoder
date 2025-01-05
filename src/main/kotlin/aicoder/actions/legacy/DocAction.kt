@@ -24,7 +24,6 @@ class DocAction : SelectionAction<String>() {
 
   private val log = com.intellij.openapi.diagnostic.Logger.getInstance(DocAction::class.java)
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
-  fun getDisplayName() = "Generate Documentation"
 
   override fun isEnabled(event: AnActionEvent) = AppSettingsState.instance.enableLegacyActions
 

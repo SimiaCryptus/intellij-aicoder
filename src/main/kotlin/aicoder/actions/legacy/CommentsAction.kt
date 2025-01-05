@@ -31,8 +31,8 @@ class CommentsAction : SelectionAction<String>() {
       return ChatProxy(
         clazz = CommentsAction_VirtualAPI::class.java,
         api = api,
-        temperature = AppSettingsState.instance.temperature,
         model = AppSettingsState.instance.smartModel.chatModel(),
+        temperature = AppSettingsState.instance.temperature,
         deserializerRetries = 5
       ).create().editCode(
         selectedText,

@@ -71,8 +71,8 @@ class MarkdownListAction : BaseAction() {
         clazz = ListAPI::class.java,
         api = api,
         model = AppSettingsState.instance.smartModel.chatModel(),
-        deserializerRetries = 5,
-        temperature = AppSettingsState.instance.temperature
+        temperature = AppSettingsState.instance.temperature,
+        deserializerRetries = 5
       )
       chatProxy.addExample(
         returnValue = ListAPI.Items(

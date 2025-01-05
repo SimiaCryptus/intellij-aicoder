@@ -52,9 +52,6 @@ class AppServer(
     return context
   }
 
-
-  private val serverLock = Object()
-
   fun start() {
     server.start()
   }

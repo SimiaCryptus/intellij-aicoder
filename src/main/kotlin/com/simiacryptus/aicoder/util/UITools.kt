@@ -19,8 +19,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.FormBuilder
 import com.simiacryptus.aicoder.config.AppSettingsState
@@ -483,13 +481,6 @@ object UITools {
       counter++
     }
     return JOptionPane.CLOSED_OPTION
-  }
-
-  private fun wrapScrollPane(promptArea: JBTextArea?): JBScrollPane {
-    val scrollPane = JBScrollPane(promptArea)
-    scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
-    scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
-    return scrollPane
   }
 
   fun showCheckboxDialog(

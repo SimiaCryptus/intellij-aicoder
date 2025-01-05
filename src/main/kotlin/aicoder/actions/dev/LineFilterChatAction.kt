@@ -37,9 +37,6 @@ class LineFilterChatAction : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   val path = "/codeChat"
-  fun canWrite(user: String?): Boolean {
-    return true
-  }
 
   override fun handle(e: AnActionEvent) {
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return

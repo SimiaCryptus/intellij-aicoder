@@ -38,8 +38,8 @@ open class CustomEditAction : SelectionAction<String>(requiresSelection = true) 
       val chatProxy = ChatProxy(
         clazz = VirtualAPI::class.java,
         api = api,
-        temperature = AppSettingsState.instance.temperature,
         model = AppSettingsState.instance.smartModel.chatModel(),
+        temperature = AppSettingsState.instance.temperature,
       )
       chatProxy.addExample(
         VirtualAPI.EditedText(

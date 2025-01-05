@@ -12,7 +12,6 @@ import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.diff.AddApplyFileDiffLinks
-
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.describe.Description
@@ -26,11 +25,12 @@ import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.TabbedDisplay
-import com.simiacryptus.skyenet.core.actors.*
+import com.simiacryptus.skyenet.core.actors.ParsedActor
+import com.simiacryptus.skyenet.core.actors.ParsedResponse
+import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import com.simiacryptus.skyenet.core.platform.model.StorageInterface
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.commonRoot
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
@@ -122,7 +122,6 @@ class MultiStepPatchAction : BaseAction() {
       if (api is ChatClient) api.budget = settings.budget ?: DEFAULT_BUDGET
       AutoDevAgent(
         api = api,
-        dataStorage = dataStorage,
         session = session,
         user = user,
         ui = ui,
@@ -148,13 +147,14 @@ class MultiStepPatchAction : BaseAction() {
 
   class AutoDevAgent(
     val api: API,
-    dataStorage: StorageInterface,
-    session: Session,
-    user: User?,
+    val session: Session,
+    val user: User?,
     val ui: ApplicationInterface,
     val model: ChatModel,
     val parsingModel: ChatModel,
-    actorMap: Map<ActorTypes, BaseActor<*, *>> = mapOf(
+    val event: AnActionEvent,
+  ) {
+    val actors = mapOf(
       ActorTypes.DesignActor to ParsedActor(
         resultClass = TaskList::class.java,
         prompt = """
@@ -204,18 +204,15 @@ class MultiStepPatchAction : BaseAction() {
                     """.trimIndent(),
         model = model
       ),
-    ),
-    val event: AnActionEvent,
-  ) : ActorSystem<AutoDevAgent.ActorTypes>(
-    actorMap.map { it.key.name to it.value }.toMap(), dataStorage, user, session
-  ) {
+    ).map { it.key.name to it.value }.toMap()
+
     enum class ActorTypes {
       DesignActor,
       TaskCodingActor,
     }
 
-    private val designActor by lazy { getActor(ActorTypes.DesignActor) as ParsedActor<TaskList> }
-    private val taskActor by lazy { getActor(ActorTypes.TaskCodingActor) as SimpleActor }
+    private val designActor by lazy { actors.get(ActorTypes.DesignActor.name)!! as ParsedActor<TaskList> }
+    private val taskActor by lazy { actors.get(ActorTypes.TaskCodingActor.name)!! as SimpleActor }
 
     fun start(
       userMessage: String,
@@ -281,7 +278,7 @@ class MultiStepPatchAction : BaseAction() {
           }
           description = renderMarkdown(description, ui = ui, tabs = false)
           val task = ui.newTask(false).apply { taskTabs[description] = placeholder }
-          pool.submit {
+          ApplicationServices.clientManager.getPool(session, user).submit {
             task.header("Task: $description")
             Retryable(ui, task) {
               try {

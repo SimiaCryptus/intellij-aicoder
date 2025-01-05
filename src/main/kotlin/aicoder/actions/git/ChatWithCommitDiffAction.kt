@@ -147,12 +147,4 @@ class ChatWithCommitDiffAction : BaseAction(
     }
     return diff.toString()
   }
-
-
-  fun updateAction(e: AnActionEvent) {
-    val project = e.project
-    e.presentation.isEnabledAndVisible = project != null &&
-        ProjectLevelVcsManager.getInstance(project).allActiveVcss.isNotEmpty()
-  }
-
 }

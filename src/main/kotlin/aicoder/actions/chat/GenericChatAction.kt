@@ -20,7 +20,6 @@ import java.text.SimpleDateFormat
 class GenericChatAction : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  private val path = "/codeChat"
   private val systemPrompt = ""
   private val userInterfacePrompt = ""
   private val model by lazy { AppSettingsState.instance.smartModel.chatModel() }
@@ -74,10 +73,6 @@ class GenericChatAction : BaseAction() {
   }
 
   override fun isEnabled(event: AnActionEvent) = true
-  fun updateAction(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null
-  }
-
 
   companion object {
     private val log = LoggerFactory.getLogger(GenericChatAction::class.java)

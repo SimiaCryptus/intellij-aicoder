@@ -41,22 +41,6 @@ class TestResultAutofixAction : BaseAction() {
     val tripleTilde = "`" + "``" // This is a workaround for the markdown parser when editing this file
 
     fun getFiles(
-      virtualFiles: Array<out VirtualFile>?
-    ): MutableSet<Path> {
-      val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates
-      virtualFiles?.forEach { file ->
-        if (file.name.startsWith(".")) return@forEach
-        if (isGitignore(file.toNioPath())) return@forEach
-        if (file.isDirectory) {
-          codeFiles.addAll(getFiles(file.children))
-        } else {
-          codeFiles.add((file.toNioPath()))
-        }
-      }
-      return codeFiles
-    }
-
-    fun getFiles(
       virtualFiles: Array<out Path>?
     ): MutableSet<Path> {
       val codeFiles = mutableSetOf<Path>()    // Set to avoid duplicates

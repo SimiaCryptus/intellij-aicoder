@@ -58,8 +58,8 @@ class DescribeAction : SelectionAction<String>() {
     get() = ChatProxy(
       clazz = DescribeAction_VirtualAPI::class.java,
       api = api,
-      temperature = AppSettingsState.instance.temperature,
       model = AppSettingsState.instance.smartModel.chatModel(),
+      temperature = AppSettingsState.instance.temperature,
       deserializerRetries = 5
     ).create()
 
