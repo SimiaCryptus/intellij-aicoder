@@ -1,4 +1,9 @@
 package com.simiacryptus.aicoder.ui
+ import java.util.ResourceBundle
+ import javax.accessibility.AccessibleContext
+ import javax.swing.KeyStroke
+ import java.awt.event.KeyEvent
+ import java.awt.event.InputEvent
 
 import aicoder.actions.SessionProxyServer
 import com.intellij.openapi.project.Project
@@ -65,6 +70,22 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       }
       val treeModel = DefaultTreeModel(root)
       val tree = Tree(treeModel)
+     // Add accessibility description
+     tree.accessibleContext.accessibleDescription = getMessage("tree.description", title)
+     // Add keyboard navigation
+     tree.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "toggle")
+     tree.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "select")
+     // Add screen reader support for selection changes
+     tree.addTreeSelectionListener {
+       val selectedNode = tree.lastSelectedPathComponent?.toString()
+       if (selectedNode != null) {
+         tree.accessibleContext.firePropertyChange(
+           AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY,
+           null,
+           getMessage("tree.selected", selectedNode)
+         )
+       }
+     }
       tree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
       tree.isRootVisible = false
       tree.showsRootHandles = true
@@ -90,10 +111,25 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
 
     private val temperatureSlider by lazy {
       val slider = JSlider(0, 100, (AppSettingsState.instance.temperature * 100).toInt())
+     // Add accessibility description
+     slider.accessibleContext.accessibleDescription = getMessage("slider.description")
+     // Add keyboard increments
+     slider.majorTickSpacing = 10
+     slider.minorTickSpacing = 1
+     slider.snapToTicks = true
+     // Add screen reader announcements for value changes
+     slider.addChangeListener { 
+       slider.accessibleContext.firePropertyChange(
+         AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
+         null,
+         getMessage("slider.value", slider.value / 100.0)
+       )
+     }
       slider.addChangeListener { AppSettingsState.instance.temperature = slider.value / 100.0 }
       val panel = JPanel(BorderLayout(5, 5)) // Add padding
       panel.add(slider, BorderLayout.CENTER)
       val label = JLabel(String.format("%.2f", AppSettingsState.instance.temperature))
+     label.accessibleContext.accessibleDescription = getMessage("label.temperature")
       slider.addChangeListener { label.text = String.format("%.2f", slider.value / 100.0) }
       panel.add(label, BorderLayout.EAST)
       panel
@@ -101,6 +137,12 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
 
     private fun createServerControlPanel(): JPanel {
       val panel = JPanel(BorderLayout())
+     panel.accessibleContext.accessibleDescription = getMessage("panel.server.description")
+     sessionsList.accessibleContext.accessibleDescription = getMessage("list.sessions.description")
+     sessionsList.accessibleContext.accessibleName = getMessage("list.sessions.name")
+     // Add keyboard navigation for sessions list
+     sessionsList.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "activate")
+     sessionsList.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "activate")
       // Server control buttons
       val buttonPanel = JPanel(FlowLayout(FlowLayout.LEFT))
       val startButton = JButton("Start Server")
@@ -202,6 +244,9 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
           label.background = list?.background
           label.foreground = list?.foreground
         }
+       // Add accessibility name to each list item
+       label.accessibleContext.accessibleName = label.text
+       label.accessibleContext.accessibleDescription = getMessage("session.item.description", label.text)
         return label
       }
 
@@ -287,9 +332,12 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       updateSessionsList()
 
       val panel = JPanel(BorderLayout())
+     panel.accessibleContext.accessibleDescription = getMessage("popup.description")
       panel.add(createHeader(), BorderLayout.NORTH)
       // Create tabbed pane
       val tabbedPane = JTabbedPane()
+     // Add accessibility descriptions for tabs
+     tabbedPane.accessibleContext.accessibleDescription = getMessage("tabs.description")
       // Smart model tab
       val smartModelPanel = JPanel(BorderLayout())
       smartModelPanel.add(JScrollPane(smartModelTree), BorderLayout.CENTER)
@@ -343,6 +391,9 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
     }
 
     companion object {
+   private val messages = ResourceBundle.getBundle("messages.SettingsWidget")
+   private fun getMessage(key: String, vararg args: Any): String = 
+     String.format(messages.getString(key), *args)
       fun getSessionLink(session: Session) =
         "http://${AppSettingsState.instance.listeningEndpoint}:${AppSettingsState.instance.listeningPort}/#${session.sessionId}"
     }

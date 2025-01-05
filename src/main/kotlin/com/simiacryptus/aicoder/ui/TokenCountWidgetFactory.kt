@@ -17,12 +17,13 @@ import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
-import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import kotlinx.coroutines.CoroutineScope
 import java.awt.event.MouseEvent
 import java.io.File
+import java.util.*
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -31,6 +32,9 @@ import javax.swing.event.TreeSelectionListener
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
   companion object {
+    private val messages = ResourceBundle.getBundle("messages.TokenCountWidget")
+    private fun getMessage(key: String, vararg args: Any): String =
+      String.format(messages.getString(key), *args)
     val workQueue = LinkedBlockingDeque<Runnable>()
     val pool = ThreadPoolExecutor(
       /* corePoolSize = */ 1, /* maximumPoolSize = */ 1,
@@ -44,6 +48,8 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     private var tokenCount: Int = 0
     val codex = GPT4Tokenizer(false)
     private var tooltipDetails: String = "Current file token count"
+    private var isCalculating: Boolean = false
+    private var animationCounter: Int = 0
 
     override fun ID(): String {
       return "StatusBarComponent"
@@ -220,6 +226,8 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
 
     private fun update(statusBar: StatusBar, tokens: () -> Int) {
       workQueue.clear()
+      isCalculating = true
+      statusBar.updateWidget(ID())
       pool.submit {
         val text = statusBar.project?.let {
           FileEditorManager.getInstance(it).selectedTextEditor?.document?.text
@@ -229,6 +237,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         } else {
           tokens()
         }
+        isCalculating = false
         statusBar.updateWidget(ID())
       }
     }
@@ -238,10 +247,31 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     }
 
 
-    override fun getText() = tokenCountToString(tokenCount)
+    override fun getText(): String {
+      return if (isCalculating) {
+        val dots = ".".repeat((animationCounter % 3) + 1)
+        getMessage("status.calculating", dots)
+      } else {
+        tokenCountToString(tokenCount)
+      }
+    }
 
     override fun getTooltipText(): String {
-      return tooltipDetails
+      return if (isCalculating) {
+        // Create smooth animated progress indicator
+        val frames = listOf("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
+        val spinnerChar = frames[animationCounter % frames.size]
+
+        animationCounter++
+        // Reset counter to prevent potential integer overflow
+        if (animationCounter >= frames.size) animationCounter = 0
+
+        getMessage("tooltip.calculating_html", spinnerChar)
+      } else {
+        // Reset animation counter when not calculating
+        animationCounter = 0
+        tooltipDetails
+      }
     }
 
     override fun getAlignment(): Float {
@@ -270,12 +300,13 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
 
       fun tokenCountToString(count: Int): String {
         return when {
-          count == 0 -> "0 Tokens"
-          count == 1 -> "1 Token"
           count < 0 -> "${-count} Chars"  // Handle character count case
-          count >= 1000000 -> "${count / 1000000}M Tokens"
-          count >= 10000 -> "${count / 1000}K Tokens"
-          else -> "$count Tokens"
+          count == 0 -> getMessage("count.zero")
+          count == 1 -> getMessage("count.one")
+          count < 0 -> getMessage("count.chars", -count)
+          count >= 1000000 -> getMessage("count.millions", count / 1000000)
+          count >= 10000 -> getMessage("count.thousands", count / 1000)
+          else -> getMessage("count.normal", count)
         }
       }
     }
@@ -288,7 +319,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
   }
 
   override fun getDisplayName(): String {
-    return "Token Counter"
+    return getMessage("widget.display_name")
   }
 
   override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
