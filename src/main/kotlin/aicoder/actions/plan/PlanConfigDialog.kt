@@ -374,10 +374,10 @@ class PlanConfigDialog(
     }
     val taskSettingsMap = TaskType.values().associate { taskType ->
       val taskSettings = settings.getTaskSettings(taskType)
-      taskType.name to AppSettingsState.TaskSettingsSerialized(
-        enabled = taskSettings.enabled, modelName = taskSettings.model?.modelName, commandAutoFixCommands = if (taskType == TaskType.CommandAutoFix) {
-          (taskSettings as? CommandAutoFixTask.CommandAutoFixTaskSettings)?.commandAutoFixCommands
-        } else null
+      taskType.name to TaskSettingsBase(
+        task_type = taskType.name,
+        enabled = taskSettings.enabled,
+        model = taskSettings.model,
       )
     }
     val config = AppSettingsState.SavedPlanConfig(
@@ -397,7 +397,7 @@ class PlanConfigDialog(
     val hasUnsavedChanges = TaskType.values().any { taskType ->
       val currentSettings = settings.getTaskSettings(taskType)
       val savedSettings = config.taskSettings[taskType.name]
-      currentSettings.enabled != savedSettings?.enabled || currentSettings.model?.modelName != savedSettings.modelName
+      currentSettings.enabled != savedSettings?.enabled || currentSettings.model?.modelName != savedSettings.model?.modelName
     }
     if (hasUnsavedChanges) {
       val confirmResult = JOptionPane.showConfirmDialog(
@@ -416,23 +416,11 @@ class PlanConfigDialog(
       settings.allowBlocking = config.allowBlocking
       autoFixCheckbox.isSelected = config.autoFix
       allowBlockingCheckbox.isSelected = config.allowBlocking
-      val taskUpdates = config.taskSettings.mapNotNull { (taskTypeName, serializedSettings) ->
-        val taskType = TaskType.values().find { it.name == taskTypeName } ?: return@mapNotNull null
+      config.taskSettings.forEach { (taskTypeName: String, serializedSettings: TaskSettingsBase) ->
+        val taskType = TaskType.values().find { it.name == taskTypeName } ?: return@forEach
         val availableModels = getVisibleModels()
-        val selectedModel = availableModels.find { it.modelName == serializedSettings.modelName } ?: availableModels.firstOrNull()
-        Triple(taskType, serializedSettings, selectedModel)
-      }
-      taskUpdates.forEach { (taskType, serializedSettings, selectedModel) ->
-        val newSettings = when (taskType) {
-          TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
-            taskType.name, serializedSettings.enabled, selectedModel, serializedSettings.commandAutoFixCommands ?: emptyList()
-          )
-
-          else -> TaskSettingsBase(taskType.name, serializedSettings.enabled).apply {
-            this.model = selectedModel
-          }
-        }
-        settings.setTaskSettings(taskType, newSettings)
+        val selectedModel = availableModels.find { it.modelName == serializedSettings.model?.modelName } ?: availableModels.firstOrNull()
+        settings.setTaskSettings(taskType, serializedSettings)
         taskConfigs[taskType.name]?.apply {
           enabledCheckbox.isSelected = serializedSettings.enabled
           if (modelComboBox.itemCount > 0 && selectedModel != null) {

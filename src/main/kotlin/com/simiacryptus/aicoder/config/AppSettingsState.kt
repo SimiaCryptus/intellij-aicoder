@@ -18,6 +18,7 @@ import com.simiacryptus.aicoder.util.PluginStartupActivity.Companion.addUserSupp
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
+import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
 import com.simiacryptus.util.JsonUtil
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -72,13 +73,7 @@ data class AppSettingsState(
     val temperature: Double,
     val autoFix: Boolean,
     val allowBlocking: Boolean,
-    val taskSettings: Map<String, TaskSettingsSerialized>
-  )
-
-  data class TaskSettingsSerialized(
-    val enabled: Boolean,
-    val modelName: String?,
-    val commandAutoFixCommands: List<String>? = null
+    val taskSettings: Map<String, TaskSettingsBase>
   )
 
   private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()

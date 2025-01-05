@@ -148,7 +148,8 @@ class CommandAutofixAction : BaseAction() {
             workingDirectory = File(settingsUI.workingDirectoryField.text),
             exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero",
             additionalInstructions = settingsUI.additionalInstructionsField.text,
-            autoFix = settingsUI.autoFixCheckBox.isSelected
+            autoFix = settingsUI.autoFixCheckBox.isSelected,
+            maxRetries = settingsUI.maxRetriesField.value as Int,
           )
         } else {
           null
@@ -162,6 +163,9 @@ class CommandAutofixAction : BaseAction() {
      */
 
     class SettingsUI(root: File) {
+      val maxRetriesField = JSpinner(SpinnerNumberModel(3, 0, 10, 1)).apply {
+        toolTipText = "Maximum number of auto-retry attempts (0-10)"
+      }
       val argumentsField = ComboBox<String>().apply {
         isEditable = true
         AppSettingsState.instance.recentArguments.forEach { addItem(it) }
@@ -246,6 +250,8 @@ class CommandAutofixAction : BaseAction() {
             add(settingsUI.exitCodeNonZero)
             add(settingsUI.exitCodeAny)
             add(settingsUI.exitCodeZero)
+            add(JLabel("Max Auto-Retries"))
+            add(settingsUI.maxRetriesField)
             add(JLabel("Additional Instructions"))
             add(JScrollPane(settingsUI.additionalInstructionsField))
             add(settingsUI.autoFixCheckBox)
