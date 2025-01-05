@@ -9,7 +9,6 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import org.apache.hc.core5.http.HttpRequest
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.concurrent.atomic.AtomicBoolean
 
 class IdeaOpenAIClient : OpenAIClient(
   key = AppSettingsState.instance.apiKey?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()

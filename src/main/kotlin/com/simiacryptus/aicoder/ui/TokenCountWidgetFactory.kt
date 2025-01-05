@@ -35,6 +35,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     private val messages = ResourceBundle.getBundle("messages.TokenCountWidget")
     private fun getMessage(key: String, vararg args: Any): String =
       String.format(messages.getString(key), *args)
+
     val workQueue = LinkedBlockingDeque<Runnable>()
     val pool = ThreadPoolExecutor(
       /* corePoolSize = */ 1, /* maximumPoolSize = */ 1,

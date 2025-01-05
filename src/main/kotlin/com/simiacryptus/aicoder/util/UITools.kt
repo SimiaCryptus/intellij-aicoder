@@ -287,8 +287,8 @@ object UITools {
 
   private fun findValue(enumClass: Class<out Enum<*>?>, string: String): Enum<*>? {
     // First try case-insensitive match
-    val caseInsensitiveMatch = enumClass.enumConstants?.firstOrNull { 
-      it?.name?.equals(string, ignoreCase = true) == true 
+    val caseInsensitiveMatch = enumClass.enumConstants?.firstOrNull {
+      it?.name?.equals(string, ignoreCase = true) == true
     }
     if (caseInsensitiveMatch != null) return caseInsensitiveMatch
     // Fall back to exact case match
@@ -756,7 +756,7 @@ object UITools {
           }
           row {
             textArea().rows(40).columns(80).text(
-                """
+              """
                 Log Message: ${msg.trimIndent()}
                 Error Message: ${e.message?.trimIndent()}
                 Error Type: ${e.javaClass.name}
@@ -773,7 +773,7 @@ object UITools {
                 Error History:
                 ${errorLog.filter { it.second != e }.joinToString("\n") { "${it.first}\n```\n${toString(it.second)}\n```" }}
                 """.trimIndent()
-              )
+            )
           }
           row {
             button("Open New Issue on our Github page") {

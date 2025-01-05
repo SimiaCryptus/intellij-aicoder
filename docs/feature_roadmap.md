@@ -558,58 +558,70 @@ selected text within the IDE. This roadmap outlines the planned features and imp
 ##### Phase 1: Core Functionality Enhancements
 
 1. **Improved Code Generation Accuracy**
-  - Implement advanced NLP models to better understand the context and intent behind comments or selected text.
-  - Integrate with multiple code generation APIs to compare and choose the best-generated code snippet.
+
+- Implement advanced NLP models to better understand the context and intent behind comments or selected text.
+- Integrate with multiple code generation APIs to compare and choose the best-generated code snippet.
 
 2. **Support for More Programming Languages**
-  - Extend the current support to include more programming languages, focusing on those most requested by the community.
-  - Develop language-specific plugins to handle idiomatic nuances better.
+
+- Extend the current support to include more programming languages, focusing on those most requested by the community.
+- Develop language-specific plugins to handle idiomatic nuances better.
 
 3. **Enhanced Context Understanding**
-  - Improve the extraction and interpretation of the surrounding code context to generate more relevant code snippets.
-  - Use the entire file or project context where necessary to understand broader requirements.
+
+- Improve the extraction and interpretation of the surrounding code context to generate more relevant code snippets.
+- Use the entire file or project context where necessary to understand broader requirements.
 
 ##### Phase 2: User Experience Improvements
 
 1. **Configurable Preferences**
-  - Allow users to set preferences for code style, documentation, and error handling patterns.
-  - Enable project-specific configurations to cater to different coding standards and practices.
+
+- Allow users to set preferences for code style, documentation, and error handling patterns.
+- Enable project-specific configurations to cater to different coding standards and practices.
 
 2. **Interactive Code Generation**
-  - Introduce an interactive mode where users can guide the code generation process through choices or corrections.
-  - Implement feedback loops where the tool learns from user corrections to improve future suggestions.
+
+- Introduce an interactive mode where users can guide the code generation process through choices or corrections.
+- Implement feedback loops where the tool learns from user corrections to improve future suggestions.
 
 3. **Integration with Version Control Systems**
-  - Develop features to automatically create branches or pull requests with generated code for review.
-  - Provide options to compare generated code with existing implementations to assess novelty and relevance.
+
+- Develop features to automatically create branches or pull requests with generated code for review.
+- Provide options to compare generated code with existing implementations to assess novelty and relevance.
 
 ##### Phase 3: Advanced Features and Integrations
 
 1. **Code Refactoring Suggestions**
-  - Analyze existing code to suggest refactoring opportunities where generated code could simplify or optimize the current implementation.
-  - Offer automated refactoring tools guided by the generated code suggestions.
+
+- Analyze existing code to suggest refactoring opportunities where generated code could simplify or optimize the current implementation.
+- Offer automated refactoring tools guided by the generated code suggestions.
 
 2. **Integration with Code Review Tools**
-  - Connect with code review platforms to suggest generated code during the review process, helping reviewers offer concrete improvement suggestions.
-  - Implement a review mode where generated code is specifically tailored to address review comments.
+
+- Connect with code review platforms to suggest generated code during the review process, helping reviewers offer concrete improvement suggestions.
+- Implement a review mode where generated code is specifically tailored to address review comments.
 
 3. **Collaboration and Sharing**
-  - Enable users to share their generated code snippets with the community, fostering a collaborative environment for improvement and innovation.
-  - Create a repository of user-approved code snippets that can be directly inserted into projects.
+
+- Enable users to share their generated code snippets with the community, fostering a collaborative environment for improvement and innovation.
+- Create a repository of user-approved code snippets that can be directly inserted into projects.
 
 ##### Phase 4: Scalability and Performance Optimization
 
 1. **Caching and Performance Improvements**
-  - Implement caching mechanisms for frequently requested code generation to reduce latency and improve responsiveness.
-  - Optimize the code generation pipeline for speed and efficiency, especially for large projects.
+
+- Implement caching mechanisms for frequently requested code generation to reduce latency and improve responsiveness.
+- Optimize the code generation pipeline for speed and efficiency, especially for large projects.
 
 2. **Scalable Architecture**
-  - Design the backend to efficiently handle a growing number of requests and support concurrent code generation tasks.
-  - Ensure the system is robust and can scale horizontally to meet increasing demand.
+
+- Design the backend to efficiently handle a growing number of requests and support concurrent code generation tasks.
+- Ensure the system is robust and can scale horizontally to meet increasing demand.
 
 3. **Monitoring and Analytics**
-  - Integrate monitoring tools to track usage patterns, performance metrics, and error rates.
-  - Use analytics to understand feature usage and prioritize future development efforts based on user needs.
+
+- Integrate monitoring tools to track usage patterns, performance metrics, and error rates.
+- Use analytics to understand feature usage and prioritize future development efforts based on user needs.
 
 This roadmap is subject to change based on user feedback and technological advancements. The ultimate goal is to create a highly efficient, user-friendly, and
 versatile tool that significantly enhances the coding experience by automating routine tasks and fostering innovation.
@@ -624,57 +636,70 @@ This roadmap outlines the planned features and improvements to make this tool mo
 ##### Phase 1: Core Functionality Enhancements
 
 1. **Improved Command History Management**
-  - Implement a more sophisticated algorithm for tracking and prioritizing the history of custom edits based on frequency and recency of use.
-  - Allow users to manually pin/unpin commands in the history for easier access.
+
+- Implement a more sophisticated algorithm for tracking and prioritizing the history of custom edits based on frequency and recency of use.
+- Allow users to manually pin/unpin commands in the history for easier access.
 
 2. **Dynamic Context Sensitivity**
-  - Enhance the action to be context-sensitive, showing relevant code edits based on the current file type or project context.
+
+- Enhance the action to be context-sensitive, showing relevant code edits based on the current file type or project context.
 
 3. **UI/UX Improvements**
-  - Introduce a cleaner, more intuitive UI for displaying the list of commands.
-  - Implement keyboard shortcuts for faster navigation and selection of recent edits.
+
+- Introduce a cleaner, more intuitive UI for displaying the list of commands.
+- Implement keyboard shortcuts for faster navigation and selection of recent edits.
 
 ##### Phase 2: Integration and Compatibility
 
 1. **Cross-Project Command Sharing**
-  - Enable sharing of custom edit commands across different projects within the same IDE instance.
-  - Implement a feature to export/import command sets for use in different environments or by different users.
+
+- Enable sharing of custom edit commands across different projects within the same IDE instance.
+- Implement a feature to export/import command sets for use in different environments or by different users.
 
 2. **Support for Multiple Languages**
-  - Extend the functionality to support multiple programming languages, adapting the available commands based on the language of the current file.
+
+- Extend the functionality to support multiple programming languages, adapting the available commands based on the language of the current file.
 
 3. **Version Control System (VCS) Integration**
-  - Integrate with VCS to allow users to mark edits related to specific commits or branches, facilitating easier code reviews and collaboration.
+
+- Integrate with VCS to allow users to mark edits related to specific commits or branches, facilitating easier code reviews and collaboration.
 
 ##### Phase 3: Advanced Features
 
 1. **AI-Assisted Code Edits**
-  - Incorporate AI-based suggestions for code edits based on the current project context and past user behavior.
-  - Implement a feedback mechanism for users to improve AI suggestions over time.
+
+- Incorporate AI-based suggestions for code edits based on the current project context and past user behavior.
+- Implement a feedback mechanism for users to improve AI suggestions over time.
 
 2. **Custom Edit Scripting**
-  - Allow users to create more complex custom edit commands using a simple scripting language.
-  - Provide a library of script templates for common tasks to help users get started.
+
+- Allow users to create more complex custom edit commands using a simple scripting language.
+- Provide a library of script templates for common tasks to help users get started.
 
 3. **Performance Optimization**
-  - Optimize the performance of the action, ensuring it remains responsive even with a large history of commands or in large projects.
+
+- Optimize the performance of the action, ensuring it remains responsive even with a large history of commands or in large projects.
 
 4. **Analytics and Insights**
-  - Offer analytics on the usage of custom edits, helping users identify patterns and optimize their workflow.
-  - Provide insights and recommendations based on analysis of common edits and user behavior.
+
+- Offer analytics on the usage of custom edits, helping users identify patterns and optimize their workflow.
+- Provide insights and recommendations based on analysis of common edits and user behavior.
 
 ##### Phase 4: Community and Collaboration
 
 1. **Community Sharing Platform**
-  - Develop a platform for users to share, rate, and comment on custom edit scripts.
-  - Implement a system for discovering and incorporating highly-rated community scripts into the user's IDE.
+
+- Develop a platform for users to share, rate, and comment on custom edit scripts.
+- Implement a system for discovering and incorporating highly-rated community scripts into the user's IDE.
 
 2. **Collaborative Editing Sessions**
-  - Enable real-time collaborative editing sessions where users can apply custom edits together, facilitating pair programming and team code reviews.
+
+- Enable real-time collaborative editing sessions where users can apply custom edits together, facilitating pair programming and team code reviews.
 
 3. **Feedback and Continuous Improvement**
-  - Establish a feedback loop with the user community to continuously gather suggestions and improve the tool.
-  - Regularly update the tool with new features and improvements based on user feedback and emerging development trends.
+
+- Establish a feedback loop with the user community to continuously gather suggestions and improve the tool.
+- Regularly update the tool with new features and improvements based on user feedback and emerging development trends.
 
 By following this roadmap, the `RecentCodeEditsAction` can evolve into a powerful tool that significantly enhances coding efficiency and collaboration within
 the IDE environment.
@@ -888,48 +913,58 @@ the current state of the class as a starting point.
 #### Short-Term Goals (1-3 Months)
 
 1. **Enhanced Error Handling and Logging**:
-  - Improve error handling to provide more descriptive messages for failures, especially for network and file access errors.
-  - Enhance logging to include more detailed information for debugging purposes, such as session initiation and termination logs.
+
+- Improve error handling to provide more descriptive messages for failures, especially for network and file access errors.
+- Enhance logging to include more detailed information for debugging purposes, such as session initiation and termination logs.
 
 2. **User Interface Improvements**:
-  - Develop a more intuitive and user-friendly interface for the code chat feature, making it easier for users to start a chat session.
-  - Implement visual indicators for the chat session's status (active, waiting, closed).
+
+- Develop a more intuitive and user-friendly interface for the code chat feature, making it easier for users to start a chat session.
+- Implement visual indicators for the chat session's status (active, waiting, closed).
 
 3. **Performance Optimization**:
-  - Optimize the initialization of the chat server and the handling of chat sessions to reduce latency.
-  - Investigate and reduce memory footprint for each chat session to support more concurrent users.
+
+- Optimize the initialization of the chat server and the handling of chat sessions to reduce latency.
+- Investigate and reduce memory footprint for each chat session to support more concurrent users.
 
 #### Mid-Term Goals (4-6 Months)
 
 1. **Integration with Other IDEs**:
-  - Extend the functionality to be compatible with other popular IDEs beyond IntelliJ, such as Eclipse and VS Code.
-  - Develop plugins or extensions for these IDEs to facilitate easy access to the code chat feature.
+
+- Extend the functionality to be compatible with other popular IDEs beyond IntelliJ, such as Eclipse and VS Code.
+- Develop plugins or extensions for these IDEs to facilitate easy access to the code chat feature.
 
 2. **Support for More Programming Languages**:
-  - Increase the number of supported programming languages in the `ComputerLanguage` class to cater to a broader audience.
-  - Implement language-specific features in the chat, such as syntax highlighting and code suggestions.
+
+- Increase the number of supported programming languages in the `ComputerLanguage` class to cater to a broader audience.
+- Implement language-specific features in the chat, such as syntax highlighting and code suggestions.
 
 3. **Session Management Enhancements**:
-  - Introduce features for managing chat sessions, such as the ability to save, archive, and revisit past chat sessions.
-  - Implement user authentication and session privacy controls to enhance security.
+
+- Introduce features for managing chat sessions, such as the ability to save, archive, and revisit past chat sessions.
+- Implement user authentication and session privacy controls to enhance security.
 
 #### Long-Term Goals (7-12 Months)
 
 1. **AI-Powered Code Assistance**:
-  - Integrate AI-based code analysis and suggestion tools to provide real-time assistance during code chat sessions.
-  - Explore the use of machine learning models for code completion, bug detection, and optimization suggestions.
+
+- Integrate AI-based code analysis and suggestion tools to provide real-time assistance during code chat sessions.
+- Explore the use of machine learning models for code completion, bug detection, and optimization suggestions.
 
 2. **Collaborative Coding Features**:
-  - Develop features that allow multiple users to join a code chat session and collaboratively edit code in real-time.
-  - Implement version control integration to manage changes made during collaborative sessions.
+
+- Develop features that allow multiple users to join a code chat session and collaboratively edit code in real-time.
+- Implement version control integration to manage changes made during collaborative sessions.
 
 3. **Extensibility and API Development**:
-  - Design and expose APIs that allow third-party developers to create add-ons or integrate the code chat feature into their tools.
-  - Encourage community contributions by documenting the API and providing development guides.
+
+- Design and expose APIs that allow third-party developers to create add-ons or integrate the code chat feature into their tools.
+- Encourage community contributions by documenting the API and providing development guides.
 
 4. **Comprehensive Analytics and Reporting**:
-  - Implement analytics to track usage patterns, popular languages, and other metrics to inform future development.
-  - Provide users with reports on their chat sessions, including summaries, code changes, and recommendations for improvement.
+
+- Implement analytics to track usage patterns, popular languages, and other metrics to inform future development.
+- Provide users with reports on their chat sessions, including summaries, code changes, and recommendations for improvement.
 
 This roadmap aims to guide the development of the `CodeChatAction` class and its associated features, ensuring continuous improvement and adaptation to user
 needs and technological advancements.
@@ -1213,58 +1248,70 @@ project. This roadmap outlines the planned features and improvements to enhance 
 ##### Phase 1: Core Functionality Enhancements
 
 1. **Improved Content Transformation**
-  - Implement advanced natural language processing (NLP) techniques to improve the quality of the generated documentation.
-  - Support for multiple languages and code comments to cater to a diverse developer base.
+
+- Implement advanced natural language processing (NLP) techniques to improve the quality of the generated documentation.
+- Support for multiple languages and code comments to cater to a diverse developer base.
 
 2. **User Interface Improvements**
-  - Develop a more intuitive and user-friendly settings dialog.
-  - Implement real-time previews of the transformation message and the resulting documentation.
+
+- Develop a more intuitive and user-friendly settings dialog.
+- Implement real-time previews of the transformation message and the resulting documentation.
 
 3. **Performance Optimization**
-  - Optimize the file processing and content transformation pipeline for faster execution.
-  - Implement asynchronous processing to prevent UI freezing during documentation compilation.
+
+- Optimize the file processing and content transformation pipeline for faster execution.
+- Implement asynchronous processing to prevent UI freezing during documentation compilation.
 
 ##### Phase 2: Integration and Compatibility
 
 1. **Version Control System Integration**
-  - Integrate with popular version control systems (e.g., Git) to automatically document changes in code.
-  - Support for generating documentation pull requests based on the compiled documentation.
+
+- Integrate with popular version control systems (e.g., Git) to automatically document changes in code.
+- Support for generating documentation pull requests based on the compiled documentation.
 
 2. **Support for Additional File Types**
-  - Extend the functionality to support more file types beyond the current scope, including but not limited to XML, JSON, and YAML.
-  - Implement customizable parsers for different file types to improve the flexibility of the tool.
+
+- Extend the functionality to support more file types beyond the current scope, including but not limited to XML, JSON, and YAML.
+- Implement customizable parsers for different file types to improve the flexibility of the tool.
 
 3. **IDE Compatibility**
-  - Ensure compatibility with other JetBrains IDEs (e.g., PyCharm, WebStorm) to cater to a broader audience.
-  - Explore the possibility of porting the tool to other development environments (e.g., Visual Studio Code).
+
+- Ensure compatibility with other JetBrains IDEs (e.g., PyCharm, WebStorm) to cater to a broader audience.
+- Explore the possibility of porting the tool to other development environments (e.g., Visual Studio Code).
 
 ##### Phase 3: Advanced Features
 
 1. **Documentation Versioning**
-  - Implement a versioning system for the generated documentation to track changes over time.
-  - Support for tagging and branching in the documentation, mirroring the version control system's functionality.
+
+- Implement a versioning system for the generated documentation to track changes over time.
+- Support for tagging and branching in the documentation, mirroring the version control system's functionality.
 
 2. **Collaborative Editing**
-  - Introduce features for collaborative editing and review of the generated documentation.
-  - Implement commenting and suggestion systems within the documentation compilation interface.
+
+- Introduce features for collaborative editing and review of the generated documentation.
+- Implement commenting and suggestion systems within the documentation compilation interface.
 
 3. **Customizable Templates**
-  - Allow users to create and use customizable templates for the generated documentation to match their project's style guide.
-  - Support for importing and exporting templates to share with the community.
+
+- Allow users to create and use customizable templates for the generated documentation to match their project's style guide.
+- Support for importing and exporting templates to share with the community.
 
 ##### Phase 4: Community and Ecosystem
 
 1. **Plugin Marketplace**
-  - Develop a marketplace for users to share and discover custom templates, parsers, and other extensions.
-  - Implement a rating and review system to help users find the best resources.
+
+- Develop a marketplace for users to share and discover custom templates, parsers, and other extensions.
+- Implement a rating and review system to help users find the best resources.
 
 2. **Documentation Hosting and Sharing**
-  - Provide options for hosting the compiled documentation on popular platforms (e.g., GitHub Pages, Read the Docs).
-  - Implement easy sharing options to distribute the documentation to stakeholders.
+
+- Provide options for hosting the compiled documentation on popular platforms (e.g., GitHub Pages, Read the Docs).
+- Implement easy sharing options to distribute the documentation to stakeholders.
 
 3. **Educational Resources**
-  - Create comprehensive tutorials, guides, and video content to help users get the most out of the tool.
-  - Establish a community forum for users to share tips, ask questions, and provide feedback.
+
+- Create comprehensive tutorials, guides, and video content to help users get the most out of the tool.
+- Establish a community forum for users to share tips, ask questions, and provide feedback.
 
 ##### Conclusion
 
@@ -1911,57 +1958,70 @@ experience, expanding capabilities, and maintaining compatibility and performanc
 #### Short-Term Goals (0-3 Months)
 
 1. **Improve Configuration UI:**
-  - Develop a more intuitive and user-friendly settings interface that allows users to easily configure the plugin settings such as `temperature`, `modelName`,
-    `listeningPort`, etc.
-  - Implement validation checks for user inputs to prevent configuration errors.
+
+- Develop a more intuitive and user-friendly settings interface that allows users to easily configure the plugin settings such as `temperature`, `modelName`,
+  `listeningPort`, etc.
+- Implement validation checks for user inputs to prevent configuration errors.
 
 2. **Enhance Recent Commands Feature:**
-  - Improve the UI for accessing and managing recent commands, making it easier for users to reuse previous inputs.
-  - Add the ability to categorize and search through the recent commands for better organization.
+
+- Improve the UI for accessing and managing recent commands, making it easier for users to reuse previous inputs.
+- Add the ability to categorize and search through the recent commands for better organization.
 
 3. **API Key Security:**
-  - Implement a more secure way to store and handle the `apiKey` to enhance security and protect user data.
+
+- Implement a more secure way to store and handle the `apiKey` to enhance security and protect user data.
 
 4. **Localization and Internationalization:**
-  - Begin the process of localizing the plugin UI and messages to support multiple languages, starting with major languages such as Spanish, Chinese, and
-    German.
+
+- Begin the process of localizing the plugin UI and messages to support multiple languages, starting with major languages such as Spanish, Chinese, and
+  German.
 
 #### Mid-Term Goals (4-8 Months)
 
 1. **Expand Model Support:**
-  - Integrate additional OpenAI models into the plugin, providing users with a wider range of AI capabilities.
-  - Allow users to customize and extend the model configurations for advanced use cases.
+
+- Integrate additional OpenAI models into the plugin, providing users with a wider range of AI capabilities.
+- Allow users to customize and extend the model configurations for advanced use cases.
 
 2. **Performance Optimization:**
-  - Optimize the plugin's performance, especially in terms of API call efficiency and response handling, to ensure a smooth user experience even under heavy
-    load.
+
+- Optimize the plugin's performance, especially in terms of API call efficiency and response handling, to ensure a smooth user experience even under heavy
+  load.
 
 3. **Advanced Error Handling:**
-  - Develop a comprehensive error handling and reporting system that provides users with clear, actionable feedback on issues such as API failures, network
-    problems, or configuration errors.
+
+- Develop a comprehensive error handling and reporting system that provides users with clear, actionable feedback on issues such as API failures, network
+  problems, or configuration errors.
 
 4. **Plugin Analytics:**
-  - Introduce optional, privacy-respecting analytics to gather insights on how the plugin is used, which features are most popular, and what areas need
-    improvement.
+
+- Introduce optional, privacy-respecting analytics to gather insights on how the plugin is used, which features are most popular, and what areas need
+  improvement.
 
 #### Long-Term Goals (9-12 Months)
 
 1. **Collaborative Features:**
-  - Explore the possibility of adding collaborative features that allow teams to share configurations, models, and commands within the plugin environment.
+
+- Explore the possibility of adding collaborative features that allow teams to share configurations, models, and commands within the plugin environment.
 
 2. **Extend IDE Integration:**
-  - Broaden the plugin's integration with other aspects of the IntelliJ platform, such as offering AI-assisted coding suggestions, code analysis, and more
-    interactive development tools.
+
+- Broaden the plugin's integration with other aspects of the IntelliJ platform, such as offering AI-assisted coding suggestions, code analysis, and more
+  interactive development tools.
 
 3. **Custom AI Model Training:**
-  - Investigate the feasibility of allowing users to train custom models directly from the plugin, leveraging OpenAI's APIs for personalized AI functionalities.
+
+- Investigate the feasibility of allowing users to train custom models directly from the plugin, leveraging OpenAI's APIs for personalized AI functionalities.
 
 4. **Community and Ecosystem:**
-  - Foster a community around the plugin by setting up forums, contributing guides, and encouraging third-party extensions or integrations.
+
+- Foster a community around the plugin by setting up forums, contributing guides, and encouraging third-party extensions or integrations.
 
 5. **Sustainability and Open Source:**
-  - Consider open-sourcing parts of the plugin to encourage community contributions, improve transparency, and ensure the long-term sustainability of the
-    project.
+
+- Consider open-sourcing parts of the plugin to encourage community contributions, improve transparency, and ensure the long-term sustainability of the
+  project.
 
 This roadmap is subject to change based on user feedback, technological advancements, and strategic priorities. Regular reviews and updates to the roadmap will
 ensure that the development efforts remain aligned with user needs and industry trends.
@@ -2095,8 +2155,10 @@ within a plugin environment. Below is a proposed roadmap categorized into short-
 #### Mid-term Goals (4-6 months)
 
 1. **Feature Enhancements**:
-  - **Token Counter**: Reintroduce the token counter feature with improvements, such as real-time updates and better integration with the rest of the settings.
-  - **API Log Management**: Enhance the API log management capabilities, allowing users to easily view, search, and filter log entries from within the plugin.
+
+- **Token Counter**: Reintroduce the token counter feature with improvements, such as real-time updates and better integration with the rest of the settings.
+- **API Log Management**: Enhance the API log management capabilities, allowing users to easily view, search, and filter log entries from within the plugin.
+
 2. **Security Enhancements**: Implement security measures for sensitive information, such as encrypting the API key stored in the settings.
 3. **Customization Options**: Provide more customization options for users, allowing them to tailor the plugin's behavior and appearance to their preferences.
 
@@ -2875,51 +2937,62 @@ long-term goals.
 #### Short-Term Goals (1-3 Months)
 
 1. **Refactoring and Code Cleanup:**
-  - Simplify complex methods in the `PsiClassContext` class.
-  - Increase code readability and maintainability by breaking down large methods into smaller, more manageable functions.
+
+- Simplify complex methods in the `PsiClassContext` class.
+- Increase code readability and maintainability by breaking down large methods into smaller, more manageable functions.
 
 2. **Performance Optimization:**
-  - Profile the current implementation to identify and optimize performance bottlenecks, especially in the `init` method where PSI tree traversal occurs.
+
+- Profile the current implementation to identify and optimize performance bottlenecks, especially in the `init` method where PSI tree traversal occurs.
 
 3. **Unit Testing:**
-  - Develop a comprehensive suite of unit tests to cover various scenarios of PSI tree parsing and context generation.
-  - Ensure that edge cases, such as deeply nested structures and various language-specific constructs, are adequately tested.
+
+- Develop a comprehensive suite of unit tests to cover various scenarios of PSI tree parsing and context generation.
+- Ensure that edge cases, such as deeply nested structures and various language-specific constructs, are adequately tested.
 
 4. **Documentation Enhancement:**
-  - Improve inline documentation and code comments to better describe the logic and purpose of each method and class property.
-  - Create a developer guide that explains how to use the `PsiClassContext` class and extend its functionalities.
+
+- Improve inline documentation and code comments to better describe the logic and purpose of each method and class property.
+- Create a developer guide that explains how to use the `PsiClassContext` class and extend its functionalities.
 
 #### Mid-Term Goals (4-6 Months)
 
 1. **Language Support Expansion:**
-  - Extend support to additional programming languages beyond Java, Kotlin, and Scala. Prioritize languages commonly used in IntelliJ-based IDEs, such as Python
-    and JavaScript.
-  - Implement language-specific parsing strategies to handle unique syntax and constructs effectively.
+
+- Extend support to additional programming languages beyond Java, Kotlin, and Scala. Prioritize languages commonly used in IntelliJ-based IDEs, such as Python
+  and JavaScript.
+- Implement language-specific parsing strategies to handle unique syntax and constructs effectively.
 
 2. **Integration with Other IntelliJ APIs:**
-  - Explore integration possibilities with other IntelliJ Platform APIs to enhance functionality, such as code formatting, refactoring, and inspections.
+
+- Explore integration possibilities with other IntelliJ Platform APIs to enhance functionality, such as code formatting, refactoring, and inspections.
 
 3. **User Interface for Context Visualization:**
-  - Develop a plugin UI component that allows users to visualize and interact with the `PsiClassContext` structure generated from their code.
-  - Enable features like context navigation, editing, and live updates as the source code changes.
+
+- Develop a plugin UI component that allows users to visualize and interact with the `PsiClassContext` structure generated from their code.
+- Enable features like context navigation, editing, and live updates as the source code changes.
 
 #### Long-Term Goals (7-12 Months)
 
 1. **Advanced Code Analysis Features:**
-  - Implement advanced code analysis features that leverage the `PsiClassContext`, such as code complexity analysis, pattern detection, and code smell
-    identification.
+
+- Implement advanced code analysis features that leverage the `PsiClassContext`, such as code complexity analysis, pattern detection, and code smell
+  identification.
 
 2. **Machine Learning Integration:**
-  - Explore the use of machine learning algorithms to predict code patterns and suggest improvements based on the `PsiClassContext`.
-  - Investigate the feasibility of auto-generating code snippets or entire classes based on the existing project context and user input.
+
+- Explore the use of machine learning algorithms to predict code patterns and suggest improvements based on the `PsiClassContext`.
+- Investigate the feasibility of auto-generating code snippets or entire classes based on the existing project context and user input.
 
 3. **Community and Ecosystem Development:**
-  - Encourage community contributions by making the project open source (if not already) and establishing a clear contribution guideline.
-  - Develop a plugin ecosystem that allows third-party developers to extend and build upon the `PsiClassContext` functionalities.
+
+- Encourage community contributions by making the project open source (if not already) and establishing a clear contribution guideline.
+- Develop a plugin ecosystem that allows third-party developers to extend and build upon the `PsiClassContext` functionalities.
 
 4. **Cross-IDE Support:**
-  - Investigate the possibility of porting the `PsiClassContext` functionalities to other IDEs or code editors, potentially through the Language Server
-    Protocol (LSP) or similar mechanisms.
+
+- Investigate the possibility of porting the `PsiClassContext` functionalities to other IDEs or code editors, potentially through the Language Server
+  Protocol (LSP) or similar mechanisms.
 
 This roadmap provides a structured approach to evolving the `PsiClassContext` class and its related features. By focusing on immediate improvements and laying
 the groundwork for future innovations, the project can continuously adapt to meet the needs of its users and leverage new technologies.
@@ -3662,17 +3735,24 @@ goals of the project. Here's a structured approach to creating a feature develop
 #### Example Roadmap Layout
 
 1. **Q1:**
-  - Complete user research and finalize product vision.
-  - Develop MVP with core features.
+
+- Complete user research and finalize product vision.
+- Develop MVP with core features.
+
 2. **Q2:**
-  - Launch public beta and collect user feedback.
-  - Begin development on "Should have" features.
+
+- Launch public beta and collect user feedback.
+- Begin development on "Should have" features.
+
 3. **Q3:**
-  - Official public release with additional features.
-  - Start working on "Could have" features based on user feedback.
+
+- Official public release with additional features.
+- Start working on "Could have" features based on user feedback.
+
 4. **Q4:**
-  - Expand marketing efforts and partnerships.
-  - Evaluate the year's progress and plan for the next year.
+
+- Expand marketing efforts and partnerships.
+- Evaluate the year's progress and plan for the next year.
 
 Remember, a feature development roadmap is a living document that should evolve based on the project's progress and external factors.
 
@@ -4219,58 +4299,70 @@ selected text within an IDE. This roadmap outlines the planned features and impr
 ##### Phase 1: Core Functionality Enhancements
 
 1. **Improved Code Generation Accuracy**
-  - Implement advanced NLP models to better understand the context and intent behind comments or selected text.
-  - Integrate with multiple code generation APIs to compare and choose the best-generated code snippet.
+
+- Implement advanced NLP models to better understand the context and intent behind comments or selected text.
+- Integrate with multiple code generation APIs to compare and choose the best-generated code snippet.
 
 2. **Support for More Programming Languages**
-  - Extend the current support to include more programming languages, focusing on those most requested by the community.
-  - Develop language-specific plugins to handle idiomatic nuances better.
+
+- Extend the current support to include more programming languages, focusing on those most requested by the community.
+- Develop language-specific plugins to handle idiomatic nuances better.
 
 3. **Enhanced Context Understanding**
-  - Improve the extraction and interpretation of the surrounding code context to generate more relevant code snippets.
-  - Use the entire file or project context when generating code to ensure consistency and adherence to project standards.
+
+- Improve the extraction and interpretation of the surrounding code context to generate more relevant code snippets.
+- Use the entire file or project context when generating code to ensure consistency and adherence to project standards.
 
 ##### Phase 2: User Experience Improvements
 
 1. **Configurable Preferences**
-  - Allow users to set preferences for code style, documentation, and error handling.
-  - Enable project-specific configurations to maintain consistency across team projects.
+
+- Allow users to set preferences for code style, documentation, and error handling.
+- Enable project-specific configurations to maintain consistency across team projects.
 
 2. **Interactive Code Generation**
-  - Introduce an interactive mode where users can guide the code generation process through options or corrections.
-  - Implement feedback loops where the tool learns from user corrections to improve future suggestions.
+
+- Introduce an interactive mode where users can guide the code generation process through options or corrections.
+- Implement feedback loops where the tool learns from user corrections to improve future suggestions.
 
 3. **Integration with Development Environments**
-  - Develop plugins for popular IDEs (e.g., VSCode, IntelliJ IDEA) to provide seamless integration.
-  - Ensure compatibility with cloud-based development environments.
+
+- Develop plugins for popular IDEs (e.g., VSCode, IntelliJ IDEA) to provide seamless integration.
+- Ensure compatibility with cloud-based development environments.
 
 ##### Phase 3: Collaboration and Sharing
 
 1. **Code Snippet Sharing**
-  - Create a platform for users to share and discover code snippets generated by the tool.
-  - Implement tagging and categorization to make it easier to find relevant snippets.
+
+- Create a platform for users to share and discover code snippets generated by the tool.
+- Implement tagging and categorization to make it easier to find relevant snippets.
 
 2. **Team Collaboration Features**
-  - Enable teams to share a common configuration and preferences for code generation.
-  - Provide mechanisms for reviewing and approving generated code before it is merged into the codebase.
+
+- Enable teams to share a common configuration and preferences for code generation.
+- Provide mechanisms for reviewing and approving generated code before it is merged into the codebase.
 
 3. **Community-Driven Improvements**
-  - Open source the tool or parts of it to allow the community to contribute improvements and new features.
-  - Set up a system for users to report issues, request features, and contribute to the tool's development.
+
+- Open source the tool or parts of it to allow the community to contribute improvements and new features.
+- Set up a system for users to report issues, request features, and contribute to the tool's development.
 
 ##### Phase 4: Advanced Features and Integrations
 
 1. **AI-Powered Refactoring**
-  - Use AI to suggest refactoring opportunities in existing code based on best practices and recent advancements.
-  - Implement automated refactoring with user approval to improve code quality and maintainability.
+
+- Use AI to suggest refactoring opportunities in existing code based on best practices and recent advancements.
+- Implement automated refactoring with user approval to improve code quality and maintainability.
 
 2. **Integration with Code Analysis Tools**
-  - Connect with static code analysis tools to ensure generated code meets quality standards.
-  - Use feedback from code analysis to improve the code generation models.
+
+- Connect with static code analysis tools to ensure generated code meets quality standards.
+- Use feedback from code analysis to improve the code generation models.
 
 3. **Custom Model Training**
-  - Allow users or organizations to train custom models on their codebases to tailor suggestions more closely to their coding styles and practices.
-  - Implement privacy-preserving techniques to ensure codebase confidentiality during model training.
+
+- Allow users or organizations to train custom models on their codebases to tailor suggestions more closely to their coding styles and practices.
+- Implement privacy-preserving techniques to ensure codebase confidentiality during model training.
 
 This roadmap is subject to change based on user feedback, technological advancements, and strategic priorities. The goal is to continuously improve the
 `InsertImplementationAction` tool to meet the evolving needs of developers and teams.
@@ -4283,62 +4375,77 @@ collection. Below is a detailed roadmap for developing this feature, including k
 #### Phase 1: Planning and Design
 
 1. **Requirement Analysis**
-  - Gather requirements by consulting with stakeholders and potential users.
-  - Define the scope of the feature, including supported languages and IDEs.
+
+- Gather requirements by consulting with stakeholders and potential users.
+- Define the scope of the feature, including supported languages and IDEs.
 
 2. **Feasibility Study**
-  - Evaluate technical feasibility, including integration with existing systems like `ChatProxy` and the IntelliJ platform.
-  - Assess the availability of resources and tools needed for development.
+
+- Evaluate technical feasibility, including integration with existing systems like `ChatProxy` and the IntelliJ platform.
+- Assess the availability of resources and tools needed for development.
 
 3. **Design**
-  - Design the user interface and experience for selecting variables to rename.
-  - Outline the architecture of the feature, including how it interacts with the `ChatProxy` and processes suggestions.
+
+- Design the user interface and experience for selecting variables to rename.
+- Outline the architecture of the feature, including how it interacts with the `ChatProxy` and processes suggestions.
 
 #### Phase 2: Development
 
 4. **Setup Development Environment**
-  - Prepare the development environment, including necessary SDKs and plugins for IntelliJ platform development.
+
+- Prepare the development environment, including necessary SDKs and plugins for IntelliJ platform development.
 
 5. **Implement Core Functionality**
-  - Develop the `RenameAPI` interface and its `SuggestionResponse` inner class to handle rename suggestions.
-  - Implement the `proxy` property to create a `ChatProxy` instance for accessing the rename API.
+
+- Develop the `RenameAPI` interface and its `SuggestionResponse` inner class to handle rename suggestions.
+- Implement the `proxy` property to create a `ChatProxy` instance for accessing the rename API.
 
 6. **User Interface Development**
-  - Implement the UI components for displaying rename suggestions and allowing users to select which variables to rename.
+
+- Implement the UI components for displaying rename suggestions and allowing users to select which variables to rename.
 
 7. **Integration**
-  - Integrate the UI with the core functionality to fetch and display suggestions based on selected text.
-  - Ensure the feature can accurately replace selected variables with suggested names within the code.
+
+- Integrate the UI with the core functionality to fetch and display suggestions based on selected text.
+- Ensure the feature can accurately replace selected variables with suggested names within the code.
 
 #### Phase 3: Testing and Quality Assurance
 
 8. **Unit Testing**
-  - Write unit tests for individual components, including the API interaction, suggestion processing, and UI components.
+
+- Write unit tests for individual components, including the API interaction, suggestion processing, and UI components.
 
 9. **Integration Testing**
-  - Test the feature as a whole to ensure it works seamlessly within the intended IDE environment and with various programming languages.
+
+- Test the feature as a whole to ensure it works seamlessly within the intended IDE environment and with various programming languages.
 
 10. **User Acceptance Testing**
-  - Conduct user acceptance testing with a group of beta testers to gather feedback on usability and functionality.
+
+- Conduct user acceptance testing with a group of beta testers to gather feedback on usability and functionality.
 
 #### Phase 4: Deployment
 
 11. **Deployment Preparation**
-  - Prepare the feature for deployment, including finalizing documentation and updating any necessary configurations.
+
+- Prepare the feature for deployment, including finalizing documentation and updating any necessary configurations.
 
 12. **Release**
-  - Release the feature as part of a new version of the software or as an update to existing users.
+
+- Release the feature as part of a new version of the software or as an update to existing users.
 
 #### Phase 5: Maintenance and Feedback
 
 13. **Collect Feedback**
-  - Collect user feedback through surveys, bug reports, and feature requests.
+
+- Collect user feedback through surveys, bug reports, and feature requests.
 
 14. **Maintenance**
-  - Regularly update the feature to fix bugs, improve performance, and add enhancements based on user feedback.
+
+- Regularly update the feature to fix bugs, improve performance, and add enhancements based on user feedback.
 
 15. **Iterate**
-  - Based on feedback and technological advancements, iterate on the feature to introduce new functionalities or improve existing ones.
+
+- Based on feedback and technological advancements, iterate on the feature to introduce new functionalities or improve existing ones.
 
 This roadmap provides a structured approach to developing the `RenameVariablesAction` feature, ensuring thorough planning, development, testing, and deployment,
 followed by continuous improvement based on user feedback.
@@ -4354,61 +4461,76 @@ development workflow.
 ##### Phase 1: Core Functionality Enhancement
 
 1. **Improve Recent Edits Retrieval:**
-  - Optimize the retrieval of recent commands to ensure faster access and display.
-  - Implement caching mechanisms to reduce load times for frequently accessed commands.
+
+- Optimize the retrieval of recent commands to ensure faster access and display.
+- Implement caching mechanisms to reduce load times for frequently accessed commands.
 
 2. **Dynamic Update Mechanism:**
-  - Develop a dynamic update feature that refreshes the list of recent edits in real-time as new edits are made.
+
+- Develop a dynamic update feature that refreshes the list of recent edits in real-time as new edits are made.
 
 3. **Custom Edit Action Enhancement:**
-  - Extend the `CustomEditAction` class to support more complex edit actions, including multi-file edits and refactorings.
+
+- Extend the `CustomEditAction` class to support more complex edit actions, including multi-file edits and refactorings.
 
 4. **User Preferences:**
-  - Introduce settings allowing users to customize the number of recent edits displayed and the types of edits that should be tracked.
+
+- Introduce settings allowing users to customize the number of recent edits displayed and the types of edits that should be tracked.
 
 ##### Phase 2: User Interface and Experience Improvements
 
 1. **UI Enhancements:**
-  - Redesign the action presentation to make it more intuitive and visually appealing.
-  - Implement grouping or categorization of edits based on file type, project, or other criteria.
+
+- Redesign the action presentation to make it more intuitive and visually appealing.
+- Implement grouping or categorization of edits based on file type, project, or other criteria.
 
 2. **Search and Filter Capability:**
-  - Add a search bar to allow users to quickly find specific edits.
-  - Implement filtering options to help users narrow down the list based on criteria such as date, project, or file type.
+
+- Add a search bar to allow users to quickly find specific edits.
+- Implement filtering options to help users narrow down the list based on criteria such as date, project, or file type.
 
 3. **Keyboard Shortcuts:**
-  - Introduce customizable keyboard shortcuts for faster access to the recent edits list and individual edit actions.
+
+- Introduce customizable keyboard shortcuts for faster access to the recent edits list and individual edit actions.
 
 ##### Phase 3: Integration and Collaboration Features
 
 1. **Project-Specific Histories:**
-  - Enable project-specific tracking of recent edits to provide more relevant suggestions in multi-project environments.
+
+- Enable project-specific tracking of recent edits to provide more relevant suggestions in multi-project environments.
 
 2. **Collaboration Tools Integration:**
-  - Integrate with version control systems (VCS) to highlight edits that have been shared or are new from collaborators.
-  - Implement a feature to share custom edits with team members directly from the IDE.
+
+- Integrate with version control systems (VCS) to highlight edits that have been shared or are new from collaborators.
+- Implement a feature to share custom edits with team members directly from the IDE.
 
 3. **Analytics and Insights:**
-  - Provide analytics on the user's editing patterns, suggesting optimizations and frequently used edits for quick access.
+
+- Provide analytics on the user's editing patterns, suggesting optimizations and frequently used edits for quick access.
 
 ##### Phase 4: Advanced Features and Customization
 
 1. **Macro Recording:**
-  - Allow users to record sequences of edits as macros that can be named, saved, and executed with a single action.
+
+- Allow users to record sequences of edits as macros that can be named, saved, and executed with a single action.
 
 2. **AI-Assisted Code Edits:**
-  - Integrate AI-based suggestions for code edits based on the context and the user's past editing patterns.
+
+- Integrate AI-based suggestions for code edits based on the context and the user's past editing patterns.
 
 3. **Plugin Ecosystem:**
-  - Develop an API that allows third-party plugins to add custom edit actions and integrations, enhancing the tool's capabilities.
+
+- Develop an API that allows third-party plugins to add custom edit actions and integrations, enhancing the tool's capabilities.
 
 ##### Phase 5: Performance Optimization and Scalability
 
 1. **Performance Tuning:**
-  - Conduct thorough performance testing and optimization to ensure the tool remains responsive even with large histories or complex edits.
+
+- Conduct thorough performance testing and optimization to ensure the tool remains responsive even with large histories or complex edits.
 
 2. **Scalability Enhancements:**
-  - Implement scalable storage and retrieval mechanisms for edit histories to support enterprise-level usage and collaboration.
+
+- Implement scalable storage and retrieval mechanisms for edit histories to support enterprise-level usage and collaboration.
 
 ##### Conclusion
 
@@ -4434,53 +4556,67 @@ ensuring that the project evolves in a way that meets user needs and leverages n
 #### Short-Term Roadmap (0-6 Months)
 
 1. **Security Enhancements**
-  - Implement HTTPS support to ensure secure communication.
-  - Add basic authentication and authorization for accessing the server and its applications.
+
+- Implement HTTPS support to ensure secure communication.
+- Add basic authentication and authorization for accessing the server and its applications.
 
 2. **Performance Optimization**
-  - Analyze current performance bottlenecks and address them.
-  - Implement connection pooling for WebSocket connections to improve scalability.
+
+- Analyze current performance bottlenecks and address them.
+- Implement connection pooling for WebSocket connections to improve scalability.
 
 3. **Error Handling and Logging**
-  - Enhance error handling to provide more informative error messages to clients.
-  - Expand logging capabilities to include more detailed server and application-level events.
+
+- Enhance error handling to provide more informative error messages to clients.
+- Expand logging capabilities to include more detailed server and application-level events.
 
 4. **API Documentation**
-  - Create comprehensive API documentation to facilitate easier integration and usage by developers.
+
+- Create comprehensive API documentation to facilitate easier integration and usage by developers.
 
 5. **Unit and Integration Testing**
-  - Develop a suite of unit and integration tests to ensure stability and reliability of the server and its applications.
+
+- Develop a suite of unit and integration tests to ensure stability and reliability of the server and its applications.
 
 #### Mid-Term Roadmap (6-12 Months)
 
 1. **Plugin Architecture**
-  - Develop a plugin architecture to allow third-party developers to extend the server's functionality with custom handlers and services.
+
+- Develop a plugin architecture to allow third-party developers to extend the server's functionality with custom handlers and services.
 
 2. **UI Improvements**
-  - Enhance the administrative UI for managing server settings, monitoring performance, and viewing logs.
+
+- Enhance the administrative UI for managing server settings, monitoring performance, and viewing logs.
 
 3. **Database Integration**
-  - Integrate a database system for persistent storage of chat logs, user accounts, and application settings.
+
+- Integrate a database system for persistent storage of chat logs, user accounts, and application settings.
 
 4. **Distributed Deployment**
-  - Enable the server to be deployed in a distributed environment, supporting load balancing and failover capabilities.
+
+- Enable the server to be deployed in a distributed environment, supporting load balancing and failover capabilities.
 
 #### Long-Term Roadmap (1-2 Years)
 
 1. **Machine Learning Integration**
-  - Incorporate machine learning algorithms for chat moderation, user behavior analysis, and personalized user experiences.
+
+- Incorporate machine learning algorithms for chat moderation, user behavior analysis, and personalized user experiences.
 
 2. **Internationalization and Localization**
-  - Support multiple languages in the server UI and chat applications to cater to a global audience.
+
+- Support multiple languages in the server UI and chat applications to cater to a global audience.
 
 3. **Blockchain Integration**
-  - Explore the integration of blockchain technology for secure and verifiable transactions within chat applications.
+
+- Explore the integration of blockchain technology for secure and verifiable transactions within chat applications.
 
 4. **IoT Integration**
-  - Develop capabilities for integrating with IoT devices, enabling new types of interactive applications.
+
+- Develop capabilities for integrating with IoT devices, enabling new types of interactive applications.
 
 5. **Community and Ecosystem Development**
-  - Foster a developer community around the server platform, encouraging the sharing of plugins, applications, and best practices.
+
+- Foster a developer community around the server platform, encouraging the sharing of plugins, applications, and best practices.
 
 This roadmap is a living document and should be revisited and revised regularly based on user feedback, technological advancements, and strategic priorities.
 
@@ -4494,76 +4630,96 @@ technologies. The roadmap below outlines the planned features and improvements t
 ##### Phase 1: Core Functionality and Stability
 
 1. **Initial Setup and Integration**
-  - Ensure seamless integration with IntelliJ IDE.
-  - Verify the action is correctly triggered from the IDE with all necessary context.
+
+- Ensure seamless integration with IntelliJ IDE.
+- Verify the action is correctly triggered from the IDE with all necessary context.
 
 2. **Session Management**
-  - Improve session handling to ensure robustness, including error handling and session recovery.
+
+- Improve session handling to ensure robustness, including error handling and session recovery.
 
 3. **UI and UX Enhancements**
-  - Develop a more intuitive and responsive UI for the coding agent within the IDE and the browser.
-  - Implement feedback mechanisms for users to report issues or suggest improvements directly from the UI.
+
+- Develop a more intuitive and responsive UI for the coding agent within the IDE and the browser.
+- Implement feedback mechanisms for users to report issues or suggest improvements directly from the UI.
 
 4. **Agent Communication**
-  - Enhance the efficiency and reliability of communication between the IDE, the server, and the coding agent.
+
+- Enhance the efficiency and reliability of communication between the IDE, the server, and the coding agent.
 
 5. **Security Improvements**
-  - Implement comprehensive security measures to protect user data and code.
-  - Ensure all communications are encrypted and sessions are securely managed.
+
+- Implement comprehensive security measures to protect user data and code.
+- Ensure all communications are encrypted and sessions are securely managed.
 
 ##### Phase 2: Advanced Features and Integration
 
 1. **AI-Powered Code Suggestions**
-  - Integrate advanced AI models to provide context-aware code suggestions and improvements.
-  - Allow users to customize the AI's behavior and response style.
+
+- Integrate advanced AI models to provide context-aware code suggestions and improvements.
+- Allow users to customize the AI's behavior and response style.
 
 2. **Collaborative Coding Sessions**
-  - Enable multiple users to join a coding session, allowing for real-time collaboration and code review.
+
+- Enable multiple users to join a coding session, allowing for real-time collaboration and code review.
 
 3. **Cross-Platform Support**
-  - Ensure the coding agent and associated tools work seamlessly across different operating systems.
-  - Explore the possibility of supporting other IDEs or code editors.
+
+- Ensure the coding agent and associated tools work seamlessly across different operating systems.
+- Explore the possibility of supporting other IDEs or code editors.
 
 4. **Performance Optimization**
-  - Optimize the performance of the system to handle large projects and files without significant lag or resource consumption.
+
+- Optimize the performance of the system to handle large projects and files without significant lag or resource consumption.
 
 5. **Extensibility**
-  - Develop a plugin system to allow third-party extensions and integrations.
-  - Encourage community contributions by making the project open-source.
+
+- Develop a plugin system to allow third-party extensions and integrations.
+- Encourage community contributions by making the project open-source.
 
 ##### Phase 3: Intelligence and Learning
 
 1. **Contextual Learning**
-  - Implement machine learning algorithms that allow the coding agent to learn from the user's coding style and preferences.
+
+- Implement machine learning algorithms that allow the coding agent to learn from the user's coding style and preferences.
 
 2. **Automated Code Refactoring**
-  - Introduce features for automated code refactoring based on best practices and user-defined rules.
+
+- Introduce features for automated code refactoring based on best practices and user-defined rules.
 
 3. **Code Quality Analysis**
-  - Integrate code quality and security analysis tools directly into the coding session, providing real-time feedback and suggestions.
+
+- Integrate code quality and security analysis tools directly into the coding session, providing real-time feedback and suggestions.
 
 4. **Personalized Learning and Assistance**
-  - Develop personalized learning paths for users to improve their coding skills, based on their interaction with the coding agent.
+
+- Develop personalized learning paths for users to improve their coding skills, based on their interaction with the coding agent.
 
 5. **Advanced Debugging Assistance**
-  - Provide AI-powered debugging assistance, offering suggestions for fixing common errors and performance issues.
+
+- Provide AI-powered debugging assistance, offering suggestions for fixing common errors and performance issues.
 
 ##### Phase 4: Community and Ecosystem
 
 1. **Community Platform**
-  - Launch a community platform for users to share their experiences, code snippets, and custom extensions.
+
+- Launch a community platform for users to share their experiences, code snippets, and custom extensions.
 
 2. **Marketplace for Extensions**
-  - Create a marketplace for third-party extensions, themes, and tools for the coding agent.
+
+- Create a marketplace for third-party extensions, themes, and tools for the coding agent.
 
 3. **Educational Content and Tutorials**
-  - Collaborate with educators and content creators to provide tutorials, courses, and challenges that leverage the coding agent.
+
+- Collaborate with educators and content creators to provide tutorials, courses, and challenges that leverage the coding agent.
 
 4. **Integration with Other Tools and Services**
-  - Develop integrations with version control systems, continuous integration tools, and cloud platforms.
+
+- Develop integrations with version control systems, continuous integration tools, and cloud platforms.
 
 5. **Feedback Loop and Continuous Improvement**
-  - Establish a continuous feedback loop with the community to guide future development priorities and improvements.
+
+- Establish a continuous feedback loop with the community to guide future development priorities and improvements.
 
 This roadmap is subject to change based on user feedback, technological advancements, and strategic priorities. The goal is to create a powerful, user-friendly
 coding assistant that enhances productivity and learning for developers of all skill levels.
@@ -5165,58 +5321,70 @@ the planned features and improvements to enhance its functionality, usability, a
 ##### Phase 1: Core Functionality Enhancements
 
 1. **Improved Content Transformation**
-  - Implement advanced parsing and transformation logic to handle a wider range of programming languages and documentation styles.
-  - Integrate machine learning models for better understanding and summarization of code.
+
+- Implement advanced parsing and transformation logic to handle a wider range of programming languages and documentation styles.
+- Integrate machine learning models for better understanding and summarization of code.
 
 2. **User Interface Improvements**
-  - Enhance the settings UI to include more customization options such as selecting specific file types or directories for documentation compilation.
-  - Provide real-time previews of the generated documentation.
+
+- Enhance the settings UI to include more customization options such as selecting specific file types or directories for documentation compilation.
+- Provide real-time previews of the generated documentation.
 
 3. **Performance Optimization**
-  - Optimize the file processing and content transformation pipeline for faster execution.
-  - Implement asynchronous processing to prevent UI freezing during documentation compilation.
+
+- Optimize the file processing and content transformation pipeline for faster execution.
+- Implement asynchronous processing to prevent UI freezing during documentation compilation.
 
 ##### Phase 2: Integration and Compatibility
 
 1. **Version Control System Integration**
-  - Add support for automatically fetching and updating documentation based on version control system events (e.g., post-commit hooks).
-  - Implement functionality to push generated documentation to specified branches or repositories.
+
+- Add support for automatically fetching and updating documentation based on version control system events (e.g., post-commit hooks).
+- Implement functionality to push generated documentation to specified branches or repositories.
 
 2. **Support for Additional IDEs**
-  - Extend compatibility to other popular IDEs beyond IntelliJ, such as VS Code and Eclipse.
-  - Ensure seamless integration with the build tools and plugins commonly used in these environments.
+
+- Extend compatibility to other popular IDEs beyond IntelliJ, such as VS Code and Eclipse.
+- Ensure seamless integration with the build tools and plugins commonly used in these environments.
 
 3. **Customizable Templates**
-  - Allow users to define custom templates for the generated documentation to match their project's style guidelines or preferences.
-  - Support for importing and exporting templates for easy sharing within teams.
+
+- Allow users to define custom templates for the generated documentation to match their project's style guidelines or preferences.
+- Support for importing and exporting templates for easy sharing within teams.
 
 ##### Phase 3: Advanced Features and Collaboration Tools
 
 1. **Collaborative Editing**
-  - Integrate real-time collaborative editing features for teams to work on documentation together.
-  - Implement versioning and change tracking for documentation files.
+
+- Integrate real-time collaborative editing features for teams to work on documentation together.
+- Implement versioning and change tracking for documentation files.
 
 2. **Automated Documentation Review**
-  - Develop a feature for automated suggestions on improving documentation quality, such as identifying unclear descriptions or missing information.
-  - Integrate with code review tools to include documentation quality as part of the code review process.
+
+- Develop a feature for automated suggestions on improving documentation quality, such as identifying unclear descriptions or missing information.
+- Integrate with code review tools to include documentation quality as part of the code review process.
 
 3. **Documentation Analytics**
-  - Provide analytics on documentation usage, such as frequently accessed sections or outdated pages.
-  - Implement feedback mechanisms for readers to suggest improvements or report issues with the documentation.
+
+- Provide analytics on documentation usage, such as frequently accessed sections or outdated pages.
+- Implement feedback mechanisms for readers to suggest improvements or report issues with the documentation.
 
 ##### Phase 4: Scalability and Deployment
 
 1. **Cloud Integration**
-  - Enable cloud-based processing for heavy documentation compilation tasks to reduce local resource consumption.
-  - Support for storing and serving compiled documentation from cloud storage solutions.
+
+- Enable cloud-based processing for heavy documentation compilation tasks to reduce local resource consumption.
+- Support for storing and serving compiled documentation from cloud storage solutions.
 
 2. **Continuous Integration/Continuous Deployment (CI/CD) Integration**
-  - Develop plugins or extensions for popular CI/CD tools to automate documentation compilation and deployment as part of the software release process.
-  - Implement checks to ensure documentation is up-to-date with the codebase before deployment.
+
+- Develop plugins or extensions for popular CI/CD tools to automate documentation compilation and deployment as part of the software release process.
+- Implement checks to ensure documentation is up-to-date with the codebase before deployment.
 
 3. **Enterprise Features**
-  - Add support for Single Sign-On (SSO) and role-based access control for large teams and organizations.
-  - Implement audit logs and compliance features for enterprise usage.
+
+- Add support for Single Sign-On (SSO) and role-based access control for large teams and organizations.
+- Implement audit logs and compliance features for enterprise usage.
 
 This roadmap is subject to change based on user feedback and technological advancements. The goal is to make `GenerateDocumentationAction` a comprehensive tool
 that simplifies the process of generating and maintaining high-quality documentation for software projects.
@@ -5290,64 +5458,77 @@ quality and performance.
 ##### Phase 1: Initial Setup and Core Functionality
 
 1. **Codebase Setup**
-  - Set up the project repository and define the initial project structure.
-  - Establish coding standards and guidelines for contributors.
+
+- Set up the project repository and define the initial project structure.
+- Establish coding standards and guidelines for contributors.
 
 2. **Core Functionality Development**
-  - Implement the base `MarkdownImplementActionGroup` class to manage action groups.
-  - Develop the `MarkdownImplementAction` class to handle the conversion of selected text into different programming languages within Markdown code blocks.
-  - Integrate a list of supported programming languages for Markdown code blocks.
+
+- Implement the base `MarkdownImplementActionGroup` class to manage action groups.
+- Develop the `MarkdownImplementAction` class to handle the conversion of selected text into different programming languages within Markdown code blocks.
+- Integrate a list of supported programming languages for Markdown code blocks.
 
 3. **Integration with Conversion API**
-  - Establish a connection with the `ConversionAPI` to convert selected text into the specified programming language code.
-  - Implement error handling and retries for API requests.
+
+- Establish a connection with the `ConversionAPI` to convert selected text into the specified programming language code.
+- Implement error handling and retries for API requests.
 
 4. **User Interface and Experience**
-  - Enhance the UI to provide a seamless experience for users when selecting text and converting it into code blocks.
-  - Implement feedback mechanisms for successful and unsuccessful conversions.
+
+- Enhance the UI to provide a seamless experience for users when selecting text and converting it into code blocks.
+- Implement feedback mechanisms for successful and unsuccessful conversions.
 
 ##### Phase 2: Expansion and Enhancement
 
 1. **Support for Additional Languages**
-  - Evaluate and add more programming languages to the supported languages list based on user feedback and demand.
-  - Ensure the conversion accuracy and quality for newly supported languages.
+
+- Evaluate and add more programming languages to the supported languages list based on user feedback and demand.
+- Ensure the conversion accuracy and quality for newly supported languages.
 
 2. **Performance Optimization**
-  - Optimize the performance of the conversion process to handle large selections of text efficiently.
-  - Reduce the latency in fetching conversion results from the `ConversionAPI`.
+
+- Optimize the performance of the conversion process to handle large selections of text efficiently.
+- Reduce the latency in fetching conversion results from the `ConversionAPI`.
 
 3. **Advanced Configuration Options**
-  - Allow users to customize the behavior of the Markdown Implement Action Group through settings, such as default language preferences and conversion
-    temperature.
-  - Implement project-specific settings to cater to different project requirements.
+
+- Allow users to customize the behavior of the Markdown Implement Action Group through settings, such as default language preferences and conversion
+  temperature.
+- Implement project-specific settings to cater to different project requirements.
 
 ##### Phase 3: User Feedback and Continuous Improvement
 
 1. **User Feedback Collection**
-  - Implement mechanisms to collect user feedback directly within the plugin.
-  - Analyze feedback to identify common issues, requested features, and areas for improvement.
+
+- Implement mechanisms to collect user feedback directly within the plugin.
+- Analyze feedback to identify common issues, requested features, and areas for improvement.
 
 2. **Feature Enhancements Based on Feedback**
-  - Prioritize and implement feature enhancements and improvements based on user feedback.
-  - Continuously monitor the impact of changes on user satisfaction and plugin performance.
+
+- Prioritize and implement feature enhancements and improvements based on user feedback.
+- Continuously monitor the impact of changes on user satisfaction and plugin performance.
 
 3. **Documentation and Support**
-  - Develop comprehensive documentation covering setup, usage, and troubleshooting.
-  - Establish a support channel for users to report issues and seek assistance.
+
+- Develop comprehensive documentation covering setup, usage, and troubleshooting.
+- Establish a support channel for users to report issues and seek assistance.
 
 ##### Phase 4: Future Directions
 
 1. **AI-Assisted Code Generation**
-  - Explore the integration of AI-based code generation features to assist users in creating code blocks from natural language descriptions.
-  - Evaluate the feasibility and user demand for such features.
+
+- Explore the integration of AI-based code generation features to assist users in creating code blocks from natural language descriptions.
+- Evaluate the feasibility and user demand for such features.
 
 2. **Collaboration and Sharing**
-  - Implement features to facilitate the sharing of converted code blocks among team members or within the developer community.
-  - Explore integration with version control systems for seamless collaboration.
+
+- Implement features to facilitate the sharing of converted code blocks among team members or within the developer community.
+- Explore integration with version control systems for seamless collaboration.
 
 3. **Plugin Ecosystem Integration**
-  - Investigate opportunities for integrating the Markdown Implement Action Group with other plugins and tools within the developer ecosystem.
-  - Enhance interoperability and data exchange capabilities to enrich the user experience.
+
+- Investigate opportunities for integrating the Markdown Implement Action Group with other plugins and tools within the developer ecosystem.
+- Enhance interoperability and data exchange capabilities to enrich the user experience.
 
 This roadmap is subject to change based on user feedback, technological advancements, and strategic priorities. The development team is committed to delivering
 high-quality features that add value to the user experience while maintaining the flexibility to adapt to emerging needs and opportunities.
@@ -5361,46 +5542,55 @@ and long-term goals, each with specific features and improvements to be implemen
 #### Short-Term Goals (1-3 Months)
 
 1. **Refinement of Selection Mechanisms**
-  - Improve the `retarget` method to handle edge cases more gracefully, ensuring selections are always valid and meaningful.
-  - Enhance the `defaultSelection` and `editSelection` methods to support more complex selection scenarios, such as code blocks or specific syntax patterns.
+
+- Improve the `retarget` method to handle edge cases more gracefully, ensuring selections are always valid and meaningful.
+- Enhance the `defaultSelection` and `editSelection` methods to support more complex selection scenarios, such as code blocks or specific syntax patterns.
 
 2. **UI Improvements**
-  - Develop a more intuitive UI for configuring the action settings, making it easier for users to specify their preferences without diving into code.
-  - Implement visual feedback in the editor for the selected range, especially when the selection is automatically adjusted by the action.
+
+- Develop a more intuitive UI for configuring the action settings, making it easier for users to specify their preferences without diving into code.
+- Implement visual feedback in the editor for the selected range, especially when the selection is automatically adjusted by the action.
 
 3. **Performance Optimization**
-  - Profile the action's performance, especially in large files, and optimize the code to reduce latency.
-  - Ensure that the action does not block the UI thread, providing a smooth user experience.
+
+- Profile the action's performance, especially in large files, and optimize the code to reduce latency.
+- Ensure that the action does not block the UI thread, providing a smooth user experience.
 
 #### Mid-Term Goals (4-6 Months)
 
 1. **Language Support Expansion**
-  - Extend the `isLanguageSupported` method to include more programming languages, broadening the utility of the action across different types of projects.
-  - Implement language-specific selection strategies to handle unique syntax and structure efficiently.
+
+- Extend the `isLanguageSupported` method to include more programming languages, broadening the utility of the action across different types of projects.
+- Implement language-specific selection strategies to handle unique syntax and structure efficiently.
 
 2. **Context-Aware Enhancements**
-  - Improve the `contextRanges` method to identify and utilize more detailed context information, enabling smarter selection adjustments based on the
-    surrounding code.
-  - Develop a feature to suggest actions or refactorings based on the selected code and its context.
+
+- Improve the `contextRanges` method to identify and utilize more detailed context information, enabling smarter selection adjustments based on the
+  surrounding code.
+- Develop a feature to suggest actions or refactorings based on the selected code and its context.
 
 3. **Integration with Other Tools**
-  - Create APIs or hooks that allow other plugins or tools to interact with or extend the `SelectionAction` functionalities.
-  - Explore integration possibilities with version control systems to facilitate actions like partial commits or code reviews.
+
+- Create APIs or hooks that allow other plugins or tools to interact with or extend the `SelectionAction` functionalities.
+- Explore integration possibilities with version control systems to facilitate actions like partial commits or code reviews.
 
 #### Long-Term Goals (7-12 Months)
 
 1. **Machine Learning Assisted Selections**
-  - Investigate the use of machine learning models to predict and adjust selections based on user behavior and common patterns in code structure.
-  - Implement a feedback loop where the action learns from user adjustments to improve its selection predictions over time.
+
+- Investigate the use of machine learning models to predict and adjust selections based on user behavior and common patterns in code structure.
+- Implement a feedback loop where the action learns from user adjustments to improve its selection predictions over time.
 
 2. **Collaborative Features**
-  - Develop features that allow teams to share and synchronize selection actions or configurations, promoting consistency across a project or organization.
-  - Explore the possibility of real-time collaboration features, where selections can be shared or mirrored between users in a pair programming scenario.
+
+- Develop features that allow teams to share and synchronize selection actions or configurations, promoting consistency across a project or organization.
+- Explore the possibility of real-time collaboration features, where selections can be shared or mirrored between users in a pair programming scenario.
 
 3. **Extensive Customization and Scripting Support**
-  - Allow users to write custom scripts or plugins that can modify or extend the selection logic, providing a powerful tool for developers to tailor the action
-    to their specific needs.
-  - Implement a sandbox environment where users can safely test and debug their custom scripts.
+
+- Allow users to write custom scripts or plugins that can modify or extend the selection logic, providing a powerful tool for developers to tailor the action
+  to their specific needs.
+- Implement a sandbox environment where users can safely test and debug their custom scripts.
 
 #### Continuous Improvement
 
@@ -5475,48 +5665,58 @@ medium-term, and long-term goals.
 #### Short-Term Goals (1-3 Months)
 
 1. **UI Improvements:**
-  - Enhance table UI responsiveness and aesthetics.
-  - Implement better validation feedback for user inputs in the clone and edit dialogs.
+
+- Enhance table UI responsiveness and aesthetics.
+- Implement better validation feedback for user inputs in the clone and edit dialogs.
 
 2. **Performance Optimization:**
-  - Optimize the read and write operations to handle larger datasets without performance degradation.
-  - Implement lazy loading for action settings if the dataset becomes significantly large.
+
+- Optimize the read and write operations to handle larger datasets without performance degradation.
+- Implement lazy loading for action settings if the dataset becomes significantly large.
 
 3. **Bug Fixes:**
-  - Address any known bugs related to the action table's CRUD operations.
-  - Ensure compatibility with the latest version of the IntelliJ platform.
+
+- Address any known bugs related to the action table's CRUD operations.
+- Ensure compatibility with the latest version of the IntelliJ platform.
 
 #### Medium-Term Goals (4-6 Months)
 
 1. **Feature Expansion:**
-  - Introduce a search/filter feature to easily locate actions within the table.
-  - Add multi-select capabilities to clone and remove actions in batches.
+
+- Introduce a search/filter feature to easily locate actions within the table.
+- Add multi-select capabilities to clone and remove actions in batches.
 
 2. **Integration Enhancements:**
-  - Develop an API for other plugins to interact with the action table, allowing for extensibility.
-  - Implement a mechanism to automatically update action settings from an external source or repository.
+
+- Develop an API for other plugins to interact with the action table, allowing for extensibility.
+- Implement a mechanism to automatically update action settings from an external source or repository.
 
 3. **User Experience:**
-  - Add a preview feature to view the outcome of an action before applying it.
-  - Implement undo/redo functionality for action modifications.
+
+- Add a preview feature to view the outcome of an action before applying it.
+- Implement undo/redo functionality for action modifications.
 
 #### Long-Term Goals (7-12 Months)
 
 1. **Scalability:**
-  - Design and implement a scalable backend (if applicable) to store action settings, supporting collaboration among multiple users.
-  - Explore the possibility of cloud-based synchronization of action settings across different installations.
+
+- Design and implement a scalable backend (if applicable) to store action settings, supporting collaboration among multiple users.
+- Explore the possibility of cloud-based synchronization of action settings across different installations.
 
 2. **Advanced Customization:**
-  - Allow users to create custom action categories for better organization.
-  - Implement a scripting interface for users to define custom actions or extend existing ones with custom logic.
+
+- Allow users to create custom action categories for better organization.
+- Implement a scripting interface for users to define custom actions or extend existing ones with custom logic.
 
 3. **Community and Collaboration:**
-  - Develop a community portal where users can share and discover custom actions created by others.
-  - Integrate with version control systems to enable versioning and sharing of action configurations within teams.
+
+- Develop a community portal where users can share and discover custom actions created by others.
+- Integrate with version control systems to enable versioning and sharing of action configurations within teams.
 
 4. **Analytics and Insights:**
-  - Introduce analytics to track the usage and performance of actions, providing insights to users for optimization.
-  - Implement feedback mechanisms within the plugin to gather user suggestions and issues for continuous improvement.
+
+- Introduce analytics to track the usage and performance of actions, providing insights to users for optimization.
+- Implement feedback mechanisms within the plugin to gather user suggestions and issues for continuous improvement.
 
 This roadmap aims to progressively enhance the `ActionTable` component's functionality, usability, and integration capabilities, ultimately enriching the user
 experience and fostering a collaborative community around the tool.
@@ -5592,9 +5792,11 @@ steps from initial planning to the final release and maintenance.
 
 4. **Setup Development Environment**: Ensure all developers have the necessary tools and access to resources required for development.
 5. **Implementation**: Start coding the new feature based on the design specifications. This includes:
-  - Enhancing the `read` and `write` methods to support additional settings.
-  - Improving the `newComponent` and `newSettings` methods for better initialization.
-  - Adding new UI components or functionalities as needed.
+
+- Enhancing the `read` and `write` methods to support additional settings.
+- Improving the `newComponent` and `newSettings` methods for better initialization.
+- Adding new UI components or functionalities as needed.
+
 6. **Code Review**: Conduct regular code reviews to ensure code quality and adherence to project standards.
 
 #### Phase 3: Testing
@@ -6214,44 +6416,62 @@ improvements and new features aimed at increasing usability, flexibility, and ef
 #### Phase 1: Core Improvements
 
 1. **UI Responsiveness Enhancements**
-  - Optimize UI rendering and update mechanisms to ensure smooth user interactions, especially for complex settings.
+
+- Optimize UI rendering and update mechanisms to ensure smooth user interactions, especially for complex settings.
+
 2. **Dynamic UI Components**
-  - Implement support for dynamically adding or removing components based on certain conditions or user actions.
+
+- Implement support for dynamically adding or removing components based on certain conditions or user actions.
 
 #### Phase 2: Usability Enhancements
 
 3. **User Feedback Mechanisms**
-  - Integrate user feedback options directly within the UI settings panel, allowing users to report issues or suggest improvements.
+
+- Integrate user feedback options directly within the UI settings panel, allowing users to report issues or suggest improvements.
+
 4. **Search and Filter Capabilities**
-  - Add search and filter functionalities to allow users to easily find specific settings.
+
+- Add search and filter functionalities to allow users to easily find specific settings.
 
 #### Phase 3: Advanced Configuration
 
 5. **Customizable UI Themes**
-  - Allow users to customize the appearance of the settings UI, including themes and color schemes.
+
+- Allow users to customize the appearance of the settings UI, including themes and color schemes.
+
 6. **Profile Management**
-  - Enable users to create, save, and switch between multiple settings profiles for different workflows or projects.
+
+- Enable users to create, save, and switch between multiple settings profiles for different workflows or projects.
 
 #### Phase 4: Integration and Expansion
 
 7. **External Configuration Import/Export**
-  - Develop features for importing and exporting settings from external sources, facilitating easy sharing and backup.
+
+- Develop features for importing and exporting settings from external sources, facilitating easy sharing and backup.
+
 8. **Plugin Ecosystem Support**
-  - Create an API or framework that allows other plugin developers to easily integrate their settings UI with the AICoder settings panel.
+
+- Create an API or framework that allows other plugin developers to easily integrate their settings UI with the AICoder settings panel.
 
 #### Phase 5: Performance and Security
 
 9. **Performance Optimization**
-  - Continuously monitor and optimize the performance of the settings UI, ensuring it remains fast and responsive as new features are added.
+
+- Continuously monitor and optimize the performance of the settings UI, ensuring it remains fast and responsive as new features are added.
+
 10. **Security Enhancements**
-  - Implement security measures to protect user settings, especially when importing or exporting configurations.
+
+- Implement security measures to protect user settings, especially when importing or exporting configurations.
 
 #### Phase 6: Documentation and Community Engagement
 
 11. **Comprehensive Documentation**
-  - Provide detailed documentation covering all aspects of the UIAdapter class and its usage, including examples and best practices.
+
+- Provide detailed documentation covering all aspects of the UIAdapter class and its usage, including examples and best practices.
+
 12. **Community Feedback Loop**
-  - Establish a system for gathering and incorporating community feedback into the development roadmap, ensuring the tool evolves in line with user needs.
+
+- Establish a system for gathering and incorporating community feedback into the development roadmap, ensuring the tool evolves in line with user needs.
 
 This roadmap is designed to be iterative, with each phase building upon the successes and lessons learned from the previous ones. By following this roadmap, the
 AICoder plugin can significantly enhance its UI settings management capabilities, providing a more robust, user-friendly, and flexible tool for developers.
@@ -6330,43 +6550,52 @@ enhancing user experience, functionality, and integration capabilities.
 #### Short-Term Goals (0-3 Months)
 
 1. **Bug Fixes and Stability Improvements:**
-  - Address any reported bugs related to the temperature slider or the feedback links.
-  - Ensure compatibility with the latest IntelliJ IDEA versions.
+
+- Address any reported bugs related to the temperature slider or the feedback links.
+- Ensure compatibility with the latest IntelliJ IDEA versions.
 
 2. **UI/UX Enhancements:**
-  - Improve the visual design of the temperature slider for better readability and accessibility.
-  - Add tooltips to provide users with more context about the temperature control and feedback options.
+
+- Improve the visual design of the temperature slider for better readability and accessibility.
+- Add tooltips to provide users with more context about the temperature control and feedback options.
 
 3. **Performance Optimization:**
-  - Optimize the widget's performance to ensure it does not impact the IDE's startup time or overall responsiveness.
+
+- Optimize the widget's performance to ensure it does not impact the IDE's startup time or overall responsiveness.
 
 #### Mid-Term Goals (4-6 Months)
 
 1. **Configuration Options:**
-  - Allow users to configure the temperature range and default value via the plugin settings.
-  - Provide options to customize the appearance of the widget in the status bar.
+
+- Allow users to configure the temperature range and default value via the plugin settings.
+- Provide options to customize the appearance of the widget in the status bar.
 
 2. **Advanced Temperature Control Features:**
-  - Introduce a logarithmic scale option for the temperature slider for finer control at lower temperatures.
-  - Implement a feature to remember the last set temperature across IDE restarts.
+
+- Introduce a logarithmic scale option for the temperature slider for finer control at lower temperatures.
+- Implement a feature to remember the last set temperature across IDE restarts.
 
 3. **Feedback Mechanism Enhancement:**
-  - Add a feature to allow users to submit feedback directly from the IDE, including feature requests and bug reports.
-  - Integrate a system to notify users about the status of their submitted feedback.
+
+- Add a feature to allow users to submit feedback directly from the IDE, including feature requests and bug reports.
+- Integrate a system to notify users about the status of their submitted feedback.
 
 #### Long-Term Goals (7-12 Months)
 
 1. **Integration with AI Services:**
-  - Explore the possibility of integrating with external AI coding assistants and services to adjust their behavior based on the temperature setting.
-  - Implement security measures to safely handle API keys and user data.
+
+- Explore the possibility of integrating with external AI coding assistants and services to adjust their behavior based on the temperature setting.
+- Implement security measures to safely handle API keys and user data.
 
 2. **Community and Collaboration Features:**
-  - Develop a community-driven platform within the plugin for users to share their temperature presets for different programming tasks and languages.
-  - Allow users to rate and comment on shared presets, fostering a collaborative environment.
+
+- Develop a community-driven platform within the plugin for users to share their temperature presets for different programming tasks and languages.
+- Allow users to rate and comment on shared presets, fostering a collaborative environment.
 
 3. **Educational Content and Tutorials:**
-  - Provide users with tutorials and guides on how to effectively use the temperature control for various coding tasks.
-  - Offer insights and tips on optimizing AI-assisted coding based on the temperature settings.
+
+- Provide users with tutorials and guides on how to effectively use the temperature control for various coding tasks.
+- Offer insights and tips on optimizing AI-assisted coding based on the temperature settings.
 
 #### Continuous Improvement:
 
@@ -6442,68 +6671,86 @@ roadmap outlines the planned features and improvements to enhance its functional
 ##### Phase 1: Core Functionality Enhancements
 
 1. **Improved Code Parsing and Highlighting**
-  - Implement advanced code parsing to better understand the structure and semantics of the provided code snippet.
-  - Enhance syntax highlighting based on the `language` parameter to support a wider range of programming languages.
+
+- Implement advanced code parsing to better understand the structure and semantics of the provided code snippet.
+- Enhance syntax highlighting based on the `language` parameter to support a wider range of programming languages.
 
 2. **Contextual Help and Suggestions**
-  - Develop a feature to provide contextual help and suggestions based on the current cursor position or selected code within the chat interface.
+
+- Develop a feature to provide contextual help and suggestions based on the current cursor position or selected code within the chat interface.
 
 3. **Integration with Code Repositories**
-  - Enable linking with popular code repositories (e.g., GitHub, GitLab) to directly fetch and update code snippets.
+
+- Enable linking with popular code repositories (e.g., GitHub, GitLab) to directly fetch and update code snippets.
 
 4. **Custom Model Training**
-  - Explore the possibility of training the OpenAITextModel on domain-specific codebases to provide more accurate and relevant assistance.
+
+- Explore the possibility of training the OpenAITextModel on domain-specific codebases to provide more accurate and relevant assistance.
 
 ##### Phase 2: User Experience Improvements
 
 1. **Interactive Code Editing**
-  - Allow users to edit code directly within the chat interface and receive real-time feedback and suggestions from the AI.
+
+- Allow users to edit code directly within the chat interface and receive real-time feedback and suggestions from the AI.
 
 2. **Multi-Language Support**
-  - Extend support for additional programming languages based on user demand and feedback.
+
+- Extend support for additional programming languages based on user demand and feedback.
 
 3. **User Customization Options**
-  - Provide users with options to customize the appearance and behavior of the chat interface, including theme, font size, and syntax highlighting preferences.
+
+- Provide users with options to customize the appearance and behavior of the chat interface, including theme, font size, and syntax highlighting preferences.
 
 4. **Accessibility Enhancements**
-  - Implement accessibility features to ensure the chat interface is usable by people with disabilities, including keyboard navigation and screen reader
-    support.
+
+- Implement accessibility features to ensure the chat interface is usable by people with disabilities, including keyboard navigation and screen reader
+  support.
 
 ##### Phase 3: Collaboration and Community Features
 
 1. **Live Collaboration Mode**
-  - Introduce a feature for multiple users to collaborate on the same code snippet in real-time within the chat interface.
+
+- Introduce a feature for multiple users to collaborate on the same code snippet in real-time within the chat interface.
 
 2. **Community-Driven Q&A**
-  - Develop a community-driven Q&A feature where users can ask and answer questions related to the code snippet, with the best responses highlighted by the AI.
+
+- Develop a community-driven Q&A feature where users can ask and answer questions related to the code snippet, with the best responses highlighted by the AI.
 
 3. **Feedback and Rating System**
-  - Implement a feedback and rating system for users to rate the helpfulness of AI-generated responses, which can be used to improve response quality over time.
+
+- Implement a feedback and rating system for users to rate the helpfulness of AI-generated responses, which can be used to improve response quality over time.
 
 4. **Integration with Development Environments**
-  - Develop plugins or extensions to integrate the chat feature directly into popular Integrated Development Environments (IDEs) and code editors.
+
+- Develop plugins or extensions to integrate the chat feature directly into popular Integrated Development Environments (IDEs) and code editors.
 
 ##### Phase 4: Security and Compliance
 
 1. **Code Privacy and Security**
-  - Implement robust security measures to ensure that code shared within the chat interface is kept private and secure.
+
+- Implement robust security measures to ensure that code shared within the chat interface is kept private and secure.
 
 2. **Compliance and Ethics Guidelines**
-  - Develop and enforce guidelines to ensure the ethical use of the AI, including preventing the generation of malicious code.
+
+- Develop and enforce guidelines to ensure the ethical use of the AI, including preventing the generation of malicious code.
 
 3. **Audit Trails and Monitoring**
-  - Introduce audit trails and monitoring features to track usage and detect any potential misuse of the chat feature.
+
+- Introduce audit trails and monitoring features to track usage and detect any potential misuse of the chat feature.
 
 ##### Phase 5: Scalability and Performance Optimization
 
 1. **Load Balancing and Scalability**
-  - Optimize the backend infrastructure to handle a high number of concurrent users and ensure smooth performance during peak usage.
+
+- Optimize the backend infrastructure to handle a high number of concurrent users and ensure smooth performance during peak usage.
 
 2. **Caching and Optimization**
-  - Implement caching strategies and optimize API calls to reduce latency and improve the responsiveness of the chat interface.
+
+- Implement caching strategies and optimize API calls to reduce latency and improve the responsiveness of the chat interface.
 
 3. **Monitoring and Analytics**
-  - Integrate monitoring and analytics tools to track usage patterns, identify bottlenecks, and inform future improvements.
+
+- Integrate monitoring and analytics tools to track usage patterns, identify bottlenecks, and inform future improvements.
 
 This roadmap is subject to change based on user feedback, technological advancements, and strategic priorities. The development team is committed to delivering
 a high-quality, user-friendly coding assistance chat feature that meets the needs of its users.
@@ -6691,53 +6938,66 @@ specific features and improvements.
 #### Short-Term Goals (1-3 Months)
 
 1. **Enhanced Error Handling and Logging**:
-  - Implement more detailed error messages and exceptions handling to make debugging easier for users.
-  - Integrate a logging framework to provide users with runtime information and error logs.
+
+- Implement more detailed error messages and exceptions handling to make debugging easier for users.
+- Integrate a logging framework to provide users with runtime information and error logs.
 
 2. **Performance Optimization**:
-  - Profile the current implementation to identify bottlenecks.
-  - Optimize the script engine initialization and code wrapping process for faster execution.
+
+- Profile the current implementation to identify bottlenecks.
+- Optimize the script engine initialization and code wrapping process for faster execution.
 
 3. **Documentation and Examples**:
-  - Create comprehensive documentation covering all functionalities and use cases.
-  - Provide a set of example scripts and use cases to help new users get started.
+
+- Create comprehensive documentation covering all functionalities and use cases.
+- Provide a set of example scripts and use cases to help new users get started.
 
 4. **Unit Testing**:
-  - Develop a suite of unit tests to ensure the reliability and stability of key functionalities.
-  - Integrate continuous integration (CI) tools to automate testing.
+
+- Develop a suite of unit tests to ensure the reliability and stability of key functionalities.
+- Integrate continuous integration (CI) tools to automate testing.
 
 #### Mid-Term Goals (4-6 Months)
 
 1. **Interactive Development Environment (IDE) Integration Enhancements**:
-  - Improve integration with IntelliJ IDEA and other JetBrains IDEs, focusing on usability and performance.
-  - Implement features like code completion, syntax highlighting, and debugging support for scripts executed within the interpreter.
+
+- Improve integration with IntelliJ IDEA and other JetBrains IDEs, focusing on usability and performance.
+- Implement features like code completion, syntax highlighting, and debugging support for scripts executed within the interpreter.
 
 2. **Extended Language Support**:
-  - Explore the possibility of extending the interpreter to support additional JVM languages (e.g., Groovy, Scala) within the same framework.
+
+- Explore the possibility of extending the interpreter to support additional JVM languages (e.g., Groovy, Scala) within the same framework.
 
 3. **Dynamic Symbol Management**:
-  - Develop a more flexible system for managing symbols, allowing users to add, remove, or modify symbols at runtime.
+
+- Develop a more flexible system for managing symbols, allowing users to add, remove, or modify symbols at runtime.
 
 4. **Security Features**:
-  - Implement security measures to prevent unauthorized code execution and access to sensitive data.
+
+- Implement security measures to prevent unauthorized code execution and access to sensitive data.
 
 #### Long-Term Goals (7-12 Months)
 
 1. **Plugin Ecosystem**:
-  - Develop an API that allows third-party developers to create plugins and extensions for the interpreter, enhancing its functionality and versatility.
+
+- Develop an API that allows third-party developers to create plugins and extensions for the interpreter, enhancing its functionality and versatility.
 
 2. **Cross-Platform Support**:
-  - Ensure the interpreter can be easily used across different operating systems and IDEs, broadening its user base.
+
+- Ensure the interpreter can be easily used across different operating systems and IDEs, broadening its user base.
 
 3. **Cloud Integration**:
-  - Provide features for executing scripts in cloud environments, facilitating distributed computing and remote development scenarios.
+
+- Provide features for executing scripts in cloud environments, facilitating distributed computing and remote development scenarios.
 
 4. **Community Building**:
-  - Foster a community of users and developers through forums, social media, and events to gather feedback, share knowledge, and drive the project's direction.
+
+- Foster a community of users and developers through forums, social media, and events to gather feedback, share knowledge, and drive the project's direction.
 
 5. **Advanced Debugging Tools**:
-  - Develop advanced debugging tools that integrate seamlessly with the interpreter, offering features like breakpoint management, variable inspection, and
-    execution flow control.
+
+- Develop advanced debugging tools that integrate seamlessly with the interpreter, offering features like breakpoint management, variable inspection, and
+  execution flow control.
 
 By following this roadmap, the `IdeaKotlinInterpreter` can evolve into a more powerful, user-friendly, and widely adopted tool for Kotlin script execution
 within the IntelliJ IDEA environment and beyond.
@@ -7154,52 +7414,64 @@ features and improvements aimed at expanding the utility, efficiency, and flexib
 #### Phase 1: Core Functionality Enhancements
 
 1. **Generic Error Handling**:
-  - Introduce a standardized error handling mechanism for parsing and generating text blocks, ensuring robustness and reliability.
+
+- Introduce a standardized error handling mechanism for parsing and generating text blocks, ensuring robustness and reliability.
 
 2. **Performance Optimization**:
-  - Profile and optimize the core methods (`fromString`, `toString`, `looksLike`) for better performance, especially for large text blocks.
+
+- Profile and optimize the core methods (`fromString`, `toString`, `looksLike`) for better performance, especially for large text blocks.
 
 3. **Support for Rich Text Formats**:
-  - Extend the `TextBlockFactory` to support rich text formats (e.g., HTML, Markdown), enabling more versatile text processing capabilities.
+
+- Extend the `TextBlockFactory` to support rich text formats (e.g., HTML, Markdown), enabling more versatile text processing capabilities.
 
 #### Phase 2: Advanced Features
 
 4. **Asynchronous Processing**:
-  - Develop asynchronous versions of the `fromString` and `toString` methods to handle long-running operations without blocking the main thread, improving the
-    responsiveness of applications.
+
+- Develop asynchronous versions of the `fromString` and `toString` methods to handle long-running operations without blocking the main thread, improving the
+  responsiveness of applications.
 
 5. **Text Block Manipulation Utilities**:
-  - Introduce utility methods for common text block manipulations (e.g., trimming, splitting, merging) to facilitate more complex text processing tasks.
+
+- Introduce utility methods for common text block manipulations (e.g., trimming, splitting, merging) to facilitate more complex text processing tasks.
 
 6. **Customizable Text Matching**:
-  - Enhance the `looksLike` method with customizable matching strategies (e.g., regex, fuzzy matching), allowing for more flexible and powerful text recognition
-    capabilities.
+
+- Enhance the `looksLike` method with customizable matching strategies (e.g., regex, fuzzy matching), allowing for more flexible and powerful text recognition
+  capabilities.
 
 #### Phase 3: Integration and Expansion
 
 7. **Plugin Architecture for Extensions**:
-  - Implement a plugin architecture, enabling third-party extensions to introduce new text block types, formats, or processing algorithms seamlessly.
+
+- Implement a plugin architecture, enabling third-party extensions to introduce new text block types, formats, or processing algorithms seamlessly.
 
 8. **Internationalization and Localization Support**:
-  - Add support for internationalization and localization, ensuring that the `TextBlockFactory` can handle text in various languages and cultural contexts
-    effectively.
+
+- Add support for internationalization and localization, ensuring that the `TextBlockFactory` can handle text in various languages and cultural contexts
+  effectively.
 
 9. **Machine Learning Integration**:
-  - Explore the integration of machine learning models for advanced text analysis and generation tasks, such as sentiment analysis, text summarization, or
-    auto-completion.
+
+- Explore the integration of machine learning models for advanced text analysis and generation tasks, such as sentiment analysis, text summarization, or
+  auto-completion.
 
 #### Phase 4: Community and Documentation
 
 10. **Comprehensive Documentation and Examples**:
-  - Develop thorough documentation, including API reference, usage examples, and best practices, to assist developers in effectively utilizing the
-    `TextBlockFactory`.
+
+- Develop thorough documentation, including API reference, usage examples, and best practices, to assist developers in effectively utilizing the
+  `TextBlockFactory`.
 
 11. **Community Engagement and Feedback**:
-  - Establish channels for community engagement, such as forums or GitHub discussions, to gather feedback, prioritize feature development, and encourage
-    contributions.
+
+- Establish channels for community engagement, such as forums or GitHub discussions, to gather feedback, prioritize feature development, and encourage
+  contributions.
 
 12. **Tutorials and Educational Resources**:
-  - Create tutorials, blog posts, and video content to educate users on the capabilities of the `TextBlockFactory` and inspire innovative applications.
+
+- Create tutorials, blog posts, and video content to educate users on the capabilities of the `TextBlockFactory` and inspire innovative applications.
 
 This roadmap is intended to guide the development of the `TextBlockFactory` interface and its ecosystem, ensuring it evolves to meet the needs of developers and
 remains at the forefront of text processing technology. Each phase builds upon the previous, gradually expanding the capabilities and reach of the

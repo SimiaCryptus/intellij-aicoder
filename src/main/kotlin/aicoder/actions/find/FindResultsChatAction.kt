@@ -119,6 +119,7 @@ class FindResultsChatAction(
       isFocused -> "/* L$index */ $line /* <<< */"
       else -> "/* L$index */ $line"
     }
+
     private fun getFilteredLines(project: Project, file: VirtualFile, usages: List<Usage>): String? {
       val document = PsiDocumentManager.getInstance(project)
         .getDocument(file.findPsiFile(project) ?: return null) ?: return null
@@ -149,7 +150,7 @@ class FindResultsChatAction(
         val document = PsiDocumentManager.getInstance(project).getDocument(
           file.findPsiFile(project) ?: return@joinToString ""
         ) ?: return@joinToString ""
-        
+
         val usageLocations = usages.joinToString("\n") { usage ->
           val lineNumber = document.getLineNumber(usage.navigationOffset)
           "* Line ${lineNumber + 1}: ${usage.presentation.plainText}"

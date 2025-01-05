@@ -171,9 +171,10 @@ by providing human-readable explanations of what the code does.
 
 1. Select a block of code in the editor that you want to describe
 2. Invoke the action through:
-  - The context menu (right-click)
-  - A keyboard shortcut (if configured)
-  - The Actions menu
+
+- The context menu (right-click)
+- A keyboard shortcut (if configured)
+- The Actions menu
 
 The action will:
 
@@ -252,8 +253,9 @@ programming languages. There are two variants available:
 1. Copy content to your clipboard from any source
 2. Place cursor at desired paste location in editor
 3. Use one of the paste actions:
-  - Smart Paste: For highest quality conversion
-  - Fast Paste: For quicker conversion of simpler content
+
+- Smart Paste: For highest quality conversion
+- Fast Paste: For quicker conversion of simpler content
 
 The action will automatically:
 
@@ -306,9 +308,10 @@ The Recent Code Edits action provides quick access to your most recently used cu
 1. Select some code in the editor
 2. Click the Recent Code Edits action button or use its shortcut
 3. Choose a recent command from the dropdown menu:
-  - Use number keys 1-9 for quick access to first 9 items
-  - Click any item to execute that command
-  - Commands are shown with most recent first
+
+- Use number keys 1-9 for quick access to first 9 items
+- Click any item to execute that command
+- Commands are shown with most recent first
 
 ### Requirements
 
@@ -403,8 +406,9 @@ and can reference specific line numbers in its responses.
 
 1. Select code in the editor (optional - if no selection is made, the entire file will be used)
 2. Invoke the action through:
-  - Search actions (Ctrl+Shift+A / ⌘⇧A) and search for "Line Filter Chat"
-  - Or through any configured keyboard shortcuts
+
+- Search actions (Ctrl+Shift+A / ⌘⇧A) and search for "Line Filter Chat"
+- Or through any configured keyboard shortcuts
 
 A browser window will open with a chat interface where you can:
 
@@ -465,17 +469,20 @@ platform.
 ### How to Use
 
 1. **Enable Developer Actions**
-  - Go to Settings/Preferences
-  - Navigate to the AI Coder plugin settings
-  - Enable the "Developer Actions" option
+
+- Go to Settings/Preferences
+- Navigate to the AI Coder plugin settings
+- Enable the "Developer Actions" option
 
 2. **Access the Action**
-  - Right-click in the editor to open the context menu
-  - Look for the "Print Tree" action
+
+- Right-click in the editor to open the context menu
+- Look for the "Print Tree" action
 
 3. **View Results**
-  - The PSI tree structure will be printed to the IDE's log
-  - You can view the output in the IDE's log window or console
+
+- The PSI tree structure will be printed to the IDE's log
+- You can view the output in the IDE's log window or console
 
 ### Features
 
@@ -605,9 +612,10 @@ This action opens a web-based chat interface that allows you to have an AI-assis
 
 1. Select code in the editor (optional - if no selection is made, the entire file will be used)
 2. Trigger the Code Chat action through:
-  - The IDE menu
-  - A keyboard shortcut (if configured)
-  - The context menu
+
+- The IDE menu
+- A keyboard shortcut (if configured)
+- The context menu
 
 A browser window will automatically open with the chat interface where you can:
 
@@ -679,10 +687,11 @@ uses AI to analyze and fix any errors or issues that occur.
 
 4. Click OK to run the command
 5. A browser window will open showing:
-  - Command output
-  - Detected issues
-  - Suggested fixes
-  - Options to apply/modify fixes
+
+- Command output
+- Detected issues
+- Suggested fixes
+- Options to apply/modify fixes
 
 ### Tips
 
@@ -803,23 +812,27 @@ The action works with the following file extensions:
 ### How to Use
 
 1. **Select Content**
-  - Select one or more files in your project explorer
-  - Or select a directory to analyze multiple files at once
+
+- Select one or more files in your project explorer
+- Or select a directory to analyze multiple files at once
 
 2. **Invoke the Action**
-  - Right-click on your selection
-  - Find "Create Image" in the context menu
-  - Or use the assigned keyboard shortcut if configured
+
+- Right-click on your selection
+- Find "Create Image" in the context menu
+- Or use the assigned keyboard shortcut if configured
 
 3. **Interact with the Generator**
-  - A browser window will open with a chat interface
-  - Describe what kind of visualization you want
-  - The AI will generate images based on your code and requirements
+
+- A browser window will open with a chat interface
+- Describe what kind of visualization you want
+- The AI will generate images based on your code and requirements
 
 4. **View and Save Results**
-  - Generated images will be displayed in the chat interface
-  - Images are automatically saved in both PNG and JPG formats
-  - Files are saved in your project directory with randomly generated names
+
+- Generated images will be displayed in the chat interface
+- Images are automatically saved in both PNG and JPG formats
+- Files are saved in your project directory with randomly generated names
 
 ### Technical Details
 
@@ -865,21 +878,24 @@ changes through a chat interface while maintaining precise control over the modi
 ### Usage
 
 1. **Accessing the Action**
-  - Select code in the editor (optional - if no selection is made, the entire file will be used)
-  - Right-click to open the context menu
-  - Select "DiffChat" from the available actions
+
+- Select code in the editor (optional - if no selection is made, the entire file will be used)
+- Right-click to open the context menu
+- Select "DiffChat" from the available actions
 
 2. **Chat Interface**
-  - A browser window will open with the chat interface
-  - The selected code or file content will be available as context
-  - You can discuss modifications with the AI assistant
+
+- A browser window will open with the chat interface
+- The selected code or file content will be available as context
+- You can discuss modifications with the AI assistant
 
 3. **Applying Changes**
-  - Changes will be suggested in a diff format showing:
-    - Lines to be removed (prefixed with `-`)
-    - Lines to be added (prefixed with `+`)
-    - Context lines around the changes
-  - Click the "Apply" link next to a diff block to apply those specific changes
+
+- Changes will be suggested in a diff format showing:
+  - Lines to be removed (prefixed with `-`)
+  - Lines to be added (prefixed with `+`)
+  - Context lines around the changes
+- Click the "Apply" link next to a diff block to apply those specific changes
 
 ### Example Interaction
 
@@ -1127,37 +1143,43 @@ AI-powered content transformation.
 ### Key Features
 
 1. **Batch Documentation Generation**
-  - Can process multiple files simultaneously
-  - Supports both single-file and multi-file output modes
-  - Uses parallel processing for improved performance
+
+- Can process multiple files simultaneously
+- Supports both single-file and multi-file output modes
+- Uses parallel processing for improved performance
 
 2. **Configurable Output**
-  - Option to generate a single consolidated documentation file
-  - Support for custom output directory structure
-  - Automatic file naming with conflict resolution
+
+- Option to generate a single consolidated documentation file
+- Support for custom output directory structure
+- Automatic file naming with conflict resolution
 
 3. **User Interface**
-  - Interactive dialog for configuration
-  - File selection checklist
-  - Recent instructions history
-  - Customizable AI instructions
-  - Output path configuration
+
+- Interactive dialog for configuration
+- File selection checklist
+- Recent instructions history
+- Customizable AI instructions
+- Output path configuration
 
 ### How to Use
 
 1. **Launch the Action**
-  - Select a directory in your project
-  - Right-click and select the documentation generation action
+
+- Select a directory in your project
+- Right-click and select the documentation generation action
 
 2. **Configure Settings**
-  - Choose files to process using the checkbox list
-  - Enter or select an AI instruction for documentation generation
-  - Specify output filename and directory
-  - Toggle single/multiple output file mode
+
+- Choose files to process using the checkbox list
+- Enter or select an AI instruction for documentation generation
+- Specify output filename and directory
+- Toggle single/multiple output file mode
 
 3. **Output Options**
-  - Single File Mode: Generates one consolidated markdown file
-  - Multiple File Mode: Creates individual documentation files for each source file
+
+- Single File Mode: Generates one consolidated markdown file
+- Multiple File Mode: Creates individual documentation files for each source file
 
 ### Configuration Options
 
@@ -1184,19 +1206,22 @@ AI-powered content transformation.
 ### Best Practices
 
 1. **AI Instructions**
-  - Be specific about the documentation style needed
-  - Consider the target audience
-  - Include any special formatting requirements
+
+- Be specific about the documentation style needed
+- Consider the target audience
+- Include any special formatting requirements
 
 2. **File Selection**
-  - Group related files for consistent documentation
-  - Consider dependencies between files
-  - Exclude generated or binary files
+
+- Group related files for consistent documentation
+- Consider dependencies between files
+- Exclude generated or binary files
 
 3. **Output Organization**
-  - Use meaningful file names
-  - Maintain a consistent directory structure
-  - Consider using the single-file mode for related components
+
+- Use meaningful file names
+- Maintain a consistent directory structure
+- Consider using the single-file mode for related components
 
 ### Limitations
 
@@ -1222,8 +1247,9 @@ file using AI assistance.
 1. Select a single file in your project
 2. Right-click and select "Generate Related File" from the context menu (or use the assigned shortcut if configured)
 3. In the dialog that appears:
-  - Enter your directive describing what kind of file you want to generate (e.g., "Create test cases", "Generate interface", etc.)
-  - Click OK to proceed
+
+- Enter your directive describing what kind of file you want to generate (e.g., "Create test cases", "Generate interface", etc.)
+- Click OK to proceed
 
 ### Features
 
@@ -1289,14 +1315,16 @@ allows you to have natural language conversations with an AI assistant.
 ### Usage
 
 1. You can trigger the Generic Chat Action through:
-  - The IDE's action menu
-  - Keyboard shortcuts (if configured)
-  - The IDE's search actions (Ctrl+Shift+A / ⌘⇧A)
+
+- The IDE's action menu
+- Keyboard shortcuts (if configured)
+- The IDE's search actions (Ctrl+Shift+A / ⌘⇧A)
 
 2. When activated:
-  - A new chat session will be initialized
-  - Your default browser will open automatically
-  - The chat interface will be ready for interaction
+
+- A new chat session will be initialized
+- Your default browser will open automatically
+- The chat interface will be ready for interaction
 
 ### Requirements
 
@@ -1418,9 +1446,11 @@ user interface for selecting files and specifying transformation instructions.
 1. Select files/folders in the project explorer
 2. Invoke the MassPatchAction
 3. In the configuration dialog:
-  - Select files to process
-  - Enter transformation instructions or select from recent ones
-  - Optionally enable auto-apply
+
+- Select files to process
+- Enter transformation instructions or select from recent ones
+- Optionally enable auto-apply
+
 4. Click OK to start processing
 5. Review and apply suggested changes in the browser interface
 
@@ -1674,7 +1704,8 @@ interactive chat interface where users can discuss code changes and apply sugges
 
 1. Select one or more files/folders in your IntelliJ project
 2. Right-click and select the MultiDiffChat action from the context menu
-  - Or use the assigned keyboard shortcut if configured
+
+- Or use the assigned keyboard shortcut if configured
 
 #### Chat Interface
 
@@ -1775,10 +1806,11 @@ This action provides an interactive interface that:
 
 1. Enter your desired changes or requirements in natural language in the input field
 2. The system will:
-  - Analyze your request and break it down into specific tasks
-  - Show you a task list with detailed descriptions
-  - Generate code patches for each task
-  - Provide options to review and apply the changes
+
+- Analyze your request and break it down into specific tasks
+- Show you a task list with detailed descriptions
+- Generate code patches for each task
+- Provide options to review and apply the changes
 
 #### Example Workflow
 
@@ -1858,21 +1890,24 @@ using AI assistance through a web interface.
 ### Usage
 
 1. **Accessing the Action**
-  - The outline tool can be accessed through the IDE's action system
-  - Look for "AI Outline Tool" in menus or use the assigned shortcut
+
+- The outline tool can be accessed through the IDE's action system
+- Look for "AI Outline Tool" in menus or use the assigned shortcut
 
 2. **Configuration**
-  - When activated, a configuration dialog will appear
-  - Settings include:
-    - Expansion steps with associated AI models
-    - Temperature setting for AI response variation
-  - Click OK to proceed or Cancel to abort
+
+- When activated, a configuration dialog will appear
+- Settings include:
+  - Expansion steps with associated AI models
+  - Temperature setting for AI response variation
+- Click OK to proceed or Cancel to abort
 
 3. **Working with the Tool**
-  - After configuration, a web browser window will open
-  - The interface provides a single input area for outline creation
-  - Work is automatically saved in the current session
-  - The session name includes a timestamp for reference
+
+- After configuration, a web browser window will open
+- The interface provides a single input area for outline creation
+- Work is automatically saved in the current session
+- The session name includes a timestamp for reference
 
 ### Technical Details
 
@@ -1934,23 +1969,27 @@ This section displays and manages the sequence of AI models used for generating 
 ### Usage
 
 1. **Adding Steps**:
-  - Click "Add Step"
-  - Select an AI model from the available options
-  - The new step will be added to the end of the sequence
+
+- Click "Add Step"
+- Select an AI model from the available options
+- The new step will be added to the end of the sequence
 
 2. **Removing Steps**:
-  - Select a step from the list
-  - Click "Remove Step"
-  - Note: At least one step must remain in the sequence
+
+- Select a step from the list
+- Click "Remove Step"
+- Note: At least one step must remain in the sequence
 
 3. **Editing Steps**:
-  - Select a step from the list
-  - Click "Edit Step"
-  - Choose a different model from the dialog
+
+- Select a step from the list
+- Click "Edit Step"
+- Choose a different model from the dialog
 
 4. **Adjusting Temperature**:
-  - Use the slider to set the desired temperature value
-  - Changes affect all generation steps
+
+- Use the slider to set the desired temperature value
+- Changes affect all generation steps
 
 ### Validation
 
@@ -2056,18 +2095,21 @@ The Shell Command Action provides an interactive interface to execute shell comm
 ### Usage
 
 1. **Activation**:
-  - Select a folder in your project explorer
-  - Trigger the Shell Command action from the IDE menu or toolbar
+
+- Select a folder in your project explorer
+- Trigger the Shell Command action from the IDE menu or toolbar
 
 2. **Interface**:
-  - A browser window will automatically open with a chat interface
-  - Enter your shell commands in the input field
-  - View command output and results in the chat window
+
+- A browser window will automatically open with a chat interface
+- Enter your shell commands in the input field
+- View command output and results in the chat window
 
 3. **Command Execution**:
-  - Commands are executed in the context of the selected directory
-  - For Windows systems, PowerShell is used as the shell
-  - For Unix-based systems, Bash is used as the shell
+
+- Commands are executed in the context of the selected directory
+- For Windows systems, PowerShell is used as the shell
+- For Unix-based systems, Bash is used as the shell
 
 ### Configuration
 
@@ -2227,28 +2269,32 @@ and generate web applications with HTML, CSS, JavaScript, and image assets.
 ### Usage
 
 1. **Launch the Assistant**
-  - Select a directory in your project where you want to create the web application
-  - Right-click and select "Web Development Assistant" from the context menu
-  - A browser window will open with the interactive interface
+
+- Select a directory in your project where you want to create the web application
+- Right-click and select "Web Development Assistant" from the context menu
+- A browser window will open with the interactive interface
 
 2. **Describe Your Project**
-  - Enter a description of the web application you want to create
-  - The assistant will analyze your request and create an architecture specification
-  - You'll see a tabbed view showing both the plain text description and JSON specification
+
+- Enter a description of the web application you want to create
+- The assistant will analyze your request and create an architecture specification
+- You'll see a tabbed view showing both the plain text description and JSON specification
 
 3. **File Generation**
-  - The assistant will automatically generate the necessary files:
-    - HTML files for structure
-    - CSS files for styling
-    - JavaScript files for functionality
-    - Image assets (PNG/JPG) as needed
-  - Each file will be created based on the project requirements and best practices
+
+- The assistant will automatically generate the necessary files:
+  - HTML files for structure
+  - CSS files for styling
+  - JavaScript files for functionality
+  - Image assets (PNG/JPG) as needed
+- Each file will be created based on the project requirements and best practices
 
 4. **Code Review and Refinement**
-  - After initial file generation, the assistant performs an automated code review
-  - Suggestions for improvements are presented as code diffs
-  - You can accept or modify the suggested changes
-  - The code can be iteratively refined through the interactive interface
+
+- After initial file generation, the assistant performs an automated code review
+- Suggestions for improvements are presented as code diffs
+- You can accept or modify the suggested changes
+- The code can be iteratively refined through the interactive interface
 
 ### File Types Supported
 
@@ -2310,10 +2356,11 @@ discuss code changes in a conversational interface.
 1. Select one or more files/directories in your project
 2. Right-click and select "Chat With Commit" from the context menu
 3. The system will:
-  - Analyze the selected files for changes
-  - Generate a diff of the changes
-  - Open a chat interface in your browser
-  - Allow you to discuss the changes with an AI assistant
+
+- Analyze the selected files for changes
+- Generate a diff of the changes
+- Open a chat interface in your browser
+- Allow you to discuss the changes with an AI assistant
 
 ### Supported Content
 
@@ -2369,20 +2416,23 @@ understanding code changes between commits by presenting them in a readable diff
 ### How to Use
 
 1. **Access the Action**
-  - Navigate to a commit in your Git history
-  - Right-click or use the action menu to select "Chat with Commit Diff"
+
+- Navigate to a commit in your Git history
+- Right-click or use the action menu to select "Chat with Commit Diff"
 
 2. **View Changes**
-  - The system will automatically generate a diff between the selected commit and the current state
-  - Changes are displayed in a standard diff format:
-    - Lines starting with `+` indicate additions
-    - Lines starting with `-` indicate deletions
+
+- The system will automatically generate a diff between the selected commit and the current state
+- Changes are displayed in a standard diff format:
+  - Lines starting with `+` indicate additions
+  - Lines starting with `-` indicate deletions
 
 3. **Chat Interface**
-  - A browser window will open with a chat interface
-  - The diff information will be pre-loaded into the chat context
-  - You can ask questions or discuss specific aspects of the changes
-  - The AI will respond based on the context of the changes
+
+- A browser window will open with a chat interface
+- The diff information will be pre-loaded into the chat context
+- You can ask questions or discuss specific aspects of the changes
+- The AI will respond based on the context of the changes
 
 ### Requirements
 
@@ -2436,19 +2486,22 @@ This feature helps developers:
 
 1. Make some changes to files in your Git repository but don't commit them yet
 2. Access the action through:
-  - Right-click menu in project view
-  - VCS menu
-  - Search for "Chat with Working Copy Changes" using Find Action (Ctrl+Shift+A / ⌘⇧A)
+
+- Right-click menu in project view
+- VCS menu
+- Search for "Chat with Working Copy Changes" using Find Action (Ctrl+Shift+A / ⌘⇧A)
 
 3. The action will:
-  - Collect all uncommitted changes in your working directory
-  - Generate a diff view comparing current state with HEAD
-  - Open a chat interface in your browser
+
+- Collect all uncommitted changes in your working directory
+- Generate a diff view comparing current state with HEAD
+- Open a chat interface in your browser
 
 4. In the chat interface, you can:
-  - Discuss the changes with the AI assistant
-  - Ask questions about specific modifications
-  - Get suggestions or feedback on the changes
+
+- Discuss the changes with the AI assistant
+- Ask questions about specific modifications
+- Get suggestions or feedback on the changes
 
 ### Requirements
 
@@ -2502,22 +2555,26 @@ particularly useful when you want to:
 ### How to Use
 
 1. **Select Changes**:
-  - Select one or more files with Git changes in your project
-  - The changes can be from the current working directory or committed changes
+
+- Select one or more files with Git changes in your project
+- The changes can be from the current working directory or committed changes
 
 2. **Launch the Action**:
-  - Access via the IDE's action menu or keyboard shortcuts
-  - The action will only be enabled when valid Git changes are selected
+
+- Access via the IDE's action menu or keyboard shortcuts
+- The action will only be enabled when valid Git changes are selected
 
 3. **Interact with the Interface**:
-  - A browser window will open showing the selected changes
-  - Enter your requirements or modifications in the input field
-  - The AI will analyze the changes and propose modifications
+
+- A browser window will open showing the selected changes
+- Enter your requirements or modifications in the input field
+- The AI will analyze the changes and propose modifications
 
 4. **Review and Apply Changes**:
-  - Review the proposed changes in diff format
-  - Click on the provided links to apply specific changes
-  - Changes will be applied to your working directory
+
+- Review the proposed changes in diff format
+- Click on the provided links to apply specific changes
+- Changes will be applied to your working directory
 
 ### Features
 
@@ -2602,9 +2659,10 @@ visualization interface. This is useful for exploring relationships between docu
 1. In your IDE, select one or more .index.data files or folders containing .index.data files
 2. Right-click and select "Create Projector from Query Index" from the context menu
 3. Wait while the action:
-  - Reads the document records from the selected files
-  - Sets up the TensorFlow Projector visualization
-  - Opens your default web browser to display the interactive visualization
+
+- Reads the document records from the selected files
+- Sets up the TensorFlow Projector visualization
+- Opens your default web browser to display the interactive visualization
 
 ### Requirements
 
@@ -2669,20 +2727,23 @@ from files like PDFs, text documents, HTML files, and markdown files.
 ### Usage
 
 1. **Select Files**
-  - Select one or more files in your project
-  - You can also select entire directories to process multiple files
-  - Invalid file types will be automatically filtered out
+
+- Select one or more files in your project
+- You can also select entire directories to process multiple files
+- Invalid file types will be automatically filtered out
 
 2. **Configure Settings**
-  - When you run the action, a configuration dialog will appear
-  - Adjust the parsing settings according to your needs:
-    - Fast Mode: Toggle for quicker but potentially less detailed processing
-    - Model Type: Select the appropriate parsing model for your documents
+
+- When you run the action, a configuration dialog will appear
+- Adjust the parsing settings according to your needs:
+  - Fast Mode: Toggle for quicker but potentially less detailed processing
+  - Model Type: Select the appropriate parsing model for your documents
 
 3. **View Results**
-  - After configuration, a web browser will open automatically
-  - The extracted data will be displayed in a structured format
-  - Results are saved in the same directory as the source files
+
+- After configuration, a web browser will open automatically
+- The extracted data will be displayed in a structured format
+- Results are saved in the same directory as the source files
 
 ### Requirements
 
@@ -2872,18 +2933,21 @@ useful for creating searchable knowledge bases from parsed documents.
 ### Usage
 
 1. **File Selection**
-  - Select one or more `.parsed.json` files directly
-  - Or select directories containing `.parsed.json` files
-  - Right-click and select "Save As Query Index" from the context menu
+
+- Select one or more `.parsed.json` files directly
+- Or select directories containing `.parsed.json` files
+- Right-click and select "Save As Query Index" from the context menu
 
 2. **Processing**
-  - A progress bar will appear showing the indexing status
-  - The process can be cancelled at any time using the cancel button
-  - The system will automatically utilize multiple threads for faster processing
+
+- A progress bar will appear showing the indexing status
+- The process can be cancelled at any time using the cancel button
+- The system will automatically utilize multiple threads for faster processing
 
 3. **Completion**
-  - A success message will appear when indexing is complete
-  - The resulting index can be used for vector-based queries
+
+- A success message will appear when indexing is complete
+- The resulting index can be used for vector-based queries
 
 ### Configuration
 
@@ -2980,9 +3044,10 @@ code readability by automatically generating inline comments.
 
 1. Select the code you want to comment in the editor
 2. Trigger the action via:
-  - Menu: Edit > Add Line Comments
-  - Keyboard shortcut (if configured)
-  - Right-click context menu
+
+- Menu: Edit > Add Line Comments
+- Keyboard shortcut (if configured)
+- Right-click context menu
 
 ### Requirements
 
@@ -3049,9 +3114,10 @@ The DocAction class is a code documentation generator that automatically creates
 
 1. Select the code block you want to document in your IDE
 2. Invoke the "Generate Documentation" action through:
-  - The IDE's action menu
-  - A keyboard shortcut (if configured)
-  - The context menu
+
+- The IDE's action menu
+- A keyboard shortcut (if configured)
+- The context menu
 
 The action will automatically:
 
@@ -3197,17 +3263,20 @@ appropriate code implementations while considering the context of your codebase.
 ### Usage
 
 1. **Select Text or Position Cursor**
-  - Place your cursor on a comment describing desired functionality, or
-  - Select text that describes the implementation you want
-  - The action will automatically find the nearest relevant comment if no specific selection is made
+
+- Place your cursor on a comment describing desired functionality, or
+- Select text that describes the implementation you want
+- The action will automatically find the nearest relevant comment if no specific selection is made
 
 2. **Invoke the Action**
-  - Use the action shortcut or menu item to trigger the implementation generation
-  - The action will analyze the context and generate appropriate code
+
+- Use the action shortcut or menu item to trigger the implementation generation
+- The action will analyze the context and generate appropriate code
 
 3. **Review Generated Code**
-  - The generated code will be inserted below your selection/comment
-  - The code maintains proper indentation matching the context
+
+- The generated code will be inserted below your selection/comment
+- The code maintains proper indentation matching the context
 
 ### Requirements
 
@@ -3236,17 +3305,20 @@ public int factorial(int n) {
 Common issues and solutions:
 
 1. **No Code Generated**
-  - Ensure AI model is properly configured in settings
-  - Check if the comment/selection provides clear implementation instructions
-  - Verify the programming language is supported
+
+- Ensure AI model is properly configured in settings
+- Check if the comment/selection provides clear implementation instructions
+- Verify the programming language is supported
 
 2. **Configuration Errors**
-  - Make sure the AI model is selected in plugin settings
-  - Enable legacy actions if disabled
+
+- Make sure the AI model is selected in plugin settings
+- Enable legacy actions if disabled
 
 3. **Unexpected Results**
-  - Try providing more detailed specifications in the comment
-  - Check if the surrounding code context is properly detected
+
+- Try providing more detailed specifications in the comment
+- Check if the surrounding code context is properly detected
 
 ### Notes
 
@@ -3277,21 +3349,25 @@ and provides intelligent suggestions for renaming variables based on their conte
 ### How to Use
 
 1. **Select Code**
-  - Highlight the code segment containing variables you want to rename
-  - The selection can include multiple variables and any surrounding code for context
+
+- Highlight the code segment containing variables you want to rename
+- The selection can include multiple variables and any surrounding code for context
 
 2. **Trigger the Action**
-  - Access the action through the IDE menu or keyboard shortcut
-  - The tool will analyze your selected code
+
+- Access the action through the IDE menu or keyboard shortcut
+- The tool will analyze your selected code
 
 3. **Review Suggestions**
-  - A dialog will appear showing suggested renames
-  - Each suggestion will be displayed as: `originalName -> suggestedName`
-  - Check the boxes next to the suggestions you want to apply
+
+- A dialog will appear showing suggested renames
+- Each suggestion will be displayed as: `originalName -> suggestedName`
+- Check the boxes next to the suggestions you want to apply
 
 4. **Apply Changes**
-  - Click OK to apply the selected rename suggestions
-  - The tool will automatically replace all instances of the selected variables within your selection
+
+- Click OK to apply the selected rename suggestions
+- The tool will automatically replace all instances of the selected variables within your selection
 
 ### Requirements
 
@@ -3543,8 +3619,9 @@ The Markdown List Generator is a tool that helps you extend existing markdown li
 
 1. Place your cursor anywhere within an existing markdown list
 2. Trigger the action via:
-  - Menu: Tools > AI Coder > Markdown > Generate List Items
-  - Or use the assigned keyboard shortcut
+
+- Menu: Tools > AI Coder > Markdown > Generate List Items
+- Or use the assigned keyboard shortcut
 
 3. Enter the number of new items you want to generate when prompted
 4. The AI will analyze your existing list items and generate new ones in a similar style
@@ -3624,11 +3701,12 @@ interact with an AI assistant that can help plan and execute development tasks w
 1. Select a file or folder in your project
 2. Invoke the Auto Plan Chat action from the IDE
 3. Configure settings in the dialog that appears:
-  - AI models for chat and parsing
-  - Temperature setting (0.0-1.0)
-  - Working directory
-  - GitHub token (optional)
-  - Google API credentials (optional)
+
+- AI models for chat and parsing
+- Temperature setting (0.0-1.0)
+- Working directory
+- GitHub token (optional)
+- Google API credentials (optional)
 
 #### Configuration Options
 
@@ -3692,11 +3770,12 @@ implementation work by integrating with language models and development tools.
 
 1. Trigger the action from IntelliJ IDEA (via menu or shortcut)
 2. Configure planning settings in the dialog:
-  - Language models for planning and parsing
-  - Working directory
-  - Environment settings
-  - API keys for GitHub and Google services
-  - Temperature setting for AI responses
+
+- Language models for planning and parsing
+- Working directory
+- Environment settings
+- API keys for GitHub and Google services
+- Temperature setting for AI responses
 
 3. Click OK to launch the planning assistant
 4. A browser window will open automatically with the planning interface
@@ -3766,22 +3845,25 @@ environment. It supports both Windows (PowerShell) and Unix (Bash) environments.
 #### Steps to Use
 
 1. **Activation**:
-  - Select a folder or file in your project
-  - Trigger the Plan Chat action from the IDE menu or toolbar
+
+- Select a folder or file in your project
+- Trigger the Plan Chat action from the IDE menu or toolbar
 
 2. **Configuration Dialog**:
    A settings dialog will appear where you can configure:
-  - Default model for main operations
-  - Parsing model for command interpretation
-  - Temperature setting for AI responses
-  - Working directory
-  - GitHub token (optional)
-  - Google API credentials (optional)
+
+- Default model for main operations
+- Parsing model for command interpretation
+- Temperature setting for AI responses
+- Working directory
+- GitHub token (optional)
+- Google API credentials (optional)
 
 3. **Chat Interface**:
-  - After configuration, a browser window will open with the chat interface
-  - Use the interface to plan and execute commands
-  - Interact with the AI to get assistance with command execution
+
+- After configuration, a browser window will open with the chat interface
+- Use the interface to plan and execute commands
+- Interact with the AI to get assistance with command execution
 
 #### Settings
 
@@ -3868,61 +3950,71 @@ Each task can be configured with:
 #### Available Task Types
 
 1. **Performance Analysis**
-  - Analyzes code performance
-  - Identifies bottlenecks
-  - Suggests optimizations
+
+- Analyzes code performance
+- Identifies bottlenecks
+- Suggests optimizations
 
 2. **Web Fetch and Transform**
-  - Downloads web content
-  - Converts to specified formats
-  - Handles content limitations
+
+- Downloads web content
+- Converts to specified formats
+- Handles content limitations
 
 3. **Search Operations**
-  - GitHub Search
-  - Google Search
-  - Pattern-based Search
-  - Semantic Search
+
+- GitHub Search
+- Google Search
+- Pattern-based Search
+- Semantic Search
 
 4. **Knowledge Management**
-  - Content Indexing
-  - Web Search and Index
-  - Documentation Generation
+
+- Content Indexing
+- Web Search and Index
+- Documentation Generation
 
 5. **Code Operations**
-  - File Modification
-  - Code Review
-  - Test Generation
-  - Optimization
-  - Security Audit
-  - Refactoring
+
+- File Modification
+- Code Review
+- Test Generation
+- Optimization
+- Security Audit
+- Refactoring
 
 6. **Task Management**
-  - Task Planning
-  - Command Sessions
-  - Selenium Sessions
-  - Shell Command Execution
+
+- Task Planning
+- Command Sessions
+- Selenium Sessions
+- Shell Command Execution
 
 ### Usage Tips
 
 1. **Configuration Management**
-  - Save frequently used configurations for quick access
-  - Confirm before overwriting existing configurations
-  - Validate configurations before saving
+
+- Save frequently used configurations for quick access
+- Confirm before overwriting existing configurations
+- Validate configurations before saving
 
 2. **Task Selection**
-  - Enable only needed tasks to optimize performance
-  - Ensure models are selected for enabled tasks
-  - Review task descriptions for optimal usage
+
+- Enable only needed tasks to optimize performance
+- Ensure models are selected for enabled tasks
+- Review task descriptions for optimal usage
 
 3. **Model Selection**
-  - Choose appropriate models based on task requirements
-  - Verify API key availability for selected models
-  - Consider model capabilities and limitations
+
+- Choose appropriate models based on task requirements
+- Verify API key availability for selected models
+- Consider model capabilities and limitations
 
 4. **Performance Optimization**
-  - Adjust temperature based on needed creativity level
-  - Use auto-fix carefully in production environments
-  - Consider blocking implications in UI-heavy workflows
+
+- Adjust temperature based on needed creativity level
+- Use auto-fix carefully in production environments
+- Consider blocking implications in UI-heavy workflows
 
 ### Error Handling
 
@@ -3936,24 +4028,28 @@ The dialog provides validation and error checking for:
 ### Best Practices
 
 1. **Configuration Management**
-  - Use descriptive names for configurations
-  - Regular backup of important configurations
-  - Document configuration purposes
+
+- Use descriptive names for configurations
+- Regular backup of important configurations
+- Document configuration purposes
 
 2. **Task Setup**
-  - Start with minimal enabled tasks
-  - Test configurations in non-production environment
-  - Monitor task performance and adjust settings
+
+- Start with minimal enabled tasks
+- Test configurations in non-production environment
+- Monitor task performance and adjust settings
 
 3. **Model Selection**
-  - Match model capabilities to task requirements
-  - Consider cost implications of model choices
-  - Maintain backup model options
+
+- Match model capabilities to task requirements
+- Consider cost implications of model choices
+- Maintain backup model options
 
 4. **Security Considerations**
-  - Review command permissions carefully
-  - Validate web content sources
-  - Monitor auto-fix behavior
+
+- Review command permissions carefully
+- Validate web content sources
+- Monitor auto-fix behavior
 
 This dialog is a powerful tool for managing AI-powered development tasks. Take time to understand each setting's impact on your workflow for optimal results.
 
@@ -3978,35 +4074,40 @@ with a planning system to help organize and execute development workflows.
 ### Usage
 
 1. **Initiating the Action**
-  - Trigger the PrePlanAction from your IDE
-  - A dialog will appear requesting JSON input for task breakdown
+
+- Trigger the PrePlanAction from your IDE
+- A dialog will appear requesting JSON input for task breakdown
 
 2. **JSON Input Format**
    The input should follow the TaskBreakdownWithPrompt format, which can include:
-  - Task descriptions
-  - Execution steps
-  - Required resources
-  - Template variables using `{{variableName}}` syntax
+
+- Task descriptions
+- Execution steps
+- Required resources
+- Template variables using `{{variableName}}` syntax
 
 3. **Template Variables**
-  - If your JSON contains template variables (e.g., `{{projectName}}`)
-  - A form dialog will appear to collect values for each variable
-  - Enter values for each variable to customize the task breakdown
+
+- If your JSON contains template variables (e.g., `{{projectName}}`)
+- A form dialog will appear to collect values for each variable
+- Enter values for each variable to customize the task breakdown
 
 4. **Configuration**
    After providing the JSON input, you can configure:
-  - Default and parsing models
-  - Command shell (PowerShell for Windows, Bash for others)
-  - Temperature settings
-  - Working directory
-  - Environment variables
-  - GitHub token
-  - Google API credentials
+
+- Default and parsing models
+- Command shell (PowerShell for Windows, Bash for others)
+- Temperature settings
+- Working directory
+- Environment variables
+- GitHub token
+- Google API credentials
 
 5. **Execution**
-  - After configuration, a browser window will open
-  - The task breakdown will be displayed in a web interface
-  - You can monitor and control task execution from this interface
+
+- After configuration, a browser window will open
+- The task breakdown will be displayed in a web interface
+- You can monitor and control task execution from this interface
 
 ### Requirements
 
@@ -4053,11 +4154,12 @@ configure and run individual tasks with customized settings and context awarenes
 
 1. Trigger the action from IntelliJ IDEA
 2. Configure task settings in the dialog that appears:
-  - Select AI models for task execution and parsing
-  - Set temperature for AI responses (0.0-1.0)
-  - Configure working directory
-  - Add optional environment variables
-  - Set API tokens (GitHub, Google) if needed
+
+- Select AI models for task execution and parsing
+- Set temperature for AI responses (0.0-1.0)
+- Configure working directory
+- Add optional environment variables
+- Set API tokens (GitHub, Google) if needed
 
 3. Click OK to start the task
 4. A browser window will automatically open with the task interface
@@ -4138,23 +4240,26 @@ When you trigger the action:
 
 1. A new analysis session opens in your browser
 2. The tool collects relevant information including:
-  - File path and type
-  - Problem description
-  - Code context around the error
-  - Project structure
-  - Related file contents
+
+- File path and type
+- Problem description
+- Code context around the error
+- Project structure
+- Related file contents
 
 3. The AI analyzes the problem and provides:
-  - Detailed error analysis
-  - List of files that need fixing
-  - Related files for debugging context
-  - Specific code patches in diff format
+
+- Detailed error analysis
+- List of files that need fixing
+- Related files for debugging context
+- Specific code patches in diff format
 
 4. You can review the suggested fixes and:
-  - View the changes in diff format
-  - Apply patches directly to your code
-  - Navigate to related files
-  - See the full analysis in a tabbed interface
+
+- View the changes in diff format
+- Apply patches directly to your code
+- Navigate to related files
+- See the full analysis in a tabbed interface
 
 ### Key Components
 
@@ -4212,22 +4317,25 @@ Use this action when:
 ### How to Use
 
 1. **Access the Action**
-  - Run your tests in IntelliJ IDEA
-  - When a test fails, select the failed test in the test runner window
-  - Right-click and select the "Test Result Autofix" action
+
+- Run your tests in IntelliJ IDEA
+- When a test fails, select the failed test in the test runner window
+- Right-click and select the "Test Result Autofix" action
 
 2. **Review Analysis**
-  - The action will open a browser window with the analysis
-  - You'll see:
-    - Test failure details
-    - Identified errors
-    - Affected files
-    - Suggested fixes in diff format
+
+- The action will open a browser window with the analysis
+- You'll see:
+  - Test failure details
+  - Identified errors
+  - Affected files
+  - Suggested fixes in diff format
 
 3. **Apply Fixes**
-  - Review the suggested code changes
-  - Click the "Apply" links next to each diff to implement the changes
-  - Changes will be applied to your project files automatically
+
+- Review the suggested code changes
+- Click the "Apply" links next to each diff to implement the changes
+- Changes will be applied to your project files automatically
 
 ### Features in Detail
 

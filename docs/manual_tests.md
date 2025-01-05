@@ -421,54 +421,69 @@ IDE environment.
 **Objective**: Verify that the `isLanguageSupported` method correctly identifies supported and unsupported languages.
 
 1. **Steps**:
-  - Invoke the method with various `ComputerLanguage` values including `null`, `ComputerLanguage.Text`, and other supported languages.
+
+- Invoke the method with various `ComputerLanguage` values including `null`, `ComputerLanguage.Text`, and other supported languages.
+
 2. **Expected Results**:
-  - The method should return `false` for `null` and `ComputerLanguage.Text`.
-  - The method should return `true` for other supported languages.
+
+- The method should return `false` for `null` and `ComputerLanguage.Text`.
+- The method should return `true` for other supported languages.
 
 ###### TC2: Default Selection for Code
 
 **Objective**: Ensure that the `defaultSelection` method correctly identifies the smallest code block or the entire line if no code blocks are identified.
 
 1. **Steps**:
-  - Provide an `EditorState` with multiple code ranges and invoke the method.
-  - Provide an `EditorState` without code ranges and invoke the method.
+
+- Provide an `EditorState` with multiple code ranges and invoke the method.
+- Provide an `EditorState` without code ranges and invoke the method.
+
 2. **Expected Results**:
-  - Returns the range of the smallest code block when available.
-  - Returns the entire line if no code blocks are present.
+
+- Returns the range of the smallest code block when available.
+- Returns the entire line if no code blocks are present.
 
 ###### TC3: Code Editing via Virtual API
 
 **Objective**: Test the `processSelection` method's ability to send code to the `VirtualAPI` and receive edited code.
 
 1. **Steps**:
-  - Select a stub code in the editor.
-  - Trigger the `processSelection` method.
+
+- Select a stub code in the editor.
+- Trigger the `processSelection` method.
+
 2. **Expected Results**:
-  - The method sends the correct parameters to the `VirtualAPI`.
-  - The method updates the editor with the returned `ConvertedText.code`.
+
+- The method sends the correct parameters to the `VirtualAPI`.
+- The method updates the editor with the returned `ConvertedText.code`.
 
 ###### TC4: Error Handling and Stability
 
 **Objective**: Ensure the action handles errors gracefully when the backend service is unavailable or returns an error.
 
 1. **Steps**:
-  - Simulate backend service failure or error responses.
-  - Trigger the `processSelection` method.
+
+- Simulate backend service failure or error responses.
+- Trigger the `processSelection` method.
+
 2. **Expected Results**:
-  - The method should not crash the IDE.
-  - Appropriate error messages or logs should be generated.
+
+- The method should not crash the IDE.
+- Appropriate error messages or logs should be generated.
 
 ###### TC5: User Interface and Integration
 
 **Objective**: Confirm that the action integrates well with the IDE and user interactions are handled smoothly.
 
 1. **Steps**:
-  - Use the IDE's interface to trigger the action through context menus or keyboard shortcuts.
-  - Observe the interaction and any UI changes or prompts.
+
+- Use the IDE's interface to trigger the action through context menus or keyboard shortcuts.
+- Observe the interaction and any UI changes or prompts.
+
 2. **Expected Results**:
-  - The action should be accessible through the expected UI elements.
-  - Any dialogs or prompts should display correctly and be user-friendly.
+
+- The action should be accessible through the expected UI elements.
+- Any dialogs or prompts should display correctly and be user-friendly.
 
 ##### Post-Test Cleanup:
 
@@ -513,8 +528,9 @@ processing comments, and interacting with the virtual API to generate code imple
 2. Select a single line comment that specifies a clear implementation requirement.
 3. Trigger the `InsertImplementationAction`.
 4. **Expected Result**:
-  - The action communicates with the virtual API.
-  - Generated code is inserted correctly below the comment.
+
+- The action communicates with the virtual API.
+- Generated code is inserted correctly below the comment.
 
 ###### TC2: Multi-line Comment Test
 
@@ -524,8 +540,9 @@ processing comments, and interacting with the virtual API to generate code imple
 2. Select a multi-line comment with a detailed specification.
 3. Trigger the `InsertImplementationAction`.
 4. **Expected Result**:
-  - The action processes the entire comment as a single specification.
-  - Appropriate code is generated and inserted.
+
+- The action processes the entire comment as a single specification.
+- Appropriate code is generated and inserted.
 
 ###### TC3: No Comment Selected Test
 
@@ -535,7 +552,8 @@ processing comments, and interacting with the virtual API to generate code imple
 2. Place the cursor in a code block without any nearby comments.
 3. Trigger the `InsertImplementationAction`.
 4. **Expected Result**:
-  - No action is taken, or a user-friendly message is displayed indicating no specification found.
+
+- No action is taken, or a user-friendly message is displayed indicating no specification found.
 
 ###### TC4: Unsupported Language Test
 
@@ -545,8 +563,9 @@ processing comments, and interacting with the virtual API to generate code imple
 2. Select any portion of text.
 3. Trigger the `InsertImplementationAction`.
 4. **Expected Result**:
-  - The action should not proceed.
-  - A message indicates that the language is not supported.
+
+- The action should not proceed.
+- A message indicates that the language is not supported.
 
 ###### TC5: Error Handling Test
 
@@ -556,8 +575,9 @@ processing comments, and interacting with the virtual API to generate code imple
 2. Open a source file in a supported language.
 3. Select a comment and trigger the `InsertImplementationAction`.
 4. **Expected Result**:
-  - The action should handle the error without crashing.
-  - A user-friendly error message is displayed.
+
+- The action should handle the error without crashing.
+- A user-friendly error message is displayed.
 
 ###### TC6: Large Specification Test
 
@@ -567,8 +587,9 @@ processing comments, and interacting with the virtual API to generate code imple
 2. Select a very long comment that spans multiple lines and includes complex specifications.
 3. Trigger the `InsertImplementationAction`.
 4. **Expected Result**:
-  - The action processes the comment efficiently.
-  - Code is generated and inserted without significant delay.
+
+- The action processes the comment efficiently.
+- Code is generated and inserted without significant delay.
 
 ##### Reporting:
 
@@ -799,73 +820,91 @@ To manually test the `RenameVariablesAction` class to ensure that it correctly s
 **Objective**: Verify that the action suggests and applies renames correctly for a simple case.
 
 1. **Steps**:
-  - Open a source file with a few variables.
-  - Highlight a variable name.
-  - Trigger the `RenameVariablesAction`.
-  - Select all suggested renames in the dialog.
-  - Apply the changes.
+
+- Open a source file with a few variables.
+- Highlight a variable name.
+- Trigger the `RenameVariablesAction`.
+- Select all suggested renames in the dialog.
+- Apply the changes.
+
 2. **Expected Result**:
-  - The variable names in the code are renamed as suggested by the AI.
-  - No syntax errors or unresolved references should occur due to renaming.
+
+- The variable names in the code are renamed as suggested by the AI.
+- No syntax errors or unresolved references should occur due to renaming.
 
 ###### TC2: No Selection Test
 
 **Objective**: Verify the behavior when no text is selected.
 
 1. **Steps**:
-  - Open a source file.
-  - Ensure no text is selected.
-  - Trigger the `RenameVariablesAction`.
+
+- Open a source file.
+- Ensure no text is selected.
+- Trigger the `RenameVariablesAction`.
+
 2. **Expected Result**:
-  - An appropriate message indicating no selection or no operation should be displayed.
+
+- An appropriate message indicating no selection or no operation should be displayed.
 
 ###### TC3: Unsupported Language Test
 
 **Objective**: Verify that the action does not proceed in unsupported languages.
 
 1. **Steps**:
-  - Open a text file or a file of an unsupported language.
-  - Select some text.
-  - Trigger the `RenameVariablesAction`.
+
+- Open a text file or a file of an unsupported language.
+- Select some text.
+- Trigger the `RenameVariablesAction`.
+
 2. **Expected Result**:
-  - The action should not proceed, possibly showing a message that the language is unsupported.
+
+- The action should not proceed, possibly showing a message that the language is unsupported.
 
 ###### TC4: Multiple Suggestions Test
 
 **Objective**: Verify that the action handles multiple suggestions correctly.
 
 1. **Steps**:
-  - Open a source file with multiple variables.
-  - Highlight a block of code containing multiple variable names.
-  - Trigger the `RenameVariablesAction`.
-  - Choose only a subset of the suggested renames.
-  - Apply the changes.
+
+- Open a source file with multiple variables.
+- Highlight a block of code containing multiple variable names.
+- Trigger the `RenameVariablesAction`.
+- Choose only a subset of the suggested renames.
+- Apply the changes.
+
 2. **Expected Result**:
-  - Only the selected variable names should be renamed.
-  - The code should remain functional with no unresolved references.
+
+- Only the selected variable names should be renamed.
+- The code should remain functional with no unresolved references.
 
 ###### TC5: Cancel Operation Test
 
 **Objective**: Verify that cancelling the rename operation leaves the code unchanged.
 
 1. **Steps**:
-  - Open a source file.
-  - Select a variable name.
-  - Trigger the `RenameVariablesAction`.
-  - When the rename suggestions dialog appears, cancel the operation.
+
+- Open a source file.
+- Select a variable name.
+- Trigger the `RenameVariablesAction`.
+- When the rename suggestions dialog appears, cancel the operation.
+
 2. **Expected Result**:
-  - No changes should be made to the code.
+
+- No changes should be made to the code.
 
 ###### TC6: Error Handling Test
 
 **Objective**: Verify that the system handles errors gracefully (e.g., API failures, network issues).
 
 1. **Steps**:
-  - Simulate an API failure or network issue (e.g., by temporarily modifying the `ChatProxy` settings to an invalid state).
-  - Open a source file and select a variable name.
-  - Trigger the `RenameVariablesAction`.
+
+- Simulate an API failure or network issue (e.g., by temporarily modifying the `ChatProxy` settings to an invalid state).
+- Open a source file and select a variable name.
+- Trigger the `RenameVariablesAction`.
+
 2. **Expected Result**:
-  - An error message should be displayed, and no changes should be made to the code.
+
+- An error message should be displayed, and no changes should be made to the code.
 
 ##### Post-Test Cleanup
 
@@ -908,58 +947,65 @@ appropriately to user interactions and system events.
 ##### Test Cases:
 
 1. **Initialization Test**
-  - **Objective**: Verify that the server initializes correctly with the specified local name and port.
-  - **Steps**:
-    1. Instantiate `AppServer` with "localhost" and 8080.
-    2. Call `start()` method.
-  - **Expected Result**: Server starts without errors, and logs indicate initialization at the specified address and port.
+
+- **Objective**: Verify that the server initializes correctly with the specified local name and port.
+- **Steps**:
+  1. Instantiate `AppServer` with "localhost" and 8080.
+  2. Call `start()` method.
+- **Expected Result**: Server starts without errors, and logs indicate initialization at the specified address and port.
 
 2. **Add Application Test**
-  - **Objective**: Verify that applications can be added dynamically and are accessible.
-  - **Steps**:
-    1. Start the server.
-    2. Create a `ChatServer` instance and add it using `addApp("/chat", chatServerInstance)`.
-    3. Access `localhost:8080/chat`.
-  - **Expected Result**:
-    - The server should restart with the new context.
-    - The chat application should be accessible and functional at the specified path.
+
+- **Objective**: Verify that applications can be added dynamically and are accessible.
+- **Steps**:
+  1. Start the server.
+  2. Create a `ChatServer` instance and add it using `addApp("/chat", chatServerInstance)`.
+  3. Access `localhost:8080/chat`.
+- **Expected Result**:
+  - The server should restart with the new context.
+  - The chat application should be accessible and functional at the specified path.
 
 3. **Server Restart on New App Addition**
-  - **Objective**: Ensure the server restarts correctly when a new application is added.
-  - **Steps**:
-    1. Start the server.
-    2. Add a new `ChatServer` application.
-    3. Monitor logs for restart messages.
-  - **Expected Result**: Logs should indicate that the server was stopped and restarted successfully.
+
+- **Objective**: Ensure the server restarts correctly when a new application is added.
+- **Steps**:
+  1. Start the server.
+  2. Add a new `ChatServer` application.
+  3. Monitor logs for restart messages.
+- **Expected Result**: Logs should indicate that the server was stopped and restarted successfully.
 
 4. **Concurrency Test**
-  - **Objective**: Verify that the server can handle multiple requests simultaneously.
-  - **Steps**:
-    1. Start the server.
-    2. Simultaneously access multiple paths ("/chat", "/info") from different clients.
-  - **Expected Result**: All clients should receive correct responses without any delay or errors.
+
+- **Objective**: Verify that the server can handle multiple requests simultaneously.
+- **Steps**:
+  1. Start the server.
+  2. Simultaneously access multiple paths ("/chat", "/info") from different clients.
+- **Expected Result**: All clients should receive correct responses without any delay or errors.
 
 5. **Error Handling Test**
-  - **Objective**: Verify that the server handles errors gracefully.
-  - **Steps**:
-    1. Start the server.
-    2. Simulate an error scenario (e.g., add an app with invalid configuration).
-    3. Check the response and logs.
-  - **Expected Result**: Appropriate error messages are logged, and the server continues to run other contexts correctly.
+
+- **Objective**: Verify that the server handles errors gracefully.
+- **Steps**:
+  1. Start the server.
+  2. Simulate an error scenario (e.g., add an app with invalid configuration).
+  3. Check the response and logs.
+- **Expected Result**: Appropriate error messages are logged, and the server continues to run other contexts correctly.
 
 6. **Server Stop Test**
-  - **Objective**: Ensure the server stops cleanly on command.
-  - **Steps**:
-    1. Start the server.
-    2. Call `stop()` from the `AppServer.Companion` object.
-  - **Expected Result**: Server stops without errors, and logs indicate a clean shutdown.
+
+- **Objective**: Ensure the server stops cleanly on command.
+- **Steps**:
+  1. Start the server.
+  2. Call `stop()` from the `AppServer.Companion` object.
+- **Expected Result**: Server stops without errors, and logs indicate a clean shutdown.
 
 7. **Resource Leak Test**
-  - **Objective**: Ensure there are no resource leaks (threads, file handles, sockets) after server operations.
-  - **Steps**:
-    1. Start and stop the server multiple times.
-    2. Monitor system resources.
-  - **Expected Result**: No increase in resource usage over time, indicating no leaks.
+
+- **Objective**: Ensure there are no resource leaks (threads, file handles, sockets) after server operations.
+- **Steps**:
+  1. Start and stop the server multiple times.
+  2. Monitor system resources.
+- **Expected Result**: No increase in resource usage over time, indicating no leaks.
 
 ##### Post-conditions:
 
@@ -1113,12 +1159,15 @@ handling of file paths.
 
 1. **Preconditions**: Open a project with at least one non-directory file.
 2. **Test Steps**:
-  - Right-click on a file and select "Create Analogue File".
-  - Enter the directive: "Create test cases".
-  - Execute the action.
+
+- Right-click on a file and select "Create Analogue File".
+- Enter the directive: "Create test cases".
+- Execute the action.
+
 3. **Expected Results**:
-  - A new file is created in the same directory as the original.
-  - The new file contains content relevant to the directive.
+
+- A new file is created in the same directory as the original.
+- The new file contains content relevant to the directive.
 
 ###### TC2: Directory Selection Handling
 
@@ -1126,9 +1175,12 @@ handling of file paths.
 
 1. **Preconditions**: Open a project and select a directory.
 2. **Test Steps**:
-  - Right-click on the directory and observe the available actions.
+
+- Right-click on the directory and observe the available actions.
+
 3. **Expected Results**:
-  - The "Create Analogue File" action should be disabled or not visible.
+
+- The "Create Analogue File" action should be disabled or not visible.
 
 ###### TC3: Non-existent Path Handling
 
@@ -1136,12 +1188,15 @@ handling of file paths.
 
 1. **Preconditions**: Open a project with at least one file.
 2. **Test Steps**:
-  - Right-click on a file and select "Create Analogue File".
-  - Enter a directive that implies saving to a non-existent path.
-  - Execute the action.
+
+- Right-click on a file and select "Create Analogue File".
+- Enter a directive that implies saving to a non-existent path.
+- Execute the action.
+
 3. **Expected Results**:
-  - Directories along the path are created as needed.
-  - The file is successfully created at the specified path.
+
+- Directories along the path are created as needed.
+- The file is successfully created at the specified path.
 
 ###### TC4: File Overwrite Handling
 
@@ -1149,11 +1204,14 @@ handling of file paths.
 
 1. **Preconditions**: A file already exists at the target path.
 2. **Test Steps**:
-  - Right-click on a file and select "Create Analogue File".
-  - Enter a directive that results in a file path where a file already exists.
-  - Execute the action.
+
+- Right-click on a file and select "Create Analogue File".
+- Enter a directive that results in a file path where a file already exists.
+- Execute the action.
+
 3. **Expected Results**:
-  - The action does not overwrite the existing file but creates a new file with a modified name to avoid duplication.
+
+- The action does not overwrite the existing file but creates a new file with a modified name to avoid duplication.
 
 ###### TC5: Error Handling and Messages
 
@@ -1161,11 +1219,14 @@ handling of file paths.
 
 1. **Preconditions**: Open a project.
 2. **Test Steps**:
-  - Induce different error scenarios like API failures, permission issues, etc.
-  - Observe the error handling and messages displayed.
+
+- Induce different error scenarios like API failures, permission issues, etc.
+- Observe the error handling and messages displayed.
+
 3. **Expected Results**:
-  - Relevant and user-friendly error messages are displayed.
-  - The system handles exceptions gracefully without crashing.
+
+- Relevant and user-friendly error messages are displayed.
+- The system handles exceptions gracefully without crashing.
 
 ###### TC6: Performance Test
 
@@ -1173,11 +1234,14 @@ handling of file paths.
 
 1. **Preconditions**: Open a project with large files.
 2. **Test Steps**:
-  - Execute the action on large files multiple times.
-  - Monitor the response time and resource usage.
+
+- Execute the action on large files multiple times.
+- Monitor the response time and resource usage.
+
 3. **Expected Results**:
-  - The action completes within a reasonable time.
-  - No significant degradation in IDE performance.
+
+- The action completes within a reasonable time.
+- No significant degradation in IDE performance.
 
 ##### Post-Test Cleanup:
 
@@ -1326,8 +1390,9 @@ To manually test the `CodeChatAction` class to ensure it correctly initializes a
 1. Open a project and select a file.
 2. Trigger the `CodeChatAction`.
 3. **Expected Result**:
-  - A new browser tab opens with the chat interface.
-  - The chat session corresponds to the selected file and language.
+
+- A new browser tab opens with the chat interface.
+- The chat session corresponds to the selected file and language.
 
 ###### TC2: Null Editor Handling
 
@@ -1335,8 +1400,9 @@ To manually test the `CodeChatAction` class to ensure it correctly initializes a
 
 1. Trigger the `CodeChatAction` without opening any file.
 2. **Expected Result**:
-  - No action is taken.
-  - No errors or crashes occur.
+
+- No action is taken.
+- No errors or crashes occur.
 
 ###### TC3: Unsupported Language Handling
 
@@ -1345,8 +1411,9 @@ To manually test the `CodeChatAction` class to ensure it correctly initializes a
 1. Open a file with an unsupported language or plain text.
 2. Trigger the `CodeChatAction`.
 3. **Expected Result**:
-  - No chat session is initiated.
-  - Appropriate user feedback is provided (e.g., a notification).
+
+- No chat session is initiated.
+- Appropriate user feedback is provided (e.g., a notification).
 
 ###### TC4: Session Initialization
 
@@ -1355,8 +1422,9 @@ To manually test the `CodeChatAction` class to ensure it correctly initializes a
 1. Open a supported file and select some text.
 2. Trigger the `CodeChatAction`.
 3. **Expected Result**:
-  - A new session is created with the correct language and selected text.
-  - The session ID is correctly appended to the URL.
+
+- A new session is created with the correct language and selected text.
+- The session ID is correctly appended to the URL.
 
 ###### TC5: Error Handling in Browser Opening
 
@@ -1365,8 +1433,9 @@ To manually test the `CodeChatAction` class to ensure it correctly initializes a
 1. Temporarily modify system settings to prevent the IDE from opening a browser.
 2. Trigger the `CodeChatAction`.
 3. **Expected Result**:
-  - An error is logged.
-  - The application does not crash.
+
+- An error is logged.
+- The application does not crash.
 
 ###### TC6: Multiple Sessions Handling
 
@@ -1375,8 +1444,9 @@ To manually test the `CodeChatAction` class to ensure it correctly initializes a
 1. Open multiple files in different tabs.
 2. Trigger the `CodeChatAction` in each tab sequentially.
 3. **Expected Result**:
-  - Each file opens its own chat session in a new browser tab.
-  - Sessions do not interfere with each other.
+
+- Each file opens its own chat session in a new browser tab.
+- Sessions do not interfere with each other.
 
 ##### Post-Test Cleanup:
 
@@ -1422,9 +1492,11 @@ the editor at the correct position.
 3. Trigger the `VoiceToTextAction`.
 4. Speak a few sentences into the microphone.
 5. Verify that:
-  - The recording starts and the status dialog appears.
-  - The audio is processed, and the speech-to-text conversion happens.
-  - The text appears in the editor at the cursor's position.
+
+- The recording starts and the status dialog appears.
+- The audio is processed, and the speech-to-text conversion happens.
+- The text appears in the editor at the cursor's position.
+
 6. Close the status dialog to stop the recording.
 7. Check the final text in the editor for accuracy.
 
@@ -1437,8 +1509,10 @@ the editor at the correct position.
 3. Trigger the `VoiceToTextAction`.
 4. Speak a continuation of the selected text.
 5. Verify that:
-  - The selected text is used as a prompt.
-  - The dictated text follows the selected text logically and grammatically.
+
+- The selected text is used as a prompt.
+- The dictated text follows the selected text logically and grammatically.
+
 6. Close the status dialog to end the session.
 7. Review the text for logical continuation and correctness.
 
@@ -1450,8 +1524,10 @@ the editor at the correct position.
 2. Trigger the `VoiceToTextAction`.
 3. During recording, simulate an error (e.g., disconnect the microphone).
 4. Verify that:
-  - An error message is displayed.
-  - The process stops gracefully without crashing the IDE.
+
+- An error message is displayed.
+- The process stops gracefully without crashing the IDE.
+
 5. Reconnect the microphone and restart the dictation to check recovery.
 
 ###### TC4: Concurrency and Performance
@@ -1462,8 +1538,9 @@ the editor at the correct position.
 2. Start dictation in one file.
 3. While dictation is ongoing, switch to another file and edit text manually.
 4. Verify that:
-  - The IDE remains responsive.
-  - There are no lags or freezes in either the dictation or manual editing processes.
+
+- The IDE remains responsive.
+- There are no lags or freezes in either the dictation or manual editing processes.
 
 ###### TC5: Stop Dictation Midway
 
@@ -1473,8 +1550,9 @@ the editor at the correct position.
 2. Trigger the `VoiceToTextAction`.
 3. Start dictating and then abruptly close the status dialog to stop dictation.
 4. Verify that:
-  - The dictation stops immediately.
-  - Partially dictated text remains in the editor and is correct up to the point of stopping.
+
+- The dictation stops immediately.
+- Partially dictated text remains in the editor and is correct up to the point of stopping.
 
 ##### Test Data:
 
@@ -1702,8 +1780,9 @@ chat system for code assistance.
 2. Select a portion of code or simply place the cursor within the document.
 3. Trigger the `LineFilterChatAction` via its assigned shortcut or menu entry.
 4. **Expected Result**:
-  - The action initializes without errors.
-  - A browser window/tab opens pointing to the chat interface.
+
+- The action initializes without errors.
+- A browser window/tab opens pointing to the chat interface.
 
 ###### TC2: No Selection Handling
 
@@ -1712,7 +1791,8 @@ chat system for code assistance.
 1. Open a source code file and ensure no text is selected.
 2. Trigger the `LineFilterChatAction`.
 3. **Expected Result**:
-  - The entire text of the current document is used as input for the chat session.
+
+- The entire text of the current document is used as input for the chat session.
 
 ###### TC3: Error Handling - Unsupported File Type
 
@@ -1721,8 +1801,9 @@ chat system for code assistance.
 1. Open a file of an unsupported type (e.g., a binary file).
 2. Attempt to trigger the `LineFilterChatAction`.
 3. **Expected Result**:
-  - The action does not proceed.
-  - An appropriate error message or notification is displayed.
+
+- The action does not proceed.
+- An appropriate error message or notification is displayed.
 
 ###### TC4: Chat Interaction
 
@@ -1731,8 +1812,9 @@ chat system for code assistance.
 1. Trigger the action with a selected portion of code.
 2. In the opened chat interface, ask specific questions related to the code.
 3. **Expected Result**:
-  - The AI responds accurately based on the provided code context.
-  - Responses include appropriate references to the code lines.
+
+- The AI responds accurately based on the provided code context.
+- Responses include appropriate references to the code lines.
 
 ###### TC5: Session Management
 
@@ -1742,8 +1824,9 @@ chat system for code assistance.
 2. Interact with the chat in each session.
 3. Navigate between different chat sessions.
 4. **Expected Result**:
-  - Each session maintains its state independently.
-  - Switching between sessions displays the correct chat history and code context.
+
+- Each session maintains its state independently.
+- Switching between sessions displays the correct chat history and code context.
 
 ###### TC6: Network Failure Handling
 
@@ -1754,8 +1837,9 @@ chat system for code assistance.
 3. Attempt to continue the interaction.
 4. Restore network connectivity and try interacting again.
 5. **Expected Result**:
-  - During network failure, the system should handle the loss gracefully, possibly with error notifications.
-  - After connectivity is restored, the system should resume normal operation.
+
+- During network failure, the system should handle the loss gracefully, possibly with error notifications.
+- After connectivity is restored, the system should resume normal operation.
 
 ###### TC7: Code Update Reflection
 
@@ -1764,7 +1848,8 @@ chat system for code assistance.
 1. Open a source code file, trigger the action, and start a chat session.
 2. Close the chat, modify the code in the IDE, and trigger the action again.
 3. **Expected Result**:
-  - The new chat session should reflect the updated code.
+
+- The new chat session should reflect the updated code.
 
 ##### Reporting:
 
@@ -1803,62 +1888,70 @@ with the system environment and other components.
 ##### Test Cases:
 
 1. **Initialization Test**
-  - **Objective**: Ensure the `MultiStepPatchAction` initializes correctly within the IDE environment.
-  - **Steps**:
-    1. Start the IDE.
-    2. Open a project.
-    3. Trigger the `MultiStepPatchAction`.
-  - **Expected Result**: The action initializes without errors, and the Auto Dev Assistant UI is accessible.
+
+- **Objective**: Ensure the `MultiStepPatchAction` initializes correctly within the IDE environment.
+- **Steps**:
+  1. Start the IDE.
+  2. Open a project.
+  3. Trigger the `MultiStepPatchAction`.
+- **Expected Result**: The action initializes without errors, and the Auto Dev Assistant UI is accessible.
 
 2. **UI Accessibility Test**
-  - **Objective**: Verify that the Auto Dev Assistant UI opens in the default browser and displays correctly.
-  - **Steps**:
-    1. Trigger the `MultiStepPatchAction`.
-    2. Observe the browser opening automatically.
-  - **Expected Result**: The Auto Dev Assistant UI is displayed correctly in the browser with all elements visible.
+
+- **Objective**: Verify that the Auto Dev Assistant UI opens in the default browser and displays correctly.
+- **Steps**:
+  1. Trigger the `MultiStepPatchAction`.
+  2. Observe the browser opening automatically.
+- **Expected Result**: The Auto Dev Assistant UI is displayed correctly in the browser with all elements visible.
 
 3. **Session Handling Test**
-  - **Objective**: Confirm that sessions are handled correctly, allowing multiple instances without conflict.
-  - **Steps**:
-    1. Trigger the `MultiStepPatchAction` multiple times with different projects.
-    2. Navigate between different sessions in the browser.
-  - **Expected Result**: Each session should maintain its state independently.
+
+- **Objective**: Confirm that sessions are handled correctly, allowing multiple instances without conflict.
+- **Steps**:
+  1. Trigger the `MultiStepPatchAction` multiple times with different projects.
+  2. Navigate between different sessions in the browser.
+- **Expected Result**: Each session should maintain its state independently.
 
 4. **File Selection and Data Storage Interaction**
-  - **Objective**: Ensure that the action correctly handles file selections and interacts with the data storage.
-  - **Steps**:
-    1. Select different folders and files in the IDE.
-    2. Trigger the `MultiStepPatchAction`.
-    3. Check if the selected files are correctly recognized and listed in the UI.
-  - **Expected Result**: The selected files should be correctly passed to the Auto Dev Assistant and displayed in the UI.
+
+- **Objective**: Ensure that the action correctly handles file selections and interacts with the data storage.
+- **Steps**:
+  1. Select different folders and files in the IDE.
+  2. Trigger the `MultiStepPatchAction`.
+  3. Check if the selected files are correctly recognized and listed in the UI.
+- **Expected Result**: The selected files should be correctly passed to the Auto Dev Assistant and displayed in the UI.
 
 5. **Task Generation and Display**
-  - **Objective**: Test the generation and display of tasks based on user input.
-  - **Steps**:
-    1. Provide a specific development directive in the UI.
-    2. Observe the tasks generated by the system.
-  - **Expected Result**: Tasks relevant to the user's directive are generated and displayed correctly.
+
+- **Objective**: Test the generation and display of tasks based on user input.
+- **Steps**:
+  1. Provide a specific development directive in the UI.
+  2. Observe the tasks generated by the system.
+- **Expected Result**: Tasks relevant to the user's directive are generated and displayed correctly.
 
 6. **Error Handling Test**
-  - **Objective**: Ensure that the system gracefully handles errors.
-  - **Steps**:
-    1. Trigger scenarios likely to produce errors (e.g., invalid file paths, unsupported operations).
-    2. Observe the system's response.
-  - **Expected Result**: Errors are handled gracefully, with informative messages displayed to the user without crashing the system.
+
+- **Objective**: Ensure that the system gracefully handles errors.
+- **Steps**:
+  1. Trigger scenarios likely to produce errors (e.g., invalid file paths, unsupported operations).
+  2. Observe the system's response.
+- **Expected Result**: Errors are handled gracefully, with informative messages displayed to the user without crashing the system.
 
 7. **Concurrency Test**
-  - **Objective**: Verify that the system handles concurrent operations without data corruption or crashes.
-  - **Steps**:
-    1. Trigger multiple instances of `MultiStepPatchAction` simultaneously.
-    2. Perform operations in multiple UI sessions at the same time.
-  - **Expected Result**: All operations are processed correctly without interference, data corruption, or system crashes.
+
+- **Objective**: Verify that the system handles concurrent operations without data corruption or crashes.
+- **Steps**:
+  1. Trigger multiple instances of `MultiStepPatchAction` simultaneously.
+  2. Perform operations in multiple UI sessions at the same time.
+- **Expected Result**: All operations are processed correctly without interference, data corruption, or system crashes.
 
 8. **Cleanup and Session Termination**
-  - **Objective**: Confirm that sessions are cleaned up properly after termination.
-  - **Steps**:
-    1. Close the browser or terminate sessions from the UI.
-    2. Check system resources and logs for any remnants.
-  - **Expected Result**: All resources are released, and no session data remains after termination.
+
+- **Objective**: Confirm that sessions are cleaned up properly after termination.
+- **Steps**:
+  1. Close the browser or terminate sessions from the UI.
+  2. Check system resources and logs for any remnants.
+- **Expected Result**: All resources are released, and no session data remains after termination.
 
 ##### Post-conditions:
 
@@ -1903,44 +1996,54 @@ To verify that the RedoLast action correctly redoes the last AI Coder action per
 
 1. **Objective**: Ensure that the RedoLast action can redo a simple undone action.
 2. **Steps**:
-  - Open a file in the editor.
-  - Perform a simple action (e.g., typing a line of code).
-  - Undo the action using IntelliJ's built-in undo feature.
-  - Trigger the RedoLast action.
+
+- Open a file in the editor.
+- Perform a simple action (e.g., typing a line of code).
+- Undo the action using IntelliJ's built-in undo feature.
+- Trigger the RedoLast action.
+
 3. **Expected Result**: The undone action should be redone correctly.
 
 ###### TC2: Redo After Multiple Actions
 
 1. **Objective**: Verify that RedoLast redoes the last undone action after multiple changes.
 2. **Steps**:
-  - Open a file and perform multiple editing actions (e.g., add several lines of code).
-  - Undo several actions one by one.
-  - Trigger the RedoLast action.
+
+- Open a file and perform multiple editing actions (e.g., add several lines of code).
+- Undo several actions one by one.
+- Trigger the RedoLast action.
+
 3. **Expected Result**: Only the last undone action should be redone.
 
 ###### TC3: Redo With No Prior Action
 
 1. **Objective**: Check the behavior when there is no action to redo.
 2. **Steps**:
-  - Open a new or existing file.
-  - Ensure no actions are performed or undo any performed actions.
-  - Trigger the RedoLast action.
+
+- Open a new or existing file.
+- Ensure no actions are performed or undo any performed actions.
+- Trigger the RedoLast action.
+
 3. **Expected Result**: No changes should occur in the editor. The action should handle the absence of redoable actions gracefully.
 
 ###### TC4: Redo in Different File Types
 
 1. **Objective**: Ensure that RedoLast works across files of different types.
 2. **Steps**:
-  - Repeat TC1 for different file types (e.g., .java, .kt, .py).
+
+- Repeat TC1 for different file types (e.g., .java, .kt, .py).
+
 3. **Expected Result**: The RedoLast action should function correctly regardless of the file type.
 
 ###### TC5: Redo After Restarting IntelliJ
 
 1. **Objective**: Verify that RedoLast can still function after restarting IntelliJ.
 2. **Steps**:
-  - Open a file, perform some actions, and undo at least one.
-  - Close and reopen IntelliJ.
-  - Open the same file and trigger the RedoLast action.
+
+- Open a file, perform some actions, and undo at least one.
+- Close and reopen IntelliJ.
+- Open the same file and trigger the RedoLast action.
+
 3. **Expected Result**: The last undone action should be redone correctly, assuming session persistence for undo/redo stacks.
 
 ##### Reporting:
@@ -1985,8 +2088,9 @@ an IDE environment.
 1. Right-click on a file or a selection of files in the project explorer.
 2. Select the `MultiDiffChat` action.
 3. **Expected Result**:
-  - A new browser tab opens pointing to the chat interface.
-  - The chat interface displays the initial code summary correctly.
+
+- A new browser tab opens pointing to the chat interface.
+- The chat interface displays the initial code summary correctly.
 
 ###### TC2: Multi-file Handling
 
@@ -1995,8 +2099,9 @@ an IDE environment.
 1. Select multiple files with different extensions from the project explorer.
 2. Trigger the `MultiDiffChat` action.
 3. **Expected Result**:
-  - The chat interface shows a code summary for each selected file.
-  - Language detection works as expected for different file types.
+
+- The chat interface shows a code summary for each selected file.
+- Language detection works as expected for different file types.
 
 ###### TC3: No File Selected
 
@@ -2005,7 +2110,8 @@ an IDE environment.
 1. Ensure no file is selected in the project explorer.
 2. Trigger the `MultiDiffChat` action.
 3. **Expected Result**:
-  - An error message appears indicating that no file was selected or an automatic fallback to a default directory occurs.
+
+- An error message appears indicating that no file was selected or an automatic fallback to a default directory occurs.
 
 ###### TC4: File Updates
 
@@ -2015,8 +2121,9 @@ an IDE environment.
 2. In the chat interface, submit a code change suggestion.
 3. Accept the change in the IDE.
 4. **Expected Result**:
-  - The file in the IDE is updated with the new code.
-  - The document is saved automatically if changes are applied.
+
+- The file in the IDE is updated with the new code.
+- The document is saved automatically if changes are applied.
 
 ###### TC5: Error Handling
 
@@ -2025,8 +2132,9 @@ an IDE environment.
 1. Manipulate the environment to simulate an error (e.g., permissions issues, network failures).
 2. Trigger the `MultiDiffChat` action.
 3. **Expected Result**:
-  - Appropriate error messages are displayed.
-  - The system logs the error details for debugging.
+
+- Appropriate error messages are displayed.
+- The system logs the error details for debugging.
 
 ###### TC6: Session Management
 
@@ -2036,7 +2144,8 @@ an IDE environment.
 2. Close the browser or navigate away from the chat page.
 3. Reopen the chat interface.
 4. **Expected Result**:
-  - The previous session should either continue where it left off or a new session should start cleanly.
+
+- The previous session should either continue where it left off or a new session should start cleanly.
 
 ###### TC7: Browser Compatibility
 
@@ -2044,7 +2153,8 @@ an IDE environment.
 
 1. Trigger the `MultiDiffChat` action using different browsers (e.g., Chrome, Firefox, Edge).
 2. **Expected Result**:
-  - The chat interface functions correctly in all tested browsers.
+
+- The chat interface functions correctly in all tested browsers.
 
 ##### Post-conditions:
 
@@ -2088,69 +2198,87 @@ content.
 **Objective**: To verify that the action compiles documentation from selected files.
 
 1. **Steps**:
-  - Right-click on a folder containing multiple source files.
-  - Select the "Compile Documentation" option.
-  - In the dialog, select multiple files to process.
-  - Enter a specific AI instruction in the provided text area.
-  - Specify an output filename.
-  - Click OK to generate the documentation.
+
+- Right-click on a folder containing multiple source files.
+- Select the "Compile Documentation" option.
+- In the dialog, select multiple files to process.
+- Enter a specific AI instruction in the provided text area.
+- Specify an output filename.
+- Click OK to generate the documentation.
+
 2. **Expected Result**:
-  - A markdown file with the specified name is created in the same directory.
-  - The file contains compiled documentation based on the AI transformation of the selected files.
+
+- A markdown file with the specified name is created in the same directory.
+- The file contains compiled documentation based on the AI transformation of the selected files.
 
 ###### TC2: Validation of Output File Naming
 
 **Objective**: To verify that the system handles existing filenames correctly by creating a new file with an incremented index.
 
 1. **Steps**:
-  - Repeat TC1 but specify an output filename that already exists.
+
+- Repeat TC1 but specify an output filename that already exists.
+
 2. **Expected Result**:
-  - A new file is created with an incremented index in its name (e.g., `compiled_documentation.1.md`).
+
+- A new file is created with an incremented index in its name (e.g., `compiled_documentation.1.md`).
 
 ###### TC3: AI Instruction Impact
 
 **Objective**: To verify that changing the AI instruction affects the generated documentation content.
 
 1. **Steps**:
-  - Perform TC1 with a basic instruction.
-  - Repeat the process with a more detailed or different instruction.
+
+- Perform TC1 with a basic instruction.
+- Repeat the process with a more detailed or different instruction.
+
 2. **Expected Result**:
-  - The content of the generated documentation should reflect the differences dictated by the AI instructions.
+
+- The content of the generated documentation should reflect the differences dictated by the AI instructions.
 
 ###### TC4: No Files Selected
 
 **Objective**: To verify the system behavior when no files are selected for processing.
 
 1. **Steps**:
-  - Open the "Compile Documentation" dialog.
-  - Deselect all files.
-  - Provide an AI instruction and output filename.
-  - Click OK.
+
+- Open the "Compile Documentation" dialog.
+- Deselect all files.
+- Provide an AI instruction and output filename.
+- Click OK.
+
 2. **Expected Result**:
-  - No output file is created.
-  - A user-friendly message or indication that no files were processed.
+
+- No output file is created.
+- A user-friendly message or indication that no files were processed.
 
 ###### TC5: Error Handling
 
 **Objective**: To verify that the system handles errors gracefully (e.g., permission issues, corrupted files).
 
 1. **Steps**:
-  - Introduce a controlled error scenario such as permissions restrictions on a file.
-  - Attempt to compile documentation including the problematic file.
+
+- Introduce a controlled error scenario such as permissions restrictions on a file.
+- Attempt to compile documentation including the problematic file.
+
 2. **Expected Result**:
-  - The process should not crash.
-  - An error message should be displayed, indicating the nature of the problem.
+
+- The process should not crash.
+- An error message should be displayed, indicating the nature of the problem.
 
 ###### TC6: UI Elements and Responsiveness
 
 **Objective**: To verify that all UI elements are responsive and function as expected.
 
 1. **Steps**:
-  - Open the "Compile Documentation" dialog.
-  - Interact with all UI elements (checkboxes, text fields, buttons).
+
+- Open the "Compile Documentation" dialog.
+- Interact with all UI elements (checkboxes, text fields, buttons).
+
 2. **Expected Result**:
-  - All elements should be responsive.
-  - Changes in the UI should reflect immediately (e.g., text updates, checkbox selections).
+
+- All elements should be responsive.
+- Changes in the UI should reflect immediately (e.g., text updates, checkbox selections).
 
 ##### Post-Test Cleanup
 
@@ -2388,87 +2516,111 @@ file operations, and server communications effectively.
 **Objective**: Verify that the action initializes and opens a browser window to the correct URL.
 
 1. **Steps**:
-  - Right-click on a folder in the project explorer.
-  - Select the `Web Dev Assistant v1.1` action.
+
+- Right-click on a folder in the project explorer.
+- Select the `Web Dev Assistant v1.1` action.
+
 2. **Expected Results**:
-  - A new browser window/tab opens.
-  - The URL corresponds to the `AppServer` URL with the appropriate session ID appended.
+
+- A new browser window/tab opens.
+- The URL corresponds to the `AppServer` URL with the appropriate session ID appended.
 
 ###### TC2: Directory Selection Validation
 
 **Objective**: Ensure the action is disabled when a non-directory file is selected.
 
 1. **Steps**:
-  - Right-click on a non-directory file in the project explorer.
-  - Observe the availability of the `Web Dev Assistant v1.1` action.
+
+- Right-click on a non-directory file in the project explorer.
+- Observe the availability of the `Web Dev Assistant v1.1` action.
+
 2. **Expected Results**:
-  - The action should be disabled or not visible.
+
+- The action should be disabled or not visible.
 
 ###### TC3: Session Handling
 
 **Objective**: Test if new sessions are correctly created and managed.
 
 1. **Steps**:
-  - Trigger the action multiple times with different selected directories.
-  - Observe the creation of new sessions.
+
+- Trigger the action multiple times with different selected directories.
+- Observe the creation of new sessions.
+
 2. **Expected Results**:
-  - Each action trigger should result in a new session.
-  - Each session should have a unique session ID.
+
+- Each action trigger should result in a new session.
+- Each session should have a unique session ID.
 
 ###### TC4: Error Handling
 
 **Objective**: Verify that the system handles errors gracefully (e.g., failure to open a browser).
 
 1. **Steps**:
-  - Temporarily modify system settings to disable the default browser.
-  - Trigger the action.
+
+- Temporarily modify system settings to disable the default browser.
+- Trigger the action.
+
 2. **Expected Results**:
-  - An appropriate error message should be logged.
-  - The system should not crash.
+
+- An appropriate error message should be logged.
+- The system should not crash.
 
 ###### TC5: User Message Handling
 
 **Objective**: Ensure that user messages are correctly processed and responded to within the application.
 
 1. **Steps**:
-  - Use the browser interface to send a message through the web application.
-  - Observe the response and any changes in the UI.
+
+- Use the browser interface to send a message through the web application.
+- Observe the response and any changes in the UI.
+
 2. **Expected Results**:
-  - The message should be processed.
-  - A valid response should be displayed in the UI.
+
+- The message should be processed.
+- A valid response should be displayed in the UI.
 
 ###### TC6: File Generation and Linking
 
 **Objective**: Test the generation of HTML, CSS, and JavaScript files based on user input.
 
 1. **Steps**:
-  - Provide specific instructions via the web interface for generating web resources.
-  - Check the generated files and their content.
+
+- Provide specific instructions via the web interface for generating web resources.
+- Check the generated files and their content.
+
 2. **Expected Results**:
-  - Files should be correctly generated in the specified paths.
-  - Files should contain content that matches the instructions provided.
+
+- Files should be correctly generated in the specified paths.
+- Files should contain content that matches the instructions provided.
 
 ###### TC7: Code Review and Feedback Integration
 
 **Objective**: Verify that code reviews and feedback are correctly applied to the generated code.
 
 1. **Steps**:
-  - Generate some initial code files.
-  - Use the provided interface to request a code review.
-  - Apply suggested changes via the interface.
+
+- Generate some initial code files.
+- Use the provided interface to request a code review.
+- Apply suggested changes via the interface.
+
 2. **Expected Results**:
-  - The system should provide valid code modifications.
-  - Users should be able to apply these modifications directly from the interface.
+
+- The system should provide valid code modifications.
+- Users should be able to apply these modifications directly from the interface.
 
 ###### TC8: Multi-Session Interaction
 
 **Objective**: Ensure that multiple sessions can run concurrently without interference.
 
 1. **Steps**:
-  - Open multiple sessions from different projects.
-  - Interact with each session independently.
+
+- Open multiple sessions from different projects.
+- Interact with each session independently.
+
 2. **Expected Results**:
-  - Actions in one session should not affect any other sessions.
+
+- Actions in one session should not affect any other sessions.
 
 ##### Test Data:
 
@@ -2531,10 +2683,11 @@ to convert selected text into various programming languages within a Markdown co
 **Objective**: Test the conversion functionality for each supported language.
 
 1. For each language in the `markdownLanguages` list:
-  - Select a block of text in a Markdown file.
-  - Trigger the `MarkdownImplementAction` for the language.
-  - Verify that the selected text is converted appropriately into the target language and wrapped in the correct Markdown code block syntax.
-  - Check for proper escaping and indentation of the generated code.
+
+- Select a block of text in a Markdown file.
+- Trigger the `MarkdownImplementAction` for the language.
+- Verify that the selected text is converted appropriately into the target language and wrapped in the correct Markdown code block syntax.
+- Check for proper escaping and indentation of the generated code.
 
 ###### TC4: Error Handling
 

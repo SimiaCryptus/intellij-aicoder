@@ -14,8 +14,8 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.Name
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
-import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
 import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.awt.BorderLayout
