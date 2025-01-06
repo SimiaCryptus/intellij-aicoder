@@ -5,6 +5,8 @@
     <category>Code Tools</category>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
+    <depends>org.jetbrains.plugins.yaml</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="com.simiacryptus.aicoder.util.PluginStartupActivity"/>

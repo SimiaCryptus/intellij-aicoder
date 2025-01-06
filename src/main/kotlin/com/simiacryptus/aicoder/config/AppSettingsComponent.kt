@@ -232,12 +232,16 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
 
   @Suppress("unused")
   val choosePluginHome = com.intellij.openapi.ui.TextFieldWithBrowseButton(pluginHome).apply {
-    addBrowseFolderListener(
+    val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+    val browserDescriptor = com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
       "Select Plugin Home Directory",
       null,
+      this,
       null,
-      FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      descriptor,
+      com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
     )
+    addActionListener(browserDescriptor)
   }
 
   @Suppress("unused")

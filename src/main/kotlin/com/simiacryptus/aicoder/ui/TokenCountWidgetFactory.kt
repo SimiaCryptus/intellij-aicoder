@@ -80,7 +80,11 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
             /* File */
             val node = path.lastPathComponent
             val virtualFile = ProjectManager.getInstance().openProjects.flatMap {
-              it.baseDir?.listChildrenRecursively { file ->
+              val basePath = it.basePath
+              if (basePath == null) emptyList()
+              else com.intellij.openapi.vfs.VirtualFileManager.getInstance()
+                .findFileByNioPath(java.nio.file.Paths.get(basePath))
+                ?.listChildrenRecursively { file ->
                 file.isFile && file.name.contains(node.toString())
               } ?: emptyList()
             }.let { files ->
@@ -94,8 +98,11 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
             /* Directory */
             val node = path.lastPathComponent
             val virtualFile = ProjectManager.getInstance().openProjects.flatMap {
-              val baseDir = it.baseDir
-              baseDir?.listChildrenRecursively { file ->
+              val basePath = it.basePath
+              if (basePath == null) emptyList()
+              else com.intellij.openapi.vfs.VirtualFileManager.getInstance()
+                .findFileByNioPath(java.nio.file.Paths.get(basePath))
+                ?.listChildrenRecursively { file ->
                 file.isDirectory && file.name.contains(node.toString())
               } ?: emptyList()
             }.let { files ->

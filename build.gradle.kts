@@ -109,7 +109,17 @@ tasks {
 
   jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude("org/jetbrains/**")
+    exclude(
+      "org/jetbrains/org/objectweb/asm/util/**",
+      "org/jetbrains/org/objectweb/asm/tree/analysis/**",
+      "org/jetbrains/org/objectweb/asm/tree/**",
+      "org/jetbrains/org/objectweb/asm/commons/**",
+      "org/jetbrains/concurrency/**",
+      "org/jetbrains/org/**",
+      "org/jetbrains/org/objectweb/asm/signature/**",
+      "org/jetbrains/org/objectweb/asm/**",
+      "org/jetbrains/org/objectweb/**"
+    )
   }
 
 

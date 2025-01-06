@@ -206,7 +206,7 @@ class FindResultsModificationAction(
     else -> "/* L$index */ $line"
   }
 
-  fun getFilteredLines(project: Project, file: VirtualFile, usages: List<Usage>): String? {
+private fun getFilteredLines(project: Project, file: VirtualFile, usages: List<Usage>): String? {
     val document =
       PsiDocumentManager.getInstance(project).getDocument(file.findPsiFile(project) ?: return null) ?: return null
     val psiRoot: PsiFile? = file.findPsiFile(project)
@@ -216,8 +216,9 @@ class FindResultsModificationAction(
       val lineEnd = document.getLineEndOffset(index)
       val containers = byContainer.map { it.key }.filter { psiElement ->
         psiElement ?: return@filter false
-        val startOffset = psiElement.startOffset
-        val endOffset = psiElement.endOffset
+        val textRange = psiElement.textRange
+        val startOffset = textRange.startOffset
+        val endOffset = textRange.endOffset
         when {
           startOffset >= lineEnd -> false
           endOffset <= lineStart -> false

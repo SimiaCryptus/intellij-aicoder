@@ -1,4 +1,4 @@
-﻿package aicoder.actions.editor
+package aicoder.actions.editor
 
 import aicoder.actions.BaseAction
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -15,11 +15,13 @@ class RedoLast : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun handle(e: AnActionEvent) {
-    retry[e.getRequiredData(CommonDataKeys.EDITOR).document]!!.run()
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+    retry[editor.document]?.run()
   }
 
   override fun isEnabled(event: AnActionEvent): Boolean {
-    return null != retry[event.getRequiredData(CommonDataKeys.EDITOR).document]
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
+    return retry[editor.document] != null
   }
 
 }
