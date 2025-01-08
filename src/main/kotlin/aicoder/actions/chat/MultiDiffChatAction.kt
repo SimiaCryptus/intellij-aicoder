@@ -7,13 +7,11 @@ import aicoder.actions.agent.toFile
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.diff.AddApplyFileDiffLinks
-
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ApiModel
@@ -25,6 +23,7 @@ import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.core.util.FileValidationUtils
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -38,13 +37,15 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.relativeTo
 
 class MultiDiffChatAction : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun isEnabled(event: AnActionEvent): Boolean {
-    val root = getRoot(event) ?: return false
-    val files = getFiles(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf(), root)
-    if (files.isEmpty()) return false
+    if (FileValidationUtils.expandFileList(
+        *PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile }?.toTypedArray<File>() ?: arrayOf()
+      ).isEmpty()
+    ) return false
     return super.isEnabled(event)
   }
 
@@ -52,7 +53,9 @@ class MultiDiffChatAction : BaseAction() {
     try {
       val root = getRoot(event) ?: throw RuntimeException("No file or folder selected")
       val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
-      val initialFiles = getFiles(virtualFiles, root)
+      val initialFiles = FileValidationUtils.expandFileList(*virtualFiles?.map { it.toFile }?.toTypedArray() ?: arrayOf()).map {
+        it.toPath().relativeTo(root)
+      }.toSet()
       val session = Session.newGlobalID()
       SessionProxyServer.metadataStorage.setSessionName(
         null,
@@ -213,21 +216,6 @@ class MultiDiffChatAction : BaseAction() {
       }
     }
   }
-
-
-  private fun getFiles(
-    virtualFiles: Array<out VirtualFile>?,
-    root: Path
-  ): Set<Path> = virtualFiles?.flatMap { file ->
-    if (file.isDirectory && !file.name.startsWith(".")) {
-      getFiles(file.children, root)
-    } else if (!file.toNioPath().isBinary()) {
-      setOf(root.relativize(file.toNioPath()))
-    } else {
-      emptySet()
-    }
-  }?.toSet() ?: emptySet()
-
 
   companion object {
     private val log = LoggerFactory.getLogger(MultiDiffChatAction::class.java)
