@@ -42,24 +42,16 @@ import java.util.concurrent.atomic.AtomicReference
 class MultiDiffChatAction : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun isEnabled(event: AnActionEvent): Boolean {
-    UITools.getSelectedFile(event) ?: return false
+    val root = getRoot(event) ?: return false
+    val files = getFiles(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext) ?: arrayOf(), root)
+    if (files.isEmpty()) return false
     return super.isEnabled(event)
   }
 
   override fun handle(event: AnActionEvent) {
     try {
-      val root: Path
-      val dataContext = event.dataContext
-      val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-      val folder = UITools.getSelectedFolder(event)
-      root = if (null != folder) {
-        folder.toFile.toPath()
-      } else {
-        getModuleRootForFile(
-          UITools.getSelectedFile(event)?.parent?.toFile
-            ?: throw RuntimeException("No file or folder selected")
-        ).toPath()
-      }
+      val root = getRoot(event) ?: throw RuntimeException("No file or folder selected")
+      val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
       val initialFiles = getFiles(virtualFiles, root)
       val session = Session.newGlobalID()
       SessionProxyServer.metadataStorage.setSessionName(
@@ -76,23 +68,34 @@ class MultiDiffChatAction : BaseAction() {
         showMenubar = false
       )
       val server = AppServer.getServer(event.project)
-      UITools.runAsync(event.project, "Opening Browser", true) { progress ->
-        Thread.sleep(500)
-        try {
-          val uri = server.server.uri.resolve("/#$session")
-          BaseAction.log.info("Opening browser to $uri")
-          browse(uri)
-        } catch (e: Throwable) {
-          val message = "Failed to open browser: ${e.message}"
-          log.error(message, e)
-          UITools.showErrorDialog(message, "Error")
-        }
-      }
+      launchBrowser(server, session.toString())
     } catch (e: Exception) {
       // Comprehensive error logging
       log.error("Error in MultiDiffChatAction", e)
       UITools.showErrorDialog(e.message ?: "", "Error")
     }
+  }
+
+  private fun getRoot(event: AnActionEvent): Path? {
+    val folder = UITools.getSelectedFolder(event)
+    return if (null != folder) {
+      folder.toFile.toPath()
+    } else {
+      getModuleRootForFile(UITools.getSelectedFile(event)?.parent?.toFile ?: return null).toPath()
+    }
+  }
+
+  private fun launchBrowser(server: AppServer, session: String) {
+    Thread {
+      Thread.sleep(500)
+      try {
+        val uri = server.server.uri.resolve("/#$session")
+        BaseAction.log.info("Opening browser to $uri")
+        browse(uri)
+      } catch (e: Throwable) {
+        log.warn("Error opening browser", e)
+      }
+    }.start()
   }
 
   inner class PatchApp(
@@ -215,21 +218,15 @@ class MultiDiffChatAction : BaseAction() {
   private fun getFiles(
     virtualFiles: Array<out VirtualFile>?,
     root: Path
-  ): MutableSet<Path> {
-    val codeFiles = mutableSetOf<Path>()
-    if (virtualFiles == null) {
-      log.warn("No virtual files provided")
-      return codeFiles
+  ): Set<Path> = virtualFiles?.flatMap { file ->
+    if (file.isDirectory && !file.name.startsWith(".")) {
+      getFiles(file.children, root)
+    } else if (!file.toNioPath().isBinary()) {
+      setOf(root.relativize(file.toNioPath()))
+    } else {
+      emptySet()
     }
-    virtualFiles.forEach { file ->
-      if (file.isDirectory) {
-        getFiles(file.children, root)
-      } else if (file.toNioPath().isBinary().not()) {
-        codeFiles.add(root.relativize(file.toNioPath()))
-      }
-    }
-    return codeFiles
-  }
+  }?.toSet() ?: emptySet()
 
 
   companion object {
