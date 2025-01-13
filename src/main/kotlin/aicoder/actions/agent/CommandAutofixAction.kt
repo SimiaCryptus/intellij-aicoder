@@ -26,6 +26,7 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.io.File
+import java.nio.file.Path
 import java.text.SimpleDateFormat
 import javax.swing.*
 import kotlin.collections.set
@@ -55,7 +56,7 @@ class CommandAutofixAction : BaseAction() {
         val settings = run {
           var settings1: PatchApp.Settings? = null
           SwingUtilities.invokeAndWait {
-            val settingsUI = SettingsUI(workingDirectory = root.toFile())
+            val settingsUI = SettingsUI(workingDirectory = root.toFile(), folders)
             val dialog = CommandSettingsDialog(event.project, settingsUI)
             dialog.show()
             settings1 = if (dialog.isOK) {
@@ -145,7 +146,7 @@ class CommandAutofixAction : BaseAction() {
      * UI component class for command settings dialog
      */
 
-    class SettingsUI(workingDirectory: File) {
+    class SettingsUI(workingDirectory: File, folders: List<Path>) {
       val maxRetriesField = JSpinner(SpinnerNumberModel(3, 0, 10, 1)).apply {
         toolTipText = "Maximum number of auto-retry attempts (0-10)"
       }
@@ -172,9 +173,17 @@ class CommandAutofixAction : BaseAction() {
       }
       val workingDirectoryField = ComboBox<String>().apply {
         isEditable = true
-        AppSettingsState.instance.recentWorkingDirs.forEach { addItem(it) }
+        val items = mutableListOf<String>()
+        AppSettingsState.instance.recentWorkingDirs.forEach { addItem(it); items.add(it) }
         if (AppSettingsState.instance.recentWorkingDirs.isEmpty()) {
           addItem(workingDirectory.absolutePath)
+        }
+        folders.forEach {
+          val absolutePath = it.toFile().absolutePath
+          if (!items.contains(absolutePath)) {
+            addItem(absolutePath)
+            items.add(absolutePath)
+          }
         }
         selectedItem = workingDirectory.absolutePath
       }
