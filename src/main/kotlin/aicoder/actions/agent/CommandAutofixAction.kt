@@ -8,11 +8,9 @@ import aicoder.actions.BaseAction
 import aicoder.actions.SessionProxyServer
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
@@ -21,12 +19,13 @@ import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.CmdPatchApp
 import com.simiacryptus.skyenet.apps.general.PatchApp
 import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.util.FileValidationUtils
+import com.simiacryptus.skyenet.core.util.commonRoot
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.io.File
-import java.nio.file.Files
 import java.text.SimpleDateFormat
 import javax.swing.*
 import kotlin.collections.set
@@ -50,59 +49,79 @@ class CommandAutofixAction : BaseAction() {
       UITools.runAsync(event.project, "Initializing Command Autofix", true) { progress ->
         progress.isIndeterminate = true
         progress.text = "Getting settings..."
-        val settings = getUserSettings(event) ?: return@runAsync
-        val dataContext = event.dataContext
-        val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
-        setupAndLaunchSession(event, settings, virtualFiles)
+        val folders = UITools.getSelectedFolders(event).map { it.toFile.toPath() }
+        val root = folders.toTypedArray().commonRoot()
+        val files = folders.flatMap { FileValidationUtils.expandFileList(it.toFile()).toList() }.distinct().sorted().toTypedArray()
+        val settings = run {
+          var settings1: PatchApp.Settings? = null
+          SwingUtilities.invokeAndWait {
+            val settingsUI = SettingsUI(workingDirectory = root.toFile())
+            val dialog = CommandSettingsDialog(event.project, settingsUI)
+            dialog.show()
+            settings1 = if (dialog.isOK) {
+              val executable = File(settingsUI.commandField.selectedItem?.toString() ?: throw IllegalArgumentException("No executable selected"))
+              AppSettingsState.instance.executables += executable.absolutePath
+              val argument = settingsUI.argumentsField.selectedItem?.toString() ?: ""
+              AppSettingsState.instance.recentArguments.remove(argument)
+              AppSettingsState.instance.recentArguments.add(0, argument)
+              AppSettingsState.instance.recentArguments =
+                AppSettingsState.instance.recentArguments.take(MAX_RECENT_ARGUMENTS).toMutableList()
+              val workingDir = settingsUI.workingDirectoryField.selectedItem?.toString() ?: ""
+              AppSettingsState.instance.recentWorkingDirs.remove(workingDir)
+              AppSettingsState.instance.recentWorkingDirs.add(0, workingDir)
+              AppSettingsState.instance.recentWorkingDirs =
+                AppSettingsState.instance.recentWorkingDirs.take(MAX_RECENT_DIRS).toMutableList()
+              PatchApp.Settings(
+                executable = executable,
+                arguments = argument,
+                workingDirectory = File(workingDir),
+                exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero",
+                additionalInstructions = settingsUI.additionalInstructionsField.text,
+                autoFix = settingsUI.autoFixCheckBox.isSelected,
+                maxRetries = settingsUI.maxRetriesField.value as Int,
+              )
+            } else {
+              null
+            }
+          }
+          settings1
+        } ?: return@runAsync
+        require(settings.executable.exists()) { "Executable file does not exist: ${settings.executable}" }
+        val patchApp = CmdPatchApp(
+          root = root,
+          settings = settings,
+          api = api,
+          files = files,
+          model = AppSettingsState.instance.smartModel.chatModel()
+        )
+        val session = Session.newGlobalID()
+        SessionProxyServer.chats[session] = patchApp
+        ApplicationServer.appInfoMap[session] = AppInfoData(
+          applicationName = "Code Chat",
+          singleInput = true,
+          stickyInput = false,
+          loadImages = false,
+          showMenubar = false
+        )
+        val dateFormat = SimpleDateFormat("HH:mm:ss")
+        val sessionName = "${javaClass.simpleName} @ ${dateFormat.format(System.currentTimeMillis())}"
+        SessionProxyServer.metadataStorage.setSessionName(null, session, sessionName)
+        val server = AppServer.getServer(event.project)
+        Thread {
+          Thread.sleep(500)
+          try {
+            val uri = server.server.uri.resolve("/#$session")
+            BaseAction.log.info("Opening browser to $uri")
+            browse(uri)
+          } catch (e: Throwable) {
+            log.warn("Error opening browser", e)
+          }
+        }.start()
       }
     } catch (e: Throwable) {
       log.error("Failed to execute command autofix", e)
       UITools.showErrorDialog("Failed to execute command autofix: ${e.message}", "Error")
     }
-  }
-
-  /**
-   * Sets up and launches the patch app session
-   */
-  private fun setupAndLaunchSession(event: AnActionEvent, settings: PatchApp.Settings, virtualFiles: Array<VirtualFile>?) {
-    val folder = UITools.getSelectedFolder(event)
-    val root = if (null != folder) {
-      folder.toFile.toPath()
-    } else {
-      event.project?.basePath?.let { File(it).toPath() }
-    }!!
-    // Validate input parameters
-    require(settings.executable.exists()) { "Executable file does not exist: ${settings.executable}" }
-    val patchApp = CmdPatchApp(
-      root,
-      settings,
-      api,
-      virtualFiles?.map { it.toFile }?.toTypedArray(),
-      AppSettingsState.instance.smartModel.chatModel()
-    )
-    val session = Session.newGlobalID()
-    SessionProxyServer.chats[session] = patchApp
-    ApplicationServer.appInfoMap[session] = AppInfoData(
-      applicationName = "Code Chat",
-      singleInput = true,
-      stickyInput = false,
-      loadImages = false,
-      showMenubar = false
-    )
-    val dateFormat = SimpleDateFormat("HH:mm:ss")
-    val sessionName = "${javaClass.simpleName} @ ${dateFormat.format(System.currentTimeMillis())}"
-    SessionProxyServer.metadataStorage.setSessionName(null, session, sessionName)
-    val server = AppServer.getServer(event.project)
-    Thread {
-      Thread.sleep(500)
-      try {
-        val uri = server.server.uri.resolve("/#$session")
-        BaseAction.log.info("Opening browser to $uri")
-        browse(uri)
-      } catch (e: Throwable) {
-        log.warn("Error opening browser", e)
-      }
-    }.start()
   }
 
   /**
@@ -119,50 +138,14 @@ class CommandAutofixAction : BaseAction() {
     private val log = LoggerFactory.getLogger(CommandAutofixAction::class.java)
     private const val DEFAULT_ARGUMENT = "run build"
     private const val MAX_RECENT_ARGUMENTS = 10
+    private const val MAX_RECENT_DIRS = 10
     private const val TEXT_AREA_ROWS = 3
-
-    private fun getUserSettings(event: AnActionEvent?): PatchApp.Settings? {
-      val root = UITools.getSelectedFolder(event ?: return null)?.toNioPath() ?: event.project?.basePath?.let {
-        File(it).toPath()
-      }
-      val files = UITools.getSelectedFiles(event).map { it.path.let { File(it).toPath() } }.toMutableSet()
-      if (files.isEmpty()) Files.walk(root)
-        .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
-        .toList().filterNotNull().forEach { files.add(it) }
-      var settings: PatchApp.Settings? = null
-      SwingUtilities.invokeAndWait {
-        val settingsUI = SettingsUI(root!!.toFile())
-        val dialog = CommandSettingsDialog(event.project, settingsUI)
-        dialog.show()
-        settings = if (dialog.isOK) {
-          val executable = File(settingsUI.commandField.selectedItem?.toString() ?: throw IllegalArgumentException("No executable selected"))
-          AppSettingsState.instance.executables += executable.absolutePath
-          val argument = settingsUI.argumentsField.selectedItem?.toString() ?: ""
-          AppSettingsState.instance.recentArguments.remove(argument)
-          AppSettingsState.instance.recentArguments.add(0, argument)
-          AppSettingsState.instance.recentArguments =
-            AppSettingsState.instance.recentArguments.take(MAX_RECENT_ARGUMENTS).toMutableList()
-          PatchApp.Settings(
-            executable = executable,
-            arguments = argument,
-            workingDirectory = File(settingsUI.workingDirectoryField.text),
-            exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero",
-            additionalInstructions = settingsUI.additionalInstructionsField.text,
-            autoFix = settingsUI.autoFixCheckBox.isSelected,
-            maxRetries = settingsUI.maxRetriesField.value as Int,
-          )
-        } else {
-          null
-        }
-      }
-      return settings
-    }
 
     /**
      * UI component class for command settings dialog
      */
 
-    class SettingsUI(root: File) {
+    class SettingsUI(workingDirectory: File) {
       val maxRetriesField = JSpinner(SpinnerNumberModel(3, 0, 10, 1)).apply {
         toolTipText = "Maximum number of auto-retry attempts (0-10)"
       }
@@ -187,18 +170,23 @@ class CommandAutofixAction : BaseAction() {
           }
         }
       }
-      val workingDirectoryField = JTextField(root.absolutePath).apply {
+      val workingDirectoryField = ComboBox<String>().apply {
         isEditable = true
+        AppSettingsState.instance.recentWorkingDirs.forEach { addItem(it) }
+        if (AppSettingsState.instance.recentWorkingDirs.isEmpty()) {
+          addItem(workingDirectory.absolutePath)
+        }
+        selectedItem = workingDirectory.absolutePath
       }
       val workingDirectoryButton = JButton("...").apply {
         addActionListener {
           val fileChooser = JFileChooser().apply {
             fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
             isMultiSelectionEnabled = false
-            this.selectedFile = File(workingDirectoryField.text)
+            this.selectedFile = File(workingDirectoryField.selectedItem?.toString() ?: workingDirectory.absolutePath)
           }
           if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            workingDirectoryField.text = fileChooser.selectedFile.absolutePath
+            workingDirectoryField.selectedItem = fileChooser.selectedFile.absolutePath
           }
         }
       }

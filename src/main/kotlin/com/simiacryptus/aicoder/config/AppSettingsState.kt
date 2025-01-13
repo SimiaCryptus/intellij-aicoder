@@ -59,6 +59,7 @@ data class AppSettingsState(
   var enableLegacyActions: Boolean = false,
   var executables: MutableSet<String> = mutableSetOf(),
   var recentArguments: MutableList<String> = mutableListOf(),
+  var recentWorkingDirs: MutableList<String> = mutableListOf(),
   val recentCommands: MutableMap<String, MRUItems> = mutableMapOf<String, MRUItems>(),
   var userSuppliedModels: MutableList<UserSuppliedModel> = mutableListOf(),
   var githubToken: String? = null,
@@ -209,3 +210,4 @@ data class AppSettingsState(
 
   var analyticsEnabled: Boolean = false
 }
+    var recentWorkingDirs: MutableList<String> = mutableListOf()

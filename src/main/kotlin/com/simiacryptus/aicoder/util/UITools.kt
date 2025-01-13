@@ -601,6 +601,20 @@ object UITools {
     return null
   }
 
+  fun getSelectedFolders(e: AnActionEvent): List<VirtualFile> {
+    val dataContext = e.dataContext
+    val data = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+    if (null != data) return data.filter { it.isDirectory }
+    val editor = PlatformDataKeys.EDITOR.getData(dataContext)
+    if (editor != null) {
+      val file = FileDocumentManager.getInstance().getFile(editor.document)
+      if (file != null) {
+        return listOf(file.parent)
+      }
+    }
+    return emptyList()
+  }
+
   fun getSelectedFile(e: AnActionEvent): VirtualFile? {
     val dataContext = e.dataContext
     val data = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext)
