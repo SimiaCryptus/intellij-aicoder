@@ -2,18 +2,24 @@ package com.simiacryptus.aicoder.util
 
 import com.intellij.openapi.vfs.VirtualFile
 
-fun VirtualFile.findRecursively(predicate: (VirtualFile) -> Boolean): List<VirtualFile> {
+fun VirtualFile.findRecursively(deadline: Long = System.currentTimeMillis() + 100, predicate: (VirtualFile) -> Boolean): List<VirtualFile> {
   val results = mutableListOf<VirtualFile>()
-  if (this.isDirectory) {
-    this.children?.forEach { child ->
-      if (child.isDirectory) {
-        results.addAll(child.findRecursively(predicate))
-      } else if (predicate(child)) {
-        results.add(child)
+  when {
+    System.currentTimeMillis() > deadline -> return results
+    this.isDirectory -> {
+      val children = this.children
+      children?.forEach { child ->
+        when {
+          System.currentTimeMillis() > deadline -> return results
+          child.isDirectory -> results.addAll(child.findRecursively(deadline, predicate))
+          predicate(child) -> results.add(child)
+        }
       }
     }
-  } else if (predicate(this)) {
-    results.add(this)
+
+    predicate(this) -> {
+      results.add(this)
+    }
   }
   return results
 }

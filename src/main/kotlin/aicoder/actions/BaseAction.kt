@@ -31,7 +31,14 @@ abstract class BaseAction(
   val api2 = IdeaOpenAIClient.instance
 
   final override fun update(event: AnActionEvent) {
+    val currentThread = Thread.currentThread()
+    val scheduledFuture = scheduledPool.schedule({
+      if (event.presentation.isEnabledAndVisible) {
+        log.warn("Slow update: ${javaClass.simpleName} took too long; ${currentThread.name}\n\t${currentThread.stackTrace.joinToString("\n\t")}")
+      }
+    }, 1, java.util.concurrent.TimeUnit.SECONDS)
     event.presentation.isEnabledAndVisible = isEnabled(event)
+    scheduledFuture.cancel(false)
     super.update(event)
   }
 

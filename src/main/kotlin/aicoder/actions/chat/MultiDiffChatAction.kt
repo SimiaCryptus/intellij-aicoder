@@ -24,6 +24,7 @@ import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.FileValidationUtils
+import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -154,7 +155,7 @@ class MultiDiffChatAction : BaseAction() {
                                   
                                   You will be answering questions about the following code:
                                   
-                                  """.trimIndent() + codeSummary() + AddApplyFileDiffLinks.patchEditorPrompt,
+                                  """.trimIndent() + codeSummary() + SimpleDiffApplier.patchEditorPrompt,
             model = AppSettingsState.instance.smartModel.chatModel()
           )
         }

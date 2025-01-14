@@ -20,6 +20,7 @@ import com.simiacryptus.diff.AddApplyDiffLinks.Companion.addApplyDiffLinks
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
+import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -131,34 +132,8 @@ class DiffChatAction : BaseAction() {
                   - If a line is part of the original code and hasn't been modified, simply include it without '+' or '-'.
                   - Lines starting with "@@" or "---" or "+++" are treated as headers and are ignored.
                   
-                  Example:
                   
-                  Here are the patches:
-                  
-                  ### src/utils/exampleUtils.js
-                  ```diff
-                   // Utility functions for example feature
-                   const b = 2;
-                   function exampleFunction() {
-                  -   return b + 1;
-                  +   return b + 2;
-                   }
-                  ```
-                  
-                  ### tests/exampleUtils.test.js
-                  ```diff
-                   // Unit tests for exampleUtils
-                   const assert = require('assert');
-                   const { exampleFunction } = require('../src/utils/exampleUtils');
-                   
-                   describe('exampleFunction', () => {
-                  -   it('should return 3', () => {
-                  +   it('should return 4', () => {
-                       assert.equal(exampleFunction(), 3);
-                     });
-                   });
-                  ```
-                """.trimIndent()
+                """.trimIndent() + SimpleDiffApplier.patchEditorPrompt
       val ui by lazy { ApplicationInterface(this) }
       override fun renderResponse(response: String, task: SessionTask): String = """<div>${
         renderMarkdown(

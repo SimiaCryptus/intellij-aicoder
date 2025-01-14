@@ -10,8 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.endOffset
-import com.intellij.psi.util.startOffset
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageView
@@ -27,6 +25,7 @@ import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -152,7 +151,7 @@ class FindResultsModificationAction(
                     Your task is to suggest appropriate modifications based on the replacement text provided.
                     Usage locations:
                     """.trimIndent() + usages.joinToString("\n") { "* `${it.presentation.plainText}`" } +
-              "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + AddApplyFileDiffLinks.patchEditorPrompt
+              "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + SimpleDiffApplier.patchEditorPrompt
         }
         ui.socketManager!!.pool.submit {
           val api = api.getChildClient().apply {

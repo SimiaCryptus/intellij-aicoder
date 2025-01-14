@@ -24,6 +24,7 @@ import com.simiacryptus.skyenet.core.util.FileValidationUtils
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.filteredWalk
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
+import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -240,41 +241,7 @@ class SimpleCommandAction : BaseAction() {
                               
                               You will be answering questions about the following code:
                               
-                              """.trimIndent() + codeSummary + """
-                              
-                              
-                              Response should use one or more code patches in diff format within """.trimIndent() + tripleTilde + """diff code blocks.
-                              Each diff should be preceded by a header that identifies the file being modified.
-                              The diff format should use + for line additions, - for line deletions.
-                              The diff should include 2 lines of context before and after every change.
-                              
-                              Example:
-                              
-                              Here are the patches:
-                              
-                              ### src/utils/exampleUtils.js
-                              """.trimIndent() + tripleTilde + """diff
-                               // Utility functions for example feature
-                               const b = 2;
-                               function exampleFunction() {
-                              -   return b + 1;
-                              +   return b + 2;
-                               }
-                              """.trimIndent() + tripleTilde + """
-                              
-                              ### tests/exampleUtils.test.js
-                              """.trimIndent() + tripleTilde + """diff
-                               // Unit tests for exampleUtils
-                               const assert = require('assert');
-                               const { exampleFunction } = require('../src/utils/exampleUtils');
-                               
-                               describe('exampleFunction', () => {
-                              -   it('should return 3', () => {
-                              +   it('should return 4', () => {
-                                   assert.equal(exampleFunction(), 3);
-                                 });
-                               });
-                              """.trimIndent() + tripleTilde + """
+                              """.trimIndent() + codeSummary + "\n\n" + SimpleDiffApplier.patchEditorPrompt + """
                               
                               If needed, new files can be created by using code blocks labeled with the filename in the same manner.
                               """.trimIndent(),
