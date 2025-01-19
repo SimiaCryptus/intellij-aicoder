@@ -12,8 +12,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.aicoder.config.CommandConfig
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.jopenai.models.chatModel
@@ -26,8 +32,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.FlowLayout
+import java.awt.Dimension
 import java.io.File
 import java.nio.file.Path
 import java.text.SimpleDateFormat
@@ -86,7 +91,7 @@ class CommandAutofixAction : BaseAction() {
               }.toList()
               PatchApp.Settings(
                 commands = commands,
-                exitCodeOption = if (settingsUI.exitCodeZero.isSelected) "0" else if (settingsUI.exitCodeAny.isSelected) "any" else "nonzero",
+                exitCodeOption = if (settingsUI.exitCodeZero?.component?.isSelected == true) "0" else if (settingsUI.exitCodeAny?.component?.isSelected == true) "any" else "nonzero",
                 autoFix = settingsUI.autoFixCheckBox.isSelected,
                 maxRetries = settingsUI.maxRetriesField.value as Int,
               )
@@ -159,6 +164,13 @@ class CommandAutofixAction : BaseAction() {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
       }
       val commandsList = mutableListOf<CommandPanel>()
+      val savedConfigsCombo = ComboBox<String>().apply {
+        preferredSize = Dimension(200, 30)
+        AppSettingsState.instance.savedCommandConfigs.keys.sorted().forEach { addItem(it) }
+      }
+      var exitCodeNonZero: Cell<JBRadioButton>? = null
+      var exitCodeZero: Cell<JBRadioButton>? = null
+      var exitCodeAny: Cell<JBRadioButton>? = null
 
       init {
         addCommandPanel()
@@ -177,15 +189,12 @@ class CommandAutofixAction : BaseAction() {
         commandsPanel.remove(panel)
         commandsPanel.revalidate()
         commandsPanel.repaint()
+        SwingUtilities.getWindowAncestor(commandsPanel)?.pack()
       }
 
       val maxRetriesField = JSpinner(SpinnerNumberModel(3, 0, 10, 1)).apply {
         toolTipText = "Maximum number of auto-retry attempts (0-10)"
       }
-      val exitCodeOptions = ButtonGroup()
-      val exitCodeNonZero = JRadioButton("Patch nonzero exit code", true)
-      val exitCodeZero = JRadioButton("Patch 0 exit code")
-      val exitCodeAny = JRadioButton("Patch any exit code")
       val additionalInstructionsField = JTextArea().apply {
         rows = TEXT_AREA_ROWS
         lineWrap = true
@@ -193,6 +202,47 @@ class CommandAutofixAction : BaseAction() {
       }
       val autoFixCheckBox = JCheckBox("Auto-apply fixes").apply {
         isSelected = false
+      }
+      fun saveCurrentConfig() {
+        val configName = JOptionPane.showInputDialog(
+          null, "Enter configuration name:", "Save Configuration", JOptionPane.PLAIN_MESSAGE
+        )?.trim()
+        if (configName.isNullOrBlank()) {
+          JOptionPane.showMessageDialog(
+            null, "Please enter a valid configuration name", "Invalid Name", JOptionPane.WARNING_MESSAGE
+          )
+          return
+        }
+        val config = CommandConfig(
+          commands = commandsList.map { it.toCommandSettings() },
+          exitCodeOption = if (exitCodeZero?.component?.isSelected == true) "0" else if (exitCodeAny?.component?.isSelected == true) "any" else "nonzero",
+          autoFix = autoFixCheckBox.isSelected,
+          maxRetries = maxRetriesField.value as Int,
+          additionalInstructions = additionalInstructionsField.text
+        )
+        AppSettingsState.instance.savedCommandConfigs[configName] = config
+        savedConfigsCombo.addItem(configName)
+        savedConfigsCombo.selectedItem = configName
+      }
+
+      fun loadConfig(configName: String) {
+        val config = AppSettingsState.instance.savedCommandConfigs[configName] ?: return
+        commandsList.clear()
+        commandsPanel.removeAll()
+        config.commands.forEach {
+          val panel = CommandPanel(workingDirectory, folders)
+          panel.loadFromSettings(it)
+          commandsList.add(panel)
+          commandsPanel.add(panel)
+        }
+        exitCodeNonZero?.component?.isSelected = config.exitCodeOption == "nonzero"
+        exitCodeZero?.component?.isSelected = config.exitCodeOption == "0"
+        exitCodeAny?.component?.isSelected = config.exitCodeOption == "any"
+        autoFixCheckBox.isSelected = config.autoFix
+        maxRetriesField.value = config.maxRetries
+        additionalInstructionsField.text = config.additionalInstructions
+        commandsPanel.revalidate()
+        commandsPanel.repaint()
       }
 
 
@@ -286,6 +336,21 @@ class CommandAutofixAction : BaseAction() {
           add(fieldsPanel, BorderLayout.CENTER)
         }
 
+        fun toCommandSettings(): PatchApp.CommandSettings {
+          return PatchApp.CommandSettings(
+            executable = File(commandField.selectedItem?.toString() ?: ""),
+            arguments = argumentsField.selectedItem?.toString() ?: "",
+            workingDirectory = File(workingDirectoryField.selectedItem?.toString() ?: ""),
+            additionalInstructions = ""
+          )
+        }
+
+        fun loadFromSettings(settings: PatchApp.CommandSettings) {
+          commandField.selectedItem = settings.executable.absolutePath
+          argumentsField.selectedItem = settings.arguments
+          workingDirectoryField.selectedItem = settings.workingDirectory?.absolutePath
+        }
+
       }
     }
 
@@ -295,53 +360,94 @@ class CommandAutofixAction : BaseAction() {
 
     class CommandSettingsDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
       init {
-        settingsUI.exitCodeOptions.add(settingsUI.exitCodeNonZero)
-        settingsUI.exitCodeOptions.add(settingsUI.exitCodeZero)
-        settingsUI.exitCodeOptions.add(settingsUI.exitCodeAny)
         title = "Command Autofix Settings"
         init()
       }
 
       override fun createCenterPanel(): JComponent {
-        val panel = JPanel(BorderLayout()).apply {
-          border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
-
-          val optionsPanel = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            add(JLabel("Commands:").apply {
-              border = BorderFactory.createEmptyBorder(0, 0, 5, 0)
-              alignmentX = Component.LEFT_ALIGNMENT
-            })
-            add(settingsUI.commandsPanel)
-            add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-              add(JButton("Add Command").apply {
-                addActionListener {
-                  settingsUI.addCommandPanel()
+        return panel {
+          row("Saved Configs:") {
+            cell(settingsUI.savedConfigsCombo).align(Align.FILL)
+              .comment("Select a saved configuration to load or save current settings")
+            button("Save...") {
+              settingsUI.saveCurrentConfig()
+            }
+            button("Load") {
+              val selected = settingsUI.savedConfigsCombo.selectedItem as? String
+              if (selected != null) {
+                settingsUI.loadConfig(selected)
+              } else {
+                JOptionPane.showMessageDialog(
+                  null,
+                  "Please select a configuration to load",
+                  "No Configuration Selected",
+                  JOptionPane.WARNING_MESSAGE
+                )
+              }
+            }
+            button("Delete") {
+              val selected = settingsUI.savedConfigsCombo.selectedItem as? String
+              if (selected != null) {
+                val confirmResult = JOptionPane.showConfirmDialog(
+                  null, "Delete configuration '$selected'?", "Confirm Delete", JOptionPane.YES_NO_OPTION
+                )
+                if (confirmResult == JOptionPane.YES_OPTION) {
+                  AppSettingsState.instance.savedCommandConfigs.remove(selected)
+                  settingsUI.savedConfigsCombo.removeItem(selected)
                 }
-              })
-              add(JButton("Remove Command").apply {
-                addActionListener {
-                  if (settingsUI.commandsList.size > 1) {
-                    settingsUI.removeCommandPanel(settingsUI.commandsList.last())
+              } else {
+                JOptionPane.showMessageDialog(
+                  null,
+                  "Please select a configuration to delete",
+                  "No Configuration Selected",
+                  JOptionPane.WARNING_MESSAGE
+                )
+              }
+            }
+          }
+          row {
+            cell(settingsUI.commandsPanel)
+          }
+          row {
+            button("Add Command") {
+              settingsUI.addCommandPanel()
+            }
+            button("Remove Command") {
+              if (settingsUI.commandsList.size > 1) {
+                settingsUI.removeCommandPanel(settingsUI.commandsList.last())
+              }
+            }
+          }
+          row("Exit Code Options") {
+            // Radio buttons are already part of exitCodeOptions ButtonGroup
+            panel {
+              buttonsGroup {
+                row {
+                  settingsUI.exitCodeNonZero = radioButton("Fix commands that return nonzero exit code").apply {
+                    selected(true)
                   }
                 }
-              })
-            })
-            add(JLabel("Exit Code Options"))
-            add(settingsUI.exitCodeNonZero)
-            add(settingsUI.exitCodeAny)
-            add(settingsUI.exitCodeZero)
-            add(JLabel("Max Auto-Retries"))
-            add(settingsUI.maxRetriesField)
-            add(JLabel("Additional Instructions"))
-            add(JScrollPane(settingsUI.additionalInstructionsField))
-            add(settingsUI.autoFixCheckBox)
-          }
-          add(optionsPanel, BorderLayout.SOUTH)
-        }
-        return panel
-      }
+                row {
+                  settingsUI.exitCodeAny = radioButton("Fix commands regardless of exit code")
+                }
+                row {
+                  settingsUI.exitCodeZero = radioButton("Fix commands that return zero exit code")
+                }
+              }
+            }
 
+          }
+          row("Max Auto-Retries") {
+            cell(settingsUI.maxRetriesField)
+          }
+          row("Additional Instructions") {
+            cell(JScrollPane(settingsUI.additionalInstructionsField))
+          }
+          row {
+            cell(settingsUI.autoFixCheckBox)
+          }
+        }
+      }
       override fun doOKAction() {
         if (settingsUI.commandsList.isEmpty()) {
           Messages.showErrorDialog("At least one command is required", "Validation Error")

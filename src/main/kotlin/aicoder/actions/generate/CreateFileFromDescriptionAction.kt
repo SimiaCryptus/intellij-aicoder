@@ -40,13 +40,13 @@ class CreateFileFromDescriptionAction : aicoder.actions.FileContextAction<Create
     val project: Project? = null
   )
 
-  override fun getConfig(project: Project?, e: AnActionEvent): Settings {
+  override fun getConfig(project: Project?, e: AnActionEvent): Settings? {
     val userSettings = UITools.showDialog(
       project,
       SettingsUI::class.java,
       Settings::class.java,
       "Create File From Description"
-    )
+    ) ?: return null
     return Settings(userSettings.directive, project)
   }
 

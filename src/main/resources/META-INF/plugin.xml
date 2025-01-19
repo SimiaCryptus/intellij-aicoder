@@ -327,7 +327,7 @@
                description="AI-powered file modification tools">
             <add-to-group group-id="UsageView.Popup" anchor="last"/>
             <action id="AICoderPlugin.FindResultsModification"
-                    class="aicoder.actions.FindResultsModificationAction"
+                    class="aicoder.actions.find.FindResultsModificationAction"
                     text="Modify Find Results"
                     description="Modify files based on find results">
             </action>

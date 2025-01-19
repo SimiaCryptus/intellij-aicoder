@@ -1,7 +1,8 @@
-package aicoder.actions
+package aicoder.actions.find
 
+import aicoder.actions.BaseAction
+import aicoder.actions.SessionProxyServer
 import aicoder.actions.agent.toFile
-import aicoder.actions.find.FindResultsModificationDialog
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager

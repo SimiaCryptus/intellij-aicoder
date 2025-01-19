@@ -550,39 +550,39 @@ object UITools {
     configClass: Class<C>,
     title: String = "Generate Project",
     onComplete: (C) -> Unit = { _ -> },
-  ): C = showDialog<C, T>(
-    project, uiClass.getConstructor().newInstance(), configClass.getConstructor().newInstance(), title, onComplete
-  )
-
-  fun <C : Any, T : Any> showDialog(
-    project: Project?, component: T, config: C, title: String, onComplete: (C) -> Unit
-  ): C {
+  ): C? {
+    val component1 = uiClass.getConstructor().newInstance()
+    val config = configClass.getConstructor().newInstance()
     log.debug("Showing dialog with title: $title")
     val dialog = object : DialogWrapper(project) {
       init {
-        this.init()
+        init()
         this.title = title
-        this.setOKButtonText("Generate")
-        this.setCancelButtonText("Cancel")
-        this.isResizable = true
+        setOKButtonText("Generate")
+        setCancelButtonText("Cancel")
+        isResizable = true
       }
 
       override fun createCenterPanel(): JComponent? {
         log.debug("Creating center panel for dialog")
-        return buildFormViaReflection(component)
+        return buildFormViaReflection(component1)
       }
     }
     dialog.show()
     log.debug("Dialog shown with result: ${dialog.isOK}")
     if (dialog.isOK) {
       readKotlinUIViaReflection(
-        settings = config, component = component, componentClass = component::class
+        settings = config, component = component1, componentClass = component1::class
       )
       log.debug("Reading UI via reflection completed")
-      onComplete(config)
+      onComplete
+      (config)
       log.debug("onComplete callback executed")
+      return config
+    } else {
+      log.debug("Dialog cancelled")
+      return null
     }
-    return config
   }
 
   fun getSelectedFolder(e: AnActionEvent): VirtualFile? {

@@ -19,24 +19,8 @@ open class CodeChatSocketManager(
 ) : ChatSocketManager(
   session = session,
   model = model,
-  userInterfacePrompt = ("""
-          # `""".trimIndent() + filename + """`
-          
-          ```""".trimIndent() + language + """
-          """.trimIndent() + codeSelection + """
-          ```
-          """.trimIndent()).trim(),
-  systemPrompt = """
-          You are a helpful AI that helps people with coding.
-          
-          You will be answering questions about the following code located in `""" + filename + """`:
-          
-          ```""".trimIndent() + language + """
-          """.trimIndent() + codeSelection + """
-          ```
-          
-          Responses may use markdown formatting, including code blocks.
-          """.trimIndent(),
+  userInterfacePrompt = "# `$filename`\n\n```$language\n$codeSelection\n```",
+  systemPrompt = "\nYou are a helpful AI that helps people with coding.\n\nYou will be answering questions about the following code located in `$filename`:\n\n```$language\n$codeSelection\n```\n\nResponses may use markdown formatting, including code blocks.",
   api = api,
   applicationClass = ApplicationServer::class.java,
   storage = storage,

@@ -19,16 +19,25 @@ import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
+import com.simiacryptus.skyenet.apps.general.PatchApp
 import com.simiacryptus.util.JsonUtil
 import org.slf4j.LoggerFactory
 import java.io.File
 
+  data class CommandConfig(
+    val commands: List<PatchApp.CommandSettings>,
+    val exitCodeOption: String,
+    val autoFix: Boolean,
+    val maxRetries: Int,
+    val additionalInstructions: String
+  )
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
   var temperature: Double = 0.1,
   var smartModel: String = OpenAIModels.GPT4o.modelName,
   var fastModel: String = OpenAIModels.GPT4oMini.modelName,
   var savedPlanConfigs: MutableMap<String, SavedPlanConfig> = mutableMapOf(),
+  var savedCommandConfigs: MutableMap<String, CommandConfig> = mutableMapOf(),
   var mainImageModel: String = ImageModels.DallE3.modelName,
   var listeningPort: Int = 8081,
   var listeningEndpoint: String = "localhost",

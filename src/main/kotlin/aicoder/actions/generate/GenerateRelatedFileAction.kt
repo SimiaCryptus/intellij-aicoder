@@ -19,11 +19,14 @@ import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
+import java.awt.BorderLayout
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JComboBox
+import javax.swing.JPanel
 import javax.swing.JTextArea
 
 class GenerateRelatedFileAction : aicoder.actions.FileContextAction<GenerateRelatedFileAction.Settings>() {
@@ -41,13 +44,48 @@ class GenerateRelatedFileAction : aicoder.actions.FileContextAction<GenerateRela
 
   class SettingsUI {
     @Name("Directive")
-    var directive: JTextArea = JTextArea(
-      """
-            Create test cases
-            """.trimIndent(),
-      3,
-      120
-    )
+    var directive: JTextArea = JTextArea(3, 120).apply {
+      lineWrap = true
+      wrapStyleWord = true
+      text = "Create README.md"
+    }
+
+    @Name("Recent Commands")
+    var recentCommandsDropdown: JComboBox<String> = JComboBox()
+
+    init {
+      directive.addFocusListener(object : java.awt.event.FocusAdapter() {
+        override fun focusGained(e: java.awt.event.FocusEvent) {
+          directive.selectAll()
+        }
+      })
+
+      val panel = createPanel()
+      panel.add(createDirectivePanel(), BorderLayout.NORTH)
+      panel.add(createRecentCommandsPanel(), BorderLayout.SOUTH)
+      populateRecentCommands()
+    }
+
+    private fun createPanel(): JPanel {
+      return JPanel(BorderLayout())
+    }
+
+    private fun createDirectivePanel(): JPanel {
+      val directivePanel = JPanel()
+      directivePanel.add(directive)
+      return directivePanel
+    }
+
+    private fun createRecentCommandsPanel(): JPanel {
+      val recentCommandsPanel = JPanel()
+      recentCommandsPanel.add(recentCommandsDropdown)
+      return recentCommandsPanel
+    }
+
+    private fun populateRecentCommands() {
+      val recentCommands = AppSettingsState.instance.getRecentCommands("generate").getMostRecent()
+      recentCommands.forEach { recentCommandsDropdown.addItem(it) }
+    }
   }
 
   class UserSettings(
@@ -59,18 +97,25 @@ class GenerateRelatedFileAction : aicoder.actions.FileContextAction<GenerateRela
     val project: Project? = null
   )
 
-  override fun getConfig(project: Project?, e: AnActionEvent): Settings {
-    return Settings(
-      UITools.showDialog(
+  override fun getConfig(project: Project?, e: AnActionEvent): Settings? {
+    val userSettings = UITools.showDialog(
         project,
         SettingsUI::class.java,
         UserSettings::class.java,
         "Create Analogue File"
-      ), project
     )
+    return if (userSettings != null) {
+      Settings(userSettings, project)
+    } else {
+      null
+    }
   }
 
   override fun processSelection(state: SelectionState, config: Settings?, progress: ProgressIndicator): Array<File> {
+    if (config?.settings == null) {
+      log.info("Action canceled by user.")
+      return emptyArray()
+    }
     try {
       progress.isIndeterminate = false
       progress.text = "Reading source file..."

@@ -55,7 +55,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
 
   override fun isEnabled(event: AnActionEvent): Boolean {
     if (!super.isEnabled(event)) return false
-    val file = UITools.getSelectedFile(event) ?: return false
+    val file = UITools.getSelectedFolder(event) ?: return false
     return file.isDirectory
   }
 
