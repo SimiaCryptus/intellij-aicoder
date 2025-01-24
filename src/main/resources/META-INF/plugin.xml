@@ -169,11 +169,6 @@
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt S"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt S"/>
             </action>
-            <action class="aicoder.actions.legacy.VoiceToTextAction"
-                    text="🎤 Voice to Text"
-                    description="Convert spoken language into text using AI.">
-                <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt V"/>
-            </action>
         </group>
         <group id="com.simiacryptus.aicoder.ui.ProjectMenu"
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"
