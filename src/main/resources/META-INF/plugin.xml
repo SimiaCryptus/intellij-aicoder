@@ -11,16 +11,23 @@
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="com.simiacryptus.aicoder.util.PluginStartupActivity"/>
         <applicationService serviceImplementation="com.simiacryptus.aicoder.config.AppSettingsState"/>
-        <applicationConfigurable parentId="tools"
-                                 instance="com.simiacryptus.aicoder.config.StaticAppSettingsConfigurable"
-                                 id="org.intellij.sdk.settings.AppSettingsConfigurable"
-                                 displayName="AI Coder"/>
-        <statusBarWidgetFactory implementation="com.simiacryptus.aicoder.ui.SettingsWidgetFactory"
-                                id="com.simiacryptus.aicoder.ui.SettingsWidgetFactory"
-                                order="first"/>
-        <statusBarWidgetFactory implementation="com.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
-                                id="com.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
-                                order="first"/>
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.simiacryptus.aicoder.config.StaticAppSettingsConfigurable"
+                id="org.intellij.sdk.settings.AppSettingsConfigurable"
+                displayName="AI Coder"/>
+        <statusBarWidgetFactory
+                implementation="com.simiacryptus.aicoder.ui.SettingsWidgetFactory"
+                id="com.simiacryptus.aicoder.ui.SettingsWidgetFactory"
+                order="first"/>
+        <statusBarWidgetFactory
+                implementation="com.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
+                id="com.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
+                order="first"/>
+        <statusBarWidgetFactory
+                implementation="com.simiacryptus.aicoder.ui.SpeechToTextWidgetFactory"
+                id="AICodingAssistant.SpeechToTextWidget"
+                order="first"/>
     </extensions>
 
     <actions>

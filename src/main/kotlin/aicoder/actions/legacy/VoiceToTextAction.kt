@@ -43,7 +43,7 @@ class VoiceToTextAction : BaseAction() {
     Thread({
       log.warn("Audio processing thread started")
       try {
-        LookbackLoudnessWindowBuffer(rawBuffer, wavBuffer, continueFn).run()
+        LookbackLoudnessWindowBuffer(rawBuffer, wavBuffer, {}, {}, continueFn).run()
       } catch (e: Throwable) {
         UITools.error(log, "Error", e)
       }

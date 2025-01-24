@@ -49,6 +49,8 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     private var tokenCount: Int = 0
     val codex = GPT4Tokenizer(false)
     private var tooltipDetails: String = "Current file token count"
+
+    @Volatile
     private var isCalculating: Boolean = false
     private var animationCounter: Int = 0
 
@@ -56,9 +58,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
       return "StatusBarComponent"
     }
 
-    override fun getPresentation(): StatusBarWidget.WidgetPresentation {
-      return this
-    }
+    override fun getPresentation() = this
 
     fun resolve(path: Array<String>, candidates: List<VirtualFile>): VirtualFile? {
       if (candidates.isEmpty()) return null
@@ -121,7 +121,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         }?.let { pairs ->
           val tokenCountCache = mutableMapOf<String, Int>()
           fun getCachedTokenCount(text: String): Int = tokenCountCache.getOrPut(text) { codex.estimateTokenCount(text) }
-          val totalCount = pairs.sumBy { (content, _) -> content?.let { getCachedTokenCount(it) } ?: 0 }
+          val totalCount = pairs.sumOf { (content, _) -> content?.let { getCachedTokenCount(it) } ?: 0 }
           val details = buildString {
             //Language=HTML
             append("<html><body style='font-family: Arial, sans-serif;'>")
@@ -250,11 +250,6 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
       }
     }
 
-    override fun dispose() {
-      //connection?.disconnect()
-    }
-
-
     override fun getText(): String {
       return if (isCalculating) {
         val dots = ".".repeat((animationCounter % 3) + 1)
@@ -311,15 +306,12 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
           count < 0 -> "${-count} Chars"  // Handle character count case
           count == 0 -> getMessage("count.zero")
           count == 1 -> getMessage("count.one")
-          count < 0 -> getMessage("count.chars", -count)
           count >= 1000000 -> getMessage("count.millions", count / 1000000)
           count >= 10000 -> getMessage("count.thousands", count / 1000)
           else -> getMessage("count.normal", count)
         }
       }
     }
-
-
   }
 
   override fun getId(): String {

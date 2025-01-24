@@ -33,6 +33,7 @@ import java.io.File
   )
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
+  var selectedMicLine: String? = null,
   var temperature: Double = 0.1,
   var smartModel: String = OpenAIModels.GPT4o.modelName,
   var fastModel: String = OpenAIModels.GPT4oMini.modelName,
@@ -108,6 +109,7 @@ data class AppSettingsState(
     addUserSuppliedModels(fromJson.userSuppliedModels)
     recentCommands.clear()
     recentCommands.putAll(fromJson.recentCommands)
+    selectedMicLine = fromJson.selectedMicLine
     notifySettingsLoaded()
   }
 
