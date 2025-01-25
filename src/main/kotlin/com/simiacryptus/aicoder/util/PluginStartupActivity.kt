@@ -1,6 +1,7 @@
 package com.simiacryptus.aicoder.util
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
@@ -8,10 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowManager
 import com.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.aicoder.ui.DictationSettingsToolWindowFactory
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
@@ -25,6 +23,7 @@ import com.simiacryptus.skyenet.core.platform.model.AuthenticationInterface
 import com.simiacryptus.skyenet.core.platform.model.AuthorizationInterface
 import com.simiacryptus.skyenet.core.platform.model.User
 import org.jetbrains.annotations.NonNls
+import org.slf4j.LoggerFactory
 import software.amazon.awssdk.regions.Region
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -39,6 +38,27 @@ class PluginStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     // Check if this is the first run after installation
     try {
+      LoggerFactory.getLogger("org.apache.hc.client5.http").apply {
+        when (this) {
+          is com.intellij.openapi.diagnostic.Logger -> {
+            setLevel(LogLevel.INFO)
+          }
+          // class ch.qos.logback.classic.Logger
+          is ch.qos.logback.classic.Logger -> {
+            setLevel(ch.qos.logback.classic.Level.INFO)
+          }
+
+          else -> {
+            log.info("Failed to set log level for org.apache.hc.client5.http.wire")
+          }
+        }
+      }
+    } catch (e: Exception) {
+      log.error("Error setting log level for org.apache.hc.client5.http.wire", e)
+    }
+
+    try {
+
       //ApplicationServicesConfig.dataStorageRoot = ApplicationServicesConfig.dataStorageRoot.resolve("intellij")
       val currentThread = Thread.currentThread()
       val prevClassLoader = currentThread.contextClassLoader

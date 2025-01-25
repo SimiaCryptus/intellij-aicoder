@@ -1,5 +1,8 @@
 package com.simiacryptus.aicoder.ui
 
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
@@ -11,9 +14,14 @@ import javax.swing.JSlider
 import javax.swing.event.ChangeListener
 
 class DictationSettingsPanel(
-  val settings: DictationSettings = DictationSettings.Companion
+  val project: Project,
+  val settings: DictationSettings = DictationSettings.Companion,
 ) : JPanel(), AutoCloseable {
-  private val micLineComboBoxListener: (Any) -> Unit = { event: Any ->
+  companion object {
+    private val log = org.slf4j.LoggerFactory.getLogger(DictationSettingsPanel::class.java)
+  }
+
+  private val micLineComboBoxListener: (Any) -> Unit = {
     val selectedIndex = micLineComboBox.selectedIndex
     settings.setSelectedMicLine(if (selectedIndex == 0) null else micLineComboBox.getItemAt(selectedIndex))
   }
@@ -23,9 +31,9 @@ class DictationSettingsPanel(
   private val rmsPercentileThresholdSliderListener: ChangeListener = ChangeListener { settings.setRmsPercentileThreshold(rmsPercentileThresholdSlider.value) }
   private val iec61672PercentileThresholdSliderListener: ChangeListener =
     ChangeListener { settings.setIec61672PercentileThreshold(iec61672PercentileThresholdSlider.value) }
-  private val sampleRateComboBoxListener: (Any) -> Unit = { event: Any -> settings.setSampleRate(sampleRateComboBox.selectedItem as Int) }
-  private val sampleSizeComboBoxListener: (Any) -> Unit = { event: Any -> settings.setSampleSize(sampleSizeComboBox.selectedItem as Int) }
-  private val channelsComboBoxListener: (Any) -> Unit = { event: Any -> settings.setChannels(channelsComboBox.selectedItem as Int) }
+  private val sampleRateComboBoxListener: (Any) -> Unit = { settings.setSampleRate(sampleRateComboBox.selectedItem as Int) }
+  private val sampleSizeComboBoxListener: (Any) -> Unit = { settings.setSampleSize(sampleSizeComboBox.selectedItem as Int) }
+  private val channelsComboBoxListener: (Any) -> Unit = { settings.setChannels(channelsComboBox.selectedItem as Int) }
   private val rmsLabel = JBLabel("RMS: 0%")
   private val iec61672Label = JBLabel("IEC61672: 0%")
   private val rmsSlider = JSlider(JSlider.HORIZONTAL, 0, 100, 0).apply {
@@ -198,7 +206,6 @@ class DictationSettingsPanel(
     })
     dictationButton.addActionListener { toggleDictation() }
     updateButtonStates()
-
     revalidate()
     updateParams()
     settings.addListener(updateParamsListener)
@@ -232,8 +239,13 @@ class DictationSettingsPanel(
     dictationButton.text = "Stop Dictation"
     Thread {
       SpeechRecognitionManager.startRecording(
-        onTranscriptionUpdate = { println("Transcription: $it") },
-        onException = { println("Error during recording: $it") }
+        onTranscriptionUpdate = {
+          log.info("Transcription: $it")
+          WriteCommandAction.runWriteCommandAction(project) {
+            val currentEditor = project.currentEditor() ?: return@runWriteCommandAction
+            currentEditor.document.insertString(currentEditor.caretModel.offset, it)
+          }
+        }
       )
     }.start()
     SpeechToTextWidget.statusBar?.updateWidget(SpeechToTextWidget.ID)
@@ -245,3 +257,8 @@ class DictationSettingsPanel(
     settings.removeListener(::updateButtonStates)
   }
 }
+
+// Extension function to get current editor
+private fun Project.currentEditor() = FileEditorManager
+  .getInstance(this)
+  .selectedTextEditor

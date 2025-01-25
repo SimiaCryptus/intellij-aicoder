@@ -1,6 +1,8 @@
 package com.simiacryptus.aicoder.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.simiacryptus.aicoder.ui.SpeechToTextWidget.Companion
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.audio.AudioPacket
 import com.simiacryptus.jopenai.audio.AudioRecorder
@@ -16,9 +18,11 @@ import kotlin.collections.ArrayDeque
 open class SpeechRecognitionManager : Disposable {
   companion object : SpeechRecognitionManager() {
     private val log = LoggerFactory.getLogger(SpeechRecognitionManager::class.java)
-    var iec61672Max = 5000.0
-    var rmsMax = 2.0
   }
+
+  var iec61672Max = 5000.0
+  var rmsMax = 2.0
+  var transcriptionProcessor: TranscriptionProcessor? = null
 
   var audioFormat: AudioFormat = AudioFormat(16000f, 16, 1, true, false)
     set(value) {
@@ -48,25 +52,18 @@ open class SpeechRecognitionManager : Disposable {
       }.map { it.toString() }.toList()
     }
 
+  var onRmsUpdate: (AudioPacket) -> Unit = {
+    rmsMax = it.rms.coerceAtLeast(rmsMax)
+    DictationSettings.setRmsPercentage(((it.rms / rmsMax) * 100).toInt())
+  }
+  var onIec61672Update: (AudioPacket) -> Unit = {
+    iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
+    DictationSettings.setIec61672Percentage(((it.iec61672 / iec61672Max) * 100).toInt())
+  }
   @Suppress("LongParameterList")
   fun startRecording(
-    onRmsUpdate: (AudioPacket) -> Unit = {
-      rmsMax = it.rms.coerceAtLeast(rmsMax)
-      DictationSettings.setRmsPercentage(((it.rms / rmsMax) * 100).toInt())
-    },
-    onIec61672Update: (AudioPacket) -> Unit = {
-      iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
-      DictationSettings.setIec61672Percentage(((it.iec61672 / iec61672Max) * 100).toInt())
-    },
-    onTranscriptionUpdate: (String) -> Unit = {},
-    onRecordingStarted: (Long) -> Unit = { recordingStartTime ->
-      DictationSettings.setRmsPercentage(0)
-      DictationSettings.setIec61672Percentage(0)
-    },
-    onRecordingDurationUpdate: (Long) -> Unit = {},
-    onRecordingStateChanged: (Boolean) -> Unit = {},
-    onRecordingStopped: () -> Unit = {},
-    onException: (java.lang.Exception) -> Unit = {}
+    onTranscriptionUpdate: (String) -> Unit,
+    onException: (java.lang.Exception) -> Unit = { log.error("Error during recording", it) }
   ) {
     audioFormat = AudioFormat(
       /* sampleRate = */ DictationSettings.sampleRate.toFloat(),
@@ -97,14 +94,13 @@ open class SpeechRecognitionManager : Disposable {
       recentPacketBuffer.clear()
       recordingStartTime = System.currentTimeMillis()
       recordingDuration = 0
-      onRecordingStarted(recordingStartTime)
+      DictationSettings.setRmsPercentage(0)
+      DictationSettings.setIec61672Percentage(0)
       recorder = Thread {
         try {
           AudioRecorder(audioBuffer, 0.5, { isRecording }, this.selectedMicLine, audioFormat).run()
         } catch (e: Exception) {
           onException(e)
-        } finally {
-          onRecordingStopped()
         }
       }.apply { start() }
       windowBuffer = Thread {
@@ -116,13 +112,13 @@ open class SpeechRecognitionManager : Disposable {
         start()
       }
       processor = Thread {
-        TranscriptionProcessor(
+        transcriptionProcessor = TranscriptionProcessor(
           OpenAIClient(),
           processedBuffer,
           { isRecording },
           prompt = "",
           onTranscriptionUpdate = onTranscriptionUpdate
-        ).run()
+        ).apply { run() }
       }.apply { start() }
       monitoringThread = Thread {
         while (isRecording) {
@@ -135,9 +131,7 @@ open class SpeechRecognitionManager : Disposable {
           }
           Thread.sleep(100)
         }
-        onRecordingDurationUpdate(recordingDuration)
       }.apply { start() }
-      onRecordingStateChanged(true)
     } catch (e: Exception) {
       JOptionPane.showMessageDialog(
         null,

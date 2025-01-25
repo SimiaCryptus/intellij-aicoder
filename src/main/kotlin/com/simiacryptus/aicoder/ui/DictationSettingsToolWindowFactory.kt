@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 
 class DictationSettingsToolWindowFactory : ToolWindowFactory {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    toolWindow.contentManager.addContent(toolWindow.contentManager.factory.createContent(DictationSettingsPanel(), "Settings", false))
+    toolWindow.contentManager.addContent(toolWindow.contentManager.factory.createContent(DictationSettingsPanel(project), "Settings", false))
     toolWindow.isShowStripeButton = true
   }
 

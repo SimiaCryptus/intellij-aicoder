@@ -63,6 +63,8 @@ dependencies {
   implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
 
   implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
+  // Logback is the default logging implementation for SLF4J
+  implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.5.16")
 
   testImplementation(platform("org.junit:junit-bom:5.11.2"))
   testImplementation("org.junit.jupiter:junit-jupiter-api")

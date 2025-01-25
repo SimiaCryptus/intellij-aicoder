@@ -1,11 +1,20 @@
 package com.simiacryptus.aicoder.ui
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.util.Consumer
+import com.simiacryptus.aicoder.ui.SpeechRecognitionManager.Companion
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
 import org.slf4j.LoggerFactory
@@ -28,21 +37,33 @@ class SpeechToTextWidget(private val project: Project) : StatusBarWidget,
     val ID = "AICodingAssistant.SpeechToTextWidget"
   }
 
-  override fun ID(): String = ID
-
   override fun install(statusBar: StatusBar) {
     Companion.statusBar = statusBar
+    val connection = statusBar.project?.messageBus?.connect()
+    connection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+
+        val editor = FileEditorManager.getInstance(statusBar.project!!).selectedTextEditor
+        editor?.document?.addDocumentListener(object : DocumentListener {
+          override fun documentChanged(event: DocumentEvent) {
+            SpeechRecognitionManager.transcriptionProcessor?.prompt = event.document.text.take(1024)
+          }
+        })
+
+        editor?.selectionModel?.addSelectionListener(object : SelectionListener {
+          override fun selectionChanged(event: SelectionEvent) {
+            SpeechRecognitionManager.transcriptionProcessor?.prompt = editor.selectionModel.selectedText?.take(1024) ?: ""
+          }
+        })
+      }
+    })
   }
 
+  override fun ID(): String = ID
   override fun getPresentation() = this
   override fun getIcon() = if (DictationSettings.isRecording) MyIcons.micActive else MyIcons.micInactive
-
   override fun getTooltipText(): String = if (DictationSettings.isRecording) "Click to stop recording" else "Click to start recording"
-
-  override fun getClickConsumer(): Consumer<MouseEvent> = Consumer {
-    Thread { toggleRecording() }.start()
-  }
-
+  override fun getClickConsumer(): Consumer<MouseEvent> = Consumer { Thread { toggleRecording() }.start() }
 
   private fun toggleRecording() {
     if (DictationSettings.isRecording) {
@@ -53,16 +74,15 @@ class SpeechToTextWidget(private val project: Project) : StatusBarWidget,
       SpeechRecognitionManager.startRecording(
         onTranscriptionUpdate = {
           log.info("Transcription: $it")
-          project.currentEditor()?.document?.insertString(project.currentEditor()?.caretModel?.offset ?: 0, it)
-        },
-        onException = {
-          log.error("Error during recording", it)
+          WriteCommandAction.runWriteCommandAction(project) {
+            val currentEditor = project.currentEditor() ?: return@runWriteCommandAction
+            currentEditor.document.insertString(currentEditor.caretModel.offset, it)
+          }
         }
       )
     }
     statusBar?.updateWidget(ID())
   }
-
 }
 
 // Extension function to get current editor
