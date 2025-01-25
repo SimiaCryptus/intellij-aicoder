@@ -8,7 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowManager
 import com.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.aicoder.ui.DictationSettingsToolWindowFactory
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
@@ -95,6 +98,7 @@ class PluginStartupActivity : ProjectActivity {
         AppSettingsState.instance.greetedVersion = AppSettingsState.WELCOME_VERSION
         AppSettingsState.instance.showWelcomeScreen = false
       }
+
     } catch (e: Exception) {
       log.error("Error during plugin startup", e)
     }

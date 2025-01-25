@@ -29,6 +29,10 @@
                 id="AICodingAssistant.SpeechToTextWidget"
                 order="first"/>
     </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="AI Dictator" anchor="right" icon="MyIcons.micInactive"
+                    factoryClass="com.simiacryptus.aicoder.ui.DictationSettingsToolWindowFactory"/>
+    </extensions>
 
     <actions>
         <group id="com.simiacryptus.aicoder.ui.MainMenu"

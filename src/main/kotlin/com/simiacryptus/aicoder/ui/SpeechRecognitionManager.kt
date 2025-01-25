@@ -2,7 +2,10 @@ package com.simiacryptus.aicoder.ui
 
 import com.intellij.openapi.Disposable
 import com.simiacryptus.jopenai.OpenAIClient
-import com.simiacryptus.jopenai.audio.*
+import com.simiacryptus.jopenai.audio.AudioPacket
+import com.simiacryptus.jopenai.audio.AudioRecorder
+import com.simiacryptus.jopenai.audio.LookbackLoudnessWindowBuffer
+import com.simiacryptus.jopenai.audio.TranscriptionProcessor
 import org.slf4j.LoggerFactory
 import java.util.*
 import javax.sound.sampled.AudioFormat
@@ -12,29 +15,29 @@ import kotlin.collections.ArrayDeque
 
 open class SpeechRecognitionManager : Disposable {
   companion object : SpeechRecognitionManager() {
-    val log = LoggerFactory.getLogger(SpeechRecognitionManager::class.java)
+    private val log = LoggerFactory.getLogger(SpeechRecognitionManager::class.java)
+    var iec61672Max = 5000.0
+    var rmsMax = 2.0
   }
 
-  var audioFormat = AudioFormat(16000f, 16, 1, true, false)
+  var audioFormat: AudioFormat = AudioFormat(16000f, 16, 1, true, false)
     set(value) {
       field = value
       loudnessStrategy = null
     }
-  private val recentPacketBuffer = ArrayDeque<AudioPacket>()
-  val audioBuffer = LinkedList<ByteArray>()
-  val processedBuffer = LinkedList<ByteArray>()
+  var selectedMicLine: String? = null
   var isRecording = false
   var recordingStartTime: Long = 0
+  var loudnessStrategy: LookbackLoudnessWindowBuffer? = null
+  val audioBuffer: Queue<ByteArray> = LinkedList()
+  val processedBuffer: Queue<ByteArray> = LinkedList()
+
+  private val recentPacketBuffer = ArrayDeque<AudioPacket>()
   private var recordingDuration: Long = 0
   private var recorder: Thread? = null
   private var processor: Thread? = null
   private var windowBuffer: Thread? = null
-  var loudnessStrategy: LoudnessWindowBuffer? = null
   private var monitoringThread: Thread? = null
-  var selectedMicLine: String? = null
-    set(value) {
-      field = value
-    }
   private var onTranscriptionUpdate: (String) -> Unit = {}
 
   val availableMicLines: List<String>
@@ -47,16 +50,45 @@ open class SpeechRecognitionManager : Disposable {
 
   @Suppress("LongParameterList")
   fun startRecording(
-    onRmsUpdate: (AudioPacket) -> Unit,
-    onIec61672Update: (AudioPacket) -> Unit,
-    onSpectralEntropyUpdate: (AudioPacket) -> Unit,
-    onTranscriptionUpdate: (String) -> Unit,
-    onRecordingStarted: (Long) -> Unit,
-    onRecordingDurationUpdate: (Long) -> Unit,
-    onRecordingStateChanged: (Boolean) -> Unit,
+    onRmsUpdate: (AudioPacket) -> Unit = {
+      rmsMax = it.rms.coerceAtLeast(rmsMax)
+      DictationSettings.setRmsPercentage(((it.rms / rmsMax) * 100).toInt())
+    },
+    onIec61672Update: (AudioPacket) -> Unit = {
+      iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
+      DictationSettings.setIec61672Percentage(((it.iec61672 / iec61672Max) * 100).toInt())
+    },
+    onTranscriptionUpdate: (String) -> Unit = {},
+    onRecordingStarted: (Long) -> Unit = { recordingStartTime ->
+      DictationSettings.setRmsPercentage(0)
+      DictationSettings.setIec61672Percentage(0)
+    },
+    onRecordingDurationUpdate: (Long) -> Unit = {},
+    onRecordingStateChanged: (Boolean) -> Unit = {},
     onRecordingStopped: () -> Unit = {},
     onException: (java.lang.Exception) -> Unit = {}
   ) {
+    audioFormat = AudioFormat(
+      /* sampleRate = */ DictationSettings.sampleRate.toFloat(),
+      /* sampleSizeInBits = */ DictationSettings.sampleSize,
+      /* channels = */ DictationSettings.channels,
+      /* signed = */ true,
+      /* bigEndian = */ false
+    )
+    loudnessStrategy = LookbackLoudnessWindowBuffer(
+      inputBuffer = audioBuffer,
+      outputBuffer = processedBuffer,
+      continueFn = { isRecording },
+      audioFormat = audioFormat,
+      onRmsUpdate = {
+        DictationSettings.setRmsPercentage(((it.rms / rmsMax) * 100).toInt())
+        onRmsUpdate(it)
+      },
+      onIec61672Update = {
+        DictationSettings.setIec61672Percentage(((it.iec61672 / iec61672Max) * 100).toInt())
+        onIec61672Update(it)
+      }
+    )
     this.onTranscriptionUpdate = onTranscriptionUpdate
     try {
       isRecording = true
@@ -66,8 +98,6 @@ open class SpeechRecognitionManager : Disposable {
       recordingStartTime = System.currentTimeMillis()
       recordingDuration = 0
       onRecordingStarted(recordingStartTime)
-
-      // Start audio recorder
       recorder = Thread {
         try {
           AudioRecorder(audioBuffer, 0.5, { isRecording }, this.selectedMicLine, audioFormat).run()
@@ -77,13 +107,14 @@ open class SpeechRecognitionManager : Disposable {
           onRecordingStopped()
         }
       }.apply { start() }
-
-      // Start window buffer
       windowBuffer = Thread {
-        windowBuffer(onRmsUpdate, onIec61672Update).run()
-      }.apply { start() }
-
-      // Start transcription processor
+        loudnessStrategy?.apply {
+          rmsPercentileThreshold = DictationSettings.rmsPercentileThreshold.toDouble()
+          iec61672PercentileThreshold = DictationSettings.iec61672PercentileThreshold.toDouble()
+        }?.run()
+      }.apply {
+        start()
+      }
       processor = Thread {
         TranscriptionProcessor(
           OpenAIClient(),
@@ -93,8 +124,6 @@ open class SpeechRecognitionManager : Disposable {
           onTranscriptionUpdate = onTranscriptionUpdate
         ).run()
       }.apply { start() }
-
-      // Start monitoring thread
       monitoringThread = Thread {
         while (isRecording) {
           val packet = processedBuffer.poll()
@@ -103,14 +132,11 @@ open class SpeechRecognitionManager : Disposable {
             recentPacketBuffer.add(audioPacket)
             recentPacketBuffer.removeIf { it.duration > 5.0 }
             recordingDuration = System.currentTimeMillis() - recordingStartTime
-            onSpectralEntropyUpdate(audioPacket)
-            onSpectralEntropyUpdate(audioPacket)
           }
           Thread.sleep(100)
         }
         onRecordingDurationUpdate(recordingDuration)
       }.apply { start() }
-
       onRecordingStateChanged(true)
     } catch (e: Exception) {
       JOptionPane.showMessageDialog(
@@ -122,18 +148,6 @@ open class SpeechRecognitionManager : Disposable {
       stopRecording()
     }
   }
-
-  private fun windowBuffer(
-    onRmsUpdate: (AudioPacket) -> Unit,
-    onIec61672Update: (AudioPacket) -> Unit
-  ) = LookbackLoudnessWindowBuffer(
-    audioBuffer,
-    processedBuffer,
-    onRmsUpdate,
-    onIec61672Update,
-    { isRecording },
-    audioFormat
-  )
 
   fun stopRecording() {
     isRecording = false
