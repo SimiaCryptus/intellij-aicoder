@@ -1,7 +1,6 @@
 ﻿.gradle
 .idea
 .qodana
-.*
 build
 openai.key
 .run
@@ -19,3 +18,5 @@ html-games.iml
 test-recordings/
 *.index.data
 *.parsed.json
+.intellijPlatform
+.kotlin/
