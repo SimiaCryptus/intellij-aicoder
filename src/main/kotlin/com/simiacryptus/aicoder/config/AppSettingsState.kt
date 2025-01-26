@@ -34,6 +34,14 @@ import java.io.File
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
   var selectedMicLine: String? = null,
+  var isRecording: Boolean = false,
+  var minRMS: Double = 0.2,
+  var minIEC61672: Double = 0.2,
+  var rmsLevel: Int = 0,
+  var iec61672Level: Int = 0,
+  var sampleRate: Int = 44100,
+  var sampleSize: Int = 16,
+  var channels: Int = 1,
   var temperature: Double = 0.1,
   var smartModel: String = OpenAIModels.GPT4o.modelName,
   var fastModel: String = OpenAIModels.GPT4oMini.modelName,
@@ -125,6 +133,14 @@ data class AppSettingsState(
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
     other as AppSettingsState
+    if (isRecording != other.isRecording) return false
+    if (minRMS != other.minRMS) return false
+    if (minIEC61672 != other.minIEC61672) return false
+    if (rmsLevel != other.rmsLevel) return false
+    if (iec61672Level != other.iec61672Level) return false
+    if (sampleRate != other.sampleRate) return false
+    if (sampleSize != other.sampleSize) return false
+    if (channels != other.channels) return false
     if (temperature != other.temperature) return false
     if (smartModel != other.smartModel) return false
     if (fastModel != other.fastModel) return false
@@ -161,6 +177,14 @@ data class AppSettingsState(
 
   override fun hashCode(): Int {
     var result = temperature.hashCode()
+    result = 31 * result + isRecording.hashCode()
+    result = 31 * result + minRMS.hashCode()
+    result = 31 * result + minIEC61672.hashCode()
+    result = 31 * result + rmsLevel
+    result = 31 * result + iec61672Level
+    result = 31 * result + sampleRate
+    result = 31 * result + sampleSize
+    result = 31 * result + channels
     result = 31 * result + smartModel.hashCode()
     result = 31 * result + fastModel.hashCode()
     result = 31 * result + enableLegacyActions.hashCode()

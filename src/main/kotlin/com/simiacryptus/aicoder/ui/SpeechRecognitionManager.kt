@@ -1,6 +1,7 @@
 package com.simiacryptus.aicoder.ui
 
 import com.intellij.openapi.Disposable
+import com.simiacryptus.aicoder.ui.DictationSettings.Companion.packetDuration
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.audio.AudioPacket
 import com.simiacryptus.jopenai.audio.AudioRecorder
@@ -34,16 +35,17 @@ open class SpeechRecognitionManager : Disposable {
   var selectedMicLine: String? = null
   var transcriptionProcessor: TranscriptionProcessor? = null
 
-  private var audioFormat: AudioFormat = AudioFormat(16000f, 16, 1, true, false)
+  var audioFormat: AudioFormat = AudioFormat(16000f, 16, 1, true, false)
     set(value) {
       field = value
       loudnessStrategy = null
     }
-  private var iec61672Max = 5000.0
-  private var rmsMax = 2.0
+  private var iec61672Max = 0.0
+  private var rmsMax = 0.0
   private var isRecording = false
   private var recordingStartTime: Long = 0
-  private var loudnessStrategy: LoudnessWindowBuffer? = null
+  var loudnessStrategy: LoudnessWindowBuffer? = null
+    private set
   private val audioBuffer: Queue<ByteArray> = LinkedList()
   private val processedBuffer: Queue<ByteArray> = LinkedList()
   private val recentPacketBuffer = ArrayDeque<AudioPacket>()
@@ -59,6 +61,8 @@ open class SpeechRecognitionManager : Disposable {
     onTranscriptionUpdate: (String) -> Unit,
     onException: (java.lang.Exception) -> Unit = { log.error("Error during recording", it) }
   ) {
+    rmsMax = 0.0
+    iec61672Max = 0.0
     audioFormat = AudioFormat(
       /* sampleRate = */ DictationSettings.sampleRate.toFloat(),
       /* sampleSizeInBits = */ DictationSettings.sampleSize,
@@ -74,12 +78,13 @@ open class SpeechRecognitionManager : Disposable {
       onPacket = {
         DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
         DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
+        DictationSettings.setTalkTime(loudnessStrategy?.talkTime)
         onPacket(it)
       },
     )
     DictationSettings.addListener {
-      loudnessStrategy?.rmsThreshold = DictationSettings.rmsThreshold.toDouble() / 100.0
-      loudnessStrategy?.iec61672Threshold = DictationSettings.iec61672Threshold.toDouble() / 100.0
+      loudnessStrategy?.minRMS = DictationSettings.minRMS * rmsMax
+      loudnessStrategy?.minIEC61672 = DictationSettings.minIEC61672 * iec61672Max
     }
 
     this.onTranscriptionUpdate = onTranscriptionUpdate
@@ -94,15 +99,17 @@ open class SpeechRecognitionManager : Disposable {
       DictationSettings.setIec61672Level(0)
       recorder = Thread {
         try {
-          AudioRecorder(audioBuffer, 0.5, { isRecording }, this.selectedMicLine, audioFormat).run()
+          AudioRecorder(audioBuffer, packetDuration, { isRecording }, this.selectedMicLine, audioFormat).run()
         } catch (e: Exception) {
           onException(e)
         }
       }.apply { start() }
       windowBuffer = Thread {
         loudnessStrategy?.apply {
-          rmsThreshold = DictationSettings.rmsThreshold.toDouble()
-          iec61672Threshold = DictationSettings.iec61672Threshold.toDouble()
+          minRMS = DictationSettings.minRMS
+          minIEC61672 = DictationSettings.minIEC61672
+          lookbackPackets = ((DictationSettings.lookbackSeconds * 1000.0) / packetDuration).toInt()
+          memoryPackets = ((DictationSettings.memorySeconds * 1000.0) / packetDuration).toInt()
         }?.run()
       }.apply {
         start()
@@ -114,7 +121,10 @@ open class SpeechRecognitionManager : Disposable {
           { isRecording },
           prompt = "",
           onTranscriptionUpdate = onTranscriptionUpdate
-        ).apply { run() }
+        ).apply {
+
+          run()
+        }
       }.apply { start() }
       monitoringThread = Thread {
         while (isRecording) {
