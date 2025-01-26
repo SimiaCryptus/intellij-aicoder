@@ -34,9 +34,9 @@ import java.io.File
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
   var selectedMicLine: String? = null,
-  var isRecording: Boolean = false,
   var minRMS: Double = 0.2,
   var minIEC61672: Double = 0.2,
+  var minimumTalkSeconds: Double = 1.0,
   var rmsLevel: Int = 0,
   var iec61672Level: Int = 0,
   var sampleRate: Int = 44100,
@@ -117,7 +117,6 @@ data class AppSettingsState(
     addUserSuppliedModels(fromJson.userSuppliedModels)
     recentCommands.clear()
     recentCommands.putAll(fromJson.recentCommands)
-    selectedMicLine = fromJson.selectedMicLine
     notifySettingsLoaded()
   }
 
@@ -133,7 +132,6 @@ data class AppSettingsState(
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
     other as AppSettingsState
-    if (isRecording != other.isRecording) return false
     if (minRMS != other.minRMS) return false
     if (minIEC61672 != other.minIEC61672) return false
     if (rmsLevel != other.rmsLevel) return false
@@ -172,12 +170,12 @@ data class AppSettingsState(
     if (awsProfile != other.awsProfile) return false
     if (awsRegion != other.awsRegion) return false
     if (awsBucket != other.awsBucket) return false
+    if (selectedMicLine != other.selectedMicLine) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = temperature.hashCode()
-    result = 31 * result + isRecording.hashCode()
     result = 31 * result + minRMS.hashCode()
     result = 31 * result + minIEC61672.hashCode()
     result = 31 * result + rmsLevel
@@ -215,6 +213,7 @@ data class AppSettingsState(
     result = 31 * result + (awsProfile?.hashCode() ?: 0)
     result = 31 * result + (awsRegion?.hashCode() ?: 0)
     result = 31 * result + (awsBucket?.hashCode() ?: 0)
+    result = 31 * result + (selectedMicLine?.hashCode() ?: 0)
     return result
   }
 

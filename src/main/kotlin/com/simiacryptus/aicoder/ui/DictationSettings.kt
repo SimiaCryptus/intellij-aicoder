@@ -14,7 +14,7 @@ open class DictationSettings {
   var memorySeconds: Double = 60.0
     private set
   private val listeners = mutableListOf<() -> Unit>()
-  var isRecording: Boolean
+  var isRecording: Boolean = false
     private set
   var minRMS: Double
     private set
@@ -35,7 +35,6 @@ open class DictationSettings {
   var packetDuration: Long = 100
     private set
   init {
-    isRecording = AppSettingsState.instance.isRecording
     minRMS = AppSettingsState.instance.minRMS
     minIEC61672 = AppSettingsState.instance.minIEC61672
     rmsLevel = AppSettingsState.instance.rmsLevel
@@ -63,7 +62,6 @@ open class DictationSettings {
   fun setRecordingState(isRecording: Boolean) {
     if (isRecording == this.isRecording) return
     this.isRecording = isRecording
-    AppSettingsState.instance.isRecording = isRecording
     notifyListeners()
   }
 

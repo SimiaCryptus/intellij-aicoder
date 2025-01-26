@@ -12,7 +12,6 @@ import java.awt.GridBagLayout
 import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.JSlider
-import javax.swing.event.ChangeListener
 
 class DictationSettingsPanel(
   val project: Project,
@@ -22,22 +21,28 @@ class DictationSettingsPanel(
     private val log = org.slf4j.LoggerFactory.getLogger(DictationSettingsPanel::class.java)
   }
 
-  private val micLineComboBoxListener: (Any) -> Unit = {
-    val selectedIndex = micLineComboBox.selectedIndex
-    settings.setSelectedMicLine(if (selectedIndex == 0) null else micLineComboBox.getItemAt(selectedIndex))
+  private val rmsLabel = JBLabel()
+  private val iec61672Label = JBLabel()
+  private val lookbackLabel = JBLabel("Lookback Time: 2s")
+  private val memoryLabel = JBLabel("Memory Time: 60s")
+  private val minRmsLabel = JBLabel("RMS Threshold: 0%")
+  private val minIec61672Label = JBLabel("IEC61672 Threshold: 0%")
+  private val minTalkTimeLabel = JBLabel("Minimum Talk Time: 1.0s")
+  private val micLineComboBox = ComboBox<String>().apply {
+    border = JBUI.Borders.emptyRight(5) // Consider adding a left border as well
+    addItem("Default")
+    SpeechRecognitionManager.availableMicLines.forEach { addItem(it) }
+    AppSettingsState.instance.selectedMicLine?.let {
+      selectedItem = it
+      SpeechRecognitionManager.selectedMicLine = it
+      settings.setSelectedMicLine(it)
+    }
+    addActionListener({
+      settings.setSelectedMicLine(selectedItem as String)
+      SpeechRecognitionManager.selectedMicLine = selectedItem as String
+      AppSettingsState.instance.selectedMicLine = selectedItem as String
+    })
   }
-  private val updateParamsListener: () -> Unit = { updateParams() }
-  private val rmsSliderListener: ChangeListener = ChangeListener { settings.setRmsLevel(rmsSlider.value) }
-  private val iec61672SliderListener: ChangeListener = ChangeListener { settings.setIec61672Level(iec61672Slider.value) }
-  private val minRMSSliderListener: ChangeListener =
-    ChangeListener { settings.setMinRMS(minRMSSlider.value.toDouble() / 100) }
-  private val minIEC61672SliderListener: ChangeListener =
-    ChangeListener { settings.setMinIEC61672(minIEC61672Slider.value.toDouble() / 100) }
-  private val sampleRateComboBoxListener: (Any) -> Unit = { settings.setSampleRate(sampleRateComboBox.selectedItem as Int) }
-  private val sampleSizeComboBoxListener: (Any) -> Unit = { settings.setSampleSize(sampleSizeComboBox.selectedItem as Int) }
-  private val channelsComboBoxListener: (Any) -> Unit = { settings.setChannels(channelsComboBox.selectedItem as Int) }
-  private val rmsLabel = JBLabel("RMS: 0%")
-  private val iec61672Label = JBLabel("IEC61672: 0%")
   private val rmsSlider = JSlider(JSlider.HORIZONTAL, 0, 100, 0).apply {
     paintTicks = true
     paintLabels = true
@@ -45,7 +50,10 @@ class DictationSettingsPanel(
     majorTickSpacing = 20
     minorTickSpacing = 10
     border = JBUI.Borders.emptyRight(5)
-    addChangeListener(rmsSliderListener)
+    addChangeListener { rmsLabel.text = "RMS: ${value}%" }
+    addChangeListener {
+      settings.setRmsLevel(value)
+    }
   }
   private val iec61672Slider = JSlider(JSlider.HORIZONTAL, 0, 100, 0).apply {
     paintTicks = true
@@ -54,77 +62,69 @@ class DictationSettingsPanel(
     majorTickSpacing = 20
     minorTickSpacing = 5
     border = JBUI.Borders.emptyRight(5)
-    addChangeListener(iec61672SliderListener)
-  }
-  private val minRMSSlider = JSlider(JSlider.HORIZONTAL, 0, 100, (settings.minRMS * 100).toInt()).apply {
-    paintTicks = true
-    paintLabels = true
-    majorTickSpacing = 20
-    minorTickSpacing = 5
-    border = JBUI.Borders.emptyRight(5)
-    addChangeListener(minRMSSliderListener)
-  }
-  private val minIEC61672Slider = JSlider(JSlider.HORIZONTAL, 0, 100, (settings.minIEC61672 * 100).toInt()).apply {
-    paintTicks = true
-    paintLabels = true
-    majorTickSpacing = 20
-    minorTickSpacing = 5
-    border = JBUI.Borders.emptyRight(5)
-    addChangeListener(minIEC61672SliderListener)
-  }
-  private val minimumTalkSecondsSlider =
-    JSlider(JSlider.HORIZONTAL, 0, 10000, (SpeechRecognitionManager.loudnessStrategy?.minimumTalkSeconds?.let { it*1000 } ?: 1.0).toInt()).apply {
-      paintTicks = true
-      paintLabels = true
-      majorTickSpacing = 2500
-      minorTickSpacing = 100
-      border = JBUI.Borders.emptyRight(5)
-      addChangeListener { SpeechRecognitionManager.loudnessStrategy?.minimumTalkSeconds = value.toDouble() / 1000.0 }
+    addChangeListener { iec61672Label.text = "IEC61672: ${value}%" }
+    addChangeListener {
+      settings.setIec61672Level(value)
     }
+  }
   private val talkTimeSlider = JSlider(JSlider.HORIZONTAL, 0, 10000, (settings.talkTime * 1000).toInt()).apply {
     paintTicks = true
     paintLabels = true
+    isEnabled = false
     majorTickSpacing = 2500
     minorTickSpacing = 100
     border = JBUI.Borders.emptyRight(5)
-    addChangeListener { settings.setTalkTime(value.toDouble() / 1000.0) }
+    addChangeListener {
+      settings.setTalkTime(value.toDouble() / 1000.0)
+      updateTalkTimeLabel()
+    }
   }
   private val lookbackSecondsSlider = JSlider(
     JSlider.HORIZONTAL,
     1,
     30,
-    (SpeechRecognitionManager.loudnessStrategy?.lookbackPackets?.toDouble()?.div(SpeechRecognitionManager.audioFormat.frameRate) ?: 2.0).toInt()
+    (SpeechRecognitionManager.loudnessStrategy?.lookbackPackets?.toDouble()?.div(settings.packetDuration) ?: 2.0).toInt()
   ).apply {
     paintTicks = true
     paintLabels = true
     majorTickSpacing = 5
     minorTickSpacing = 1
     border = JBUI.Borders.emptyRight(5)
-    addChangeListener { SpeechRecognitionManager.loudnessStrategy?.lookbackPackets = (value * SpeechRecognitionManager.audioFormat.frameRate).toInt() }
+    addChangeListener {
+      SpeechRecognitionManager.loudnessStrategy?.lookbackPackets = (value * settings.packetDuration).toInt()
+      lookbackLabel.text = "Lookback Time: ${value}s"
+    }
   }
-  private val talkTimeLabel = JBLabel("Talk Time: 0.0s")
+  private val talkTimeLabel = JBLabel()
   private val sampleRateComboBox = ComboBox(arrayOf(8000, 16000, 22050, 44100, 48000)).apply {
     border = JBUI.Borders.emptyRight(5) // Consider adding a left border as well
-    addActionListener(sampleRateComboBoxListener)
+    addActionListener({
+      settings.setSampleRate(selectedItem as Int)
+    })
   }
   private val sampleSizeComboBox = ComboBox(arrayOf(8, 16, 24, 32)).apply {
     border = JBUI.Borders.emptyRight(5) // Consider adding a left border as well
-    addActionListener(sampleSizeComboBoxListener)
+    AppSettingsState.instance.sampleSize.let {
+      selectedItem = it
+    }
+    addActionListener({
+      settings.setSampleSize(selectedItem as Int)
+      AppSettingsState.instance.sampleSize = selectedItem as Int
+    })
   }
   private val channelsComboBox = ComboBox(arrayOf(1, 2)).apply {
     border = JBUI.Borders.emptyRight(5) // Consider adding a left border as well
-    addActionListener(channelsComboBoxListener)
-  }
-  private val micLineComboBox = ComboBox<String>().apply {
-    border = JBUI.Borders.emptyRight(5) // Consider adding a left border as well
-    addActionListener(micLineComboBoxListener)
+    AppSettingsState.instance.channels.let {
+      selectedItem = it
+    }
+    addActionListener({
+      settings.setChannels(selectedItem as Int)
+      AppSettingsState.instance.channels = selectedItem as Int
+    })
   }
   private val dictationButton = JButton("Start Dictation")
 
   init {
-    micLineComboBox.addItem("Default")
-    SpeechRecognitionManager.availableMicLines.forEach { micLineComboBox.addItem(it) }
-    AppSettingsState.instance.selectedMicLine?.let { micLineComboBox.selectedItem = it }
     layout = GridBagLayout().apply {
       columnWidths = intArrayOf(100, 200, 100, 200)
     }
@@ -190,20 +190,32 @@ class DictationSettingsPanel(
       fill = GridBagConstraints.HORIZONTAL
     })
 
-    add(JBLabel("RMS Threshold:"), GridBagConstraints().apply {
+    add(this.minRmsLabel, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 0
       gridy = 4
     })
-    add(minRMSSlider, GridBagConstraints().apply {
+    add(JSlider(JSlider.HORIZONTAL, 0, 100, (settings.minRMS * 100).toInt()).apply {
+      paintTicks = true
+      paintLabels = true
+      majorTickSpacing = 20
+      minorTickSpacing = 5
+      border = JBUI.Borders.emptyRight(5)
+      value = (AppSettingsState.instance.minRMS * 100).toInt()
+      addChangeListener {
+        settings.setMinRMS(value.toDouble() / 100)
+        AppSettingsState.instance.minRMS = value.toDouble() / 100
+        this@DictationSettingsPanel.minRmsLabel.text = "RMS Threshold: ${value}%"
+      }
+    }, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
       gridy = 4
       fill = GridBagConstraints.HORIZONTAL
     })
-    add(rmsLabel, GridBagConstraints().apply {
+    add(this.rmsLabel, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 2
@@ -217,13 +229,24 @@ class DictationSettingsPanel(
       fill = GridBagConstraints.HORIZONTAL
     })
 
-    add(JBLabel("IEC61672 Threshold:"), GridBagConstraints().apply {
+    add(this.minIec61672Label, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 0
       gridy = 5
     })
-    add(minIEC61672Slider, GridBagConstraints().apply {
+    add(JSlider(JSlider.HORIZONTAL, 0, 100, (settings.minIEC61672 * 100).toInt()).apply {
+      paintTicks = true
+      paintLabels = true
+      majorTickSpacing = 20
+      minorTickSpacing = 5
+      border = JBUI.Borders.emptyRight(5)
+      value = (AppSettingsState.instance.minIEC61672 * 100).toInt()
+      addChangeListener {
+        settings.setMinIEC61672(value.toDouble() / 100)
+        AppSettingsState.instance.minIEC61672 = value.toDouble() / 100
+      }
+    }, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
@@ -243,13 +266,25 @@ class DictationSettingsPanel(
       gridy = 5
       fill = GridBagConstraints.HORIZONTAL
     })
-    add(JBLabel("Minimum Talk Time:"), GridBagConstraints().apply {
+    add(minTalkTimeLabel, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 0
       gridy = 6
     })
-    add(minimumTalkSecondsSlider, GridBagConstraints().apply {
+    add(JSlider(JSlider.HORIZONTAL, 0, 10000, (SpeechRecognitionManager.loudnessStrategy?.minimumTalkSeconds?.let { it * 1000 } ?: 1000.0).toInt()).apply {
+      paintTicks = true
+      paintLabels = true
+      majorTickSpacing = 2500
+      minorTickSpacing = 100
+      border = JBUI.Borders.emptyRight(5)
+      value = (AppSettingsState.instance.minimumTalkSeconds * 1000).toInt()
+      addChangeListener {
+        SpeechRecognitionManager.loudnessStrategy?.minimumTalkSeconds = value.toDouble() / 1000.0
+        AppSettingsState.instance.minimumTalkSeconds = value.toDouble() / 1000.0
+        minTalkTimeLabel.text = "Minimum Talk Time: ${"%.3f".format(value.toDouble() / 1000.0)}s"
+      }
+    }, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
@@ -269,7 +304,7 @@ class DictationSettingsPanel(
       gridy = 6
       fill = GridBagConstraints.HORIZONTAL
     })
-    add(JBLabel("Lookback Time:"), GridBagConstraints().apply {
+    add(lookbackLabel, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 0
@@ -282,7 +317,7 @@ class DictationSettingsPanel(
       gridy = 7
       fill = GridBagConstraints.HORIZONTAL
     })
-    add(JBLabel("Memory Time:"), GridBagConstraints().apply {
+    add(memoryLabel, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 2
@@ -291,15 +326,18 @@ class DictationSettingsPanel(
     add(JSlider(
       JSlider.HORIZONTAL,
       1,
-      60,
-      (SpeechRecognitionManager.loudnessStrategy?.memoryPackets?.toDouble()?.div(settings.packetDuration) ?: 6.0).toInt()
+      120,
+      (SpeechRecognitionManager.loudnessStrategy?.memoryPackets?.toDouble()?.div(settings.packetDuration) ?: 60.0).toInt()
     ).apply {
       paintTicks = true
       paintLabels = true
-      majorTickSpacing = 10
-      minorTickSpacing = 1
+      majorTickSpacing = 20
+      minorTickSpacing = 5
       border = JBUI.Borders.emptyRight(5)
-      addChangeListener { SpeechRecognitionManager.loudnessStrategy?.memoryPackets = (value * SpeechRecognitionManager.audioFormat.frameRate).toInt() }
+      addChangeListener {
+        SpeechRecognitionManager.loudnessStrategy?.memoryPackets = ((value * 1.0) / settings.packetDuration).toInt()
+        memoryLabel.text = "Memory Time: ${value}s"
+      }
     }, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
@@ -312,7 +350,7 @@ class DictationSettingsPanel(
     updateButtonStates()
     revalidate()
     updateParams()
-    settings.addListener(updateParamsListener)
+    settings.addListener({ updateParams() })
     settings.addListener(::updateButtonStates)
   }
 
@@ -321,18 +359,25 @@ class DictationSettingsPanel(
   }
 
   private fun updateParams() {
-    rmsLabel.text = "RMS: ${settings.rmsLevel}%"
-    iec61672Label.text = "IEC61672: ${settings.iec61672Level}%"
-    talkTimeLabel.text = "Talk Time: ${SpeechRecognitionManager.loudnessStrategy?.minimumTalkSeconds}s"
     rmsSlider.value = settings.rmsLevel
     iec61672Slider.value = settings.iec61672Level
+    minTalkTimeLabel.text = "Minimum Talk Time: ${SpeechRecognitionManager.loudnessStrategy?.minimumTalkSeconds?.format("%.1f")}s"
+    updateTalkTimeLabel()
     sampleRateComboBox.selectedItem = settings.sampleRate
     sampleSizeComboBox.selectedItem = settings.sampleSize
     channelsComboBox.selectedItem = settings.channels
     micLineComboBox.selectedItem = settings.selectedMicLine ?: "Default"
     talkTimeLabel.text = "Talk Time: ${settings.talkTime.format("%.3f")}s"
     talkTimeSlider.value = (settings.talkTime * 1000.0).toInt()
-    lookbackSecondsSlider.value = (SpeechRecognitionManager.loudnessStrategy?.lookbackPackets?.toDouble()?.div(SpeechRecognitionManager.audioFormat.frameRate) ?: 2.0).toInt()
+    lookbackSecondsSlider.value = (SpeechRecognitionManager.loudnessStrategy?.lookbackPackets?.toDouble()?.div(settings.packetDuration) ?: 2.0).toInt()
+    lookbackLabel.text = "Lookback Time: ${lookbackSecondsSlider.value}s"
+    this.minRmsLabel.text = "RMS Threshold: ${(settings.minRMS * 100).toInt()}%"
+    this.minIec61672Label.text = "IEC61672 Threshold: ${(settings.minIEC61672 * 100).toInt()}%"
+
+  }
+
+  private fun updateTalkTimeLabel() {
+    talkTimeLabel.text = "Talk Time: ${settings.talkTime.format("%.3f")}s"
   }
 
   private fun toggleDictation() = if (settings.isRecording) {
@@ -359,7 +404,7 @@ class DictationSettingsPanel(
 
 
   override fun close() {
-    settings.removeListener(updateParamsListener)
+    settings.removeListener({ updateParams() })
     settings.removeListener(::updateButtonStates)
   }
 }
