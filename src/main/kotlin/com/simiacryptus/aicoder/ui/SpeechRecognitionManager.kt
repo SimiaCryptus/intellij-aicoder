@@ -4,7 +4,7 @@ import com.intellij.openapi.Disposable
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.audio.AudioPacket
 import com.simiacryptus.jopenai.audio.AudioRecorder
-import com.simiacryptus.jopenai.audio.LookbackLoudnessWindowBuffer
+import com.simiacryptus.jopenai.audio.LoudnessWindowBuffer
 import com.simiacryptus.jopenai.audio.TranscriptionProcessor
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -18,22 +18,34 @@ open class SpeechRecognitionManager : Disposable {
     private val log = LoggerFactory.getLogger(SpeechRecognitionManager::class.java)
   }
 
-  var iec61672Max = 5000.0
-  var rmsMax = 2.0
+  val availableMicLines: List<String>
+    get() {
+      return AudioSystem.getMixerInfo().filter {
+        val mixer = AudioSystem.getMixer(it)
+        !mixer.targetLineInfo.isNullOrEmpty()
+      }.map { it.toString() }.toList()
+    }
+  var onPacket: (AudioPacket) -> Unit = {
+    rmsMax = it.rms.coerceAtLeast(rmsMax)
+    iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
+    DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
+    DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
+  }
+  var selectedMicLine: String? = null
   var transcriptionProcessor: TranscriptionProcessor? = null
 
-  var audioFormat: AudioFormat = AudioFormat(16000f, 16, 1, true, false)
+  private var audioFormat: AudioFormat = AudioFormat(16000f, 16, 1, true, false)
     set(value) {
       field = value
       loudnessStrategy = null
     }
-  var selectedMicLine: String? = null
-  var isRecording = false
-  var recordingStartTime: Long = 0
-  var loudnessStrategy: LookbackLoudnessWindowBuffer? = null
-  val audioBuffer: Queue<ByteArray> = LinkedList()
-  val processedBuffer: Queue<ByteArray> = LinkedList()
-
+  private var iec61672Max = 5000.0
+  private var rmsMax = 2.0
+  private var isRecording = false
+  private var recordingStartTime: Long = 0
+  private var loudnessStrategy: LoudnessWindowBuffer? = null
+  private val audioBuffer: Queue<ByteArray> = LinkedList()
+  private val processedBuffer: Queue<ByteArray> = LinkedList()
   private val recentPacketBuffer = ArrayDeque<AudioPacket>()
   private var recordingDuration: Long = 0
   private var recorder: Thread? = null
@@ -42,22 +54,6 @@ open class SpeechRecognitionManager : Disposable {
   private var monitoringThread: Thread? = null
   private var onTranscriptionUpdate: (String) -> Unit = {}
 
-  val availableMicLines: List<String>
-    get() {
-      return AudioSystem.getMixerInfo().filter {
-        val mixer = AudioSystem.getMixer(it)
-        !mixer.targetLineInfo.isNullOrEmpty()
-      }.map { it.toString() }.toList()
-    }
-
-  var onRmsUpdate: (AudioPacket) -> Unit = {
-    rmsMax = it.rms.coerceAtLeast(rmsMax)
-    DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
-  }
-  var onIec61672Update: (AudioPacket) -> Unit = {
-    iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
-    DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
-  }
   @Suppress("LongParameterList")
   fun startRecording(
     onTranscriptionUpdate: (String) -> Unit,
@@ -70,19 +66,16 @@ open class SpeechRecognitionManager : Disposable {
       /* signed = */ true,
       /* bigEndian = */ false
     )
-    loudnessStrategy = LookbackLoudnessWindowBuffer(
+    loudnessStrategy = LoudnessWindowBuffer(
       inputBuffer = audioBuffer,
       outputBuffer = processedBuffer,
       continueFn = { isRecording },
       audioFormat = audioFormat,
-      onRmsUpdate = {
+      onPacket = {
         DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
-        onRmsUpdate(it)
-      },
-      onIec61672Update = {
         DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
-        onIec61672Update(it)
-      }
+        onPacket(it)
+      },
     )
     DictationSettings.addListener {
       loudnessStrategy?.rmsThreshold = DictationSettings.rmsThreshold.toDouble() / 100.0
