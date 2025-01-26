@@ -1,8 +1,6 @@
 package com.simiacryptus.aicoder.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.simiacryptus.aicoder.ui.SpeechToTextWidget.Companion
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.audio.AudioPacket
 import com.simiacryptus.jopenai.audio.AudioRecorder
@@ -54,11 +52,11 @@ open class SpeechRecognitionManager : Disposable {
 
   var onRmsUpdate: (AudioPacket) -> Unit = {
     rmsMax = it.rms.coerceAtLeast(rmsMax)
-    DictationSettings.setRmsPercentage(((it.rms / rmsMax) * 100).toInt())
+    DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
   }
   var onIec61672Update: (AudioPacket) -> Unit = {
     iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
-    DictationSettings.setIec61672Percentage(((it.iec61672 / iec61672Max) * 100).toInt())
+    DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
   }
   @Suppress("LongParameterList")
   fun startRecording(
@@ -78,14 +76,19 @@ open class SpeechRecognitionManager : Disposable {
       continueFn = { isRecording },
       audioFormat = audioFormat,
       onRmsUpdate = {
-        DictationSettings.setRmsPercentage(((it.rms / rmsMax) * 100).toInt())
+        DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
         onRmsUpdate(it)
       },
       onIec61672Update = {
-        DictationSettings.setIec61672Percentage(((it.iec61672 / iec61672Max) * 100).toInt())
+        DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
         onIec61672Update(it)
       }
     )
+    DictationSettings.addListener {
+      loudnessStrategy?.rmsThreshold = DictationSettings.rmsThreshold.toDouble() / 100.0
+      loudnessStrategy?.iec61672Threshold = DictationSettings.iec61672Threshold.toDouble() / 100.0
+    }
+
     this.onTranscriptionUpdate = onTranscriptionUpdate
     try {
       isRecording = true
@@ -94,8 +97,8 @@ open class SpeechRecognitionManager : Disposable {
       recentPacketBuffer.clear()
       recordingStartTime = System.currentTimeMillis()
       recordingDuration = 0
-      DictationSettings.setRmsPercentage(0)
-      DictationSettings.setIec61672Percentage(0)
+      DictationSettings.setRmsLevel(0)
+      DictationSettings.setIec61672Level(0)
       recorder = Thread {
         try {
           AudioRecorder(audioBuffer, 0.5, { isRecording }, this.selectedMicLine, audioFormat).run()
@@ -105,8 +108,8 @@ open class SpeechRecognitionManager : Disposable {
       }.apply { start() }
       windowBuffer = Thread {
         loudnessStrategy?.apply {
-          rmsPercentileThreshold = DictationSettings.rmsPercentileThreshold.toDouble()
-          iec61672PercentileThreshold = DictationSettings.iec61672PercentileThreshold.toDouble()
+          rmsThreshold = DictationSettings.rmsThreshold.toDouble()
+          iec61672Threshold = DictationSettings.iec61672Threshold.toDouble()
         }?.run()
       }.apply {
         start()

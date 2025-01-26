@@ -26,11 +26,11 @@ class DictationSettingsPanel(
     settings.setSelectedMicLine(if (selectedIndex == 0) null else micLineComboBox.getItemAt(selectedIndex))
   }
   private val updateParamsListener: () -> Unit = { updateParams() }
-  private val rmsSliderListener: ChangeListener = ChangeListener { settings.setRmsPercentage(rmsSlider.value) }
-  private val iec61672SliderListener: ChangeListener = ChangeListener { settings.setIec61672Percentage(iec61672Slider.value) }
-  private val rmsPercentileThresholdSliderListener: ChangeListener = ChangeListener { settings.setRmsPercentileThreshold(rmsPercentileThresholdSlider.value) }
-  private val iec61672PercentileThresholdSliderListener: ChangeListener =
-    ChangeListener { settings.setIec61672PercentileThreshold(iec61672PercentileThresholdSlider.value) }
+  private val rmsSliderListener: ChangeListener = ChangeListener { settings.setRmsLevel(rmsSlider.value) }
+  private val iec61672SliderListener: ChangeListener = ChangeListener { settings.setIec61672Level(iec61672Slider.value) }
+  private val rmsThresholdSliderListener: ChangeListener = ChangeListener { settings.setRmsThreshold(rmsThresholdSlider.value) }
+  private val iec61672ThresholdSliderListener: ChangeListener =
+    ChangeListener { settings.setIec61672Threshold(iec61672ThresholdSlider.value) }
   private val sampleRateComboBoxListener: (Any) -> Unit = { settings.setSampleRate(sampleRateComboBox.selectedItem as Int) }
   private val sampleSizeComboBoxListener: (Any) -> Unit = { settings.setSampleSize(sampleSizeComboBox.selectedItem as Int) }
   private val channelsComboBoxListener: (Any) -> Unit = { settings.setChannels(channelsComboBox.selectedItem as Int) }
@@ -54,17 +54,17 @@ class DictationSettingsPanel(
     border = JBUI.Borders.emptyRight(5)
     addChangeListener(iec61672SliderListener)
   }
-  private val rmsPercentileThresholdSlider = JSlider(JSlider.HORIZONTAL, 0, 100, 50).apply {
+  private val rmsThresholdSlider = JSlider(JSlider.HORIZONTAL, 0, 100, 50).apply {
     paintTicks = true
     paintLabels = true
     border = JBUI.Borders.emptyRight(5) // Consider adding a left border as well
-    addChangeListener(rmsPercentileThresholdSliderListener)
+    addChangeListener(rmsThresholdSliderListener)
   }
-  private val iec61672PercentileThresholdSlider = JSlider(JSlider.HORIZONTAL, 0, 100, 25).apply {
+  private val iec61672ThresholdSlider = JSlider(JSlider.HORIZONTAL, 0, 100, 25).apply {
     paintTicks = true
     paintLabels = true
     border = JBUI.Borders.emptyRight(5)
-    addChangeListener(iec61672PercentileThresholdSliderListener)
+    addChangeListener(iec61672ThresholdSliderListener)
   }
   private val sampleRateComboBox = ComboBox(arrayOf(8000, 16000, 22050, 44100, 48000)).apply {
     border = JBUI.Borders.emptyRight(5) // Consider adding a left border as well
@@ -158,7 +158,7 @@ class DictationSettingsPanel(
       gridx = 0
       gridy = 4
     })
-    add(rmsPercentileThresholdSlider, GridBagConstraints().apply {
+    add(rmsThresholdSlider, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
@@ -184,7 +184,7 @@ class DictationSettingsPanel(
       gridx = 0
       gridy = 5
     })
-    add(iec61672PercentileThresholdSlider, GridBagConstraints().apply {
+    add(iec61672ThresholdSlider, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
@@ -217,12 +217,12 @@ class DictationSettingsPanel(
   }
 
   private fun updateParams() {
-    rmsLabel.text = "RMS: ${settings.rmsPercentage}%"
-    iec61672Label.text = "IEC61672: ${settings.iec61672Percentage}%"
-    rmsSlider.value = settings.rmsPercentage
-    iec61672Slider.value = settings.iec61672Percentage
-    rmsPercentileThresholdSlider.value = settings.rmsPercentileThreshold
-    iec61672PercentileThresholdSlider.value = settings.iec61672PercentileThreshold
+    rmsLabel.text = "RMS: ${settings.rmsLevel}%"
+    iec61672Label.text = "IEC61672: ${settings.iec61672Level}%"
+    rmsSlider.value = settings.rmsLevel
+    iec61672Slider.value = settings.iec61672Level
+    rmsThresholdSlider.value = settings.rmsThreshold
+    iec61672ThresholdSlider.value = settings.iec61672Threshold
     sampleRateComboBox.selectedItem = settings.sampleRate
     sampleSizeComboBox.selectedItem = settings.sampleSize
     channelsComboBox.selectedItem = settings.channels

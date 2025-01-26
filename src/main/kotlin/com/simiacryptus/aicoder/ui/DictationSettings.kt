@@ -8,13 +8,13 @@ open class DictationSettings {
   private val listeners = mutableListOf<() -> Unit>()
   var isRecording: Boolean = false
     private set
-  var rmsPercentage: Int = 0
+  var rmsLevel: Int = 0
     private set
-  var iec61672Percentage: Int = 0
+  var iec61672Level: Int = 0
     private set
-  var rmsPercentileThreshold: Int = 50
+  var rmsThreshold: Int = 50
     private set
-  var iec61672PercentileThreshold: Int = 25
+  var iec61672Threshold: Int = 25
     private set
   var sampleRate: Int = 44100
     private set
@@ -25,47 +25,55 @@ open class DictationSettings {
   var selectedMicLine: String? = null
     private set
   fun setRecordingState(isRecording: Boolean) {
+    if (isRecording == this.isRecording) return
     this.isRecording = isRecording
     notifyListeners()
   }
 
-
-  fun setRmsPercentage(value: Int) {
-    rmsPercentage = value
+  fun setRmsLevel(value: Int) {
+    if (value == rmsLevel) return
+    rmsLevel = value
     notifyListeners()
   }
 
-  fun setIec61672Percentage(value: Int) {
-    iec61672Percentage = value
+  fun setIec61672Level(value: Int) {
+    if (value == iec61672Level) return
+    iec61672Level = value
     notifyListeners()
   }
 
-  fun setRmsPercentileThreshold(value: Int) {
-    rmsPercentileThreshold = value
+  fun setRmsThreshold(value: Int) {
+    if (value == rmsThreshold) return
+    rmsThreshold = value
     notifyListeners()
   }
 
-  fun setIec61672PercentileThreshold(value: Int) {
-    iec61672PercentileThreshold = value
+  fun setIec61672Threshold(value: Int) {
+    if (value == iec61672Threshold) return
+    iec61672Threshold = value
     notifyListeners()
   }
 
   fun setSampleRate(value: Int) {
+    if (value == sampleRate) return
     sampleRate = value
     notifyListeners()
   }
 
   fun setSampleSize(value: Int) {
+    if (value == sampleSize) return
     sampleSize = value
     notifyListeners()
   }
 
   fun setChannels(value: Int) {
+    if (value == channels) return
     channels = value
     notifyListeners()
   }
 
   fun setSelectedMicLine(value: String?) {
+    if (value == selectedMicLine) return
     selectedMicLine = value
     SpeechRecognitionManager.selectedMicLine = value
     notifyListeners()
