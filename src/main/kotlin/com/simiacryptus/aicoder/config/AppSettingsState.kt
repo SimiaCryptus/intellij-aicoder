@@ -18,13 +18,13 @@ import com.simiacryptus.aicoder.util.PluginStartupActivity.Companion.addUserSupp
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
-import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
 import com.simiacryptus.skyenet.apps.general.PatchApp
+import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
 import com.simiacryptus.util.JsonUtil
 import org.slf4j.LoggerFactory
 import java.io.File
 
-  data class CommandConfig(
+data class CommandConfig(
     val commands: List<PatchApp.CommandSettings>,
     val exitCodeOption: String,
     val autoFix: Boolean,
@@ -34,11 +34,16 @@ import java.io.File
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
   var selectedMicLine: String? = null,
-  var minRMS: Double = 0.2,
-  var minIEC61672: Double = 0.2,
+  var talkTime: Double = 1.0,
+  var memorySeconds: Double = 10.0,
+  var lookbackSeconds: Double = 5.0,
+  var minRMS: Double = 0.5,
+  var minIEC61672: Double = 0.5,
+  var minSpectralEntropy: Double = 0.5,
   var minimumTalkSeconds: Double = 1.0,
   var rmsLevel: Int = 0,
   var iec61672Level: Int = 0,
+  var spectralEntropyLevel: Int = 0,
   var sampleRate: Int = 44100,
   var sampleSize: Int = 16,
   var channels: Int = 1,
@@ -134,8 +139,10 @@ data class AppSettingsState(
     other as AppSettingsState
     if (minRMS != other.minRMS) return false
     if (minIEC61672 != other.minIEC61672) return false
+    if (minSpectralEntropy != other.minSpectralEntropy) return false
     if (rmsLevel != other.rmsLevel) return false
     if (iec61672Level != other.iec61672Level) return false
+    if (spectralEntropyLevel != other.spectralEntropyLevel) return false
     if (sampleRate != other.sampleRate) return false
     if (sampleSize != other.sampleSize) return false
     if (channels != other.channels) return false
@@ -178,8 +185,10 @@ data class AppSettingsState(
     var result = temperature.hashCode()
     result = 31 * result + minRMS.hashCode()
     result = 31 * result + minIEC61672.hashCode()
+    result = 31 * result + minSpectralEntropy.hashCode()
     result = 31 * result + rmsLevel
     result = 31 * result + iec61672Level
+    result = 31 * result + spectralEntropyLevel
     result = 31 * result + sampleRate
     result = 31 * result + sampleSize
     result = 31 * result + channels

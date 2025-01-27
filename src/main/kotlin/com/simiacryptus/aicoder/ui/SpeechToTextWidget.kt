@@ -1,6 +1,5 @@
 package com.simiacryptus.aicoder.ui
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -14,7 +13,6 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.util.Consumer
-import com.simiacryptus.aicoder.ui.SpeechRecognitionManager.Companion
 import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
 import org.slf4j.LoggerFactory
@@ -71,15 +69,7 @@ class SpeechToTextWidget(private val project: Project) : StatusBarWidget,
       SpeechRecognitionManager.stopRecording()
     } else {
       DictationSettings.setRecordingState(true)
-      SpeechRecognitionManager.startRecording(
-        onTranscriptionUpdate = {
-          log.info("Transcription: $it")
-          WriteCommandAction.runWriteCommandAction(project) {
-            val currentEditor = project.currentEditor() ?: return@runWriteCommandAction
-            currentEditor.document.insertString(currentEditor.caretModel.offset, it)
-          }
-        }
-      )
+      SpeechRecognitionManager.startRecording()
     }
     statusBar?.updateWidget(ID())
   }

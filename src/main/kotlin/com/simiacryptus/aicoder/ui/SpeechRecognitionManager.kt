@@ -1,12 +1,17 @@
 package com.simiacryptus.aicoder.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.simiacryptus.aicoder.ui.DictationSettings.Companion.packetDuration
+import com.simiacryptus.aicoder.ui.DictationSettingsPanel.Companion
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.audio.AudioPacket
 import com.simiacryptus.jopenai.audio.AudioRecorder
 import com.simiacryptus.jopenai.audio.LoudnessWindowBuffer
 import com.simiacryptus.jopenai.audio.TranscriptionProcessor
+import com.simiacryptus.jopenai.audio.TranscriptionProcessor.TranscriptionResult
 import org.slf4j.LoggerFactory
 import java.util.*
 import javax.sound.sampled.AudioFormat
@@ -29,8 +34,10 @@ open class SpeechRecognitionManager : Disposable {
   var onPacket: (AudioPacket) -> Unit = {
     rmsMax = it.rms.coerceAtLeast(rmsMax)
     iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
+    spectralEntropyMax = it.spectralEntropy.coerceAtLeast(spectralEntropyMax)
     DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
     DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
+    DictationSettings.setSpectralEntropyLevel(((it.spectralEntropy / spectralEntropyMax) * 100).toInt())
   }
   var selectedMicLine: String? = null
   var transcriptionProcessor: TranscriptionProcessor? = null
@@ -42,25 +49,36 @@ open class SpeechRecognitionManager : Disposable {
     }
   private var iec61672Max = 0.0
   private var rmsMax = 0.0
+  private var spectralEntropyMax = 0.0
   private var isRecording = false
   private var recordingStartTime: Long = 0
   var loudnessStrategy: LoudnessWindowBuffer? = null
     private set
-  private val audioBuffer: Queue<ByteArray> = LinkedList()
-  private val processedBuffer: Queue<ByteArray> = LinkedList()
-  private val recentPacketBuffer = ArrayDeque<AudioPacket>()
-  private var recordingDuration: Long = 0
+  private val audioBuffer: Queue<AudioPacket> = LinkedList()
+  private val processedBuffer: Queue<AudioPacket> = LinkedList()
   private var recorder: Thread? = null
   private var processor: Thread? = null
   private var windowBuffer: Thread? = null
   private var monitoringThread: Thread? = null
-  private var onTranscriptionUpdate: (String) -> Unit = {}
+  private var project: Project? = null
+
+  var recentTranscriptionResult: TranscriptionResult? = null
+    private set
+  val transctiption = EventDispatcher()
+  private val onTranscriptionUpdate: (TranscriptionResult) -> Unit = {
+    log.info("Transcription: $it")
+    recentTranscriptionResult = it
+    transctiption.notifyListeners()
+    WriteCommandAction.runWriteCommandAction(project) {
+      project?.currentEditor()?.apply {
+        document.insertString(caretModel.offset, it.text)
+      }
+    }
+  }
+  var onException: (java.lang.Exception) -> Unit = { log.error("Error during recording", it) }
 
   @Suppress("LongParameterList")
-  fun startRecording(
-    onTranscriptionUpdate: (String) -> Unit,
-    onException: (java.lang.Exception) -> Unit = { log.error("Error during recording", it) }
-  ) {
+  fun startRecording() {
     rmsMax = 0.0
     iec61672Max = 0.0
     audioFormat = AudioFormat(
@@ -78,23 +96,22 @@ open class SpeechRecognitionManager : Disposable {
       onPacket = {
         DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
         DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
+        DictationSettings.setSpectralEntropyLevel(((it.spectralEntropy / spectralEntropyMax) * 100).toInt())
         DictationSettings.setTalkTime(loudnessStrategy?.talkTime)
         onPacket(it)
       },
     )
-    DictationSettings.addListener {
+    DictationSettings.configuration.addListener {
       loudnessStrategy?.minRMS = DictationSettings.minRMS * rmsMax
       loudnessStrategy?.minIEC61672 = DictationSettings.minIEC61672 * iec61672Max
+      loudnessStrategy?.minSpectralEntropy = DictationSettings.minSpectralEntropy
     }
 
-    this.onTranscriptionUpdate = onTranscriptionUpdate
     try {
       isRecording = true
       audioBuffer.clear()
       processedBuffer.clear()
-      recentPacketBuffer.clear()
       recordingStartTime = System.currentTimeMillis()
-      recordingDuration = 0
       DictationSettings.setRmsLevel(0)
       DictationSettings.setIec61672Level(0)
       recorder = Thread {
@@ -108,6 +125,7 @@ open class SpeechRecognitionManager : Disposable {
         loudnessStrategy?.apply {
           minRMS = DictationSettings.minRMS
           minIEC61672 = DictationSettings.minIEC61672
+          minSpectralEntropy = DictationSettings.minSpectralEntropy
           lookbackPackets = ((DictationSettings.lookbackSeconds * 1000.0) / packetDuration).toInt()
           memoryPackets = ((DictationSettings.memorySeconds * 1000.0) / packetDuration).toInt()
         }?.run()
@@ -122,20 +140,7 @@ open class SpeechRecognitionManager : Disposable {
           prompt = "",
           onTranscriptionUpdate = onTranscriptionUpdate
         ).apply {
-
           run()
-        }
-      }.apply { start() }
-      monitoringThread = Thread {
-        while (isRecording) {
-          val packet = processedBuffer.poll()
-          if (packet != null) {
-            val audioPacket = AudioPacket.fromByteArray(packet, audioFormat)
-            recentPacketBuffer.add(audioPacket)
-            recentPacketBuffer.removeIf { it.duration > 5.0 }
-            recordingDuration = System.currentTimeMillis() - recordingStartTime
-          }
-          Thread.sleep(100)
         }
       }.apply { start() }
     } catch (e: Exception) {
@@ -156,22 +161,23 @@ open class SpeechRecognitionManager : Disposable {
     processor?.join()
     recorder = null
     recordingStartTime = 0
-    recordingDuration = 0
     loudnessStrategy = null
     windowBuffer = null
     processor = null
-    recentPacketBuffer.clear()
     loudnessStrategy = null
   }
 
   override fun dispose() {
     stopRecording()
     monitoringThread?.interrupt()
-    recentPacketBuffer.clear()
     loudnessStrategy = null
-    recordingDuration = 0
     audioBuffer.clear()
     processedBuffer.clear()
   }
 
 }
+
+// Extension function to get current editor
+private fun Project.currentEditor() = FileEditorManager
+  .getInstance(this)
+  .selectedTextEditor
