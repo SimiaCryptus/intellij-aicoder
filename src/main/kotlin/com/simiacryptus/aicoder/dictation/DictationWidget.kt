@@ -36,20 +36,30 @@ class SpeechToTextWidget(private val project: Project) : StatusBarWidget,
 
   override fun install(statusBar: StatusBar) {
     Companion.statusBar = statusBar
-    val connection = statusBar.project?.messageBus?.connect()
-    connection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+    val project = statusBar.project ?: return
+    DictationManager.project = project
+    val connection = project.messageBus.connect()
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
 
-        val editor = FileEditorManager.getInstance(statusBar.project!!).selectedTextEditor
+        log.debug("Selection changed")
+
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor
         editor?.document?.addDocumentListener(object : DocumentListener {
           override fun documentChanged(event: DocumentEvent) {
-            DictationManager.transcriptionProcessor?.prompt = event.document.text.take(1024)
+            log.debug("Document changed")
+            val str = event.document.text.take(1024)
+            DictationManager.transcriptionProcessor?.prompt = str
+            log.debug("Prompt updated: $str")
           }
         })
 
         editor?.selectionModel?.addSelectionListener(object : SelectionListener {
           override fun selectionChanged(event: SelectionEvent) {
-            DictationManager.transcriptionProcessor?.prompt = editor.selectionModel.selectedText?.take(1024) ?: ""
+            log.debug("Selection changed")
+            val str = editor.selectionModel.selectedText?.take(1024) ?: ""
+            DictationManager.transcriptionProcessor?.prompt = str
+            log.debug("Prompt updated: $str")
           }
         })
       }

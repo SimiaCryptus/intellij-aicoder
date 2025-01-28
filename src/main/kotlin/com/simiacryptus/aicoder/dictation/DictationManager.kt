@@ -32,7 +32,6 @@ open class DictationManager : Disposable {
   var onPacket: (AudioPacket) -> Unit = {
     rmsMax = it.rms.coerceAtLeast(rmsMax)
     iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
-    spectralEntropyMax = it.spectralEntropy.coerceAtLeast(spectralEntropyMax)
     DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
     DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
   }
@@ -46,7 +45,6 @@ open class DictationManager : Disposable {
     }
   private var iec61672Max = 0.0
   private var rmsMax = 0.0
-  private var spectralEntropyMax = 0.0
   private var isRecording = false
   private var recordingStartTime: Long = 0
   var loudnessStrategy: LoudnessWindowBuffer? = null
@@ -57,7 +55,7 @@ open class DictationManager : Disposable {
   private var processor: Thread? = null
   private var windowBuffer: Thread? = null
   private var monitoringThread: Thread? = null
-  private var project: Project? = null
+  var project: Project? = null
 
   var recentTranscriptionResult: TranscriptionResult? = null
     private set
@@ -66,13 +64,19 @@ open class DictationManager : Disposable {
     recentTranscriptionResult = it
     transctiption.notifyListeners()
     WriteCommandAction.runWriteCommandAction(project) {
-      val currentEditor = project?.currentEditor()
-      if (currentEditor != null) {
-        log.info("Dictated Insertion: ${it.text}")
-        currentEditor.document.insertString(currentEditor.caretModel.offset, it.text)
-      } else {
-        log.info("Dictation Ignored - No current editor")
+      val project = project
+      if (project == null) {
+        log.info("Dictation Ignored - No project")
+        return@runWriteCommandAction
       }
+      val currentEditor = project.currentEditor()
+      if (currentEditor == null) {
+        log.info("Dictation Ignored - No current editor")
+        return@runWriteCommandAction
+      }
+      log.info("Dictated Insertion: ${it.text}")
+      currentEditor.document.insertString(currentEditor.caretModel.offset, it.text)
+      currentEditor.caretModel.moveToOffset(currentEditor.caretModel.offset + it.text.length)
     }
   }
   var onException: (java.lang.Exception) -> Unit = { log.error("Error during recording", it) }
