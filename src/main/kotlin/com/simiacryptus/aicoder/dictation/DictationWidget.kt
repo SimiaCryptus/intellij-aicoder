@@ -1,6 +1,5 @@
-package com.simiacryptus.aicoder.ui
+package com.simiacryptus.aicoder.dictation
 
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.SelectionEvent
@@ -44,13 +43,13 @@ class SpeechToTextWidget(private val project: Project) : StatusBarWidget,
         val editor = FileEditorManager.getInstance(statusBar.project!!).selectedTextEditor
         editor?.document?.addDocumentListener(object : DocumentListener {
           override fun documentChanged(event: DocumentEvent) {
-            SpeechRecognitionManager.transcriptionProcessor?.prompt = event.document.text.take(1024)
+            DictationManager.transcriptionProcessor?.prompt = event.document.text.take(1024)
           }
         })
 
         editor?.selectionModel?.addSelectionListener(object : SelectionListener {
           override fun selectionChanged(event: SelectionEvent) {
-            SpeechRecognitionManager.transcriptionProcessor?.prompt = editor.selectionModel.selectedText?.take(1024) ?: ""
+            DictationManager.transcriptionProcessor?.prompt = editor.selectionModel.selectedText?.take(1024) ?: ""
           }
         })
       }
@@ -66,10 +65,10 @@ class SpeechToTextWidget(private val project: Project) : StatusBarWidget,
   private fun toggleRecording() {
     if (DictationSettings.isRecording) {
       DictationSettings.setRecordingState(false)
-      SpeechRecognitionManager.stopRecording()
+      DictationManager.stopRecording()
     } else {
       DictationSettings.setRecordingState(true)
-      SpeechRecognitionManager.startRecording()
+      DictationManager.startRecording()
     }
     statusBar?.updateWidget(ID())
   }

@@ -187,7 +187,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       copyButton.addActionListener {
         val session = sessionsList.selectedValue
         if (session != null) {
-          val link = Companion.getSessionLink(session)
+          val link = getSessionLink(session)
           val selection = StringSelection(link)
           Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, null)
         }
@@ -195,7 +195,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       openButton.addActionListener {
         val session = sessionsList.selectedValue
         if (session != null) {
-          browse(URI(Companion.getSessionLink(session)))
+          browse(URI(getSessionLink(session)))
         }
       }
       actionPanel.add(copyButton)

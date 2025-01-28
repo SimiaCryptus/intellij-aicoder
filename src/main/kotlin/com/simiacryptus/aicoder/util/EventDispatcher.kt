@@ -1,6 +1,9 @@
-package com.simiacryptus.aicoder.ui
+package com.simiacryptus.aicoder.util
 
 open class EventDispatcher {
+  companion object {
+    private val log = org.slf4j.LoggerFactory.getLogger(EventDispatcher::class.java)
+  }
   private val listeners = mutableListOf<() -> Unit>()
   fun addListener(listener: () -> Unit) {
     listeners.add(listener)
@@ -11,6 +14,6 @@ open class EventDispatcher {
   }
 
   fun notifyListeners() {
-    listeners.forEach { it() }
+    listeners.forEach { try { it() } catch (e: Throwable) {  log.error(e.message, e) } }
   }
 }

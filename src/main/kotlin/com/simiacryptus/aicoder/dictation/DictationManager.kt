@@ -1,11 +1,10 @@
-package com.simiacryptus.aicoder.ui
+package com.simiacryptus.aicoder.dictation
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.simiacryptus.aicoder.ui.DictationSettings.Companion.packetDuration
-import com.simiacryptus.aicoder.ui.DictationSettingsPanel.Companion
+import com.simiacryptus.aicoder.util.EventDispatcher
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.audio.AudioPacket
 import com.simiacryptus.jopenai.audio.AudioRecorder
@@ -17,11 +16,10 @@ import java.util.*
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.swing.JOptionPane
-import kotlin.collections.ArrayDeque
 
-open class SpeechRecognitionManager : Disposable {
-  companion object : SpeechRecognitionManager() {
-    private val log = LoggerFactory.getLogger(SpeechRecognitionManager::class.java)
+open class DictationManager : Disposable {
+  companion object : DictationManager() {
+    private val log = LoggerFactory.getLogger(DictationManager::class.java)
   }
 
   val availableMicLines: List<String>
@@ -37,7 +35,6 @@ open class SpeechRecognitionManager : Disposable {
     spectralEntropyMax = it.spectralEntropy.coerceAtLeast(spectralEntropyMax)
     DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
     DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
-    DictationSettings.setSpectralEntropyLevel(((it.spectralEntropy / spectralEntropyMax) * 100).toInt())
   }
   var selectedMicLine: String? = null
   var transcriptionProcessor: TranscriptionProcessor? = null
@@ -66,12 +63,15 @@ open class SpeechRecognitionManager : Disposable {
     private set
   val transctiption = EventDispatcher()
   private val onTranscriptionUpdate: (TranscriptionResult) -> Unit = {
-    log.info("Transcription: $it")
     recentTranscriptionResult = it
     transctiption.notifyListeners()
     WriteCommandAction.runWriteCommandAction(project) {
-      project?.currentEditor()?.apply {
-        document.insertString(caretModel.offset, it.text)
+      val currentEditor = project?.currentEditor()
+      if (currentEditor != null) {
+        log.info("Dictated Insertion: ${it.text}")
+        currentEditor.document.insertString(currentEditor.caretModel.offset, it.text)
+      } else {
+        log.info("Dictation Ignored - No current editor")
       }
     }
   }
@@ -91,21 +91,14 @@ open class SpeechRecognitionManager : Disposable {
     loudnessStrategy = LoudnessWindowBuffer(
       inputBuffer = audioBuffer,
       outputBuffer = processedBuffer,
-      continueFn = { isRecording },
-      audioFormat = audioFormat,
       onPacket = {
         DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
         DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
-        DictationSettings.setSpectralEntropyLevel(((it.spectralEntropy / spectralEntropyMax) * 100).toInt())
         DictationSettings.setTalkTime(loudnessStrategy?.talkTime)
         onPacket(it)
       },
+      continueFn = { isRecording },
     )
-    DictationSettings.configuration.addListener {
-      loudnessStrategy?.minRMS = DictationSettings.minRMS * rmsMax
-      loudnessStrategy?.minIEC61672 = DictationSettings.minIEC61672 * iec61672Max
-      loudnessStrategy?.minSpectralEntropy = DictationSettings.minSpectralEntropy
-    }
 
     try {
       isRecording = true
@@ -116,19 +109,13 @@ open class SpeechRecognitionManager : Disposable {
       DictationSettings.setIec61672Level(0)
       recorder = Thread {
         try {
-          AudioRecorder(audioBuffer, packetDuration, { isRecording }, this.selectedMicLine, audioFormat).run()
+          AudioRecorder(audioBuffer, 100, { isRecording }, this.selectedMicLine, audioFormat).run()
         } catch (e: Exception) {
           onException(e)
         }
       }.apply { start() }
       windowBuffer = Thread {
-        loudnessStrategy?.apply {
-          minRMS = DictationSettings.minRMS
-          minIEC61672 = DictationSettings.minIEC61672
-          minSpectralEntropy = DictationSettings.minSpectralEntropy
-          lookbackPackets = ((DictationSettings.lookbackSeconds * 1000.0) / packetDuration).toInt()
-          memoryPackets = ((DictationSettings.memorySeconds * 1000.0) / packetDuration).toInt()
-        }?.run()
+        loudnessStrategy?.run()
       }.apply {
         start()
       }
