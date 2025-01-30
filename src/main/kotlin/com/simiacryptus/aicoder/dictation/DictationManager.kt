@@ -6,10 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.simiacryptus.aicoder.util.EventDispatcher
 import com.simiacryptus.jopenai.OpenAIClient
-import com.simiacryptus.jopenai.audio.AudioPacket
-import com.simiacryptus.jopenai.audio.AudioRecorder
-import com.simiacryptus.jopenai.audio.LoudnessWindowBuffer
-import com.simiacryptus.jopenai.audio.TranscriptionProcessor
+import com.simiacryptus.jopenai.audio.*
 import com.simiacryptus.jopenai.audio.TranscriptionProcessor.TranscriptionResult
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -35,27 +32,37 @@ open class DictationManager : Disposable {
     DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
     DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
   }
+
+  private fun handlePacket(it: AudioPacket) {
+    DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
+    DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
+    DictationSettings.setTalkTime(loudnessStrategy.talkTime)
+    onPacket(it)
+  }
+
   var selectedMicLine: String? = null
   var transcriptionProcessor: TranscriptionProcessor? = null
 
   var audioFormat: AudioFormat = AudioFormat(16000f, 16, 1, true, false)
     set(value) {
       field = value
-      loudnessStrategy = null
     }
   private var iec61672Max = 0.0
   private var rmsMax = 0.0
   private var isRecording = false
   private var recordingStartTime: Long = 0
-  var loudnessStrategy: LoudnessWindowBuffer? = null
-    private set
   private val audioBuffer: Queue<AudioPacket> = LinkedList()
   private val processedBuffer: Queue<AudioPacket> = LinkedList()
   private var recorder: Thread? = null
   private var processor: Thread? = null
   private var windowBuffer: Thread? = null
-  private var monitoringThread: Thread? = null
   var project: Project? = null
+  var loudnessStrategy = TrainedSilenceDiscriminator(
+    inputBuffer = audioBuffer,
+    outputBuffer = processedBuffer,
+    onPacket = { handlePacket(it) },
+    continueFn = { isRecording },)
+    private set
 
   var recentTranscriptionResult: TranscriptionResult? = null
     private set
@@ -83,27 +90,7 @@ open class DictationManager : Disposable {
 
   @Suppress("LongParameterList")
   fun startRecording() {
-    rmsMax = 0.0
-    iec61672Max = 0.0
-    audioFormat = AudioFormat(
-      /* sampleRate = */ DictationSettings.sampleRate.toFloat(),
-      /* sampleSizeInBits = */ DictationSettings.sampleSize,
-      /* channels = */ DictationSettings.channels,
-      /* signed = */ true,
-      /* bigEndian = */ false
-    )
-    loudnessStrategy = LoudnessWindowBuffer(
-      inputBuffer = audioBuffer,
-      outputBuffer = processedBuffer,
-      onPacket = {
-        DictationSettings.setRmsLevel(((it.rms / rmsMax) * 100).toInt())
-        DictationSettings.setIec61672Level(((it.iec61672 / iec61672Max) * 100).toInt())
-        DictationSettings.setTalkTime(loudnessStrategy?.talkTime)
-        onPacket(it)
-      },
-      continueFn = { isRecording },
-    )
-
+    resetState()
     try {
       isRecording = true
       audioBuffer.clear()
@@ -119,7 +106,11 @@ open class DictationManager : Disposable {
         }
       }.apply { start() }
       windowBuffer = Thread {
-        loudnessStrategy?.run()
+        log.info("Starting WindowBuffer processing loop.")
+        while (loudnessStrategy.let { it.shouldContinue(it.inputBuffer) } == true) {
+          loudnessStrategy.let { it.poll(it.inputBuffer) }
+          }
+        log.info("WindowBuffer processing loop ended.")
       }.apply {
         start()
       }
@@ -145,6 +136,18 @@ open class DictationManager : Disposable {
     }
   }
 
+  private fun resetState() {
+    rmsMax = 0.0
+    iec61672Max = 0.0
+    audioFormat = AudioFormat(
+      /* sampleRate = */ DictationSettings.sampleRate.toFloat(),
+      /* sampleSizeInBits = */ DictationSettings.sampleSize,
+      /* channels = */ DictationSettings.channels,
+      /* signed = */ true,
+      /* bigEndian = */ false
+      )
+    }
+
   fun stopRecording() {
     isRecording = false
     recorder?.join()
@@ -152,16 +155,13 @@ open class DictationManager : Disposable {
     processor?.join()
     recorder = null
     recordingStartTime = 0
-    loudnessStrategy = null
     windowBuffer = null
     processor = null
-    loudnessStrategy = null
+    log.info("Recording stopped")
   }
 
   override fun dispose() {
     stopRecording()
-    monitoringThread?.interrupt()
-    loudnessStrategy = null
     audioBuffer.clear()
     processedBuffer.clear()
   }

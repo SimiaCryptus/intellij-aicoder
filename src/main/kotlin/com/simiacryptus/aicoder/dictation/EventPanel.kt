@@ -101,17 +101,9 @@ class EventPanel : JPanel() {
         DictationManager.transctiption.addListener {
             val result = DictationManager.recentTranscriptionResult ?: return@addListener
             SwingUtilities.invokeLater {
-                updateTranscriptionDetails(result, listModel)
+                listModel.addElement(result)
             }
         }
     }
 
-    private fun updateTranscriptionDetails(
-        result: TranscriptionProcessor.TranscriptionResult,
-        listModel: DefaultListModel<TranscriptionProcessor.TranscriptionResult>
-    ) {
-        val age = System.currentTimeMillis() - result.packet.createdOn
-        val ageInSeconds = age / 1000.0
-        listModel.addElement(result)
-    }
 }

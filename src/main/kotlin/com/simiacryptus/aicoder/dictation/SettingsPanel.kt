@@ -7,6 +7,8 @@ import com.intellij.util.ui.JBUI
 import com.simiacryptus.aicoder.config.AppSettingsState
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.JSlider
@@ -60,7 +62,10 @@ class SettingsPanel(
       settings.setIec61672Level(value)
     }
   }
-  private val talkTimeSlider = JSlider(JSlider.HORIZONTAL, 0, 10000, (settings.talkTime * 1000).toInt()).apply {
+  private val talkTimeSlider = JSlider(
+    JSlider.HORIZONTAL, 0, 10000,
+    (settings.talkTime * 1000).toInt().coerceIn(0, 10000)
+  ).apply {
     paintTicks = true
     paintLabels = true
     isEnabled = false
@@ -73,6 +78,21 @@ class SettingsPanel(
     }
   }
   private val talkTimeLabel = JBLabel()
+  private val biasSlider = JSlider(
+    JSlider.HORIZONTAL, -100, 100,
+    (DictationManager.loudnessStrategy.bias * 100).toInt()
+  ).apply {
+    paintTicks = true
+    paintLabels = true
+    majorTickSpacing = 50
+    minorTickSpacing = 10
+    border = JBUI.Borders.emptyRight(5)
+    addChangeListener {
+      DictationManager.loudnessStrategy.bias = value.toDouble() / 100.0
+      updateBiasLabel()
+    }
+  }
+  private val biasLabel = JBLabel("Bias: ${biasSlider.value / 100.0}")
   private val formatComboBox = ComboBox<String>().apply {
     border = JBUI.Borders.emptyRight(5) // Consider adding a left border as well
     // Add common audio format combinations
@@ -82,15 +102,19 @@ class SettingsPanel(
       "8000Hz 16-bit Mono",
       // Speech recognition optimized
       "16000Hz 16-bit Mono",
+      // ... other formats ...
       "22050Hz 16-bit Mono",
       // Standard audio quality
       "32000Hz 16-bit Mono",
       "32000Hz 16-bit Stereo",
       // CD quality
+      "44100Hz 16-bit Mono",
       "44100Hz 16-bit Stereo",
+      "44100Hz 24-bit Mono",
       "44100Hz 24-bit Stereo",
       // Professional audio quality
       "48000Hz 16-bit Mono",
+      "48000Hz 24-bit Mono",
       "48000Hz 16-bit Stereo",
       "48000Hz 24-bit Stereo",
       // High-resolution audio
@@ -117,7 +141,6 @@ class SettingsPanel(
   private val dictationButton = JButton("Start Dictation")
 
   init {
-
     layout = GridBagLayout().apply {
       columnWidths = intArrayOf(150, 250, 150, 250)
     }
@@ -149,12 +172,70 @@ class SettingsPanel(
       gridx = 1
       gridy = 1
     })
-    add(dictationButton, GridBagConstraints().apply {
+
+
+    add(JPanel(GridBagLayout()).apply {
+      add(dictationButton, GridBagConstraints().apply {
+        anchor = GridBagConstraints.WEST
+        insets = JBUI.insets(5)
+        gridx = 0
+        gridy = 0
+      })
+      add(JButton("Train Quiet").apply {
+        addMouseListener(object : MouseAdapter() {
+          override fun mousePressed(e: MouseEvent?) {
+            DictationManager.loudnessStrategy.trainingState = false
+            text = "Training..."
+          }
+
+          override fun mouseReleased(e: MouseEvent?) {
+            DictationManager.loudnessStrategy.trainingState = null
+            DictationManager.loudnessStrategy.clearMemory()
+            text = "Train Quiet"
+          }
+        })
+      }, GridBagConstraints().apply {
+        anchor = GridBagConstraints.WEST
+        insets = JBUI.insets(5)
+        gridx = 1
+        gridy = 0
+      })
+      add(JButton("Train Talk").apply {
+        addMouseListener(object : MouseAdapter() {
+          override fun mousePressed(e: MouseEvent?) {
+            DictationManager.loudnessStrategy.trainingState = true
+            text = "Training..."
+          }
+
+          override fun mouseReleased(e: MouseEvent?) {
+            DictationManager.loudnessStrategy.trainingState = null
+            DictationManager.loudnessStrategy.clearMemory()
+            text = "Train Talk"
+          }
+        })
+      }, GridBagConstraints().apply {
+        anchor = GridBagConstraints.WEST
+        insets = JBUI.insets(5)
+        gridx = 2
+        gridy = 0
+      })
+      add(JButton("Reset").apply {
+        addActionListener {
+          DictationManager.loudnessStrategy.reset()
+        }
+      }, GridBagConstraints().apply {
+        anchor = GridBagConstraints.WEST
+        insets = JBUI.insets(5)
+        gridx = 3
+        gridy = 0
+      })
+    }, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridwidth = 2
       gridx = 0
       gridy = 2
+      fill = GridBagConstraints.HORIZONTAL
     })
 
     add(rmsLabel, GridBagConstraints().apply {
@@ -199,6 +280,20 @@ class SettingsPanel(
       fill = GridBagConstraints.HORIZONTAL
     })
 
+    add(biasLabel, GridBagConstraints().apply {
+      anchor = GridBagConstraints.WEST
+      insets = JBUI.insets(10)
+      gridx = 0
+      gridy = 6
+    })
+    add(biasSlider, GridBagConstraints().apply {
+      anchor = GridBagConstraints.WEST
+      insets = JBUI.insets(10)
+      gridx = 1
+      gridy = 6
+      fill = GridBagConstraints.HORIZONTAL
+    })
+
     dictationButton.addActionListener { toggleDictation() }
     updateButtonStates()
     revalidate()
@@ -212,15 +307,22 @@ class SettingsPanel(
   }
 
   private fun updateParams() {
-    rmsSlider.value = settings.rmsLevel
-    iec61672Slider.value = settings.iec61672Level
+    // Safely set slider values within their valid ranges
+    rmsSlider.value = settings.rmsLevel.coerceIn(rmsSlider.minimum, rmsSlider.maximum)
+    iec61672Slider.value = settings.iec61672Level.coerceIn(iec61672Slider.minimum, iec61672Slider.maximum)
     updateTalkTimeLabel()
     val currentFormat = "${settings.sampleRate}Hz ${settings.sampleSize}-bit ${if(settings.channels == 1) "Mono" else "Stereo"}"
     formatComboBox.selectedItem = formatComboBox.items.firstOrNull { it == currentFormat } ?: formatComboBox.items[1]
     micLineComboBox.selectedItem = settings.selectedMicLine ?: "Default"
     talkTimeLabel.text = "Talk Time: ${settings.talkTime.format("%.3f")}s"
-    talkTimeSlider.value = (settings.talkTime * 1000.0).toInt()
+    val talkTimeValue = (settings.talkTime * 1000.0).toInt()
+    talkTimeSlider.value = talkTimeValue.coerceIn(talkTimeSlider.minimum, talkTimeSlider.maximum)
   }
+
+  private fun updateBiasLabel() {
+    biasLabel.text = "Bias: ${biasSlider.value / 100.0}"
+  }
+
 
   private fun updateTalkTimeLabel() {
     talkTimeLabel.text = "Talk Time: ${settings.talkTime.format("%.3f")}s"

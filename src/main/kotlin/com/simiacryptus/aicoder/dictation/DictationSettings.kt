@@ -1,6 +1,7 @@
 package com.simiacryptus.aicoder.dictation
 
 import com.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.aicoder.dictation.DictationManager.Companion
 import com.simiacryptus.aicoder.util.EventDispatcher
 
 open class DictationSettings {
@@ -57,6 +58,8 @@ open class DictationSettings {
 
   fun setTalkTime(value: Double?) {
     if (value == null) return
+    if (value == this.talkTime) return
+    //log.debug("Setting talk time to $value")
     this.talkTime = value
     AppSettingsState.instance.talkTime = value
     configuration.notifyListeners()
