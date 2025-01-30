@@ -13,6 +13,16 @@ class EventPanel : JPanel() {
         // Initialize transcription list
         val listModel = DefaultListModel<TranscriptionProcessor.TranscriptionResult>()
         val transcriptionList = JList(listModel)
+        transcriptionList.setCellRenderer(object : DefaultListCellRenderer() {
+            override fun getListCellRendererComponent(
+                list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
+            ): Component {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+                val result = value as TranscriptionProcessor.TranscriptionResult
+                text = result.text
+                return this
+            }
+        })
         val listScrollPane = JScrollPane(transcriptionList)
 
         // Add transcription info panel
@@ -51,14 +61,30 @@ class EventPanel : JPanel() {
             gbc.gridx = 1
             gbc.weightx = 1.0
             gbc.insets.left = 10
-            val textValue = JLabel()
-            val promptValue = JLabel()
+            val textValue = JTextArea().apply {
+                lineWrap = true
+                wrapStyleWord = true
+                isEditable = false
+                background = Color(250, 250, 250)
+                border = BorderFactory.createLineBorder(Color(200, 200, 200))
+            }
+            val promptValue = JTextArea().apply {
+                lineWrap = true
+                wrapStyleWord = true
+                isEditable = false
+                background = Color(250, 250, 250)
+                border = BorderFactory.createLineBorder(Color(200, 200, 200))
+            }
             val processingTimeValue = JLabel()
             val durationValue = JLabel()
             gbc.gridy = 0
-            details.add(textValue, gbc)
+            details.add(JScrollPane(textValue).apply {
+                preferredSize = Dimension(300, 100)
+            }, gbc)
             gbc.gridy++
-            details.add(promptValue, gbc)
+            details.add(JScrollPane(promptValue).apply {
+                preferredSize = Dimension(300, 100)
+            }, gbc)
             gbc.gridy++
             details.add(processingTimeValue, gbc)
             gbc.gridy++
@@ -84,8 +110,8 @@ class EventPanel : JPanel() {
                     // Get references to value labels
                     val details = transcriptionPanel.components.first { it is JSplitPane }
                         .let { (it as JSplitPane).rightComponent as JPanel }
-                    val textValue = details.getClientProperty("textValue") as JLabel
-                    val promptValue = details.getClientProperty("promptValue") as JLabel
+                    val textValue = details.getClientProperty("textValue") as JTextArea
+                    val promptValue = details.getClientProperty("promptValue") as JTextArea
                     val processingTimeValue = details.getClientProperty("processingTimeValue") as JLabel
                     val durationValue = details.getClientProperty("durationValue") as JLabel
                     // Update values
@@ -98,8 +124,8 @@ class EventPanel : JPanel() {
         }
         add(transcriptionPanel, BorderLayout.CENTER)
 
-        DictationManager.transctiption.addListener {
-            val result = DictationManager.recentTranscriptionResult ?: return@addListener
+        DictationState.transctiption.addListener {
+            val result = DictationState.recentTranscriptionResult ?: return@addListener
             SwingUtilities.invokeLater {
                 listModel.addElement(result)
             }

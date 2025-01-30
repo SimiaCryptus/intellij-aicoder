@@ -25,13 +25,13 @@
                 id="com.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
                 order="first"/>
         <statusBarWidgetFactory
-                implementation="com.simiacryptus.aicoder.dictation.SpeechToTextWidgetFactory"
+                implementation="com.simiacryptus.aicoder.dictation.DictationWidgetFactory"
                 id="AICodingAssistant.SpeechToTextWidget"
                 order="first"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="AI Dictator" anchor="right" icon="MyIcons.micInactive"
-                    factoryClass="com.simiacryptus.aicoder.dictation.DictationSettingsToolWindowFactory"/>
+                    factoryClass="com.simiacryptus.aicoder.dictation.DictationToolWindowFactory"/>
     </extensions>
 
     <actions>

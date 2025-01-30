@@ -8,6 +8,9 @@ object MyIcons {
   val micActive = IconLoader.getIcon("/META-INF/Microphone_2.svg", MyIcons::class.java)
 
   @JvmField
+  val micListening = IconLoader.getIcon("/META-INF/Microphone_3.svg", MyIcons::class.java)
+
+  @JvmField
   val micInactive = IconLoader.getIcon("/META-INF/Microphone_1.svg", MyIcons::class.java)
 
   @JvmField
