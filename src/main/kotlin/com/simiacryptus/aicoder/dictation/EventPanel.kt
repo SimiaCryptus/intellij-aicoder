@@ -5,11 +5,16 @@ import java.awt.*
 import javax.swing.*
 
 class EventPanel : JPanel() {
+    companion object {
+        private const val MAX_RECORDS = 100
+    }
+
     init {
         layout = BorderLayout()
         border = BorderFactory.createEmptyBorder(15, 15, 15, 15)
         background = Color(250, 250, 250)
         preferredSize = Dimension(500, 300)
+
         // Initialize transcription list
         val listModel = DefaultListModel<TranscriptionProcessor.TranscriptionResult>()
         val transcriptionList = JList(listModel)
@@ -24,6 +29,15 @@ class EventPanel : JPanel() {
             }
         })
         val listScrollPane = JScrollPane(transcriptionList)
+        // Add control buttons panel
+        val buttonPanel = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            background = Color(250, 250, 250)
+            add(JButton("Clear History").apply {
+                addActionListener {
+                    listModel.clear()
+                }
+            })
+        }
 
         // Add transcription info panel
         val transcriptionPanel = JPanel(GridLayout(0, 1, 5, 5)).apply {
@@ -66,6 +80,7 @@ class EventPanel : JPanel() {
                 wrapStyleWord = true
                 isEditable = false
                 background = Color(250, 250, 250)
+                foreground = Color.BLACK
                 border = BorderFactory.createLineBorder(Color(200, 200, 200))
             }
             val promptValue = JTextArea().apply {
@@ -73,6 +88,7 @@ class EventPanel : JPanel() {
                 wrapStyleWord = true
                 isEditable = false
                 background = Color(250, 250, 250)
+                foreground = Color.BLACK
                 border = BorderFactory.createLineBorder(Color(200, 200, 200))
             }
             val processingTimeValue = JLabel()
@@ -95,7 +111,7 @@ class EventPanel : JPanel() {
                 dividerLocation = 200
                 resizeWeight = 0.3
             }
-            add(splitPane, BorderLayout.CENTER)
+            add(splitPane)
             // Store references to value labels
             details.putClientProperty("textValue", textValue)
             details.putClientProperty("promptValue", promptValue)
@@ -123,11 +139,19 @@ class EventPanel : JPanel() {
             }
         }
         add(transcriptionPanel, BorderLayout.CENTER)
+        add(buttonPanel, BorderLayout.SOUTH)
 
         DictationState.transctiption.addListener {
             val result = DictationState.recentTranscriptionResult ?: return@addListener
             SwingUtilities.invokeLater {
+                // Remove oldest item if limit is reached
+                if (listModel.size >= MAX_RECORDS) {
+                    listModel.remove(0)
+                }
                 listModel.addElement(result)
+                // Auto-scroll to the latest item
+                transcriptionList.selectedIndex = listModel.size() - 1
+                transcriptionList.ensureIndexIsVisible(listModel.size() - 1)
             }
         }
     }

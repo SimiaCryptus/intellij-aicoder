@@ -9,7 +9,7 @@ import javax.swing.JComponent
 
 class ModelSelectionDialog(
   project: Project?,
-  private val availableModels: List<ChatModel>,
+  private val availableModels: List<Pair<String, ChatModel>>,
   private val initialSelection: ChatModel? = null
 ) : DialogWrapper(project, true) {
 
@@ -22,9 +22,9 @@ class ModelSelectionDialog(
 
   override fun createCenterPanel(): JComponent = panel {
     row("Model:") {
-      comboBox(availableModels.map { it.modelName })
+      comboBox(availableModels.map { it.second.modelName })
         .bindItem({ initialSelection?.modelName }, { selectedItem ->
-          selectedModel = availableModels.find { it.modelName == selectedItem }
+          selectedModel = availableModels.find { it.second.modelName == selectedItem }?.second
         })
         .focused()
         .validationOnApply {

@@ -4,6 +4,8 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -18,13 +20,15 @@ import icons.MyIcons
 import kotlinx.coroutines.CoroutineScope
 import org.slf4j.LoggerFactory
 import java.awt.event.MouseEvent
+ import com.intellij.openapi.application.ApplicationManager
+ import java.util.concurrent.ConcurrentHashMap
 
 class DictationWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = SpeechToTextWidget.ID
   override fun getDisplayName(): String = "AI Speech-to-Text"
   override fun isAvailable(project: Project) = true
   override fun createWidget(project: Project) = SpeechToTextWidget()
-  override fun createWidget(project: Project, scope: CoroutineScope) = SpeechToTextWidget()
+ override fun createWidget(project: Project, scope: CoroutineScope) = createWidget(project)
   override fun canBeEnabledOn(statusBar: StatusBar) = true
 
   class SpeechToTextWidget : StatusBarWidget,
@@ -33,6 +37,18 @@ class DictationWidgetFactory : StatusBarWidgetFactory {
       private val log = LoggerFactory.getLogger(SpeechToTextWidget::class.java)
       var statusBar: StatusBar? = null
       val ID = "AICodingAssistant.SpeechToTextWidget"
+     private val editorsWithListeners = ConcurrentHashMap.newKeySet<Int>()
+      fun toggleRecording() {
+        if (DictationState.isRecording) {
+          DictationState.setRecordingState(false)
+          DictationManager.stopRecording()
+        } else {
+          DictationState.setRecordingState(true)
+          DictationState.resetState()
+          DictationManager.startRecording()
+        }
+        statusBar?.updateWidget(ID)
+      }
     }
 
     override fun install(statusBar: StatusBar) {
@@ -48,6 +64,11 @@ class DictationWidgetFactory : StatusBarWidgetFactory {
           log.debug("Selection changed")
 
           val editor = FileEditorManager.getInstance(project).selectedTextEditor
+         val editorHash = editor?.hashCode() ?: return
+         if (!editorsWithListeners.add(editorHash)) {
+           log.debug("Listeners already added to editor")
+           return
+         }
           editor?.document?.addDocumentListener(object : DocumentListener {
             override fun documentChanged(event: DocumentEvent) {
               log.debug("Document changed")
@@ -65,8 +86,19 @@ class DictationWidgetFactory : StatusBarWidgetFactory {
               log.debug("Prompt updated: $str")
             }
           })
+            editor?.caretModel?.addCaretListener(object : CaretListener {
+              override fun caretPositionChanged(event: CaretEvent) {
+                log.debug("Caret position changed")
+                val caret = event.caret
+                val offset = caret?.offset
+                val document = caret?.editor?.document
+                val str = document?.text?.take(1024)
+                DictationManager.transcriptionProcessor?.prompt = str ?: ""
+                log.debug("Prompt updated on caret move: $str")
+              }
+            })
           DictationManager.discriminator.onModeChanged.addListener {
-            Companion.statusBar?.updateWidget(ID())
+             Companion.statusBar?.updateWidget(ID)
           }
         }
       })
@@ -83,23 +115,10 @@ class DictationWidgetFactory : StatusBarWidgetFactory {
       }
     }
     override fun getTooltipText(): String = if (DictationState.isRecording) "Click to stop recording" else "Click to start recording"
-    override fun getClickConsumer(): Consumer<MouseEvent> = Consumer { Thread { toggleRecording() }.start() }
+   override fun getClickConsumer(): Consumer<MouseEvent> = Consumer {
+     ApplicationManager.getApplication().invokeLater { toggleRecording() }
+   }
 
-    private fun toggleRecording() {
-      if (DictationState.isRecording) {
-        DictationState.setRecordingState(false)
-        DictationManager.stopRecording()
-      } else {
-        DictationState.setRecordingState(true)
-        DictationState.resetState()
-        DictationManager.startRecording()
-      }
-      statusBar?.updateWidget(ID())
-    }
   }
 }
-
-// Extension function to get current editor
-private fun Project.currentEditor() = FileEditorManager
-  .getInstance(this)
-  .selectedTextEditor
+ // Extension function to get current editor moved to DictationState.kt

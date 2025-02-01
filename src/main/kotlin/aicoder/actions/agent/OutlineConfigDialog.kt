@@ -28,9 +28,7 @@ class OutlineConfigDialog(
     settings.expansionSteps.forEach { addElement(it) }
   }
   private var selectedIndex = -1
-  private val availableModels = ChatModel.values()
-    .map { it.value }
-    .filter { isVisible(it) }
+  private val availableModels = ChatModel.values().filter { isVisible(it.value) }
     .toList()
 
   init {
@@ -40,22 +38,22 @@ class OutlineConfigDialog(
 
   override fun createCenterPanel(): JComponent = panel {
     group("Outline Generation Steps") {
-      row {
-        val listComponent = JBList(expansionSteps).apply {
-          cellRenderer = ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
-            JLabel(value?.model?.modelName ?: "Unknown Model").apply {
-              if (isSelected) {
-                background = list.selectionBackground
-                foreground = list.selectionForeground
-              }
-            }
-          }
-          addListSelectionListener { e ->
-            if (!e.valueIsAdjusting) {
-              selectedIndex = selectedIndex
+      val listComponent = JBList(expansionSteps).apply {
+        cellRenderer = ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
+          JLabel(value?.model?.modelName ?: "Unknown Model").apply {
+            if (isSelected) {
+              background = list.selectionBackground
+              foreground = list.selectionForeground
             }
           }
         }
+        addListSelectionListener { e ->
+          if (!e.valueIsAdjusting) {
+            selectedIndex = this@apply.selectedIndex
+          }
+        }
+      }
+      row {
         cell(listComponent)
           .align(Align.FILL)
           .comment("List of models to use in sequence for outline generation. At least one model is required.")
@@ -66,29 +64,34 @@ class OutlineConfigDialog(
             val dialog = ModelSelectionDialog(project, availableModels)
             if (dialog.showAndGet()) {
               dialog.selectedModel?.let { model ->
+                listComponent.clearSelection()
                 expansionSteps.addElement(ExpansionStep(model))
                 selectedIndex = expansionSteps.size() - 1
+                listComponent.selectedIndex = selectedIndex
               }
             }
           }
           this@row.button("Remove Step") {
-            if (selectedIndex >= 0) {
-              val newIndex = when {
-                selectedIndex > 0 -> selectedIndex - 1
-                expansionSteps.size() > 1 -> 0
+            val currentIndex = listComponent.selectedIndex
+            if (currentIndex >= 0) {
+              expansionSteps.remove(currentIndex)
+              selectedIndex = when {
+                currentIndex > 0 -> currentIndex - 1
+                expansionSteps.size() > 0 -> 0
                 else -> -1
               }
-              expansionSteps.remove(selectedIndex)
-              selectedIndex = newIndex
+              listComponent.selectedIndex = selectedIndex
             }
           }
           this@row.button("Edit Step") {
-            if (selectedIndex >= 0) {
-              val currentStep = expansionSteps.get(selectedIndex)
+            val currentIndex = listComponent.selectedIndex
+            if (currentIndex >= 0) {
+              val currentStep = expansionSteps.get(currentIndex)
               val dialog = ModelSelectionDialog(project, availableModels, currentStep.model)
               if (dialog.showAndGet()) {
                 dialog.selectedModel?.let { model ->
-                  expansionSteps.set(selectedIndex, ExpansionStep(model))
+                  expansionSteps.set(currentIndex, ExpansionStep(model))
+                  listComponent.repaint()
                 }
               }
             }
@@ -98,8 +101,7 @@ class OutlineConfigDialog(
     }
     group("Model Settings") {
       row("Parsing Model:") {
-        comboBox(availableModels)
-          .apply {
+        comboBox(availableModels).apply {
             component.selectedItem = parsingModel
             component.addActionListener {
               parsingModel = component.selectedItem as ChatModel
@@ -109,8 +111,7 @@ class OutlineConfigDialog(
           .comment("Model used for parsing outline structure")
       }
       row("Min Tokens for Expansion:") {
-        intTextField()
-          .apply {
+        intTextField().apply {
             component.text = minTokens.toString()
             component.addActionListener {
               minTokens = component.text.toIntOrNull() ?: minTokens
@@ -191,22 +192,21 @@ class OutlineConfigDialog(
       return false != hasApiKey
     }
   }
+  data class ExpansionStep(
+    val model: ChatModel,
+  )
+
+
+  data class OutlineSettings(
+    val expansionSteps: List<ExpansionStep> = listOf(
+      ExpansionStep(AppSettingsState.instance.smartModel.chatModel()),
+      ExpansionStep(AppSettingsState.instance.smartModel.chatModel())
+    ),
+    val temperature: Double = AppSettingsState.instance.temperature,
+    val minTokensForExpansion: Int = 16,
+    val showProjector: Boolean = true,
+    val writeFinalEssay: Boolean = true,
+    val budget: Double = 2.0,
+    val parsingModel: ChatModel = AppSettingsState.instance.smartModel.chatModel()
+  )
 }
-
-data class ExpansionStep(
-  val model: ChatModel,
-)
-
-
-data class OutlineSettings(
-  val expansionSteps: List<ExpansionStep> = listOf(
-    ExpansionStep(AppSettingsState.instance.smartModel.chatModel()),
-    ExpansionStep(AppSettingsState.instance.smartModel.chatModel())
-  ),
-  val temperature: Double = AppSettingsState.instance.temperature,
-  val minTokensForExpansion: Int = 16,
-  val showProjector: Boolean = true,
-  val writeFinalEssay: Boolean = true,
-  val budget: Double = 2.0,
-  val parsingModel: ChatModel = AppSettingsState.instance.smartModel.chatModel()
-)

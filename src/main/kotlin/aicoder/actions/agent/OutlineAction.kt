@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory
 import java.text.SimpleDateFormat
 
 class OutlineAction : BaseAction() {
-  private var settings = OutlineSettings()
+  private var settings = OutlineConfigDialog.OutlineSettings()
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

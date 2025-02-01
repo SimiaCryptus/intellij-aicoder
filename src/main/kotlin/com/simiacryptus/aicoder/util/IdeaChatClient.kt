@@ -1,4 +1,4 @@
-﻿package com.simiacryptus.aicoder.util
+package com.simiacryptus.aicoder.util
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -33,9 +33,11 @@ open class IdeaChatClient(
     ?.associate { it.key to it.value } ?: mapOf(),
   apiBase: Map<APIProvider, String> = AppSettingsState.instance.apiBase?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
     ?.associate { it.key to it.value } ?: mapOf(),
+  reasoningEffort: ReasoningEffort = ReasoningEffort.valueOf(AppSettingsState.instance.reasoningEffort)
 ) : ChatClient(
   key = key,
   apiBase = apiBase,
+  reasoningEffort = reasoningEffort,
 ) {
 
   init {
@@ -51,7 +53,8 @@ open class IdeaChatClient(
     apiBase: Map<APIProvider, String>
   ) : IdeaChatClient(
     key = key,
-    apiBase = apiBase
+    apiBase = apiBase,
+    reasoningEffort = inner.reasoningEffort
   ) {
     override fun log(level: Level, msg: String) {
       super.log(level, msg)
@@ -143,7 +146,11 @@ open class IdeaChatClient(
 
   companion object {
 
-    val instance by lazy {
+    val instance
+      get() = _instance.apply {
+        reasoningEffort = AppSettingsState.instance.reasoningEffort.let(ReasoningEffort::valueOf)
+      }
+    private val _instance by lazy {
       //log.info("Initializing OpenAI Client", Throwable())
       val client = IdeaChatClient()
       if (AppSettingsState.instance.apiLog) {
@@ -230,4 +237,3 @@ open class IdeaChatClient(
   }
 
 }
-

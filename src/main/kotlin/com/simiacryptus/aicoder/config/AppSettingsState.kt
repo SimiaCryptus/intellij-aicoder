@@ -48,6 +48,7 @@ data class AppSettingsState(
   var sampleSize: Int = 16,
   var channels: Int = 1,
   var temperature: Double = 0.1,
+  var reasoningEffort: String = "Low",
   var smartModel: String = OpenAIModels.GPT4o.modelName,
   var fastModel: String = OpenAIModels.GPT4oMini.modelName,
   var savedPlanConfigs: MutableMap<String, SavedPlanConfig> = mutableMapOf(),
@@ -178,6 +179,7 @@ data class AppSettingsState(
     if (awsRegion != other.awsRegion) return false
     if (awsBucket != other.awsBucket) return false
     if (selectedMicLine != other.selectedMicLine) return false
+    if (reasoningEffort != other.reasoningEffort) return false
     return true
   }
 
@@ -223,6 +225,7 @@ data class AppSettingsState(
     result = 31 * result + (awsRegion?.hashCode() ?: 0)
     result = 31 * result + (awsBucket?.hashCode() ?: 0)
     result = 31 * result + (selectedMicLine?.hashCode() ?: 0)
+    result = 31 * result + reasoningEffort.hashCode()
     return result
   }
 

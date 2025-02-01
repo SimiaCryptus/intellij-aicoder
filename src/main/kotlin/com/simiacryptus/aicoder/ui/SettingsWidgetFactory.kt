@@ -20,7 +20,6 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig.dataStorageRoot
 import icons.MyIcons
-import kotlinx.coroutines.CoroutineScope
 import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyEvent
@@ -115,20 +114,33 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       slider.majorTickSpacing = 10
       slider.minorTickSpacing = 1
       slider.snapToTicks = true
-      // Add screen reader announcements for value changes
+      val panel = JPanel(BorderLayout(5, 5)) // Add padding
+
+      // Add reasoning effort dropdown
+      val reasoningPanel = JPanel(FlowLayout(FlowLayout.LEFT))
+      val reasoningLabel = JLabel(getMessage("label.reasoningEffort"))
+      val reasoningCombo = JComboBox(arrayOf("Low", "Medium", "High"))
+      reasoningCombo.selectedItem = AppSettingsState.instance.reasoningEffort
+      reasoningCombo.addActionListener {
+        AppSettingsState.instance.reasoningEffort = reasoningCombo.selectedItem as String
+      }
+      reasoningPanel.add(reasoningLabel)
+      reasoningPanel.add(reasoningCombo)
+
+      val label = JLabel(String.format("%.2f", AppSettingsState.instance.temperature))
+      label.accessibleContext.accessibleDescription = getMessage("label.temperature")
       slider.addChangeListener {
         slider.accessibleContext.firePropertyChange(
           AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
           null,
           getMessage("slider.value", slider.value / 100.0)
         )
+        AppSettingsState.instance.temperature = slider.value / 100.0
+        label.text = String.format("%.2f", slider.value / 100.0)
       }
-      slider.addChangeListener { AppSettingsState.instance.temperature = slider.value / 100.0 }
-      val panel = JPanel(BorderLayout(5, 5)) // Add padding
+
       panel.add(slider, BorderLayout.CENTER)
-      val label = JLabel(String.format("%.2f", AppSettingsState.instance.temperature))
-      label.accessibleContext.accessibleDescription = getMessage("label.temperature")
-      slider.addChangeListener { label.text = String.format("%.2f", slider.value / 100.0) }
+      panel.add(reasoningPanel, BorderLayout.SOUTH)
       panel.add(label, BorderLayout.EAST)
       panel
     }
@@ -143,8 +155,8 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       sessionsList.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "activate")
       // Server control buttons
       val buttonPanel = JPanel(FlowLayout(FlowLayout.LEFT))
-      val startButton = JButton("Start Server")
-      val stopButton = JButton("Stop Server")
+      val startButton = JButton(getMessage("server.start"))
+      val stopButton = JButton(getMessage("server.stop"))
       // Set initial button states
       startButton.isEnabled = !AppServer.isRunning()
       stopButton.isEnabled = AppServer.isRunning()
@@ -168,12 +180,12 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       sessionsList.model = sessionsListModel
       sessionsList.cellRenderer = SessionListRenderer()
       val sessionPanel = JPanel(BorderLayout())
-      sessionPanel.add(JLabel("Active Sessions:"), BorderLayout.NORTH)
+      sessionPanel.add(JLabel(getMessage("label.activeSessions")), BorderLayout.NORTH)
       sessionPanel.add(JScrollPane(sessionsList), BorderLayout.CENTER)
       // Action buttons for sessions
       val actionPanel = JPanel(GridLayout(1, 2))
-      val copyButton = JButton("Copy Link")
-      val openButton = JButton("Open Link")
+      val copyButton = JButton(getMessage("action.copyLink"))
+      val openButton = JButton(getMessage("action.openLink"))
       // Set initial button states for session actions
       copyButton.isEnabled = false
       openButton.isEnabled = false
@@ -195,7 +207,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       openButton.addActionListener {
         val session = sessionsList.selectedValue
         if (session != null) {
-          browse(URI(getSessionLink(session)))
+          browse(URI(getMessage("action.openLinkURI", getSessionLink(session))))
         }
       }
       actionPanel.add(copyButton)
@@ -253,6 +265,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       }
     }
 
+
     init {
       AppSettingsState.instance.addOnSettingsLoadedListener {
         statusBar?.updateWidget(ID())
@@ -281,12 +294,13 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       return this
     }
 
+
     override fun install(statusBar: StatusBar) {
       this.statusBar = statusBar
     }
 
     override fun dispose() {
-      //connection?.disconnect()
+      // Previously commented out: connection?.disconnect()
     }
 
     private fun createHeader(): JPanel {
@@ -296,7 +310,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
 
       val header = JPanel(BorderLayout())
       header.add(appname, BorderLayout.WEST)
-      header.add(JLabel("<html><a href=\"\">Rate Us!</a></html>").apply {
+      header.add(JLabel(String.format("<html><a href=\"\">%s</a></html>", getMessage("header.rateUs"))).apply {
         cursor = Cursor(Cursor.HAND_CURSOR)
         addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent) = browse(
@@ -339,17 +353,17 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       // Smart model tab
       val smartModelPanel = JPanel(BorderLayout())
       smartModelPanel.add(JScrollPane(smartModelTree), BorderLayout.CENTER)
-      tabbedPane.addTab("Smart Model", smartModelPanel)
       // Fast model tab
       val fastModelPanel = JPanel(BorderLayout())
       fastModelPanel.add(JScrollPane(fastModelTree), BorderLayout.CENTER)
-      tabbedPane.addTab("Fast Model", fastModelPanel)
-      // Add server control tab
-      tabbedPane.addTab("Server", createServerControlPanel())
       // Add usage tab
       val usagePanel = JPanel(BorderLayout())
       usagePanel.add(UsageTable(ApplicationServices.usageManager), BorderLayout.CENTER)
-      tabbedPane.addTab("Usage", usagePanel)
+      // Add server control tab
+      tabbedPane.addTab(getMessage("tab.smartModel"), smartModelPanel)
+      tabbedPane.addTab(getMessage("tab.fastModel"), fastModelPanel)
+      tabbedPane.addTab(getMessage("tab.server"), createServerControlPanel())
+      tabbedPane.addTab(getMessage("tab.usage"), usagePanel)
 
       panel.add(tabbedPane, BorderLayout.CENTER)
       panel.add(temperatureSlider, BorderLayout.SOUTH)
@@ -389,6 +403,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
     }
 
     companion object {
+      private val copyLinkURI = "action.openLinkURI"
       private val messages = ResourceBundle.getBundle("messages.SettingsWidget")
       private fun getMessage(key: String, vararg args: Any): String =
         String.format(messages.getString(key), *args)
@@ -407,9 +422,6 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
     return "AI Coding Assistant Settings"
   }
 
-  override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
-    return SettingsWidget()
-  }
 
   override fun createWidget(project: Project): StatusBarWidget {
     return SettingsWidget()

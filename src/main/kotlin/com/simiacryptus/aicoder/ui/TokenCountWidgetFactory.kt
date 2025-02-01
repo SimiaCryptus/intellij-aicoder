@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.readText
@@ -29,6 +31,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import javax.swing.event.TreeSelectionEvent
 import javax.swing.event.TreeSelectionListener
+import kotlin.io.path.isSymbolicLink
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
   companion object {
@@ -55,7 +58,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     private var animationCounter: Int = 0
 
     override fun ID(): String {
-      return "StatusBarComponent"
+      return "TokenCountWidget"
     }
 
     override fun getPresentation() = this
@@ -127,10 +130,8 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
             append("<html><body style='font-family: Arial, sans-serif;'>")
             append("<table border='0' cellpadding='3' style='border-collapse: collapse; width: 100%; max-width: 800px; margin: 20px auto;'>")
             append("<tr style='font-weight: bold;'><th style='padding: 10px; text-align: left; border-bottom: 2px solid #ddd;'>File</th><th style='padding: 10px; text-align: left; border-bottom: 2px solid #ddd;'>Tokens</th></tr>")
-            var totalCount = 0
-            for ((content, name) in pairs.sortedBy {
-              -(it.first?.length ?: 0)
-            }) {
+            var displayedCount = 0
+            for ((content, name) in pairs.sortedBy { it.second }) {
               if (content != null) {
                 val fileTokens = getCachedTokenCount(content)
                 append(
@@ -140,10 +141,10 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
                     )
                   }</td></tr>"
                 )
-                totalCount += 1
+                displayedCount += 1
               }
-              if (totalCount > 10) {
-                append("<tr><td colspan='3' style='text-align: center; padding: 8px; font-style: italic; color: #666;'>...</td></tr>")
+              if (displayedCount > 10) {
+                append("<tr><td colspan='2' style='text-align: center; padding: 8px; font-style: italic; color: #666;'>...</td></tr>")
                 break
               }
             }
@@ -162,7 +163,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         override fun selectionChanged(event: FileEditorManagerEvent) {
           update(statusBar) {
             codex.estimateTokenCount((event.newFile ?: event.oldFile)?.readText() ?: "")
-            updateTooltip(event.newFile?.name ?: event.oldFile?.name, tokenCount)
+            updateTooltip(event.newFile?.name ?: event.oldFile?.name, tokenCount ?: 0)
             tokenCount
           }
 
@@ -186,7 +187,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
                       it.startOffset,
                       it.endOffset
                     )
-                  )
+                  ) ?: 0
                   updateTooltip(editor.virtualFile.name, estimateTokenCount)
                   estimateTokenCount
                 } ?: 0
@@ -214,12 +215,11 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         val projectView = com.intellij.ide.projectView.impl.ProjectViewImpl.getInstance(project)
         val currentPane = projectView.currentProjectViewPane
         if (currentPane != null) {
-          val listener = object : TreeSelectionListener {
-            override fun valueChanged(e: TreeSelectionEvent?) {
-              update(statusBar, currentPane)
-            }
+          val treeSelectionListener = TreeSelectionListener { update(statusBar, currentPane) }
+          currentPane.tree.addTreeSelectionListener(treeSelectionListener)
+          Disposer.register(this) {
+            currentPane.tree.removeTreeSelectionListener(treeSelectionListener)
           }
-          currentPane.tree.addTreeSelectionListener(listener)
         }
       }
     }
@@ -238,7 +238,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
       statusBar.updateWidget(ID())
       pool.submit {
         val text = statusBar.project?.let {
-          FileEditorManager.getInstance(it).selectedTextEditor?.document?.text
+          FileEditorManager.getInstance(it).selectedTextEditor?.document?.text ?: ""
         } ?: ""
         tokenCount = if (text.length > 1024 * 1024) {
           -text.length  // Using negative value to indicate character count
@@ -246,7 +246,11 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
           tokens()
         }
         isCalculating = false
-        statusBar.updateWidget(ID())
+        statusBar.project?.let {
+          invokeLater(it) {
+            statusBar.updateWidget(ID())
+          }
+        }
       }
     }
 
@@ -303,11 +307,11 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
 
       fun tokenCountToString(count: Int): String {
         return when {
-          count < 0 -> "${-count} Chars"  // Handle character count case
           count == 0 -> getMessage("count.zero")
           count == 1 -> getMessage("count.one")
-          count >= 1000000 -> getMessage("count.millions", count / 1000000)
+          count >= 1_000_000 -> getMessage("count.millions", count / 1_000_000)
           count >= 10000 -> getMessage("count.thousands", count / 1000)
+          count < 0 -> getMessage("count.characters", -count)
           else -> getMessage("count.normal", count)
         }
       }
@@ -315,7 +319,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
   }
 
   override fun getId(): String {
-    return "StatusBarComponent"
+    return "TokenCountWidget"
   }
 
   override fun getDisplayName(): String {
@@ -345,6 +349,10 @@ private fun VirtualFile.listChildrenRecursively(filter: (VirtualFile) -> Boolean
     when {
       isGitignore(this.toNioPath()) -> return
       name.startsWith(".") -> return
+      // Exclude hidden directories and certain file types
+      isDirectory && name.startsWith("_") -> return
+      this.toNioPath().isSymbolicLink() -> return
+        
       else -> {
         if (filter(this)) result.add(this)
         children.forEach { it.listChildrenRecursively() }

@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.aicoder.dictation.DictationWidgetFactory.SpeechToTextWidget.Companion.toggleRecording
 import com.simiacryptus.jopenai.audio.DictationManager
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -256,7 +257,14 @@ class ControlPanel(
       fill = GridBagConstraints.HORIZONTAL
     })
 
-    dictationButton.addActionListener { toggleDictation() }
+    dictationButton.addActionListener {
+      toggleRecording()
+      if (settings.isRecording) {
+        dictationButton.text = "Stop Dictation"
+      } else {
+        dictationButton.text = "Start Dictation"
+      }
+    }
     updateButtonStates()
     revalidate()
     updateParams()
@@ -279,22 +287,6 @@ class ControlPanel(
     talkTimeLabel.text = "Talk Time: ${settings.talkTime.format("%.3f")}s"
     val talkTimeValue = (settings.talkTime * 1000.0).toInt()
     talkTimeSlider.value = talkTimeValue.coerceIn(talkTimeSlider.minimum, talkTimeSlider.maximum)
-  }
-
-  private fun toggleDictation() = if (settings.isRecording) {
-    settings.setRecordingState(false)
-    dictationButton.text = "Start Dictation"
-    DictationWidgetFactory.SpeechToTextWidget.statusBar?.updateWidget(DictationWidgetFactory.SpeechToTextWidget.ID)
-    Thread(DictationManager.Companion::stopRecording).start()
-  } else {
-    settings.setRecordingState(true)
-    dictationButton.text = "Stop Dictation"
-    Thread {
-      DictationState.setRecordingState(true)
-      DictationState.resetState()
-      DictationManager.startRecording()
-    }.start()
-    DictationWidgetFactory.SpeechToTextWidget.statusBar?.updateWidget(DictationWidgetFactory.SpeechToTextWidget.ID)
   }
 
   override fun close() {
