@@ -31,10 +31,10 @@ class BgTask<T>(
   override fun run(indicator: ProgressIndicator) {
     taskLog.debug("Starting run() for BgTask: $title")
     synchronized(lock) {
-      taskLog.debug("Checking task state - started: ${started.get()}, completed: ${completed.get()}, cancelled: ${cancelled.get()}")
+//      taskLog.debug("Checking task state - started: ${started.get()}, completed: ${completed.get()}, cancelled: ${cancelled.get()}")
       if (!started.compareAndSet(false, true)) return
       if (completed.get() || cancelled.get()) {
-        taskLog.debug("Task already completed or cancelled, releasing semaphore")
+//        taskLog.debug("Task already completed or cancelled, releasing semaphore")
         startSemaphore.release()
         completeSemaphore.release()
         return
@@ -42,11 +42,11 @@ class BgTask<T>(
     }
     startSemaphore.release()
     val currentThread = Thread.currentThread()
-    taskLog.debug("Adding thread ${currentThread.name} to threadList")
+//    taskLog.debug("Adding thread ${currentThread.name} to threadList")
     threadList.add(currentThread)
     val scheduledFuture = UITools.scheduledPool.scheduleAtFixedRate({
       if (indicator.isCanceled) {
-        taskLog.debug("Indicator cancelled, interrupting threads")
+//        taskLog.debug("Indicator cancelled, interrupting threads")
         cancelled.set(true)
         threadList.forEach { it.interrupt() }
       }
@@ -54,15 +54,15 @@ class BgTask<T>(
     try {
       synchronized(lock) {
         if (completed.get() || cancelled.get()) {
-          taskLog.debug("Task completed or cancelled during execution")
+//          taskLog.debug("Task completed or cancelled during execution")
           completeSemaphore.release()
           return
         }
       }
-      taskLog.debug("Executing task")
+//      taskLog.debug("Executing task")
       val result = task(indicator)
       this.result.set(result)
-      taskLog.debug("Task completed successfully")
+//      taskLog.debug("Task completed successfully")
     } catch (e: Throwable) {
       taskLog.error("Error executing task", e)
       log.info("Error running task", e)
@@ -70,11 +70,11 @@ class BgTask<T>(
       isError.set(true)
     } finally {
       synchronized(lock) {
-        taskLog.debug("Finalizing task execution")
+//        taskLog.debug("Finalizing task execution")
         completed.set(true)
         completeSemaphore.release()
       }
-      taskLog.debug("Removing thread ${currentThread.name} from threadList")
+//      taskLog.debug("Removing thread ${currentThread.name} from threadList")
       threadList.remove(currentThread)
       scheduledFuture.cancel(true)
     }
@@ -85,7 +85,7 @@ class BgTask<T>(
     try {
       // Wait for task to start
       val startAcquired = startSemaphore.tryAcquire(5, TimeUnit.SECONDS)
-      taskLog.debug("Start semaphore acquired: $startAcquired")
+//      taskLog.debug("Start semaphore acquired: $startAcquired")
       synchronized(lock) {
         if (!started.get() || !startAcquired) {
           taskLog.error("Task timed out or never started")
@@ -95,7 +95,7 @@ class BgTask<T>(
       }
       // Wait for task to complete
       val completeAcquired = completeSemaphore.tryAcquire(3000, TimeUnit.SECONDS)
-      taskLog.debug("Complete semaphore acquired: $completeAcquired")
+//      taskLog.debug("Complete semaphore acquired: $completeAcquired")
       if (!completeAcquired) {
         taskLog.error("Task execution timed out")
         cancelled.set(true)
@@ -106,7 +106,7 @@ class BgTask<T>(
       completeSemaphore.release()
     }
     synchronized(lock) {
-      taskLog.debug("Checking final task state - completed: ${completed.get()}, error: ${isError.get()}, cancelled: ${cancelled.get()}")
+//      taskLog.debug("Checking final task state - completed: ${completed.get()}, error: ${isError.get()}, cancelled: ${cancelled.get()}")
       if (!completed.get()) {
         throw IllegalStateException(
           "Task not completed" +
@@ -119,7 +119,7 @@ class BgTask<T>(
         throw e
       }
       if (cancelled.get()) {
-        taskLog.debug("Task was cancelled")
+//        taskLog.debug("Task was cancelled")
         throw InterruptedException("Task was cancelled")
       }
       taskLog.debug("Returning successful task result")

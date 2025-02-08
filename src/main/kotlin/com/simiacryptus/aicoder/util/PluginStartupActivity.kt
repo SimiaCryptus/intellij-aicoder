@@ -1,5 +1,6 @@
 package com.simiacryptus.aicoder.util
 
+import ch.qos.logback.classic.Level
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -36,26 +37,8 @@ class PluginStartupActivity : ProjectActivity {
   private val documentationPageOpenTimes = ConcurrentHashMap<String, Long>()
   private lateinit var messageBusConnection: com.intellij.util.messages.MessageBusConnection
   override suspend fun execute(project: Project) {
-    // Check if this is the first run after installation
-    try {
-      LoggerFactory.getLogger("org.apache.hc.client5.http").apply {
-        when (this) {
-          is com.intellij.openapi.diagnostic.Logger -> {
-            setLevel(LogLevel.INFO)
-          }
-          // class ch.qos.logback.classic.Logger
-          is ch.qos.logback.classic.Logger -> {
-            setLevel(ch.qos.logback.classic.Level.INFO)
-          }
-
-          else -> {
-            log.info("Failed to set log level for org.apache.hc.client5.http.wire")
-          }
-        }
-      }
-    } catch (e: Exception) {
-      log.error("Error setting log level for org.apache.hc.client5.http.wire", e)
-    }
+    setLogInfo("org.apache.hc.client5.http")
+    setLogInfo("org.eclipse.jetty")
 
     try {
 
@@ -181,17 +164,17 @@ class PluginStartupActivity : ProjectActivity {
         IdeaChatClient.instance
     }
     AppSettingsState.instance.apply {
-      if (!awsProfile.isNullOrBlank() && !awsRegion.isNullOrBlank() && !awsBucket.isNullOrBlank()) {
-        ApplicationServices.cloud = AwsPlatform(
+      ApplicationServices.cloud = when {
+        awsProfile.isNullOrBlank() -> null
+        awsRegion.isNullOrBlank() -> null
+        awsBucket.isNullOrBlank() -> null
+        else -> AwsPlatform(
           bucket = awsBucket!!,
           region = Region.of(awsRegion!!),
           profileName = awsProfile!!,
         )
-      } else {
-        ApplicationServices.cloud = null
       }
     }
-    ApplicationServices.usageManager = HSQLUsageManager(ApplicationServicesConfig.dataStorageRoot.resolve("usage"))
     ApplicationServices.authorizationManager = object : AuthorizationInterface {
       override fun isAuthorized(
         applicationClass: Class<*>?,
@@ -220,6 +203,20 @@ class PluginStartupActivity : ProjectActivity {
           inputTokenPricePerK = 0.0, // Default value, adjust as needed
           outputTokenPricePerK = 0.0 // Default value, adjust as needed
         )
+      }
+    }
+
+    private fun setLogInfo(name: String) {
+      try {
+        LoggerFactory.getLogger(name).apply {
+          when (this) {
+            is com.intellij.openapi.diagnostic.Logger -> setLevel(LogLevel.INFO)
+            is ch.qos.logback.classic.Logger -> setLevel(Level.INFO)
+            else -> log.info("Failed to set log level for $name: Unsupported logger type (${this::class.java})")
+          }
+        }
+      } catch (e: Exception) {
+        log.error("Error setting log level for $name", e)
       }
     }
   }
