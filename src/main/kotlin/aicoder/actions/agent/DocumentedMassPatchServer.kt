@@ -16,7 +16,9 @@ import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
+import com.simiacryptus.skyenet.webui.session.SessionTask
 import com.simiacryptus.skyenet.webui.session.SocketManager
+import com.simiacryptus.skyenet.webui.session.getChildClient
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Semaphore
@@ -76,15 +78,7 @@ class DocumentedMassPatchServer(
     val ui = (socketManager as ApplicationSocketManager).applicationInterface
     _root = config.project?.basePath?.let { Path.of(it) } ?: Path.of(".")
     val task = ui.newTask(true)
-    val api = (api as ChatClient).getChildClient().apply {
-      val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
-      // Handle potential null from createFile
-      createFile.second?.apply {
-        logStreams += this.outputStream().buffered()
-        task.add("Initializing API logging...")
-        task.verbose("API log: <a href=\"file:///$this\">$this</a>")
-      }
-    }
+    val api = api.getChildClient(task)
 
     val tabs = TabbedDisplay(task)
     val userMessage = config.settings?.transformationMessage ?: "Review and update code according to documentation"
@@ -174,3 +168,4 @@ class DocumentedMassPatchServer(
     private val log = org.slf4j.LoggerFactory.getLogger(DocumentedMassPatchServer::class.java)
   }
 }
+

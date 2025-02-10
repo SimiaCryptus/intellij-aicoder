@@ -33,6 +33,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
+import com.simiacryptus.skyenet.webui.session.getChildClient
 import java.io.File
 import java.nio.file.Path
 import java.text.SimpleDateFormat
@@ -130,13 +131,7 @@ class FindResultsModificationAction(
       val socketManager = super.newSession(user, session)
       val ui = (socketManager as ApplicationSocketManager).applicationInterface
       val task = ui.newTask()
-      val api = api.getChildClient().apply {
-        val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
-        createFile.second?.apply {
-          logStreams += this.outputStream().buffered()
-          task.verbose("API log: <a href=\"file:///$this\">$this</a>")
-        }
-      }
+      val api = api.getChildClient(task)
       val tabs = TabbedDisplay(task)
       usages.entries.map { (file, usages) ->
         val task = ui.newTask(false)
@@ -155,13 +150,7 @@ class FindResultsModificationAction(
               "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + SimpleDiffApplier.patchEditorPrompt
         }
         ui.socketManager!!.pool.submit {
-          val api = api.getChildClient().apply {
-            val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
-            createFile.second?.apply {
-              logStreams += this.outputStream().buffered()
-              task.verbose("API log: <a href=\"file:///$this\">$this</a>")
-            }
-          }
+          val api = api.getChildClient(task)
           val response = SimpleActor(
             prompt = prompt,
             model = AppSettingsState.instance.smartModel.chatModel()

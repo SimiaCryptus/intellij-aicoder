@@ -28,6 +28,7 @@ import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import com.simiacryptus.skyenet.webui.session.getChildClient
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -170,13 +171,7 @@ class FindResultsChatAction(
       if (api is ChatClient) api.budget = settings.budget ?: 2.00
 
       val task = ui.newTask()
-      val api = (api as ChatClient).getChildClient().apply {
-        val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
-        createFile.second?.apply {
-          logStreams += this.outputStream().buffered()
-          task.verbose("API log: <a href=\"file:///$this\">$this</a>")
-        }
-      }
+      val api = (api as ChatClient).getChildClient(task)
 
       task.echo(renderMarkdown(userMessage))
 

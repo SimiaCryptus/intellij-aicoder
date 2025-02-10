@@ -27,6 +27,7 @@ import com.simiacryptus.skyenet.util.MarkdownUtil
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import com.simiacryptus.skyenet.webui.session.getChildClient
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
@@ -150,13 +151,8 @@ class MultiCodeChatAction : BaseAction() {
       if (api is ChatClient) api.budget = settings.budget ?: 2.00
       val task = ui.newTask()
       val codex = GPT4Tokenizer()
-      val api = (api as ChatClient).getChildClient().apply {
-        val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
-        createFile.second?.apply {
-          logStreams += this.outputStream().buffered()
-          task.verbose("API log: <a href=\"file:///$this\">$this</a>")
-        }
-      }
+      val api = (api as ChatClient).getChildClient(task)
+
       task.echo(MarkdownUtil.renderMarkdown(userMessage))
       task.verbose(MarkdownUtil.renderMarkdown(codeFiles.joinToString("\n") { path ->
         "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"

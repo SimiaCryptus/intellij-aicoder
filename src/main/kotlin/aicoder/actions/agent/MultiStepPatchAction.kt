@@ -38,6 +38,7 @@ import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import com.simiacryptus.skyenet.webui.session.getChildClient
 import com.simiacryptus.util.JsonUtil.toJson
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -198,13 +199,7 @@ class MultiStepPatchAction : BaseAction() {
       }
 
       val task = ui.newTask()
-      val api = (api as ChatClient).getChildClient().apply {
-        val createFile = task.createFile(".logs/api-${java.util.UUID.randomUUID()}.log")
-        createFile.second?.apply {
-          logStreams += this.outputStream().buffered()
-          task.verbose("API log: <a href=\"file:///$this\">$this</a>")
-        }
-      }
+      val api = (api as ChatClient).getChildClient(task)
 
       val toInput = { it: String -> listOf(codeSummary(), it) }
       val architectureResponse = Discussable(

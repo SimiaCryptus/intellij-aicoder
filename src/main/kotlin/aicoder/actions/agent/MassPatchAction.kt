@@ -35,6 +35,7 @@ import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.application.ApplicationSocketManager
 import com.simiacryptus.skyenet.webui.session.SocketManager
+import com.simiacryptus.skyenet.webui.session.getChildClient
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.nio.file.Files
@@ -254,13 +255,7 @@ class MassPatchServer(
       throw e
     }
     val task = ui.newTask(true)
-    val api = (api as ChatClient).getChildClient().apply {
-      val createFile = task.createFile(".logs/api-${UUID.randomUUID()}.log")
-      createFile.second?.apply {
-        logStreams += this.outputStream().buffered()
-        task.verbose("API log: <a href=\"file:///$this\">$this</a>")
-      }
-    }
+    val api = api.getChildClient(task)
     val tabs = TabbedDisplay(task)
     val userMessage = config.settings?.transformationMessage ?: "Create user documentation"
     val codeFiles = config.settings?.filesToProcess

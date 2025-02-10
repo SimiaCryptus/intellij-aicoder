@@ -216,9 +216,9 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         val currentPane = projectView.currentProjectViewPane
         if (currentPane != null) {
           val treeSelectionListener = TreeSelectionListener { update(statusBar, currentPane) }
-          currentPane.tree.addTreeSelectionListener(treeSelectionListener)
+          currentPane?.tree?.addTreeSelectionListener(treeSelectionListener)
           Disposer.register(this) {
-            currentPane.tree.removeTreeSelectionListener(treeSelectionListener)
+            currentPane?.tree?.removeTreeSelectionListener(treeSelectionListener)
           }
         }
       }

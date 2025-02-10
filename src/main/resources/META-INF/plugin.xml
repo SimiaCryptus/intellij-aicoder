@@ -47,18 +47,13 @@
             </action>
             <action id="AICoderEnhancedChat"
                     class="aicoder.actions.chat.LargeOutputChatAction"
-                    text="🔍 Enhanced AI Chat"
+                    text="🧐 Smart Chat"
                     description="Open enhanced AI code chat with structured responses">
                 <add-to-group group-id="ToolsMenu" anchor="last"/>
             </action>
-            <action id="OpenWebPageAction"
-                    class="aicoder.actions.legacy.OpenWebPageAction"
-                    text="🌐 Open apps.simiacrypt.us"
-                    description="Opens the Simiacryptus Apps web page in your default browser, providing access to additional resources and documentation">
-            </action>
             <action class="aicoder.actions.agent.OutlineAction"
                     id="OutlineAction"
-                    text="📋 Outline Tool"
+                    text="🗂️ Outline Tool"
                     description="Create and expand outlines using AI assistance">
             </action>
         </group>
@@ -74,7 +69,7 @@
                     description="Start an interactive dialogue about your selected code, offering insights, explanations, and suggestions for improvements">
             </action>
             <action class="aicoder.actions.chat.DiffChatAction"
-                    text="🔧 Patch Chat"
+                    text="🛠️ Patch Chat"
                     description="Initiate an interactive session to discuss and apply patches to your code, with intelligent suggestions for modifications">
             </action>
             <action class="aicoder.actions.editor.SmartPasteAction"
@@ -209,7 +204,7 @@
                         description="Create a new file with appropriate content based on a natural language description, intelligently determining file type and location">
                 </action>
                 <action class="aicoder.actions.generate.CreateImageAction"
-                        text="🖼️ Create Image"
+                        text="🖌️ Create Image"
                         description="Generate visual representations of code structure, algorithms, or data flow based on selected code or project files">
                 </action>
                 <action class="aicoder.actions.generate.GenerateDocumentationAction"
@@ -233,6 +228,10 @@
                 <action class="aicoder.actions.plan.AutoPlanChatAction"
                         text="🤖 Auto-Plan"
                         description="Automatically generate a structured task plan based on the selected code, project, or task description">
+                </action>
+                <action class="aicoder.actions.plan.GraphPlanAction"
+                        text="🕸️ Graph-Based Planning"
+                        description="Use a software graph to generate and execute task plans">
                 </action>
                 <action class="aicoder.actions.plan.PlanChatAction"
                         text="💬 Chat w/ Planner"
