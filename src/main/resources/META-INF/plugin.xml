@@ -233,6 +233,10 @@
                         text="🕸️ Graph-Based Planning"
                         description="Use a software graph to generate and execute task plans">
                 </action>
+            <action class="aicoder.actions.plan.GraphOrderedPlanAction"
+                    text="🕸️ Ordered Graph-Based Planning"
+                    description="Generate an ordered plan by prioritizing graph nodes and execute the aggregated DAG">
+            </action>
                 <action class="aicoder.actions.plan.PlanChatAction"
                         text="💬 Chat w/ Planner"
                         description="Interactive session for project planning, task breakdown, and development strategy discussions">
