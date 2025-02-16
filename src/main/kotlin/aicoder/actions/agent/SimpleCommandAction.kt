@@ -24,7 +24,7 @@ import com.simiacryptus.skyenet.core.util.FileValidationUtils
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.filteredWalk
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
-import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -229,6 +229,7 @@ class SimpleCommandAction : BaseAction() {
                 val progressHeader = task.header("Processing tasks")
                 plan.obj.errors?.forEach { planTask ->
                     Retryable(ui, task) {
+                        val task = ui.newTask(false)
                         val paths =
                             ((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap {
                                 toPaths(settings.workingDirectory.toPath(), it)
@@ -244,7 +245,7 @@ class SimpleCommandAction : BaseAction() {
                 
                 You will be answering questions about the following code:
                 
-                """.trimIndent() + codeSummary + "\n\n" + SimpleDiffApplier.patchEditorPrompt + """
+                """.trimIndent() + codeSummary + "\n\n" + patchFormatPrompt + """
                 
                 If needed, new files can be created by using code blocks labeled with the filename in the same manner.
                 """.trimIndent(),
@@ -271,7 +272,8 @@ class SimpleCommandAction : BaseAction() {
                             ui = ui,
                             api = api,
                         )
-                        "<div>${renderMarkdown(markdown!!)}</div>"
+                        task.add(renderMarkdown(markdown))
+                        task.placeholder
                     }
                 }
                 progressHeader?.clear()

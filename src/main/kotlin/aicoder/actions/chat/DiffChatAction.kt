@@ -20,7 +20,7 @@ import com.simiacryptus.diff.AddApplyDiffLinks.Companion.addApplyDiffLinks
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -119,10 +119,10 @@ class DiffChatAction : BaseAction() {
       storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
     ) {
 
-      // ... rest of the implementation
-      override val systemPrompt: String
-        @Language("Markdown")
-        get() = super.systemPrompt + """
+        // ... rest of the implementation
+        override val systemPrompt: String
+            @Language("Markdown")
+            get() = super.systemPrompt + """
                   Please provide code modifications in the following diff format within triple-backtick diff code blocks. Each diff block should be preceded by a header that identifies the file being modified.
                   
                   The diff format rules are as follows:
@@ -133,7 +133,7 @@ class DiffChatAction : BaseAction() {
                   - Lines starting with "@@" or "---" or "+++" are treated as headers and are ignored.
                   
                   
-                """.trimIndent() + SimpleDiffApplier.patchEditorPrompt
+                """.trimIndent() + patchFormatPrompt
       val ui by lazy { ApplicationInterface(this) }
       override fun renderResponse(response: String, task: SessionTask): String = """<div>${
         renderMarkdown(

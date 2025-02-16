@@ -32,7 +32,7 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.core.util.commonRoot
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -168,8 +168,8 @@ class MultiStepPatchAction : BaseAction() {
         parsingModel = parsingModel,
       ),
       ActorTypes.TaskCodingActor to SimpleActor(
-        prompt = "Implement the changes to the codebase as described in the task list.\n\n" + SimpleDiffApplier.patchEditorPrompt,
-        model = model
+          prompt = "Implement the changes to the codebase as described in the task list.\n\n" + patchFormatPrompt,
+          model = model
       ),
     ).map { it.key.name to it.value }.toMap()
 
@@ -248,16 +248,16 @@ class MultiStepPatchAction : BaseAction() {
                 }
                 require(filter.isNotEmpty()) {
                   """
-                                    No files found for """.trimIndent() + paths + """
-                                    
-                                    Root:
-                                    """.trimIndent() + root + """
-                                    
-                                    Files:
-                                    """.trimIndent() + codeFiles.joinToString("\n") + """
-                                    
-                                    Paths:
-                                    """.trimIndent() + (paths?.joinToString("\n") ?: "")
+                  No files found for """.trimIndent() + paths + """
+                  
+                  Root:
+                  """.trimIndent() + root + """
+                  
+                  Files:
+                  """.trimIndent() + codeFiles.joinToString("\n") + """
+                  
+                  Paths:
+                  """.trimIndent() + (paths?.joinToString("\n") ?: "")
                 }
                 renderMarkdown(
                   AddApplyFileDiffLinks.instrumentFileDiffs(

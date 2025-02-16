@@ -167,6 +167,7 @@ class AnalyzeProblemAction : AnAction() {
     private fun analyzeProblem(ui: ApplicationInterface, task: SessionTask, api: API) {
       try {
         Retryable(ui, task) {
+          val task = ui.newTask(false)
           val plan = ParsedActor(
             resultClass = ParsedErrors::class.java,
             prompt = """
@@ -193,6 +194,7 @@ class AnalyzeProblemAction : AnAction() {
 
           plan.obj.errors?.forEach { error ->
             Retryable(ui, task) {
+              val task = ui.newTask(false)
               val filesToFix = (error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())
               val summary = filesToFix.joinToString("\n\n") { filePath ->
                 val file = gitRoot?.toFile?.resolve(filePath)
@@ -207,11 +209,11 @@ class AnalyzeProblemAction : AnAction() {
                   "# $filePath\nFile not found"
                 }
               }
-
-              generateAndAddResponse(ui, task, error, summary, api)
+              task.add(generateAndAddResponse(ui, task, error, summary, api))
+              task.placeholder
             }
           }
-          ""
+          task.placeholder
         }
       } catch (e: Exception) {
         task.error(ui, e)

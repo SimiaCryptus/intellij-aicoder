@@ -26,7 +26,7 @@ import com.simiacryptus.skyenet.TabbedDisplay
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -37,7 +37,6 @@ import com.simiacryptus.skyenet.webui.session.getChildClient
 import java.io.File
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
 import javax.swing.Icon
 
 class FindResultsModificationAction(
@@ -139,15 +138,16 @@ class FindResultsModificationAction(
         lateinit var fileListingMarkdown: String
         lateinit var prompt: String
         ApplicationManager.getApplication().runReadAction {
-          file ?: return@runReadAction
-          fileListingMarkdown = "## ${file.name}\n\n```${file.extension}\n${getFilteredLines(project, file, usages)}\n```\n"
-          task.add(renderMarkdown(fileListingMarkdown))
-          prompt = """
+            file ?: return@runReadAction
+            fileListingMarkdown =
+                "## ${file.name}\n\n```${file.extension}\n${getFilteredLines(project, file, usages)}\n```\n"
+            task.add(renderMarkdown(fileListingMarkdown))
+            prompt = """
                     You are a code modification assistant. You will receive code files and locations where changes are needed.
                     Your task is to suggest appropriate modifications based on the replacement text provided.
                     Usage locations:
                     """.trimIndent() + usages.joinToString("\n") { "* `${it.presentation.plainText}`" } +
-              "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + SimpleDiffApplier.patchEditorPrompt
+                    "\n\nRequested modification: " + modificationParams.replacementText + "\n\n" + patchFormatPrompt
         }
         ui.socketManager!!.pool.submit {
           val api = api.getChildClient(task)

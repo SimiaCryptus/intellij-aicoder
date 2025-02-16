@@ -249,6 +249,11 @@
                         text="✨ Single Task"
                         description="Execute a single AI-powered task with focused functionality">
                 </action>
+                <action id="GraphAnalyzeAction"
+                        class="aicoder.actions.plan.GraphAnalyzeAction"
+                        text="🔍 Analyze Graph"
+                        description="Analyze code and documentation files to produce a detailed software graph">
+                </action>
             </group>
             <group id="com.simiacryptus.aicoder.ui.ProjectMenu.Agents"
                    class="com.intellij.openapi.actionSystem.DefaultActionGroup"

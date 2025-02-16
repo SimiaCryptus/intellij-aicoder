@@ -29,7 +29,7 @@ import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.FileValidationUtils
 import com.simiacryptus.skyenet.core.util.IterativePatchUtil
-import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -220,6 +220,7 @@ class ReplicateCommitAction : BaseAction() {
       val planTxt = projectSummary()
       task.add(renderMarkdown(planTxt))
       Retryable(ui, task) {
+        val task = ui.newTask(false)
         val plan = ParsedActor(
           resultClass = ParsedTasks::class.java,
           prompt = """
@@ -256,19 +257,20 @@ class ReplicateCommitAction : BaseAction() {
         )
         plan.obj.errors?.map { planTask ->
           Retryable(ui, task) {
+            val task = ui.newTask(false)
             val paths =
               ((planTask.fixFiles ?: emptyList()) + (planTask.relatedFiles ?: emptyList())).flatMap {
                 toPaths(settings.workingDirectory.toPath(), it)
               }
             val codeSummary = codeSummary(paths)
             val response = SimpleActor(
-              prompt = """
+                prompt = """
                   You are a helpful AI that helps people with coding.
                   
                   You will be answering questions about the following code:
                   
-                  """.trimIndent() + codeSummary + "\n" + SimpleDiffApplier.patchEditorPrompt +
-                  "\nIf needed, new files can be created by using code blocks labeled with the filename in the same manner.",
+                  """.trimIndent() + codeSummary + "\n" + patchFormatPrompt +
+                        "\nIf needed, new files can be created by using code blocks labeled with the filename in the same manner.",
               model = AppSettingsState.instance.smartModel.chatModel()
             ).answer(
               listOf(
@@ -295,10 +297,12 @@ class ReplicateCommitAction : BaseAction() {
               ui = ui,
               api = api,
             )
-            "<div>${renderMarkdown(markdown!!)}</div>"
+            task.add(renderMarkdown(markdown))
+            task.placeholder
           }
           ""
-        }?.joinToString { it } ?: ""
+        }?.joinToString { it }?.apply { task.add(this) }
+        task.placeholder
       }
     } catch (e: Exception) {
       task.error(ui, e)

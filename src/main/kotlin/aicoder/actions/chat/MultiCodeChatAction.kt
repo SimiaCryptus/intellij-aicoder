@@ -158,27 +158,24 @@ class MultiCodeChatAction : BaseAction() {
         "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
       }))
       val toInput = { it: String -> listOf(codeSummary(), it) }
-      Retryable(
-        ui = ui,
-        task = task,
-        process = { content ->
-          "<div>" + MarkdownUtil.renderMarkdown(mainActor.answer(toInput(userMessage), api = api)) {
-            AddApplyFileDiffLinks.instrumentFileDiffs(
-              ui.socketManager!!,
-              root = root.toPath(),
-              response = it,
-              handle = { newCodeMap ->
-                newCodeMap.forEach { (path, newCode) ->
-                  content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                }
-              },
-              ui = ui,
-              api = api,
-            )!!
-          } + "</div>"
-
-        },
-      )
+      Retryable(ui = ui, task = task) { content ->
+        val task = ui.newTask(false)
+        task.add("<div>" + MarkdownUtil.renderMarkdown(mainActor.answer(toInput(userMessage), api = api)) {
+          AddApplyFileDiffLinks.instrumentFileDiffs(
+            ui.socketManager!!,
+            root = root.toPath(),
+            response = it,
+            handle = { newCodeMap ->
+              newCodeMap.forEach { (path, newCode) ->
+                content.append("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+              }
+            },
+            ui = ui,
+            api = api,
+          )
+        } + "</div>")
+        task.placeholder
+      }
     }
   }
 

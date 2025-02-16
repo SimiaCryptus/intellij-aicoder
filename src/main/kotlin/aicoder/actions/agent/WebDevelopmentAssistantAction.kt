@@ -31,7 +31,7 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -183,13 +183,13 @@ class WebDevelopmentAssistantAction : BaseAction() {
         parsingModel = parsingModel,
       ),
       ActorTypes.CodeReviewer to SimpleActor(
-        prompt = """
+          prompt = """
                   Analyze the code summarized in the user's header-labeled code blocks.
                   Review, look for bugs, and provide fixes. 
                   Provide implementations for missing functions.
                   
-                """.trimIndent() + SimpleDiffApplier.patchEditorPrompt,
-        model = model,
+                """.trimIndent() + patchFormatPrompt,
+          model = model,
       ),
       ActorTypes.HtmlCodingActor to SimpleActor(
         prompt = """

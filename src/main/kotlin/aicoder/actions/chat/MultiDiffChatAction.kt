@@ -24,7 +24,7 @@ import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.FileValidationUtils
-import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -36,7 +36,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.relativeTo
@@ -151,13 +150,13 @@ class MultiDiffChatAction : BaseAction() {
       try {
         fun mainActor(): SimpleActor {
           return SimpleActor(
-            prompt = """
+              prompt = """
                                   You are a helpful AI that helps people with coding.
                                   
                                   You will be answering questions about the following code:
                                   
-                                  """.trimIndent() + codeSummary() + SimpleDiffApplier.patchEditorPrompt,
-            model = AppSettingsState.instance.smartModel.chatModel()
+                                  """.trimIndent() + codeSummary() + patchFormatPrompt,
+              model = AppSettingsState.instance.smartModel.chatModel()
           )
         }
 

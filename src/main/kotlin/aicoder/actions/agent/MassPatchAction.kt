@@ -29,7 +29,7 @@ import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
-import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
@@ -41,7 +41,6 @@ import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
@@ -235,7 +234,7 @@ class MassPatchServer(
       return SimpleActor(
         prompt = buildString {
           append("You are a helpful AI that helps people with coding.\n")
-          append(SimpleDiffApplier.patchEditorPrompt)
+            append(patchFormatPrompt)
           append("\nIf needed, new files can be created by using code blocks labeled with the filename in the same manner.")
         },
         model = AppSettingsState.instance.smartModel.chatModel(),

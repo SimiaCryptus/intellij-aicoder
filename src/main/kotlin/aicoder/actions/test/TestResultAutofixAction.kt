@@ -194,6 +194,7 @@ class TestResultAutofixAction : BaseAction() {
     private fun runAutofix(ui: ApplicationInterface, task: SessionTask) {
       Retryable(ui, task) {
         try {
+          val task = ui.newTask(false)
           val plan = ParsedActor(
             resultClass = ParsedErrors::class.java,
             prompt = """
@@ -212,7 +213,7 @@ class TestResultAutofixAction : BaseAction() {
           ).answer(listOf(testInfo), api = IdeaChatClient.instance)
           if (plan.obj.errors.isNullOrEmpty()) {
             task.add("No errors identified in test result")
-            return@Retryable ""
+            return@Retryable task.placeholder
           }
 
           task.add(
@@ -229,6 +230,7 @@ class TestResultAutofixAction : BaseAction() {
 
           plan.obj.errors?.forEach { error ->
             Retryable(ui, task) {
+              val task = ui.newTask(false)
               val filesToFix = (error.fixFiles ?: emptyList()) + (error.relatedFiles ?: emptyList())
               val summary = filesToFix.joinToString("\n\n") { filePath ->
                 val file = File(projectPath, filePath)
@@ -243,12 +245,11 @@ class TestResultAutofixAction : BaseAction() {
                   "# $filePath\nFile not found"
                 }
               }
-
               generateAndAddResponse(ui, task, error, summary, filesToFix)
-              return@Retryable ""
+              return@Retryable task.placeholder
             }
           }
-          return@Retryable ""
+          return@Retryable task.placeholder
         } catch (e: Exception) {
           log.error("Error in autofix process: ${e.message}", e)
           task.error(ui, e)
