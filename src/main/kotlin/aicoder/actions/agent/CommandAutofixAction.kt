@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.isFile
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Cell
@@ -40,12 +41,7 @@ import javax.swing.*
 import kotlin.collections.set
 
 class CommandAutofixAction : BaseAction() {
-    /**
-    /**
-     * Sets up and launches the patch app session with the given settings and files
-    */
-     * Returns the thread that should be used for action update.
-     */
+
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     /**
@@ -58,11 +54,9 @@ class CommandAutofixAction : BaseAction() {
             UITools.runAsync(event.project, "Initializing Command Autofix", true) { progress ->
                 progress.isIndeterminate = true
                 progress.text = "Getting settings..."
+                val files = UITools.getSelectedFiles(event)//.map { it.toFile.toPath() }
                 val folders = UITools.getSelectedFolders(event).map { it.toFile.toPath() }
                 val root = folders.toTypedArray().commonRoot()
-                val files =
-                    folders.flatMap { FileValidationUtils.expandFileList(it.toFile()).toList() }.distinct().sorted()
-                        .toTypedArray()
                 val settings = run {
                     var settings1: PatchApp.Settings? = null
                     SwingUtilities.invokeAndWait {
@@ -72,11 +66,11 @@ class CommandAutofixAction : BaseAction() {
                             val defaultFile = files[0]
                             val whitelist = listOf("sh", "py", "bat", "exe")
                             val matchesWhitelist = whitelist.any { defaultFile.name.endsWith(".$it", ignoreCase = true) }
-                            if (defaultFile.isFile && (defaultFile.canExecute() || matchesWhitelist)) {
+                            if (defaultFile.isFile && (defaultFile.toFile.canExecute() || matchesWhitelist)) {
                                 // Update the default fields for the first (and only) command panel
                                 val first = settingsUI.commandsList.firstOrNull()
                                 if (first != null) {
-                                    first.commandField.selectedItem = defaultFile.absolutePath
+                                    first.commandField.selectedItem = defaultFile.toFile.absolutePath
                                     first.workingDirectoryField.selectedItem = defaultFile.parent
                                     first.argumentsField.selectedItem = ""
                                 }
@@ -125,7 +119,7 @@ class CommandAutofixAction : BaseAction() {
                     root = root,
                     settings = settings,
                     api = api,
-                    files = files,
+                    files = files.map { it.toFile }.toTypedArray(),
                     model = AppSettingsState.instance.smartModel.chatModel()
                 )
                 val session = Session.newGlobalID()
