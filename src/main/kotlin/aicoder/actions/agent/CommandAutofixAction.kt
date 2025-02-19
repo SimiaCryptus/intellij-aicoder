@@ -120,7 +120,8 @@ class CommandAutofixAction : BaseAction() {
                     settings = settings,
                     api = api,
                     files = files.map { it.toFile }.toTypedArray(),
-                    model = AppSettingsState.instance.smartModel.chatModel()
+                    model = AppSettingsState.instance.smartModel.chatModel(),
+                    parsingModel = AppSettingsState.instance.fastModel.chatModel()
                 )
                 val session = Session.newGlobalID()
                 SessionProxyServer.chats[session] = patchApp

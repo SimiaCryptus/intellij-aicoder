@@ -234,7 +234,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
       EtcCodingActor,
       ImageActor,
     }
-
+    
     private val architectureDiscussionActor by lazy { actors.get(ActorTypes.ArchitectureDiscussionActor.name)!! as ParsedActor<ProjectSpec> }
     private val htmlActor by lazy { actors.get(ActorTypes.HtmlCodingActor.name)!! as SimpleActor }
     private val imageActor by lazy { actors.get(ActorTypes.ImageActor.name)!! as ImageActor }

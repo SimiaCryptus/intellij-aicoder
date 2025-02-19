@@ -264,6 +264,10 @@
                         text="🔄 Run ... and Fix"
                         description="Intelligent analysis and automatic resolution of build or test errors, with customizable fix suggestions">
                 </action>
+                <action class="aicoder.actions.agent.ValidateCodeAction"
+                        text="✓ Validate Code"
+                        description="Validate code syntax and structure using AI-powered analysis">
+                </action>
                 <action class="aicoder.actions.agent.SimpleCommandAction"
                         text="✨ Do Something"
                         description="Execute custom coding tasks with intelligent assistance, analyzing project structure and context">

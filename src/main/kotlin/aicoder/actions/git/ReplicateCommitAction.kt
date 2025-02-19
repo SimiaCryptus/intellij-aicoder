@@ -161,7 +161,7 @@ class ReplicateCommitAction : BaseAction() {
         val before = change.beforeRevision?.content
         val after = change.afterRevision?.content
         if ((before ?: after)!!.isBinary)
-          return@joinToString "# Binary: ${change.afterRevision?.file}".replace("\n", "\n  ")
+          return@joinToString "# Binary: ${change.afterRevision?.file}".prependIndent("  ")
         if (before == null) return@joinToString "# Deleted: ${change.afterRevision?.file}\n${after}".replace(
           "\n",
           "\n  "
@@ -171,7 +171,7 @@ class ReplicateCommitAction : BaseAction() {
           "\n  "
         )
         val diff = IterativePatchUtil.generatePatch(before, after)
-        "# Change: ${change.beforeRevision?.file}\n$diff".replace("\n", "\n  ")
+        "# Change: ${change.beforeRevision?.file}\n$diff".prependIndent("  ")
       } ?: "No changes found"
   }
 
@@ -282,7 +282,7 @@ class ReplicateCommitAction : BaseAction() {
                               """.trimIndent() + tripleTilde + """
                               
                               Focus on the task at hand:
-                              """.trimIndent() + (planTask.message?.replace("\n", "\n  ") ?: "")
+                              """.trimIndent() + (planTask.message?.prependIndent("  ") ?: "")
               ), api = api
             )
             var markdown = AddApplyFileDiffLinks.instrumentFileDiffs(

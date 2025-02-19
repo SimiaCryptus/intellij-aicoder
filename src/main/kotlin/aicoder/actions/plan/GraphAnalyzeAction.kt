@@ -103,7 +103,7 @@ class GraphAnalyzeAction : BaseAction() {
                                                         )
                                                     }\n    ${
                                                         describer.describe(rawType = it.nodeClass)
-                                                            .replace("\n", "\n    ")
+                                                            .prependIndent("  ")
                                                     }"
                                                 },
                                         /* Accumulated Graph */

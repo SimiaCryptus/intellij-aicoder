@@ -17,12 +17,12 @@ import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.AwsPlatform
 import com.simiacryptus.skyenet.core.platform.ClientManager
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.platform.hsql.HSQLUsageManager
 import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig
 import com.simiacryptus.skyenet.core.platform.model.ApplicationServicesConfig.isLocked
 import com.simiacryptus.skyenet.core.platform.model.AuthenticationInterface
 import com.simiacryptus.skyenet.core.platform.model.AuthorizationInterface
 import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
 import org.jetbrains.annotations.NonNls
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.regions.Region
@@ -47,7 +47,7 @@ class PluginStartupActivity : ProjectActivity {
       val prevClassLoader = currentThread.contextClassLoader
       try {
         currentThread.contextClassLoader = PluginStartupActivity::class.java.classLoader
-        init()
+        init(project)
         // Add user-supplied models to ChatModel
         addUserSuppliedModels(AppSettingsState.instance.userSuppliedModels)
       } finally {
@@ -155,10 +155,18 @@ class PluginStartupActivity : ProjectActivity {
 
   private val isInitialized = AtomicBoolean(false)
 
-  private fun init() {
+  private fun init(project: Project) {
     if (isInitialized.getAndSet(true)) return
     ApplicationServicesConfig.dataStorageRoot = AppSettingsState.instance.pluginHome.resolve(".skyenet")
     OutputInterceptor.setupInterceptor()
+    SimpleDiffApplier.validatorProviders.add(0) { filename ->
+      val extension = filename?.split('.')?.lastOrNull()
+      if (IntelliJPsiValidator.isLanguageSupported(extension)) {
+        IntelliJPsiValidator(project, extension ?: "", filename ?: "")
+      } else {
+        null
+      }
+    }
     ApplicationServices.clientManager = object : ClientManager() {
       override fun createChatClient(session: Session, user: User?) =
         IdeaChatClient.instance

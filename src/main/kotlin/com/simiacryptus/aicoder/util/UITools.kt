@@ -783,7 +783,7 @@ object UITools {
                 ${toString(e)}
                 ```
                 Action History:
-                ${actionLog.joinToString("\n") { "* ${it.replace("\n", "\n  ")}" }}
+                ${actionLog.joinToString("\n") { "* ${it.prependIndent("  ")}" }}
                 Error History:
                 ${errorLog.filter { it.second != e }.joinToString("\n") { "${it.first}\n```\n${toString(it.second)}\n```" }}
                 """.trimIndent()

@@ -92,7 +92,7 @@ class AnalyzeProblemAction : AnAction() {
           }
 
           val projectStructure = getProjectStructure(gitRoot)
-          appendLine("Project structure:\n  ${projectStructure.replace("\n", "\n  ")}\n")
+          appendLine("Project structure:\n  ${projectStructure.prependIndent("  ")}\n")
           appendLine("## ${file.path}\n```${fileType.lowercase()}\n${document?.text}\n```\n")
         }
         log.info("Problem info: $problemInfo")

@@ -64,29 +64,29 @@ class DictationWidgetFactory : StatusBarWidgetFactory {
                     }
                     editor.document.addDocumentListener(object : DocumentListener {
                         override fun documentChanged(event: DocumentEvent) {
-                            log.debug("Document changed")
+//                            log.debug("Document changed")
                             val str = event.document.text.take(1024)
                             DictationManager.transcriptionProcessor?.prompt = str
-                            log.debug("Prompt updated: $str")
+//                            log.debug("Prompt updated: $str")
                         }
                     })
                     editor.selectionModel.addSelectionListener(object : SelectionListener {
                         override fun selectionChanged(event: SelectionEvent) {
-                            log.debug("Selection changed")
+//                            log.debug("Selection changed")
                             val str = editor.selectionModel.selectedText?.take(1024) ?: ""
                             DictationManager.transcriptionProcessor?.prompt = str
-                            log.debug("Prompt updated: $str")
+//                            log.debug("Prompt updated: $str")
                         }
                     })
                     editor.caretModel.addCaretListener(object : CaretListener {
                         override fun caretPositionChanged(event: CaretEvent) {
-                            log.debug("Caret position changed")
+//                            log.debug("Caret position changed")
                             val caret = event.caret
                             val offset = caret?.offset
                             val document = caret?.editor?.document
                             val str = document?.text?.take(offset ?: 0)?.takeLast(1024)
                             DictationManager.transcriptionProcessor?.prompt = str ?: ""
-                            log.debug("Prompt updated on caret move: `${str?.replace("\n", "\\n")}`")
+//                            log.debug("Prompt updated on caret move: `${str?.replace("\n", "\\n")}`")
                         }
                     })
                     DictationManager.discriminator.onModeChanged.addListener {
