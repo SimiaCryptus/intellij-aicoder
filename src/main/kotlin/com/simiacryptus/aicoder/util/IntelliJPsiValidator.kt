@@ -11,7 +11,7 @@ class IntelliJPsiValidator(private val project: Project, val extension: String, 
     override fun validateGrammar(code: String): List<GrammarValidator.ValidationError> {
         return try {
             val fileType = FileTypeRegistry.getInstance().getFileTypeByExtension(extension)
-            val virtualFile = LightVirtualFile(filename, fileType, code)
+            val virtualFile = LightVirtualFile("dummy.$extension", fileType, code)
             val psiFile = PsiFileFactory.getInstance(project).createFileFromText(virtualFile.name, fileType, code)
             collectErrors(psiFile)
         } catch (e: Exception) {
