@@ -16,7 +16,7 @@ class IntelliJPsiValidator(private val project: Project, val extension: String, 
             collectErrors(psiFile)
         } catch (e: Exception) {
             listOf(GrammarValidator.ValidationError(
-                message = "Error validating ${SUPPORTED_LANGUAGES[extension]} grammar: ${e.message}",
+                message = "Error validating ${SUPPORTED_LANGUAGES[extension.lowercase()]} grammar: ${e.message}",
                 severity = GrammarValidator.Severity.ERROR
             ))
         }
@@ -57,7 +57,7 @@ class IntelliJPsiValidator(private val project: Project, val extension: String, 
          * Check if a language is supported
          */
         fun isLanguageSupported(extension: String?): Boolean {
-            return extension?.toLowerCase()?.let { SUPPORTED_LANGUAGES.containsKey(it) } ?: false
+            return extension?.lowercase()?.let { SUPPORTED_LANGUAGES.containsKey(it) } ?: false
         }
     }
 

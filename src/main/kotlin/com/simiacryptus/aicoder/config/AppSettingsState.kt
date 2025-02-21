@@ -37,6 +37,7 @@ data class AppSettingsState(
   var talkTime: Double = 1.0,
   var memorySeconds: Double = 10.0,
   var lookbackSeconds: Double = 5.0,
+  var diffLoggingEnabled: Boolean = false,
   var minRMS: Double = 0.5,
   var minIEC61672: Double = 0.5,
   var minSpectralEntropy: Double = 0.5,

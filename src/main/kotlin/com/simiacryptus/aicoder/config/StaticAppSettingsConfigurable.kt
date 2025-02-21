@@ -100,6 +100,10 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             add(component.devActions)
           })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Enable Diff Logging:"))
+            add(component.diffLoggingEnabled)
+          })
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
             add(JLabel("Enable Legacy Actions:"))
             add(component.enableLegacyActions)
           })
@@ -187,6 +191,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
   override fun write(settings: AppSettingsState, component: AppSettingsComponent) {
     try {
+      component.diffLoggingEnabled.isSelected = settings.diffLoggingEnabled
       component.githubToken.text = settings.githubToken ?: ""
       component.googleApiKey.text = settings.googleApiKey ?: ""
       component.googleSearchEngineId.text = settings.googleSearchEngineId ?: ""
@@ -225,6 +230,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
   override fun read(component: AppSettingsComponent, settings: AppSettingsState) {
     try {
+      settings.diffLoggingEnabled = component.diffLoggingEnabled.isSelected
       settings.githubToken = component.githubToken.text.takeIf { it.isNotBlank() }
       settings.googleApiKey = component.googleApiKey.text.takeIf { it.isNotBlank() }
       settings.googleSearchEngineId = component.googleSearchEngineId.text.takeIf { it.isNotBlank() }

@@ -41,6 +41,9 @@ class PluginStartupActivity : ProjectActivity {
     setLogInfo("org.eclipse.jetty")
 
     try {
+      // Configure diff logging based on settings
+      com.simiacryptus.diff.AddApplyFileDiffLinks.loggingEnabled = AppSettingsState.instance.diffLoggingEnabled
+
 
       //ApplicationServicesConfig.dataStorageRoot = ApplicationServicesConfig.dataStorageRoot.resolve("intellij")
       val currentThread = Thread.currentThread()

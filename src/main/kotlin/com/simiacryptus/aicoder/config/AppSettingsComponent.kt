@@ -33,6 +33,10 @@ import javax.swing.table.DefaultTableModel
 
 class AppSettingsComponent : com.intellij.openapi.Disposable {
   @Suppress("unused")
+  @Name("Enable Diff Logging")
+  val diffLoggingEnabled = JBCheckBox()
+
+  @Suppress("unused")
   @Name("GitHub Token")
   val githubToken = JBTextField().apply {
     toolTipText = "GitHub Personal Access Token"
@@ -315,6 +319,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
 
   init {
     // Initialize new fields
+    diffLoggingEnabled.isSelected = AppSettingsState.instance.diffLoggingEnabled
     githubToken.text = AppSettingsState.instance.githubToken ?: ""
     googleApiKey.text = AppSettingsState.instance.googleApiKey ?: ""
     googleSearchEngineId.text = AppSettingsState.instance.googleSearchEngineId ?: ""

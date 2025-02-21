@@ -1,4 +1,4 @@
-﻿package com.simiacryptus.aicoder.ui
+package com.simiacryptus.aicoder.ui
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewListener
@@ -23,6 +23,8 @@ import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isGitignore
 import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.event.MouseEvent
 import java.io.File
 import java.util.*
@@ -31,6 +33,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import javax.swing.event.TreeSelectionEvent
 import javax.swing.event.TreeSelectionListener
+import javax.swing.tree.TreePath
 import kotlin.io.path.isSymbolicLink
 
 class TokenCountWidgetFactory : StatusBarWidgetFactory {
@@ -38,7 +41,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     private val messages = ResourceBundle.getBundle("messages.TokenCountWidget")
     private fun getMessage(key: String, vararg args: Any): String =
       String.format(messages.getString(key), *args)
-
+    
     val workQueue = LinkedBlockingDeque<Runnable>()
     val pool = ThreadPoolExecutor(
       /* corePoolSize = */ 1, /* maximumPoolSize = */ 1,
@@ -46,23 +49,50 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
       /* workQueue = */ workQueue
     )
   }
-
+  
   class TokenCountWidget : StatusBarWidget, StatusBarWidget.TextPresentation {
-
     private var tokenCount: Int = 0
     val codex = GPT4Tokenizer(false)
     private var tooltipDetails: String = "Current file token count"
-
+    
     @Volatile
     private var isCalculating: Boolean = false
     private var animationCounter: Int = 0
-
+    
+    
+    
+    // Default constructor.
+    constructor() {
+    }
+    private fun update(statusBar: StatusBar, tokens: () -> Int) {
+      // Remove any pending work (no coroutine cancellation required now)
+      isCalculating = true
+      statusBar.updateWidget(ID())
+      workQueue.clear()
+      pool.submit {
+        try {
+          // This branch executes immediately; you can add a debounce delay here if needed.
+          tokenCount = tokens()
+        } catch (e: Exception) {
+          e.printStackTrace()
+          tokenCount = 0
+        } finally {
+          isCalculating = false
+          statusBar.project?.let {
+            invokeLater(it) {
+              statusBar.updateWidget(ID())
+            }
+          }
+        }
+      }
+    }
+    
     override fun ID(): String {
       return "TokenCountWidget"
     }
-
+    
     override fun getPresentation() = this
-
+    
     fun resolve(path: Array<String>, candidates: List<VirtualFile>): VirtualFile? {
       if (candidates.isEmpty()) return null
       val sortedCandidates = candidates.sortedBy {
@@ -70,9 +100,9 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
       }
       return sortedCandidates.first()
     }
-
+    
     fun update(statusBar: StatusBar, current: AbstractProjectViewPane) {
-      val paths = current.selectionPaths
+      val paths: Array<TreePath>? = current.selectionPaths
       val pathChildren = paths?.associate { path ->
         path to current.tree.model.getChildCount(path.lastPathComponent)
       } ?: emptyMap()
@@ -88,15 +118,18 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
               else com.intellij.openapi.vfs.VirtualFileManager.getInstance()
                 .findFileByNioPath(java.nio.file.Paths.get(basePath))
                 ?.listChildrenRecursively { file ->
-                file.isFile && file.name.contains(node.toString())
-              } ?: emptyList()
+                  file.isFile && file.name.contains(node.toString())
+                } ?: emptyList()
             }.let { files ->
               resolve(
                 path?.path?.map { it.toString() }?.toTypedArray<String>() ?: emptyArray<String>(),
                 files
               )
             }
-            listOf(virtualFile?.readText() to node.toString())
+            if (virtualFile != null)
+              listOf(virtualFile.readText() to node.toString())
+            else
+              emptyList()
           } else {
             /* Directory */
             val node = path.lastPathComponent
@@ -106,8 +139,8 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
               else com.intellij.openapi.vfs.VirtualFileManager.getInstance()
                 .findFileByNioPath(java.nio.file.Paths.get(basePath))
                 ?.listChildrenRecursively { file ->
-                file.isDirectory && file.name.contains(node.toString())
-              } ?: emptyList()
+                  file.isDirectory && file.name.contains(node.toString())
+                } ?: emptyList()
             }.let { files ->
               resolve(
                 path?.path?.map { it.toString() }?.toTypedArray<String>() ?: emptyArray<String>(),
@@ -156,7 +189,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         } ?: 0
       }
     }
-
+    
     override fun install(statusBar: StatusBar) {
       val connection = statusBar.project?.messageBus?.connect()
       connection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
@@ -166,7 +199,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
             updateTooltip(event.newFile?.name ?: event.oldFile?.name, tokenCount ?: 0)
             tokenCount
           }
-
+          
           val editor = FileEditorManager.getInstance(statusBar.project!!).selectedTextEditor
           editor?.document?.addDocumentListener(object : DocumentListener {
             override fun documentChanged(event: DocumentEvent) {
@@ -177,7 +210,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
               }
             }
           })
-
+          
           editor?.selectionModel?.addSelectionListener(object : SelectionListener {
             override fun selectionChanged(event: SelectionEvent) {
               update(statusBar) {
@@ -223,7 +256,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         }
       }
     }
-
+    
     private fun updateTooltip(source: String?, count: Int) {
       tooltipDetails = when {
         source == null -> "No file selected"
@@ -231,29 +264,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         else -> "<html><body>File: $source<br>Tokens: $count</body></html>"
       }
     }
-
-    private fun update(statusBar: StatusBar, tokens: () -> Int) {
-      workQueue.clear()
-      isCalculating = true
-      statusBar.updateWidget(ID())
-      pool.submit {
-        val text = statusBar.project?.let {
-          FileEditorManager.getInstance(it).selectedTextEditor?.document?.text ?: ""
-        } ?: ""
-        tokenCount = if (text.length > 1024 * 1024) {
-          -text.length  // Using negative value to indicate character count
-        } else {
-          tokens()
-        }
-        isCalculating = false
-        statusBar.project?.let {
-          invokeLater(it) {
-            statusBar.updateWidget(ID())
-          }
-        }
-      }
-    }
-
+    
     override fun getText(): String {
       return if (isCalculating) {
         val dots = ".".repeat((animationCounter % 3) + 1)
@@ -262,17 +273,17 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         tokenCountToString(tokenCount)
       }
     }
-
+    
     override fun getTooltipText(): String {
       return if (isCalculating) {
         // Create smooth animated progress indicator
         val frames = listOf("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
         val spinnerChar = frames[animationCounter % frames.size]
-
+        
         animationCounter++
         // Reset counter to prevent potential integer overflow
         if (animationCounter >= frames.size) animationCounter = 0
-
+        
         getMessage("tooltip.calculating_html", spinnerChar)
       } else {
         // Reset animation counter when not calculating
@@ -280,13 +291,13 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         tooltipDetails
       }
     }
-
+    
     override fun getAlignment(): Float {
       return 0.5f
     }
-
+    
     override fun getClickConsumer(): com.intellij.util.Consumer<MouseEvent>? = null
-
+    
     companion object {
       fun stringDistance(s1: String, s2: String): Int {
         val m = s1.length
@@ -304,7 +315,7 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
         }
         return dp[m][n]
       }
-
+      
       fun tokenCountToString(count: Int): String {
         return when {
           count == 0 -> getMessage("count.zero")
@@ -317,27 +328,27 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
       }
     }
   }
-
+  
   override fun getId(): String {
     return "TokenCountWidget"
   }
-
+  
   override fun getDisplayName(): String {
     return getMessage("widget.display_name")
   }
-
+  
   override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
     return TokenCountWidget()
   }
-
+  
   override fun createWidget(project: Project): StatusBarWidget {
     return TokenCountWidget()
   }
-
+  
   override fun isAvailable(project: Project): Boolean {
     return true
   }
-
+  
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
     return true
   }
@@ -352,7 +363,7 @@ private fun VirtualFile.listChildrenRecursively(filter: (VirtualFile) -> Boolean
       // Exclude hidden directories and certain file types
       isDirectory && name.startsWith("_") -> return
       this.toNioPath().isSymbolicLink() -> return
-        
+      
       else -> {
         if (filter(this)) result.add(this)
         children.forEach { it.listChildrenRecursively() }
