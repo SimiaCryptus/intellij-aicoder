@@ -20,6 +20,7 @@ import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import com.simiacryptus.skyenet.Discussable
+import com.simiacryptus.skyenet.apps.general.renderMarkdown
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
@@ -168,9 +169,9 @@ class MultiDiffChatAction : BaseAction() {
 
         val api = (api as ChatClient).getChildClient(task)
         val codex = GPT4Tokenizer()
-        task.verbose(renderMarkdown(getCodeFiles().joinToString("\n") { path ->
+        task.verbose((getCodeFiles().joinToString("\n") { path ->
           "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
-        }))
+        }).renderMarkdown())
         val toInput = { it: String -> listOf(codeSummary(), it) }
         Discussable(
           task = task,

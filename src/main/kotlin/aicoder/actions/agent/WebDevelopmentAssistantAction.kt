@@ -297,7 +297,7 @@ class WebDevelopmentAssistantAction : BaseAction() {
           !it.name!!.startsWith("http")
         }.map { (path, description) ->
           val task = ui.newTask(false).apply { fileTabs[path.toString()] = placeholder }
-          task.header("Drafting $path")
+          task.header("Drafting $path", 1)
           codeFiles.add(File(path).toPath())
           ApplicationServices.clientManager.getPool(session, user).submit {
             when (path!!.split(".").last().lowercase()) {

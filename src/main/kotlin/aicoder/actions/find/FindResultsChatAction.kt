@@ -20,6 +20,7 @@ import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.apps.general.renderMarkdown
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
@@ -180,7 +181,7 @@ class FindResultsChatAction(
 
             task.echo(renderMarkdown(userMessage))
 
-            task.verbose(renderMarkdown(getCodeContext()))
+            task.verbose((getCodeContext()).renderMarkdown())
 
             Retryable(ui = ui, task = task) { content ->
                 val task = ui.newTask(false)

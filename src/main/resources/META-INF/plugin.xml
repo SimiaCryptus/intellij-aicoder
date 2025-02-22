@@ -56,6 +56,11 @@
                     text="🗂️ Outline Tool"
                     description="Create and expand outlines using AI assistance">
             </action>
+            <action class="aicoder.actions.agent.EnhancedOutlineAction"
+                    id="EnhancedOutlineAction" 
+                    text="📝 Enhanced Outline Tool"
+                    description="Create and expand outlines with customizable phases using AI assistance">
+            </action>
         </group>
         <group id="com.simiacryptus.aicoder.ui.EditorMenu"
                class="com.intellij.openapi.actionSystem.DefaultActionGroup"

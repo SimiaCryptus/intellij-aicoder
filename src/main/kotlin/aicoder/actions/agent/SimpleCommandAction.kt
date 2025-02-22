@@ -16,6 +16,7 @@ import com.simiacryptus.jopenai.describe.Description
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.AgentPatterns
 import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.apps.general.renderMarkdown
 import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
@@ -199,7 +200,7 @@ class SimpleCommandAction : BaseAction() {
         userMessage: String = ""
     ) {
         val planTxt = projectSummary()
-        task.verbose(renderMarkdown(planTxt))
+        task.verbose(planTxt.renderMarkdown())
         Retryable(ui, task) {
             val task = ui.newTask(false)
             try {
@@ -226,7 +227,7 @@ class SimpleCommandAction : BaseAction() {
                         "\nExecute the following directive:\n\n$tripleTilde\n$userMessage\n$tripleTilde\n"
                     ), api = api
                 )
-                val progressHeader = task.header("Processing tasks")
+                val progressHeader = task.header("Processing tasks", 1)
                 plan.obj.errors?.forEach { planTask ->
                     Retryable(ui, task) {
                         val task = ui.newTask(false)

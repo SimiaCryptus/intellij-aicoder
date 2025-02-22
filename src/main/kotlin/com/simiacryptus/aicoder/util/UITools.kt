@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.text.JTextComponent
+import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
@@ -91,7 +92,35 @@ object UITools {
   fun getRoot(e: AnActionEvent): String {
     return getSelectedFolder(e)?.toFile?.absolutePath ?: getSelectedFile(e)?.toFile?.parent ?: ""
   }
-
+  
+  fun runAsync(
+    project: Project?,
+    title: String?,
+    canBeCancelled: Boolean = true,
+    suppressProgress: Boolean = true,
+    task: (ProgressIndicator) -> Unit,
+  ) {
+    thread(name = title ?: "runAsync") {
+      try {
+        if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
+          AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
+          task(AbstractProgressIndicatorBase())
+        } else {
+          AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
+          val t = if (AppSettingsState.instance.modalTasks)
+            ModalTask(project, title ?: "", canBeCancelled, task)
+          else
+            BgTask(project, title ?: "", canBeCancelled, task)
+          ProgressManager.getInstance().run(t)
+          t.get()
+        }
+      } catch (e: Throwable) {
+        error(log, "Error running task", e)
+        showError(project, "Failed to initialize chat: ${e.message}")
+      }
+    }
+  }
+  
   fun redoableTask(
     event: AnActionEvent,
     request: Supplier<Runnable>,
@@ -667,35 +696,6 @@ object UITools {
   }
 
 
-  fun runAsync(
-    project: Project?,
-    title: String?,
-    canBeCancelled: Boolean = true,
-    suppressProgress: Boolean = true,
-    task: (ProgressIndicator) -> Unit,
-  ) {
-    Thread {
-      try {
-        if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
-          AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
-          task(AbstractProgressIndicatorBase())
-        } else {
-          AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
-          val t = if (AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
-          else BgTask(project, title ?: "", canBeCancelled, task)
-          ProgressManager.getInstance().run(t)
-          t.get()
-        }
-      } catch (e: Throwable) {
-        error(log, "Error running task", e)
-        showError(project, "Failed to initialize chat: ${e.message}")
-      }
-    }.apply {
-      name = title
-    }.start()
-  }
-
-
   fun <I : Any?, O : Any?> map(
     moderateAsync: ListenableFuture<I>,
     o: com.google.common.base.Function<in I, out O>,
@@ -862,4 +862,6 @@ object UITools {
     }
     showOptionDialog(panel, "OK", title = title, modal = true)
   }
+  
+  
 }

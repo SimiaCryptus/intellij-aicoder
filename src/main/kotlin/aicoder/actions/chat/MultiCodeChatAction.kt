@@ -19,6 +19,7 @@ import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import com.simiacryptus.skyenet.Retryable
+import com.simiacryptus.skyenet.apps.general.renderMarkdown
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
@@ -154,9 +155,9 @@ class MultiCodeChatAction : BaseAction() {
       val api = (api as ChatClient).getChildClient(task)
 
       task.echo(MarkdownUtil.renderMarkdown(userMessage))
-      task.verbose(MarkdownUtil.renderMarkdown(codeFiles.joinToString("\n") { path ->
+      task.verbose((codeFiles.joinToString("\n") { path ->
         "* $path - ${codex.estimateTokenCount(root.resolve(path.toFile()).readText())} tokens"
-      }))
+      }).renderMarkdown())
       val toInput = { it: String -> listOf(codeSummary(), it) }
       Retryable(ui = ui, task = task) { content ->
         val task = ui.newTask(false)

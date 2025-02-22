@@ -240,7 +240,7 @@ class MultiStepPatchAction : BaseAction() {
           description = renderMarkdown(description, ui = ui, tabs = false)
           val task = ui.newTask(false).apply { taskTabs[description] = placeholder }
           ApplicationServices.clientManager.getPool(session, user).submit {
-            task.header("Task: $description")
+            task.header("Task: $description", 2)
             Retryable(ui, task) {
               try {
                 val filter = codeFiles.filter { path ->
