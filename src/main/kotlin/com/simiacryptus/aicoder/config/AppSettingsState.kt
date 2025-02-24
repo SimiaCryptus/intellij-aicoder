@@ -25,12 +25,14 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 data class CommandConfig(
-    val commands: List<PatchApp.CommandSettings>,
-    val exitCodeOption: String,
-    val autoFix: Boolean,
-    val maxRetries: Int,
-    val additionalInstructions: String
-  )
+  val commands: List<PatchApp.CommandSettings>,
+  val exitCodeOption: String,
+  val autoFix: Boolean,
+  val maxRetries: Int,
+  val additionalInstructions: String,
+  val includeGitDiffs: Boolean = false
+)
+
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
   var selectedMicLine: String? = null,
@@ -101,17 +103,17 @@ data class AppSettingsState(
     val allowBlocking: Boolean,
     val taskSettings: Map<String, TaskSettingsBase>
   )
-
+  
   private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
-
+  
   @JsonIgnore
   override fun getState(): SimpleEnvelope {
     val value = JsonUtil.toJson(this)
     return SimpleEnvelope(value)
   }
-
+  
   fun getRecentCommands(id: String) = recentCommands.computeIfAbsent(id) { MRUItems() }
-
+  
   override fun loadState(state: SimpleEnvelope) {
     state.value ?: return
     val fromJson = try {
@@ -126,15 +128,15 @@ data class AppSettingsState(
     recentCommands.putAll(fromJson.recentCommands)
     notifySettingsLoaded()
   }
-
+  
   fun addOnSettingsLoadedListener(listener: () -> Unit) {
     onSettingsLoadedListeners.add(listener)
   }
-
+  
   private fun notifySettingsLoaded() {
     onSettingsLoadedListeners.forEach { it() }
   }
-
+  
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -183,7 +185,7 @@ data class AppSettingsState(
     if (reasoningEffort != other.reasoningEffort) return false
     return true
   }
-
+  
   override fun hashCode(): Int {
     var result = temperature.hashCode()
     result = 31 * result + minRMS.hashCode()
@@ -229,32 +231,33 @@ data class AppSettingsState(
     result = 31 * result + reasoningEffort.hashCode()
     return result
   }
-
+  
   companion object {
     val log = LoggerFactory.getLogger(AppSettingsState::class.java)
     var auxiliaryLog: File? = null
     const val WELCOME_VERSION: String = "1.5.0"
-
+    
     @JvmStatic
     val instance: AppSettingsState by lazy {
       ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
     }
-
+    
     fun String.imageModel(): ImageModels {
       return ImageModels.values().firstOrNull {
         it.modelName == this || it.name == this
       } ?: ImageModels.DallE3
     }
-
+    
     fun getDefaultShell() = if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
   }
-
+  
   data class UserSuppliedModel(
     var displayName: String = "",
     var modelId: String = "",
     var provider: APIProvider = APIProvider.OpenAI
   )
-
+  
   var analyticsEnabled: Boolean = false
 }
-    var recentWorkingDirs: MutableList<String> = mutableListOf()
+
+var recentWorkingDirs: MutableList<String> = mutableListOf()

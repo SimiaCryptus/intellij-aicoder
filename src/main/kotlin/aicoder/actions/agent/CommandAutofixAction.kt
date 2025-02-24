@@ -108,6 +108,7 @@ class CommandAutofixAction : BaseAction() {
                                 exitCodeOption = if (settingsUI.exitCodeZero?.component?.isSelected == true) "0" else if (settingsUI.exitCodeAny?.component?.isSelected == true) "any" else "nonzero",
                                 autoFix = settingsUI.autoFixCheckBox.isSelected,
                                 maxRetries = settingsUI.maxRetriesField.value as Int,
+                               includeGitDiffs = settingsUI.includeGitDiffsCheckBox.isSelected
                             )
                         } else {
                             null
@@ -182,6 +183,10 @@ class CommandAutofixAction : BaseAction() {
             var exitCodeNonZero: Cell<JBRadioButton>? = null
             var exitCodeZero: Cell<JBRadioButton>? = null
             var exitCodeAny: Cell<JBRadioButton>? = null
+    val includeGitDiffsCheckBox = JCheckBox("Include Git Working Copy Diffs").apply {
+        isSelected = false
+        toolTipText = "Include git diffs between working copy and HEAD when analyzing code"
+    }
 
             init {
                 addCommandPanel()
@@ -230,6 +235,7 @@ class CommandAutofixAction : BaseAction() {
                     exitCodeOption = if (exitCodeZero?.component?.isSelected == true) "0" else if (exitCodeAny?.component?.isSelected == true) "any" else "nonzero",
                     autoFix = autoFixCheckBox.isSelected,
                     maxRetries = maxRetriesField.value as Int,
+                    includeGitDiffs = includeGitDiffsCheckBox.isSelected,
                     additionalInstructions = additionalInstructionsField.text
                 )
                 AppSettingsState.instance.savedCommandConfigs[configName] = config
@@ -252,6 +258,7 @@ class CommandAutofixAction : BaseAction() {
                 exitCodeAny?.component?.isSelected = config.exitCodeOption == "any"
                 autoFixCheckBox.isSelected = config.autoFix
                 maxRetriesField.value = config.maxRetries
+        includeGitDiffsCheckBox.isSelected = config.includeGitDiffs
                 additionalInstructionsField.text = config.additionalInstructions
                 commandsPanel.revalidate()
                 commandsPanel.repaint()
@@ -379,6 +386,7 @@ class CommandAutofixAction : BaseAction() {
 
             override fun createCenterPanel(): JComponent {
                 return panel {
+// ... existing rows ...
                     row("Saved Configs:") {
                         cell(settingsUI.savedConfigsCombo).align(Align.FILL)
                             .comment("Select a saved configuration to load or save current settings")
@@ -462,6 +470,7 @@ class CommandAutofixAction : BaseAction() {
                     }
                     row {
                         cell(settingsUI.autoFixCheckBox)
+                cell(settingsUI.includeGitDiffsCheckBox)
                     }
                 }
             }

@@ -179,6 +179,10 @@
                text="_AI Coder"
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+            <action class="aicoder.actions.chat.CodeChangeAction"
+                    text="🎯 Smart Code Change"
+                    description="Intelligently analyze and modify code files using a two-stage approach with optimized model selection">
+            </action>
             <action class="aicoder.actions.chat.MultiDiffChatAction"
                     text="📝 Modify Files"
                     description="Analyze and generate patches for multiple files simultaneously, considering the broader project context">
