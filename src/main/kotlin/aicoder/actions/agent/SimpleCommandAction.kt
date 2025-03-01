@@ -221,7 +221,8 @@ class SimpleCommandAction : BaseAction() {
                          1) predict the files that need to be fixed
                          2) predict related files that may be needed to debug the issue
                       """.trimIndent(),
-                    model = AppSettingsState.instance.smartModel.chatModel()
+                    model = AppSettingsState.instance.smartModel.chatModel(),
+                    parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 ).answer(
                     listOf(
                         "\nExecute the following directive:\n\n$tripleTilde\n$userMessage\n$tripleTilde\n"

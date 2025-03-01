@@ -53,7 +53,7 @@
             </action>
             <action class="aicoder.actions.agent.OutlineAction"
                     id="OutlineAction"
-                    text="🗂️ Outline Tool"
+                    text="🗂️ Simple Outline Tool"
                     description="Create and expand outlines using AI assistance">
             </action>
             <action class="aicoder.actions.agent.EnhancedOutlineAction"

@@ -86,6 +86,7 @@ class GraphAnalyzeAction : BaseAction() {
                                 val softwareGraph = ParsedActor(
                                     resultClass = SoftwareNodeType.SoftwareGraph::class.java,
                                     model = AppSettingsState.instance.smartModel.chatModel(),
+                                  parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                                 ).answer(
                                     listOf(
                                         /* Directive */

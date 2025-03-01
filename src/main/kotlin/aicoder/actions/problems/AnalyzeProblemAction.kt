@@ -177,7 +177,8 @@ class AnalyzeProblemAction : AnAction() {
                            1) predict the files that need to be fixed
                            2) predict related files that may be needed to debug the issue
                         """.trimIndent(),
-            model = AppSettingsState.instance.smartModel.chatModel()
+            model = AppSettingsState.instance.smartModel.chatModel(),
+            parsingModel = AppSettingsState.instance.fastModel.chatModel(),
           ).answer(listOf(problemInfo), api = IdeaChatClient.instance)
 
           task.add(
