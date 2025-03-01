@@ -30,7 +30,8 @@ data class CommandConfig(
   val autoFix: Boolean,
   val maxRetries: Int,
   val additionalInstructions: String,
-  val includeGitDiffs: Boolean = false
+  val includeGitDiffs: Boolean = false,
+  val includeLineNumbers: Boolean = false,
 )
 
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])

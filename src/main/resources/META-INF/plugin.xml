@@ -179,26 +179,37 @@
                text="_AI Coder"
                description="AI coding assistant tools">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
-            <action class="aicoder.actions.chat.CodeChangeAction"
-                    text="🎯 Smart Code Change"
-                    description="Intelligently analyze and modify code files using a two-stage approach with optimized model selection">
-            </action>
-            <action class="aicoder.actions.chat.MultiDiffChatAction"
-                    text="📝 Modify Files"
-                    description="Analyze and generate patches for multiple files simultaneously, considering the broader project context">
-            </action>
             <action class="aicoder.actions.chat.MultiCodeChatAction"
                     text="💬 Code Chat"
                     description="Initiate an interactive dialogue session to discuss and analyze multiple code files simultaneously">
             </action>
-            <action class="aicoder.actions.dev.ApplyPatchAction"
-                    text="🔧 Apply Patch"
-                    description="Intelligently apply a provided patch to the selected file, with automatic conflict resolution and error handling">
-            </action>
-            <action class="aicoder.actions.agent.DocumentedMassPatchAction"
-                    text="🔨 Mass Patch"
-                    description="Analyze and patch multiple code files while considering markdown documentation files for context and standards">
-            </action>
+            <group id="com.simiacryptus.aicoder.ui.ProjectMenu.Modify"
+                   class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+                   popup="true"
+                   text="🔧 Modify"
+                   description="File modification tools">
+                <action class="aicoder.actions.chat.MultiDiffChatAction"
+                        text="📝 Modify Files"
+                        description="Analyze and generate patches for multiple files simultaneously, considering the broader project context">
+                </action>
+                <action class="aicoder.actions.chat.MultiDiffChatWithLineNumbersAction"
+                        text="📝 Modify Files (with Line Numbers)"
+                        description="Analyze and generate patches for multiple files with line numbers displayed for easier reference">
+                </action>
+                <action class="aicoder.actions.chat.CodeChangeAction"
+                        text="🎯 Smart Code Change"
+                        description="Intelligently analyze and modify code files using a two-stage approach with optimized model selection">
+                </action>
+                <action class="aicoder.actions.dev.ApplyPatchAction"
+                        text="🔧 Apply Patch"
+                        description="Intelligently apply a provided patch to the selected file, with automatic conflict resolution and error handling">
+                </action>
+                <action class="aicoder.actions.agent.DocumentedMassPatchAction"
+                        text="🔨 Mass Patch"
+                        description="Analyze and patch multiple code files while considering markdown documentation files for context and standards">
+                </action>
+
+            </group>
             <group id="com.simiacryptus.aicoder.ui.ProjectMenu.Generation"
                    class="com.intellij.openapi.actionSystem.DefaultActionGroup"
                    popup="true"

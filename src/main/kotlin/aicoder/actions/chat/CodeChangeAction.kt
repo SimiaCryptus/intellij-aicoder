@@ -179,7 +179,8 @@ class CodeChangeAction : BaseAction() {
                         2) Related files that provide important context
                         Be selective and only include files that are directly relevant.
                     """.trimIndent(),
-                    model = AppSettingsState.instance.fastModel.chatModel()
+                    model = AppSettingsState.instance.fastModel.chatModel(),
+                    parsingModel = AppSettingsState.instance.fastModel.chatModel(),
                 )
 
                 val allFiles = getCodeFiles()

@@ -1,4 +1,4 @@
-﻿package aicoder.actions.chat
+package aicoder.actions.chat
 
 import aicoder.actions.BaseAction
 import aicoder.actions.SessionProxyServer
@@ -41,7 +41,9 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.relativeTo
 
-class MultiDiffChatAction : BaseAction() {
+open class MultiDiffChatAction(
+  protected val showLineNumbers: Boolean = false
+) : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun isEnabled(event: AnActionEvent): Boolean {
     if (FileValidationUtils.expandFileList(
@@ -62,9 +64,9 @@ class MultiDiffChatAction : BaseAction() {
       SessionProxyServer.metadataStorage.setSessionName(
         null,
         session,
-        "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
+        "${getActionName()} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
       )
-      SessionProxyServer.chats[session] = PatchApp(root.toFile(), initialFiles)
+      SessionProxyServer.chats[session] = PatchApp(root.toFile(), initialFiles, showLineNumbers)
       ApplicationServer.appInfoMap[session] = AppInfoData(
         applicationName = "Code Chat",
         singleInput = true,
@@ -80,6 +82,8 @@ class MultiDiffChatAction : BaseAction() {
       UITools.showErrorDialog(e.message ?: "", "Error")
     }
   }
+  protected open fun getActionName(): String = if (showLineNumbers) "MultiDiffChatWithLineNumbers" else "MultiDiffChat"
+
 
   private fun getRoot(event: AnActionEvent): Path? {
     val folder = UITools.getSelectedFolder(event)
@@ -106,6 +110,7 @@ class MultiDiffChatAction : BaseAction() {
   inner class PatchApp(
     override val root: File,
     private val initialFiles: Set<Path>,
+    private val showLineNumbers: Boolean = false
   ) : ApplicationServer(
     applicationName = "Multi-file Patch Chat",
     path = "/patchChat",
@@ -136,7 +141,16 @@ class MultiDiffChatAction : BaseAction() {
         .entries.joinToString("\n\n") { (path, code) ->
           val extension =
             path.toString().split('.').lastOrNull()?.let { /*escapeHtml4*/(it)/*.indent("  ")*/ }
-          "# $path\n```$extension\n$code\n```"
+          if (showLineNumbers) {
+            val lines = code.lines()
+            val lineNumberWidth = lines.size.toString().length
+            val numberedLines = lines.mapIndexed { index, line ->
+              String.format("%${lineNumberWidth}d | %s", index + 1, line)
+            }.joinToString("\n")
+            "# $path\n```$extension\n$numberedLines\n```"
+          } else {
+            "# $path\n```$extension\n$code\n```"
+          }
         }
     }
 
@@ -156,7 +170,9 @@ class MultiDiffChatAction : BaseAction() {
                                   
                                   You will be answering questions about the following code:
                                   
-                                  """.trimIndent() + codeSummary() + patchFormatPrompt,
+                                  """.trimIndent() + codeSummary() +
+                                  (if (showLineNumbers) "\nNote: Line numbers are shown at the beginning of each line in the format 'NUMBER | CODE'. These are for reference only and should not be included in any patches or code modifications.\n" else "") +
+                                  patchFormatPrompt,
               model = AppSettingsState.instance.smartModel.chatModel()
           )
         }
@@ -218,6 +234,14 @@ class MultiDiffChatAction : BaseAction() {
 
   }
 }
+/**
+ * A variant of MultiDiffChatAction that displays line numbers in code blocks
+ * to make it easier to reference specific lines in discussions.
+ */
+class MultiDiffChatWithLineNumbersAction : MultiDiffChatAction(showLineNumbers = true) {
+  override fun getActionName(): String = "MultiDiffChatWithLineNumbers"
+}
+
 
 private fun Path.isBinary() = try {
   this.toFile().length() > 4 * 1024 * 1024 || Files.readAllBytes(this).any { it == 0.toByte() }

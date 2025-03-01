@@ -42,10 +42,11 @@ class ValidateCodeAction : BaseAction() {
                     ?: throw IllegalStateException("Could not determine project root")
 
                 val settings = PatchApp.Settings(
-                    commands = listOf(),
-                    autoFix = true,
-                    maxRetries = 1,
-                    exitCodeOption = "nonzero"
+                  commands = listOf(),
+                  autoFix = true,
+                  maxRetries = 1,
+                  exitCodeOption = "nonzero",
+                  includeLineNumbers = false
                 )
 
                 val session = Session.newGlobalID()

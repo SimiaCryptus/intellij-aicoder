@@ -27,7 +27,6 @@ import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.CmdPatchApp
 import com.simiacryptus.skyenet.apps.general.PatchApp
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.util.FileValidationUtils
 import com.simiacryptus.skyenet.core.util.commonRoot
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
@@ -48,15 +47,14 @@ class CommandAutofixAction : BaseAction() {
      * Handles the action execution.
      * Shows settings dialog, creates patch app session and opens browser interface.
      */
-
     override fun handle(event: AnActionEvent) {
         try {
             UITools.runAsync(event.project, "Initializing Command Autofix", true) { progress ->
                 progress.isIndeterminate = true
                 progress.text = "Getting settings..."
-                val files = UITools.getSelectedFiles(event)//.map { it.toFile.toPath() }
+                val files = UITools.getSelectedFiles(event)
                 val folders = UITools.getSelectedFolders(event).map { it.toFile.toPath() }
-                val root = folders.toTypedArray().commonRoot()
+                val root = (folders + files.map { it.toFile.toPath() }).filterNotNull().toTypedArray().commonRoot()
                 val settings = run {
                     var settings1: PatchApp.Settings? = null
                     SwingUtilities.invokeAndWait {
@@ -64,7 +62,7 @@ class CommandAutofixAction : BaseAction() {
                         // If a single file is provided that is executable or has a whitelisted extension
                         if (files.size == 1) {
                             val defaultFile = files[0]
-                            val whitelist = listOf("sh", "py", "bat", "exe")
+                            val whitelist = listOf("sh", "py", "bat", "ps")
                             val matchesWhitelist = whitelist.any { defaultFile.name.endsWith(".$it", ignoreCase = true) }
                             if (defaultFile.isFile && (defaultFile.toFile.canExecute() || matchesWhitelist)) {
                                 // Update the default fields for the first (and only) command panel
@@ -107,7 +105,8 @@ class CommandAutofixAction : BaseAction() {
                                 commands = commands,
                                 exitCodeOption = if (settingsUI.exitCodeZero?.component?.isSelected == true) "0" else if (settingsUI.exitCodeAny?.component?.isSelected == true) "any" else "nonzero",
                                 autoFix = settingsUI.autoFixCheckBox.isSelected,
-                                maxRetries = settingsUI.maxRetriesField.value as Int,
+                                maxRetries = settingsUI.maxRetriesSlider.value,
+                               includeLineNumbers = settingsUI.includeLineNumbersCheckBox.isSelected,
                                includeGitDiffs = settingsUI.includeGitDiffsCheckBox.isSelected
                             )
                         } else {
@@ -187,6 +186,10 @@ class CommandAutofixAction : BaseAction() {
         isSelected = false
         toolTipText = "Include git diffs between working copy and HEAD when analyzing code"
     }
+    val includeLineNumbersCheckBox = JCheckBox("Include Line Numbers").apply {
+        isSelected = true
+        toolTipText = "Show line numbers in code snippets for better context"
+    }
 
             init {
                 addCommandPanel()
@@ -209,6 +212,13 @@ class CommandAutofixAction : BaseAction() {
             }
 
             val maxRetriesField = JSpinner(SpinnerNumberModel(3, 0, 10, 1)).apply {
+                toolTipText = "Maximum number of auto-retry attempts (0-10)"
+            }
+            val maxRetriesSlider = JSlider(JSlider.HORIZONTAL, 0, 10, 3).apply {
+                majorTickSpacing = 2
+                minorTickSpacing = 1
+                paintTicks = true
+                paintLabels = true
                 toolTipText = "Maximum number of auto-retry attempts (0-10)"
             }
             val additionalInstructionsField = JTextArea().apply {
@@ -234,8 +244,9 @@ class CommandAutofixAction : BaseAction() {
                     commands = commandsList.map { it.toCommandSettings() },
                     exitCodeOption = if (exitCodeZero?.component?.isSelected == true) "0" else if (exitCodeAny?.component?.isSelected == true) "any" else "nonzero",
                     autoFix = autoFixCheckBox.isSelected,
-                    maxRetries = maxRetriesField.value as Int,
+                    maxRetries = maxRetriesSlider.value,
                     includeGitDiffs = includeGitDiffsCheckBox.isSelected,
+                    includeLineNumbers = includeLineNumbersCheckBox.isSelected,
                     additionalInstructions = additionalInstructionsField.text
                 )
                 AppSettingsState.instance.savedCommandConfigs[configName] = config
@@ -250,6 +261,8 @@ class CommandAutofixAction : BaseAction() {
                 config.commands.forEach {
                     val panel = CommandPanel(workingDirectory, folders)
                     panel.loadFromSettings(it)
+                    // Ensure working directory is set to the currently selected directory
+                    panel.workingDirectoryField.selectedItem = workingDirectory.absolutePath
                     commandsList.add(panel)
                     commandsPanel.add(panel)
                 }
@@ -257,8 +270,9 @@ class CommandAutofixAction : BaseAction() {
                 exitCodeZero?.component?.isSelected = config.exitCodeOption == "0"
                 exitCodeAny?.component?.isSelected = config.exitCodeOption == "any"
                 autoFixCheckBox.isSelected = config.autoFix
-                maxRetriesField.value = config.maxRetries
+                maxRetriesSlider.value = config.maxRetries
         includeGitDiffsCheckBox.isSelected = config.includeGitDiffs
+        includeLineNumbersCheckBox.isSelected = config.includeLineNumbers ?: true
                 additionalInstructionsField.text = config.additionalInstructions
                 commandsPanel.revalidate()
                 commandsPanel.repaint()
@@ -368,7 +382,8 @@ class CommandAutofixAction : BaseAction() {
                 fun loadFromSettings(settings: PatchApp.CommandSettings) {
                     commandField.selectedItem = settings.executable.absolutePath
                     argumentsField.selectedItem = settings.arguments
-                    workingDirectoryField.selectedItem = settings.workingDirectory?.absolutePath
+                    // Don't override the working directory from settings to maintain context
+                    // of the currently selected directory/file in the IDE
                 }
 
             }
@@ -463,7 +478,8 @@ class CommandAutofixAction : BaseAction() {
 
                     }
                     row("Max Auto-Retries") {
-                        cell(settingsUI.maxRetriesField)
+                        cell(settingsUI.maxRetriesSlider)
+                            .comment("Adjust the maximum number of automatic retry attempts (0-10)")
                     }
                     row("Additional Instructions") {
                         cell(JScrollPane(settingsUI.additionalInstructionsField))
