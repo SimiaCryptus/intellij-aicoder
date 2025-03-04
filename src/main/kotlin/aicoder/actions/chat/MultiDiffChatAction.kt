@@ -241,10 +241,3 @@ open class MultiDiffChatAction(
 class MultiDiffChatWithLineNumbersAction : MultiDiffChatAction(showLineNumbers = true) {
   override fun getActionName(): String = "MultiDiffChatWithLineNumbers"
 }
-
-
-private fun Path.isBinary() = try {
-  this.toFile().length() > 4 * 1024 * 1024 || Files.readAllBytes(this).any { it == 0.toByte() }
-} catch (e: Exception) {
-  false
-}

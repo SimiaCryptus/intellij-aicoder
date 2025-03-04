@@ -4,7 +4,7 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 
----
+<!-- Plugin description -->
 
 ## 🌟 **Empowering Developers with Open Source AI Tools**
 
@@ -84,3 +84,4 @@ Experience the power of open source generative and agentic AI tools today. Insta
 your development workflow—transparent, customizable, and built for developers by developers.
 
 🚀 **AI Coding Assistant: Open Source AI Tools for Developers Who Love to Code.** 🌟
+<!-- Plugin description end -->
