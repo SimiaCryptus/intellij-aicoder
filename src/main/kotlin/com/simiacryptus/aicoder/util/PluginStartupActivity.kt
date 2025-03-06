@@ -161,7 +161,9 @@ class PluginStartupActivity : ProjectActivity {
   private fun init(project: Project) {
     if (isInitialized.getAndSet(true)) return
     ApplicationServicesConfig.dataStorageRoot = AppSettingsState.instance.pluginHome.resolve(".skyenet")
-    OutputInterceptor.setupInterceptor()
+    if(AppSettingsState.instance.interceptOutput) {
+      OutputInterceptor.setupInterceptor()
+    }
     SimpleDiffApplier.validatorProviders.add(0) { filename ->
       val extension = filename?.split('.')?.lastOrNull()
       if (IntelliJPsiValidator.isLanguageSupported(extension)) {

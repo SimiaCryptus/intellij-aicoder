@@ -95,7 +95,8 @@ data class AppSettingsState(
   var googleSearchEngineId: String? = null,
   var awsProfile: String? = null,
   var awsRegion: String? = null,
-  var awsBucket: String? = null
+  var awsBucket: String? = null,
+  var interceptOutput: Boolean = false
 ) : PersistentStateComponent<SimpleEnvelope> {
   data class SavedPlanConfig(
     val name: String,

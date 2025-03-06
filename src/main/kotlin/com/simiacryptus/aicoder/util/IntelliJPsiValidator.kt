@@ -1,5 +1,6 @@
 package com.simiacryptus.aicoder.util
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFileFactory
@@ -9,17 +10,21 @@ import com.intellij.psi.PsiErrorElement
 
 class IntelliJPsiValidator(private val project: Project, val extension: String, val filename: String) : GrammarValidator {
     override fun validateGrammar(code: String): List<GrammarValidator.ValidationError> {
-        return try {
-            val fileType = FileTypeRegistry.getInstance().getFileTypeByExtension(extension)
-            val virtualFile = LightVirtualFile("dummy.$extension", fileType, code)
-            val psiFile = PsiFileFactory.getInstance(project).createFileFromText(virtualFile.name, fileType, code)
-            collectErrors(psiFile)
-        } catch (e: Exception) {
-            listOf(GrammarValidator.ValidationError(
-                message = "Error validating ${SUPPORTED_LANGUAGES[extension.lowercase()]} grammar: ${e.message}",
-                severity = GrammarValidator.Severity.ERROR
-            ))
+        lateinit var errors: List<GrammarValidator.ValidationError>
+        WriteCommandAction.runWriteCommandAction(project) {
+             try {
+                val fileType = FileTypeRegistry.getInstance().getFileTypeByExtension(extension)
+                val virtualFile = LightVirtualFile("dummy.$extension", fileType, code)
+                val psiFile = PsiFileFactory.getInstance(project).createFileFromText(virtualFile.name, fileType, code)
+                errors = collectErrors(psiFile)
+            } catch (e: Exception) {
+                listOf(GrammarValidator.ValidationError(
+                    message = "Error validating ${SUPPORTED_LANGUAGES[extension.lowercase()]} grammar: ${e.message}",
+                    severity = GrammarValidator.Severity.ERROR
+                ))
+            }
         }
+        return errors
     }
     companion object {
         // Map of supported file extensions to their language names
