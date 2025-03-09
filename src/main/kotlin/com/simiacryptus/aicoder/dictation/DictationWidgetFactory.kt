@@ -55,11 +55,11 @@ class DictationWidgetFactory : StatusBarWidgetFactory {
             val connection = project.messageBus.connect()
             connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
                 override fun selectionChanged(event: FileEditorManagerEvent) {
-                    log.debug("Selection changed")
+                    //log.debug("Selection changed")
                     val editor = FileEditorManager.getInstance(project).selectedTextEditor
                     val editorHash = editor?.hashCode() ?: return
                     if (!editorsWithListeners.add(editorHash)) {
-                        log.debug("Listeners already added to editor")
+                        //log.debug("Listeners already added to editor")
                         return
                     }
                     editor.document.addDocumentListener(object : DocumentListener {
@@ -118,4 +118,4 @@ class DictationWidgetFactory : StatusBarWidgetFactory {
 
     }
 }
-// Extension function to get current editor moved to DictationState.kt
+
