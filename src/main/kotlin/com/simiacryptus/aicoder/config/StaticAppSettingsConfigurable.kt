@@ -1,12 +1,17 @@
 package com.simiacryptus.aicoder.config
 
+import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.aicoder.util.IdeaChatClient
 import com.simiacryptus.aicoder.util.PluginStartupActivity.Companion.addUserSuppliedModels
 import com.simiacryptus.jopenai.models.APIProvider
+import com.simiacryptus.util.JsonUtil
 import java.awt.*
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileReader
+import java.io.FileWriter
 import javax.swing.*
+import javax.swing.filechooser.FileNameExtensionFilter
 import javax.swing.table.DefaultTableModel
 
 class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
@@ -28,8 +33,8 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
 
   override fun build(component: AppSettingsComponent): JComponent {
     val tabbedPane = com.intellij.ui.components.JBTabbedPane()
-    try {// Basic Settings Tab
-      val basicSettingsPanel = JPanel(BorderLayout()).apply {
+    try {
+      tabbedPane.addTab("Basic Settings", JPanel(BorderLayout()).apply {
         add(JPanel(BorderLayout()).apply {
           layout = BoxLayout(this, BoxLayout.Y_AXIS)
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
@@ -48,17 +53,36 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             add(JLabel("Temperature:"))
             add(component.temperature)
           })
-          add(JPanel(BorderLayout()).apply {
-            add(JLabel("API Configurations:"), BorderLayout.NORTH)
-            add(component.apis, BorderLayout.CENTER)
-          })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
             add(JLabel("Executables:"))
             add(component.executablesPanel)
           })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Human Language:"))
-            add(component.humanLanguage)
+            add(JLabel("Configuration:"))
+            add(JButton("Export Config").apply {
+              addActionListener {
+                showExportConfigDialog()
+              }
+            })
+            add(JButton("Import Config").apply {
+              addActionListener {
+                showImportConfigDialog()
+              }
+            })
+          })
+        })
+      })
+    } catch (e: Exception) {
+      log.warn("Error building Basic Settings", e)
+    }
+
+    try {
+      tabbedPane.addTab("Keys", JPanel(BorderLayout()).apply {
+        add(JPanel(BorderLayout()).apply {
+          layout = BoxLayout(this, BoxLayout.Y_AXIS)
+          add(JPanel(BorderLayout()).apply {
+            add(JLabel("API Configurations:"), BorderLayout.NORTH)
+            add(component.apis, BorderLayout.CENTER)
           })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
             add(JLabel("GitHub Token:"))
@@ -85,13 +109,12 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             add(component.awsBucket)
           })
         })
-      }
-      tabbedPane.addTab("Basic Settings", basicSettingsPanel)
+      })
     } catch (e: Exception) {
-      log.warn("Error building Basic Settings", e)
+      log.warn("Error building Configuration", e)
     }
 
-    tabbedPane.addTab("Developer Tools", JPanel(BorderLayout()).apply {
+    tabbedPane.addTab("Advanced Settings", JPanel(BorderLayout()).apply {
       try {
         add(JPanel().apply {
           layout = BoxLayout(this, BoxLayout.Y_AXIS)
@@ -100,12 +123,22 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             add(component.devActions)
           })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Disable Auto-Open URLs:"))
+            add(component.disableAutoOpenUrls)
+          })
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Enable API Log:"))
+            add(component.apiLog)
+            add(component.openApiLog)
+            add(component.clearApiLog)
+          })
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
             add(JLabel("Enable Diff Logging:"))
             add(component.diffLoggingEnabled)
           })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Enable Legacy Actions:"))
-            add(component.enableLegacyActions)
+            add(JLabel("Edit API Requests:"))
+            add(component.editRequests)
           })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
             // Removed sections that reference non-existing components
@@ -115,13 +148,44 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             })
           }, BorderLayout.NORTH)
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Edit API Requests:"))
-            add(component.editRequests)
+            //add(JLabel("Show Welcome Screen:"))
+            add(component.showWelcomeScreen)
           })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Disable Auto-Open URLs:"))
-            add(component.disableAutoOpenUrls)
+            add(JLabel("Server Port:"))
+            add(component.listeningPort)
           })
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Server Endpoint:"))
+            add(component.listeningEndpoint)
+          })
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Plugin Home:"))
+            add(component.pluginHome)
+            add(component.choosePluginHome)
+          })
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Shell Command:"))
+            add(component.shellCommand)
+          })
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Enable Legacy Actions:"))
+            add(component.enableLegacyActions)
+          })
+          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Human Language:"))
+            add(component.humanLanguage)
+          })
+        }, BorderLayout.NORTH)
+      } catch (e: Exception) {
+        log.warn("Error building Developer Tools", e)
+      }
+    })
+
+    tabbedPane.addTab("OpenAI", JPanel(BorderLayout()).apply {
+      try {
+        add(JPanel().apply {
+          layout = BoxLayout(this, BoxLayout.Y_AXIS)
           add(JPanel(BorderLayout()).apply {
             add(JLabel("Store Metadata (JSON):"), BorderLayout.NORTH)
             val scrollPane = JScrollPane(component.storeMetadata)
@@ -145,39 +209,13 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
               add(component.removeUserModelButton, gbc)
             }, BorderLayout.SOUTH)
           })
-          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Enable API Log:"))
-            add(component.apiLog)
-            add(component.openApiLog)
-            add(component.clearApiLog)
-          })
-          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Server Port:"))
-            add(component.listeningPort)
-          })
-          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Server Endpoint:"))
-            add(component.listeningEndpoint)
-          })
-          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Plugin Home:"))
-            add(component.pluginHome)
-            add(component.choosePluginHome)
-          })
-          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Shell Command:"))
-            add(component.shellCommand)
-          })
-          add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            //add(JLabel("Show Welcome Screen:"))
-            add(component.showWelcomeScreen)
-          })
         }, BorderLayout.NORTH)
       } catch (e: Exception) {
         log.warn("Error building Developer Tools", e)
       }
     })
 
+/*
     tabbedPane.addTab("Usage", JPanel(BorderLayout()).apply {
       try {
         add(component.usage, BorderLayout.CENTER)
@@ -185,8 +223,138 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
         log.warn("Error building Usage", e)
       }
     })
+*/
 
     return tabbedPane
+  }
+  private fun showExportConfigDialog() {
+    val dialog = JDialog(null as Frame?, "Export Configuration", true)
+    dialog.layout = BorderLayout()
+    val configJson = JsonUtil.toJson(AppSettingsState.instance)
+    val textArea = JTextArea(configJson).apply {
+      lineWrap = true
+      wrapStyleWord = true
+      font = Font(Font.MONOSPACED, Font.PLAIN, 12)
+    }
+    dialog.add(JScrollPane(textArea), BorderLayout.CENTER)
+    val buttonPanel = JPanel(FlowLayout(FlowLayout.RIGHT))
+    val copyButton = JButton("Copy to Clipboard")
+    copyButton.addActionListener {
+      textArea.selectAll()
+      textArea.copy()
+      JOptionPane.showMessageDialog(dialog, "Configuration copied to clipboard", "Success", JOptionPane.INFORMATION_MESSAGE)
+    }
+    val saveButton = JButton("Save to File")
+    saveButton.addActionListener {
+      val fileChooser = JFileChooser().apply {
+        dialogTitle = "Save Configuration"
+        fileFilter = FileNameExtensionFilter("JSON Files", "json")
+      }
+      if (fileChooser.showSaveDialog(dialog) == JFileChooser.APPROVE_OPTION) {
+        val file = fileChooser.selectedFile
+        val filePath = if (!file.name.lowercase().endsWith(".json")) {
+          File("${file.absolutePath}.json")
+        } else {
+          file
+        }
+        try {
+          FileWriter(filePath).use { writer ->
+            writer.write(textArea.text)
+          }
+          JOptionPane.showMessageDialog(dialog, "Configuration saved to ${filePath.absolutePath}", "Success", JOptionPane.INFORMATION_MESSAGE)
+        } catch (e: Exception) {
+          JOptionPane.showMessageDialog(dialog, "Error saving configuration: ${e.message}", "Error", JOptionPane.ERROR_MESSAGE)
+          log.error("Error saving configuration", e)
+        }
+      }
+    }
+    val closeButton = JButton("Close")
+    closeButton.addActionListener {
+      dialog.dispose()
+    }
+    buttonPanel.add(copyButton)
+    buttonPanel.add(saveButton)
+    buttonPanel.add(closeButton)
+    dialog.add(buttonPanel, BorderLayout.SOUTH)
+    dialog.preferredSize = Dimension(800, 600)
+    dialog.pack()
+    dialog.setLocationRelativeTo(null)
+    dialog.isVisible = true
+  }
+  private fun showImportConfigDialog() {
+    val dialog = JDialog(null as Frame?, "Import Configuration", true)
+    dialog.layout = BorderLayout()
+    val textArea = JTextArea().apply {
+      lineWrap = true
+      wrapStyleWord = true
+      font = Font(Font.MONOSPACED, Font.PLAIN, 12)
+    }
+    dialog.add(JScrollPane(textArea), BorderLayout.CENTER)
+    val buttonPanel = JPanel(FlowLayout(FlowLayout.RIGHT))
+    val pasteButton = JButton("Paste from Clipboard")
+    pasteButton.addActionListener {
+      textArea.paste()
+    }
+    val loadButton = JButton("Load from File")
+    loadButton.addActionListener {
+      val fileChooser = JFileChooser().apply {
+        dialogTitle = "Load Configuration"
+        fileFilter = FileNameExtensionFilter("JSON Files", "json")
+      }
+      if (fileChooser.showOpenDialog(dialog) == JFileChooser.APPROVE_OPTION) {
+        try {
+          FileReader(fileChooser.selectedFile).use { reader ->
+            textArea.text = reader.readText()
+          }
+        } catch (e: Exception) {
+          JOptionPane.showMessageDialog(dialog, "Error loading configuration: ${e.message}", "Error", JOptionPane.ERROR_MESSAGE)
+          log.error("Error loading configuration", e)
+        }
+      }
+    }
+    val applyButton = JButton("Apply Configuration")
+    applyButton.addActionListener {
+      try {
+        val importedSettings = JsonUtil.fromJson<AppSettingsState>(textArea.text, AppSettingsState::class.java)
+        // Confirm before applying
+        val confirm = JOptionPane.showConfirmDialog(
+          dialog,
+          "Are you sure you want to apply this configuration? This will overwrite your current settings.",
+          "Confirm Import",
+          JOptionPane.YES_NO_OPTION,
+          JOptionPane.WARNING_MESSAGE
+        )
+        if (confirm == JOptionPane.YES_OPTION) {
+          // Copy all properties from imported settings to current instance
+          XmlSerializerUtil.copyBean(importedSettings, AppSettingsState.instance)
+          // Update user-supplied models
+          addUserSuppliedModels(importedSettings.userSuppliedModels)
+          JOptionPane.showMessageDialog(
+            dialog,
+            "Configuration applied successfully. Please restart the IDE for all changes to take effect.",
+            "Success",
+            JOptionPane.INFORMATION_MESSAGE
+          )
+          dialog.dispose()
+        }
+      } catch (e: Exception) {
+        JOptionPane.showMessageDialog(dialog, "Error applying configuration: ${e.message}", "Error", JOptionPane.ERROR_MESSAGE)
+        log.error("Error applying configuration", e)
+      }
+    }
+    val closeButton = JButton("Cancel")
+    closeButton.addActionListener {
+      dialog.dispose()
+    }
+    buttonPanel.add(pasteButton)
+    buttonPanel.add(loadButton)
+    buttonPanel.add(applyButton)
+    buttonPanel.add(closeButton)
+    dialog.add(buttonPanel, BorderLayout.SOUTH)
+    dialog.preferredSize = Dimension(800, 600)
+    dialog.pack()
+    dialog.setLocationRelativeTo(null)
+    dialog.isVisible = true
   }
 
   override fun write(settings: AppSettingsState, component: AppSettingsComponent) {

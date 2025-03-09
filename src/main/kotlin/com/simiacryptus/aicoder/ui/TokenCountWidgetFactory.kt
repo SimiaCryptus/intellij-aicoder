@@ -33,7 +33,10 @@ class TokenCountWidgetFactory : StatusBarWidgetFactory {
     val log = com.intellij.openapi.diagnostic.Logger.getInstance(TokenCountWidgetFactory::class.java)
     private val messages = ResourceBundle.getBundle("messages.TokenCountWidget")
     private fun getMessage(key: String, vararg args: Any): String =
-      String.format(messages.getString(key), *args)
+      try { String.format(messages.getString(key), *args) } catch (e: Exception) {
+        log.warn("Error getting message for key: $key", e)
+        key
+      }
     
     val workQueue = LinkedBlockingDeque<Runnable>()
     val pool = ThreadPoolExecutor(

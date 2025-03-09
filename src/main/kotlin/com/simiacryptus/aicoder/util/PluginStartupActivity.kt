@@ -39,6 +39,7 @@ class PluginStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     setLogInfo("org.apache.hc.client5.http")
     setLogInfo("org.eclipse.jetty")
+    setLogInfo("com.simiacryptus.jopenai")
 
     try {
       // Configure diff logging based on settings
