@@ -208,7 +208,6 @@
                         text="🔨 Mass Patch"
                         description="Analyze and patch multiple code files while considering markdown documentation files for context and standards">
                 </action>
-
             </group>
             <group id="com.simiacryptus.aicoder.ui.ProjectMenu.Generation"
                    class="com.intellij.openapi.actionSystem.DefaultActionGroup"
@@ -236,54 +235,15 @@
                         description="Analyze multiple code files with the Large Output Actor">
                 </action>
             </group>
-            <group id="com.simiacryptus.aicoder.ui.ProjectMenu.Planning"
-                   class="com.intellij.openapi.actionSystem.DefaultActionGroup"
-                   popup="true"
-                   text="📋 Task Plans"
-                   description="Task planning and management tools">
-                <action class="aicoder.actions.plan.PlanAheadAction"
-                        text="🏃 Task Runner"
-                        description="Intelligent task planning and execution tool for breaking down complex coding tasks into manageable steps">
-                </action>
-                <action class="aicoder.actions.plan.AutoPlanChatAction"
-                        text="🤖 Auto-Plan"
-                        description="Automatically generate a structured task plan based on the selected code, project, or task description">
-                </action>
-    <action class="aicoder.actions.plan.UnifiedPlanAction"
-            text="🧠 Unified Planning"
-            description="Choose from multiple planning strategies in a unified interface with customizable task settings">
-    </action>
-                <action class="aicoder.actions.plan.GraphPlanAction"
-                        text="🕸️ Graph-Based Planning"
-                        description="Use a software graph to generate and execute task plans">
-                </action>
-            <action class="aicoder.actions.plan.GraphOrderedPlanAction"
-                    text="🕸️ Ordered Graph-Based Planning"
-                    description="Generate an ordered plan by prioritizing graph nodes and execute the aggregated DAG">
-            </action>
-                <action class="aicoder.actions.plan.PlanChatAction"
-                        text="💬 Chat w/ Planner"
-                        description="Interactive session for project planning, task breakdown, and development strategy discussions">
-                </action>
-                <action class="aicoder.actions.plan.PrePlanAction"
-                        text="📝 Pre-Planner"
-                        description="Set up a structured task planning session with customizable parameters and execution environment">
-                </action>
-                <action class="aicoder.actions.plan.SingleTaskAction"
-                        text="✨ Single Task"
-                        description="Execute a single AI-powered task with focused functionality">
-                </action>
-                <action id="GraphAnalyzeAction"
-                        class="aicoder.actions.plan.GraphAnalyzeAction"
-                        text="🔍 Analyze Graph"
-                        description="Analyze code and documentation files to produce a detailed software graph">
-                </action>
-            </group>
             <group id="com.simiacryptus.aicoder.ui.ProjectMenu.Agents"
                    class="com.intellij.openapi.actionSystem.DefaultActionGroup"
                    popup="true"
                    text="🤖 Agents"
                    description="AI-powered automation agents">
+                <action class="aicoder.actions.plan.UnifiedPlanAction"
+                        text="🧠 Task Planning"
+                        description="Choose from multiple planning strategies in a unified interface with customizable task settings">
+                </action>
                 <action class="aicoder.actions.agent.CommandAutofixAction"
                         text="🔄 Run ... and Fix"
                         description="Intelligent analysis and automatic resolution of build or test errors, with customizable fix suggestions">
