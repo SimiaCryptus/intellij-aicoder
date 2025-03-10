@@ -102,7 +102,6 @@ data class AppSettingsState(
     val name: String,
     val temperature: Double,
     val autoFix: Boolean,
-    val allowBlocking: Boolean,
     val taskSettings: Map<String, TaskSettingsBase>
   )
   

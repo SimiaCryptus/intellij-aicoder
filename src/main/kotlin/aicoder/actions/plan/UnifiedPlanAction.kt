@@ -14,6 +14,7 @@ import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.UnifiedPlanApp
+import com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode
 import com.simiacryptus.skyenet.apps.plan.cognitive.AutoPlanMode
 import com.simiacryptus.skyenet.apps.plan.cognitive.CognitiveModeStrategy
 import com.simiacryptus.skyenet.apps.plan.cognitive.PlanAheadMode
@@ -32,22 +33,14 @@ import java.text.SimpleDateFormat
 import javax.swing.JOptionPane
 
 class UnifiedPlanAction : BaseAction() {
-  // Maximum file size to process (512KB)
   private companion object {
     private const val MAX_FILE_SIZE = 512 * 1024
-    private val COGNITIVE_MODES = mapOf(
-      "Auto Plan" to AutoPlanMode.Companion,
-      "Plan Ahead" to PlanAheadMode.Companion,
-      "Single Task" to SingleTaskMode.Companion
-    )
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun handle(e: AnActionEvent) {
-    // First, select the cognitive mode
-    val cognitiveMode = selectCognitiveMode() ?: return
-
+    // The unified dialog now includes cognitive mode settings.
     val dialog = PlanConfigDialog(
       e.project, PlanSettings(
         defaultModel = AppSettingsState.instance.smartModel.chatModel(),
@@ -62,13 +55,23 @@ class UnifiedPlanAction : BaseAction() {
         googleApiKey = AppSettingsState.instance.googleApiKey,
         googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
       ),
-      // Use single task mode if SingleTaskMode is selected
-      singleTaskMode = (cognitiveMode == SingleTaskMode.Companion)
+      // singleTaskMode now depends on the cognitive mode selection in the dialog
+      singleTaskMode = false
     )
-    
+
     if (dialog.showAndGet()) {
       try {
         val planSettings = dialog.settings
+        // Get cognitive mode selection from the dialog's combo box (cast as needed)
+        val selectedCognitiveMode = dialog.cognitiveModeCombo.selectedItem as String
+        // Convert the selection string to the appropriate CognitiveModeStrategy.
+        val cognitiveMode = when (selectedCognitiveMode) {
+          "Plan Ahead" -> PlanAheadMode.Companion
+          "Single Task" -> SingleTaskMode.Companion
+          "Graph" -> GraphOrderedPlanMode.Companion
+          else -> AutoPlanMode.Companion
+        }
+
         UITools.runAsync(e.project, "Initializing Unified Plan", true) { progress ->
           initializeChat(e, progress, planSettings, cognitiveMode)
         }
@@ -77,21 +80,6 @@ class UnifiedPlanAction : BaseAction() {
         UITools.showError(e.project, "Failed to initialize unified plan: ${ex.message}")
       }
     }
-  }
-
-  private fun selectCognitiveMode(): CognitiveModeStrategy? {
-    val options = COGNITIVE_MODES.keys.toTypedArray()
-    val selection = JOptionPane.showInputDialog(
-      null,
-      "Select planning mode:",
-      "Unified Planning",
-      JOptionPane.QUESTION_MESSAGE,
-      null,
-      options,
-      options[0]
-    ) as String? ?: return null
-    
-    return COGNITIVE_MODES[selection]
   }
 
   private fun initializeChat(
@@ -145,7 +133,7 @@ class UnifiedPlanAction : BaseAction() {
     e: AnActionEvent, 
     planSettings: PlanSettings,
     cognitiveStrategy: CognitiveModeStrategy
-  ): UnifiedPlanApp = object : UnifiedPlanApp(
+  ): UnifiedPlanApp = UnifiedPlanApp(
     applicationName = "Unified Planning",
     path = "/unifiedPlan",
     planSettings = planSettings.copy(
@@ -163,40 +151,7 @@ class UnifiedPlanAction : BaseAction() {
     api = api,
     api2 = api2,
     cognitiveStrategy = cognitiveStrategy
-  ) {
-    private fun codeFiles() = (UITools.getSelectedFiles(e).toTypedArray().toList().flatMap<VirtualFile, File> {
-      FileValidationUtils.expandFileList(it.toFile).toList<File>()
-    }.map<File, Path> { it.toPath() }.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
-      .filter { it.toFile().exists() }
-      .filter { it.toFile().length() < MAX_FILE_SIZE }
-      .map { root.toPath().relativize(it) ?: it }.toSet()
-
-    private fun codeSummary() = codeFiles()
-      .joinToString("\n\n") { path ->
-        "# ${path}\n$tripleTilde${path.toString().split('.').lastOrNull()}\n${root.resolve(path.toFile()).readText(Charsets.UTF_8)}\n$tripleTilde"
-      }
-
-    private fun projectSummary() = codeFiles()
-      .asSequence().distinct().sorted()
-      .joinToString("\n") { path ->
-        "* ${path} - ${root.resolve(path.toFile()).length()} bytes"
-      }
-
-    // This will be used by cognitive modes that support context data
-    fun contextData(): List<String> =
-      try {
-        listOf(
-          if (codeFiles().size < 4) {
-            "Files:\n" + codeSummary()
-          } else {
-            "Files:\n" + projectSummary()
-          }
-        )
-      } catch (e: Exception) {
-        log.error("Error generating context data", e)
-        emptyList()
-      }
-  }
+  )
 
   private fun openBrowser(server: AppServer, session: String) {
     Thread {

@@ -28,6 +28,17 @@ class PlanConfigDialog(
   val settings: PlanSettings,
   val singleTaskMode: Boolean = false,
 ) : DialogWrapper(project) {
+  // New UI elements for graph file input when "Graph" mode is selected.
+  private val graphFileTextField = JTextField(com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile, 20)
+  private val selectGraphFileButton = JButton("Select File")
+  private val graphFilePanel = JPanel().apply {
+    layout = BoxLayout(this, BoxLayout.X_AXIS)
+    add(graphFileTextField)
+    add(Box.createHorizontalStrut(5))
+    add(selectGraphFileButton)
+    isVisible = false // initially hidden
+  }
+
   companion object {
     private const val CONFIG_COMBO_WIDTH = 200
     private const val CONFIG_COMBO_HEIGHT = 30
@@ -48,11 +59,13 @@ class PlanConfigDialog(
     }
   }
 
+  val cognitiveModeCombo = ComboBox(arrayOf("Auto Plan", "Plan Ahead", "Single Task", "Graph")).apply {
+    preferredSize = Dimension(200, 30)
+    selectedIndex = 0 // default to "Auto Plan" for example
+  }
+
   private fun validateModelSelection(taskType: TaskType<*, *>, model: ChatModel?): Boolean {
     if (model == null && settings.getTaskSettings(taskType).enabled) {
-      JOptionPane.showMessageDialog(
-        null, "Please select a model for enabled task: ${taskType.name}", "Model Required", JOptionPane.WARNING_MESSAGE
-      )
       return false
     }
     return true
@@ -60,9 +73,6 @@ class PlanConfigDialog(
 
   private fun validateConfigName(name: String?) = when {
     name.isNullOrBlank() -> {
-      JOptionPane.showMessageDialog(
-        null, "Please enter a valid configuration name", "Invalid Name", JOptionPane.WARNING_MESSAGE
-      )
       false
     }
 
@@ -100,8 +110,9 @@ class PlanConfigDialog(
         }
         foreground = if (isEnabled) {
           list?.foreground
-        } else {
           list?.foreground?.darker()?.darker()
+        } else {
+          list?.foreground?.darker()
         }
         text = buildString {
           val taskDescription = value.description ?: ""
@@ -160,7 +171,6 @@ class PlanConfigDialog(
             fireTableCellUpdated(row, column)
             updateCommandSettings()
             taskTypeList.repaint()
-          } else {
             throw IllegalArgumentException("Invalid column index: $column")
           }
         }
@@ -229,13 +239,9 @@ class PlanConfigDialog(
               val selectedRow = commandList.selectedRow
               if (selectedRow != -1) {
                 val command = (commandList.model as DefaultTableModel).getValueAt(selectedRow, 1) as String
-                val confirmResult = JOptionPane.showConfirmDialog(
-                  null, "Remove command: $command?", "Confirm Remove", JOptionPane.YES_NO_OPTION
-                )
-                if (confirmResult == JOptionPane.YES_OPTION) {
-                  (commandList.model as DefaultTableModel).removeRow(selectedRow)
-                  AppSettingsState.instance.executables.remove(command)
-                }
+                (commandList.model as DefaultTableModel).removeRow(selectedRow)
+                AppSettingsState.instance.executables.remove(command)
+
               } else {
                 JOptionPane.showMessageDialog(
                   null, "Please select a command to remove."
@@ -313,10 +319,8 @@ class PlanConfigDialog(
     }
   }
   private val defaultModel = AppSettingsState.instance.smartModel
-  private val fastModel = AppSettingsState.instance.fastModel
   private val temperatureLabel = JLabel(TEMPERATURE_LABEL.format(settings.temperature))
   private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
-  private val allowBlockingCheckbox = JCheckBox("Allow blocking", settings.allowBlocking)
   private val taskTypeList = JBList(TaskType.values())
   private val configPanelContainer = JPanel(CardLayout())
   private val taskConfigs = mutableMapOf<String, TaskTypeConfigPanel>()
@@ -347,6 +351,50 @@ class PlanConfigDialog(
       configPanelContainer.add(configPanel, taskType.name)
     }
     taskTypeList.selectedIndex = 0
+
+    // Add an action listener to transition the UI when the cognitive mode changes.
+    cognitiveModeCombo.addActionListener {
+      val selected = cognitiveModeCombo.selectedItem as String
+      // Show the graph file input only when "Graph" is selected.
+      graphFilePanel.isVisible = (selected == "Graph")
+
+      // For "Single Task" mode, disable the task type list and the enabled checkboxes.
+      if (selected == "Single Task") {
+        taskTypeList.isEnabled = false
+        taskConfigs.values.forEach { it.enabledCheckbox.isEnabled = false }
+      } else {
+        taskTypeList.isEnabled = true
+        taskConfigs.values.forEach { it.enabledCheckbox.isEnabled = true }
+      }
+    }
+
+    // Setup file select button to open a file chooser.
+    selectGraphFileButton.addActionListener {
+      val chooser = JFileChooser("")
+      val result = chooser.showOpenDialog(null)
+      if (result == JFileChooser.APPROVE_OPTION) {
+        val selectedFile = chooser.selectedFile
+        graphFileTextField.text = selectedFile.absolutePath
+        // Update the graph file used by GraphOrderedPlanMode.
+        com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile = selectedFile.absolutePath
+      }
+    }
+
+    // Keep the text field in sync with the GraphOrderedPlanMode property.
+    graphFileTextField.document.addDocumentListener(object : javax.swing.event.DocumentListener {
+      override fun insertUpdate(e: javax.swing.event.DocumentEvent?) {
+        com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile = graphFileTextField.text
+      }
+
+      override fun removeUpdate(e: javax.swing.event.DocumentEvent?) {
+        com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile = graphFileTextField.text
+      }
+
+      override fun changedUpdate(e: javax.swing.event.DocumentEvent?) {
+        com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile = graphFileTextField.text
+      }
+    })
+
     init()
     title = "Configure Planning and Tasks"
     temperatureSlider.addChangeListener {
@@ -384,7 +432,6 @@ class PlanConfigDialog(
       name = configName!!,
       temperature = settings.temperature,
       autoFix = settings.autoFix,
-      allowBlocking = settings.allowBlocking,
       taskSettings = taskSettingsMap
     )
     AppSettingsState.instance.savedPlanConfigs[configName] = config
@@ -413,9 +460,7 @@ class PlanConfigDialog(
       temperatureSlider.value = (validatedTemp * TEMPERATURE_SCALE).toInt()
       temperatureLabel.text = TEMPERATURE_LABEL.format(validatedTemp)
       settings.autoFix = config.autoFix
-      settings.allowBlocking = config.allowBlocking
       autoFixCheckbox.isSelected = config.autoFix
-      allowBlockingCheckbox.isSelected = config.allowBlocking
       config.taskSettings.forEach { (taskTypeName: String, serializedSettings: TaskSettingsBase) ->
         val taskType = TaskType.values().find { it.name == taskTypeName } ?: return@forEach
         val availableModels = getVisibleModels()
@@ -440,7 +485,8 @@ class PlanConfigDialog(
   }
 
   override fun createCenterPanel(): JComponent = panel {
-    group("Settings") {
+
+    group {
       if (!singleTaskMode) {
         row("Saved Configs:") {
           cell(savedConfigsCombo).align(Align.FILL).comment("Select a saved configuration to load or save current settings")
@@ -478,32 +524,40 @@ class PlanConfigDialog(
       row {
         cell(autoFixCheckbox).align(Align.FILL).comment("Automatically apply suggested fixes without confirmation")
       }
-      row {
-        cell(allowBlockingCheckbox).align(Align.FILL).comment("Allow tasks to block UI while processing")
-      }
       row("Temperature:") {
         cell(temperatureSlider).align(Align.FILL).comment("Adjust AI response creativity (higher = more creative)")
         cell(temperatureLabel)
       }
+
+      group("Planning Settings") {
+        row("Cognitive Mode:") {
+          cell(cognitiveModeCombo).align(Align.FILL).comment("Select the cognitive strategy for planning")
+        }
+        // New row for graph file input visible only when Graph mode is selected
+        row {
+          cell(graphFilePanel).align(Align.FILL).comment("Specify the graph file path")
+        }
+      }
+
+      group("Task Settings") {
+        row {
+          cell(
+            JBSplitter(false, DIVIDER_PROPORTION).apply {
+              firstComponent = JBScrollPane(taskTypeList).apply {
+                minimumSize = Dimension(DEFAULT_LIST_WIDTH, DEFAULT_LIST_HEIGHT)
+                preferredSize = Dimension(DEFAULT_LIST_WIDTH + 100, DEFAULT_LIST_HEIGHT)
+              }
+              secondComponent = JBScrollPane(configPanelContainer).apply {
+                minimumSize = Dimension(DEFAULT_PANEL_WIDTH, DEFAULT_PANEL_HEIGHT / 2)
+                preferredSize = Dimension(DEFAULT_PANEL_WIDTH, DEFAULT_PANEL_HEIGHT)
+              }
+              dividerWidth = 3
+              isShowDividerControls = true
+              isShowDividerIcon = true
+            }).align(Align.FILL).resizableColumn()
+        }.resizableRow()
+      }.layout(RowLayout.PARENT_GRID).resizableRow()
     }
-    group("Tasks") {
-      row {
-        cell(
-          JBSplitter(false, DIVIDER_PROPORTION).apply {
-            firstComponent = JBScrollPane(taskTypeList).apply {
-              minimumSize = Dimension(DEFAULT_LIST_WIDTH, DEFAULT_LIST_HEIGHT)
-              preferredSize = Dimension(DEFAULT_LIST_WIDTH + 100, DEFAULT_LIST_HEIGHT)
-            }
-            secondComponent = JBScrollPane(configPanelContainer).apply {
-              minimumSize = Dimension(DEFAULT_PANEL_WIDTH, DEFAULT_PANEL_HEIGHT / 2)
-              preferredSize = Dimension(DEFAULT_PANEL_WIDTH, DEFAULT_PANEL_HEIGHT)
-            }
-            dividerWidth = 3
-            isShowDividerControls = true
-            isShowDividerIcon = true
-          }).align(Align.FILL).resizableColumn()
-      }.resizableRow()
-    }.layout(RowLayout.PARENT_GRID).resizableRow()
   }
 
   override fun doOKAction() {
@@ -523,7 +577,6 @@ class PlanConfigDialog(
       configPanel.saveSettings()
     }
     settings.autoFix = autoFixCheckbox.isSelected
-    settings.allowBlocking = allowBlockingCheckbox.isSelected
     super.doOKAction()
   }
 
