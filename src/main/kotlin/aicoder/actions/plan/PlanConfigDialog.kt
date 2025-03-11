@@ -361,7 +361,17 @@ class PlanConfigDialog(
       // For "Single Task" mode, disable the task type list and the enabled checkboxes.
       if (selected == "Single Task") {
         taskTypeList.isEnabled = false
+    // Make sure at least one task is selected before disabling the list
+    if (taskTypeList.selectedIndex == -1) {
+      taskTypeList.selectedIndex = 0
+    }
+    // Get the currently selected task and enable only that one
+    val selectedType = (taskTypeList.selectedValue as TaskType<*, *>).name
         taskConfigs.values.forEach { it.enabledCheckbox.isEnabled = false }
+    TaskType.values().forEach { taskType ->
+      val isSelected = taskType.name == selectedType
+      taskConfigs[taskType.name]?.enabledCheckbox?.isSelected = isSelected
+    }
       } else {
         taskTypeList.isEnabled = true
         taskConfigs.values.forEach { it.enabledCheckbox.isEnabled = true }

@@ -2,12 +2,10 @@ package aicoder.actions.plan
 
 import aicoder.actions.BaseAction
 import aicoder.actions.SessionProxyServer
-import aicoder.actions.agent.SimpleCommandAction.Companion.tripleTilde
 import aicoder.actions.agent.toFile
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
@@ -15,22 +13,21 @@ import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.UnifiedPlanApp
 import com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode
+import com.simiacryptus.skyenet.apps.plan.PlanSettings
+import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
+import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
+import com.simiacryptus.skyenet.apps.plan.TaskType
 import com.simiacryptus.skyenet.apps.plan.cognitive.AutoPlanMode
 import com.simiacryptus.skyenet.apps.plan.cognitive.CognitiveModeStrategy
 import com.simiacryptus.skyenet.apps.plan.cognitive.PlanAheadMode
 import com.simiacryptus.skyenet.apps.plan.cognitive.SingleTaskMode
-import com.simiacryptus.skyenet.apps.plan.PlanSettings
-import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
-import com.simiacryptus.skyenet.core.util.FileValidationUtils
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
-import java.nio.file.Path
 import java.text.SimpleDateFormat
-import javax.swing.JOptionPane
 
 class UnifiedPlanAction : BaseAction() {
   private companion object {
@@ -55,8 +52,8 @@ class UnifiedPlanAction : BaseAction() {
         googleApiKey = AppSettingsState.instance.googleApiKey,
         googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
       ),
-      // singleTaskMode now depends on the cognitive mode selection in the dialog
-      singleTaskMode = false
+    // Set singleTaskMode based on the initial cognitive mode selection
+    singleTaskMode = false // Initially false, will be updated based on selection
     )
 
     if (dialog.showAndGet()) {
@@ -71,6 +68,23 @@ class UnifiedPlanAction : BaseAction() {
           "Graph" -> GraphOrderedPlanMode.Companion
           else -> AutoPlanMode.Companion
         }
+      // Update singleTaskMode based on the selected cognitive mode
+      val isSingleTaskMode = selectedCognitiveMode == "Single Task"
+      // If in single task mode, ensure only one task is enabled in the settings
+      if (isSingleTaskMode) {
+        val enabledTask = TaskType.values().find { planSettings.getTaskSettings(it).enabled }
+        if (enabledTask != null) {
+          // Disable all other tasks
+          TaskType.values().forEach { taskType ->
+            if (taskType != enabledTask) {
+              planSettings.setTaskSettings(
+                taskType,
+                TaskSettingsBase(taskType.name, false, planSettings.getTaskSettings(taskType).model)
+              )
+            }
+          }
+        }
+      }
 
         UITools.runAsync(e.project, "Initializing Unified Plan", true) { progress ->
           initializeChat(e, progress, planSettings, cognitiveMode)
@@ -92,7 +106,7 @@ class UnifiedPlanAction : BaseAction() {
     val session = Session.newGlobalID()
     val root = getProjectRoot(e) ?: throw RuntimeException("Could not determine project root")
     progress.text = "Processing files..."
-    setupChatSession(session, root, e, planSettings, cognitiveStrategy)
+    setupChatSession(session, root, planSettings, cognitiveStrategy)
     progress.text = "Starting server..."
     val server = AppServer.getServer(e.project)
     openBrowser(server, session.toString())
@@ -106,14 +120,13 @@ class UnifiedPlanAction : BaseAction() {
   }
 
   private fun setupChatSession(
-    session: Session, 
-    root: File, 
-    e: AnActionEvent, 
+    session: Session,
+    root: File,
     planSettings: PlanSettings,
     cognitiveStrategy: CognitiveModeStrategy
   ) {
     DataStorage.sessionPaths[session] = root
-    SessionProxyServer.chats[session] = createUnifiedPlanApp(root, e, planSettings, cognitiveStrategy)
+    SessionProxyServer.chats[session] = createUnifiedPlanApp(root, planSettings, cognitiveStrategy)
     ApplicationServer.appInfoMap[session] = AppInfoData(
       applicationName = "Unified Planning",
       singleInput = false,
@@ -129,8 +142,7 @@ class UnifiedPlanAction : BaseAction() {
   }
 
   private fun createUnifiedPlanApp(
-    root: File, 
-    e: AnActionEvent, 
+    root: File,
     planSettings: PlanSettings,
     cognitiveStrategy: CognitiveModeStrategy
   ): UnifiedPlanApp = UnifiedPlanApp(
