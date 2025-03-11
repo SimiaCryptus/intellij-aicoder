@@ -8,16 +8,10 @@ import aicoder.actions.BaseAction
 import aicoder.actions.SessionProxyServer
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.isFile
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.config.CommandConfig
@@ -55,10 +49,11 @@ class CommandAutofixAction : BaseAction() {
                 val files = UITools.getSelectedFiles(event)
                 val folders = UITools.getSelectedFolders(event).map { it.toFile.toPath() }
                 val root = (folders + files.map { it.toFile.toPath() }).filterNotNull().toTypedArray().commonRoot()
+                lateinit var settingsUI: SettingsUI
                 val settings = run {
                     var settings1: PatchApp.Settings? = null
                     SwingUtilities.invokeAndWait {
-                        val settingsUI = SettingsUI(workingDirectory = root.toFile(), folders)
+                        settingsUI = SettingsUI(workingDirectory = root.toFile(), folders)
                         // If a single file is provided that is executable or has a whitelisted extension
                         if (files.size == 1) {
                             val defaultFile = files[0]
@@ -118,7 +113,9 @@ class CommandAutofixAction : BaseAction() {
                 val patchApp = CmdPatchApp(
                     root = root,
                     settings = settings,
-                    api = api,
+                    api = api.getChildClient().apply {
+                        budget = settingsUI.apiBudgetField.value as Double
+                    },
                     files = files.map { it.toFile }.toTypedArray(),
                     model = AppSettingsState.instance.smartModel.chatModel(),
                     parsingModel = AppSettingsState.instance.fastModel.chatModel()
@@ -225,6 +222,9 @@ class CommandAutofixAction : BaseAction() {
                 rows = TEXT_AREA_ROWS
                 lineWrap = true
                 wrapStyleWord = true
+            }
+            val apiBudgetField = JSpinner(SpinnerNumberModel(0.0, 0.0, 1000.0, 0.1)).apply {
+                toolTipText = "Specify the API budget for this session (0.0 - 1000.0)"
             }
             val autoFixCheckBox = JCheckBox("Auto-apply fixes").apply {
                 isSelected = false
@@ -388,117 +388,7 @@ class CommandAutofixAction : BaseAction() {
 
             }
         }
-
-        /**
-         * Dialog for configuring command autofix settings
-         */
-
-        class CommandSettingsDialog(project: Project?, private val settingsUI: SettingsUI) : DialogWrapper(project) {
-            init {
-                title = "Command Autofix Settings"
-                init()
-            }
-
-            override fun createCenterPanel(): JComponent {
-                return panel {
-// ... existing rows ...
-                    row("Saved Configs:") {
-                        cell(settingsUI.savedConfigsCombo).align(Align.FILL)
-                            .comment("Select a saved configuration to load or save current settings")
-                        button("Save...") {
-                            settingsUI.saveCurrentConfig()
-                        }
-                        button("Load") {
-                            val selected = settingsUI.savedConfigsCombo.selectedItem as? String
-                            if (selected != null) {
-                                settingsUI.loadConfig(selected)
-                            } else {
-                                JOptionPane.showMessageDialog(
-                                    null,
-                                    "Please select a configuration to load",
-                                    "No Configuration Selected",
-                                    JOptionPane.WARNING_MESSAGE
-                                )
-                            }
-                        }
-                        button("Delete") {
-                            val selected = settingsUI.savedConfigsCombo.selectedItem as? String
-                            if (selected != null) {
-                                val confirmResult = JOptionPane.showConfirmDialog(
-                                    null,
-                                    "Delete configuration '$selected'?",
-                                    "Confirm Delete",
-                                    JOptionPane.YES_NO_OPTION
-                                )
-                                if (confirmResult == JOptionPane.YES_OPTION) {
-                                    AppSettingsState.instance.savedCommandConfigs.remove(selected)
-                                    settingsUI.savedConfigsCombo.removeItem(selected)
-                                }
-                            } else {
-                                JOptionPane.showMessageDialog(
-                                    null,
-                                    "Please select a configuration to delete",
-                                    "No Configuration Selected",
-                                    JOptionPane.WARNING_MESSAGE
-                                )
-                            }
-                        }
-                    }
-                    row {
-                        cell(settingsUI.commandsPanel)
-                    }
-                    row {
-                        button("Add Command") {
-                            settingsUI.addCommandPanel()
-                        }
-                        button("Remove Command") {
-                            if (settingsUI.commandsList.size > 1) {
-                                settingsUI.removeCommandPanel(settingsUI.commandsList.last())
-                            }
-                        }
-                    }
-                    row("Exit Code Options") {
-                        // Radio buttons are already part of exitCodeOptions ButtonGroup
-                        panel {
-                            buttonsGroup {
-                                row {
-                                    settingsUI.exitCodeNonZero =
-                                        radioButton("Fix commands that return nonzero exit code").apply {
-                                            selected(true)
-                                        }
-                                }
-                                row {
-                                    settingsUI.exitCodeAny = radioButton("Fix commands regardless of exit code")
-                                }
-                                row {
-                                    settingsUI.exitCodeZero = radioButton("Fix commands that return zero exit code")
-                                }
-                            }
-                        }
-
-                    }
-                    row("Max Auto-Retries") {
-                        cell(settingsUI.maxRetriesSlider)
-                            .comment("Adjust the maximum number of automatic retry attempts (0-10)")
-                    }
-                    row("Additional Instructions") {
-                        cell(JScrollPane(settingsUI.additionalInstructionsField))
-                    }
-                    row {
-                        cell(settingsUI.autoFixCheckBox)
-                cell(settingsUI.includeGitDiffsCheckBox)
-                    }
-                }
-            }
-
-            override fun doOKAction() {
-                if (settingsUI.commandsList.isEmpty()) {
-                    Messages.showErrorDialog("At least one command is required", "Validation Error")
-                    return
-                }
-                super.doOKAction()
-            }
-        }
-
+        
     }
+    
 }

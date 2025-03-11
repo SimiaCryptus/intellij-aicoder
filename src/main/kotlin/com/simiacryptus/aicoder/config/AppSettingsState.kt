@@ -14,7 +14,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.simiacryptus.aicoder.util.PluginStartupActivity.Companion.addUserSuppliedModels
+import com.simiacryptus.aicoder.PluginStartupActivity.Companion.addUserSuppliedModels
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
@@ -102,6 +102,7 @@ data class AppSettingsState(
     val name: String,
     val temperature: Double,
     val autoFix: Boolean,
+  val apiBudget: Double? = 10.0,
     val taskSettings: Map<String, TaskSettingsBase>
   )
   

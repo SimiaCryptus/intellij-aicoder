@@ -1,4 +1,4 @@
-package com.simiacryptus.aicoder.util
+package com.simiacryptus.aicoder
 
 import ch.qos.logback.classic.Level
 import com.intellij.openapi.application.ApplicationManager
@@ -11,6 +11,8 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.aicoder.util.IdeaChatClient
+import com.simiacryptus.aicoder.util.IntelliJPsiValidator
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.core.OutputInterceptor
 import com.simiacryptus.skyenet.core.platform.ApplicationServices

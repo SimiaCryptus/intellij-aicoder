@@ -2,7 +2,7 @@ package com.simiacryptus.aicoder.config
 
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.aicoder.util.IdeaChatClient
-import com.simiacryptus.aicoder.util.PluginStartupActivity.Companion.addUserSuppliedModels
+import com.simiacryptus.aicoder.PluginStartupActivity.Companion.addUserSuppliedModels
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.util.JsonUtil
 import java.awt.*

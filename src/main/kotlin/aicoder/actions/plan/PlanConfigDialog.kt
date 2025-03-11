@@ -27,6 +27,7 @@ class PlanConfigDialog(
   project: Project?,
   val settings: PlanSettings,
   val singleTaskMode: Boolean = false,
+  var apiBudget: Double = 10.0
 ) : DialogWrapper(project) {
   // New UI elements for graph file input when "Graph" mode is selected.
   private val graphFileTextField = JTextField(com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile, 20)
@@ -44,12 +45,16 @@ class PlanConfigDialog(
     private const val CONFIG_COMBO_HEIGHT = 30
     private const val MIN_TEMP = 0
     private const val MAX_TEMP = 100
+    private const val MIN_BUDGET = 1
+    private const val MAX_BUDGET = 100
+    private const val DEFAULT_BUDGET = 10
     private const val DEFAULT_LIST_WIDTH = 150
     private const val DEFAULT_LIST_HEIGHT = 200
     private const val DEFAULT_PANEL_WIDTH = 350
     private const val DEFAULT_PANEL_HEIGHT = 200
     private const val TEMPERATURE_SCALE = 100.0
     private const val TEMPERATURE_LABEL = "%.2f"
+    private const val BUDGET_LABEL = "$%.2f"
     private const val FONT_SIZE_ENABLED = 14f
     private const val FONT_SIZE_DISABLED = 12f
     private const val DIVIDER_PROPORTION = 0.3f
@@ -63,6 +68,15 @@ class PlanConfigDialog(
     preferredSize = Dimension(200, 30)
     selectedIndex = 0 // default to "Auto Plan" for example
   }
+  // Budget slider and label
+  private val budgetSlider = JSlider(MIN_BUDGET, MAX_BUDGET, apiBudget.toInt()).apply {
+    addChangeListener {
+      apiBudget = value.toDouble()
+      budgetLabel.text = BUDGET_LABEL.format(apiBudget)
+    }
+  }
+  private val budgetLabel = JLabel(BUDGET_LABEL.format(apiBudget))
+
 
   private fun validateModelSelection(taskType: TaskType<*, *>, model: ChatModel?): Boolean {
     if (model == null && settings.getTaskSettings(taskType).enabled) {
@@ -337,10 +351,11 @@ class PlanConfigDialog(
       if (!e.valueIsAdjusting) {
         val selectedType = (taskTypeList.selectedValue as TaskType<*, *>).name
         (configPanelContainer.layout as CardLayout).show(configPanelContainer, selectedType)
-        if (singleTaskMode) {
+        if (cognitiveModeCombo.selectedItem as String == "Single Task") {
           TaskType.values().forEach { taskType ->
-            val isSelected = taskType.name == selectedType
-            taskConfigs[taskType.name]?.enabledCheckbox?.isSelected = isSelected
+            taskConfigs[taskType.name]?.enabledCheckbox?.apply {
+              isSelected = (taskType.name == selectedType)
+            }
           }
         }
       }
@@ -353,25 +368,26 @@ class PlanConfigDialog(
     taskTypeList.selectedIndex = 0
 
     // Add an action listener to transition the UI when the cognitive mode changes.
+
     cognitiveModeCombo.addActionListener {
       val selected = cognitiveModeCombo.selectedItem as String
       // Show the graph file input only when "Graph" is selected.
       graphFilePanel.isVisible = (selected == "Graph")
 
-      // For "Single Task" mode, disable the task type list and the enabled checkboxes.
+      // For "Single Task" mode, keep taskTypeList enabled so the user can select a task,
+      // while disabling all the task checkboxes.
       if (selected == "Single Task") {
-        taskTypeList.isEnabled = false
-    // Make sure at least one task is selected before disabling the list
-    if (taskTypeList.selectedIndex == -1) {
-      taskTypeList.selectedIndex = 0
-    }
-    // Get the currently selected task and enable only that one
-    val selectedType = (taskTypeList.selectedValue as TaskType<*, *>).name
+        taskTypeList.isEnabled = true
+        if (taskTypeList.selectedIndex == -1) {
+          taskTypeList.selectedIndex = 0
+        }
+        // Disable all checkboxes
         taskConfigs.values.forEach { it.enabledCheckbox.isEnabled = false }
-    TaskType.values().forEach { taskType ->
-      val isSelected = taskType.name == selectedType
-      taskConfigs[taskType.name]?.enabledCheckbox?.isSelected = isSelected
-    }
+        // Automatically select the currently selected task only.
+        val selectedType = (taskTypeList.selectedValue as TaskType<*, *>).name
+        TaskType.values().forEach { taskType ->
+          taskConfigs[taskType.name]?.enabledCheckbox?.isSelected = (taskType.name == selectedType)
+        }
       } else {
         taskTypeList.isEnabled = true
         taskConfigs.values.forEach { it.enabledCheckbox.isEnabled = true }
@@ -442,6 +458,7 @@ class PlanConfigDialog(
       name = configName!!,
       temperature = settings.temperature,
       autoFix = settings.autoFix,
+      apiBudget = apiBudget,
       taskSettings = taskSettingsMap
     )
     AppSettingsState.instance.savedPlanConfigs[configName] = config
@@ -471,6 +488,10 @@ class PlanConfigDialog(
       temperatureLabel.text = TEMPERATURE_LABEL.format(validatedTemp)
       settings.autoFix = config.autoFix
       autoFixCheckbox.isSelected = config.autoFix
+      // Load API budget if available, otherwise use default
+      apiBudget = config.apiBudget ?: DEFAULT_BUDGET.toDouble()
+      budgetSlider.value = apiBudget.toInt()
+      budgetLabel.text = BUDGET_LABEL.format(apiBudget)
       config.taskSettings.forEach { (taskTypeName: String, serializedSettings: TaskSettingsBase) ->
         val taskType = TaskType.values().find { it.name == taskTypeName } ?: return@forEach
         val availableModels = getVisibleModels()
@@ -537,6 +558,10 @@ class PlanConfigDialog(
       row("Temperature:") {
         cell(temperatureSlider).align(Align.FILL).comment("Adjust AI response creativity (higher = more creative)")
         cell(temperatureLabel)
+      }
+      row("API Budget:") {
+        cell(budgetSlider).align(Align.FILL).comment("Set maximum spending limit for this session (in USD)")
+        cell(budgetLabel)
       }
 
       group("Planning Settings") {

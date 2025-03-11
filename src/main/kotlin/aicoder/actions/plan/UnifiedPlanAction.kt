@@ -10,6 +10,8 @@ import com.simiacryptus.aicoder.AppServer
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
+import com.simiacryptus.jopenai.API
+import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.UnifiedPlanApp
 import com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode
@@ -17,14 +19,14 @@ import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
 import com.simiacryptus.skyenet.apps.plan.TaskType
-import com.simiacryptus.skyenet.apps.plan.cognitive.AutoPlanMode
-import com.simiacryptus.skyenet.apps.plan.cognitive.CognitiveModeStrategy
-import com.simiacryptus.skyenet.apps.plan.cognitive.PlanAheadMode
-import com.simiacryptus.skyenet.apps.plan.cognitive.SingleTaskMode
+import com.simiacryptus.skyenet.apps.plan.cognitive.*
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
+import com.simiacryptus.skyenet.core.platform.model.User
+import com.simiacryptus.skyenet.core.util.FileValidationUtils
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
+import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import java.io.File
 import java.text.SimpleDateFormat
@@ -32,12 +34,14 @@ import java.text.SimpleDateFormat
 class UnifiedPlanAction : BaseAction() {
   private companion object {
     private const val MAX_FILE_SIZE = 512 * 1024
+    private const val DEFAULT_API_BUDGET = 10.0
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun handle(e: AnActionEvent) {
     // The unified dialog now includes cognitive mode settings.
+    val root: String = UITools.getRoot(e)
     val dialog = PlanConfigDialog(
       e.project, PlanSettings(
         defaultModel = AppSettingsState.instance.smartModel.chatModel(),
@@ -46,14 +50,15 @@ class UnifiedPlanAction : BaseAction() {
           if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
         ),
         temperature = AppSettingsState.instance.temperature.coerceIn(0.0, 1.0),
-        workingDir = UITools.getRoot(e),
+        workingDir = root,
         env = mapOf(),
         githubToken = AppSettingsState.instance.githubToken,
         googleApiKey = AppSettingsState.instance.googleApiKey,
         googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
       ),
     // Set singleTaskMode based on the initial cognitive mode selection
-    singleTaskMode = false // Initially false, will be updated based on selection
+      singleTaskMode = false, // Initially false, will be updated based on selection
+      apiBudget = DEFAULT_API_BUDGET // Default API budget
     )
 
     if (dialog.showAndGet()) {
@@ -62,11 +67,46 @@ class UnifiedPlanAction : BaseAction() {
         // Get cognitive mode selection from the dialog's combo box (cast as needed)
         val selectedCognitiveMode = dialog.cognitiveModeCombo.selectedItem as String
         // Convert the selection string to the appropriate CognitiveModeStrategy.
-        val cognitiveMode = when (selectedCognitiveMode) {
+        val cognitiveMode: CognitiveModeStrategy = when (selectedCognitiveMode) {
           "Plan Ahead" -> PlanAheadMode.Companion
           "Single Task" -> SingleTaskMode.Companion
           "Graph" -> GraphOrderedPlanMode.Companion
-          else -> AutoPlanMode.Companion
+          "Auto Plan" -> object : CognitiveModeStrategy {
+            override fun getCognitiveMode(
+              ui: ApplicationInterface,
+              api: API,
+              api2: OpenAIClient,
+              planSettings: PlanSettings,
+              session: Session,
+              user: User?
+            ): CognitiveMode {
+              return object : AutoPlanMode(
+                ui = ui,
+                api = api,
+                planSettings = planSettings,
+                session = session,
+                user = user,
+                api2 = api2
+              ) {
+                override fun contextData(): List<String> {
+                  return listOf(
+                    buildString {
+                      // Selected file listing
+                      append("Selected Files:\n")
+                      append(FileValidationUtils.filteredWalk(File(root)) {
+                        true
+                      }.joinToString("\n") {
+                        "* " + it.toString()
+                      })
+                    }
+                  )
+                }
+              }
+            }
+            
+          }
+          
+          else -> throw RuntimeException("Unknown plan mode: $selectedCognitiveMode")
         }
       // Update singleTaskMode based on the selected cognitive mode
       val isSingleTaskMode = selectedCognitiveMode == "Single Task"
@@ -87,7 +127,7 @@ class UnifiedPlanAction : BaseAction() {
       }
 
         UITools.runAsync(e.project, "Initializing Unified Plan", true) { progress ->
-          initializeChat(e, progress, planSettings, cognitiveMode)
+          initializeChat(e, progress, planSettings, cognitiveMode, dialog.apiBudget)
         }
       } catch (ex: Exception) {
         log.error("Failed to initialize unified plan", ex)
@@ -100,13 +140,14 @@ class UnifiedPlanAction : BaseAction() {
     e: AnActionEvent, 
     progress: ProgressIndicator, 
     planSettings: PlanSettings,
-    cognitiveStrategy: CognitiveModeStrategy
+    cognitiveStrategy: CognitiveModeStrategy,
+    apiBudget: Double
   ) {
     progress.text = "Setting up session..."
     val session = Session.newGlobalID()
     val root = getProjectRoot(e) ?: throw RuntimeException("Could not determine project root")
     progress.text = "Processing files..."
-    setupChatSession(session, root, planSettings, cognitiveStrategy)
+    setupChatSession(session, root, planSettings, cognitiveStrategy, apiBudget)
     progress.text = "Starting server..."
     val server = AppServer.getServer(e.project)
     openBrowser(server, session.toString())
@@ -118,15 +159,36 @@ class UnifiedPlanAction : BaseAction() {
       getModuleRootForFile(file)
     }
   }
-
+  
   private fun setupChatSession(
     session: Session,
     root: File,
     planSettings: PlanSettings,
-    cognitiveStrategy: CognitiveModeStrategy
+    cognitiveStrategy: CognitiveModeStrategy,
+    apiBudget: Double
   ) {
     DataStorage.sessionPaths[session] = root
-    SessionProxyServer.chats[session] = createUnifiedPlanApp(root, planSettings, cognitiveStrategy)
+    SessionProxyServer.chats[session] = UnifiedPlanApp(
+      applicationName = "Unified Planning",
+      path = "/unifiedPlan",
+      planSettings = planSettings.copy(
+        env = mapOf(),
+        workingDir = root.absolutePath,
+        language = if (isWindows) "powershell" else "bash",
+        command = listOf(
+          if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
+        ),
+        parsingModel = AppSettingsState.instance.fastModel.chatModel(),
+      ),
+      model = AppSettingsState.instance.smartModel.chatModel(),
+      parsingModel = AppSettingsState.instance.fastModel.chatModel(),
+      showMenubar = false,
+      api = api.getChildClient().apply {
+        budget = apiBudget // Set the user-configured budget for the API
+      },
+      api2 = api2,
+      cognitiveStrategy = cognitiveStrategy
+    )
     ApplicationServer.appInfoMap[session] = AppInfoData(
       applicationName = "Unified Planning",
       singleInput = false,
@@ -140,31 +202,7 @@ class UnifiedPlanAction : BaseAction() {
       "${javaClass.simpleName} @ ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}"
     )
   }
-
-  private fun createUnifiedPlanApp(
-    root: File,
-    planSettings: PlanSettings,
-    cognitiveStrategy: CognitiveModeStrategy
-  ): UnifiedPlanApp = UnifiedPlanApp(
-    applicationName = "Unified Planning",
-    path = "/unifiedPlan",
-    planSettings = planSettings.copy(
-      env = mapOf(),
-      workingDir = root.absolutePath,
-      language = if (isWindows) "powershell" else "bash",
-      command = listOf(
-        if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
-      ),
-      parsingModel = AppSettingsState.instance.fastModel.chatModel(),
-    ),
-    model = AppSettingsState.instance.smartModel.chatModel(),
-    parsingModel = AppSettingsState.instance.fastModel.chatModel(),
-    showMenubar = false,
-    api = api,
-    api2 = api2,
-    cognitiveStrategy = cognitiveStrategy
-  )
-
+  
   private fun openBrowser(server: AppServer, session: String) {
     Thread {
       Thread.sleep(500)
