@@ -4,9 +4,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBSplitter
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
@@ -34,6 +34,7 @@ class PlanConfigDialog(
   private val maxTaskHistoryCharsField = JBTextField("20000")
   private val maxTasksPerIterationField = JBTextField("3")
   private val maxIterationsField = JBTextField("100")
+  
   // New UI elements for graph file input when "Graph" mode is selected.
   private val graphFileTextField = JTextField(com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile, 20)
   private val selectGraphFileButton = JButton("Select File")
@@ -44,7 +45,21 @@ class PlanConfigDialog(
     add(selectGraphFileButton)
     isVisible = false // initially hidden
   }
-
+  
+  // New panel for AutoPlan settings to appear only when "Auto Plan" is selected.
+  private val autoPlanPanel = JPanel().apply {
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    add(JLabel("Max Task History Chars:"))
+    add(maxTaskHistoryCharsField)
+    add(Box.createVerticalStrut(5))
+    add(JLabel("Max Tasks Per Iteration:"))
+    add(maxTasksPerIterationField)
+    add(Box.createVerticalStrut(5))
+    add(JLabel("Max Iterations:"))
+    add(maxIterationsField)
+    isVisible = false
+  }
+  
   companion object {
     private const val CONFIG_COMBO_WIDTH = 200
     private const val CONFIG_COMBO_HEIGHT = 30
@@ -63,16 +78,17 @@ class PlanConfigDialog(
     private const val FONT_SIZE_ENABLED = 14f
     private const val FONT_SIZE_DISABLED = 12f
     private const val DIVIDER_PROPORTION = 0.3f
-
+    
     fun isVisible(it: ChatModel): Boolean {
       return AppSettingsState.instance.apiKey?.get(it.provider.name)?.isNotBlank() ?: false
     }
   }
-
+  
   val cognitiveModeCombo = ComboBox(arrayOf("Auto Plan", "Plan Ahead", "Single Task", "Graph")).apply {
     preferredSize = Dimension(200, 30)
     selectedIndex = 0 // default to "Auto Plan" for example
   }
+  
   // Budget slider and label
   private val budgetSlider = JSlider(MIN_BUDGET, MAX_BUDGET, apiBudget.toInt()).apply {
     addChangeListener {
@@ -81,30 +97,30 @@ class PlanConfigDialog(
     }
   }
   private val budgetLabel = JLabel(BUDGET_LABEL.format(apiBudget))
-
-
+  
+  
   private fun validateModelSelection(taskType: TaskType<*, *>, model: ChatModel?): Boolean {
     if (model == null && settings.getTaskSettings(taskType).enabled) {
       return false
     }
     return true
   }
-
+  
   private fun validateConfigName(name: String?) = when {
     name.isNullOrBlank() -> {
       false
     }
-
+    
     name.contains(Regex("[^a-zA-Z0-9_-]")) -> {
       JOptionPane.showMessageDialog(
         null, "Configuration name can only contain letters, numbers, underscores and hyphens", "Invalid Name", JOptionPane.WARNING_MESSAGE
       )
       false
     }
-
+    
     else -> true
   }
-
+  
   private inner class TaskTypeListCellRenderer : DefaultListCellRenderer() {
     private fun getTaskTooltip(taskType: TaskType<*, *>): String = """
       <html>
@@ -114,7 +130,7 @@ class PlanConfigDialog(
       </body>
       </html>
     """
-
+    
     override fun getListCellRendererComponent(
       list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
     ): Component {
@@ -123,7 +139,7 @@ class PlanConfigDialog(
         toolTipText = getTaskTooltip(value)
         val isEnabled = settings.getTaskSettings(value).enabled
         font = when (isEnabled) {
-
+          
           true -> font.deriveFont(Font.BOLD + Font.PLAIN, FONT_SIZE_ENABLED)
           false -> font.deriveFont(Font.ITALIC + Font.PLAIN, FONT_SIZE_DISABLED)
         }
@@ -145,7 +161,7 @@ class PlanConfigDialog(
       return component
     }
   }
-
+  
   private inner class TaskTypeConfigPanel(val taskType: TaskType<*, *>) : JPanel() {
     val enabledCheckbox = JCheckBox("Enabled", settings.getTaskSettings(taskType).enabled)
     val modelComboBox = ComboBox(getVisibleModels().distinctBy { it.modelName }.map { it.modelName }.toTypedArray()).apply {
@@ -163,9 +179,9 @@ class PlanConfigDialog(
       JBTable(object : DefaultTableModel(
         arrayOf("Enabled", "Command"), 0
       ) {
-
+        
         private val entries = mutableListOf<CommandTableEntry>()
-
+        
         init {
           val sortedExecutables = AppSettingsState.instance.executables.sortedWith(String.CASE_INSENSITIVE_ORDER)
           sortedExecutables.forEach { command ->
@@ -175,14 +191,14 @@ class PlanConfigDialog(
             addRow(arrayOf(isEnabled, command))
           }
         }
-
+        
         override fun getColumnClass(columnIndex: Int) = when (columnIndex) {
           0 -> java.lang.Boolean::class.java
           else -> super.getColumnClass(columnIndex)
         }
-
+        
         override fun isCellEditable(row: Int, column: Int) = column == 0
-
+        
         override fun setValueAt(aValue: Any?, row: Int, column: Int) {
           if (column == 0 && aValue is Boolean) {
             entries[row].enabled = aValue
@@ -193,7 +209,7 @@ class PlanConfigDialog(
             throw IllegalArgumentException("Invalid column index: $column")
           }
         }
-
+        
         private fun updateCommandSettings() {
           val newSettings = CommandAutoFixTask.CommandAutoFixTaskSettings(
             taskType.name,
@@ -215,7 +231,7 @@ class PlanConfigDialog(
         }
       }
     } else null
-
+    
     init {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       alignmentX = Component.LEFT_ALIGNMENT
@@ -260,7 +276,7 @@ class PlanConfigDialog(
                 val command = (commandList.model as DefaultTableModel).getValueAt(selectedRow, 1) as String
                 (commandList.model as DefaultTableModel).removeRow(selectedRow)
                 AppSettingsState.instance.executables.remove(command)
-
+                
               } else {
                 JOptionPane.showMessageDialog(
                   null, "Please select a command to remove."
@@ -270,7 +286,7 @@ class PlanConfigDialog(
           })
         })
       }
-
+      
       val currentModel = settings.getTaskSettings(taskType).model
       modelComboBox.selectedItem = currentModel?.modelName ?: defaultModel
       enabledCheckbox.addItemListener {
@@ -281,7 +297,7 @@ class PlanConfigDialog(
             getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
             (0 until (commandList?.model?.rowCount ?: 0)).filter { row -> (commandList?.model?.getValueAt(row, 0) as? Boolean) ?: false }
               .map { row -> commandList?.model?.getValueAt(row, 1) as String })
-
+          
           else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
             this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
           }
@@ -298,7 +314,7 @@ class PlanConfigDialog(
             (0 until (commandList?.model?.rowCount ?: 0)).map { row ->
               commandList?.model?.getValueAt(row, 1) as String
             })
-
+          
           else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
             this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
           }
@@ -306,7 +322,7 @@ class PlanConfigDialog(
         settings.setTaskSettings(taskType, newSettings)
       }
     }
-
+    
     fun saveSettings() {
       val newSettings = when (taskType) {
         TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
@@ -316,7 +332,7 @@ class PlanConfigDialog(
           commandAutoFixCommands = (0 until (commandList?.model?.rowCount ?: 0)).filter { row ->
             commandList?.model?.getValueAt(row, 0) as Boolean
           }.map { row -> commandList?.model?.getValueAt(row, 1) as String })
-
+        
         else -> TaskSettingsBase(taskType.name, enabledCheckbox.isSelected).apply {
           this.model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem }
         }
@@ -326,11 +342,11 @@ class PlanConfigDialog(
       }
     }
   }
-
+  
   private data class CommandTableEntry(
     var enabled: Boolean, val command: String
   )
-
+  
   private val temperatureSlider = JSlider(MIN_TEMP, MAX_TEMP, (settings.temperature * TEMPERATURE_SCALE).toInt()).apply {
     addChangeListener {
       settings.temperature = value / TEMPERATURE_SCALE
@@ -347,9 +363,9 @@ class PlanConfigDialog(
     preferredSize = Dimension(CONFIG_COMBO_WIDTH, CONFIG_COMBO_HEIGHT)
     AppSettingsState.instance.savedPlanConfigs.keys.sorted().forEach { addItem(it) }
   }
-
+  
   private fun getVisibleModels() = ChatModel.values().map { it.value }.filter { isVisible(it) }.toList().sortedBy { "${it.provider.name} - ${it.modelName}" }
-
+  
   init {
     taskTypeList.cellRenderer = TaskTypeListCellRenderer()
     taskTypeList.addListSelectionListener { e ->
@@ -371,14 +387,17 @@ class PlanConfigDialog(
       configPanelContainer.add(configPanel, taskType.name)
     }
     taskTypeList.selectedIndex = 0
-
+    
     // Add an action listener to transition the UI when the cognitive mode changes.
-
+    
+    
     cognitiveModeCombo.addActionListener {
       val selected = cognitiveModeCombo.selectedItem as String
       // Show the graph file input only when "Graph" is selected.
       graphFilePanel.isVisible = (selected == "Graph")
-
+      // Show the AutoPlan settings only when "Auto Plan" is selected.
+      autoPlanPanel.isVisible = (selected == "Auto Plan")
+      
       // For "Single Task" mode, keep taskTypeList enabled so the user can select a task,
       // while disabling all the task checkboxes.
       if (selected == "Single Task") {
@@ -398,7 +417,7 @@ class PlanConfigDialog(
         taskConfigs.values.forEach { it.enabledCheckbox.isEnabled = true }
       }
     }
-
+    
     // Setup file select button to open a file chooser.
     selectGraphFileButton.addActionListener {
       val chooser = JFileChooser("")
@@ -410,35 +429,35 @@ class PlanConfigDialog(
         com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile = selectedFile.absolutePath
       }
     }
-
+    
     // Keep the text field in sync with the GraphOrderedPlanMode property.
     graphFileTextField.document.addDocumentListener(object : javax.swing.event.DocumentListener {
       override fun insertUpdate(e: javax.swing.event.DocumentEvent?) {
         com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile = graphFileTextField.text
       }
-
+      
       override fun removeUpdate(e: javax.swing.event.DocumentEvent?) {
         com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile = graphFileTextField.text
       }
-
+      
       override fun changedUpdate(e: javax.swing.event.DocumentEvent?) {
         com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile = graphFileTextField.text
       }
     })
-
+    
     init()
     title = "Configure Planning and Tasks"
     temperatureSlider.addChangeListener {
       settings.temperature = temperatureSlider.value / 100.0
     }
   }
-
-
+  
+  
   private fun saveCurrentConfig() {
     val configName = JOptionPane.showInputDialog(
       null, "Enter configuration name:", "Save Configuration", JOptionPane.PLAIN_MESSAGE
     )?.trim()
-
+    
     if (!validateConfigName(configName)) {
       return
     }
@@ -470,7 +489,7 @@ class PlanConfigDialog(
     savedConfigsCombo.addItem(configName)
     savedConfigsCombo.selectedItem = configName
   }
-
+  
   private fun loadConfig(configName: String) {
     val config = AppSettingsState.instance.savedPlanConfigs[configName] ?: return
     val hasUnsavedChanges = TaskType.values().any { taskType ->
@@ -519,9 +538,9 @@ class PlanConfigDialog(
       )
     }
   }
-
+  
   override fun createCenterPanel(): JComponent = panel {
-
+    
     group {
       if (!singleTaskMode) {
         row("Saved Configs:") {
@@ -568,28 +587,21 @@ class PlanConfigDialog(
         cell(budgetSlider).align(Align.FILL).comment("Set maximum spending limit for this session (in USD)")
         cell(budgetLabel)
       }
-      group("AutoPlanMode Settings") {
-        row("Max Task History Chars:") {
-          cell(maxTaskHistoryCharsField).align(Align.FILL).comment("Set the maximum number of characters for task history")
-        }
-        row("Max Tasks Per Iteration:") {
-          cell(maxTasksPerIterationField).align(Align.FILL).comment("Set the maximum number of tasks per iteration")
-        }
-        row("Max Iterations:") {
-          cell(maxIterationsField).align(Align.FILL).comment("Set the maximum number of iterations")
-        }
-      }
-
+      
       group("Planning Settings") {
         row("Cognitive Mode:") {
           cell(cognitiveModeCombo).align(Align.FILL).comment("Select the cognitive strategy for planning")
         }
-        // New row for graph file input visible only when Graph mode is selected
+        // New row for Auto Plan settings; visible only if "Auto Plan" is selected.
+        row {
+          cell(autoPlanPanel).align(Align.FILL).comment("Auto Plan Settings")
+        }
+        // Row for graph file input visible only when Graph mode is selected.
         row {
           cell(graphFilePanel).align(Align.FILL).comment("Specify the graph file path")
         }
       }
-
+      
       group("Task Settings") {
         row {
           cell(
@@ -610,7 +622,7 @@ class PlanConfigDialog(
       }.layout(RowLayout.PARENT_GRID).resizableRow()
     }
   }
-
+  
   override fun doOKAction() {
     val invalidTasks = taskConfigs.values.filter { configPanel ->
       val isEnabled = configPanel.enabledCheckbox.isSelected
@@ -634,5 +646,5 @@ class PlanConfigDialog(
     settings.maxIterations = maxIterationsField.text.toIntOrNull() ?: 100
     super.doOKAction()
   }
-
+  
 }
