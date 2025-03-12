@@ -46,7 +46,6 @@ abstract class BaseAction(
    * Handle the action event
    * @param e The action event to handle
    */
-
   abstract fun handle(e: AnActionEvent)
 
   /** Determines if this action is enabled in the current context */

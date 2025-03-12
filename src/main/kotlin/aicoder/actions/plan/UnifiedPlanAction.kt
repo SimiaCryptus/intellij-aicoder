@@ -50,8 +50,8 @@ class UnifiedPlanAction : BaseAction() {
           if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
         ),
         temperature = AppSettingsState.instance.temperature.coerceIn(0.0, 1.0),
-        workingDir = root,
         env = mapOf(),
+        workingDir = root,
         githubToken = AppSettingsState.instance.githubToken,
         googleApiKey = AppSettingsState.instance.googleApiKey,
         googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
@@ -80,13 +80,17 @@ class UnifiedPlanAction : BaseAction() {
               session: Session,
               user: User?
             ): CognitiveMode {
+              
               return object : AutoPlanMode(
                 ui = ui,
                 api = api,
                 planSettings = planSettings,
                 session = session,
                 user = user,
-                api2 = api2
+                api2 = api2,
+               maxTaskHistoryChars = dialog.settings.maxTaskHistoryChars,
+               maxTasksPerIteration = dialog.settings.maxTasksPerIteration,
+               maxIterations = dialog.settings.maxIterations,
               ) {
                 override fun contextData(): List<String> {
                   return listOf(

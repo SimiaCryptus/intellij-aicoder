@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBSplitter
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
@@ -29,6 +30,10 @@ class PlanConfigDialog(
   val singleTaskMode: Boolean = false,
   var apiBudget: Double = 10.0
 ) : DialogWrapper(project) {
+  // New UI elements for AutoPlanMode parameters
+  private val maxTaskHistoryCharsField = JBTextField("20000")
+  private val maxTasksPerIterationField = JBTextField("3")
+  private val maxIterationsField = JBTextField("100")
   // New UI elements for graph file input when "Graph" mode is selected.
   private val graphFileTextField = JTextField(com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.graphFile, 20)
   private val selectGraphFileButton = JButton("Select File")
@@ -563,6 +568,17 @@ class PlanConfigDialog(
         cell(budgetSlider).align(Align.FILL).comment("Set maximum spending limit for this session (in USD)")
         cell(budgetLabel)
       }
+      group("AutoPlanMode Settings") {
+        row("Max Task History Chars:") {
+          cell(maxTaskHistoryCharsField).align(Align.FILL).comment("Set the maximum number of characters for task history")
+        }
+        row("Max Tasks Per Iteration:") {
+          cell(maxTasksPerIterationField).align(Align.FILL).comment("Set the maximum number of tasks per iteration")
+        }
+        row("Max Iterations:") {
+          cell(maxIterationsField).align(Align.FILL).comment("Set the maximum number of iterations")
+        }
+      }
 
       group("Planning Settings") {
         row("Cognitive Mode:") {
@@ -612,6 +628,10 @@ class PlanConfigDialog(
       configPanel.saveSettings()
     }
     settings.autoFix = autoFixCheckbox.isSelected
+    // Save AutoPlanMode settings
+    settings.maxTaskHistoryChars = maxTaskHistoryCharsField.text.toIntOrNull() ?: 20000
+    settings.maxTasksPerIteration = maxTasksPerIterationField.text.toIntOrNull() ?: 3
+    settings.maxIterations = maxIterationsField.text.toIntOrNull() ?: 100
     super.doOKAction()
   }
 
