@@ -84,7 +84,7 @@ class PlanConfigDialog(
     }
   }
   
-  val cognitiveModeCombo = ComboBox(arrayOf("Auto Plan", "Plan Ahead", "Single Task", "Graph")).apply {
+  val cognitiveModeCombo = ComboBox(arrayOf("Single Task", "Plan Ahead", "Auto Plan", "Graph")).apply {
     preferredSize = Dimension(200, 30)
     selectedIndex = 0 // default to "Auto Plan" for example
   }
@@ -592,13 +592,11 @@ class PlanConfigDialog(
         row("Cognitive Mode:") {
           cell(cognitiveModeCombo).align(Align.FILL).comment("Select the cognitive strategy for planning")
         }
-        // New row for Auto Plan settings; visible only if "Auto Plan" is selected.
         row {
-          cell(autoPlanPanel).align(Align.FILL).comment("Auto Plan Settings")
+          cell(autoPlanPanel).align(Align.FILL)
         }
-        // Row for graph file input visible only when Graph mode is selected.
         row {
-          cell(graphFilePanel).align(Align.FILL).comment("Specify the graph file path")
+          cell(graphFilePanel).align(Align.FILL)
         }
       }
       
