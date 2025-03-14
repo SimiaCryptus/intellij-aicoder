@@ -94,12 +94,12 @@ class DocumentedMassPatchServer(
     } ?: ""
 
     // Then process code files
+    val fixedConcurrencyProcessor = FixedConcurrencyProcessor(socketManager.pool, 2)
     config.settings?.codeFilePaths?.forEach { path: Path ->
-      socketManager.scheduledThreadPoolExecutor.schedule({
-        socketManager.pool.submit {
-          try {
-            task.add("Processing ${path}...")
-            val codeSummary = """
+      fixedConcurrencyProcessor.submit {
+        try {
+          task.add("Processing ${path}...")
+          val codeSummary = """
                              $docSummary
                              
                              # Code: $path
@@ -107,59 +107,58 @@ class DocumentedMassPatchServer(
                              ${_root.resolve(path).toFile().readText(Charsets.UTF_8)}
                              ```
                          """.trimIndent()
-
-            val fileTask = ui.newTask(false).apply {
-              tabs[path.toString()] = placeholder
-            }
-
-            val toInput = { it: String -> listOf(codeSummary, it) }
-            Discussable(
-              task = fileTask,
-              userMessage = { userMessage },
-              heading = renderMarkdown(userMessage),
-              initialResponse = {
-                mainActor.answer(toInput(it), api = api)
-              },
-              outputFn = { design: String ->
-                """<div>${
-                  renderMarkdown(design) {
-                    AddApplyFileDiffLinks.instrumentFileDiffs(
-                      self = ui.socketManager!!,
-                      root = _root,
-                      response = design,
-                      handle = { newCodeMap ->
-                        newCodeMap.forEach { (path, newCode) ->
-                          fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                        }
-                      },
-                      ui = ui,
-                      api = api as API,
-                      shouldAutoApply = { autoApply },
-                      model = AppSettingsState.instance.fastModel.chatModel(),
-                      defaultFile = path.toString()
-                    )
-                  }
-                }</div>"""
-              },
-              ui = ui,
-              reviseResponse = { userMessages ->
-                mainActor.respond(
-                  messages = userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
-                    .toTypedArray(),
-                  input = toInput(userMessage),
-                  api = api
-                )
-              },
-              atomicRef = AtomicReference(),
-              semaphore = Semaphore(0),
-            ).call()
-            task.add("Completed processing ${path}")
-          } catch (e: Exception) {
-            log.warn("Error processing $path", e)
-            task.error(ui, e)
+          
+          val fileTask = ui.newTask(false).apply {
+            tabs[path.toString()] = placeholder
           }
+          
+          val toInput = { it: String -> listOf(codeSummary, it) }
+          Discussable(
+            task = fileTask,
+            userMessage = { userMessage },
+            heading = renderMarkdown(userMessage),
+            initialResponse = {
+              mainActor.answer(toInput(it), api = api)
+            },
+            outputFn = { design: String ->
+              """<div>${
+                renderMarkdown(design) {
+                  AddApplyFileDiffLinks.instrumentFileDiffs(
+                    self = ui.socketManager!!,
+                    root = _root,
+                    response = design,
+                    handle = { newCodeMap ->
+                      newCodeMap.forEach { (path, newCode) ->
+                        fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                      }
+                    },
+                    ui = ui,
+                    api = api as API,
+                    shouldAutoApply = { autoApply },
+                    model = AppSettingsState.instance.fastModel.chatModel(),
+                    defaultFile = path.toString()
+                  )
+                }
+              }</div>"""
+            },
+            ui = ui,
+            reviseResponse = { userMessages ->
+              mainActor.respond(
+                messages = userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }
+                  .toTypedArray(),
+                input = toInput(userMessage),
+                api = api
+              )
+            },
+            atomicRef = AtomicReference(),
+            semaphore = Semaphore(0),
+          ).call()
+          task.add("Completed processing ${path}")
+        } catch (e: Exception) {
+          log.warn("Error processing $path", e)
+          task.error(ui, e)
         }
-      }, 10, java.util.concurrent.TimeUnit.MILLISECONDS)
+      }
     }
     return socketManager
   }

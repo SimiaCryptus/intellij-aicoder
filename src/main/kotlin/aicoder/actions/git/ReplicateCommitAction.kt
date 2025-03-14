@@ -202,7 +202,6 @@ class ReplicateCommitAction : BaseAction() {
       Thread {
         run(ui, task, session, settings, userMessage, diffInfo)
       }.start()
-      task.placeholder
     }
 
     abstract fun projectSummary(): String

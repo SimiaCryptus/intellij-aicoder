@@ -186,7 +186,6 @@ class SimpleCommandAction : BaseAction() {
             Thread {
                 run(ui, task, session, settings, userMessage)
             }.start()
-            task.placeholder
         }
 
         abstract fun projectSummary(): String
