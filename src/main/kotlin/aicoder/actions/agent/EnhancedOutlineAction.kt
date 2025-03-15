@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.simiacryptus.aicoder.AppServer
+import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.skyenet.core.platform.Session
@@ -72,7 +73,10 @@ class EnhancedOutlineAction : BaseAction() {
     }
   }
 
-  override fun isEnabled(event: AnActionEvent) = true
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if(!AppSettingsState.instance.devActions) return false
+    return true
+  }
 
   companion object {
     private val log = LoggerFactory.getLogger(EnhancedOutlineAction::class.java)

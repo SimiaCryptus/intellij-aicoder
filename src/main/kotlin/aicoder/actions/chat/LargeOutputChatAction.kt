@@ -92,7 +92,10 @@ class LargeOutputChatAction : BaseAction() {
     }
   }
 
-  override fun isEnabled(event: AnActionEvent) = true
+  override fun isEnabled(event: AnActionEvent): Boolean {
+    if(!AppSettingsState.instance.devActions) return false
+    return true
+  }
 
   companion object {
     private val log = LoggerFactory.getLogger(LargeOutputChatAction::class.java)

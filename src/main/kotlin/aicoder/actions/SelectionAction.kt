@@ -16,6 +16,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.simiacryptus.aicoder.util.ComputerLanguage
 import com.simiacryptus.aicoder.util.LanguageUtils
 import com.simiacryptus.aicoder.util.UITools
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 
 abstract class SelectionAction<T : Any>(
   private val requiresSelection: Boolean = true
@@ -90,6 +91,7 @@ abstract class SelectionAction<T : Any>(
           }
       }
       UITools.writeableFn(e) {
+        log.debug("Start: $selectionStart; End: $selectionEnd; Selected text: \n\t${selectedText.indent("\t")}; New text: \n\t${newText.indent("\t")}")
         UITools.replaceString(editor.document, selectionStart, selectionEnd, newText)
       }
     }
@@ -187,7 +189,8 @@ abstract class SelectionAction<T : Any>(
     config: T?
   ): String {
     return UITools.run(event?.project, templateText ?: "", true) { progress ->
-      processSelection(state = selectionState, config = config, progress = progress)
+      val result = processSelection(state = selectionState, config = config, progress = progress)
+      result
     }
   }
 

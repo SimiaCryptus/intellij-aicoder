@@ -42,18 +42,18 @@
             <add-to-group group-id="ToolsMenu" anchor="first"/>
             <action class="aicoder.actions.chat.GenericChatAction"
                     id="GenericChat"
-                    text="💬 AI Assistant Chat"
+                    text="💬 AI Chat"
                     description="Initiate a general-purpose chat session to discuss coding concepts, get assistance with programming tasks, or explore software development ideas">
             </action>
             <action id="AICoderEnhancedChat"
                     class="aicoder.actions.chat.LargeOutputChatAction"
-                    text="🧐 Smart Chat"
+                    text="🧐 Large Output Chat"
                     description="Open enhanced AI code chat with structured responses">
                 <add-to-group group-id="ToolsMenu" anchor="last"/>
             </action>
             <action class="aicoder.actions.agent.OutlineAction"
                     id="OutlineAction"
-                    text="🗂️ Simple Outline Tool"
+                    text="🗂️ Outline Tool"
                     description="Create and expand outlines using AI assistance">
             </action>
             <action class="aicoder.actions.agent.EnhancedOutlineAction"

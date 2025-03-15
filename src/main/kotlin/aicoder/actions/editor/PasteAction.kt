@@ -12,6 +12,11 @@ import com.simiacryptus.jopenai.ChatClient
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ChatProxy
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.slf4j.Logger
@@ -30,15 +35,45 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
    * API interface for code conversion
    */
   interface VirtualAPI {
-    fun convert(text: String, from_language: String, to_language: String): ConvertedText
-
-    /**
-     * Response class containing converted code
-     */
-
+    fun convert(text: String, to_language: String): ConvertedText
+    @JsonDeserialize(using = ConvertedTextDeserializer::class)
+    
     class ConvertedText {
-      var code: String? = null
-      var language: String? = null
+      var converted_text: String? = null
+    }
+    /**
+     * Custom deserializer for ConvertedText that can handle different response formats:
+     * - Direct string values
+     * - Objects with a single text attribute (regardless of attribute name)
+     * - Standard objects with the expected "converted_text" attribute
+     */
+    class ConvertedTextDeserializer : JsonDeserializer<ConvertedText>() {
+      override fun deserialize(p: JsonParser, ctxt: DeserializationContext): ConvertedText {
+        val node: JsonNode = p.codec.readTree(p)
+        val result = ConvertedText()
+        when {
+          // Case 1: Direct string value
+          node.isTextual -> {
+            result.converted_text = node.asText()
+          }
+          // Case 2: Object with expected "converted_text" field
+          node.has("converted_text") -> {
+            result.converted_text = node.get("converted_text").asText()
+          }
+          // Case 3: Object with a single text field (use first field found)
+          node.isObject && node.fields().hasNext() -> {
+            val fields = node.fields()
+            while (fields.hasNext()) {
+              val field = fields.next()
+              if (field.value.isTextual) {
+                result.converted_text = field.value.asText()
+                break
+              }
+            }
+          }
+        }
+        return result
+      }
     }
   }
 
@@ -143,7 +178,12 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
       }
     } ?: false
 
-    fun converter(chatClient: ChatClient, chatModel: ChatModel, temp: Double) = ChatProxy(VirtualAPI::class.java, chatClient, chatModel, temp).create()
+    fun converter(chatClient: ChatClient, chatModel: ChatModel, temp: Double) = ChatProxy(
+      clazz = VirtualAPI::class.java,
+      api = chatClient,
+      model = chatModel,
+      temperature = temp
+    ).create()
   }
 
   override fun getConfig(project: Project?): String {
@@ -156,9 +196,11 @@ abstract class PasteActionBase(private val model: (AppSettingsState) -> ChatMode
     progress?.text = "Reading clipboard content..."
     val clipboardContent = getClipboard() ?: return ""
     val text = clipboardContent.toString().trim()
+    if (text.isEmpty()) return ""
     progress?.text = "Converting code format..."
     val converter = converter(api, model(AppSettingsState.instance), AppSettingsState.instance.temperature)
-    return converter.convert(text, "autodetect", state.language?.name ?: state.editor?.virtualFile?.extension ?: "").code ?: ""
+    val convert = converter.convert(text, state.language?.name ?: state.editor?.virtualFile?.extension ?: "")
+    return convert.converted_text ?: ""
   }
 
   override fun isLanguageSupported(computerLanguage: ComputerLanguage?): Boolean {

@@ -10,7 +10,7 @@ import com.intellij.psi.PsiErrorElement
 
 class IntelliJPsiValidator(private val project: Project, val extension: String, val filename: String) : GrammarValidator {
     override fun validateGrammar(code: String): List<GrammarValidator.ValidationError> {
-        lateinit var errors: List<GrammarValidator.ValidationError>
+        var errors: List<GrammarValidator.ValidationError>? = null
         WriteCommandAction.runWriteCommandAction(project) {
              try {
                 val fileType = FileTypeRegistry.getInstance().getFileTypeByExtension(extension)
@@ -24,7 +24,7 @@ class IntelliJPsiValidator(private val project: Project, val extension: String, 
                 ))
             }
         }
-        return errors
+        return errors ?: emptyList()
     }
     companion object {
         // Map of supported file extensions to their language names
