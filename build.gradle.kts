@@ -8,7 +8,7 @@ fun properties(key: String) = providers.gradleProperty(key).getOrElse("")
 plugins {
   id("java")
   kotlin("jvm") version "2.0.20"
-  id("org.jetbrains.intellij.platform") version "2.1.0"
+  id("org.jetbrains.intellij.platform") version "2.4.0"
   id("org.jetbrains.changelog") version "2.2.1"
   id("org.jetbrains.qodana") version "2024.2.3"
   //id("org.jetbrains.kotlinx.kover") version "0.9.0-RC"
@@ -197,9 +197,6 @@ intellijPlatform {
   publishing {
     // Include VCS plugin
     token = providers.environmentVariable("PUBLISH_TOKEN")
-    // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
-    // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
-    // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
     channels = providers.gradleProperty("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
   }
   pluginVerification {
