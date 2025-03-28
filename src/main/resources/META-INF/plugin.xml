@@ -21,10 +21,6 @@
                 id="com.simiacryptus.aicoder.ui.SettingsWidgetFactory"
                 order="first"/>
         <statusBarWidgetFactory
-                implementation="com.simiacryptus.aicoder.ui.TokenCountWidgetFactory"
-                id="TokenCountWidget"
-                order="first"/>
-        <statusBarWidgetFactory
                 implementation="com.simiacryptus.aicoder.dictation.DictationWidgetFactory"
                 id="AICodingAssistant.SpeechToTextWidget"
                 order="first"/>
