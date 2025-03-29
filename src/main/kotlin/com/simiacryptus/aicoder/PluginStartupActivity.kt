@@ -25,6 +25,8 @@ import com.simiacryptus.skyenet.core.platform.model.AuthenticationInterface
 import com.simiacryptus.skyenet.core.platform.model.AuthorizationInterface
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.regions.Region
@@ -41,7 +43,7 @@ class PluginStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     setLogInfo("org.apache.hc.client5.http")
     setLogInfo("org.eclipse.jetty")
-    setLogInfo("com.simiacryptus.jopenai")
+    setLogInfo("com.simiacryptus")
 
     try {
       // Configure diff logging based on settings
@@ -75,7 +77,9 @@ class PluginStartupActivity : ProjectActivity {
         if (virtualFile == null) {
           try {
             val tempFile =
-              File.createTempFile(welcomeFile.substringBefore("."), "." + welcomeFile.substringAfter("."))
+              withContext(Dispatchers.IO) {
+                File.createTempFile(welcomeFile.substringBefore("."), "." + welcomeFile.substringAfter("."))
+              }
             tempFile.deleteOnExit()
             resource?.openStream()?.use { input ->
               tempFile.outputStream().use { output -> input.copyTo(output) }
@@ -228,6 +232,34 @@ class PluginStartupActivity : ProjectActivity {
           when (this) {
             is com.intellij.openapi.diagnostic.Logger -> setLevel(LogLevel.INFO)
             is ch.qos.logback.classic.Logger -> setLevel(Level.INFO)
+            else -> log.info("Failed to set log level for $name: Unsupported logger type (${this::class.java})")
+          }
+        }
+      } catch (e: Exception) {
+        log.error("Error setting log level for $name", e)
+      }
+    }
+    
+    private fun setLogDebug(name: String) {
+      try {
+        LoggerFactory.getLogger(name).apply {
+          when (this) {
+            is com.intellij.openapi.diagnostic.Logger -> setLevel(LogLevel.DEBUG)
+            is ch.qos.logback.classic.Logger -> setLevel(Level.DEBUG)
+            else -> log.info("Failed to set log level for $name: Unsupported logger type (${this::class.java})")
+          }
+        }
+      } catch (e: Exception) {
+        log.error("Error setting log level for $name", e)
+      }
+    }
+    
+    private fun setLogWarn(name: String) {
+      try {
+        LoggerFactory.getLogger(name).apply {
+          when (this) {
+            is com.intellij.openapi.diagnostic.Logger -> setLevel(LogLevel.WARNING)
+            is ch.qos.logback.classic.Logger -> setLevel(Level.WARN)
             else -> log.info("Failed to set log level for $name: Unsupported logger type (${this::class.java})")
           }
         }

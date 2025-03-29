@@ -207,7 +207,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       openButton.addActionListener {
         val session = sessionsList.selectedValue
         if (session != null) {
-          browse(URI(getMessage("action.openLinkURI", getSessionLink(session))))
+          browse(URI(getSessionLink(session)))
         }
       }
       actionPanel.add(copyButton)
