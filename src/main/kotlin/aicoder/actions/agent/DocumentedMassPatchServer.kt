@@ -9,6 +9,7 @@ import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
 import com.simiacryptus.skyenet.TabbedDisplay
+import com.simiacryptus.skyenet.apps.general.renderMarkdown
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
@@ -87,7 +88,8 @@ class DocumentedMassPatchServer(
     
     // Then process code files
     val fixedConcurrencyProcessor = FixedConcurrencyProcessor(socketManager.pool, 4)
-    config.settings?.codeFilePaths?.map { path: Path -> fixedConcurrencyProcessor.submit {
+    config.settings?.codeFilePaths?.map { path: Path ->
+      fixedConcurrencyProcessor.submit {
         try {
           task.add("Processing ${path}...")
           val codeSummary = """
@@ -104,43 +106,70 @@ class DocumentedMassPatchServer(
           }
           
           val toInput = { it: String -> listOf(codeSummary, it) }
-          Discussable(
-            task = fileTask,
-            userMessage = { userMessage },
-            heading = renderMarkdown(userMessage),
-            initialResponse = {
-              mainActor.answer(toInput(it), api = api)
-            },
-            outputFn = { design: String ->
-              """<div>${
-                renderMarkdown(design) {
-                  AddApplyFileDiffLinks.instrumentFileDiffs(
-                    self = ui.socketManager!!,
-                    root = _root,
-                    response = design,
-                    handle = { newCodeMap ->
-                      newCodeMap.forEach { (path, newCode) ->
-                        fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-                      }
-                    },
-                    ui = ui,
-                    api = api as API,
-                    shouldAutoApply = { autoApply },
-                    model = AppSettingsState.instance.fastModel.chatModel(),
-                    defaultFile = path.toString()
-                  )
-                }
-              }</div>"""
-            },
-            ui = ui,
-            reviseResponse = { userMessages ->
-              mainActor.respond(messages = userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray(),
-                input = toInput(userMessage),
-                api = api)
-            },
-            atomicRef = AtomicReference(),
-            semaphore = Semaphore(0),
-          ).call()
+          if (autoApply) {
+            val design = mainActor.answer(toInput(userMessage), api = api).toContentList().firstOrNull()?.text ?: ""
+            if (design.isNotBlank()) {
+              task.add(
+                AddApplyFileDiffLinks.instrumentFileDiffs(
+                  self = ui.socketManager!!,
+                  root = _root,
+                  response = design,
+                  handle = { newCodeMap ->
+                    newCodeMap.forEach { (path, newCode) ->
+                      fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                    }
+                  },
+                  ui = ui,
+                  api = api as API,
+                  shouldAutoApply = { autoApply },
+                  model = AppSettingsState.instance.fastModel.chatModel(),
+                  defaultFile = path.toString()
+                ).renderMarkdown
+              )
+            } else {
+              fileTask.complete("No changes suggested.")
+            }
+          } else {
+            Discussable(
+              task = fileTask,
+              userMessage = { userMessage },
+              heading = renderMarkdown(userMessage),
+              initialResponse = {
+                mainActor.answer(toInput(it), api = api)
+              },
+              outputFn = { design: String ->
+                """<div>${
+                  renderMarkdown(design) {
+                    AddApplyFileDiffLinks.instrumentFileDiffs(
+                      self = ui.socketManager!!,
+                      root = _root,
+                      response = design,
+                      handle = { newCodeMap ->
+                        newCodeMap.forEach { (path, newCode) ->
+                          fileTask.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+                        }
+                      },
+                      ui = ui,
+                      api = api as API,
+                      shouldAutoApply = { autoApply },
+                      model = AppSettingsState.instance.fastModel.chatModel(),
+                      defaultFile = path.toString()
+                    )
+                  }
+                }</div>"""
+              },
+              ui = ui,
+              reviseResponse = { userMessages ->
+                mainActor.respond(
+                  messages = userMessages.map { ApiModel.ChatMessage(it.second, it.first.toContentList()) }.toTypedArray(),
+                  input = toInput(userMessage),
+                  api = api
+                )
+              },
+              atomicRef = AtomicReference(),
+              semaphore = Semaphore(0),
+            ).call()
+          }
           task.add("Completed processing ${path}")
         } catch (e: Exception) {
           log.warn("Error processing $path", e)
