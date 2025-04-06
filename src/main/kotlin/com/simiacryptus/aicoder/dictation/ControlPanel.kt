@@ -13,7 +13,8 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JButton
 import javax.swing.JPanel
-import javax.swing.JSlider
+import javax.swing.JProgressBar
+import javax.swing.JSlider // Keep JSlider import if needed elsewhere, otherwise remove if unused.
 
 class ControlPanel(
   val project: Project,
@@ -40,33 +41,21 @@ class ControlPanel(
       AppSettingsState.instance.selectedMicLine = selectedItem as String
     })
   }
-  private val rmsSlider = JSlider(JSlider.HORIZONTAL, 0, 100, 0).apply {
-    paintTicks = true
-    paintLabels = true
-    isEnabled = false // Consider enabling the slider if needed
-    majorTickSpacing = 20
-    minorTickSpacing = 10
+  private val rmsProgressBar = JProgressBar(0, 100).apply {
+    isStringPainted = true
     border = JBUI.Borders.emptyRight(5)
-    addChangeListener { rmsLabel.text = "RMS: ${value}%" }
   }
-  private val iec61672Slider = JSlider(JSlider.HORIZONTAL, 0, 100, 0).apply {
-    paintTicks = true
-    paintLabels = true
-    isEnabled = false
-    majorTickSpacing = 20
-    minorTickSpacing = 5
+  private val iec61672ProgressBar = JProgressBar(0, 100).apply {
+    isStringPainted = true
     border = JBUI.Borders.emptyRight(5)
-    addChangeListener { iec61672Label.text = "IEC61672: ${value}%" }
   }
-  private val talkTimeSlider = JSlider(
-    JSlider.HORIZONTAL, 0, 10000,
-    (settings.talkTime * 1000).toInt().coerceIn(0, 10000)
-  ).apply {
-    paintTicks = true
-    paintLabels = true
-    isEnabled = false
-    majorTickSpacing = 2500
-    minorTickSpacing = 100
+  // Assuming max talk time display is around 10 seconds for the progress bar scale
+  private val maxTalkTimeDisplayMs = 10000
+  private val talkTimeProgressBar = JProgressBar(0, maxTalkTimeDisplayMs).apply {
+    // Display format can be customized if needed, e.g., showing seconds
+    // isStringPainted = true
+    // string = "0.0s" // Initial value
+    toolTipText = "Current consecutive talk duration"
     border = JBUI.Borders.emptyRight(5)
   }
   private val talkTimeLabel = JBLabel()
@@ -119,9 +108,7 @@ class ControlPanel(
   private val dictationButton = JButton("Start Dictation")
 
   init {
-    layout = GridBagLayout().apply {
-      columnWidths = intArrayOf(150, 250, 150, 250)
-    }
+    layout = GridBagLayout()
     add(JBLabel("Microphone Line:"), GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
@@ -221,7 +208,7 @@ class ControlPanel(
       gridx = 0
       gridy = 3
     })
-    add(rmsSlider, GridBagConstraints().apply {
+    add(rmsProgressBar, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
@@ -235,7 +222,7 @@ class ControlPanel(
       gridx = 0
       gridy = 4
     })
-    add(iec61672Slider, GridBagConstraints().apply {
+    add(iec61672ProgressBar, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
@@ -249,13 +236,23 @@ class ControlPanel(
       gridx = 0
       gridy = 5
     })
-    add(talkTimeSlider, GridBagConstraints().apply {
+    add(talkTimeProgressBar, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
       gridy = 5
       fill = GridBagConstraints.HORIZONTAL
     })
+    // Filler component to push everything to the top-left
+    add(JPanel(), GridBagConstraints().apply {
+      gridx = 0
+      gridy = 6 // Next available row
+      gridwidth = GridBagConstraints.REMAINDER // Span remaining columns
+      weightx = 1.0
+      weighty = 1.0
+      fill = GridBagConstraints.BOTH
+    })
+
 
     dictationButton.addActionListener {
       toggleRecording()
@@ -277,16 +274,19 @@ class ControlPanel(
   }
 
   private fun updateParams() {
-    rmsSlider.value = settings.rmsLevel.coerceIn(rmsSlider.minimum, rmsSlider.maximum)
-    iec61672Slider.value = settings.iec61672Level.coerceIn(iec61672Slider.minimum, iec61672Slider.maximum)
+    val rmsValue = settings.rmsLevel.coerceIn(rmsProgressBar.minimum, rmsProgressBar.maximum)
+    rmsProgressBar.value = rmsValue
+    rmsLabel.text = "RMS: $rmsValue%" // Update label as well
+    val iecValue = settings.iec61672Level.coerceIn(iec61672ProgressBar.minimum, iec61672ProgressBar.maximum)
+    iec61672ProgressBar.value = iecValue
+    iec61672Label.text = "IEC61672: $iecValue%" // Update label as well
     talkTimeLabel.text = "Talk Time: ${settings.talkTime.format("%.3f")}s"
     val currentFormat =
       "${settings.sampleRate}Hz ${settings.sampleSize}-bit ${if (settings.channels == 1) "Mono" else "Stereo"}"
     formatComboBox.selectedItem = formatComboBox.items.firstOrNull { it == currentFormat } ?: formatComboBox.items[1]
     micLineComboBox.selectedItem = settings.selectedMicLine ?: "Default"
-    talkTimeLabel.text = "Talk Time: ${settings.talkTime.format("%.3f")}s"
     val talkTimeValue = (settings.talkTime * 1000.0).toInt()
-    talkTimeSlider.value = talkTimeValue.coerceIn(talkTimeSlider.minimum, talkTimeSlider.maximum)
+    talkTimeProgressBar.value = talkTimeValue.coerceIn(talkTimeProgressBar.minimum, talkTimeProgressBar.maximum)
   }
 
   override fun close() {

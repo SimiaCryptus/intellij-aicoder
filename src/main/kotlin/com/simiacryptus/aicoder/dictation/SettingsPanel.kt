@@ -7,7 +7,7 @@ import com.simiacryptus.jopenai.audio.DictationManager
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JPanel
-import javax.swing.JSlider
+import javax.swing.JSlider // Keep JSlider import if needed elsewhere, otherwise remove if unused.
 
 class SettingsPanel(
   val project: Project,
@@ -94,9 +94,7 @@ class SettingsPanel(
 
 
   init {
-    layout = GridBagLayout().apply {
-      columnWidths = intArrayOf(150, 250, 150, 250)
-    }
+    layout = GridBagLayout()
 
     add(biasLabel, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
@@ -163,6 +161,16 @@ class SettingsPanel(
       gridy = 4
       fill = GridBagConstraints.HORIZONTAL
     })
+    // Filler component to push everything to the top-left
+    add(JPanel(), GridBagConstraints().apply {
+      gridx = 0
+      gridy = 5 // Next available row
+      gridwidth = GridBagConstraints.REMAINDER // Span remaining columns
+      weightx = 1.0
+      weighty = 1.0
+      fill = GridBagConstraints.BOTH
+    })
+
 
     revalidate()
   }

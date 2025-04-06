@@ -1,6 +1,7 @@
 package com.simiacryptus.aicoder.dictation
 
 import com.simiacryptus.jopenai.audio.TranscriptionProcessor
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import javax.swing.*
 
@@ -12,8 +13,8 @@ class EventPanel : JPanel() {
     init {
         layout = BorderLayout()
         border = BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        background = Color(250, 250, 250)
-        preferredSize = Dimension(500, 300)
+        // Use default background
+        // preferredSize = Dimension(500, 300) // Let layout manager decide preferred size
 
         // Initialize transcription list
         val listModel = DefaultListModel<TranscriptionProcessor.TranscriptionResult>()
@@ -31,7 +32,7 @@ class EventPanel : JPanel() {
         val listScrollPane = JScrollPane(transcriptionList)
         // Add control buttons panel
         val buttonPanel = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            background = Color(250, 250, 250)
+            // Use default background
             add(JButton("Clear History").apply {
                 addActionListener {
                     listModel.clear()
@@ -51,11 +52,11 @@ class EventPanel : JPanel() {
                 titleFont = Font("Segoe UI", Font.BOLD, 16)
                 titleColor = Color(60, 60, 60)
             }
-            background = Color(250, 250, 250)
+            // Use default background
             // Initialize details panel
             val details = JPanel(GridBagLayout()).apply {
                 border = BorderFactory.createTitledBorder("Details")
-                background = Color(250, 250, 250)
+                // Use default background
             }
             val gbc = GridBagConstraints()
             gbc.fill = GridBagConstraints.HORIZONTAL
@@ -78,16 +79,16 @@ class EventPanel : JPanel() {
             val textValue = JTextArea().apply {
                 lineWrap = true
                 wrapStyleWord = true
-                isEditable = false
-                background = Color(250, 250, 250)
-                foreground = Color.BLACK
+                isEditable = false // Keep non-editable
+                // Use default background/foreground
+                // background = UIUtil.getPanelBackground() // Or specific component background
                 border = BorderFactory.createLineBorder(Color(200, 200, 200))
             }
             val promptValue = JTextArea().apply {
                 lineWrap = true
                 wrapStyleWord = true
                 isEditable = false
-                background = Color(250, 250, 250)
+                // Use default background/foreground
                 foreground = Color.BLACK
                 border = BorderFactory.createLineBorder(Color(200, 200, 200))
             }
