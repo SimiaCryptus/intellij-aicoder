@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.usages.ReadWriteAccessUsageInfo2UsageAdapter
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
 import com.simiacryptus.aicoder.AppServer
@@ -98,7 +99,14 @@ class FindResultsChatAction(
         }
     }
 
-    private fun getFile(it: Usage) = it.location?.editor?.file
+    private fun getFile(it: Usage): VirtualFile? {
+        var file = it.location?.editor?.file
+        if (file != null && file.isValid) return file
+        if (it is ReadWriteAccessUsageInfo2UsageAdapter) file = it.file
+        if (file != null && file.isValid) return file
+        log.warn("Usage location does not have an editor, cannot determine file")
+        return null
+    }
 
     override fun isEnabled(event: AnActionEvent): Boolean {
         val usageView = event.getData(UsageView.USAGE_VIEW_KEY)

@@ -32,6 +32,7 @@ data class CommandConfig(
   val additionalInstructions: String,
   val includeGitDiffs: Boolean = false,
   val includeLineNumbers: Boolean = false,
+  val apiBudget: Double,
 )
 
 @State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
@@ -102,7 +103,7 @@ data class AppSettingsState(
     val name: String,
     val temperature: Double,
     val autoFix: Boolean,
-  val apiBudget: Double? = 10.0,
+    val apiBudget: Double? = 10.0,
     val taskSettings: Map<String, TaskSettingsBase>
   )
   
