@@ -1,6 +1,7 @@
 package com.simiacryptus.aicoder.config
 
 /**
+  var transcriptionModel: String = AudioModels.Whisper.modelName
  * Stores and manages plugin configuration settings.
  *
  * This class is responsible for persisting and retrieving the plugin's
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.simiacryptus.aicoder.PluginStartupActivity.Companion.addUserSuppliedModels
 import com.simiacryptus.jopenai.models.APIProvider
+import com.simiacryptus.jopenai.models.AudioModels
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.skyenet.apps.general.PatchApp
@@ -72,6 +74,7 @@ data class AppSettingsState(
   var editRequests: Boolean = false,
   var disableAutoOpenUrls: Boolean = false,
   var storeMetadata: String? = null,
+  var transcriptionModel: String? = null,
   var pluginHome: File = run {
     var logPath = System.getProperty("idea.plugins.path")
     if (logPath == null) {

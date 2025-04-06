@@ -4,6 +4,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.jopenai.models.AudioModels
 import com.simiacryptus.jopenai.audio.AudioPacket
 import com.simiacryptus.jopenai.audio.DictationManager
 import com.simiacryptus.jopenai.audio.TranscriptionProcessor
@@ -31,6 +32,8 @@ open class DictationState {
   var channels: Int
     private set
   var selectedMicLine: String?
+    private set
+  var transcriptionModel: AudioModels
     private set
   var project: Project? = null
 
@@ -68,6 +71,7 @@ open class DictationState {
     channels = AppSettingsState.instance.channels
     selectedMicLine = AppSettingsState.instance.selectedMicLine
     talkTime = AppSettingsState.instance.talkTime
+    transcriptionModel = AudioModels.find(AppSettingsState.instance.transcriptionModel) ?: AudioModels.Whisper
   }
 
   val onPacket: (AudioPacket) -> Unit = {
@@ -89,6 +93,7 @@ open class DictationState {
       /* signed = */ true,
       /* bigEndian = */ false
     )
+    DictationManager.transcriptionModel = transcriptionModel
   }
 
   fun setRecordingState(isRecording: Boolean) {
@@ -125,6 +130,14 @@ open class DictationState {
     DictationManager.selectedMicLine = value
     configuration.notifyListeners()
   }
+  fun setTranscriptionModel(model: AudioModels) {
+    if (model == transcriptionModel) return
+    transcriptionModel = model
+    AppSettingsState.instance.transcriptionModel = model.modelName
+    DictationManager.transcriptionModel = model
+    configuration.notifyListeners()
+  }
+
 
 }
 

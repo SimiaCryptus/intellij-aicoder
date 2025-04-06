@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBUI
 import com.simiacryptus.aicoder.config.AppSettingsState
 import com.simiacryptus.aicoder.dictation.DictationWidgetFactory.SpeechToTextWidget.Companion.toggleRecording
 import com.simiacryptus.jopenai.audio.DictationManager
+import com.simiacryptus.jopenai.models.AudioModels
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
@@ -105,6 +106,18 @@ class ControlPanel(
       AppSettingsState.instance.channels = channels
     })
   }
+  private val transcriptionModelComboBox = ComboBox<AudioModels>().apply {
+    border = JBUI.Borders.emptyRight(5)
+    AudioModels.entries.filter { it.type == AudioModels.AudioModelType.Transcription }.forEach(::addItem)
+    selectedItem = settings.transcriptionModel
+    setRenderer { _, value, _, _, _ -> JBLabel(value?.modelName ?: "N/A") }
+    addActionListener {
+      val selected = selectedItem as? AudioModels ?: return@addActionListener
+      settings.setTranscriptionModel(selected)
+      AppSettingsState.instance.transcriptionModel = selected.modelName
+    }
+  }
+
   private val dictationButton = JButton("Start Dictation")
 
   init {
@@ -137,11 +150,25 @@ class ControlPanel(
       gridx = 1
       gridy = 1
     })
+    add(JBLabel("Transcription Model:"), GridBagConstraints().apply {
+      anchor = GridBagConstraints.WEST
+      insets = JBUI.insets(10)
+      gridwidth = 1
+      gridx = 0
+      gridy = 2
+    })
+    add(transcriptionModelComboBox, GridBagConstraints().apply {
+      anchor = GridBagConstraints.WEST
+      insets = JBUI.insets(10)
+      gridwidth = 1
+      gridx = 1
+      gridy = 2
+    })
 
     add(JPanel(GridBagLayout()).apply {
       add(dictationButton, GridBagConstraints().apply {
         anchor = GridBagConstraints.WEST
-        insets = JBUI.insets(5)
+     insets = JBUI.insets(10)
         gridx = 0
         gridy = 0
       })
@@ -198,7 +225,7 @@ class ControlPanel(
       insets = JBUI.insets(10)
       gridwidth = 2
       gridx = 0
-      gridy = 2
+      gridy = 3
       fill = GridBagConstraints.HORIZONTAL
     })
 
@@ -206,13 +233,13 @@ class ControlPanel(
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 0
-      gridy = 3
+      gridy = 4
     })
     add(rmsProgressBar, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
-      gridy = 3
+      gridy = 4
       fill = GridBagConstraints.HORIZONTAL
     })
 
@@ -220,13 +247,13 @@ class ControlPanel(
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 0
-      gridy = 4
+      gridy = 5
     })
     add(iec61672ProgressBar, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
-      gridy = 4
+      gridy = 5
       fill = GridBagConstraints.HORIZONTAL
     })
 
@@ -234,19 +261,19 @@ class ControlPanel(
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 0
-      gridy = 5
+      gridy = 6
     })
     add(talkTimeProgressBar, GridBagConstraints().apply {
       anchor = GridBagConstraints.WEST
       insets = JBUI.insets(10)
       gridx = 1
-      gridy = 5
+      gridy = 6
       fill = GridBagConstraints.HORIZONTAL
     })
     // Filler component to push everything to the top-left
     add(JPanel(), GridBagConstraints().apply {
       gridx = 0
-      gridy = 6 // Next available row
+      gridy = 7 // Next available row
       gridwidth = GridBagConstraints.REMAINDER // Span remaining columns
       weightx = 1.0
       weighty = 1.0
@@ -285,6 +312,7 @@ class ControlPanel(
       "${settings.sampleRate}Hz ${settings.sampleSize}-bit ${if (settings.channels == 1) "Mono" else "Stereo"}"
     formatComboBox.selectedItem = formatComboBox.items.firstOrNull { it == currentFormat } ?: formatComboBox.items[1]
     micLineComboBox.selectedItem = settings.selectedMicLine ?: "Default"
+    transcriptionModelComboBox.selectedItem = settings.transcriptionModel
     val talkTimeValue = (settings.talkTime * 1000.0).toInt()
     talkTimeProgressBar.value = talkTimeValue.coerceIn(talkTimeProgressBar.minimum, talkTimeProgressBar.maximum)
   }
