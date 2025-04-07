@@ -4,10 +4,10 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.simiacryptus.aicoder.config.AppSettingsState
-import com.simiacryptus.jopenai.models.AudioModels
 import com.simiacryptus.jopenai.audio.AudioPacket
 import com.simiacryptus.jopenai.audio.DictationManager
 import com.simiacryptus.jopenai.audio.TranscriptionProcessor
+import com.simiacryptus.jopenai.models.AudioModels
 import com.simiacryptus.jopenai.util.EventDispatcher
 import javax.sound.sampled.AudioFormat
 
@@ -15,7 +15,7 @@ open class DictationState {
   companion object : DictationState() {
     val log = org.slf4j.LoggerFactory.getLogger(DictationState::class.java)
   }
-
+  
   val configuration = EventDispatcher()
   var talkTime: Double = 1.0
     private set
@@ -36,10 +36,10 @@ open class DictationState {
   var transcriptionModel: AudioModels
     private set
   var project: Project? = null
-
+  
   private var iec61672Max = 0.0
   private var rmsMax = 0.0
-
+  
   var recentTranscriptionResult: TranscriptionProcessor.TranscriptionResult? = null
     private set
   val transctiption = EventDispatcher()
@@ -62,7 +62,7 @@ open class DictationState {
       currentEditor.caretModel.moveToOffset(currentEditor.caretModel.offset + it.text.length)
     }
   }
-
+  
   init {
     rmsLevel = AppSettingsState.instance.rmsLevel
     iec61672Level = AppSettingsState.instance.iec61672Level
@@ -73,7 +73,7 @@ open class DictationState {
     talkTime = AppSettingsState.instance.talkTime
     transcriptionModel = AudioModels.find(AppSettingsState.instance.transcriptionModel) ?: AudioModels.Whisper
   }
-
+  
   val onPacket: (AudioPacket) -> Unit = {
     rmsMax = it.rms.coerceAtLeast(rmsMax)
     iec61672Max = it.iec61672.coerceAtLeast(iec61672Max)
@@ -82,7 +82,7 @@ open class DictationState {
     talkTime = DictationManager.discriminator.talkTime
     configuration.notifyListeners()
   }
-
+  
   fun resetState() {
     rmsMax = 0.0
     iec61672Max = 0.0
@@ -95,34 +95,34 @@ open class DictationState {
     )
     DictationManager.transcriptionModel = transcriptionModel
   }
-
+  
   fun setRecordingState(isRecording: Boolean) {
     if (isRecording == this.isRecording) return
     this.isRecording = isRecording
     configuration.notifyListeners()
   }
-
+  
   fun setSampleRate(value: Int) {
     if (value == sampleRate) return
     sampleRate = value
     AppSettingsState.instance.sampleRate = value
     configuration.notifyListeners()
   }
-
+  
   fun setSampleSize(value: Int) {
     if (value == sampleSize) return
     sampleSize = value
     AppSettingsState.instance.sampleSize = value
     configuration.notifyListeners()
   }
-
+  
   fun setChannels(value: Int) {
     if (value == channels) return
     channels = value
     AppSettingsState.instance.channels = value
     configuration.notifyListeners()
   }
-
+  
   fun setSelectedMicLine(value: String?) {
     if (value == selectedMicLine) return
     selectedMicLine = value
@@ -130,6 +130,7 @@ open class DictationState {
     DictationManager.selectedMicLine = value
     configuration.notifyListeners()
   }
+  
   fun setTranscriptionModel(model: AudioModels) {
     if (model == transcriptionModel) return
     transcriptionModel = model
@@ -137,8 +138,6 @@ open class DictationState {
     DictationManager.transcriptionModel = model
     configuration.notifyListeners()
   }
-
-
 }
 
 // Extension function to get current editor
