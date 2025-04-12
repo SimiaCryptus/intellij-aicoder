@@ -195,7 +195,7 @@ class UnifiedPlanAction : BaseAction() {
     )
     ApplicationServer.appInfoMap[session] = AppInfoData(
       applicationName = "Unified Planning",
-      singleInput = false,
+      singleInput = true,
       stickyInput = true,
       loadImages = false,
       showMenubar = false
