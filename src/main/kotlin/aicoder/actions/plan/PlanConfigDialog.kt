@@ -178,7 +178,7 @@ class PlanConfigDialog(
         }
       }
     }
-    private val commandList = if (taskType == TaskType.CommandAutoFix) {
+    private val commandList = if (taskType == TaskType.CommandAutoFixTask) {
       JBTable(object : DefaultTableModel(
         arrayOf("Enabled", "Command"), 0
       ) {
@@ -294,7 +294,7 @@ class PlanConfigDialog(
       modelComboBox.selectedItem = currentModel?.modelName ?: defaultModel
       enabledCheckbox.addItemListener {
         val newSettings = when (taskType) {
-          TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
+          TaskType.CommandAutoFixTask -> CommandAutoFixTask.CommandAutoFixTaskSettings(
             taskType.name,
             enabledCheckbox.isSelected,
             getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
@@ -310,7 +310,7 @@ class PlanConfigDialog(
       }
       modelComboBox.addActionListener {
         val newSettings = when (taskType) {
-          TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
+          TaskType.CommandAutoFixTask -> CommandAutoFixTask.CommandAutoFixTaskSettings(
             taskType.name,
             enabledCheckbox.isSelected,
             getVisibleModels().find { it.modelName == modelComboBox.selectedItem },
@@ -328,7 +328,7 @@ class PlanConfigDialog(
     
     fun saveSettings() {
       val newSettings = when (taskType) {
-        TaskType.CommandAutoFix -> CommandAutoFixTask.CommandAutoFixTaskSettings(
+        TaskType.CommandAutoFixTask -> CommandAutoFixTask.CommandAutoFixTaskSettings(
           task_type = taskType.name,
           enabled = enabledCheckbox.isSelected,
           model = getVisibleModels().find { it.modelName == modelComboBox.selectedItem },

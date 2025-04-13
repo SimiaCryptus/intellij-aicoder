@@ -111,7 +111,7 @@ data class AppSettingsState(
   @JsonIgnore
   override fun getState(): SimpleEnvelope {
     val value = toJson(this)
-    log.info("Serialize AppSettingsState: ${value.indent("  ")}", RuntimeException("Stack trace"))
+    //log.info("Serialize AppSettingsState: ${value.indent("  ")}", RuntimeException("Stack trace"))
     return SimpleEnvelope(value)
   }
   @JsonIgnore
@@ -120,7 +120,7 @@ data class AppSettingsState(
     val appSettings = fromJson<AppSettingsState>(mapper.writeValueAsString(jsonNode), AppSettingsState::class.java)
     // Check if there's an "apiKey" field but no "apiKeys" field
     if (jsonNode.has("apiKey") && !jsonNode.has("apiKeys")) {
-      log.info("Found legacy 'apiKey' field, migrating to 'apiKeys'")
+      //log.info("Found legacy 'apiKey' field, migrating to 'apiKeys'")
       val apiKeyNode = jsonNode.get("apiKey")
       if (apiKeyNode.isObject) {
         appSettings.apiKeys?.clear()
@@ -162,7 +162,7 @@ data class AppSettingsState(
       log.warn("Error loading settings: ${state.value}", e)
       AppSettingsState()
     }
-    log.info("Loaded settings: ${fromJson.toJson().indent("  ")} from ${state.value?.indent("  ")}", RuntimeException("Stack trace"))
+    //log.info("Loaded settings: ${fromJson.toJson().indent("  ")} from ${state.value?.indent("  ")}", RuntimeException("Stack trace"))
     XmlSerializerUtil.copyBean(fromJson, this)
     /* Copy userSuppliedModels */
     userSuppliedModels?.clear()
