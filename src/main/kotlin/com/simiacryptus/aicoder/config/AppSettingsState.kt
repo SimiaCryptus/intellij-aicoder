@@ -95,7 +95,7 @@ data class AppSettingsState(
   var awsRegion: String? = null,
   var awsBucket: String? = null,
   var interceptOutput: Boolean = false,
-  val apiBase: MutableMap<String, String>? = mapOf("OpenAI" to "https://api.openapi.com/v1").toMutableMap(),
+  val apiBase: MutableMap<String, String>? = mapOf("OpenAI" to "https://api.openai.com/v1").toMutableMap(),
   val apiKeys: MutableMap<String, String>? = mapOf("OpenAI" to "").toMutableMap(),
   val userSuppliedModels: MutableList<String>? = mutableListOf(),
   val executables: MutableSet<String>? = mutableSetOf(),
