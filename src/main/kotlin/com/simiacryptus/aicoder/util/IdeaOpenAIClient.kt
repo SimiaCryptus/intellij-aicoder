@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 class IdeaOpenAIClient : OpenAIClient(
-  key = AppSettingsState.instance.apiKey?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
+  key = AppSettingsState.instance.apiKeys?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
     ?.associate { it.key to it.value } ?: mapOf(),
   apiBase = AppSettingsState.instance.apiBase?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
     ?.associate { it.key to it.value } ?: mapOf(),

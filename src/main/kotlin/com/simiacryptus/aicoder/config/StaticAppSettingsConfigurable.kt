@@ -1,10 +1,13 @@
 package com.simiacryptus.aicoder.config
 
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.simiacryptus.aicoder.util.IdeaChatClient
 import com.simiacryptus.aicoder.PluginStartupActivity.Companion.addUserSuppliedModels
+import com.simiacryptus.aicoder.config.AppSettingsState.UserSuppliedModel
+import com.simiacryptus.aicoder.util.IdeaChatClient
 import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.util.JsonUtil.fromJson
+import com.simiacryptus.util.toJson
 import java.awt.*
 import java.io.File
 import java.io.FileOutputStream
@@ -17,7 +20,8 @@ import javax.swing.table.DefaultTableModel
 class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
   override fun apply() {
     super.apply()
-    addUserSuppliedModels(settingsInstance.userSuppliedModels)
+    addUserSuppliedModels(settingsInstance.userSuppliedModels
+      ?.map { fromJson(it, UserSuppliedModel::class.java) } ?: emptyList())
     if (settingsInstance.apiLog) {
       val file = File(AppSettingsState.instance.pluginHome, "openai.log")
       if (AppSettingsState.auxiliaryLog?.absolutePath?.lowercase() != file.absolutePath.lowercase()) {
@@ -315,7 +319,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
     val applyButton = JButton("Apply Configuration")
     applyButton.addActionListener {
       try {
-        val importedSettings = JsonUtil.fromJson<AppSettingsState>(textArea.text, AppSettingsState::class.java)
+        val importedSettings = fromJson<AppSettingsState>(textArea.text, AppSettingsState::class.java)
         // Confirm before applying
         val confirm = JOptionPane.showConfirmDialog(
           dialog,
@@ -328,7 +332,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
           // Copy all properties from imported settings to current instance
           XmlSerializerUtil.copyBean(importedSettings, AppSettingsState.instance)
           // Update user-supplied models
-          addUserSuppliedModels(importedSettings.userSuppliedModels)
+          addUserSuppliedModels(importedSettings.userSuppliedModels?.map { fromJson(it, UserSuppliedModel::class.java) } ?: emptyList())
           JOptionPane.showMessageDialog(
             dialog,
             "Configuration applied successfully. Please restart the IDE for all changes to take effect.",
@@ -381,16 +385,37 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       component.temperature.text = settings.temperature.toString()
       component.pluginHome.text = settings.pluginHome.absolutePath
       component.shellCommand.text = settings.shellCommand
-      val model = component.apis.model as DefaultTableModel
-      model.rowCount = 0 // Clear existing rows
-      APIProvider.values().forEach { value ->
-        val key = value.name
-        model.addRow(arrayOf(key, settings.apiKey?.get(key) ?: "", settings.apiBase?.get(key) ?: value.base))
-      }
       component.showWelcomeScreen.isSelected = settings.showWelcomeScreen
       component.enableLegacyActions.isSelected = settings.enableLegacyActions
-      component.setExecutables(settings.executables)
-      component.setUserSuppliedModels(settings.userSuppliedModels)
+      component.setExecutables(settings.executables ?: emptySet())
+      component.setUserSuppliedModels(settings.userSuppliedModels?.map { fromJson(it, UserSuppliedModel::class.java) } ?: emptyList())
+      val model = component.apis.model as DefaultTableModel
+      model.rowCount = 0 // Clear existing rows
+      val apiKeys = settings.apiKeys
+      if(null == apiKeys) {
+        log.warn("API keys are null")
+        return
+      }
+      val apiBase = settings.apiBase
+      if(null == apiBase) {
+        log.warn("API base is null")
+        return
+      }
+      APIProvider.values().forEach { value ->
+        val name = value.name
+        var key = apiKeys[name]
+        if (key == null) {
+          log.warn("Key is null for provider: $name")
+          key = ""
+        }
+        var url = apiBase[name]
+        if (url == null) {
+          log.warn("URL is null for provider: $name")
+          url = value.base
+        }
+        log.warn("Adding row to table model: $name, $key, $url")
+        model.addRow(arrayOf(name, key, url))
+      }
     } catch (e: Exception) {
       log.warn("Error setting UI", e)
     }
@@ -405,7 +430,8 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       settings.awsProfile = component.awsProfile.text.takeIf { it.isNotBlank() }
       settings.awsRegion = component.awsRegion.text.takeIf { it.isNotBlank() }
       settings.awsBucket = component.awsBucket.text.takeIf { it.isNotBlank() }
-      settings.executables = component.getExecutables().toMutableSet()
+      settings.executables?.clear()
+      settings.executables?.plusAssign(component.getExecutables().toMutableSet())
       settings.humanLanguage = component.humanLanguage.text
       settings.listeningPort = component.listeningPort.text.safeInt()
       settings.listeningEndpoint = component.listeningEndpoint.text
@@ -424,20 +450,25 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       settings.enableLegacyActions = component.enableLegacyActions.isSelected
 
       val tableModel = component.apis.model as DefaultTableModel
+      log.info("Reading API keys from table model: $tableModel with row count: ${tableModel.rowCount}")
       for (row in 0 until tableModel.rowCount) {
         val provider = tableModel.getValueAt(row, 0) as String
         val key = tableModel.getValueAt(row, 1) as String
         val base = tableModel.getValueAt(row, 2) as String
+        log.info("Row $row: provider=$provider, key=$key, base=$base")
         if (key.isNotBlank()) {
-          settings.apiKey = settings.apiKey?.toMutableMap()?.apply { put(provider, key) }
-          settings.apiBase = settings.apiBase?.toMutableMap()?.apply { put(provider, base) }
+          settings.apiKeys?.set(provider, key) ?: log.warn("API keys are blank")
+          settings.apiBase?.set(provider, base) ?: log.warn("API base is blank")
         } else {
-          settings.apiKey = settings.apiKey?.toMutableMap()?.apply { remove(provider) }
-          settings.apiBase = settings.apiBase?.toMutableMap()?.apply { remove(provider) }
+          log.info("Removing API key for provider: $provider")
+          settings.apiKeys?.toMutableMap()?.apply { settings.apiKeys.remove(provider) }
+          settings.apiBase?.toMutableMap()?.apply { settings.apiBase.remove(provider) }
         }
       }
       settings.showWelcomeScreen = component.showWelcomeScreen.isSelected
-      settings.userSuppliedModels = component.getUserSuppliedModels().toMutableList()
+      settings.userSuppliedModels?.clear()
+      settings.userSuppliedModels?.plusAssign(component.getUserSuppliedModels().map { it.toJson() }.toMutableList())
+      log.info("Settings after reading: ${settings.toJson()}")
     } catch (e: Exception) {
       log.warn("Error reading UI", e)
     }

@@ -15,14 +15,16 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.simiacryptus.aicoder.PluginStartupActivity.Companion.addUserSuppliedModels
 import com.simiacryptus.jopenai.models.APIProvider
-import com.simiacryptus.jopenai.models.AudioModels
 import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.skyenet.apps.general.PatchApp
 import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
-import com.simiacryptus.util.JsonUtil
+import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
+import com.simiacryptus.util.JsonUtil.fromJson
+import com.simiacryptus.util.JsonUtil.toJson
+import com.simiacryptus.util.toJson
+import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -37,7 +39,7 @@ data class CommandConfig(
   val apiBudget: Double,
 )
 
-@State(name = "org.intellij.sdk.settings.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
+@State(name = "com.simiacryptus.aicoder.config.AppSettingsState", storages = [Storage("SdkSettingsPlugin.xml")])
 data class AppSettingsState(
   var selectedMicLine: String? = null,
   var talkTime: Double = 1.0,
@@ -58,15 +60,12 @@ data class AppSettingsState(
   var reasoningEffort: String = "Low",
   var smartModel: String = OpenAIModels.GPT4o.modelName,
   var fastModel: String = OpenAIModels.GPT4oMini.modelName,
-  var savedPlanConfigs: MutableMap<String, SavedPlanConfig> = mutableMapOf(),
-  var savedCommandConfigs: MutableMap<String, CommandConfig> = mutableMapOf(),
+  var analyticsEnabled: Boolean = false,
   var mainImageModel: String = ImageModels.DallE3.modelName,
   var listeningPort: Int = 8081,
   var listeningEndpoint: String = "localhost",
   var humanLanguage: String = "English",
   var apiThreads: Int = 4,
-  var apiBase: Map<String, String>? = mapOf("OpenAI" to "https://api.openai.com/v1"),
-  var apiKey: Map<String, String>? = mapOf("OpenAI" to ""),
   var modalTasks: Boolean = false,
   var suppressErrors: Boolean = false,
   var apiLog: Boolean = false,
@@ -89,54 +88,128 @@ data class AppSettingsState(
   var greetedVersion: String = "",
   var shellCommand: String = getDefaultShell(),
   var enableLegacyActions: Boolean = false,
-  var executables: MutableSet<String> = mutableSetOf(),
-  var recentArguments: MutableList<String> = mutableListOf(),
-  var recentWorkingDirs: MutableList<String> = mutableListOf(),
-  val recentCommands: MutableMap<String, MRUItems> = mutableMapOf<String, MRUItems>(),
-  var userSuppliedModels: MutableList<UserSuppliedModel> = mutableListOf(),
   var githubToken: String? = null,
   var googleApiKey: String? = null,
   var googleSearchEngineId: String? = null,
   var awsProfile: String? = null,
   var awsRegion: String? = null,
   var awsBucket: String? = null,
-  var interceptOutput: Boolean = false
+  var interceptOutput: Boolean = false,
+  val apiBase: MutableMap<String, String>? = mapOf("OpenAI" to "https://api.openapi.com/v1").toMutableMap(),
+  val apiKeys: MutableMap<String, String>? = mapOf("OpenAI" to "").toMutableMap(),
+  val userSuppliedModels: MutableList<String>? = mutableListOf(),
+  val executables: MutableSet<String>? = mutableSetOf(),
+  val savedCommandConfigsJson: MutableMap<String, String>? = mutableMapOf(),
+  val savedPlanConfigs: MutableMap<String, String>? = mutableMapOf(),
+  val recentCommandsJson: MutableMap<String, String>? = mutableMapOf(),
+  val recentArguments: MutableList<String>? = mutableListOf(),
+  val recentWorkingDirs: MutableList<String>? = mutableListOf(),
 ) : PersistentStateComponent<SimpleEnvelope> {
-  data class SavedPlanConfig(
-    val name: String,
-    val temperature: Double,
-    val autoFix: Boolean,
-    val apiBudget: Double? = 10.0,
-    val taskSettings: Map<String, TaskSettingsBase>
-  )
-  
-  private var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
+  @JsonIgnore
+  var onSettingsLoadedListeners = mutableListOf<() -> Unit>()
   
   @JsonIgnore
   override fun getState(): SimpleEnvelope {
-    val value = JsonUtil.toJson(this)
+    val value = toJson(this)
+    log.info("Serialize AppSettingsState: ${value.indent("  ")}", RuntimeException("Stack trace"))
     return SimpleEnvelope(value)
   }
+  @JsonIgnore
+  private fun handleLegacyApiKeys(jsonNode: JsonNode): AppSettingsState {
+    val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+    val appSettings = fromJson<AppSettingsState>(mapper.writeValueAsString(jsonNode), AppSettingsState::class.java)
+    // Check if there's an "apiKey" field but no "apiKeys" field
+    if (jsonNode.has("apiKey") && !jsonNode.has("apiKeys")) {
+      log.info("Found legacy 'apiKey' field, migrating to 'apiKeys'")
+      val apiKeyNode = jsonNode.get("apiKey")
+      if (apiKeyNode.isObject) {
+        appSettings.apiKeys?.clear()
+        apiKeyNode.fields().forEach { (key, value) -> appSettings.apiKeys?.set(key, value.asText()) }
+      }
+    }
+    return appSettings
+  }
   
-  fun getRecentCommands(id: String) = recentCommands.computeIfAbsent(id) { MRUItems() }
   
+  @JsonIgnore
+  fun getRecentCommands(id: String) = recentCommandsJson?.get(id)?.let {
+    try {
+      fromJson(it, MRUItems::class.java)
+    } catch (e: Exception) {
+      log.warn("Error loading recent commands: ${it}", e)
+      MRUItems()
+    }
+  } ?: MRUItems()
+  
+  @JsonIgnore
+  fun updateRecentCommands(id: String, mruItems: MRUItems) {
+    // TODO: Call from the appropriate places
+    recentCommandsJson?.set(id, toJson(mruItems))
+  }
+  
+  @JsonIgnore
   override fun loadState(state: SimpleEnvelope) {
     state.value ?: return
     val fromJson = try {
-      JsonUtil.fromJson(state.value!!, AppSettingsState::class.java)
+      // Parse to JsonNode first to handle legacy fields
+      val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+      val jsonNode = mapper.readTree(state.value)
+      
+      // Handle legacy apiKey field if present
+      handleLegacyApiKeys(jsonNode)
+      
     } catch (e: Exception) {
       log.warn("Error loading settings: ${state.value}", e)
       AppSettingsState()
     }
+    log.info("Loaded settings: ${fromJson.toJson().indent("  ")} from ${state.value?.indent("  ")}", RuntimeException("Stack trace"))
     XmlSerializerUtil.copyBean(fromJson, this)
-    addUserSuppliedModels(fromJson.userSuppliedModels)
-    recentCommands.clear()
-    recentCommands.putAll(fromJson.recentCommands)
+    /* Copy userSuppliedModels */
+    userSuppliedModels?.clear()
+    fromJson.userSuppliedModels?.map { fromJson<UserSuppliedModel>(it, UserSuppliedModel::class.java) }?.forEach { model ->
+      userSuppliedModels?.add(toJson(model))
+    }
+    /* Copy executables */
+    executables?.clear()
+    fromJson.executables?.forEach { executable ->
+      executables?.add(executable)
+    }
+    /* Copy savedCommandConfigsJson */
+    savedCommandConfigsJson?.clear()
+    fromJson.savedCommandConfigsJson?.forEach { (key, value) ->
+      savedCommandConfigsJson?.set(key, value)
+    }
+    /* Copy savedPlanConfigs */
+    savedPlanConfigs?.clear()
+    fromJson.savedPlanConfigs?.forEach { (key, value) ->
+      savedPlanConfigs?.set(key, value)
+    }
+    /* Copy recentCommandsJson */
+    recentCommandsJson?.clear()
+    fromJson.recentCommandsJson?.forEach { (key, value) ->
+      recentCommandsJson?.set(key, value)
+    }
+    /* Copy recentArguments */
+    recentArguments?.clear()
+    fromJson.recentArguments?.forEach { argument ->
+      recentArguments?.add(argument)
+    }
+    /* Copy recentWorkingDirs */
+    recentWorkingDirs?.clear()
+    fromJson.recentWorkingDirs?.forEach { workingDir ->
+      recentWorkingDirs?.add(workingDir)
+    }
+     /* Copy apiBase */
+    apiBase?.clear()
+    fromJson.apiBase?.forEach { (key, value) ->
+      apiBase?.set(key, value)
+    }
+    /* Copy apiKeys */
+    apiKeys?.clear()
+    fromJson.apiKeys?.forEach { (key, value) ->
+      apiKeys?.set(key, value)
+    }
     notifySettingsLoaded()
-  }
-  
-  fun addOnSettingsLoadedListener(listener: () -> Unit) {
-    onSettingsLoadedListeners.add(listener)
   }
   
   private fun notifySettingsLoaded() {
@@ -165,7 +238,7 @@ data class AppSettingsState(
     if (humanLanguage != other.humanLanguage) return false
     if (apiThreads != other.apiThreads) return false
     if (apiBase != other.apiBase) return false
-    if (apiKey != other.apiKey) return false
+    if (apiKeys != other.apiKeys) return false
     if (modalTasks != other.modalTasks) return false
     if (suppressErrors != other.suppressErrors) return false
     if (apiLog != other.apiLog) return false
@@ -173,14 +246,14 @@ data class AppSettingsState(
     if (editRequests != other.editRequests) return false
     if (storeMetadata != other.storeMetadata) return false
     if (FileUtil.filesEqual(pluginHome, other.pluginHome)) return false
-    if (recentCommands != other.recentCommands) return false
+    if (recentCommandsJson != other.recentCommandsJson) return false
     if (showWelcomeScreen != other.showWelcomeScreen) return false
     if (greetedVersion != other.greetedVersion) return false
     if (mainImageModel != other.mainImageModel) return false
     if (enableLegacyActions != other.enableLegacyActions) return false
     if (executables != other.executables) return false
     //userSuppliedModels
-    if (userSuppliedModels.toTypedArray().contentDeepEquals(other.userSuppliedModels.toTypedArray()).not()) return false
+    if (userSuppliedModels != other.userSuppliedModels) return false
     if (googleApiKey != other.googleApiKey) return false
     if (googleSearchEngineId != other.googleSearchEngineId) return false
     if (githubToken != other.githubToken) return false
@@ -212,7 +285,7 @@ data class AppSettingsState(
     result = 31 * result + humanLanguage.hashCode()
     result = 31 * result + apiThreads
     result = 31 * result + (apiBase?.hashCode() ?: 0)
-    result = 31 * result + (apiKey?.hashCode() ?: 0)
+    result = 31 * result + (apiKeys?.hashCode() ?: 0)
     result = 31 * result + modalTasks.hashCode()
     result = 31 * result + suppressErrors.hashCode()
     result = 31 * result + apiLog.hashCode()
@@ -220,7 +293,7 @@ data class AppSettingsState(
     result = 31 * result + editRequests.hashCode()
     result = 31 * result + (storeMetadata?.hashCode() ?: 0)
     result = 31 * result + FileUtil.fileHashCode(pluginHome)
-    result = 31 * result + recentCommands.hashCode()
+    result = 31 * result + recentCommandsJson.hashCode()
     result = 31 * result + showWelcomeScreen.hashCode()
     result = 31 * result + greetedVersion.hashCode()
     result = 31 * result + mainImageModel.hashCode()
@@ -245,7 +318,9 @@ data class AppSettingsState(
     
     @JvmStatic
     val instance: AppSettingsState by lazy {
-      ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
+      val appSettingsState = ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
+      log.info("AppSettingsState instance: ${appSettingsState.toJson().indent("  ")}")
+      appSettingsState
     }
     
     fun String.imageModel(): ImageModels {
@@ -263,7 +338,12 @@ data class AppSettingsState(
     var provider: APIProvider = APIProvider.OpenAI
   )
   
-  var analyticsEnabled: Boolean = false
+  data class SavedPlanConfig(
+    val name: String,
+    val temperature: Double,
+    val autoFix: Boolean,
+    val apiBudget: Double? = 10.0,
+    val taskSettings: Map<String, TaskSettingsBase>
+  )
+  
 }
-
-var recentWorkingDirs: MutableList<String> = mutableListOf()

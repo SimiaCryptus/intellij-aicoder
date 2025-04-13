@@ -86,7 +86,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
   }
 
   val executablesModel = DefaultListModel<String>().apply {
-    AppSettingsState.instance.executables.forEach { addElement(it) }
+    AppSettingsState.instance.executables?.forEach { addElement(it) }
   }
   val executablesList = JBList(executablesModel)
 
@@ -110,7 +110,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         val executablePath = file.path
         if (executablePath.isNotBlank() && !executablesModel.contains(executablePath)) {
           executablesModel.addElement(executablePath)
-          AppSettingsState.instance.executables.add(executablePath)
+          AppSettingsState.instance.executables?.add(executablePath)
         }
       }
     }
@@ -118,7 +118,7 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
       val selectedIndices = executablesList.selectedIndices
       for (i in selectedIndices.reversed()) {
         val removed = executablesModel.remove(i)
-        AppSettingsState.instance.executables.remove(removed)
+        AppSettingsState.instance.executables?.remove(removed)
       }
     }
     editButton.addActionListener {
@@ -128,8 +128,8 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
         val newValue = JOptionPane.showInputDialog(this, "Edit executable path:", currentValue)
         if (newValue != null && newValue.isNotBlank()) {
           executablesModel.set(selectedIndex, newValue)
-          AppSettingsState.instance.executables.remove(currentValue)
-          AppSettingsState.instance.executables.add(newValue)
+          AppSettingsState.instance.executables?.remove(currentValue)
+          AppSettingsState.instance.executables?.add(newValue)
         }
       }
     }
@@ -328,10 +328,10 @@ class AppSettingsComponent : com.intellij.openapi.Disposable {
     awsBucket.text = AppSettingsState.instance.awsBucket ?: ""
     disableAutoOpenUrls.isSelected = AppSettingsState.instance.disableAutoOpenUrls
     // Initialize executables list
-    setExecutables(AppSettingsState.instance.executables)
+    setExecutables(AppSettingsState.instance.executables ?: emptySet())
     ChatModel.values()
       .filter {
-        AppSettingsState.instance.apiKey?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name)
+        AppSettingsState.instance.apiKeys?.filter { it.value.isNotBlank() }?.keys?.contains(it.value.provider.name)
           ?: false
       }
       .forEach {

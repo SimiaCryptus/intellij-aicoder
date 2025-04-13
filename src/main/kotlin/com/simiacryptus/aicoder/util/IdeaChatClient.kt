@@ -29,7 +29,7 @@ import javax.swing.JTextArea
 
 
 open class IdeaChatClient(
-  key: Map<APIProvider, String> = AppSettingsState.instance.apiKey?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
+  key: Map<APIProvider, String> = AppSettingsState.instance.apiKeys?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
     ?.associate { it.key to it.value } ?: mapOf(),
   apiBase: Map<APIProvider, String> = AppSettingsState.instance.apiBase?.mapKeys { APIProvider.valueOf(it.key) }?.entries?.toTypedArray()
     ?.associate { it.key to it.value } ?: mapOf(),

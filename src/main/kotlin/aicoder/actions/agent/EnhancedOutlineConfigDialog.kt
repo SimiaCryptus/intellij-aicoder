@@ -185,7 +185,7 @@ class EnhancedOutlineConfigDialog(
   
   override fun doValidate(): ValidationInfo? {
     fun isVisible(model: ChatModel): Boolean {
-      val hasApiKey = AppSettingsState.instance.apiKey
+      val hasApiKey = AppSettingsState.instance.apiKeys
         ?.filter { it.value.isNotBlank() }
         ?.keys
         ?.contains(model.provider.name)

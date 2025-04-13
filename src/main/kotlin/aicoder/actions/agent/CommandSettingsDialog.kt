@@ -48,7 +48,7 @@ class CommandSettingsDialog(project: Project?, private val settingsUI: CommandAu
                             JOptionPane.YES_NO_OPTION
                         )
                         if (confirmResult == JOptionPane.YES_OPTION) {
-                            AppSettingsState.instance.savedCommandConfigs.remove(selected)
+                            AppSettingsState.instance.savedCommandConfigsJson?.remove(selected)
                             settingsUI.savedConfigsCombo.removeItem(selected)
                         }
                     } else {

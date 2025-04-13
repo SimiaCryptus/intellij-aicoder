@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.panel
 import com.simiacryptus.aicoder.AppServer
@@ -29,6 +28,8 @@ import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.util.commonRoot
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
+import com.simiacryptus.util.JsonUtil.fromJson
+import com.simiacryptus.util.toJson
 import org.slf4j.LoggerFactory
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -82,17 +83,19 @@ class CommandAutofixAction : BaseAction() {
                   cmdPanel.commandField.selectedItem?.toString()
                     ?: throw IllegalArgumentException("No executable selected")
                 )
-                AppSettingsState.instance.executables += executable.absolutePath
+                AppSettingsState.instance.executables?.plusAssign(executable.absolutePath)
                 val argument = cmdPanel.argumentsField.selectedItem?.toString() ?: ""
-                AppSettingsState.instance.recentArguments.remove(argument)
-                AppSettingsState.instance.recentArguments.add(0, argument)
-                AppSettingsState.instance.recentArguments =
-                  AppSettingsState.instance.recentArguments.take(MAX_RECENT_ARGUMENTS).toMutableList()
+                AppSettingsState.instance.recentArguments?.remove(argument)
+                AppSettingsState.instance.recentArguments?.add(0, argument)
+                AppSettingsState.instance.recentArguments?.apply {
+                  if(size > MAX_RECENT_ARGUMENTS) dropLast(size - MAX_RECENT_ARGUMENTS)
+                }
                 val workingDir = cmdPanel.workingDirectoryField.selectedItem?.toString() ?: ""
-                AppSettingsState.instance.recentWorkingDirs.remove(workingDir)
-                AppSettingsState.instance.recentWorkingDirs.add(0, workingDir)
-                AppSettingsState.instance.recentWorkingDirs =
-                  AppSettingsState.instance.recentWorkingDirs.take(MAX_RECENT_DIRS).toMutableList()
+                AppSettingsState.instance.recentWorkingDirs?.remove(workingDir)
+                AppSettingsState.instance.recentWorkingDirs?.add(0, workingDir)
+                AppSettingsState.instance.recentWorkingDirs?.apply {
+                  if(size > MAX_RECENT_ARGUMENTS) dropLast(size - MAX_RECENT_DIRS)
+                }
                 require(executable.exists()) { "Executable file does not exist: ${executable}" }
                 PatchApp.CommandSettings(
                   executable = executable,
@@ -277,7 +280,7 @@ class CommandAutofixAction : BaseAction() {
       val commandsList = mutableListOf<CommandPanel>()
       val savedConfigsCombo = ComboBox<String>().apply {
         preferredSize = Dimension(200, 30)
-        AppSettingsState.instance.savedCommandConfigs.keys.sorted().forEach { addItem(it) }
+        AppSettingsState.instance.savedCommandConfigsJson?.keys?.sorted()?.forEach { addItem(it) }
       }
       
       // Radio button selection model
@@ -458,13 +461,15 @@ class CommandAutofixAction : BaseAction() {
           additionalInstructions = additionalInstructionsField.text,
           apiBudget = apiBudgetField.value as Double
         )
-        AppSettingsState.instance.savedCommandConfigs[configName] = config
+        AppSettingsState.instance.savedCommandConfigsJson?.set(configName, config.toJson())
         savedConfigsCombo.addItem(configName)
         savedConfigsCombo.selectedItem = configName
       }
       
       fun loadConfig(configName: String) {
-        val config = AppSettingsState.instance.savedCommandConfigs[configName] ?: return
+        val config =
+          AppSettingsState.instance.savedCommandConfigsJson?.get(configName)
+            ?.let<String, CommandConfig?> { fromJson(it, CommandConfig::class.java) } ?: return
         commandsList.clear()
         commandsPanel.removeAll()
         config.commands.forEach {
@@ -501,8 +506,8 @@ class CommandAutofixAction : BaseAction() {
         val workingDirectoryField = ComboBox<String>().apply {
           isEditable = true
           val items = mutableListOf<String>()
-          AppSettingsState.instance.recentWorkingDirs.forEach { addItem(it); items.add(it) }
-          if (AppSettingsState.instance.recentWorkingDirs.isEmpty()) {
+          AppSettingsState.instance.recentWorkingDirs?.forEach { addItem(it); items.add(it) }
+          if (AppSettingsState.instance.recentWorkingDirs?.isEmpty() == true) {
             addItem(workingDirectory.absolutePath)
           }
           folders.forEach {
@@ -515,7 +520,7 @@ class CommandAutofixAction : BaseAction() {
           selectedItem = workingDirectory.absolutePath
           preferredSize = Dimension(400, preferredSize.height)
         }
-        val commandField = ComboBox(AppSettingsState.instance.executables.toTypedArray()).apply {
+        val commandField = ComboBox(AppSettingsState.instance.executables?.toTypedArray() ?: emptyArray()).apply {
           isEditable = true
           preferredSize = Dimension(400, preferredSize.height)
         }
@@ -546,8 +551,8 @@ class CommandAutofixAction : BaseAction() {
         }
         val argumentsField = ComboBox<String>().apply {
           isEditable = true
-          AppSettingsState.instance.recentArguments.forEach { addItem(it) }
-          if (AppSettingsState.instance.recentArguments.isEmpty()) {
+          AppSettingsState.instance.recentArguments?.forEach { addItem(it) }
+          if (AppSettingsState.instance.recentArguments?.isEmpty() == true) {
             addItem("")
           }
           preferredSize = Dimension(450, preferredSize.height)

@@ -103,10 +103,10 @@ object UITools {
     thread(name = title ?: "runAsync") {
       try {
         if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
-          AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
+          AppSettingsState.instance.apiKeys?.values?.firstOrNull() ?: ""
           task(AbstractProgressIndicatorBase())
         } else {
-          AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
+          AppSettingsState.instance.apiKeys?.values?.firstOrNull() ?: ""
           val t = if (AppSettingsState.instance.modalTasks)
             ModalTask(project, title ?: "", canBeCancelled, task)
           else
@@ -684,10 +684,10 @@ object UITools {
     task: (ProgressIndicator) -> T,
   ): T {
     return if (project == null || suppressProgress == AppSettingsState.instance.editRequests) {
-      AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
+      AppSettingsState.instance.apiKeys?.values?.firstOrNull() ?: ""
       task(AbstractProgressIndicatorBase())
     } else {
-      AppSettingsState.instance.apiKey?.values?.firstOrNull() ?: ""
+      AppSettingsState.instance.apiKeys?.values?.firstOrNull() ?: ""
       val t = if (AppSettingsState.instance.modalTasks) ModalTask(project, title ?: "", canBeCancelled, task)
       else BgTask(project, title ?: "", canBeCancelled, task)
       ProgressManager.getInstance().run(t)
@@ -726,8 +726,6 @@ object UITools {
           null, "This request was cancelled by the user", "User Cancelled Request", JOptionPane.WARNING_MESSAGE
         )
       } else if (e.matches { IOException::class.java.isAssignableFrom(it.javaClass) && it.message?.contains("Incorrect API key") == true }) {
-
-
         val panel = panel {
           row {
             label("The API key was rejected by the server.")
@@ -745,7 +743,7 @@ object UITools {
                 JOptionPane.showMessageDialog(
                   null, "The API key was accepted by the server. The new value will be saved.", "Success", JOptionPane.INFORMATION_MESSAGE
                 )
-                AppSettingsState.instance.apiKey = mapOf(APIProvider.OpenAI.name to apiKey).toMutableMap()
+                AppSettingsState.instance.apiKeys?.set(APIProvider.OpenAI.name, apiKey)
               } catch (e: Exception) {
                 JOptionPane.showMessageDialog(
                   null, "The API key was rejected by the server.", "Failure", JOptionPane.WARNING_MESSAGE

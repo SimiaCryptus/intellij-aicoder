@@ -50,7 +50,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
       val providers = models()
         .filter { model ->
           val providerName = model.second.provider.name
-          AppSettingsState.instance.apiKey?.get(providerName)?.isNotEmpty() == true
+          AppSettingsState.instance.apiKeys?.get(providerName)?.isNotEmpty() == true
         }
         .groupBy { it.second.provider }
 
@@ -267,7 +267,7 @@ class SettingsWidgetFactory : StatusBarWidgetFactory {
 
 
     init {
-      AppSettingsState.instance.addOnSettingsLoadedListener {
+      AppSettingsState.instance.onSettingsLoadedListeners.add {
         statusBar?.updateWidget(ID())
       }
       // Initialize selection for both trees on EDT

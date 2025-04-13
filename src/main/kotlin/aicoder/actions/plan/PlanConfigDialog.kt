@@ -12,11 +12,14 @@ import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.simiacryptus.aicoder.config.AppSettingsState
+import com.simiacryptus.aicoder.config.AppSettingsState.SavedPlanConfig
 import com.simiacryptus.jopenai.models.ChatModel
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
 import com.simiacryptus.skyenet.apps.plan.TaskType
 import com.simiacryptus.skyenet.apps.plan.tools.CommandAutoFixTask
+import com.simiacryptus.util.JsonUtil.fromJson
+import com.simiacryptus.util.JsonUtil.toJson
 import java.awt.CardLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -80,7 +83,7 @@ class PlanConfigDialog(
     private const val DIVIDER_PROPORTION = 0.3f
     
     fun isVisible(it: ChatModel): Boolean {
-      return AppSettingsState.instance.apiKey?.get(it.provider.name)?.isNotBlank() ?: false
+      return AppSettingsState.instance.apiKeys?.get(it.provider.name)?.isNotBlank() ?: false
     }
   }
   
@@ -183,8 +186,8 @@ class PlanConfigDialog(
         private val entries = mutableListOf<CommandTableEntry>()
         
         init {
-          val sortedExecutables = AppSettingsState.instance.executables.sortedWith(String.CASE_INSENSITIVE_ORDER)
-          sortedExecutables.forEach { command ->
+          val sortedExecutables = AppSettingsState.instance.executables?.sortedWith(String.CASE_INSENSITIVE_ORDER)
+          sortedExecutables?.forEach { command ->
             val isEnabled =
               (settings.getTaskSettings(taskType) as? CommandAutoFixTask.CommandAutoFixTaskSettings)?.commandAutoFixCommands?.contains(command) ?: true
             entries.add(CommandTableEntry(isEnabled, command))
@@ -263,7 +266,7 @@ class PlanConfigDialog(
               )
               if (command != null && command.isNotEmpty()) {
                 (commandList.model as DefaultTableModel).addRow(arrayOf(true, command))
-                AppSettingsState.instance.executables.add(command)
+                AppSettingsState.instance.executables?.add(command)
               }
             }
           })
@@ -275,7 +278,7 @@ class PlanConfigDialog(
               if (selectedRow != -1) {
                 val command = (commandList.model as DefaultTableModel).getValueAt(selectedRow, 1) as String
                 (commandList.model as DefaultTableModel).removeRow(selectedRow)
-                AppSettingsState.instance.executables.remove(command)
+                AppSettingsState.instance.executables?.remove(command)
                 
               } else {
                 JOptionPane.showMessageDialog(
@@ -361,7 +364,7 @@ class PlanConfigDialog(
   private val taskConfigs = mutableMapOf<String, TaskTypeConfigPanel>()
   private val savedConfigsCombo = ComboBox<String>().apply {
     preferredSize = Dimension(CONFIG_COMBO_WIDTH, CONFIG_COMBO_HEIGHT)
-    AppSettingsState.instance.savedPlanConfigs.keys.sorted().forEach { addItem(it) }
+    AppSettingsState.instance.savedPlanConfigs?.keys?.sorted()?.forEach { addItem(it) }
   }
   
   private fun getVisibleModels() = ChatModel.values().map { it.value }.filter { isVisible(it) }.toList().sortedBy { "${it.provider.name} - ${it.modelName}" }
@@ -462,7 +465,7 @@ class PlanConfigDialog(
       return
     }
     taskConfigs.values.forEach { it.saveSettings() }
-    if (AppSettingsState.instance.savedPlanConfigs.containsKey(configName)) {
+    if (AppSettingsState.instance.savedPlanConfigs?.containsKey(configName ?: "") == true) {
       val confirmResult = JOptionPane.showConfirmDialog(
         null, "Configuration '$configName' already exists. Overwrite?", "Confirm Overwrite", JOptionPane.YES_NO_OPTION
       )
@@ -485,13 +488,13 @@ class PlanConfigDialog(
       apiBudget = apiBudget,
       taskSettings = taskSettingsMap
     )
-    AppSettingsState.instance.savedPlanConfigs[configName] = config
+    AppSettingsState.instance.savedPlanConfigs?.set(configName, toJson(config))
     savedConfigsCombo.addItem(configName)
     savedConfigsCombo.selectedItem = configName
   }
   
   private fun loadConfig(configName: String) {
-    val config = AppSettingsState.instance.savedPlanConfigs[configName] ?: return
+    val config = AppSettingsState.instance.savedPlanConfigs?.get(configName)?.let<String, SavedPlanConfig?> { fromJson(it, SavedPlanConfig::class.java) } ?: return
     val hasUnsavedChanges = TaskType.values().any { taskType ->
       val currentSettings = settings.getTaskSettings(taskType)
       val savedSettings = config.taskSettings[taskType.name]
@@ -565,7 +568,7 @@ class PlanConfigDialog(
                 null, "Delete configuration '$selected'?", "Confirm Delete", JOptionPane.YES_NO_OPTION
               )
               if (confirmResult == JOptionPane.YES_OPTION) {
-                AppSettingsState.instance.savedPlanConfigs.remove(selected)
+                AppSettingsState.instance.savedPlanConfigs?.remove(selected)
                 savedConfigsCombo.removeItem(selected)
               }
             } else {

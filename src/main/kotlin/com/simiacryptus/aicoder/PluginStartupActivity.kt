@@ -25,6 +25,7 @@ import com.simiacryptus.skyenet.core.platform.model.AuthenticationInterface
 import com.simiacryptus.skyenet.core.platform.model.AuthorizationInterface
 import com.simiacryptus.skyenet.core.platform.model.User
 import com.simiacryptus.skyenet.core.util.SimpleDiffApplier
+import com.simiacryptus.util.JsonUtil.fromJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -48,8 +49,7 @@ class PluginStartupActivity : ProjectActivity {
     try {
       // Configure diff logging based on settings
       com.simiacryptus.diff.AddApplyFileDiffLinks.loggingEnabled = AppSettingsState.instance.diffLoggingEnabled
-
-
+      
       //ApplicationServicesConfig.dataStorageRoot = ApplicationServicesConfig.dataStorageRoot.resolve("intellij")
       val currentThread = Thread.currentThread()
       val prevClassLoader = currentThread.contextClassLoader
@@ -57,7 +57,12 @@ class PluginStartupActivity : ProjectActivity {
         currentThread.contextClassLoader = PluginStartupActivity::class.java.classLoader
         init(project)
         // Add user-supplied models to ChatModel
-        addUserSuppliedModels(AppSettingsState.instance.userSuppliedModels)
+        addUserSuppliedModels(AppSettingsState.instance.userSuppliedModels?.mapNotNull {
+          try { fromJson(it, AppSettingsState.UserSuppliedModel::class.java) }
+          catch (e: Exception) { null }
+        } ?: emptyList())
+      } catch (e: Exception) {
+        log.error("Error during plugin startup", e)
       } finally {
         currentThread.contextClassLoader = prevClassLoader
       }
