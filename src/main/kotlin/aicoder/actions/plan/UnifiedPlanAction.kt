@@ -15,6 +15,7 @@ import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.UnifiedPlanApp
 import com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode
+import com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.Companion.graphFile
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
@@ -23,7 +24,8 @@ import com.simiacryptus.skyenet.apps.plan.cognitive.*
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.FileValidationUtils
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils.Companion.filteredWalk
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
 import com.simiacryptus.skyenet.webui.application.ApplicationInterface
@@ -68,9 +70,66 @@ class UnifiedPlanAction : BaseAction() {
         val selectedCognitiveMode = dialog.cognitiveModeCombo.selectedItem as String
         // Convert the selection string to the appropriate CognitiveModeStrategy.
         val cognitiveMode: CognitiveModeStrategy = when (selectedCognitiveMode) {
-          "Plan Ahead" -> PlanAheadMode.Companion
-          "Single Task" -> SingleTaskMode.Companion
-          "Graph" -> GraphOrderedPlanMode.Companion
+          "Plan Ahead" -> object : CognitiveModeStrategy {
+            override fun getCognitiveMode(
+              ui: ApplicationInterface,
+              api: API,
+              api2: OpenAIClient,
+              planSettings: PlanSettings,
+              session: Session,
+              user: User?
+            ) = object : PlanAheadMode(ui, api, planSettings, session, user, api2) {
+              override fun contextData(): List<String> {
+                return listOf(
+                  buildString {
+                    // Selected file listing
+                    append("Selected Files:\n")
+                    append(filteredWalk(File(root)) { true }.joinToString("\n") { "* ${it.toRelativeString(File(root))}" })
+                  }
+                )
+              }
+            }
+          }
+          "Single Task" -> object : CognitiveModeStrategy {
+            override fun getCognitiveMode(
+              ui: ApplicationInterface,
+              api: API,
+              api2: OpenAIClient,
+              planSettings: PlanSettings,
+              session: Session,
+              user: User?
+            ) = object : SingleTaskMode(ui, api, planSettings, session, user, api2) {
+              override fun contextData(): List<String> {
+                return listOf(
+                  buildString {
+                    // Selected file listing
+                    append("Selected Files:\n")
+                    append(filteredWalk(File(root)) { true }.joinToString("\n") { "* ${it.toRelativeString(File(root))}" })
+                  }
+                )
+              }
+            }
+          }
+          "Graph" -> object : CognitiveModeStrategy {
+            override fun getCognitiveMode(
+              ui: ApplicationInterface,
+              api: API,
+              api2: OpenAIClient,
+              planSettings: PlanSettings,
+              session: Session,
+              user: User?
+            ) = object : GraphOrderedPlanMode(ui, api, planSettings, session, user, api2, GraphOrderedPlanMode.graphFile) {
+              override fun contextData(): List<String> {
+                return listOf(
+                  buildString {
+                    // Selected file listing
+                    append("Selected Files:\n")
+                    append(filteredWalk(File(root)) { true }.joinToString("\n") { "* ${it.toRelativeString(File(root))}" })
+                  }
+                )
+              }
+            }
+          }
           "Auto Plan" -> object : CognitiveModeStrategy {
             override fun getCognitiveMode(
               ui: ApplicationInterface,
@@ -80,7 +139,6 @@ class UnifiedPlanAction : BaseAction() {
               session: Session,
               user: User?
             ): CognitiveMode {
-              
               return object : AutoPlanMode(
                 ui = ui,
                 api = api,
@@ -97,17 +155,12 @@ class UnifiedPlanAction : BaseAction() {
                     buildString {
                       // Selected file listing
                       append("Selected Files:\n")
-                      append(FileValidationUtils.filteredWalk(File(root)) {
-                        true
-                      }.joinToString("\n") {
-                        "* " + it.toString()
-                      })
+                      append(filteredWalk(File(root)) { true }.joinToString("\n") { "* ${it.toRelativeString(File(root))}" })
                     }
                   )
                 }
               }
             }
-            
           }
           
           else -> throw RuntimeException("Unknown plan mode: $selectedCognitiveMode")

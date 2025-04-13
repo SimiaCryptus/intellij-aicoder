@@ -21,10 +21,10 @@ import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.FileValidationUtils
-import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.filteredWalk
-import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isGitignore
-import com.simiacryptus.skyenet.core.util.FileValidationUtils.Companion.isLLMIncludableFile
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils.Companion.filteredWalk
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils.Companion.isGitignore
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils.Companion.isLLMIncludableFile
 import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -102,7 +102,7 @@ class SimpleCommandAction : BaseAction() {
             private val maxFileSize = 512 * 1024
 
             override fun codeFiles() = (virtualFiles?.toList<VirtualFile>()?.flatMap<VirtualFile, File> {
-                FileValidationUtils.expandFileList(it.toFile).toList()
+                FileSelectionUtils.expandFileList(it.toFile).toList()
             }?.map<File, Path> { it.toPath() }?.toSet<Path>()?.toMutableSet<Path>() ?: mutableSetOf<Path>())
                 .filter { it.toFile().length() < maxFileSize }
                 .map { root.toPath().relativize(it) ?: it }.toSet()

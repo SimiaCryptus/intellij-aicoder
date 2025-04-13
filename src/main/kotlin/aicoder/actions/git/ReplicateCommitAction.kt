@@ -27,7 +27,7 @@ import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.FileValidationUtils
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils
 import com.simiacryptus.skyenet.core.util.IterativePatchUtil
 import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
@@ -333,7 +333,7 @@ class ReplicateCommitAction : BaseAction() {
     virtualFiles?.forEach { file ->
       if (file.isDirectory) {
         if (file.name.startsWith(".")) return@forEach
-        if (FileValidationUtils.Companion.isGitignore(file.toNioPath())) return@forEach
+        if (FileSelectionUtils.Companion.isGitignore(file.toNioPath())) return@forEach
         codeFiles.addAll(getFiles(file.children))
       } else {
         codeFiles.add((file.toNioPath()))

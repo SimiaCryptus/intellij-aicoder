@@ -21,12 +21,11 @@ import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.jopenai.proxy.ValidatedObject
 import com.simiacryptus.jopenai.util.ClientUtil.toContentList
 import com.simiacryptus.skyenet.Discussable
-import com.simiacryptus.skyenet.Retryable
 import com.simiacryptus.skyenet.core.actors.ParsedActor
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.FileValidationUtils
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils
 import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
@@ -46,7 +45,7 @@ class CodeChangeAction : BaseAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
     
     override fun isEnabled(event: AnActionEvent): Boolean {
-        if (FileValidationUtils.expandFileList(
+        if (FileSelectionUtils.expandFileList(
             *PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile }?.toTypedArray<File>() ?: arrayOf()
         ).isEmpty()) return false
         return super.isEnabled(event)
@@ -71,7 +70,7 @@ class CodeChangeAction : BaseAction() {
         try {
             val root = getRoot(event) ?: throw RuntimeException("No file or folder selected")
             val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
-            val initialFiles = FileValidationUtils.expandFileList(*virtualFiles?.map { it.toFile }?.toTypedArray() ?: arrayOf()).map {
+            val initialFiles = FileSelectionUtils.expandFileList(*virtualFiles?.map { it.toFile }?.toTypedArray() ?: arrayOf()).map {
                 it.toPath().relativeTo(root)
             }.toSet()
             

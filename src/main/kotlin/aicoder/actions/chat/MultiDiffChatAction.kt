@@ -24,7 +24,7 @@ import com.simiacryptus.skyenet.apps.general.renderMarkdown
 import com.simiacryptus.skyenet.core.actors.SimpleActor
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.FileValidationUtils
+import com.simiacryptus.skyenet.core.util.FileSelectionUtils
 import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
@@ -34,7 +34,6 @@ import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.getChildClient
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.concurrent.Semaphore
@@ -46,7 +45,7 @@ open class MultiDiffChatAction(
 ) : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun isEnabled(event: AnActionEvent): Boolean {
-    if (FileValidationUtils.expandFileList(
+    if (FileSelectionUtils.expandFileList(
         *PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)?.map { it.toFile }?.toTypedArray<File>() ?: arrayOf()
       ).isEmpty()
     ) return false
@@ -57,7 +56,7 @@ open class MultiDiffChatAction(
     try {
       val root = getRoot(event) ?: throw RuntimeException("No file or folder selected")
       val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
-      val initialFiles = FileValidationUtils.expandFileList(*virtualFiles?.map { it.toFile }?.toTypedArray() ?: arrayOf()).map {
+      val initialFiles = FileSelectionUtils.expandFileList(*virtualFiles?.map { it.toFile }?.toTypedArray() ?: arrayOf()).map {
         it.toPath().relativeTo(root)
       }.toSet()
       val session = Session.newGlobalID()
