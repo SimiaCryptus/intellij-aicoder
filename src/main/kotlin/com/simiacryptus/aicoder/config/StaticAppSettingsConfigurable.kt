@@ -405,15 +405,15 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
         val name = value.name
         var key = apiKeys[name]
         if (key == null) {
-          log.warn("Key is null for provider: $name")
+          log.debug("Key is null for provider: $name")
           key = ""
         }
         var url = apiBase[name]
         if (url == null) {
-          log.warn("URL is null for provider: $name")
+          log.debug("URL is null for provider: $name")
           url = value.base
         }
-        log.warn("Adding row to table model: $name, $key, $url")
+        log.debug("Adding row to table model: $name, $key, $url")
         model.addRow(arrayOf(name, key, url))
       }
     } catch (e: Exception) {
