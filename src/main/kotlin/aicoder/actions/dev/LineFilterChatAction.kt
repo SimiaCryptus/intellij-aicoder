@@ -98,6 +98,7 @@ class LineFilterChatAction : BaseAction() {
     SessionProxyServer.agents[session] = object : ChatSocketManager(
       session = session,
       model = AppSettingsState.instance.smartModel.chatModel(),
+      parsingModel = AppSettingsState.instance.fastModel.chatModel(),
       userInterfacePrompt = userPrompt,
       systemPrompt = systemPrompt,
       api = api,

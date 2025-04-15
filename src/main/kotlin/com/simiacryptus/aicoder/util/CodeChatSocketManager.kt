@@ -15,10 +15,12 @@ open class CodeChatSocketManager(
   val codeSelection: String,
   api: ChatClient,
   model: ChatModel,
+  parsingModel: ChatModel,
   storage: StorageInterface?,
 ) : ChatSocketManager(
   session = session,
   model = model,
+  parsingModel = parsingModel,
   userInterfacePrompt = "# `$filename`\n\n```$language\n$codeSelection\n```",
   systemPrompt = "\nYou are a helpful AI that helps people with coding.\n\nYou will be answering questions about the following code located in `$filename`:\n\n```$language\n$codeSelection\n```\n\nResponses may use markdown formatting, including code blocks.",
   api = api,

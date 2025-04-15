@@ -12,6 +12,7 @@ import com.simiacryptus.skyenet.webui.chat.ChatSocketManager
 class LargeOutputChatSocketManager(
   session: Session,
   model: ChatModel,
+  parsingModel: ChatModel,
   userInterfacePrompt: String,
   systemPrompt: String,
   api: ChatClient,
@@ -21,6 +22,7 @@ class LargeOutputChatSocketManager(
 ) : ChatSocketManager(
   session = session,
   model = model,
+  parsingModel = parsingModel,
   userInterfacePrompt = userInterfacePrompt,
   systemPrompt = systemPrompt,
   api = api,

@@ -50,6 +50,7 @@ class ChatWithWorkingCopyDiffAction : AnAction() {
       filename = "working_copy_changes.diff",
       api = IdeaChatClient.instance,
       model = AppSettingsState.instance.smartModel.chatModel(),
+      parsingModel = AppSettingsState.instance.fastModel.chatModel(),
       storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
     )
     ApplicationServer.appInfoMap[session] = AppInfoData(

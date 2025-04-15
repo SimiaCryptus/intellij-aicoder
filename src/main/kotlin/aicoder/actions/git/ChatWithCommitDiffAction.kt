@@ -69,6 +69,7 @@ class ChatWithCommitDiffAction : BaseAction(
       filename = "commit_changes.diff",
       api = IdeaChatClient.instance,
       model = AppSettingsState.instance.smartModel.chatModel(),
+      parsingModel = AppSettingsState.instance.fastModel.chatModel(),
       storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
     )
     ApplicationServer.appInfoMap[session] = AppInfoData(

@@ -34,6 +34,7 @@ class LargeOutputChatAction : BaseAction() {
     """.trimIndent()
 
   private val model by lazy { AppSettingsState.instance.smartModel.chatModel() }
+  private val parsingModel by lazy { AppSettingsState.instance.fastModel.chatModel() }
 
   override fun handle(e: AnActionEvent) {
     val project = e.project ?: return
@@ -59,6 +60,7 @@ class LargeOutputChatAction : BaseAction() {
         SessionProxyServer.agents[session] = LargeOutputChatSocketManager(
           session = session,
           model = model,
+          parsingModel = parsingModel,
           userInterfacePrompt = userInterfacePrompt,
           systemPrompt = systemPrompt,
           api = api,

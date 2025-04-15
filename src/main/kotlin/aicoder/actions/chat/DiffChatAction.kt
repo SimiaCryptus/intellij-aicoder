@@ -116,6 +116,7 @@ class DiffChatAction : BaseAction() {
       filename = filename,
       api = api,
       model = AppSettingsState.instance.smartModel.chatModel(),
+      parsingModel = AppSettingsState.instance.fastModel.chatModel(),
       storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
     ) {
 
