@@ -20,10 +20,8 @@ import com.simiacryptus.jopenai.models.ImageModels
 import com.simiacryptus.jopenai.models.OpenAIModels
 import com.simiacryptus.skyenet.apps.general.PatchApp
 import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
-import com.simiacryptus.skyenet.core.actors.CodingActor.Companion.indent
 import com.simiacryptus.util.JsonUtil.fromJson
 import com.simiacryptus.util.JsonUtil.toJson
-import com.simiacryptus.util.toJson
 import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -318,9 +316,7 @@ data class AppSettingsState(
     
     @JvmStatic
     val instance: AppSettingsState by lazy {
-      val appSettingsState = ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
-      log.info("AppSettingsState instance: ${appSettingsState.toJson().indent("  ")}")
-      appSettingsState
+      ApplicationManager.getApplication()?.getService(AppSettingsState::class.java) ?: AppSettingsState()
     }
     
     fun String.imageModel(): ImageModels {

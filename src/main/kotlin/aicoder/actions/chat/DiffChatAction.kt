@@ -23,7 +23,6 @@ import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
-import com.simiacryptus.skyenet.webui.application.ApplicationInterface
 import com.simiacryptus.skyenet.webui.application.ApplicationServer
 import com.simiacryptus.skyenet.webui.session.SessionTask
 import org.intellij.lang.annotations.Language
@@ -135,7 +134,6 @@ class DiffChatAction : BaseAction() {
                   
                   
                 """.trimIndent() + patchFormatPrompt
-      val ui by lazy { ApplicationInterface(this) }
       override fun renderResponse(response: String, task: SessionTask): String = """<div>${
         renderMarkdown(
           addApplyDiffLinks(
