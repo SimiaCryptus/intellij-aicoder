@@ -41,12 +41,6 @@
                     text="💬 AI Chat"
                     description="Initiate a general-purpose chat session to discuss coding concepts, get assistance with programming tasks, or explore software development ideas">
             </action>
-            <action id="AICoderEnhancedChat"
-                    class="aicoder.actions.chat.LargeOutputChatAction"
-                    text="🧐 Large Output Chat"
-                    description="Open enhanced AI code chat with structured responses">
-                <add-to-group group-id="ToolsMenu" anchor="last"/>
-            </action>
             <action class="aicoder.actions.agent.OutlineAction"
                     id="OutlineAction"
                     text="🗂️ Outline Tool"

@@ -42,7 +42,6 @@ class UnifiedPlanAction : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun handle(e: AnActionEvent) {
-    // The unified dialog now includes cognitive mode settings.
     val root: String = UITools.getRoot(e)
     val dialog = PlanConfigDialog(
       e.project, PlanSettings(
@@ -58,7 +57,6 @@ class UnifiedPlanAction : BaseAction() {
         googleApiKey = AppSettingsState.instance.googleApiKey,
         googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
       ),
-    // Set singleTaskMode based on the initial cognitive mode selection
       singleTaskMode = false, // Initially false, will be updated based on selection
       apiBudget = DEFAULT_API_BUDGET // Default API budget
     )

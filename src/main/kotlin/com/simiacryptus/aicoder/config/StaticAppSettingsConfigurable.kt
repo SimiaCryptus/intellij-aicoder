@@ -5,6 +5,7 @@ import com.simiacryptus.aicoder.PluginStartupActivity.Companion.addUserSuppliedM
 import com.simiacryptus.aicoder.config.AppSettingsState.UserSuppliedModel
 import com.simiacryptus.aicoder.util.IdeaChatClient
 import com.simiacryptus.jopenai.models.APIProvider
+import com.simiacryptus.util.EncryptionUtil
 import com.simiacryptus.util.JsonUtil
 import com.simiacryptus.util.JsonUtil.fromJson
 import com.simiacryptus.util.toJson
@@ -34,7 +35,9 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       IdeaChatClient.instance.logStreams.retainAll { it.close(); false }
     }
   }
-
+  
+  private val password = JPasswordField()
+  
   override fun build(component: AppSettingsComponent): JComponent {
     val tabbedPane = com.intellij.ui.components.JBTabbedPane()
     try {
@@ -62,6 +65,8 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
             add(component.executablesPanel)
           })
           add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Password:"))
+            add(password) 
             add(JLabel("Configuration:"))
             add(JButton("Export Config").apply {
               addActionListener {
@@ -234,7 +239,12 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
   private fun showExportConfigDialog() {
     val dialog = JDialog(null as Frame?, "Export Configuration", true)
     dialog.layout = BorderLayout()
-    val configJson = JsonUtil.toJson(AppSettingsState.instance)
+    
+   // Encrypt keys before converting to JSON
+   val encryptedSettings = AppSettingsState.instance.copy()
+   encryptedSettings.apiKeys?.replaceAll { k, v -> EncryptionUtil.encrypt(v, password.text) ?: v }
+   val configJson = JsonUtil.toJson(encryptedSettings)
+
     val textArea = JTextArea(configJson).apply {
       lineWrap = true
       wrapStyleWord = true
@@ -322,17 +332,27 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
         val importedSettings = fromJson<AppSettingsState>(textArea.text, AppSettingsState::class.java)
         // Confirm before applying
         val confirm = JOptionPane.showConfirmDialog(
-          dialog,
+          dialog, 
           "Are you sure you want to apply this configuration? This will overwrite your current settings.",
           "Confirm Import",
           JOptionPane.YES_NO_OPTION,
           JOptionPane.WARNING_MESSAGE
         )
         if (confirm == JOptionPane.YES_OPTION) {
-          // Copy all properties from imported settings to current instance
+          importedSettings.apiKeys?.replaceAll { k, v -> EncryptionUtil.decrypt(v, password.text) ?: v }
           XmlSerializerUtil.copyBean(importedSettings, AppSettingsState.instance)
-          // Update user-supplied models
           addUserSuppliedModels(importedSettings.userSuppliedModels?.map { fromJson(it, UserSuppliedModel::class.java) } ?: emptyList())
+          // Update API keys and bases
+          importedSettings.apiKeys?.forEach { (provider, key) ->
+            AppSettingsState.instance.apiKeys?.put(provider, key)
+          }
+          importedSettings.apiBase?.forEach { (provider, base) ->
+            AppSettingsState.instance.apiBase?.put(provider, base)
+          }
+          
+          // Update UI to reflect imported settings
+          write(AppSettingsState.instance, component!!)
+          
           JOptionPane.showMessageDialog(
             dialog,
             "Configuration applied successfully. Please restart the IDE for all changes to take effect.",
@@ -390,6 +410,7 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       component.setExecutables(settings.executables ?: emptySet())
       component.setUserSuppliedModels(settings.userSuppliedModels?.map { fromJson(it, UserSuppliedModel::class.java) } ?: emptyList())
       val model = component.apis.model as DefaultTableModel
+      model.rowCount = 0 // Clear existing rows
       model.rowCount = 0 // Clear existing rows
       val apiKeys = settings.apiKeys
       if(null == apiKeys) {
@@ -450,14 +471,14 @@ class StaticAppSettingsConfigurable : AppSettingsConfigurable() {
       settings.enableLegacyActions = component.enableLegacyActions.isSelected
 
       val tableModel = component.apis.model as DefaultTableModel
-      log.info("Reading API keys from table model: $tableModel with row count: ${tableModel.rowCount}")
+      log.debug("Reading API keys from table model: $tableModel with row count: ${tableModel.rowCount}")
       for (row in 0 until tableModel.rowCount) {
         val provider = tableModel.getValueAt(row, 0) as String
         val key = tableModel.getValueAt(row, 1) as String
         val base = tableModel.getValueAt(row, 2) as String
         log.info("Row $row: provider=$provider, key=$key, base=$base")
         if (key.isNotBlank()) {
-          settings.apiKeys?.set(provider, key) ?: log.warn("API keys are blank")
+         settings.apiKeys?.set(provider, key) ?: log.warn("API keys are blank")
           settings.apiBase?.set(provider, base) ?: log.warn("API base is blank")
         } else {
           log.info("Removing API key for provider: $provider")

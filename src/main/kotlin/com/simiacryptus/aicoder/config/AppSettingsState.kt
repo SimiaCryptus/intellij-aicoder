@@ -141,7 +141,6 @@ data class AppSettingsState(
   
   @JsonIgnore
   fun updateRecentCommands(id: String, mruItems: MRUItems) {
-    // TODO: Call from the appropriate places
     recentCommandsJson?.set(id, toJson(mruItems))
   }
   
