@@ -22,9 +22,7 @@ class GenericChatAction : BaseAction() {
 
   private val systemPrompt = ""
   private val userInterfacePrompt = ""
-  private val model by lazy { AppSettingsState.instance.smartModel.chatModel() }
-  private val parsingModel by lazy { AppSettingsState.instance.fastModel.chatModel() }
-
+  
   override fun handle(e: AnActionEvent) {
     val project = e.project ?: return
 
@@ -41,8 +39,8 @@ class GenericChatAction : BaseAction() {
         )
         aicoder.actions.SessionProxyServer.agents[session] = ChatSocketManager(
           session = session,
-          model = model,
-          parsingModel = parsingModel,
+          model = AppSettingsState.instance.smartModel.chatModel(),
+          parsingModel = AppSettingsState.instance.fastModel.chatModel(),
           initialAssistantPrompt = "",
           userInterfacePrompt = userInterfacePrompt,
           systemPrompt = systemPrompt,

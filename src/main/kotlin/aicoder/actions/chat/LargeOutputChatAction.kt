@@ -32,10 +32,7 @@ class LargeOutputChatAction : BaseAction() {
         This chat interface uses structured responses to better organize complex information.
         Feel free to ask coding questions - responses will be broken down into clear sections.
     """.trimIndent()
-
-  private val model by lazy { AppSettingsState.instance.smartModel.chatModel() }
-  private val parsingModel by lazy { AppSettingsState.instance.fastModel.chatModel() }
-
+  
   override fun handle(e: AnActionEvent) {
     val project = e.project ?: return
 
@@ -46,7 +43,7 @@ class LargeOutputChatAction : BaseAction() {
 
         val session = Session.newGlobalID()
         val largeOutputActor = LargeOutputActor(
-          model = model,
+          model = AppSettingsState.instance.smartModel.chatModel(),
           temperature = 0.3,
           maxIterations = 3
         )
@@ -59,8 +56,8 @@ class LargeOutputChatAction : BaseAction() {
 
         SessionProxyServer.agents[session] = LargeOutputChatSocketManager(
           session = session,
-          model = model,
-          parsingModel = parsingModel,
+          model = AppSettingsState.instance.smartModel.chatModel(),
+          parsingModel = AppSettingsState.instance.fastModel.chatModel(),
           userInterfacePrompt = userInterfacePrompt,
           systemPrompt = systemPrompt,
           api = api,

@@ -31,40 +31,52 @@ val slf4j_version = "2.0.16"
 val skyenet_version = "1.2.22"
 val remoterobot_version = "0.11.23"
 val jackson_version = "2.17.2"
+val aws_sdk_version = "2.25.60"
+val httpclient5_version = "5.3.1"
+val logback_version = "1.5.16"
+val commons_text_version = "1.11.0"
+val commons_lang3_version = "3.15.0"
 
 dependencies {
-  implementation("software.amazon.awssdk:bedrock:2.25.9")
-  implementation("software.amazon.awssdk:bedrockruntime:2.25.9")
-  implementation("software.amazon.awssdk:s3:2.25.9")
-  implementation("software.amazon.awssdk:kms:2.25.9")
-  implementation("software.amazon.awssdk:sso:2.25.9")
-  implementation("software.amazon.awssdk:ssooidc:2.25.9")
-
-  implementation("org.apache.commons:commons-text:1.11.0")
-  implementation(group = "com.vladsch.flexmark", name = "flexmark", version = "0.64.8")
+  
+  
+  // Pin all AWS SDK dependencies to the same version to avoid forced upgrades and reduce duplicates
+  implementation("software.amazon.awssdk:bedrockruntime:$aws_sdk_version")
+  implementation("software.amazon.awssdk:s3:$aws_sdk_version")
+  implementation("software.amazon.awssdk:kms:$aws_sdk_version")
+  
+  implementation("org.apache.commons:commons-text:$commons_text_version")
+  implementation("org.apache.commons:commons-lang3:$commons_lang3_version")
+  implementation("com.vladsch.flexmark:flexmark:0.64.8")
   implementation("com.googlecode.java-diff-utils:diffutils:1.3.0")
-  implementation(group = "org.apache.httpcomponents.client5", name = "httpclient5", version = "5.2.3")
-
-  implementation(group = "com.simiacryptus", name = "jo-penai", version = "1.1.13")
-  implementation(group = "com.simiacryptus.skyenet", name = "kotlin", version = skyenet_version)
-  implementation(group = "com.simiacryptus.skyenet", name = "core", version = skyenet_version)
-  implementation(group = "com.simiacryptus.skyenet", name = "webui", version = skyenet_version)
-
-  implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jackson_version)
-  implementation(group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = jackson_version)
-  implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jackson_version)
-  implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version")
-
-  implementation(group = "org.eclipse.jetty", name = "jetty-server", version = jetty_version)
-  implementation(group = "org.eclipse.jetty", name = "jetty-servlet", version = jetty_version)
-  implementation(group = "org.eclipse.jetty", name = "jetty-annotations", version = jetty_version)
-  implementation(group = "org.eclipse.jetty.websocket", name = "websocket-jetty-server", version = jetty_version)
-  implementation(group = "org.eclipse.jetty.websocket", name = "websocket-jetty-client", version = jetty_version)
-  implementation(group = "org.eclipse.jetty.websocket", name = "websocket-servlet", version = jetty_version)
-
-  implementation(group = "org.slf4j", name = "slf4j-api", version = slf4j_version)
-  // Logback is the default logging implementation for SLF4J
-  implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.5.16")
+  implementation("org.apache.httpcomponents.client5:httpclient5:$httpclient5_version")
+  
+  implementation("com.simiacryptus:jo-penai:1.1.13") {
+    exclude(group = "org.jetbrains.kotlin")
+  }
+  implementation("com.simiacryptus.skyenet:kotlin:$skyenet_version") {
+    exclude(group = "org.jetbrains.kotlin")
+  }
+  implementation("com.simiacryptus.skyenet:core:$skyenet_version") {
+    exclude(group = "org.jetbrains.kotlin")
+  }
+  implementation("com.simiacryptus.skyenet:webui:$skyenet_version") {
+    exclude(group = "org.jetbrains.kotlin")
+  }
+  
+  implementation("com.fasterxml.jackson.core:jackson-databind:$jackson_version")
+  implementation("com.fasterxml.jackson.core:jackson-annotations:$jackson_version")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
+  
+  implementation("org.eclipse.jetty:jetty-server:$jetty_version")
+  implementation("org.eclipse.jetty:jetty-servlet:$jetty_version")
+  implementation("org.eclipse.jetty:jetty-annotations:$jetty_version")
+  implementation("org.eclipse.jetty.websocket:websocket-jetty-server:$jetty_version")
+  implementation("org.eclipse.jetty.websocket:websocket-jetty-client:$jetty_version")
+  implementation("org.eclipse.jetty.websocket:websocket-servlet:$jetty_version")
+  
+  implementation("org.slf4j:slf4j-api:$slf4j_version")
+  implementation("ch.qos.logback:logback-classic:$logback_version")
 
   testImplementation(platform("org.junit:junit-bom:5.11.2"))
   testImplementation("org.junit.jupiter:junit-jupiter-api")
@@ -81,14 +93,10 @@ dependencies {
     ext = "zip"
   )
 
-  // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
   intellijPlatform {
     create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
 
-    // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
     bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
-
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
     plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
     instrumentationTools()
@@ -111,17 +119,6 @@ tasks {
 
   jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude(
-      "org/jetbrains/org/objectweb/asm/util/**",
-      "org/jetbrains/org/objectweb/asm/tree/analysis/**",
-      "org/jetbrains/org/objectweb/asm/tree/**",
-      "org/jetbrains/org/objectweb/asm/commons/**",
-      "org/jetbrains/concurrency/**",
-      "org/jetbrains/org/**",
-      "org/jetbrains/org/objectweb/asm/signature/**",
-      "org/jetbrains/org/objectweb/asm/**",
-      "org/jetbrains/org/objectweb/**"
-    )
   }
 
 

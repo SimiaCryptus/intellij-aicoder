@@ -44,11 +44,11 @@ open class MultiDiffChatAction(
     ) return false
     return super.isEnabled(event)
   }
-
-  override fun handle(event: AnActionEvent) {
+  
+  override fun handle(e: AnActionEvent) {
     try {
-      val root = getRoot(event) ?: throw RuntimeException("No file or folder selected")
-      val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(event.dataContext)
+      val root = getRoot(e) ?: throw RuntimeException("No file or folder selected")
+      val virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.dataContext)
       val initialFiles = FileSelectionUtils.expandFileList(*virtualFiles?.map { it.toFile }?.toTypedArray() ?: arrayOf()).map {
         it.toPath().relativeTo(root)
       }.toSet()
@@ -75,7 +75,7 @@ open class MultiDiffChatAction(
         loadImages = false,
         showMenubar = false
       )
-      val server = AppServer.getServer(event.project)
+      val server = AppServer.getServer(e.project)
       launchBrowser(server, session.toString())
     } catch (e: Exception) {
       // Comprehensive error logging
@@ -165,22 +165,20 @@ open class MultiDiffChatAction(
         }
     }
     
-    override fun renderResponse(response: String, task: SessionTask) = """<div>${
-      renderMarkdown(response) { html ->
-        AddApplyFileDiffLinks.instrumentFileDiffs(
-          this,
-          root = root.toPath(),
-          response = html,
-          handle = { newCodeMap ->
-            newCodeMap.forEach { (path, newCode) ->
-              task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
-            }
-          },
-          ui = ui,
-          api = api,
-        )
-      }
-    }</div>"""
+    override fun renderResponse(response: String, task: SessionTask) = renderMarkdown(response) { html ->
+      AddApplyFileDiffLinks.instrumentFileDiffs(
+        this,
+        root = root.toPath(),
+        response = html,
+        handle = { newCodeMap ->
+          newCodeMap.forEach { (path, newCode) ->
+            task.complete("<a href='${"fileIndex/$session/$path"}'>$path</a> Updated")
+          }
+        },
+        ui = ui,
+        api = api,
+      )
+    }
     
     override fun respond(api: ChatClient, task: SessionTask, userMessage: String): String {
       // Display token count information

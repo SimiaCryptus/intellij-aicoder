@@ -25,10 +25,7 @@ import java.text.SimpleDateFormat
 
 class LargeOutputCodeChatAction : BaseAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  private val model by lazy { AppSettingsState.instance.smartModel.chatModel() }
-  private val parsingModel by lazy { AppSettingsState.instance.fastModel.chatModel() }
-
+  
   override fun handle(e: AnActionEvent) {
     val project = e.project ?: return
     val root = getRoot(e) ?: return
@@ -59,8 +56,8 @@ class LargeOutputCodeChatAction : BaseAction() {
 
         SessionProxyServer.agents[session] = LargeOutputChatSocketManager(
           session = session,
-          model = model,
-          parsingModel = parsingModel,
+          model = AppSettingsState.instance.smartModel.chatModel(),
+          parsingModel = AppSettingsState.instance.fastModel.chatModel(),
           userInterfacePrompt = """
                         # Enhanced Code Analysis Chat
                         Analyzing the following files:
@@ -79,7 +76,7 @@ class LargeOutputCodeChatAction : BaseAction() {
           storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
           applicationClass = ApplicationServer::class.java,
           largeOutputActor = LargeOutputActor(
-            model = model,
+            model = AppSettingsState.instance.smartModel.chatModel(),
             temperature = 0.3,
             maxIterations = 3
           )
