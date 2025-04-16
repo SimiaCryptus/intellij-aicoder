@@ -174,7 +174,7 @@ class PlanConfigDialog(
         val currentModel = settings.getTaskSettings(taskType).model
         selectedItem = when {
           currentModel != null -> currentModel.modelName
-          else -> defaultModel
+          else -> AppSettingsState.instance.smartModel
         }
       }
     }
@@ -291,7 +291,7 @@ class PlanConfigDialog(
       }
       
       val currentModel = settings.getTaskSettings(taskType).model
-      modelComboBox.selectedItem = currentModel?.modelName ?: defaultModel
+      modelComboBox.selectedItem = currentModel?.modelName ?: AppSettingsState.instance.smartModel
       enabledCheckbox.addItemListener {
         val newSettings = when (taskType) {
           TaskType.CommandAutoFixTask -> CommandAutoFixTask.CommandAutoFixTaskSettings(
@@ -356,7 +356,6 @@ class PlanConfigDialog(
       temperatureLabel.text = TEMPERATURE_LABEL.format(settings.temperature)
     }
   }
-  private val defaultModel = AppSettingsState.instance.smartModel
   private val temperatureLabel = JLabel(TEMPERATURE_LABEL.format(settings.temperature))
   private val autoFixCheckbox = JCheckBox("Auto-apply fixes", settings.autoFix)
   private val taskTypeList = JBList(TaskType.values())
@@ -529,7 +528,7 @@ class PlanConfigDialog(
           if (modelComboBox.itemCount > 0 && selectedModel != null) {
             modelComboBox.selectedItem = selectedModel.modelName
           } else {
-            modelComboBox.selectedItem = defaultModel
+            modelComboBox.selectedItem = AppSettingsState.instance.smartModel
           }
         }
       }

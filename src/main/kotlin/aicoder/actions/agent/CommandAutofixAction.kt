@@ -47,13 +47,13 @@ class CommandAutofixAction : BaseAction() {
    * Handles the action execution.
    * Shows settings dialog, creates patch app session and opens browser interface.
    */
-  override fun handle(event: AnActionEvent) {
+  override fun handle(e: AnActionEvent) {
     try {
-      UITools.runAsync(event.project, "Initializing Command Autofix", true) { progress ->
+      UITools.runAsync(e.project, "Initializing Command Autofix", true) { progress ->
         progress.isIndeterminate = true
         progress.text = "Getting settings..."
-        val files = UITools.getSelectedFiles(event)
-        val folders = UITools.getSelectedFolders(event).map { it.toFile.toPath() }
+        val files = UITools.getSelectedFiles(e)
+        val folders = UITools.getSelectedFolders(e).map { it.toFile.toPath() }
         val root = (folders + files.map { it.toFile.toPath() }).filterNotNull().toTypedArray().commonRoot()
         lateinit var settingsUI: SettingsUI
         val settings = run {
@@ -75,7 +75,7 @@ class CommandAutofixAction : BaseAction() {
                 }
               }
             }
-            val dialog = CommandSettingsDialog(event.project, settingsUI)
+            val dialog = CommandSettingsDialog(e.project, settingsUI)
             dialog.show()
             settings1 = if (dialog.isOK) {
               val commands = settingsUI.commandsList.map { cmdPanel ->
@@ -144,7 +144,7 @@ class CommandAutofixAction : BaseAction() {
         val dateFormat = SimpleDateFormat("HH:mm:ss")
         val sessionName = "${javaClass.simpleName} @ ${dateFormat.format(System.currentTimeMillis())}"
         SessionProxyServer.metadataStorage.setSessionName(null, session, sessionName)
-        val server = AppServer.getServer(event.project)
+        val server = AppServer.getServer(e.project)
         Thread {
           Thread.sleep(500)
           try {
