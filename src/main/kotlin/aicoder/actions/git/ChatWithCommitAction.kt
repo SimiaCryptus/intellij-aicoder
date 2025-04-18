@@ -29,10 +29,10 @@ val String.isBinary: Boolean
   }
 
 class ChatWithCommitAction : AnAction() {
-  private val logger = Logger.getInstance(ChatWithCommitAction::class.java)
+  private val log = Logger.getInstance(ChatWithCommitAction::class.java)
 
   override fun actionPerformed(e: AnActionEvent) {
-    logger.info("Comparing selected revision with the current working copy")
+    log.info("Comparing selected revision with the current working copy")
     val files = expand(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
     val changes = e.getData(VcsDataKeys.CHANGES)
     Thread {
@@ -64,7 +64,7 @@ class ChatWithCommitAction : AnAction() {
         // Open chat with the diff information
         openChatWithDiff(e, msg ?: "No changes found")
       } catch (e: Throwable) {
-        logger.error("Error comparing changes", e)
+        log.error("Error comparing changes", e)
       }
     }.start()
   }
@@ -100,10 +100,10 @@ class ChatWithCommitAction : AnAction() {
       Thread.sleep(500)
       try {
         val uri = server.server.uri.resolve("/#$session")
-        logger.info("Opening browser to $uri")
+        log.info("Opening browser to $uri")
         browse(uri)
       } catch (e: Throwable) {
-        logger.warn("Error opening browser", e)
+        log.warn("Error opening browser", e)
       }
     }.start()
   }

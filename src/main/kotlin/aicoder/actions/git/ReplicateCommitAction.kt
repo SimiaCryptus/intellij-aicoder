@@ -45,7 +45,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.walk
 
 class ReplicateCommitAction : BaseAction() {
-  private val logger = Logger.getInstance(ReplicateCommitAction::class.java)
+  private val log = Logger.getInstance(ReplicateCommitAction::class.java)
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -122,15 +122,15 @@ class ReplicateCommitAction : BaseAction() {
         try {
           val server = AppServer.getServer(project)
           val uri = server.server.uri.resolve("/#$session")
-          logger.info("Opening browser to $uri")
+          log.info("Opening browser to $uri")
           browse(uri)
         } catch (e: Throwable) {
-          logger.error("Error opening browser", e)
+          log.error("Error opening browser", e)
           UITools.showErrorDialog("Failed to open browser: ${e.message}", "Error")
         }
       }
     } catch (e: Exception) {
-      logger.error("Error in ReplicateCommitAction", e)
+      log.error("Error in ReplicateCommitAction", e)
       Messages.showErrorDialog(project, "Operation failed: ${e.message}", "Error")
     }
   }
@@ -152,7 +152,7 @@ class ReplicateCommitAction : BaseAction() {
           val find = files?.find { it.toNioPath().toFile().absolutePath == File(file).absolutePath }
           find != null
         } catch (e: Exception) {
-          logger.error("Error comparing changes", e)
+          log.error("Error comparing changes", e)
           false
         }
       }

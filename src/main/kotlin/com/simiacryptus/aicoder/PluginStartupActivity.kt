@@ -237,7 +237,7 @@ class PluginStartupActivity : ProjectActivity {
           when (this) {
             is com.intellij.openapi.diagnostic.Logger -> setLevel(LogLevel.INFO)
             is ch.qos.logback.classic.Logger -> setLevel(Level.INFO)
-            else -> log.info("Failed to set log level for $name: Unsupported logger type (${this::class.java})")
+            else -> log.info("Failed to set log level for $name: Unsupported log type (${this::class.java})")
           }
         }
       } catch (e: Exception) {
@@ -251,7 +251,7 @@ class PluginStartupActivity : ProjectActivity {
           when (this) {
             is com.intellij.openapi.diagnostic.Logger -> setLevel(LogLevel.DEBUG)
             is ch.qos.logback.classic.Logger -> setLevel(Level.DEBUG)
-            else -> log.info("Failed to set log level for $name: Unsupported logger type (${this::class.java})")
+            else -> log.info("Failed to set log level for $name: Unsupported log type (${this::class.java})")
           }
         }
       } catch (e: Exception) {
@@ -265,7 +265,7 @@ class PluginStartupActivity : ProjectActivity {
           when (this) {
             is com.intellij.openapi.diagnostic.Logger -> setLevel(LogLevel.WARNING)
             is ch.qos.logback.classic.Logger -> setLevel(Level.WARN)
-            else -> log.info("Failed to set log level for $name: Unsupported logger type (${this::class.java})")
+            else -> log.info("Failed to set log level for $name: Unsupported log type (${this::class.java})")
           }
         }
       } catch (e: Exception) {
