@@ -12,10 +12,11 @@ import com.simiacryptus.aicoder.util.BrowseUtil.browse
 import com.simiacryptus.aicoder.util.UITools
 import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.OpenAIClient
+import com.simiacryptus.jopenai.describe.AbbrevWhitelistYamlDescriber
+import com.simiacryptus.jopenai.describe.TypeDescriber
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.UnifiedPlanApp
 import com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode
-import com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode.Companion.graphFile
 import com.simiacryptus.skyenet.apps.plan.PlanSettings
 import com.simiacryptus.skyenet.apps.plan.PlanUtil.isWindows
 import com.simiacryptus.skyenet.apps.plan.TaskSettingsBase
@@ -24,7 +25,6 @@ import com.simiacryptus.skyenet.apps.plan.cognitive.*
 import com.simiacryptus.skyenet.core.platform.Session
 import com.simiacryptus.skyenet.core.platform.file.DataStorage
 import com.simiacryptus.skyenet.core.platform.model.User
-import com.simiacryptus.skyenet.core.util.FileSelectionUtils
 import com.simiacryptus.skyenet.core.util.FileSelectionUtils.Companion.filteredWalk
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -75,8 +75,9 @@ class UnifiedPlanAction : BaseAction() {
               api2: OpenAIClient,
               planSettings: PlanSettings,
               session: Session,
-              user: User?
-            ) = object : PlanAheadMode(ui, api, planSettings, session, user, api2) {
+              user: User?,
+              describer: TypeDescriber
+            ) = object : PlanAheadMode(ui, api, planSettings, session, user, api2, describer) {
               override fun contextData(): List<String> {
                 return listOf(
                   buildString {
@@ -95,8 +96,9 @@ class UnifiedPlanAction : BaseAction() {
               api2: OpenAIClient,
               planSettings: PlanSettings,
               session: Session,
-              user: User?
-            ) = object : SingleTaskMode(ui, api, planSettings, session, user, api2) {
+              user: User?,
+              describer: TypeDescriber
+            ) = object : SingleTaskMode(ui, api, planSettings, session, user, api2, describer) {
               override fun contextData(): List<String> {
                 return listOf(
                   buildString {
@@ -115,8 +117,9 @@ class UnifiedPlanAction : BaseAction() {
               api2: OpenAIClient,
               planSettings: PlanSettings,
               session: Session,
-              user: User?
-            ) = object : GraphOrderedPlanMode(ui, api, planSettings, session, user, api2, GraphOrderedPlanMode.graphFile) {
+              user: User?,
+              describer: TypeDescriber
+            ) = object : GraphOrderedPlanMode(ui, api, planSettings, session, user, api2, GraphOrderedPlanMode.graphFile, describer) {
               override fun contextData(): List<String> {
                 return listOf(
                   buildString {
@@ -135,7 +138,8 @@ class UnifiedPlanAction : BaseAction() {
               api2: OpenAIClient,
               planSettings: PlanSettings,
               session: Session,
-              user: User?
+              user: User?,
+              describer: TypeDescriber
             ): CognitiveMode {
               return object : AutoPlanMode(
                 ui = ui,
@@ -147,6 +151,7 @@ class UnifiedPlanAction : BaseAction() {
                maxTaskHistoryChars = dialog.settings.maxTaskHistoryChars,
                maxTasksPerIteration = dialog.settings.maxTasksPerIteration,
                maxIterations = dialog.settings.maxIterations,
+                describer
               ) {
                 override fun contextData(): List<String> {
                   return listOf(
@@ -192,8 +197,8 @@ class UnifiedPlanAction : BaseAction() {
   }
 
   private fun initializeChat(
-    e: AnActionEvent, 
-    progress: ProgressIndicator, 
+    e: AnActionEvent,
+    progress: ProgressIndicator,
     planSettings: PlanSettings,
     cognitiveStrategy: CognitiveModeStrategy,
     apiBudget: Double
@@ -202,7 +207,19 @@ class UnifiedPlanAction : BaseAction() {
     val session = Session.newGlobalID()
     val root = getProjectRoot(e) ?: throw RuntimeException("Could not determine project root")
     progress.text = "Processing files..."
-    setupChatSession(session, root, planSettings, cognitiveStrategy, apiBudget)
+    setupChatSession(session, root, planSettings, cognitiveStrategy, apiBudget, object : AbbrevWhitelistYamlDescriber(
+      "com.simiacryptus", "aicoder.actions"
+    ) {
+      override val includeMethods: Boolean get() = false
+      
+      override fun getEnumValues(clazz: Class<*>): List<String> {
+        return if (clazz == TaskType::class.java) {
+          planSettings.taskSettings.filter { it.value.enabled }.map { it.key }
+        } else {
+          super.getEnumValues(clazz)
+        }
+      }
+    })
     progress.text = "Starting server..."
     val server = AppServer.getServer(e.project)
     openBrowser(server, session.toString())
@@ -220,7 +237,8 @@ class UnifiedPlanAction : BaseAction() {
     root: File,
     planSettings: PlanSettings,
     cognitiveStrategy: CognitiveModeStrategy,
-    apiBudget: Double
+    apiBudget: Double,
+    describer: TypeDescriber
   ) {
     DataStorage.sessionPaths[session] = root
     SessionProxyServer.chats[session] = UnifiedPlanApp(
@@ -242,7 +260,8 @@ class UnifiedPlanAction : BaseAction() {
         budget = apiBudget // Set the user-configured budget for the API
       },
       api2 = api2,
-      cognitiveStrategy = cognitiveStrategy
+      cognitiveStrategy = cognitiveStrategy,
+      describer = describer
     )
     ApplicationServer.appInfoMap[session] = AppInfoData(
       applicationName = "Unified Planning",

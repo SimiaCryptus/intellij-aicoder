@@ -141,7 +141,6 @@ class MultiCodeChatAction : BaseAction() {
         
         You will be answering questions about the following code:
         ${codeSummary()}
-        ${patchFormatPrompt}
       """.trimIndent()
     
     private fun codeSummary(): String {

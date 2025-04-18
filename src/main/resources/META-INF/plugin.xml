@@ -220,10 +220,6 @@
                         text="📚 Generate Documentation"
                         description="Automatically generate comprehensive documentation for selected files or entire project, with customizable output formats">
                 </action>
-                <action class="aicoder.actions.chat.LargeOutputCodeChatAction"
-                        text="💬 Large Output Code Chat"
-                        description="Analyze multiple code files with the Large Output Actor">
-                </action>
             </group>
             <group id="com.simiacryptus.aicoder.ui.ProjectMenu.Agents"
                    class="com.intellij.openapi.actionSystem.DefaultActionGroup"
