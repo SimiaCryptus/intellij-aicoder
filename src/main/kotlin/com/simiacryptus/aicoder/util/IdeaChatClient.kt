@@ -65,6 +65,7 @@ open class IdeaChatClient(
   override fun getChildClient(): ChatClient = IdeaChildClient(inner = this, key = key, apiBase = apiBase).apply {
     session = inner.session
     user = inner.user
+    textCompressor = inner.textCompressor
   }
 
   private val isInRequest = AtomicBoolean(false)
