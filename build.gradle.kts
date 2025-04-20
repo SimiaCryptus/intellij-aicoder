@@ -11,7 +11,6 @@ plugins {
   id("org.jetbrains.intellij.platform") version "2.4.0"
   id("org.jetbrains.changelog") version "2.2.1"
   id("org.jetbrains.qodana") version "2024.2.3"
-  //id("org.jetbrains.kotlinx.kover") version "0.9.0-RC"
   id("org.jetbrains.dokka") version "2.0.0-Beta"
 }
 
@@ -52,9 +51,6 @@ dependencies {
   implementation("org.apache.httpcomponents.client5:httpclient5:$httpclient5_version")
   
   implementation("com.simiacryptus:jo-penai:1.1.13") {
-    exclude(group = "org.jetbrains.kotlin")
-  }
-  implementation("com.simiacryptus.skyenet:kotlin:$skyenet_version") {
     exclude(group = "org.jetbrains.kotlin")
   }
   implementation("com.simiacryptus.skyenet:core:$skyenet_version") {
