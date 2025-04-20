@@ -20,3 +20,4 @@ test-recordings/
 *.parsed.json
 .intellijPlatform
 .kotlin/
+user-sessions/
