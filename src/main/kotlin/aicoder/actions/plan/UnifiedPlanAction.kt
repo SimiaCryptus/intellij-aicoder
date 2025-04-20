@@ -14,6 +14,7 @@ import com.simiacryptus.jopenai.API
 import com.simiacryptus.jopenai.OpenAIClient
 import com.simiacryptus.jopenai.describe.AbbrevWhitelistYamlDescriber
 import com.simiacryptus.jopenai.describe.TypeDescriber
+import com.simiacryptus.jopenai.models.APIProvider
 import com.simiacryptus.jopenai.models.chatModel
 import com.simiacryptus.skyenet.apps.general.UnifiedPlanApp
 import com.simiacryptus.skyenet.apps.graph.GraphOrderedPlanMode
@@ -45,17 +46,17 @@ class UnifiedPlanAction : BaseAction() {
     val root: String = UITools.getRoot(e)
     val dialog = PlanConfigDialog(
       e.project, PlanSettings(
-        defaultModel = AppSettingsState.instance.smartModel.chatModel(),
-        parsingModel = AppSettingsState.instance.fastModel.chatModel(),
+        env = mapOf(),
+        workingDir = root,
         shellCmd = listOf(
           if (System.getProperty("os.name").lowercase().contains("win")) "powershell" else "bash"
         ),
+        defaultModel = AppSettingsState.instance.smartModel.chatModel(),
+        parsingModel = AppSettingsState.instance.fastModel.chatModel(),
         temperature = AppSettingsState.instance.temperature.coerceIn(0.0, 1.0),
-        env = mapOf(),
-        workingDir = root,
-        githubToken = AppSettingsState.instance.githubToken,
-        googleApiKey = AppSettingsState.instance.googleApiKey,
-        googleSearchEngineId = AppSettingsState.instance.googleSearchEngineId,
+        githubToken = AppSettingsState.instance.apiKeys?.get(APIProvider.Github.name),
+        googleApiKey = AppSettingsState.instance.apiKeys?.get(APIProvider.GoogleSearch.name),
+        googleSearchEngineId = AppSettingsState.instance.apiBase?.get(APIProvider.GoogleSearch.name),
       ),
       singleTaskMode = false, // Initially false, will be updated based on selection
       apiBudget = DEFAULT_API_BUDGET // Default API budget
