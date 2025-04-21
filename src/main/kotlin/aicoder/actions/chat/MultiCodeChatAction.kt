@@ -127,7 +127,6 @@ class MultiCodeChatAction : BaseAction() {
     session = session,
     model = model,
     parsingModel = parsingModel,
-    userInterfacePrompt = "",
     api = api,
     storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
     applicationClass = ApplicationServer::class.java,

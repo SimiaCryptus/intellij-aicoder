@@ -42,7 +42,6 @@ class GenericChatAction : BaseAction() {
           model = AppSettingsState.instance.smartModel.chatModel(),
           parsingModel = AppSettingsState.instance.fastModel.chatModel(),
           initialAssistantPrompt = "",
-          userInterfacePrompt = userInterfacePrompt,
           systemPrompt = systemPrompt,
           api = api,
           storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
