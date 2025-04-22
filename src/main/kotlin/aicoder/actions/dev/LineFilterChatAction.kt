@@ -102,7 +102,7 @@ class LineFilterChatAction : BaseAction() {
       systemPrompt = systemPrompt,
       api = api,
       applicationClass = ApplicationServer::class.java,
-      storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome)
+      storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
     ) {
       override fun canWrite(user: User?): Boolean = true
       override fun renderResponse(response: String, task: SessionTask): String {

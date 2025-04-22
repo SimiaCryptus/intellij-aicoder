@@ -44,8 +44,8 @@ class GenericChatAction : BaseAction() {
           initialAssistantPrompt = "",
           systemPrompt = systemPrompt,
           api = api,
-          storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
           applicationClass = ApplicationServer::class.java,
+          storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
         )
         ApplicationServer.appInfoMap[session] = AppInfoData(
           applicationName = "Code Chat",

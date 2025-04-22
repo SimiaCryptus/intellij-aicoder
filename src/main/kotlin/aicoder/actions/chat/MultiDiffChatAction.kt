@@ -119,10 +119,10 @@ open class MultiDiffChatAction(
     session = session,
     model = model,
     parsingModel = parsingModel,
+    systemPrompt = "",
     api = api,
-    storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
     applicationClass = ApplicationServer::class.java,
-    systemPrompt = "", // Overridden below
+    storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
   ) {
     override val systemPrompt: String
       get() = """

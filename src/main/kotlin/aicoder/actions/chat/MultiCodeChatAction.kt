@@ -20,7 +20,6 @@ import com.simiacryptus.jopenai.util.GPT4Tokenizer
 import com.simiacryptus.skyenet.apps.general.renderMarkdown
 import com.simiacryptus.skyenet.core.platform.ApplicationServices
 import com.simiacryptus.skyenet.core.platform.Session
-import com.simiacryptus.skyenet.core.util.IterativePatchUtil.patchFormatPrompt
 import com.simiacryptus.skyenet.core.util.getModuleRootForFile
 import com.simiacryptus.skyenet.util.MarkdownUtil.renderMarkdown
 import com.simiacryptus.skyenet.webui.application.AppInfoData
@@ -127,10 +126,10 @@ class MultiCodeChatAction : BaseAction() {
     session = session,
     model = model,
     parsingModel = parsingModel,
+    systemPrompt = "",
     api = api,
-    storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
     applicationClass = ApplicationServer::class.java,
-    systemPrompt = "", // Overridden below
+    storage = ApplicationServices.dataStorageFactory(AppSettingsState.instance.pluginHome),
   ) {
     
     
