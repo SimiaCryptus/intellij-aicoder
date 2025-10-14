@@ -1,10 +1,34 @@
-# 🚀 AI Coding Assistant: The Ultimate IntelliJ Plugin for Developers 🌟
+# AI Coding Assistant - Now Available as Cognotik!
 
 ![Build](https://github.com/SimiaCryptus/intellij-aicoder/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/20724-ai-coding-assistant.svg)](https://plugins.jetbrains.com/plugin/20724-ai-coding-assistant)
 
+## 🎉 Important Announcement
+
 <!-- Plugin description -->
+
+AI Coding Assistant has evolved into [Cognotik](https://plugins.jetbrains.com/plugin/27289-cognotik)!
+
+We've rebranded and enhanced our plugin with even more powerful features and capabilities. All future development and updates will be released under the new **Cognotik** brand.
+
+### What This Means For You
+
+- ✅ **All your existing features** are still available in Cognotik
+- ✅ **Enhanced capabilities** with improved agentic AI workflows
+- ✅ **Better performance** and more reliable operations
+- ✅ **Active development** with regular updates and new features
+- ✅ **Same open-source commitment** - 100% transparent and community-driven
+
+### How to Migrate
+
+1. **Install Cognotik** from the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/27289-cognotik)
+2. **Transfer your API keys** to the new plugin settings (Settings → Tools → Cognotik)
+3. **Uninstall AI Coding Assistant** (optional, but recommended to avoid conflicts)
+
+Your configuration and API keys will need to be re-entered in Cognotik, but the process is quick and straightforward.
+
+---
 
 Are you a developer looking to supercharge your coding workflow? Look no further than AI Coding Assistant, the
 game-changing IntelliJ plugin that harnesses the power of cutting-edge Language Model APIs to revolutionize the way you
@@ -44,50 +68,6 @@ Getting started with AI Coding Assistant is a breeze:
 2. Input your token(s) into the appropriate field(s) in the plugin's settings panel.
 3. Start coding smarter, not harder!
 
-## 🚀 Unleash Your Coding Potential
-
-AI Coding Assistant offers a suite of powerful actions designed to streamline your coding process:
-
-### 📝 Editor Actions
-* 💬 **Code Chat**: Discuss and analyze code directly in your editor.
-* ✏️ **Edit Selection**: Make targeted edits to your code with AI assistance.
-* 🔄 **Apply Patch**: Seamlessly apply AI-generated code patches.
-
-### 📁 File and Folder Actions
-* 📄 **File Actions**: Perform AI-assisted operations on individual files.
-* 📂 **Folder Actions**: Execute AI-powered tasks across entire folders.
-* 🕰️ **Git History**: Analyze and work with your project's Git history.
-* 🧪 **Test Results**: Get AI insights on your test results.
-
-### 🔬 Advanced Features
-* 🔧 **Patch Files**: Apply complex patches across multiple files.
-* 🔄 **Multi-step Patch**: Execute multi-step patching processes.
-* 🛠️ **Auto-fix**: Automatically fix common coding issues.
-* 🚀 **Do Something**: General-purpose AI-assisted coding tasks.
-* 🐚 **Shell Agent**: Interact with your development environment through an AI-powered shell.
-
-### 📊 Planning and Organization
-* 📅 **Task Planning**: Break down complex coding tasks into manageable steps.
-* 🗺️ **Pre-plans**: Create and manage coding project plans.
-* 💬 **Plan Chat**: Discuss and refine your coding plans with AI assistance.
-
-### 🧠 AI Actors and Applications
-* 🎭 **Actors**: Utilize purpose-specific AI configurations for various coding tasks.
-* 🏗️ **Applications**: Leverage collections of actors for complex coding scenarios.
-* 🔍 **Actor Types**: Choose from Simple, Parsed, Coding, and Media actors to suit your needs.
-
-### 📊 Hierarchical Design and Task Management
-* 📈 **DAG Organization**: Benefit from a Directed Acyclic Graph structure for efficient task management.
-* 🔄 **Feedback Loops**: Enjoy iterative refinement of your coding projects.
-* ✅ **Type Systems and Validation**: Ensure code quality with built-in type checking and validation.
-
-## 🚀 Advanced Execution Patterns
-
-* 🎯 **Simple Directive Execution**: Execute straightforward coding tasks with ease.
-* 💬 **Plan-Supplemented Chat Assistant**: Get AI assistance with context-aware planning capabilities.
-* 🔄 **Objective-Based Cyclic Execution**: (Coming Soon) Achieve complex coding goals through iterative AI-driven processes.
-* ⚡ **Event-Driven Triggers**: (Coming Soon) Set up automated AI responses to specific coding events.
-
 ## **Join the AI Coding Revolution**
 
 Ready to take your coding to the next level? Install AI Coding Assistant today and experience the future of software
@@ -101,4 +81,23 @@ plugin for developers. 🌟
 organization. The plugin is provided free of charge, as-is, with no warranty or guarantee of any kind, and is the work
 of a sole developer working on a hobby project.*
 
+## Ready to Upgrade? 🚀
+
+**[Install Cognotik Now](https://plugins.jetbrains.com/plugin/27289-cognotik)** and experience the next generation of AI-powered development!
+
+For questions or support, visit:
+- 📖 [Cognotik Documentation](https://github.com/SimiaCryptus/Cognotik/wiki)
+- 💬 [GitHub Discussions](https://github.com/SimiaCryptus/Cognotik/discussions)
+- 🐛 [Issue Tracker](https://github.com/SimiaCryptus/Cognotik/issues)
+
 <!-- Plugin description end -->
+
+---
+
+<div align="center">
+
+**Thank you for being part of our journey!**
+
+*The AI Coding Assistant Team (now Cognotik)*
+
+</div>
