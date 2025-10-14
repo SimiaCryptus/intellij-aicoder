@@ -176,7 +176,7 @@ data class AppSettingsState(
     companion object {
         val log = LoggerFactory.getLogger(AppSettingsState::class.java)
         var auxiliaryLog: File? = null
-        const val WELCOME_VERSION: String = "1.5.0"
+        const val WELCOME_VERSION: String = "2.0.0"
 
         @JvmStatic
         val instance: AppSettingsState by lazy {
